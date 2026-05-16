@@ -32,7 +32,7 @@
 }
 .hdr__name { font-size: var(--fs-lg); }
 .hdr__by { color: var(--ink-3); font-size: var(--fs-sm); font-weight: 400; }
-.hdr__nav { display: flex; align-items: center; gap: 4px; }
+.hdr__nav { display: flex; align-items: center; gap: 4px; margin-left: auto; }
 .hdr__nav a {
   padding: 6px 10px;
   border-radius: var(--r-sm);

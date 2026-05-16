@@ -66,7 +66,11 @@ export function HomeView({ view, onNav }: HomeViewProps) {
               aria-label="Search diseases"
             />
           </form>
-          <Button type="button" onClick={() => onNav("/start-research")}>
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => onNav("/start-research")}
+          >
             + {copy.researchCta}
           </Button>
         </div>
