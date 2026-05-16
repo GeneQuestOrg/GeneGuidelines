@@ -6,10 +6,12 @@ import type { UserLocation } from "../router/types";
 import { DiseaseCard } from "./DiseaseCard";
 import { DoctorCard } from "./DoctorCard";
 import { DiseaseOpenPrList } from "./DiseaseOpenPrList";
+import { FoundationsList } from "./FoundationsList";
 import { TherapiesList } from "./TherapiesList";
 import { TrialsList } from "./TrialsList";
 import { useContentPrs } from "../hooks/useContentPrs";
 import { useDiseaseDoctors } from "../hooks/useDiseaseDoctors";
+import { useDiseaseFoundations } from "../hooks/useDiseaseFoundations";
 import { useDiseaseTherapies } from "../hooks/useDiseaseTherapies";
 import { useDiseaseTrials } from "../hooks/useDiseaseTrials";
 import { isWorkflowDoctorSource } from "../types/doctor";
@@ -66,6 +68,11 @@ export function DiseaseTabs({
     loading: therapiesLoading,
     error: therapiesError,
   } = useDiseaseTherapies(slug);
+  const {
+    foundations,
+    loading: foundationsLoading,
+    error: foundationsError,
+  } = useDiseaseFoundations(slug);
 
   const previewDoctors = useMemo(() => {
     if (doctorsPayload == null) {
@@ -125,6 +132,16 @@ export function DiseaseTabs({
                 <p className="d-panel-empty">Loading therapies…</p>
               ) : (
                 <TherapiesList therapies={therapies} />
+              )}
+            </Section>
+
+            <Section title="Supporting foundations" divider>
+              {foundationsError != null ? (
+                <p className="d-panel-empty" role="alert">{foundationsError}</p>
+              ) : foundationsLoading ? (
+                <p className="d-panel-empty">Loading foundations…</p>
+              ) : (
+                <FoundationsList foundations={foundations} />
               )}
             </Section>
 

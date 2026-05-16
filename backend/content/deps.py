@@ -10,6 +10,11 @@ from __future__ import annotations
 
 from fastapi import Depends
 
+from .foundations import (
+    FoundationRepo,
+    FoundationService,
+    SqlaFoundationRepo,
+)
 from .repository import DiseaseRepo, SqlaDiseaseRepo
 from .service import DiseaseService, DoctorCountProvider
 from .therapies import SqlaTherapyRepo, TherapyRepo, TherapyService
@@ -67,6 +72,19 @@ def provide_therapy_service(
     return TherapyService(therapy_repo=therapy_repo, disease_repo=disease_repo)
 
 
+def provide_foundation_repo() -> FoundationRepo:
+    return SqlaFoundationRepo()
+
+
+def provide_foundation_service(
+    foundation_repo: FoundationRepo = Depends(provide_foundation_repo),
+    disease_repo: DiseaseRepo = Depends(provide_disease_repo),
+) -> FoundationService:
+    return FoundationService(
+        foundation_repo=foundation_repo, disease_repo=disease_repo
+    )
+
+
 __all__ = [
     "provide_disease_repo",
     "provide_doctor_count",
@@ -75,4 +93,6 @@ __all__ = [
     "provide_trial_service",
     "provide_therapy_repo",
     "provide_therapy_service",
+    "provide_foundation_repo",
+    "provide_foundation_service",
 ]

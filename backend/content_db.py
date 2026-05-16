@@ -28,6 +28,7 @@ CARE_PATHWAY_SEED_PATH = BACKEND_DIR / "content_care_pathway_seed.json"
 PR_PARA_MAPS_PATH = BACKEND_DIR / "content_pr_para_maps.json"
 TRIALS_SEED_PATH = BACKEND_DIR / "content_trials_seed.json"
 THERAPIES_SEED_PATH = BACKEND_DIR / "content_therapies_seed.json"
+FOUNDATIONS_SEED_PATH = BACKEND_DIR / "content_foundations_seed.json"
 DISEASE_SLUG_PATTERN = re.compile(r"^[a-z0-9-]+$")
 MAX_DISEASE_SLUG_LEN = 64
 PR_ID_PATTERN = re.compile(r"^PR-[0-9]+$")
@@ -169,6 +170,28 @@ def ensure_content_schema() -> None:
             status TEXT NOT NULL CHECK (status IN ('consensus','verified','pending','preclinical')),
             note TEXT NOT NULL DEFAULT '',
             sort_order INTEGER NOT NULL DEFAULT 100
+        )
+        """
+    )
+    cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS foundations (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL UNIQUE,
+            scope TEXT NOT NULL,
+            url TEXT NOT NULL DEFAULT '',
+            city TEXT,
+            country TEXT,
+            services_json TEXT NOT NULL DEFAULT '[]'
+        )
+        """
+    )
+    cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS disease_foundations (
+            disease_slug TEXT NOT NULL REFERENCES diseases(slug) ON DELETE CASCADE,
+            foundation_id INTEGER NOT NULL REFERENCES foundations(id) ON DELETE CASCADE,
+            PRIMARY KEY (disease_slug, foundation_id)
         )
         """
     )
@@ -1081,6 +1104,66 @@ def seed_therapies_from_file() -> None:
                     str(therapy.get("note") or ""),
                     index,
                 ),
+            )
+    conn.commit()
+    conn.close()
+
+
+def seed_foundations_from_file() -> None:
+    """Seed foundations + disease_foundations from content_foundations_seed.json.
+
+    Idempotent: foundations have a UNIQUE constraint on ``name`` so the
+    upsert is ``INSERT OR IGNORE``; junction rows use the same approach.
+    """
+    path = Path(FOUNDATIONS_SEED_PATH)
+    if not path.exists():
+        return
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return
+    rows = data.get("foundations") if isinstance(data, dict) else None
+    if not isinstance(rows, list):
+        return
+    conn = get_connection()
+    cur = conn.cursor()
+    known_slugs = {
+        str(r["slug"])
+        for r in cur.execute("SELECT slug FROM diseases").fetchall()
+    }
+    for item in rows:
+        if not isinstance(item, dict):
+            continue
+        name = str(item.get("name") or "").strip()
+        if not name:
+            continue
+        cur.execute(
+            """
+            INSERT OR IGNORE INTO foundations (
+                name, scope, url, city, country, services_json
+            ) VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (
+                name,
+                str(item.get("scope") or ""),
+                str(item.get("url") or ""),
+                item.get("city"),
+                item.get("country"),
+                json.dumps(item.get("services") or [], ensure_ascii=False),
+            ),
+        )
+        cur.execute("SELECT id FROM foundations WHERE name = ?", (name,))
+        row = cur.fetchone()
+        if row is None:
+            continue
+        foundation_id = int(row["id"])
+        for slug in item.get("diseases", []) or []:
+            slug_str = str(slug).strip().lower()
+            if not slug_str or slug_str not in known_slugs:
+                continue
+            cur.execute(
+                "INSERT OR IGNORE INTO disease_foundations (disease_slug, foundation_id) VALUES (?, ?)",
+                (slug_str, foundation_id),
             )
     conn.commit()
     conn.close()

@@ -1,6 +1,7 @@
 import type { CatalogStats, ContentPrSummary, Disease, GuidelineMeta } from "../types";
 import type { GuidelinePrDetail } from "../types/contentPr";
 import type { DiseaseDoctorsPayload, PublicDoctor } from "../types/doctor";
+import type { Foundation } from "../types/foundation";
 import type { GuidelineDocument } from "../types/guidelineDocument";
 import type { ResearchRun } from "../types/researchRun";
 import type { Therapy } from "../types/therapy";
@@ -45,4 +46,8 @@ export interface TrialRepository {
 
 export interface TherapyRepository {
   listForDisease(diseaseSlug: string): Promise<readonly Therapy[]>;
+}
+
+export interface FoundationRepository {
+  listForDisease(diseaseSlug: string): Promise<readonly Foundation[]>;
 }

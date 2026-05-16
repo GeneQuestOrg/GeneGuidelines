@@ -4,11 +4,13 @@ import { apiContentPrRepository } from "./apiContentPrRepository";
 import { apiDoctorRepository } from "./apiDoctorRepository";
 import { apiGuidelineRepository } from "./apiGuidelineRepository";
 import { apiResearchRunsRepository } from "./apiResearchRunsRepository";
+import { apiFoundationRepository } from "./apiFoundationRepository";
 import { apiTherapyRepository } from "./apiTherapyRepository";
 import { apiTrialRepository } from "./apiTrialRepository";
 import { fixtureContentPrRepository } from "./fixtureContentPrRepository";
 import { fixtureDoctorRepository } from "./fixtureDoctorRepository";
 import { fixtureDiseaseRepository } from "./fixtureDiseaseRepository";
+import { fixtureFoundationRepository } from "./fixtureFoundationRepository";
 import { fixtureGuidelineRepository } from "./fixtureGuidelineRepository";
 import { fixtureResearchRunsRepository } from "./fixtureResearchRunsRepository";
 import { fixtureTherapyRepository } from "./fixtureTherapyRepository";
@@ -17,6 +19,7 @@ import type {
   ContentPrRepository,
   DoctorRepository,
   DiseaseRepository,
+  FoundationRepository,
   GuidelineRepository,
   ResearchRunsRepository,
   TherapyRepository,
@@ -27,6 +30,7 @@ export type {
   ContentPrRepository,
   DoctorRepository,
   DiseaseRepository,
+  FoundationRepository,
   GuidelineRepository,
   ResearchRunsRepository,
   TherapyRepository,
@@ -43,6 +47,7 @@ export interface Repositories {
   researchRuns: ResearchRunsRepository;
   trials: TrialRepository;
   therapies: TherapyRepository;
+  foundations: FoundationRepository;
 }
 
 export function getRepositories(): Repositories {
@@ -56,6 +61,7 @@ export function getRepositories(): Repositories {
       researchRuns: apiResearchRunsRepository,
       trials: apiTrialRepository,
       therapies: apiTherapyRepository,
+      foundations: apiFoundationRepository,
     };
   }
   return {
@@ -66,6 +72,7 @@ export function getRepositories(): Repositories {
     researchRuns: fixtureResearchRunsRepository,
     trials: fixtureTrialRepository,
     therapies: fixtureTherapyRepository,
+    foundations: fixtureFoundationRepository,
   };
 }
 

@@ -1,0 +1,40 @@
+{
+  "foundations": [
+    {
+      "name": "FDMAS Alliance",
+      "scope": "International",
+      "diseases": ["fd", "mas"],
+      "url": "fibrousdysplasia.org",
+      "services": ["Doctor Finder", "Patient Registry", "24h Duty Events", "Workshops"],
+      "city": "USA / Online",
+      "country": "US"
+    },
+    {
+      "name": "International FD/MAS Consortium",
+      "scope": "International (clinical)",
+      "diseases": ["fd", "mas"],
+      "url": "fdmas-consortium.org",
+      "services": ["Case consultations", "Guidelines authoring", "Drug development partnerships"],
+      "city": "Leiden",
+      "country": "NL"
+    },
+    {
+      "name": "GeneQuest Foundation",
+      "scope": "Poland",
+      "diseases": ["fd", "mas", "noonan"],
+      "url": "genequest.org",
+      "services": ["Family support (PL)", "Polish doctor catalog", "1.5% CIT donations", "Zoom workshops"],
+      "city": "Zielona Góra",
+      "country": "PL"
+    },
+    {
+      "name": "Noonan Syndrome Foundation",
+      "scope": "International",
+      "diseases": ["noonan"],
+      "url": "teamnoonan.org",
+      "services": ["Community", "Annual conference", "Educational materials"],
+      "city": "USA",
+      "country": "US"
+    }
+  ]
+}

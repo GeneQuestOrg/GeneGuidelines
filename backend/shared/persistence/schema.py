@@ -211,6 +211,40 @@ therapies = Table(
 )
 
 
+foundations = Table(
+    "foundations",
+    metadata,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column("name", Text, nullable=False, unique=True),
+    Column("scope", Text, nullable=False),
+    Column("url", Text, nullable=False, server_default=""),
+    Column("city", Text),
+    Column("country", Text),
+    Column("services_json", Text, nullable=False, server_default="[]"),
+)
+
+
+disease_foundations = Table(
+    "disease_foundations",
+    metadata,
+    Column(
+        "disease_slug",
+        Text,
+        ForeignKey("diseases.slug", ondelete="CASCADE"),
+        nullable=False,
+    ),
+    Column(
+        "foundation_id",
+        Integer,
+        ForeignKey("foundations.id", ondelete="CASCADE"),
+        nullable=False,
+    ),
+    PrimaryKeyConstraint(
+        "disease_slug", "foundation_id", name="pk_disease_foundations"
+    ),
+)
+
+
 __all__ = [
     "metadata",
     "diseases",
@@ -221,4 +255,6 @@ __all__ = [
     "trials",
     "disease_trials",
     "therapies",
+    "foundations",
+    "disease_foundations",
 ]

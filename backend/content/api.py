@@ -8,12 +8,19 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
-from .contracts import DiseaseResponse, TherapyResponse, TrialResponse
+from .contracts import (
+    DiseaseResponse,
+    FoundationResponse,
+    TherapyResponse,
+    TrialResponse,
+)
 from .deps import (
     provide_disease_service,
+    provide_foundation_service,
     provide_therapy_service,
     provide_trial_service,
 )
+from .foundations import FoundationService
 from .research_runs import list_active_runs, to_payload
 from .service import DiseaseService
 from .therapies import TherapyService
@@ -77,6 +84,26 @@ def list_disease_therapies(
     if therapies is None:
         raise HTTPException(status_code=404, detail="Disease not found")
     return [TherapyResponse.from_domain(t) for t in therapies]
+
+
+@router.get("/diseases/{slug}/foundations", response_model=list[FoundationResponse])
+def list_disease_foundations(
+    slug: str,
+    service: FoundationService = Depends(provide_foundation_service),
+) -> list[FoundationResponse]:
+    """Patient-support foundations and research consortia covering ``slug``."""
+    foundations = service.list_for_disease(slug)
+    if foundations is None:
+        raise HTTPException(status_code=404, detail="Disease not found")
+    return [FoundationResponse.from_domain(f) for f in foundations]
+
+
+@router.get("/foundations", response_model=list[FoundationResponse])
+def list_foundations(
+    service: FoundationService = Depends(provide_foundation_service),
+) -> list[FoundationResponse]:
+    """Every foundation in the catalog, sorted by name."""
+    return [FoundationResponse.from_domain(f) for f in service.list_all()]
 
 
 @router.get("/research-runs")

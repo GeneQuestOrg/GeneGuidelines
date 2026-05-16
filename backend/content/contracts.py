@@ -12,6 +12,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from .foundations import Foundation
 from .models import Disease
 from .therapies import Therapy
 from .trials_models import Trial
@@ -127,4 +128,35 @@ class TherapyResponse(BaseModel):
         return cls(name=therapy.name, status=therapy.status, note=therapy.note)
 
 
-__all__ = ["DiseaseResponse", "TrialResponse", "TherapyResponse"]
+class FoundationResponse(BaseModel):
+    """Public foundation card — patient support organisations and consortia."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    name: str
+    scope: str
+    url: str
+    city: str | None = None
+    country: str | None = None
+    services: list[str] = Field(default_factory=list)
+    diseases: list[str] = Field(default_factory=list)
+
+    @classmethod
+    def from_domain(cls, foundation: Foundation) -> "FoundationResponse":
+        return cls(
+            name=foundation.name,
+            scope=foundation.scope,
+            url=foundation.url,
+            city=foundation.city,
+            country=foundation.country,
+            services=list(foundation.services),
+            diseases=list(foundation.diseases),
+        )
+
+
+__all__ = [
+    "DiseaseResponse",
+    "TrialResponse",
+    "TherapyResponse",
+    "FoundationResponse",
+]
