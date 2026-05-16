@@ -8,10 +8,11 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
-from .contracts import DiseaseResponse
-from .deps import provide_disease_service
+from .contracts import DiseaseResponse, TrialResponse
+from .deps import provide_disease_service, provide_trial_service
 from .research_runs import list_active_runs, to_payload
 from .service import DiseaseService
+from .trials_service import TrialService
 
 router = APIRouter(tags=["content"])
 
@@ -39,6 +40,26 @@ def get_disease(
     if disease is None:
         raise HTTPException(status_code=404, detail="Disease not found")
     return DiseaseResponse.from_domain(disease)
+
+
+@router.get("/diseases/{slug}/trials", response_model=list[TrialResponse])
+def list_disease_trials(
+    slug: str,
+    service: TrialService = Depends(provide_trial_service),
+) -> list[TrialResponse]:
+    """Clinical trials linked to ``slug``. 404 when the disease is unknown."""
+    trials = service.list_for_disease(slug)
+    if trials is None:
+        raise HTTPException(status_code=404, detail="Disease not found")
+    return [TrialResponse.from_domain(t) for t in trials]
+
+
+@router.get("/trials", response_model=list[TrialResponse])
+def list_trials(
+    service: TrialService = Depends(provide_trial_service),
+) -> list[TrialResponse]:
+    """All trials in the catalog, sorted by title."""
+    return [TrialResponse.from_domain(t) for t in service.list_all()]
 
 
 @router.get("/research-runs")

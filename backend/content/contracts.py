@@ -13,6 +13,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field
 
 from .models import Disease
+from .trials_models import Trial
 
 
 class DiseaseResponse(BaseModel):
@@ -65,4 +66,50 @@ class DiseaseResponse(BaseModel):
         )
 
 
-__all__ = ["DiseaseResponse"]
+class TrialResponse(BaseModel):
+    """Public clinical-trial card — camelCase JSON for the public frontend."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    nct: str
+    title: str
+    phase: str
+    status: str
+    sponsor: str
+    city: str | None = None
+    country: str | None = None
+    lat: float | None = None
+    lng: float | None = None
+    ageRange: str | None = None
+    principalInvestigator: str | None = None
+    eligibilitySummary: str
+    enrollmentTarget: int | None = None
+    enrolled: int | None = None
+    contact: str | None = None
+    lastSeen: str | None = None
+    diseases: list[str] = Field(default_factory=list)
+
+    @classmethod
+    def from_domain(cls, trial: Trial) -> "TrialResponse":
+        return cls(
+            nct=trial.nct,
+            title=trial.title,
+            phase=trial.phase,
+            status=trial.status,
+            sponsor=trial.sponsor,
+            city=trial.city,
+            country=trial.country,
+            lat=trial.lat,
+            lng=trial.lng,
+            ageRange=trial.age_range,
+            principalInvestigator=trial.principal_investigator,
+            eligibilitySummary=trial.eligibility_summary,
+            enrollmentTarget=trial.enrollment_target,
+            enrolled=trial.enrolled,
+            contact=trial.contact,
+            lastSeen=trial.last_seen,
+            diseases=list(trial.diseases),
+        )
+
+
+__all__ = ["DiseaseResponse", "TrialResponse"]

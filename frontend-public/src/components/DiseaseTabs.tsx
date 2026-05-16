@@ -6,8 +6,10 @@ import type { UserLocation } from "../router/types";
 import { DiseaseCard } from "./DiseaseCard";
 import { DoctorCard } from "./DoctorCard";
 import { DiseaseOpenPrList } from "./DiseaseOpenPrList";
+import { TrialsList } from "./TrialsList";
 import { useContentPrs } from "../hooks/useContentPrs";
 import { useDiseaseDoctors } from "../hooks/useDiseaseDoctors";
+import { useDiseaseTrials } from "../hooks/useDiseaseTrials";
 import { isWorkflowDoctorSource } from "../types/doctor";
 import {
   attachDoctorDistances,
@@ -52,6 +54,11 @@ export function DiseaseTabs({
     loading: doctorsLoading,
     error: doctorsError,
   } = useDiseaseDoctors(slug);
+  const {
+    trials,
+    loading: trialsLoading,
+    error: trialsError,
+  } = useDiseaseTrials(slug);
 
   const previewDoctors = useMemo(() => {
     if (doctorsPayload == null) {
@@ -174,22 +181,14 @@ export function DiseaseTabs({
 
         {tab === "trials" ? (
           <Section title={copy.trialsTitle}>
-            <p className="d-panel-stat">{copy.trialsSub(disease.trialsCount)}</p>
-            <div className="page__actions">
-              <Button
-                type="button"
-                onClick={() =>
-                  onNav(
-                    `/trials?q=${encodeURIComponent(disease.name)}`,
-                  )
-                }
-              >
-                View all trials
-              </Button>
-            </div>
-            {disease.trialsCount === 0 ? (
-              <p className="d-panel-empty">{copy.trialsEmpty}</p>
-            ) : null}
+            <p className="d-panel-stat">{copy.trialsSub(trials.length)}</p>
+            {trialsError != null ? (
+              <p className="d-panel-empty" role="alert">{trialsError}</p>
+            ) : trialsLoading ? (
+              <p className="d-panel-empty">Loading trials…</p>
+            ) : (
+              <TrialsList trials={trials} />
+            )}
           </Section>
         ) : null}
 

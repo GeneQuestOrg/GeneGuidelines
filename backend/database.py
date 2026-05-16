@@ -204,16 +204,19 @@ def init_db():
             ensure_content_schema,
             seed_content_if_empty,
             seed_content_prs_if_empty,
+            seed_trials_from_file,
         )
     except ImportError:
         from content_db import (  # type: ignore[no-redef]
             ensure_content_schema,
             seed_content_if_empty,
             seed_content_prs_if_empty,
+            seed_trials_from_file,
         )
     ensure_content_schema()
     seed_content_if_empty()
     seed_content_prs_if_empty()
+    seed_trials_from_file()
     try:
         from .guideline_run_store import ensure_guideline_run_results_schema
     except ImportError:

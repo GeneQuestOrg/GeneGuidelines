@@ -26,6 +26,7 @@ CONTENT_SEED_PATH = BACKEND_DIR / "content_seed.json"
 GUIDELINE_BODIES_PATH = BACKEND_DIR / "content_guideline_documents.json"
 CARE_PATHWAY_SEED_PATH = BACKEND_DIR / "content_care_pathway_seed.json"
 PR_PARA_MAPS_PATH = BACKEND_DIR / "content_pr_para_maps.json"
+TRIALS_SEED_PATH = BACKEND_DIR / "content_trials_seed.json"
 DISEASE_SLUG_PATTERN = re.compile(r"^[a-z0-9-]+$")
 MAX_DISEASE_SLUG_LEN = 64
 PR_ID_PATTERN = re.compile(r"^PR-[0-9]+$")
@@ -127,15 +128,47 @@ def ensure_content_schema() -> None:
         )
         """
     )
+    cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS trials (
+            nct TEXT PRIMARY KEY,
+            title TEXT NOT NULL,
+            phase TEXT NOT NULL,
+            status TEXT NOT NULL,
+            sponsor TEXT NOT NULL,
+            city TEXT,
+            country TEXT,
+            lat REAL,
+            lng REAL,
+            age_range TEXT,
+            principal_investigator TEXT,
+            eligibility_summary TEXT NOT NULL DEFAULT '',
+            enrollment_target INTEGER,
+            enrolled INTEGER,
+            contact TEXT,
+            last_seen TEXT
+        )
+        """
+    )
+    cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS disease_trials (
+            disease_slug TEXT NOT NULL REFERENCES diseases(slug) ON DELETE CASCADE,
+            nct TEXT NOT NULL REFERENCES trials(nct) ON DELETE CASCADE,
+            PRIMARY KEY (disease_slug, nct)
+        )
+        """
+    )
     conn.commit()
     conn.close()
     ensure_guideline_prompt_column()
     ensure_care_pathway_draft_columns()
     sync_guideline_document_bodies_from_file()
-    # NOTE: content_prs has a FK to diseases(slug) — seed_content_prs_if_empty()
-    # is invoked from database.init_db() AFTER seed_content_if_empty() so the
-    # parent rows exist. Keeping the call here would fire it on an empty diseases
-    # table and trip the FOREIGN KEY constraint on fresh databases.
+    # NOTE: content_prs and disease_trials have FKs to diseases(slug); their
+    # seeders (seed_content_prs_if_empty / seed_trials_from_file) are invoked
+    # from database.init_db() AFTER seed_content_if_empty() so the parent
+    # rows exist. Keeping those calls here would fire them on an empty
+    # diseases table and skip the junction inserts silently.
     seed_care_pathways_from_file()
 
 
@@ -903,6 +936,77 @@ def seed_care_pathways_from_file() -> None:
                 json.dumps(tree, ensure_ascii=False),
             ),
         )
+    conn.commit()
+    conn.close()
+
+
+def seed_trials_from_file() -> None:
+    """Load content_trials_seed.json on a fresh DB (or top up missing rows).
+
+    Idempotent: ``INSERT OR IGNORE`` for the ``trials`` table and the
+    ``disease_trials`` junction makes it safe to call on every startup.
+    Trials whose ``diseases`` list references a slug we have not seeded
+    are still inserted into ``trials`` (so /api/trials returns them),
+    just without a junction row.
+    """
+    path = Path(TRIALS_SEED_PATH)
+    if not path.exists():
+        return
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return
+    rows = data.get("trials") if isinstance(data, dict) else None
+    if not isinstance(rows, list):
+        return
+    conn = get_connection()
+    cur = conn.cursor()
+    known_slugs = {
+        str(r["slug"])
+        for r in cur.execute("SELECT slug FROM diseases").fetchall()
+    }
+    for trial in rows:
+        if not isinstance(trial, dict):
+            continue
+        nct = str(trial.get("nct") or "").strip()
+        if not nct:
+            continue
+        cur.execute(
+            """
+            INSERT OR IGNORE INTO trials (
+                nct, title, phase, status, sponsor, city, country,
+                lat, lng, age_range, principal_investigator,
+                eligibility_summary, enrollment_target, enrolled,
+                contact, last_seen
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                nct,
+                str(trial.get("title") or ""),
+                str(trial.get("phase") or ""),
+                str(trial.get("status") or ""),
+                str(trial.get("sponsor") or ""),
+                trial.get("city"),
+                trial.get("country"),
+                trial.get("lat"),
+                trial.get("lng"),
+                trial.get("ageRange"),
+                trial.get("principalInvestigator"),
+                str(trial.get("eligibilitySummary") or ""),
+                trial.get("enrollmentTarget"),
+                trial.get("enrolled"),
+                trial.get("contact"),
+                trial.get("lastSeen"),
+            ),
+        )
+        for slug in trial.get("diseases", []) or []:
+            slug_str = str(slug).strip().lower()
+            if not slug_str or slug_str not in known_slugs:
+                continue
+            cur.execute(
+                "INSERT OR IGNORE INTO disease_trials (disease_slug, nct) VALUES (?, ?)",
+                (slug_str, nct),
+            )
     conn.commit()
     conn.close()
 

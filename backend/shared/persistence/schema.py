@@ -21,9 +21,11 @@ from __future__ import annotations
 from sqlalchemy import (
     CheckConstraint,
     Column,
+    Float,
     ForeignKey,
     Integer,
     MetaData,
+    PrimaryKeyConstraint,
     String,
     Table,
     Text,
@@ -147,6 +149,47 @@ care_pathways = Table(
 )
 
 
+trials = Table(
+    "trials",
+    metadata,
+    Column("nct", Text, primary_key=True),
+    Column("title", Text, nullable=False),
+    Column("phase", Text, nullable=False),
+    Column("status", Text, nullable=False),
+    Column("sponsor", Text, nullable=False),
+    Column("city", Text),
+    Column("country", Text),
+    Column("lat", Float),
+    Column("lng", Float),
+    Column("age_range", Text),
+    Column("principal_investigator", Text),
+    Column("eligibility_summary", Text, nullable=False, server_default=""),
+    Column("enrollment_target", Integer),
+    Column("enrolled", Integer),
+    Column("contact", Text),
+    Column("last_seen", Text),
+)
+
+
+disease_trials = Table(
+    "disease_trials",
+    metadata,
+    Column(
+        "disease_slug",
+        Text,
+        ForeignKey("diseases.slug", ondelete="CASCADE"),
+        nullable=False,
+    ),
+    Column(
+        "nct",
+        Text,
+        ForeignKey("trials.nct", ondelete="CASCADE"),
+        nullable=False,
+    ),
+    PrimaryKeyConstraint("disease_slug", "nct", name="pk_disease_trials"),
+)
+
+
 __all__ = [
     "metadata",
     "diseases",
@@ -154,4 +197,6 @@ __all__ = [
     "catalog_stats",
     "content_prs",
     "care_pathways",
+    "trials",
+    "disease_trials",
 ]

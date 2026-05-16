@@ -3,6 +3,7 @@ import type { GuidelinePrDetail } from "../types/contentPr";
 import type { DiseaseDoctorsPayload, PublicDoctor } from "../types/doctor";
 import type { GuidelineDocument } from "../types/guidelineDocument";
 import type { ResearchRun } from "../types/researchRun";
+import type { Trial } from "../types/trial";
 
 export interface ContentPrListFilters {
   readonly disease?: string;
@@ -34,4 +35,9 @@ export interface DoctorRepository {
 
 export interface ResearchRunsRepository {
   listActiveRuns(limit?: number): Promise<readonly ResearchRun[]>;
+}
+
+export interface TrialRepository {
+  listAll(): Promise<readonly Trial[]>;
+  listForDisease(diseaseSlug: string): Promise<readonly Trial[]>;
 }
