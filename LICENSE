@@ -1,0 +1,66 @@
+Creative Commons Attribution 4.0 International License
+=======================================================
+
+Copyright (c) 2026 GeneQuest Foundation (KRS 0001211461)
+
+This work is licensed under the Creative Commons Attribution 4.0
+International License ("CC BY 4.0"). To view a copy of this license,
+visit https://creativecommons.org/licenses/by/4.0/ or send a letter to
+Creative Commons, PO Box 1866, Mountain View, CA 94042, USA.
+
+This licence applies to the entire repository unless individual files
+state otherwise. Selected source files vendored from upstream
+open-source projects retain their original licences (see ``NOTICE``).
+
+A short summary of CC BY 4.0
+----------------------------
+
+You are free to:
+
+  • Share — copy and redistribute the material in any medium or format
+  • Adapt — remix, transform, and build upon the material for any
+    purpose, even commercially.
+
+Under the following terms:
+
+  • Attribution — You must give appropriate credit, provide a link to
+    the license, and indicate if changes were made. You may do so in
+    any reasonable manner, but not in any way that suggests the
+    licensor endorses you or your use.
+
+No additional restrictions — You may not apply legal terms or
+technological measures that legally restrict others from doing
+anything the license permits.
+
+Notices
+-------
+
+You do not have to comply with the license for elements of the
+material in the public domain or where your use is permitted by an
+applicable exception or limitation.
+
+No warranties are given. The license may not give you all of the
+permissions necessary for your intended use. For example, other
+rights such as publicity, privacy, or moral rights may limit how you
+use the material.
+
+Full legal text
+---------------
+
+The full legal text of CC BY 4.0 is available at
+https://creativecommons.org/licenses/by/4.0/legalcode.
+
+Why this license
+----------------
+
+This repository was prepared as a submission to the Kaggle Gemma 4
+Good Hackathon, whose competition rules require winning submissions
+to be licensed under CC BY 4.0. The same licence applies to the rest
+of the repository so attribution requirements are uniform across the
+project.
+
+Once the workflow engine and the visual editor are extracted into
+standalone OSS packages (see ``docs/ARCHITECTURE.md`` → Roadmap),
+those packages may be relicensed under Apache 2.0 to better fit
+developer-library expectations. This repository as a whole will
+retain CC BY 4.0 for its content, narrative, and seed data.

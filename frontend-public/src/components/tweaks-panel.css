@@ -1,0 +1,128 @@
+.twk-panel {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 1000;
+  width: 280px;
+  max-height: calc(100vh - 32px);
+  display: flex;
+  flex-direction: column;
+  background: rgba(252, 250, 245, 0.92);
+  color: var(--ink);
+  backdrop-filter: blur(20px) saturate(160%);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+  font-size: 12px;
+}
+
+.twk-panel__hd {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+  font-weight: 600;
+}
+
+.twk-panel__close {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--ink-2);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.twk-panel__close:hover {
+  background: var(--bg-elev);
+  color: var(--ink);
+}
+
+.twk-reopen {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 1000;
+  padding: 8px 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(252, 250, 245, 0.92);
+  color: var(--ink-2);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(12px);
+}
+
+.twk-reopen:hover {
+  color: var(--ink);
+  border-color: color-mix(in oklch, var(--accent) 35%, var(--line));
+}
+
+.twk-panel__body {
+  padding: 12px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.twk-section {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.twk-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.twk-row label {
+  font-weight: 500;
+  color: var(--ink-2);
+}
+
+.twk-row select,
+.twk-row input[type="range"] {
+  width: 100%;
+}
+
+.twk-seg {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.twk-seg button {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--bg-elev);
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.twk-seg button.is-on {
+  background: var(--accent-soft);
+  border-color: color-mix(in oklch, var(--accent) 40%, var(--line));
+  color: var(--ink);
+}

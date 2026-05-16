@@ -1,0 +1,17 @@
+# Backend (FastAPI)
+fastapi>=0.115.0
+uvicorn[standard]>=0.32.0
+httpx>=0.27.0
+
+# Persistence — SQLAlchemy 2.0 Core (NOT ORM); see docs/wizja §3.4
+sqlalchemy>=2.0
+alembic>=1.13
+
+# Agent (Pydantic AI) + MCP
+pydantic-ai[openai,mcp]
+python-dotenv
+psycopg[binary]
+simpleeval
+
+# Country lookup (Doctor Finder geo enrichment)
+pycountry>=24.0

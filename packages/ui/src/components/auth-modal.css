@@ -1,0 +1,100 @@
+.modal__sheet--auth { max-width: 560px; }
+
+.auth__tabs {
+  display: flex;
+  gap: 2px;
+  background: var(--bg-soft);
+  border-radius: var(--r-md);
+  padding: 3px;
+  margin: 0 0 20px;
+}
+.auth__tab {
+  flex: 1;
+  padding: 8px 12px;
+  background: transparent;
+  border: 0;
+  border-radius: var(--r-sm);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  color: var(--ink-3);
+  cursor: pointer;
+}
+.auth__tab.is-active { background: var(--bg-elev); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
+.auth__intro { color: var(--ink-3); font-size: var(--fs-sm); margin: 0 0 16px; }
+.auth__form { display: flex; flex-direction: column; gap: 12px; }
+
+.auth__roles { display: flex; flex-direction: column; gap: 4px; }
+.auth__role {
+  display: grid;
+  grid-template-columns: 22px 1fr;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--bg);
+  cursor: pointer;
+  align-items: flex-start;
+  transition: border-color 120ms, background 120ms;
+}
+.auth__role.is-active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.auth__role input { margin-top: 2px; }
+.auth__role b { display: block; font-size: var(--fs-sm); font-weight: 600; }
+.auth__role span { color: var(--ink-3); font-size: var(--fs-xs); display: block; margin-top: 2px; }
+
+.auth__doctor {
+  padding: 12px 14px;
+  background: color-mix(in oklch, var(--st-amber) 8%, var(--bg-elev));
+  border-radius: var(--r-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border: 1px solid color-mix(in oklch, var(--st-amber) 20%, var(--line));
+}
+
+.auth__diseases { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+
+.auth__err {
+  padding: 8px 12px;
+  background: color-mix(in oklch, var(--st-red) 12%, var(--bg-elev));
+  border: 1px solid color-mix(in oklch, var(--st-red) 30%, var(--line));
+  border-radius: var(--r-sm);
+  color: oklch(0.42 0.16 25);
+  font-size: var(--fs-sm);
+}
+.auth__actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+  margin-top: 8px;
+}
+.auth__alt {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+}
+.auth__alt span { display: block; margin-bottom: 4px; }
+.auth__alt a { color: var(--accent-ink); text-decoration: underline; text-decoration-style: dotted; }
+
+.field { display: flex; flex-direction: column; gap: 4px; }
+.field__label { font-size: var(--fs-sm); font-weight: 600; }
+.field__label em { font-style: normal; color: var(--ink-3); font-weight: 400; font-size: var(--fs-xs); }
+.field__hint { font-size: var(--fs-xs); color: var(--ink-3); }
+.field input, .field textarea {
+  padding: 8px 10px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-sm);
+  font: inherit;
+  font-size: var(--fs-sm);
+  background: var(--bg-elev);
+  color: var(--ink);
+}
+.field input:focus, .field textarea:focus { outline: 2px solid var(--accent); outline-offset: -2px; border-color: var(--accent); }
+.field--check { flex-direction: row; align-items: flex-start; gap: 10px; font-size: var(--fs-sm); color: var(--ink-2); }
+.field--check b { color: var(--ink); }

@@ -1,0 +1,63 @@
+{
+  "fd": {
+    "id": "root",
+    "title": "What to do after a fibrous dysplasia diagnosis",
+    "subtitle": "One step at a time. You do not need to solve everything this week.",
+    "about": {
+      "title": "What is fibrous dysplasia?",
+      "summary": "Fibrous dysplasia means bone grows differently than usual. It is usually not cancer. A genetic test (GNAS) often confirms the diagnosis. People are diagnosed at many ages — as children, teenagers, or adults. Many lead full lives with a clinician who knows the condition and checks in from time to time."
+    },
+    "locale": "en",
+    "basedOn": "GeneGuidelines clinician summary",
+    "children": [
+      {
+        "id": "action-papers",
+        "action": true,
+        "title": "Gather your papers at home",
+        "specialty": "You — no appointment needed",
+        "whatToExpect": "Ask the hospital for copies of the diagnosis letter, imaging, and any biopsy results. Write down questions as they come to you. A simple folder or phone album is enough.",
+        "questions": [
+          "Can we get a short summary in everyday language?",
+          "Who should we call if we are worried before the next visit?"
+        ],
+        "citations": ["31337488"]
+      },
+      {
+        "id": "action-genetics",
+        "action": true,
+        "title": "Book a genetics appointment (GNAS / DNA test)",
+        "specialty": "Clinical genetics or hospital genetics service",
+        "whatToExpect": "Often a blood test. Results can take a few weeks. The team explains what the result means for you and anyone in your family the test might affect.",
+        "questions": [
+          "What should we bring to the appointment?",
+          "How will you tell us the results, and who can we call with questions?"
+        ],
+        "citations": ["31337488"]
+      },
+      {
+        "id": "action-coordinator",
+        "action": true,
+        "title": "Ask for one clinician to coordinate care",
+        "specialty": "GP, endocrine, or bone specialist familiar with fibrous dysplasia",
+        "whatToExpect": "One person (or team) lists the next appointments — usually over the next few months, not all in one week.",
+        "questions": [
+          "Who is our main contact if something worries us?",
+          "What check-ups are planned for the next three months?"
+        ],
+        "citations": ["31337488"]
+      },
+      {
+        "id": "action-urgent",
+        "action": true,
+        "title": "Know when to call the same day",
+        "specialty": "Your clinic or local emergency number (as advised locally)",
+        "whatToExpect": "This is rare, but call the same day if vision suddenly changes, there is a severe new headache, or you or the person with FD feels much more unwell than usual.",
+        "questions": [
+          "What symptoms mean we should not wait until Monday?",
+          "Is there a nurse line we can call after hours?"
+        ],
+        "citations": ["31337488"]
+      }
+    ]
+  }
+}

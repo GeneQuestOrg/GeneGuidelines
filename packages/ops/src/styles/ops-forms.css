@@ -1,0 +1,217 @@
+.ops-panel {
+  padding: 24px;
+  max-width: 960px;
+  color: var(--ink);
+}
+
+.ops-panel__title {
+  margin: 0 0 6px;
+  font-family: var(--font-serif);
+  font-size: var(--fs-xl);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+
+.ops-panel__lead {
+  margin: 0 0 20px;
+  color: var(--ink-2);
+  font-size: var(--fs-sm);
+  max-width: 56ch;
+}
+
+.ops-quality-summary {
+  margin: 20px 0;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-2, var(--surface));
+}
+
+.ops-quality-summary__block {
+  margin-bottom: 12px;
+}
+
+.ops-quality-summary__text {
+  margin: 8px 0 0;
+  color: var(--ink-2);
+  font-size: var(--fs-sm);
+}
+
+.ops-quality-summary__details {
+  margin-top: 8px;
+  font-size: var(--fs-sm);
+}
+
+.ops-quality-summary__details summary {
+  cursor: pointer;
+  color: var(--ink-3);
+}
+
+.ops-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ops-field label {
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--ink-3);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.ops-field input,
+.ops-field select,
+.ops-field textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-md);
+  background: var(--bg-elev);
+  color: var(--ink);
+  font-size: var(--fs-sm);
+}
+
+.ops-field textarea {
+  min-height: 72px;
+  resize: vertical;
+}
+
+.ops-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.ops-field--wide {
+  grid-column: 1 / -1;
+}
+
+.ops-field__hint {
+  margin: 0;
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+  line-height: 1.45;
+}
+
+.ops-field__hint--error {
+  color: var(--st-red);
+}
+
+.ops-prompt-editor {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--line);
+}
+
+.ops-prompt-editor__toggle {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--teal-7, #0d9488);
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.ops-prompt-editor__body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.ops-trace {
+  margin-top: 16px;
+  padding: 12px 14px;
+  background: var(--bg-soft);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  color: var(--ink-2);
+  max-height: 160px;
+  overflow: auto;
+}
+
+.ops-error {
+  margin-top: 12px;
+  padding: 12px 14px;
+  background: color-mix(in oklch, var(--st-red) 12%, var(--bg-elev));
+  border: 1px solid color-mix(in oklch, var(--st-red) 35%, var(--line));
+  border-radius: var(--r-md);
+  color: var(--st-red);
+  font-size: var(--fs-sm);
+}
+
+.ops-guideline-preview {
+  margin-top: 20px;
+  padding: 16px;
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  font-size: var(--fs-sm);
+  line-height: 1.55;
+}
+
+.ops-guideline-preview a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.ops-guideline-preview a:hover {
+  color: var(--ink);
+}
+
+.ops-guideline-preview__heading {
+  margin: 0 0 12px;
+  font-size: var(--fs-md);
+  font-weight: 600;
+}
+
+.ops-raw-output {
+  margin: 0;
+  padding: 12px;
+  max-height: 320px;
+  overflow: auto;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  font-size: var(--fs-xs);
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* Doctor finder: override legacy dark inline styles inside panel */
+.ops-panel--doctor-finder input,
+.ops-panel--doctor-finder select,
+.ops-panel--doctor-finder textarea {
+  background: var(--bg-elev) !important;
+  border: 1px solid var(--line-2) !important;
+  color: var(--ink) !important;
+}
+
+.ops-panel--doctor-finder h2,
+.ops-panel--doctor-finder h3,
+.ops-panel--doctor-finder p,
+.ops-panel--doctor-finder td,
+.ops-panel--doctor-finder th {
+  color: var(--ink) !important;
+}
+
+.ops-panel--doctor-finder table {
+  background: var(--bg-elev);
+}
+
+.ops-panel--doctor-finder thead tr {
+  border-bottom: 1px solid var(--line-2) !important;
+}
+
+.ops-panel--doctor-finder tbody tr {
+  border-bottom: 1px solid var(--line) !important;
+}

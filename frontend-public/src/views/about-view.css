@@ -1,0 +1,238 @@
+.page--about {
+  max-width: 64rem;
+  margin: 0 auto;
+  padding: 2rem 1.25rem 4rem;
+}
+
+.about__hero {
+  padding: 1.5rem 0 2.5rem;
+  border-bottom: 1px solid var(--gg-border, rgba(0, 0, 0, 0.08));
+}
+
+.about__eyebrow {
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--gg-text-muted, #6b7280);
+  margin-bottom: 1rem;
+}
+
+.about__lead {
+  font-family: var(--gg-font-serif, "Newsreader", Georgia, serif);
+  font-size: clamp(1.25rem, 2.5vw, 1.75rem);
+  font-weight: 400;
+  line-height: 1.45;
+  margin: 0 0 1.5rem;
+  color: var(--gg-text, #111827);
+}
+
+.about__lead b {
+  font-weight: 600;
+}
+
+.about__persona {
+  margin-top: 1rem;
+}
+
+.about__article {
+  padding-top: 1.5rem;
+}
+
+.about__sec {
+  padding: 2rem 0;
+  border-bottom: 1px solid var(--gg-border, rgba(0, 0, 0, 0.06));
+}
+
+.about__sec:last-child {
+  border-bottom: none;
+}
+
+.about__h2 {
+  font-family: var(--gg-font-serif, "Newsreader", Georgia, serif);
+  font-size: 1.5rem;
+  font-weight: 500;
+  margin: 0 0 1rem;
+  color: var(--gg-text, #111827);
+}
+
+.about__lede {
+  font-size: 1.0625rem;
+  line-height: 1.6;
+  margin: 0 0 1.5rem;
+  color: var(--gg-text, #1f2937);
+}
+
+.about__sec p {
+  font-size: 1rem;
+  line-height: 1.65;
+  margin: 0 0 1rem;
+  color: var(--gg-text, #1f2937);
+}
+
+.about__stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: 1rem 1.5rem;
+  margin: 1.5rem 0;
+}
+
+.about__stat-num {
+  font-family: var(--gg-font-mono, "Geist Mono", monospace);
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: var(--gg-text, #111827);
+  margin-bottom: 0.5rem;
+}
+
+.about__stat-label {
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--gg-text-muted, #6b7280);
+}
+
+.about__pull {
+  margin: 2rem 0 0;
+  padding: 1.25rem 1.5rem;
+  border-left: 3px solid var(--gg-accent, #2563eb);
+  background: var(--gg-surface-muted, rgba(0, 0, 0, 0.025));
+}
+
+.about__pull p {
+  font-family: var(--gg-font-serif, "Newsreader", Georgia, serif);
+  font-style: italic;
+  font-size: 1.125rem;
+  line-height: 1.55;
+  margin: 0 0 0.5rem;
+}
+
+.about__pull cite {
+  font-style: normal;
+  font-size: 0.875rem;
+  color: var(--gg-text-muted, #6b7280);
+}
+
+.about__steps,
+.about__pipeline {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0;
+  display: grid;
+  gap: 1rem;
+}
+
+.about__steps li {
+  padding-left: 1.5rem;
+  position: relative;
+}
+
+.about__steps li::before {
+  content: "→";
+  position: absolute;
+  left: 0;
+  color: var(--gg-accent, #2563eb);
+  font-weight: 600;
+}
+
+.about__bullets {
+  padding-left: 1.25rem;
+  margin: 1rem 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.about__bullets li {
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.about__bullets--candid li {
+  color: var(--gg-text, #374151);
+}
+
+.about__pipeline li {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.about__pipeline-num {
+  font-family: var(--gg-font-mono, "Geist Mono", monospace);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--gg-text-muted, #6b7280);
+  padding-top: 0.125rem;
+  min-width: 2rem;
+}
+
+.about__nots {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: 1.25rem;
+  margin-top: 1rem;
+}
+
+.about__not h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem;
+  color: var(--gg-text, #111827);
+}
+
+.about__not p {
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  margin: 0;
+  color: var(--gg-text-muted, #4b5563);
+}
+
+.about__contact {
+  margin-top: 1.5rem;
+}
+
+.about__ctas {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: 1rem;
+}
+
+.about__cta {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto auto;
+  gap: 0.25rem 1rem;
+  padding: 1.25rem 1.5rem;
+  border: 1px solid var(--gg-border, rgba(0, 0, 0, 0.12));
+  border-radius: 0.75rem;
+  text-decoration: none;
+  transition: border-color 120ms ease, transform 120ms ease;
+  color: inherit;
+}
+
+.about__cta:hover {
+  border-color: var(--gg-accent, #2563eb);
+  transform: translateY(-1px);
+}
+
+.about__cta-label {
+  grid-column: 1;
+  grid-row: 1;
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--gg-text, #111827);
+}
+
+.about__cta-sub {
+  grid-column: 1;
+  grid-row: 2;
+  font-size: 0.875rem;
+  color: var(--gg-text-muted, #6b7280);
+}
+
+.about__cta-arrow {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: center;
+  font-size: 1.25rem;
+  color: var(--gg-accent, #2563eb);
+}

@@ -1,0 +1,41 @@
+{
+  "PR-142": {
+    "targetSection": "therapy",
+    "targetParaIds": ["tx-denosumab-1", "tx-denosumab-2"],
+    "replaceMode": "replace"
+  },
+  "PR-141": {
+    "targetSection": "surgery",
+    "targetParaIds": ["sx-optic", "sx-optic-add"],
+    "replaceMode": "insert-after",
+    "insertAfter": "sx-optic",
+    "addedParagraph": {
+      "id": "sx-optic-add",
+      "text": "For asymptomatic patients with radiologically confirmed optic canal involvement: orbital MRI with contrast every 12 months. Clinically: visual fields and OCT every 6 months.",
+      "citations": ["38445566", "38556677"],
+      "lastChange": { "type": "pending", "by": "PR-141", "date": "2026-05-05" }
+    }
+  },
+  "PR-140": {
+    "targetSection": "diagnosis",
+    "targetParaIds": ["dx-imaging-3"],
+    "replaceMode": "already-applied"
+  },
+  "PR-139": {
+    "targetSection": "endocrine",
+    "targetParaIds": ["endo-tanner-1"],
+    "replaceMode": "replace"
+  },
+  "PR-138": {
+    "targetSection": "cardiology",
+    "targetParaIds": ["card-echo-followup"],
+    "replaceMode": "insert-after",
+    "insertAfter": "card-pvs-baseline",
+    "addedParagraph": {
+      "id": "card-echo-followup",
+      "text": "Post-intervention echocardiography at 1, 6, 12, and 24 months, then annually if stable.",
+      "citations": ["36789012"],
+      "lastChange": { "type": "pending", "by": "PR-138", "date": "2026-05-11" }
+    }
+  }
+}

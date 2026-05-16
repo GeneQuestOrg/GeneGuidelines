@@ -1,0 +1,136 @@
+.runs-view {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  overflow: hidden;
+  background: #0f172a;
+}
+
+.runs-view__sidebar {
+  width: 300px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: #1e293b;
+  border-right: 1px solid #334155;
+}
+
+.runs-view__sidebar-head {
+  padding: 14px 16px;
+  border-bottom: 1px solid #334155;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.runs-view__sidebar-head h2 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #f8fafc;
+}
+
+.runs-view__btn {
+  border: 1px solid #475569;
+  background: #334155;
+  color: #f1f5f9;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.runs-view__btn--primary {
+  background: #4f46e5;
+  border-color: #4f46e5;
+}
+
+.runs-view__list {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  list-style: none;
+  margin: 0;
+  padding: 8px 0;
+}
+
+.runs-view__item {
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 10px 16px;
+  border-left: 3px solid transparent;
+  color: #e2e8f0;
+}
+
+.runs-view__item.is-active {
+  background: #0f172a;
+  border-left-color: #818cf8;
+}
+
+.runs-view__item-id {
+  font-size: 11px;
+  font-family: ui-monospace, monospace;
+  color: #94a3b8;
+}
+
+.runs-view__item-title {
+  font-size: 13px;
+  font-weight: 600;
+  margin-top: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.runs-view__item-meta {
+  margin-top: 4px;
+  font-size: 11px;
+  color: #94a3b8;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.runs-view__badge {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.runs-view__badge--running {
+  background: #422006;
+  color: #fcd34d;
+}
+
+.runs-view__badge--done {
+  background: #052e16;
+  color: #86efac;
+}
+
+.runs-view__badge--error {
+  background: #450a0a;
+  color: #fecaca;
+}
+
+.runs-view__detail {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+}
+
+.runs-view__empty {
+  padding: 16px;
+  font-size: 13px;
+  color: #94a3b8;
+}

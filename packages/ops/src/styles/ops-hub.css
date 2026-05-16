@@ -1,0 +1,132 @@
+.ops-hub {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+.ops-hub__body {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(280px, 340px) minmax(0, 1fr);
+  overflow: hidden;
+}
+
+.ops-hub__aside {
+  border-right: 1px solid var(--line);
+  background: var(--bg-elev);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.ops-hub__aside-head {
+  padding: 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.ops-hub__aside-head h2 {
+  margin: 0;
+  font-size: var(--fs-md);
+  font-weight: 600;
+}
+
+.ops-hub__launch {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-bottom: 1px solid var(--line);
+}
+
+.ops-launch-card {
+  text-align: left;
+  padding: 14px 16px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-lg);
+  background: var(--bg);
+  cursor: pointer;
+  transition: border-color 120ms, background 120ms;
+}
+
+.ops-launch-card:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.ops-launch-card.is-active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.ops-launch-card__title {
+  margin: 0 0 4px;
+  font-weight: 600;
+  font-size: var(--fs-sm);
+}
+
+.ops-launch-card__desc {
+  margin: 0;
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+  line-height: 1.45;
+}
+
+.ops-hub__runs {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  list-style: none;
+  margin: 0;
+  padding: 8px 0;
+}
+
+.ops-run-item {
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: transparent;
+  padding: 10px 16px;
+  cursor: pointer;
+  border-left: 3px solid transparent;
+}
+
+.ops-run-item.is-active {
+  background: var(--accent-soft);
+  border-left-color: var(--accent);
+}
+
+.ops-run-item__label {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ops-run-item__meta {
+  margin-top: 4px;
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.ops-hub__main {
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  background: var(--bg);
+}
+
+.ops-hub__empty {
+  padding: 48px 24px;
+  text-align: center;
+  color: var(--ink-3);
+  font-size: var(--fs-md);
+}

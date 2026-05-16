@@ -1,0 +1,49 @@
+# Backend image — FastAPI + Pydantic AI + MCP + SQLite, served by uvicorn.
+#
+# Build context: repository root (so we can COPY backend/ and requirements.txt).
+# Production-mode: no --reload. For hot-reload development use `make dev`
+# locally (see Makefile + Procfile).
+
+FROM python:3.12-slim AS base
+
+# System deps: SQLite is built into Python; we only need git for occasional
+# tooling and ca-certificates for outbound HTTPS to OpenRouter / PubMed.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        ca-certificates \
+        curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies in a virtualenv-like /opt/venv directory so the
+# runtime stage can copy them in one shot (cleaner image, smaller layers).
+FROM base AS deps
+WORKDIR /app
+COPY requirements.txt ./
+RUN pip install --no-cache-dir --upgrade pip \
+    && pip install --no-cache-dir -r requirements.txt
+
+# Final runtime image.
+FROM base AS runtime
+WORKDIR /app
+
+# Copy the installed site-packages from the deps stage.
+COPY --from=deps /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
+COPY --from=deps /usr/local/bin /usr/local/bin
+
+# Backend source. The frontends build separately and are mounted by the
+# compose file as a read-only volume into /app/static.
+COPY backend ./backend
+COPY alembic ./alembic
+COPY alembic.ini ./
+
+# The SQLite file lives in /data so it survives container recreation. The
+# compose file binds this to a named volume.
+ENV DB_PATH=/data/tickets.db
+RUN mkdir -p /data
+
+EXPOSE 8000
+
+# Reasonable production defaults; --workers 1 because the engine keeps
+# in-process state for SSE traces. Scale horizontally by running multiple
+# containers behind a load balancer with sticky sessions.
+CMD ["python", "-m", "uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]

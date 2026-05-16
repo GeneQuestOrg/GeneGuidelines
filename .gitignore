@@ -1,0 +1,27 @@
+.DS_Store
+__pycache__/
+*.pyc
+node_modules/
+.env
+.env.local
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+dist/
+# Vite pre-bundle cache (deps); regenerated locally
+**/.vite/
+.next/
+.vscode/
+.idea/
+
+# Local AI/working artifacts
+.cursor/
+.claude/
+backend/.cursor/
+*debug-*.log
+
+# Working implementation plans (keep canonical docs tracked)
+plans/*.md
+!plans/README.md
+!plans/checklist.md

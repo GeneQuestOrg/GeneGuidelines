@@ -1,0 +1,21 @@
+export type AudienceView = "parent" | "doctor";
+
+export type Route =
+  | { name: "home" }
+  | { name: "devComponents" }
+  | { name: "diseaseIndex"; query?: string }
+  | { name: "disease"; slug: string }
+  | { name: "flowchart"; slug: string }
+  | { name: "guidelines"; slug: string; prId?: string }
+  | { name: "doctors"; disease?: string }
+  | { name: "doctor"; slug: string }
+  | { name: "startResearch"; diseaseSlug?: string }
+  | { name: "about" }
+  | { name: "account" }
+  | { name: "researchRun"; id: string; query?: string; diseaseSlug?: string }
+  | { name: "trials"; query?: string };
+
+export interface UserLocation {
+  lat: number;
+  lng: number;
+}

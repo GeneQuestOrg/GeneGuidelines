@@ -1,0 +1,70 @@
+# pyproject.toml — tool configuration only. Build/deps live in requirements.txt.
+#
+# These configs declare a quality contract for Phase 2 (master doc §5, §9). They
+# do NOT run automatically — install ``pre-commit`` (see .pre-commit-config.yaml)
+# or invoke ``ruff`` / ``mypy`` manually to enforce.
+#
+# The Phase 1 (pre-Kaggle) rule set is intentionally **gentle** so the first
+# ``ruff check backend/`` run does not surface 200+ violations on the existing
+# god modules. New code is expected to be clean; existing modules will be tidied
+# as they get refactored in Phase 2.
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+extend-exclude = [
+    "backend/tools/generated",  # auto-generated MCP stubs
+    "backend/tests/smoke",      # smoke tests intentionally rough
+]
+
+[tool.ruff.lint]
+# Gentle starter rules. Phase 2 will add B (bugbear), S (security), N (naming),
+# SIM (simplifications), PL (pylint), RUF (ruff-specific) once the existing
+# god modules are split.
+select = [
+    "E",    # pycodestyle errors
+    "F",    # pyflakes
+    "I",    # isort (import ordering)
+    "UP",   # pyupgrade (modernise syntax to py312)
+    "W",    # pycodestyle warnings
+]
+ignore = [
+    "E501",  # line too long — leave to formatter
+    "UP007", # PEP 604 unions — both forms allowed for now
+]
+
+[tool.ruff.lint.per-file-ignores]
+"backend/tests/**" = ["E402"]  # allow late imports in tests
+
+[tool.ruff.lint.isort]
+known-first-party = ["backend"]
+
+[tool.mypy]
+python_version = "3.12"
+# Phase 1 stance: lenient. Phase 2 raises ``strict = true`` once domain modules
+# have explicit Protocol boundaries and value objects.
+ignore_missing_imports = true
+follow_imports = "silent"
+warn_redundant_casts = true
+warn_unused_ignores = true
+no_implicit_optional = true
+check_untyped_defs = false
+disallow_untyped_defs = false
+
+[[tool.mypy.overrides]]
+# Existing god modules are exempt until the Phase 2 split. New code is held to
+# the section above.
+module = [
+    "backend.database",
+    "backend.engine.flow_engine",
+    "backend.agents.runner",
+]
+ignore_errors = true
+
+[tool.pytest.ini_options]
+# Document the test invocation envelope so CI and contributors stay in sync.
+testpaths = ["backend/tests"]
+asyncio_mode = "strict"
+filterwarnings = [
+    "ignore::DeprecationWarning:pydantic_ai.*",
+]

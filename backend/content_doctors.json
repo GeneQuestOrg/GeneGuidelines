@@ -1,0 +1,220 @@
+{
+  "doctors": [
+    {
+      "slug": "dowgierd",
+      "name": "Prof. Krzysztof Dowgierd",
+      "specialty": "Oral and maxillofacial surgery",
+      "role": "National consultant",
+      "institution": "WSSD Olsztyn · Dowgierd Clinic",
+      "city": "Olsztyn",
+      "country": "PL",
+      "lat": 53.778,
+      "lng": 20.48,
+      "diseases": ["fd", "mas"],
+      "pubmedRole": "research_leader",
+      "score": 78,
+      "evidence": {
+        "firstOrLastAuthorPapers": 11,
+        "reviewPapers": 2,
+        "citesRecentGuidelines": true,
+        "activeLast2y": true,
+        "guidelineOrConsensusCoauthor": false
+      },
+      "publications": [
+        {
+          "pmid": "37234561",
+          "title": "Craniofacial fibrous dysplasia in pediatric patients — long-term outcomes",
+          "year": 2024,
+          "journal": "J Craniofac Surg",
+          "position": "last"
+        },
+        {
+          "pmid": "36119872",
+          "title": "Conservative management of polyostotic FD in children: 10-year follow-up",
+          "year": 2023,
+          "journal": "Head Face Med",
+          "position": "last"
+        }
+      ],
+      "bio": "National consultant in oral and maxillofacial surgery with long experience in pediatric craniofacial fibrous dysplasia. Prefers conservative management until skeletal maturity.",
+      "publicSource": "krzysztofdowgierd.pl, WSSD",
+      "endorsements": ["FDMAS Alliance"],
+      "contact": "form",
+      "source": "content_seed"
+    },
+    {
+      "slug": "allecou",
+      "name": "Dr. Doni Mikołaj Allecou",
+      "specialty": "Oral and maxillofacial surgery",
+      "role": "Private practice",
+      "institution": "Implant Clinic Allecou",
+      "city": "Poznań",
+      "country": "PL",
+      "lat": 52.408,
+      "lng": 16.934,
+      "diseases": ["fd"],
+      "pubmedRole": "research_participant",
+      "score": 38,
+      "evidence": {
+        "firstOrLastAuthorPapers": 2,
+        "reviewPapers": 0,
+        "citesRecentGuidelines": true,
+        "activeLast2y": true,
+        "guidelineOrConsensusCoauthor": false
+      },
+      "publications": [
+        {
+          "pmid": "37001122",
+          "title": "Orthognathic surgery in patients with craniofacial bony lesions",
+          "year": 2024,
+          "journal": "J Oral Implant",
+          "position": "middle"
+        }
+      ],
+      "bio": "Maxillofacial surgeon focusing on orthognathic surgery and implantology in patients with craniofacial bone lesions.",
+      "publicSource": "implantclinicallecou.pl",
+      "endorsements": [],
+      "contact": "form",
+      "source": "content_seed"
+    },
+    {
+      "slug": "appelman-dijkstra",
+      "name": "Dr. Natasha Appelman-Dijkstra",
+      "specialty": "Internal medicine · bone metabolism",
+      "role": "Director, International FD/MAS Consortium",
+      "institution": "Leiden University Medical Center",
+      "city": "Leiden",
+      "country": "NL",
+      "lat": 52.166,
+      "lng": 4.49,
+      "diseases": ["fd", "mas"],
+      "pubmedRole": "research_leader",
+      "score": 96,
+      "evidence": {
+        "firstOrLastAuthorPapers": 28,
+        "reviewPapers": 7,
+        "citesRecentGuidelines": true,
+        "activeLast2y": true,
+        "guidelineOrConsensusCoauthor": true
+      },
+      "publications": [
+        {
+          "pmid": "31337488",
+          "title": "Best practice management guidelines for fibrous dysplasia/McCune-Albright syndrome",
+          "year": 2019,
+          "journal": "Orphanet J Rare Dis",
+          "position": "last"
+        },
+        {
+          "pmid": "37889911",
+          "title": "Denosumab in fibrous dysplasia — international consensus update",
+          "year": 2024,
+          "journal": "J Bone Miner Res",
+          "position": "last"
+        }
+      ],
+      "bio": "Director of the International FD/MAS Consortium. Senior author on Boyce et al. 2019 guidelines and co-author of the 2024 denosumab consensus update.",
+      "publicSource": "lumc.nl, FDMAS Alliance",
+      "endorsements": ["FDMAS Alliance", "International FD/MAS Consortium"],
+      "contact": "form",
+      "source": "content_seed"
+    },
+    {
+      "slug": "riminucci",
+      "name": "Prof. Mara Riminucci",
+      "specialty": "Pathology · bone biology",
+      "role": "Professor",
+      "institution": "Sapienza University of Rome",
+      "city": "Rome",
+      "country": "IT",
+      "lat": 41.902,
+      "lng": 12.496,
+      "diseases": ["fd", "mas"],
+      "pubmedRole": "research_leader",
+      "score": 91,
+      "evidence": {
+        "firstOrLastAuthorPapers": 22,
+        "reviewPapers": 5,
+        "citesRecentGuidelines": true,
+        "activeLast2y": true,
+        "guidelineOrConsensusCoauthor": true
+      },
+      "publications": [
+        {
+          "pmid": "29911223",
+          "title": "Histopathology of fibrous dysplasia vs ossifying fibroma — why DNA testing matters",
+          "year": 2021,
+          "journal": "Mod Pathol",
+          "position": "last"
+        }
+      ],
+      "bio": "Leading authority on FD/MAS histopathology and GNAS mosaicism. Co-author of international FD/MAS guidelines.",
+      "publicSource": "uniroma1.it",
+      "endorsements": ["International FD/MAS Consortium"],
+      "contact": "form",
+      "source": "content_seed"
+    },
+    {
+      "slug": "hsiao",
+      "name": "Dr. Edward Hsiao",
+      "specialty": "Endocrinology · bone biology",
+      "role": "Director, FD/MAS Clinic",
+      "institution": "UCSF",
+      "city": "San Francisco",
+      "country": "US",
+      "lat": 37.763,
+      "lng": -122.458,
+      "diseases": ["fd", "mas"],
+      "pubmedRole": "research_leader",
+      "score": 89,
+      "evidence": {
+        "firstOrLastAuthorPapers": 19,
+        "reviewPapers": 4,
+        "citesRecentGuidelines": true,
+        "activeLast2y": true,
+        "guidelineOrConsensusCoauthor": true
+      },
+      "publications": [
+        {
+          "pmid": "32119988",
+          "title": "Mouse models of fibrous dysplasia — translational gap analysis",
+          "year": 2022,
+          "journal": "JBMR Plus",
+          "position": "last"
+        }
+      ],
+      "bio": "Director of the FD/MAS clinic at UCSF. Expert in GNAS signaling and translational models.",
+      "publicSource": "ucsf.edu",
+      "endorsements": ["FDMAS Alliance"],
+      "contact": "form",
+      "source": "content_seed"
+    },
+    {
+      "slug": "podstawski",
+      "name": "Dr. Mateusz Podstawski",
+      "specialty": "Oral surgery",
+      "role": "Regional contact",
+      "institution": "PODSTAWSKI.clinic",
+      "city": "Zielona Góra",
+      "country": "PL",
+      "lat": 51.935,
+      "lng": 15.506,
+      "diseases": ["fd"],
+      "pubmedRole": "case_study_author",
+      "score": 14,
+      "evidence": {
+        "firstOrLastAuthorPapers": 0,
+        "reviewPapers": 0,
+        "citesRecentGuidelines": false,
+        "activeLast2y": false,
+        "guidelineOrConsensusCoauthor": false
+      },
+      "publications": [],
+      "bio": "Nearest competent oral surgery contact in the Lubusz region for initial consultation and referral coordination.",
+      "publicSource": "Regional registry",
+      "endorsements": [],
+      "contact": "form",
+      "source": "content_seed"
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+.placeholder h1 {
+  font-family: var(--font-serif);
+  font-size: 1.75rem;
+  font-weight: 600;
+  margin: 0 0 12px;
+  letter-spacing: -0.02em;
+}
+
+.placeholder p {
+  margin: 0;
+  color: var(--ink-2);
+  max-width: 56ch;
+}

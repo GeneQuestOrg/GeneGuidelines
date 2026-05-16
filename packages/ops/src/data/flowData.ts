@@ -1,0 +1,192 @@
+import type { FlowsMap } from "../types";
+
+export const FLOWS: FlowsMap = {
+  pubmed: {
+    label: "PubMed Search",
+    desc: "Disease query → PubMed API → AI literature summary",
+    nodes: [
+      {
+        id: "start",
+        type: "trigger",
+        label: "PubMed Search Input",
+        desc: "Accepts a disease or medical topic from the ticket title/description.",
+        prompt: "Entry point: take the disease/topic from ticket title and description.",
+      },
+      {
+        id: "pm-1",
+        type: "code",
+        label: "Build Search Query",
+        desc: "Extracts the disease name and builds a URL-encoded PubMed query.",
+        prompt: "",
+        python_source:
+          "def run(context):\n    import urllib.parse\n    title = context.get('initial', {}).get('title', '')\n    desc = context.get('initial', {}).get('description', '')\n    query_text = title.strip() if title.strip() else desc.strip()\n    query_text = query_text[:200]\n    encoded = urllib.parse.quote_plus(query_text)\n    return {'query': encoded, 'query_text': query_text}",
+      },
+      {
+        id: "pm-2",
+        type: "http_request",
+        label: "PubMed: Search Articles",
+        desc: "Calls PubMed E-utilities esearch API to find article IDs.",
+        prompt: "",
+        http_url:
+          "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term={{ context.pm-1.result.query }}&retmax=15&retmode=json&sort=date",
+        http_method: "GET",
+      },
+      {
+        id: "pm-3",
+        type: "code",
+        label: "Extract Article IDs",
+        desc: "Parses PubMed search response and extracts PMIDs.",
+        prompt: "",
+        python_source:
+          "def run(context):\n    import json\n    pm2 = context.get('outputs', {}).get('pm-2', {})\n    body = pm2.get('body', {})\n    if isinstance(body, str):\n        body = json.loads(body)\n    esearch = body.get('esearchresult', {})\n    id_list = esearch.get('idlist', [])\n    return {'pmid_count': len(id_list), 'pmid_string': ','.join(id_list)}",
+      },
+      {
+        id: "pm-4",
+        type: "http_request",
+        label: "PubMed: Fetch Summaries",
+        desc: "Fetches article summaries using esummary API.",
+        prompt: "",
+        http_url:
+          "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&id={{ context.pm-3.result.pmid_string }}&retmode=json",
+        http_method: "GET",
+      },
+      {
+        id: "pm-5",
+        type: "code",
+        label: "Parse Articles",
+        desc: "Structures raw PubMed summaries into a clean article list.",
+        prompt: "",
+        python_source:
+          "def run(context):\n    import json\n    pm4 = context.get('outputs', {}).get('pm-4', {})\n    body = pm4.get('body', {})\n    if isinstance(body, str):\n        body = json.loads(body)\n    result = body.get('result', {})\n    uids = result.get('uids', [])\n    articles = []\n    for uid in uids:\n        art = result.get(uid, {})\n        if not art or not isinstance(art, dict):\n            continue\n        authors_raw = art.get('authors', [])\n        names = [a.get('name','') for a in authors_raw[:6] if isinstance(a, dict)]\n        articles.append({'pmid': uid, 'title': art.get('title',''), 'authors': ', '.join(names), 'source': art.get('source',''), 'pubdate': art.get('pubdate','')})\n    return {'article_count': len(articles), 'articles': articles}",
+      },
+      {
+        id: "pm-5b",
+        type: "prompt",
+        label: "Evidence Quality Scoring",
+        desc: "AI estimates reliability of the PubMed evidence set.",
+        prompt:
+          "Assess evidence quality and return score/confidence for articles about {{ context.pm-1.result.query_text }} from {{ context.pm-5.result.article_count }} records.",
+      },
+      {
+        id: "pm-5c",
+        type: "code",
+        label: "Build Source Links HTML",
+        desc: "Builds deterministic clickable PubMed/DOI links from parsed records.",
+        prompt: "",
+      },
+      {
+        id: "pm-6",
+        type: "prompt",
+        label: "AI Literature Guideline",
+        desc: "AI builds a practical guideline using PubMed articles, evidence score, and source links.",
+        prompt:
+          "Build a practical guideline for {{ context.pm-1.result.query_text }} using evidence score {{ context.pm-5b.evidence_score }} and confidence index {{ context.pm-5b.confidence_index }}; include source links from {{ context.pm-5c.result.source_links_html }}.",
+      },
+      {
+        id: "end",
+        type: "output",
+        label: "End",
+        desc: "Flow completed — literature review ready.",
+        prompt: "",
+      },
+    ],
+    edges: [
+      ["start", "pm-1"],
+      ["pm-1", "pm-2"],
+      ["pm-2", "pm-3"],
+      ["pm-3", "pm-4"],
+      ["pm-4", "pm-5"],
+      ["pm-5", "pm-5b"],
+      ["pm-5b", "pm-5c"],
+      ["pm-5c", "pm-6"],
+      ["pm-6", "end"],
+    ],
+  },
+  doctor_finder: {
+    label: "Doctor Finder",
+    desc: "Disease → PubMed authors → roles → ranked specialists (+ optional AI justification)",
+    nodes: [
+      {
+        id: "start",
+        type: "trigger",
+        label: "Start",
+        desc: "Doctor Finder entry (disease_name, aliases, filters from API / UI).",
+        prompt: "",
+      },
+      {
+        id: "df-1",
+        type: "pubmed_authors_fetch",
+        label: "PubMed Author Fetch",
+        desc: "Search PubMed and fetch per-author affiliation XML.",
+        prompt: "",
+      },
+      {
+        id: "df-2",
+        type: "doctor_finder_step",
+        label: "Affiliation Parser",
+        desc: "Parse raw affiliation strings to country/continent.",
+        prompt: "",
+      },
+      {
+        id: "df-20",
+        type: "doctor_finder_step",
+        label: "Affiliation geo (Brave+LLM)",
+        desc: "Infer missing country via Brave web search + structured LLM when affiliation has no ISO2.",
+        prompt: "",
+      },
+      {
+        id: "df-3",
+        type: "doctor_finder_step",
+        label: "Author Aggregator",
+        desc: "Disambiguate and group authors across papers.",
+        prompt: "",
+      },
+      {
+        id: "df-4",
+        type: "doctor_finder_step",
+        label: "Role Classifier",
+        desc: "Assign clinical roles and flags to aggregated authors.",
+        prompt: "",
+      },
+      {
+        id: "df-5",
+        type: "doctor_finder_step",
+        label: "Scoring",
+        desc: "Compute and normalize expert scores 0–100.",
+        prompt: "",
+      },
+      {
+        id: "df-6",
+        type: "doctor_finder_step",
+        label: "Report Builder",
+        desc: "Build ranked DoctorReport with Markdown.",
+        prompt: "",
+      },
+      {
+        id: "df-7",
+        type: "doctor_finder_ai_justification",
+        label: "AI Justification",
+        desc: "Optional LLM justifications for top-scored authors.",
+        prompt: "",
+      },
+      {
+        id: "end",
+        type: "end",
+        label: "End",
+        desc: "Doctor Finder complete.",
+        prompt: "",
+      },
+    ],
+    edges: [
+      ["start", "df-1"],
+      ["df-1", "df-2"],
+      ["df-2", "df-20"],
+      ["df-20", "df-3"],
+      ["df-3", "df-4"],
+      ["df-4", "df-5"],
+      ["df-5", "df-6"],
+      ["df-6", "df-7"],
+      ["df-7", "end"],
+    ],
+  },
+};

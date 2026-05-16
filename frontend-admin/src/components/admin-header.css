@@ -1,0 +1,23 @@
+.admin-hdr-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-hdr-actions .hdr-actions__btn,
+.hdr-actions__btn {
+  font: inherit;
+  font-size: var(--fs-sm);
+  padding: 6px 12px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--line);
+  background: var(--bg-elev);
+  color: var(--ink);
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.hdr-actions__btn:hover {
+  border-color: var(--line-2);
+}

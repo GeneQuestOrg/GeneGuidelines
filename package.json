@@ -1,0 +1,22 @@
+{
+  "name": "gene-guidelines",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "frontend-public",
+    "frontend-admin"
+  ],
+  "scripts": {
+    "dev:public": "npm run dev -w frontend-public",
+    "dev:admin": "npm run dev -w frontend-admin",
+    "lint": "npm run lint -w frontend-public && npm run lint -w frontend-admin",
+    "typecheck": "npm run typecheck -w @gene-guidelines/ui && npm run typecheck -w @gene-guidelines/ops && npm run typecheck -w frontend-public && npm run typecheck -w frontend-admin",
+    "check:backend": "python3 -m pytest backend/tests -q",
+    "check:public": "npm run lint -w frontend-public && npm run typecheck -w frontend-public",
+    "check:ops": "npm run typecheck -w @gene-guidelines/ops",
+    "check:dev": "npm run check:backend && npm run check:public && npm run check:ops",
+    "build:public": "npm run build -w frontend-public",
+    "build:admin": "npm run build -w frontend-admin",
+    "build:frontends": "npm run build:public && npm run build:admin"
+  }
+}

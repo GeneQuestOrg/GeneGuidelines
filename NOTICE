@@ -1,0 +1,12 @@
+GeneGuidelines
+Copyright (c) 2026 GeneQuest Foundation (KRS 0001211461)
+
+This product includes the following third-party components, each
+distributed under its own licence:
+
+  - Pydantic AI                      — MIT
+  - FastAPI / Uvicorn                — MIT
+  - Model Context Protocol (FastMCP) — MIT
+  - SQLAlchemy / Alembic             — MIT
+  - React, React Flow (@xyflow/react) — MIT
+  - Vite                             — MIT

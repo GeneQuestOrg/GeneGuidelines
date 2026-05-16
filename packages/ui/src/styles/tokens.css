@@ -1,0 +1,74 @@
+/* GeneGuidelines design tokens */
+
+:root {
+  --bg: #F7F5F0;
+  --bg-elev: #FCFAF5;
+  --bg-soft: #F0EDE5;
+  --ink: #161614;
+  --ink-2: #3A3835;
+  --ink-3: #6E6A60;
+  --ink-4: #9C9789;
+  --line: #E5E2DA;
+  --line-2: #D7D2C7;
+  --accent: oklch(0.48 0.07 195);
+  --accent-soft: color-mix(in oklch, var(--accent) 12%, var(--bg-elev));
+  --accent-ink: color-mix(in oklch, var(--accent) 80%, black);
+
+  --st-green: oklch(0.55 0.10 145);
+  --st-red:   oklch(0.55 0.15 25);
+  --st-amber: oklch(0.70 0.13 75);
+  --st-blue:  oklch(0.55 0.11 230);
+  --st-orange: oklch(0.65 0.13 50);
+  --st-slate: oklch(0.55 0.02 250);
+
+  --r-sm: 4px;
+  --r-md: 6px;
+  --r-lg: 10px;
+
+  --gutter: 20px;
+  --content-w: 1240px;
+  --header-h: 56px;
+
+  --fs-xs: 12px;
+  --fs-sm: 13px;
+  --fs-md: 15px;
+  --fs-lg: 17px;
+  --fs-xl: 21px;
+  --fs-2xl: 28px;
+  --fs-3xl: 40px;
+  --fs-4xl: 56px;
+
+  --font-sans: "Geist", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --font-serif: "Newsreader", ui-serif, Georgia, serif;
+}
+
+[data-density="compact"] {
+  --gutter: 14px;
+  --fs-md: 14px;
+  --fs-lg: 16px;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  font-family: var(--font-sans);
+  font-size: var(--fs-md);
+  line-height: 1.55;
+  color: var(--ink);
+  background: var(--bg);
+  font-feature-settings: "ss01", "cv11";
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: inherit; text-decoration: none; }
+a:focus-visible, button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+button { font: inherit; cursor: pointer; }
+code { font-family: var(--font-mono); font-size: 0.92em; }
+em { font-style: italic; color: var(--ink-2); }
+hr { border: 0; border-top: 1px solid var(--line); margin: 24px 0; }

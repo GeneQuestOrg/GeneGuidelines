@@ -1,0 +1,138 @@
+.ops-workflows {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  width: 100%;
+  background: #f1f5f9;
+  color: #1e293b;
+  overflow: hidden;
+}
+
+.ops-workflows__banner {
+  padding: 8px 16px;
+  font-size: 13px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.ops-workflows__banner--error {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.ops-workflows__banner--warn {
+  background: #fffbeb;
+  color: #b45309;
+}
+
+.ops-workflows__banner code {
+  background: rgba(0, 0, 0, 0.06);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.ops-workflows__toolbar {
+  height: 52px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  background: white;
+  border-bottom: 1px solid #e2e8f0;
+  gap: 12px;
+}
+
+.ops-workflows__flow-tabs {
+  display: flex;
+  background: #f1f5f9;
+  border-radius: 8px;
+  padding: 4px;
+  flex-wrap: wrap;
+  gap: 2px;
+}
+
+.ops-workflows__toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.ops-workflows__btn {
+  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.ops-workflows__btn--primary {
+  background: #4f46e5;
+  color: white;
+}
+
+.ops-workflows__btn--secondary {
+  background: #f1f5f9;
+  color: #334155;
+  border: 1px solid #e2e8f0;
+}
+
+.ops-workflows__btn--danger {
+  background: #fee2e2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+
+.ops-workflows__body {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  overflow: hidden;
+}
+
+.ops-workflows__canvas-wrap {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
+  background-size: 20px 20px;
+  background-color: #f1f5f9;
+}
+
+.ops-workflows__resizer {
+  width: 6px;
+  flex-shrink: 0;
+  cursor: col-resize;
+  background: #e2e8f0;
+  border-left: 1px solid #cbd5e1;
+  border-right: 1px solid #cbd5e1;
+}
+
+.ops-workflows__inspector {
+  background: white;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  box-shadow: -4px 0 15px rgba(0, 0, 0, 0.03);
+}
+
+.ops-runs-panel,
+.ops-tools-panel {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.ops-runs-panel {
+  background: var(--bg);
+}
