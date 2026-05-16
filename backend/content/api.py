@@ -10,9 +10,14 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 
 from .contracts import DiseaseResponse
 from .deps import provide_disease_service
+from .research_runs import list_active_runs, to_payload
 from .service import DiseaseService
 
 router = APIRouter(tags=["content"])
+
+
+_RESEARCH_RUNS_DEFAULT_LIMIT = 3
+_RESEARCH_RUNS_MAX_LIMIT = 10
 
 
 @router.get("/diseases", response_model=list[DiseaseResponse])
@@ -34,6 +39,25 @@ def get_disease(
     if disease is None:
         raise HTTPException(status_code=404, detail="Disease not found")
     return DiseaseResponse.from_domain(disease)
+
+
+@router.get("/research-runs")
+def get_active_research_runs(
+    limit: int = Query(
+        _RESEARCH_RUNS_DEFAULT_LIMIT,
+        ge=1,
+        le=_RESEARCH_RUNS_MAX_LIMIT,
+        description="Maximum number of in-flight runs to return.",
+    ),
+) -> dict[str, list[dict[str, object]]]:
+    """In-flight workflow runs surfaced to the public home view.
+
+    Returns an empty ``runs`` array when nothing is currently executing —
+    the frontend hides the section entirely in that case rather than
+    showing an empty state.
+    """
+    runs = list_active_runs(limit=limit)
+    return {"runs": [to_payload(r) for r in runs]}
 
 
 __all__ = ["router"]
