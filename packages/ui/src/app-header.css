@@ -30,6 +30,11 @@
   color: var(--accent);
   align-self: center;
 }
+.hdr__mark img {
+  height: 24px;
+  width: auto;
+  display: block;
+}
 .hdr__name { font-size: var(--fs-lg); }
 .hdr__by { color: var(--ink-3); font-size: var(--fs-sm); font-weight: 400; }
 .hdr__nav { display: flex; align-items: center; gap: 4px; margin-left: auto; }

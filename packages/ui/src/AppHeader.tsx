@@ -16,25 +16,6 @@ export interface AppHeaderProps {
   children?: ReactNode;
 }
 
-function GeneMarkSvg() {
-  return (
-    <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden>
-      <path
-        d="M5 4 C 5 14, 19 10, 19 20 M19 4 C 19 14, 5 10, 5 20"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        fill="none"
-        strokeLinecap="round"
-      />
-      <circle cx="8" cy="7" r="1" fill="currentColor" />
-      <circle cx="16" cy="7" r="1" fill="currentColor" />
-      <circle cx="12" cy="12" r="1" fill="currentColor" />
-      <circle cx="8" cy="17" r="1" fill="currentColor" />
-      <circle cx="16" cy="17" r="1" fill="currentColor" />
-    </svg>
-  );
-}
-
 const DEFAULT_PUBLIC_LINKS: NavLink[] = [
   { href: "#/diseases", label: "Diseases" },
   { href: "#/doctors", label: "Doctors" },
@@ -56,7 +37,7 @@ export function AppHeader({ variant = "public", navLinks, children }: AppHeaderP
       <div className="hdr__row">
         <a href="#/" className="hdr__brand">
           <span className="hdr__mark">
-            <GeneMarkSvg />
+            <img src="/logo.png" alt="" width="24" height="24" />
           </span>
           <span className="hdr__name">GeneGuidelines</span>
           <span className="hdr__by">{isAdmin ? "/ Admin" : "/ GeneQuest"}</span>
