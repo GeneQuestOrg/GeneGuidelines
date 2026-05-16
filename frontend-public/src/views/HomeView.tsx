@@ -2,7 +2,6 @@ import { useState } from "react";
 import { SearchBar, Button, Section } from "@gene-guidelines/ui";
 import type { AudienceView } from "../router/types";
 import { getAudienceCopy } from "../copy";
-import { PersonaSwitcher } from "../components/PersonaSwitcher";
 import { DiseaseCard } from "../components/DiseaseCard";
 import { NewDiseaseCard } from "../components/NewDiseaseCard";
 import { useDiseaseCatalog } from "../hooks/useDiseaseCatalog";
@@ -15,7 +14,7 @@ export interface HomeViewProps {
   onNav: (path: string) => void;
 }
 
-export function HomeView({ view, onViewChange, onNav }: HomeViewProps) {
+export function HomeView({ view, onNav }: HomeViewProps) {
   const [query, setQuery] = useState("");
   const { diseases, stats, loading, error } = useDiseaseCatalog(query);
   const copy = getAudienceCopy(view).home;
@@ -34,15 +33,24 @@ export function HomeView({ view, onViewChange, onNav }: HomeViewProps) {
           <span className="intro__dot" aria-hidden />
           {copy.eyebrow}
         </div>
-        <div className="hero__top">
-          <PersonaSwitcher view={view} onChange={onViewChange} />
-        </div>
         <h1 className="hero__title">
           {copy.titleLine1}
           <br />
           <em>{copy.titleEmphasis}</em>
         </h1>
-        <p className="hero__lead">{copy.subtitle}</p>
+        <p className="hero__lead">
+          {copy.subtitle}{" "}
+          <a
+            href="#/about"
+            className="hero__about-link"
+            onClick={(e) => {
+              e.preventDefault();
+              onNav("/about");
+            }}
+          >
+            {copy.aboutLinkLabel} →
+          </a>
+        </p>
         <div className="intro__bar">
           <form
             className="hero__search"
@@ -58,23 +66,8 @@ export function HomeView({ view, onViewChange, onNav }: HomeViewProps) {
               aria-label="Search diseases"
             />
           </form>
-          <a
-            href="#/about"
-            className="intro__sublink"
-            onClick={(e) => {
-              e.preventDefault();
-              onNav("/about");
-            }}
-          >
-            {copy.aboutLinkLabel} →
-          </a>
-        </div>
-        <div className="hero__cta">
-          <Button variant="primary" type="button" onClick={() => onNav("/diseases")}>
-            {copy.browseCta}
-          </Button>
           <Button type="button" onClick={() => onNav("/start-research")}>
-            {copy.researchCta}
+            + {copy.researchCta}
           </Button>
         </div>
         {stats != null ? (

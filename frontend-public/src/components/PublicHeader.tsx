@@ -14,14 +14,14 @@ export interface PublicHeaderProps {
 
 function routeMatchesNav(route: Route, href: string): boolean {
   const path = href.replace(/^#/, "") || "/";
-  if (path === "/" || path === "/diseases") {
-    return route.name === "home" || route.name === "diseaseIndex";
+  if (path === "/diseases") {
+    return route.name === "diseaseIndex" || route.name === "disease";
   }
   if (path === "/doctors") {
     return route.name === "doctors" || route.name === "doctor";
   }
-  if (path === "/trials") {
-    return route.name === "trials";
+  if (path === "/start-research") {
+    return route.name === "startResearch" || route.name === "researchRun";
   }
   if (path === "/about") {
     return route.name === "about";
@@ -30,11 +30,12 @@ function routeMatchesNav(route: Route, href: string): boolean {
 }
 
 function buildNavLinks(route: Route): NavLink[] {
+  // Mirrors the original draft2 layout: three primary links plus the brand
+  // logo as the implicit "home" target. Trials live inside individual
+  // disease detail views, not as a top-level destination.
   const base = [
-    { href: "#/", label: "Home" },
-    { href: "#/diseases", label: "Diseases" },
     { href: "#/doctors", label: "Doctors" },
-    { href: "#/trials", label: "Trials" },
+    { href: "#/start-research", label: "New research" },
     { href: "#/about", label: "About" },
   ];
   return base.map((link) => ({

@@ -83,13 +83,31 @@
   margin: 0 0 28px;
   color: var(--ink-2);
   font-size: var(--fs-lg);
-  max-width: 52ch;
-  line-height: 1.5;
+  max-width: 60ch;
+  line-height: 1.55;
+}
+
+.hero__about-link {
+  color: var(--accent-ink, #0f766e);
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.hero__about-link:hover {
+  text-decoration: underline;
 }
 
 .hero__search {
-  max-width: 520px;
-  margin-bottom: 24px;
+  flex: 1 1 480px;
+  min-width: 280px;
+}
+
+.hero__search input,
+.hero__search [role="search"] input {
+  height: 56px;
+  font-size: var(--fs-md);
+  padding: 0 16px;
 }
 
 .hero__cta {
