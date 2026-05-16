@@ -24,6 +24,12 @@ A **controlled AI workflow engine** that does three things end-to-end:
 2. **Drafts guideline updates as pull requests.** Each PR carries the diff, the citations, the AI's rationale, and an evidence-quality score. A senior clinician approves, requests changes, or rejects — and that decision is signed and dated.
 3. **Surfaces three things to patients and family doctors:** the current living guideline document, a flowchart of the diagnostic pathway, and a directory of specialists ranked by published evidence in the disease.
 
+The workflow itself is treated as a living artefact: reviewer feedback on
+each PR feeds the next iteration, and the clinicians we collaborate with also
+shape the workflow shape — adjusting prompts, evidence tiers, approval gates —
+so it converges on how a rare-disease consortium actually works, not on how a
+solo engineer guessed.
+
 Two surfaces over one backend:
 
 - **`frontend-public`** (`:5173`) — patients, families, clinicians: living guidelines, diagnostic pathways, specialist directory.
