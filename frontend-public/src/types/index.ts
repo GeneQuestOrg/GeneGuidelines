@@ -19,3 +19,4 @@ export type {
   PathwayDecisionNode,
   PathwayNode,
 } from "./parentPathway";
+export type { ResearchRun, ResearchRunsResponse } from "./researchRun";

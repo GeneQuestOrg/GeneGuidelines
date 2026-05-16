@@ -3,15 +3,18 @@ import { apiDiseaseRepository } from "./apiDiseaseRepository";
 import { apiContentPrRepository } from "./apiContentPrRepository";
 import { apiDoctorRepository } from "./apiDoctorRepository";
 import { apiGuidelineRepository } from "./apiGuidelineRepository";
+import { apiResearchRunsRepository } from "./apiResearchRunsRepository";
 import { fixtureContentPrRepository } from "./fixtureContentPrRepository";
 import { fixtureDoctorRepository } from "./fixtureDoctorRepository";
 import { fixtureDiseaseRepository } from "./fixtureDiseaseRepository";
 import { fixtureGuidelineRepository } from "./fixtureGuidelineRepository";
+import { fixtureResearchRunsRepository } from "./fixtureResearchRunsRepository";
 import type {
   ContentPrRepository,
   DoctorRepository,
   DiseaseRepository,
   GuidelineRepository,
+  ResearchRunsRepository,
 } from "./types";
 
 export type {
@@ -19,6 +22,7 @@ export type {
   DoctorRepository,
   DiseaseRepository,
   GuidelineRepository,
+  ResearchRunsRepository,
 } from "./types";
 export { ApiRepositoryNotReadyError } from "./errors";
 export { isValidDiseaseSlug, normalizeDiseaseSlug, DISEASE_SLUG_PATTERN } from "../router/slug";
@@ -28,6 +32,7 @@ export interface Repositories {
   guidelines: GuidelineRepository;
   contentPrs: ContentPrRepository;
   doctors: DoctorRepository;
+  researchRuns: ResearchRunsRepository;
 }
 
 export function getRepositories(): Repositories {
@@ -38,6 +43,7 @@ export function getRepositories(): Repositories {
       guidelines: apiGuidelineRepository,
       contentPrs: apiContentPrRepository,
       doctors: apiDoctorRepository,
+      researchRuns: apiResearchRunsRepository,
     };
   }
   return {
@@ -45,6 +51,7 @@ export function getRepositories(): Repositories {
     guidelines: fixtureGuidelineRepository,
     contentPrs: fixtureContentPrRepository,
     doctors: fixtureDoctorRepository,
+    researchRuns: fixtureResearchRunsRepository,
   };
 }
 

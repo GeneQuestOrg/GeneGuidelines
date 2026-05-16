@@ -2,6 +2,7 @@ import type { CatalogStats, ContentPrSummary, Disease, GuidelineMeta } from "../
 import type { GuidelinePrDetail } from "../types/contentPr";
 import type { DiseaseDoctorsPayload, PublicDoctor } from "../types/doctor";
 import type { GuidelineDocument } from "../types/guidelineDocument";
+import type { ResearchRun } from "../types/researchRun";
 
 export interface ContentPrListFilters {
   readonly disease?: string;
@@ -29,4 +30,8 @@ export interface DoctorRepository {
   listAllDoctors(): Promise<readonly PublicDoctor[]>;
   getDoctorBySlug(slug: string): Promise<PublicDoctor | null>;
   getDoctorsForDisease(diseaseSlug: string): Promise<DiseaseDoctorsPayload>;
+}
+
+export interface ResearchRunsRepository {
+  listActiveRuns(limit?: number): Promise<readonly ResearchRun[]>;
 }

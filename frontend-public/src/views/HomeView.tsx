@@ -2,8 +2,10 @@ import { useState } from "react";
 import { SearchBar, Button, Section } from "@gene-guidelines/ui";
 import type { AudienceView } from "../router/types";
 import { getAudienceCopy } from "../copy";
+import { ActiveResearchSection } from "../components/ActiveResearchSection";
 import { DiseaseCard } from "../components/DiseaseCard";
 import { NewDiseaseCard } from "../components/NewDiseaseCard";
+import { useActiveResearchRuns } from "../hooks/useActiveResearchRuns";
 import { useDiseaseCatalog } from "../hooks/useDiseaseCatalog";
 import "../components/disease-grid.css";
 import "../styles/disease-page.css";
@@ -17,6 +19,7 @@ export interface HomeViewProps {
 export function HomeView({ view, onNav }: HomeViewProps) {
   const [query, setQuery] = useState("");
   const { diseases, stats, loading, error } = useDiseaseCatalog(query);
+  const { runs: activeRuns } = useActiveResearchRuns(3);
   const copy = getAudienceCopy(view).home;
 
   const goSearch = () => {
@@ -97,6 +100,8 @@ export function HomeView({ view, onNav }: HomeViewProps) {
           {error}
         </p>
       ) : null}
+
+      <ActiveResearchSection runs={activeRuns} onNav={onNav} />
 
       <Section title={copy.diseasesSectionTitle} count={loading ? undefined : diseases.length}>
         {loading ? (
