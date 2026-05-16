@@ -37,7 +37,7 @@ export function AppHeader({ variant = "public", navLinks, children }: AppHeaderP
       <div className="hdr__row">
         <a href="#/" className="hdr__brand">
           <span className="hdr__mark">
-            <img src="/logo.png" alt="" width="24" height="24" />
+            <img src="/logo.png" alt="" />
           </span>
           <span className="hdr__name">GeneGuidelines</span>
           <span className="hdr__by">{isAdmin ? "/ Admin" : "/ GeneQuest"}</span>

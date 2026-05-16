@@ -29,9 +29,10 @@
   align-items: center;
   color: var(--accent);
   align-self: center;
+  font-size: var(--fs-lg);
 }
 .hdr__mark img {
-  height: 24px;
+  height: 1em;
   width: auto;
   display: block;
 }
