@@ -67,6 +67,16 @@ def _content_security_policy_for_path(path: str) -> str:
     return "default-src 'none'; frame-ancestors 'none'; base-uri 'none'"
 
 
+# Public read endpoints whose responses can be safely cached for 60s by browsers
+# and 300s by a CDN. None of these depend on per-user state or carry secrets.
+_PUBLIC_READ_PATH_PREFIXES: tuple[str, ...] = (
+    "/api/diseases",
+    "/api/doctors",
+    "/api/catalog/",
+    "/api/guideline-prs",
+)
+
+
 @app.middleware("http")
 async def security_headers(request: Request, call_next) -> Response:
     response = await call_next(request)
@@ -78,6 +88,11 @@ async def security_headers(request: Request, call_next) -> Response:
     response.headers["Content-Security-Policy"] = _content_security_policy_for_path(request.url.path)
     if request.url.scheme == "https":
         response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    if request.method == "GET" and any(
+        request.url.path.startswith(prefix) for prefix in _PUBLIC_READ_PATH_PREFIXES
+    ):
+        response.headers["Cache-Control"] = "public, max-age=60, s-maxage=300"
+        response.headers["Vary"] = "Accept-Encoding"
     return response
 
 # Mount agent router under /api/agent/... (explicit prefix avoids 404 on approval-pending).
