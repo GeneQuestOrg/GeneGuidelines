@@ -12,6 +12,7 @@ from fastapi import Depends
 
 from .repository import DiseaseRepo, SqlaDiseaseRepo
 from .service import DiseaseService, DoctorCountProvider
+from .therapies import SqlaTherapyRepo, TherapyRepo, TherapyService
 from .trials_repository import SqlaTrialRepo, TrialRepo
 from .trials_service import TrialService
 
@@ -55,10 +56,23 @@ def provide_trial_service(
     return TrialService(trial_repo=trial_repo, disease_repo=disease_repo)
 
 
+def provide_therapy_repo() -> TherapyRepo:
+    return SqlaTherapyRepo()
+
+
+def provide_therapy_service(
+    therapy_repo: TherapyRepo = Depends(provide_therapy_repo),
+    disease_repo: DiseaseRepo = Depends(provide_disease_repo),
+) -> TherapyService:
+    return TherapyService(therapy_repo=therapy_repo, disease_repo=disease_repo)
+
+
 __all__ = [
     "provide_disease_repo",
     "provide_doctor_count",
     "provide_disease_service",
     "provide_trial_repo",
     "provide_trial_service",
+    "provide_therapy_repo",
+    "provide_therapy_service",
 ]

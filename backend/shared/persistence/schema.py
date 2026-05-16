@@ -190,6 +190,27 @@ disease_trials = Table(
 )
 
 
+therapies = Table(
+    "therapies",
+    metadata,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column(
+        "disease_slug",
+        Text,
+        ForeignKey("diseases.slug", ondelete="CASCADE"),
+        nullable=False,
+    ),
+    Column("name", Text, nullable=False),
+    Column("status", Text, nullable=False),
+    Column("note", Text, nullable=False, server_default=""),
+    Column("sort_order", Integer, nullable=False, server_default="100"),
+    CheckConstraint(
+        "status IN ('consensus','verified','pending','preclinical')",
+        name="therapy_status_enum",
+    ),
+)
+
+
 __all__ = [
     "metadata",
     "diseases",
@@ -199,4 +220,5 @@ __all__ = [
     "care_pathways",
     "trials",
     "disease_trials",
+    "therapies",
 ]

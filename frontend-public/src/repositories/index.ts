@@ -4,12 +4,14 @@ import { apiContentPrRepository } from "./apiContentPrRepository";
 import { apiDoctorRepository } from "./apiDoctorRepository";
 import { apiGuidelineRepository } from "./apiGuidelineRepository";
 import { apiResearchRunsRepository } from "./apiResearchRunsRepository";
+import { apiTherapyRepository } from "./apiTherapyRepository";
 import { apiTrialRepository } from "./apiTrialRepository";
 import { fixtureContentPrRepository } from "./fixtureContentPrRepository";
 import { fixtureDoctorRepository } from "./fixtureDoctorRepository";
 import { fixtureDiseaseRepository } from "./fixtureDiseaseRepository";
 import { fixtureGuidelineRepository } from "./fixtureGuidelineRepository";
 import { fixtureResearchRunsRepository } from "./fixtureResearchRunsRepository";
+import { fixtureTherapyRepository } from "./fixtureTherapyRepository";
 import { fixtureTrialRepository } from "./fixtureTrialRepository";
 import type {
   ContentPrRepository,
@@ -17,6 +19,7 @@ import type {
   DiseaseRepository,
   GuidelineRepository,
   ResearchRunsRepository,
+  TherapyRepository,
   TrialRepository,
 } from "./types";
 
@@ -26,6 +29,7 @@ export type {
   DiseaseRepository,
   GuidelineRepository,
   ResearchRunsRepository,
+  TherapyRepository,
   TrialRepository,
 } from "./types";
 export { ApiRepositoryNotReadyError } from "./errors";
@@ -38,6 +42,7 @@ export interface Repositories {
   doctors: DoctorRepository;
   researchRuns: ResearchRunsRepository;
   trials: TrialRepository;
+  therapies: TherapyRepository;
 }
 
 export function getRepositories(): Repositories {
@@ -50,6 +55,7 @@ export function getRepositories(): Repositories {
       doctors: apiDoctorRepository,
       researchRuns: apiResearchRunsRepository,
       trials: apiTrialRepository,
+      therapies: apiTherapyRepository,
     };
   }
   return {
@@ -59,6 +65,7 @@ export function getRepositories(): Repositories {
     doctors: fixtureDoctorRepository,
     researchRuns: fixtureResearchRunsRepository,
     trials: fixtureTrialRepository,
+    therapies: fixtureTherapyRepository,
   };
 }
 

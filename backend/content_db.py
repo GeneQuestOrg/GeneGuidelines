@@ -27,6 +27,7 @@ GUIDELINE_BODIES_PATH = BACKEND_DIR / "content_guideline_documents.json"
 CARE_PATHWAY_SEED_PATH = BACKEND_DIR / "content_care_pathway_seed.json"
 PR_PARA_MAPS_PATH = BACKEND_DIR / "content_pr_para_maps.json"
 TRIALS_SEED_PATH = BACKEND_DIR / "content_trials_seed.json"
+THERAPIES_SEED_PATH = BACKEND_DIR / "content_therapies_seed.json"
 DISEASE_SLUG_PATTERN = re.compile(r"^[a-z0-9-]+$")
 MAX_DISEASE_SLUG_LEN = 64
 PR_ID_PATTERN = re.compile(r"^PR-[0-9]+$")
@@ -156,6 +157,18 @@ def ensure_content_schema() -> None:
             disease_slug TEXT NOT NULL REFERENCES diseases(slug) ON DELETE CASCADE,
             nct TEXT NOT NULL REFERENCES trials(nct) ON DELETE CASCADE,
             PRIMARY KEY (disease_slug, nct)
+        )
+        """
+    )
+    cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS therapies (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            disease_slug TEXT NOT NULL REFERENCES diseases(slug) ON DELETE CASCADE,
+            name TEXT NOT NULL,
+            status TEXT NOT NULL CHECK (status IN ('consensus','verified','pending','preclinical')),
+            note TEXT NOT NULL DEFAULT '',
+            sort_order INTEGER NOT NULL DEFAULT 100
         )
         """
     )
@@ -1006,6 +1019,68 @@ def seed_trials_from_file() -> None:
             cur.execute(
                 "INSERT OR IGNORE INTO disease_trials (disease_slug, nct) VALUES (?, ?)",
                 (slug_str, nct),
+            )
+    conn.commit()
+    conn.close()
+
+
+def seed_therapies_from_file() -> None:
+    """Seed therapies for each disease present in content_therapies_seed.json.
+
+    Idempotent on a per-(slug, name) basis: rows whose ``(disease_slug, name)``
+    pair already exists are not re-inserted. The order from the JSON file is
+    preserved by writing the file index into ``sort_order``.
+    """
+    path = Path(THERAPIES_SEED_PATH)
+    if not path.exists():
+        return
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return
+    payload = data.get("therapies") if isinstance(data, dict) else None
+    if not isinstance(payload, dict):
+        return
+    conn = get_connection()
+    cur = conn.cursor()
+    known_slugs = {
+        str(r["slug"])
+        for r in cur.execute("SELECT slug FROM diseases").fetchall()
+    }
+    for raw_slug, items in payload.items():
+        slug = str(raw_slug).strip().lower()
+        if not slug or slug not in known_slugs or not isinstance(items, list):
+            continue
+        for index, therapy in enumerate(items):
+            if not isinstance(therapy, dict):
+                continue
+            name = str(therapy.get("name") or "").strip()
+            status = str(therapy.get("status") or "").strip()
+            if not name or status not in (
+                "consensus",
+                "verified",
+                "pending",
+                "preclinical",
+            ):
+                continue
+            cur.execute(
+                "SELECT 1 FROM therapies WHERE disease_slug = ? AND name = ?",
+                (slug, name),
+            )
+            if cur.fetchone() is not None:
+                continue
+            cur.execute(
+                """
+                INSERT INTO therapies (disease_slug, name, status, note, sort_order)
+                VALUES (?, ?, ?, ?, ?)
+                """,
+                (
+                    slug,
+                    name,
+                    status,
+                    str(therapy.get("note") or ""),
+                    index,
+                ),
             )
     conn.commit()
     conn.close()

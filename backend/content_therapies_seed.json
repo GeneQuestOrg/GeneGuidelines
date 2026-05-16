@@ -1,0 +1,70 @@
+{
+  "therapies": {
+    "fd": [
+      {
+        "name": "Observation (children — standard of care)",
+        "status": "consensus",
+        "note": "No pain, no functional impairment — monitor until skeletal maturity."
+      },
+      {
+        "name": "Bisphosphonates (pamidronate, zoledronate)",
+        "status": "consensus",
+        "note": "Standard for bone pain. IV cycles every 3-6 months."
+      },
+      {
+        "name": "Denosumab",
+        "status": "verified",
+        "note": "For rapidly progressive lesions — RANKL blockade. Strict calcium and 25-OH-D monitoring required."
+      },
+      {
+        "name": "Burosumab",
+        "status": "verified",
+        "note": "Only when FGF23-dependent hypophosphataemia is documented. New — consensus since 2024."
+      },
+      {
+        "name": "Surgery",
+        "status": "pending",
+        "note": "Only after skeletal maturity and a compelling reason (optic nerve compression, severe deformity). Not in children."
+      },
+      {
+        "name": "MEK inhibitors",
+        "status": "preclinical",
+        "note": "Preliminary mouse-model data. No clinical evidence yet."
+      }
+    ],
+    "mas": [
+      {
+        "name": "Endocrine treatment (per endocrinopathy)",
+        "status": "consensus",
+        "note": "Letrozole for precocious puberty in girls; somatostatin analogues for GH excess."
+      },
+      {
+        "name": "Bisphosphonates (same indications as FD)",
+        "status": "consensus",
+        "note": "Identical indications to FD."
+      },
+      {
+        "name": "Denosumab",
+        "status": "verified",
+        "note": "Same protocol as FD."
+      }
+    ],
+    "noonan": [
+      {
+        "name": "Recombinant growth hormone (rGH)",
+        "status": "consensus",
+        "note": "FDA-approved for Noonan-related short stature. Higher dose than in GH deficiency."
+      },
+      {
+        "name": "Cardiology monitoring",
+        "status": "consensus",
+        "note": "ECHO every 1-2 years; more frequent with hypertrophic cardiomyopathy."
+      },
+      {
+        "name": "MEK inhibitors (trametinib, selumetinib)",
+        "status": "pending",
+        "note": "Off-label in severe HCM. Phase 2 trials in progress."
+      }
+    ]
+  }
+}

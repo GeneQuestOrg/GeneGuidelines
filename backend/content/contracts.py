@@ -13,6 +13,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field
 
 from .models import Disease
+from .therapies import Therapy
 from .trials_models import Trial
 
 
@@ -112,4 +113,18 @@ class TrialResponse(BaseModel):
         )
 
 
-__all__ = ["DiseaseResponse", "TrialResponse"]
+class TherapyResponse(BaseModel):
+    """Public therapy row — small card on the disease detail view."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    name: str
+    status: Literal["consensus", "verified", "pending", "preclinical"]
+    note: str
+
+    @classmethod
+    def from_domain(cls, therapy: Therapy) -> "TherapyResponse":
+        return cls(name=therapy.name, status=therapy.status, note=therapy.note)
+
+
+__all__ = ["DiseaseResponse", "TrialResponse", "TherapyResponse"]

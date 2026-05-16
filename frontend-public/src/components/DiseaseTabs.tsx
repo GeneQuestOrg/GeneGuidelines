@@ -6,9 +6,11 @@ import type { UserLocation } from "../router/types";
 import { DiseaseCard } from "./DiseaseCard";
 import { DoctorCard } from "./DoctorCard";
 import { DiseaseOpenPrList } from "./DiseaseOpenPrList";
+import { TherapiesList } from "./TherapiesList";
 import { TrialsList } from "./TrialsList";
 import { useContentPrs } from "../hooks/useContentPrs";
 import { useDiseaseDoctors } from "../hooks/useDiseaseDoctors";
+import { useDiseaseTherapies } from "../hooks/useDiseaseTherapies";
 import { useDiseaseTrials } from "../hooks/useDiseaseTrials";
 import { isWorkflowDoctorSource } from "../types/doctor";
 import {
@@ -59,6 +61,11 @@ export function DiseaseTabs({
     loading: trialsLoading,
     error: trialsError,
   } = useDiseaseTrials(slug);
+  const {
+    therapies,
+    loading: therapiesLoading,
+    error: therapiesError,
+  } = useDiseaseTherapies(slug);
 
   const previewDoctors = useMemo(() => {
     if (doctorsPayload == null) {
@@ -109,6 +116,16 @@ export function DiseaseTabs({
                   </ul>
                 </aside>
               </div>
+            </Section>
+
+            <Section title="Therapies" divider>
+              {therapiesError != null ? (
+                <p className="d-panel-empty" role="alert">{therapiesError}</p>
+              ) : therapiesLoading ? (
+                <p className="d-panel-empty">Loading therapies…</p>
+              ) : (
+                <TherapiesList therapies={therapies} />
+              )}
             </Section>
 
             {disease.related.length > 0 ? (
