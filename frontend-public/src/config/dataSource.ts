@@ -4,13 +4,10 @@ const VALID_SOURCES: readonly DataSource[] = ["fixture", "api"] as const;
 
 export function getDataSource(): DataSource {
   const raw = import.meta.env.VITE_DATA_SOURCE;
-  if (raw === "api") {
-    return "api";
-  }
-  if (raw != null && raw !== "fixture" && raw !== "") {
+  if (raw === "fixture") {
     return "fixture";
   }
-  return "fixture";
+  return "api";
 }
 
 export function assertValidDataSource(value: string): DataSource {

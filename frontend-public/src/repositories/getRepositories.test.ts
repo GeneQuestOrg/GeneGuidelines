@@ -4,16 +4,16 @@ import { fixtureDiseaseRepository } from "./fixtureDiseaseRepository";
 import { apiDiseaseRepository } from "./apiDiseaseRepository";
 
 describe("getRepositories", () => {
-  it("returns fixture repos by default", () => {
+  it("returns api repos by default (production target)", () => {
     vi.stubEnv("VITE_DATA_SOURCE", "");
     const repos = getRepositories();
-    expect(repos.diseases).toBe(fixtureDiseaseRepository);
+    expect(repos.diseases).toBe(apiDiseaseRepository);
   });
 
-  it("returns api stubs when VITE_DATA_SOURCE=api", () => {
-    vi.stubEnv("VITE_DATA_SOURCE", "api");
+  it("returns fixture stubs when VITE_DATA_SOURCE=fixture", () => {
+    vi.stubEnv("VITE_DATA_SOURCE", "fixture");
     const repos = getRepositories();
-    expect(repos.diseases).toBe(apiDiseaseRepository);
+    expect(repos.diseases).toBe(fixtureDiseaseRepository);
     vi.unstubAllEnvs();
   });
 });
