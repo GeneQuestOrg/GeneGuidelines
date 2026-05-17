@@ -21,6 +21,7 @@ is the deployment target for clinics that need the bytes to stay on-premise.
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import json
 import logging
 from dataclasses import dataclass
@@ -63,6 +64,40 @@ class ClinicalFinding(BaseModel):
     )
 
 
+class PiiBreakdown(BaseModel):
+    """Per-category count of identifier-like tokens removed during redaction.
+
+    Each field is a conservative integer estimate of how many tokens in that
+    category the model dropped while rewriting the document. Zero means the
+    model did not see any tokens it considered to belong to that category —
+    which on a real discharge summary is almost certainly a miss; on a
+    de-identified document it is a true zero.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    names: int = Field(
+        default=0,
+        description="Patient, parent, clinician, and any other personal names.",
+    )
+    government_ids: int = Field(
+        default=0,
+        description="PESEL, SSN, NHS number, MRN, case number, and similar IDs.",
+    )
+    absolute_dates: int = Field(
+        default=0,
+        description="Dates of birth, admission, discharge — any exact calendar date.",
+    )
+    addresses: int = Field(
+        default=0,
+        description="Street addresses, city names, postal codes, hospital names.",
+    )
+    document_numbers: int = Field(
+        default=0,
+        description="Phone numbers, email addresses, fax numbers.",
+    )
+
+
 class RedactedFacts(BaseModel):
     """The only payload the synthesis pipeline ever sees from a private upload."""
 
@@ -88,14 +123,16 @@ class RedactedFacts(BaseModel):
             "'imaging_report', 'unknown'."
         ),
     )
-    pii_tokens_removed: int = Field(
-        default=0,
-        description=(
-            "Count of identifier-like tokens the model REMOVED while rewriting "
-            "(names, IDs, dates of birth, addresses, phone numbers, email). "
-            "Conservative integer estimate."
-        ),
+    pii_breakdown: PiiBreakdown = Field(
+        default_factory=PiiBreakdown,
+        description="Per-category count of identifiers removed during redaction.",
     )
+
+    @property
+    def pii_tokens_removed(self) -> int:
+        """Sum of all per-category counts. Computed, not stored."""
+        b = self.pii_breakdown
+        return b.names + b.government_ids + b.absolute_dates + b.addresses + b.document_numbers
 
 
 # ---------------------------------------------------------------------------
@@ -109,6 +146,7 @@ class PrivateContext:
     disease_slug: str
     original_filename: str
     original_chars: int
+    original_sha256: str
     uploaded_at: str
     redacted: RedactedFacts
     pii_tokens_removed: int
@@ -130,6 +168,7 @@ def private_context_from_row(row: Mapping[str, object]) -> PrivateContext:
         disease_slug=str(row["disease_slug"]),
         original_filename=str(row["original_filename"]),
         original_chars=int(row.get("original_chars") or 0),  # type: ignore[arg-type]
+        original_sha256=str(row.get("original_sha256") or ""),
         uploaded_at=str(row["uploaded_at"]),
         redacted=redacted,
         pii_tokens_removed=int(row.get("pii_tokens_removed") or 0),  # type: ignore[arg-type]
@@ -227,9 +266,19 @@ ABSOLUTE RULES — these are non-negotiable:
 6. If you are uncertain whether a token is identifying, DROP IT. Conservatism
    is the rule.
 
-Return the structured fields from the schema. Estimate, conservatively, how
-many identifier-like tokens you removed while rewriting; that integer goes
-in ``pii_tokens_removed``.
+Return the structured fields from the schema. For ``pii_breakdown``, COUNT
+the identifier-like tokens you removed in each category (conservative
+integer estimates):
+
+- ``names``: every personal name token (patient, parent, clinician, …).
+  Count "Jan Kowalski" as 2, "Dr Nowak" as 1, etc.
+- ``government_ids``: PESEL, SSN, MRN, case numbers, NHS numbers.
+- ``absolute_dates``: every full date / year / month that could pinpoint
+  the case (e.g. "12.12.2013" → 1; "October 2023" → 1).
+- ``addresses``: street addresses, city names, postal codes, hospital names.
+- ``document_numbers``: phone numbers, email addresses, fax numbers.
+
+If a category has zero matches, return 0 — do not omit fields.
 """
 
 
@@ -323,6 +372,7 @@ class PrivateContextRepo(Protocol):
         disease_slug: str,
         original_filename: str,
         original_chars: int,
+        original_sha256: str,
         redacted: RedactedFacts,
         model_used: str,
         status: str,
@@ -342,6 +392,7 @@ class SqlaPrivateContextRepo(BaseSqlalchemyRepo):
         disease_slug: str,
         original_filename: str,
         original_chars: int,
+        original_sha256: str,
         redacted: RedactedFacts,
         model_used: str,
         status: str,
@@ -358,6 +409,7 @@ class SqlaPrivateContextRepo(BaseSqlalchemyRepo):
             disease_slug=disease_slug,
             original_filename=original_filename,
             original_chars=original_chars,
+            original_sha256=original_sha256,
             uploaded_at=now,
             redacted_json=redacted.model_dump_json(),
             pii_tokens_removed=redacted.pii_tokens_removed,
@@ -399,6 +451,7 @@ class InMemoryPrivateContextRepo:
         disease_slug: str,
         original_filename: str,
         original_chars: int,
+        original_sha256: str,
         redacted: RedactedFacts,
         model_used: str,
         status: str,
@@ -415,6 +468,7 @@ class InMemoryPrivateContextRepo:
             disease_slug=disease_slug,
             original_filename=original_filename,
             original_chars=original_chars,
+            original_sha256=original_sha256,
             uploaded_at=datetime.now(timezone.utc).isoformat(),
             redacted=redacted,
             pii_tokens_removed=redacted.pii_tokens_removed,
@@ -461,6 +515,11 @@ class PrivateContextService:
         if normalized is None or self.disease_repo.get(normalized) is None:
             return None
 
+        # Compute the SHA-256 of the original bytes BEFORE we touch them.
+        # This is the only fingerprint we keep — it lets the operator detect
+        # duplicate uploads of the same document without knowing the content.
+        sha256 = hashlib.sha256(raw_bytes).hexdigest()
+
         try:
             raw_text = extract_text_from_upload(filename, raw_bytes)
         except UnsupportedUploadError as exc:
@@ -468,6 +527,7 @@ class PrivateContextService:
                 disease_slug=normalized,
                 original_filename=filename,
                 original_chars=len(raw_bytes),
+                original_sha256=sha256,
                 redacted=RedactedFacts(),
                 model_used="",
                 status="failed",
@@ -488,6 +548,7 @@ class PrivateContextService:
                 disease_slug=normalized,
                 original_filename=filename,
                 original_chars=original_chars,
+                original_sha256=sha256,
                 redacted=RedactedFacts(),
                 model_used="",
                 status="failed",
@@ -503,6 +564,7 @@ class PrivateContextService:
             disease_slug=normalized,
             original_filename=filename,
             original_chars=original_chars,
+            original_sha256=sha256,
             redacted=redacted,
             model_used=model_used,
             status="ready",
@@ -518,6 +580,7 @@ class PrivateContextService:
 
 __all__ = [
     "ClinicalFinding",
+    "PiiBreakdown",
     "RedactedFacts",
     "PrivateContext",
     "PrivateContextRepo",

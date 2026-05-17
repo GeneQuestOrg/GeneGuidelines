@@ -202,6 +202,7 @@ def ensure_content_schema() -> None:
             disease_slug TEXT NOT NULL REFERENCES diseases(slug) ON DELETE CASCADE,
             original_filename TEXT NOT NULL,
             original_chars INTEGER NOT NULL DEFAULT 0,
+            original_sha256 TEXT NOT NULL DEFAULT '',
             uploaded_at TEXT NOT NULL,
             redacted_json TEXT NOT NULL DEFAULT '{}',
             pii_tokens_removed INTEGER NOT NULL DEFAULT 0,

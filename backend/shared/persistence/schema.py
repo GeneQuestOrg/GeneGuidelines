@@ -248,7 +248,10 @@ disease_foundations = Table(
 # Private case context uploaded by a parent / clinician. We store the
 # Gemma-extracted, PII-free JSON. The original text is held only in memory
 # while the redaction runs and is discarded immediately afterwards — the
-# raw bytes never reach disk and never reach the synthesis model.
+# raw bytes never reach disk and never reach the synthesis model. The
+# SHA-256 of the original bytes is kept as the only fingerprint, so two
+# uploads of the same document can be matched without knowing their
+# content.
 private_contexts = Table(
     "private_contexts",
     metadata,
@@ -261,6 +264,7 @@ private_contexts = Table(
     ),
     Column("original_filename", Text, nullable=False),
     Column("original_chars", Integer, nullable=False, server_default="0"),
+    Column("original_sha256", Text, nullable=False, server_default=""),
     Column("uploaded_at", Text, nullable=False),
     Column("redacted_json", Text, nullable=False, server_default="{}"),
     Column("pii_tokens_removed", Integer, nullable=False, server_default="0"),

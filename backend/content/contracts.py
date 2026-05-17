@@ -14,7 +14,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from .foundations import Foundation
 from .models import Disease
-from .private_context import PrivateContext, RedactedFacts
+from .private_context import PiiBreakdown, PrivateContext, RedactedFacts
 from .therapies import Therapy
 from .trials_models import Trial
 
@@ -168,8 +168,10 @@ class PrivateContextResponse(BaseModel):
     diseaseSlug: str
     originalFilename: str
     originalChars: int
+    originalSha256: str
     uploadedAt: str
     redacted: RedactedFacts
+    piiBreakdown: PiiBreakdown
     piiTokensRemoved: int
     clinicalFactsExtracted: int
     modelUsed: str
@@ -183,8 +185,10 @@ class PrivateContextResponse(BaseModel):
             diseaseSlug=ctx.disease_slug,
             originalFilename=ctx.original_filename,
             originalChars=ctx.original_chars,
+            originalSha256=ctx.original_sha256,
             uploadedAt=ctx.uploaded_at,
             redacted=ctx.redacted,
+            piiBreakdown=ctx.redacted.pii_breakdown,
             piiTokensRemoved=ctx.pii_tokens_removed,
             clinicalFactsExtracted=ctx.clinical_facts_extracted,
             modelUsed=ctx.model_used,

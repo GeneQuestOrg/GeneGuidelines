@@ -1,11 +1,19 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { repositories } from "../repositories";
 import type { PrivateContext } from "../types/privateContext";
+
+export type RedactionStage =
+  | "idle"
+  | "reading"
+  | "redacting"
+  | "extracting"
+  | "discarding";
 
 export interface PrivateContextsState {
   contexts: readonly PrivateContext[];
   loading: boolean;
   uploading: boolean;
+  stage: RedactionStage;
   error: string | null;
   lastUpload: PrivateContext | null;
   upload(file: File): Promise<PrivateContext | null>;
@@ -16,8 +24,15 @@ export function usePrivateContexts(diseaseSlug: string): PrivateContextsState {
   const [contexts, setContexts] = useState<readonly PrivateContext[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [stage, setStage] = useState<RedactionStage>("idle");
   const [error, setError] = useState<string | null>(null);
   const [lastUpload, setLastUpload] = useState<PrivateContext | null>(null);
+  const stageTimersRef = useRef<number[]>([]);
+
+  const clearStageTimers = useCallback(() => {
+    stageTimersRef.current.forEach((id) => window.clearTimeout(id));
+    stageTimersRef.current = [];
+  }, []);
 
   const reload = useCallback(async () => {
     const repo = repositories().privateContexts;
@@ -64,6 +79,19 @@ export function usePrivateContexts(diseaseSlug: string): PrivateContextsState {
     async (file: File): Promise<PrivateContext | null> => {
       setUploading(true);
       setError(null);
+      // Walk the user through the four conceptual stages of redaction while
+      // the real Gemma call runs. Timings are tuned to a typical 3-5s call;
+      // if the response arrives early the hook short-circuits to the final
+      // state; if it arrives late, we hold on the last stage with the
+      // animation continuing.
+      clearStageTimers();
+      setStage("reading");
+      stageTimersRef.current.push(
+        window.setTimeout(() => setStage("redacting"), 700),
+        window.setTimeout(() => setStage("extracting"), 1800),
+        window.setTimeout(() => setStage("discarding"), 3200),
+      );
+
       try {
         const result = await repositories().privateContexts.upload(
           diseaseSlug,
@@ -78,11 +106,15 @@ export function usePrivateContexts(diseaseSlug: string): PrivateContextsState {
         setError(err instanceof Error ? err.message : "Upload failed.");
         return null;
       } finally {
+        clearStageTimers();
+        setStage("idle");
         setUploading(false);
       }
     },
-    [diseaseSlug],
+    [diseaseSlug, clearStageTimers],
   );
 
-  return { contexts, loading, uploading, error, lastUpload, upload, reload };
+  useEffect(() => () => clearStageTimers(), [clearStageTimers]);
+
+  return { contexts, loading, uploading, stage, error, lastUpload, upload, reload };
 }

@@ -3,11 +3,20 @@ import type { PrivateContextRepository } from "./types";
 
 // Fixture mode is offline-only. Uploads return a canned redaction example so
 // the UI can be developed without a backend.
+const FIXTURE_BREAKDOWN = {
+  names: 3,
+  government_ids: 1,
+  absolute_dates: 4,
+  addresses: 1,
+  document_numbers: 0,
+};
+
 const FIXTURE: PrivateContext = {
   id: 1,
   diseaseSlug: "fd",
   originalFilename: "demo_discharge.txt",
   originalChars: 940,
+  originalSha256: "d2c468f05d0b5e05ccb2dcd6ba9517f4463a105c7699cfd1fb7d46e31ed3d6ea",
   uploadedAt: new Date().toISOString(),
   redacted: {
     clinical_findings: [
@@ -18,8 +27,9 @@ const FIXTURE: PrivateContext = {
     mutations: ["GNAS c.601C>T"],
     outcomes: ["stable, no functional impairment"],
     evidence_quality: "discharge_summary",
-    pii_tokens_removed: 9,
+    pii_breakdown: FIXTURE_BREAKDOWN,
   },
+  piiBreakdown: FIXTURE_BREAKDOWN,
   piiTokensRemoved: 9,
   clinicalFactsExtracted: 5,
   modelUsed: "openrouter:google/gemma-4-31b-it:free",

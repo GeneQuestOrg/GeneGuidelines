@@ -20,6 +20,7 @@ from backend.content.models import Disease
 from backend.content.private_context import (
     ClinicalFinding,
     InMemoryPrivateContextRepo,
+    PiiBreakdown,
     PrivateContextService,
     RedactedFacts,
     UnsupportedUploadError,
@@ -120,7 +121,13 @@ async def test_upload_happy_path_persists_redacted_facts(monkeypatch):
         mutations=["GNAS c.601C>T"],
         outcomes=["pain controlled on NSAIDs"],
         evidence_quality="discharge_summary",
-        pii_tokens_removed=14,
+        pii_breakdown=PiiBreakdown(
+            names=5,
+            government_ids=1,
+            absolute_dates=4,
+            addresses=2,
+            document_numbers=2,
+        ),
     )
 
     async def fake_extractor(*, disease_slug, raw_text, **kwargs):
@@ -143,12 +150,17 @@ async def test_upload_happy_path_persists_redacted_facts(monkeypatch):
     assert out.status == "ready"
     assert out.error is None
     assert out.pii_tokens_removed == 14
+    assert out.redacted.pii_breakdown.names == 5
+    assert out.redacted.pii_breakdown.government_ids == 1
     assert out.clinical_facts_extracted == 5  # 1 finding + 2 interventions + 1 mutation + 1 outcome
     assert out.redacted.mutations == ["GNAS c.601C>T"]
     # The persisted record carries the original filename and char count but
     # never the original text.
     assert out.original_filename == "jan_discharge.txt"
     assert out.original_chars > 0
+    # The SHA-256 of the original bytes is the only fingerprint.
+    assert len(out.original_sha256) == 64
+    assert all(c in "0123456789abcdef" for c in out.original_sha256)
 
 
 @pytest.mark.asyncio
@@ -196,7 +208,7 @@ async def test_unsupported_file_persists_failed_row(monkeypatch):
 @pytest.mark.asyncio
 async def test_list_returns_uploads_newest_first(monkeypatch):
     async def fake_extractor(**_kwargs):
-        return RedactedFacts(pii_tokens_removed=1), "test:model"
+        return RedactedFacts(pii_breakdown=PiiBreakdown(names=1)), "test:model"
 
     monkeypatch.setattr(
         "backend.content.private_context.extract_redacted_facts_async",
