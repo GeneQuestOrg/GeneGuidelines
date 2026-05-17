@@ -41,6 +41,73 @@
   color: var(--ink-3);
 }
 
+/* Privacy Audit Badge — fires on every successful redaction.
+   The visual punch is intentional: the green "0 identifiers reached the
+   synthesis model" is the architectural guarantee, not a UX flourish. */
+.pc-audit {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 18px;
+  background: color-mix(in oklch, oklch(0.55 0.13 155) 8%, var(--bg-elev));
+  border: 1px solid color-mix(in oklch, oklch(0.55 0.13 155) 35%, var(--line));
+  border-left: 4px solid oklch(0.55 0.13 155);
+  border-radius: var(--r-md);
+}
+
+.pc-audit__dot {
+  flex: 0 0 auto;
+  width: 14px;
+  height: 14px;
+  margin-top: 4px;
+  border-radius: 50%;
+  background: oklch(0.55 0.13 155);
+  box-shadow: 0 0 0 0 color-mix(in oklch, oklch(0.55 0.13 155) 60%, transparent);
+  animation: pc-audit-pulse 1.8s ease-out infinite;
+}
+
+@keyframes pc-audit-pulse {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in oklch, oklch(0.55 0.13 155) 60%, transparent);
+  }
+  70% {
+    box-shadow: 0 0 0 10px transparent;
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+.pc-audit__body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: var(--fs-sm);
+  color: var(--ink);
+  line-height: 1.5;
+}
+
+.pc-audit__body strong {
+  color: var(--ink);
+  font-size: var(--fs-md);
+  margin-bottom: 2px;
+}
+
+.pc-audit__body b {
+  font-family: var(--font-mono);
+  color: var(--ink);
+}
+
+.pc-audit__model {
+  margin-top: 4px;
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+}
+
+.pc-audit__model code {
+  font-family: var(--font-mono);
+}
+
 .pc-list {
   list-style: none;
   padding: 0;

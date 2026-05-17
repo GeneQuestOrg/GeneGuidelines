@@ -75,7 +75,7 @@ function RedactedFactsView({ ctx }: { ctx: PrivateContext }) {
 }
 
 export function PrivateContextPanel({ diseaseSlug }: PrivateContextPanelProps) {
-  const { contexts, uploading, error, upload } =
+  const { contexts, uploading, error, lastUpload, upload } =
     usePrivateContexts(diseaseSlug);
   const fileRef = useRef<HTMLInputElement | null>(null);
   const [expandedId, setExpandedId] = useState<number | null>(null);
@@ -128,6 +128,25 @@ export function PrivateContextPanel({ diseaseSlug }: PrivateContextPanelProps) {
         <p className="pc-error" role="alert">
           {error}
         </p>
+      ) : null}
+
+      {lastUpload != null && lastUpload.status === "ready" ? (
+        <div className="pc-audit" role="status">
+          <span className="pc-audit__dot" aria-hidden />
+          <div className="pc-audit__body">
+            <strong>Redaction complete.</strong>
+            <span>
+              <b>{lastUpload.piiTokensRemoved}</b> identifier-like tokens
+              stripped before storage.
+            </span>
+            <span>
+              <b>0</b> identifiers reached the synthesis model.
+            </span>
+            <span className="pc-audit__model">
+              Model: <code>{lastUpload.modelUsed}</code>
+            </span>
+          </div>
+        </div>
       ) : null}
 
       {contexts.length === 0 && !uploading ? (
