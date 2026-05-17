@@ -11,6 +11,7 @@ from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from .contracts import (
     DiseaseResponse,
     FoundationResponse,
+    OfficialGuidelineResponse,
     PrivateContextResponse,
     TherapyResponse,
     TrialResponse,
@@ -18,11 +19,13 @@ from .contracts import (
 from .deps import (
     provide_disease_service,
     provide_foundation_service,
+    provide_official_guideline_service,
     provide_private_context_service,
     provide_therapy_service,
     provide_trial_service,
 )
 from .foundations import FoundationService
+from .official_guideline import OfficialGuidelineService
 from .private_context import PrivateContextService
 from .research_runs import list_active_runs, to_payload
 from .service import DiseaseService
@@ -160,6 +163,26 @@ def list_private_contexts(
     if contexts is None:
         raise HTTPException(status_code=404, detail="Disease not found")
     return [PrivateContextResponse.from_domain(c) for c in contexts]
+
+
+@router.get(
+    "/diseases/{slug}/official-guideline",
+    response_model=OfficialGuidelineResponse,
+)
+def get_official_guideline(
+    slug: str,
+    service: OfficialGuidelineService = Depends(provide_official_guideline_service),
+) -> OfficialGuidelineResponse:
+    """The recognised consensus paper for ``slug``.
+
+    404 when the disease itself is unknown; 404 when the disease is known
+    but no pointer has been confirmed yet (the find-the-consensus workflow
+    has not been run, or the reviewer has not approved a candidate).
+    """
+    pointer = service.get(slug)
+    if pointer is None:
+        raise HTTPException(status_code=404, detail="No official guideline pointer")
+    return OfficialGuidelineResponse.from_domain(pointer)
 
 
 @router.get("/research-runs")

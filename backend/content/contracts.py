@@ -14,6 +14,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from .foundations import Foundation
 from .models import Disease
+from .official_guideline import OfficialGuideline
 from .private_context import PiiBreakdown, PrivateContext, RedactedFacts
 from .therapies import Therapy
 from .trials_models import Trial
@@ -197,10 +198,45 @@ class PrivateContextResponse(BaseModel):
         )
 
 
+class OfficialGuidelineResponse(BaseModel):
+    """Public-safe view of a disease's official consensus paper pointer."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    diseaseSlug: str
+    title: str
+    authors: str
+    year: int
+    journal: str
+    pmid: str
+    url: str
+    summary: str
+    confirmedBy: str
+    confirmedAt: str
+    source: Literal["reviewer", "workflow", "seed"]
+
+    @classmethod
+    def from_domain(cls, pointer: OfficialGuideline) -> "OfficialGuidelineResponse":
+        return cls(
+            diseaseSlug=pointer.disease_slug,
+            title=pointer.title,
+            authors=pointer.authors,
+            year=pointer.year,
+            journal=pointer.journal,
+            pmid=pointer.pmid,
+            url=pointer.url,
+            summary=pointer.summary,
+            confirmedBy=pointer.confirmed_by,
+            confirmedAt=pointer.confirmed_at,
+            source=pointer.source,  # type: ignore[arg-type]
+        )
+
+
 __all__ = [
     "DiseaseResponse",
     "TrialResponse",
     "TherapyResponse",
     "FoundationResponse",
     "PrivateContextResponse",
+    "OfficialGuidelineResponse",
 ]

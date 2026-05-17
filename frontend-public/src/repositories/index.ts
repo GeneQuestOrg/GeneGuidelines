@@ -5,6 +5,7 @@ import { apiDoctorRepository } from "./apiDoctorRepository";
 import { apiGuidelineRepository } from "./apiGuidelineRepository";
 import { apiResearchRunsRepository } from "./apiResearchRunsRepository";
 import { apiFoundationRepository } from "./apiFoundationRepository";
+import { apiOfficialGuidelineRepository } from "./apiOfficialGuidelineRepository";
 import { apiPrivateContextRepository } from "./apiPrivateContextRepository";
 import { apiTherapyRepository } from "./apiTherapyRepository";
 import { apiTrialRepository } from "./apiTrialRepository";
@@ -13,6 +14,7 @@ import { fixtureDoctorRepository } from "./fixtureDoctorRepository";
 import { fixtureDiseaseRepository } from "./fixtureDiseaseRepository";
 import { fixtureFoundationRepository } from "./fixtureFoundationRepository";
 import { fixtureGuidelineRepository } from "./fixtureGuidelineRepository";
+import { fixtureOfficialGuidelineRepository } from "./fixtureOfficialGuidelineRepository";
 import { fixturePrivateContextRepository } from "./fixturePrivateContextRepository";
 import { fixtureResearchRunsRepository } from "./fixtureResearchRunsRepository";
 import { fixtureTherapyRepository } from "./fixtureTherapyRepository";
@@ -23,6 +25,7 @@ import type {
   DiseaseRepository,
   FoundationRepository,
   GuidelineRepository,
+  OfficialGuidelineRepository,
   PrivateContextRepository,
   ResearchRunsRepository,
   TherapyRepository,
@@ -35,6 +38,7 @@ export type {
   DiseaseRepository,
   FoundationRepository,
   GuidelineRepository,
+  OfficialGuidelineRepository,
   PrivateContextRepository,
   ResearchRunsRepository,
   TherapyRepository,
@@ -53,6 +57,7 @@ export interface Repositories {
   therapies: TherapyRepository;
   foundations: FoundationRepository;
   privateContexts: PrivateContextRepository;
+  officialGuidelines: OfficialGuidelineRepository;
 }
 
 export function getRepositories(): Repositories {
@@ -68,6 +73,7 @@ export function getRepositories(): Repositories {
       therapies: apiTherapyRepository,
       foundations: apiFoundationRepository,
       privateContexts: apiPrivateContextRepository,
+      officialGuidelines: apiOfficialGuidelineRepository,
     };
   }
   return {
@@ -80,6 +86,7 @@ export function getRepositories(): Repositories {
     therapies: fixtureTherapyRepository,
     foundations: fixtureFoundationRepository,
     privateContexts: fixturePrivateContextRepository,
+    officialGuidelines: fixtureOfficialGuidelineRepository,
   };
 }
 

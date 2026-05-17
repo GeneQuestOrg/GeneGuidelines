@@ -3,7 +3,9 @@ import { getAudienceCopy } from "../copy";
 import { PersonaSwitcher } from "../components/PersonaSwitcher";
 import { DiseaseHero } from "../components/DiseaseHero";
 import { DiseaseTabs } from "../components/DiseaseTabs";
+import { OfficialGuidelineBlock } from "../components/OfficialGuidelineBlock";
 import { useDisease } from "../hooks/useDisease";
+import { useOfficialGuideline } from "../hooks/useOfficialGuideline";
 import { useRelatedDiseases } from "../hooks/useRelatedDiseases";
 import { PlaceholderView } from "./PlaceholderView";
 import "../styles/disease-page.css";
@@ -19,6 +21,7 @@ export interface DiseaseViewProps {
 export function DiseaseView({ slug, view, userLoc, onViewChange, onNav }: DiseaseViewProps) {
   const { disease, guideline, loading, error } = useDisease(slug);
   const { related, loading: relatedLoading } = useRelatedDiseases(disease?.related ?? []);
+  const { pointer: officialPointer } = useOfficialGuideline(slug);
   const copy = getAudienceCopy(view).disease;
   const isClinician = view === "doctor";
 
@@ -62,6 +65,9 @@ export function DiseaseView({ slug, view, userLoc, onViewChange, onNav }: Diseas
         isClinician={isClinician}
         onNav={onNav}
       />
+      {officialPointer != null ? (
+        <OfficialGuidelineBlock pointer={officialPointer} />
+      ) : null}
       <DiseaseTabs
         disease={disease}
         copy={copy}

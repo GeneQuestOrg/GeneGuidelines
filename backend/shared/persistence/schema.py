@@ -135,8 +135,14 @@ care_pathways = Table(
         "disease_slug",
         Text,
         ForeignKey("diseases.slug", ondelete="CASCADE"),
-        primary_key=True,
+        nullable=False,
     ),
+    # Multi-kind pathways — a parent navigates each independently: how to
+    # confirm the diagnosis, what to monitor over time, what to do on
+    # treatment or after surgery. Existing single rows default to
+    # 'diagnosis'; the migration on a populated DB happens via the alter
+    # in content_db.ensure_content_schema.
+    Column("kind", Text, nullable=False, server_default="diagnosis"),
     Column("locale", Text, nullable=False, server_default="en"),
     Column("version", Text, nullable=False),
     Column("based_on", Text, nullable=False),
@@ -146,6 +152,11 @@ care_pathways = Table(
     Column("tree_json", Text, nullable=False),
     Column("draft_tree_json", Text),
     Column("draft_updated_at", Text),
+    PrimaryKeyConstraint("disease_slug", "kind", name="pk_care_pathways"),
+    CheckConstraint(
+        "kind IN ('diagnosis','monitoring','post_treatment')",
+        name="care_pathway_kind_enum",
+    ),
 )
 
 
@@ -245,6 +256,38 @@ disease_foundations = Table(
 )
 
 
+# Pointer to the international consensus paper for each disease — the
+# "ground truth" the AI-maintained living document is read against. Filled
+# either by the find-the-consensus workflow (Gemma 4 ranking) or by a
+# reviewer asserting "yes, this is the paper". The pointer is paragraph 0
+# of every disease detail page: parents and clinicians see the recognised
+# document name before they see anything the system proposes on top.
+official_guideline_pointers = Table(
+    "official_guideline_pointers",
+    metadata,
+    Column(
+        "disease_slug",
+        Text,
+        ForeignKey("diseases.slug", ondelete="CASCADE"),
+        primary_key=True,
+    ),
+    Column("title", Text, nullable=False),
+    Column("authors", Text, nullable=False),
+    Column("year", Integer, nullable=False),
+    Column("journal", Text, nullable=False),
+    Column("pmid", Text, nullable=False),
+    Column("url", Text, nullable=False, server_default=""),
+    Column("summary", Text, nullable=False, server_default=""),
+    Column("confirmed_by", Text, nullable=False, server_default=""),
+    Column("confirmed_at", Text, nullable=False),
+    Column("source", Text, nullable=False, server_default="reviewer"),
+    CheckConstraint(
+        "source IN ('reviewer','workflow','seed')",
+        name="official_guideline_source_enum",
+    ),
+)
+
+
 # Private case context uploaded by a parent / clinician. We store the
 # Gemma-extracted, PII-free JSON. The original text is held only in memory
 # while the redaction runs and is discarded immediately afterwards — the
@@ -292,4 +335,5 @@ __all__ = [
     "foundations",
     "disease_foundations",
     "private_contexts",
+    "official_guideline_pointers",
 ]

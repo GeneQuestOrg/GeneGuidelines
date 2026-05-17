@@ -15,6 +15,11 @@ from .foundations import (
     FoundationService,
     SqlaFoundationRepo,
 )
+from .official_guideline import (
+    OfficialGuidelineRepo,
+    OfficialGuidelineService,
+    SqlaOfficialGuidelineRepo,
+)
 from .private_context import (
     PrivateContextRepo,
     PrivateContextService,
@@ -90,6 +95,17 @@ def provide_foundation_service(
     )
 
 
+def provide_official_guideline_repo() -> OfficialGuidelineRepo:
+    return SqlaOfficialGuidelineRepo()
+
+
+def provide_official_guideline_service(
+    repo: OfficialGuidelineRepo = Depends(provide_official_guideline_repo),
+    disease_repo: DiseaseRepo = Depends(provide_disease_repo),
+) -> OfficialGuidelineService:
+    return OfficialGuidelineService(repo=repo, disease_repo=disease_repo)
+
+
 def provide_private_context_repo() -> PrivateContextRepo:
     return SqlaPrivateContextRepo()
 
@@ -113,4 +129,6 @@ __all__ = [
     "provide_foundation_service",
     "provide_private_context_repo",
     "provide_private_context_service",
+    "provide_official_guideline_repo",
+    "provide_official_guideline_service",
 ]

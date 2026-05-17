@@ -29,6 +29,7 @@ PR_PARA_MAPS_PATH = BACKEND_DIR / "content_pr_para_maps.json"
 TRIALS_SEED_PATH = BACKEND_DIR / "content_trials_seed.json"
 THERAPIES_SEED_PATH = BACKEND_DIR / "content_therapies_seed.json"
 FOUNDATIONS_SEED_PATH = BACKEND_DIR / "content_foundations_seed.json"
+OFFICIAL_GUIDELINES_SEED_PATH = BACKEND_DIR / "content_official_guidelines_seed.json"
 DISEASE_SLUG_PATTERN = re.compile(r"^[a-z0-9-]+$")
 MAX_DISEASE_SLUG_LEN = 64
 PR_ID_PATTERN = re.compile(r"^PR-[0-9]+$")
@@ -119,14 +120,17 @@ def ensure_content_schema() -> None:
     cur.execute(
         """
         CREATE TABLE IF NOT EXISTS care_pathways (
-            disease_slug TEXT PRIMARY KEY REFERENCES diseases(slug) ON DELETE CASCADE,
+            disease_slug TEXT NOT NULL REFERENCES diseases(slug) ON DELETE CASCADE,
+            kind TEXT NOT NULL DEFAULT 'diagnosis'
+                CHECK (kind IN ('diagnosis','monitoring','post_treatment')),
             locale TEXT NOT NULL DEFAULT 'en',
             version TEXT NOT NULL,
             based_on TEXT NOT NULL,
             generated_at TEXT NOT NULL,
             source_guideline_version TEXT,
             source_execution_id TEXT,
-            tree_json TEXT NOT NULL
+            tree_json TEXT NOT NULL,
+            PRIMARY KEY (disease_slug, kind)
         )
         """
     )
@@ -217,6 +221,7 @@ def ensure_content_schema() -> None:
     conn.close()
     ensure_guideline_prompt_column()
     ensure_care_pathway_draft_columns()
+    ensure_official_guideline_pointers_schema()
     sync_guideline_document_bodies_from_file()
     # NOTE: content_prs and disease_trials have FKs to diseases(slug); their
     # seeders (seed_content_prs_if_empty / seed_trials_from_file) are invoked
@@ -227,7 +232,13 @@ def ensure_content_schema() -> None:
 
 
 def ensure_care_pathway_draft_columns() -> None:
-    """Add draft_tree_json for operator preview before publish."""
+    """Add draft_tree_json + kind for existing deployments.
+
+    SQLite cannot ALTER PRIMARY KEY in place, so the kind column lives next
+    to the existing single-row-per-disease layout. New code keys lookups on
+    (disease_slug, kind) — old rows surface as kind='diagnosis' which is
+    the documented default.
+    """
     conn = get_connection()
     cur = conn.cursor()
     cur.execute("PRAGMA table_info(care_pathways)")
@@ -236,6 +247,36 @@ def ensure_care_pathway_draft_columns() -> None:
         cur.execute("ALTER TABLE care_pathways ADD COLUMN draft_tree_json TEXT")
     if "draft_updated_at" not in columns:
         cur.execute("ALTER TABLE care_pathways ADD COLUMN draft_updated_at TEXT")
+    if "kind" not in columns:
+        cur.execute(
+            "ALTER TABLE care_pathways ADD COLUMN kind TEXT NOT NULL DEFAULT 'diagnosis'"
+        )
+    conn.commit()
+    conn.close()
+
+
+def ensure_official_guideline_pointers_schema() -> None:
+    """Create the official_guideline_pointers table if missing."""
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS official_guideline_pointers (
+            disease_slug TEXT PRIMARY KEY REFERENCES diseases(slug) ON DELETE CASCADE,
+            title TEXT NOT NULL,
+            authors TEXT NOT NULL,
+            year INTEGER NOT NULL,
+            journal TEXT NOT NULL,
+            pmid TEXT NOT NULL,
+            url TEXT NOT NULL DEFAULT '',
+            summary TEXT NOT NULL DEFAULT '',
+            confirmed_by TEXT NOT NULL DEFAULT '',
+            confirmed_at TEXT NOT NULL,
+            source TEXT NOT NULL DEFAULT 'reviewer'
+                CHECK (source IN ('reviewer','workflow','seed'))
+        )
+        """
+    )
     conn.commit()
     conn.close()
 
@@ -1190,6 +1231,66 @@ def seed_foundations_from_file() -> None:
                 "INSERT OR IGNORE INTO disease_foundations (disease_slug, foundation_id) VALUES (?, ?)",
                 (slug_str, foundation_id),
             )
+    conn.commit()
+    conn.close()
+
+
+def seed_official_guidelines_from_file() -> None:
+    """Seed official_guideline_pointers for each disease the seed file names.
+
+    Idempotent. The seed marks every row as ``source = 'seed'`` so a future
+    reviewer-confirmed entry (``source = 'reviewer'``) clearly differs from
+    the bundled defaults — and the discovery workflow's auto-suggestions
+    (``source = 'workflow'``) are visibly the third class.
+    """
+    path = Path(OFFICIAL_GUIDELINES_SEED_PATH)
+    if not path.exists():
+        return
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return
+    pointers = data.get("pointers") if isinstance(data, dict) else None
+    if not isinstance(pointers, dict):
+        return
+    conn = get_connection()
+    cur = conn.cursor()
+    known_slugs = {
+        str(r["slug"])
+        for r in cur.execute("SELECT slug FROM diseases").fetchall()
+    }
+    now = date.today().isoformat()
+    for raw_slug, entry in pointers.items():
+        slug = str(raw_slug).strip().lower()
+        if not slug or slug not in known_slugs or not isinstance(entry, dict):
+            continue
+        cur.execute(
+            "SELECT 1 FROM official_guideline_pointers WHERE disease_slug = ?",
+            (slug,),
+        )
+        if cur.fetchone() is not None:
+            continue
+        cur.execute(
+            """
+            INSERT INTO official_guideline_pointers (
+                disease_slug, title, authors, year, journal, pmid, url,
+                summary, confirmed_by, confirmed_at, source
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                slug,
+                str(entry.get("title") or ""),
+                str(entry.get("authors") or ""),
+                int(entry.get("year") or 0),
+                str(entry.get("journal") or ""),
+                str(entry.get("pmid") or ""),
+                str(entry.get("url") or ""),
+                str(entry.get("summary") or ""),
+                str(entry.get("confirmed_by") or ""),
+                now,
+                str(entry.get("source") or "seed"),
+            ),
+        )
     conn.commit()
     conn.close()
 
