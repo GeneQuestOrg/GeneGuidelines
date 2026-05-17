@@ -1,4 +1,4 @@
-import { Section } from "@gene-guidelines/ui";
+import { Button, Section } from "@gene-guidelines/ui";
 import { DiseaseCard } from "../components/DiseaseCard";
 import { useDiseaseCatalog } from "../hooks/useDiseaseCatalog";
 import "../components/disease-grid.css";
@@ -19,6 +19,11 @@ export function DiseaseIndexView({ initialQuery = "", onNav }: DiseaseIndexViewP
           ? `Results for “${initialQuery}”`
           : "Rare genetic conditions with living, physician-reviewed guidelines."}
       </p>
+      <div style={{ marginBottom: "1.25rem" }}>
+        <Button type="button" variant="primary" onClick={() => onNav("/add-disease")}>
+          + Add a disease
+        </Button>
+      </div>
       {error != null ? (
         <p className="catalog-error" role="alert">
           {error}

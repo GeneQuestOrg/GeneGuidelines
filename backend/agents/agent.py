@@ -34,13 +34,14 @@ from ..config import (
     DEEPSEEK_BASE_URL,
     DEFAULT_MODEL_NAME,
     MCP_SERVER_TIMEOUT_SEC,
+    OLLAMA_BASE_URL,
     OPENAI_CLIENT_TIMEOUT_SEC,
     OPENROUTER_API_KEY,
     OPENROUTER_BASE_URL,
 )
 from . import flow_prompt
 
-_SUPPORTED_PROVIDERS = ("openai", "deepseek", "openrouter")
+_SUPPORTED_PROVIDERS = ("openai", "deepseek", "openrouter", "ollama")
 
 # Default model id without provider prefix (e.g. "gpt-4o-mini" from "openai:gpt-4o-mini")
 _MODEL_NAME = DEFAULT_MODEL_NAME.split(":", 1)[-1] if ":" in DEFAULT_MODEL_NAME else DEFAULT_MODEL_NAME
@@ -105,6 +106,14 @@ def get_openai_chat_model(model_spec: str | None) -> OpenAIChatModel:
         client = AsyncOpenAI(
             api_key=OPENROUTER_API_KEY,
             base_url=OPENROUTER_BASE_URL,
+            timeout=OPENAI_CLIENT_TIMEOUT_SEC,
+        )
+    elif provider == "ollama":
+        # Ollama exposes an OpenAI-compatible API on /v1. Local-only by default,
+        # so the api_key value is ignored by the server but required by the client.
+        client = AsyncOpenAI(
+            api_key="ollama",
+            base_url=OLLAMA_BASE_URL,
             timeout=OPENAI_CLIENT_TIMEOUT_SEC,
         )
     else:

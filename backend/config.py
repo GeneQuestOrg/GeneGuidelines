@@ -41,13 +41,25 @@ _TEST_OVERFLOW = (
 # OpenRouter (OpenAI-compatible). Used when model_spec uses `openrouter:` prefix or profile "openrouter".
 _OPENROUTER_SIMPLE = (
     (os.environ.get("MODEL_PROFILE_OPENROUTER_SIMPLE") or "").strip()
-    or "openrouter:google/gemma-4-31b-it:free"
+    or "openrouter:google/gemma-4-31b-it"
 )
 _OPENROUTER_AGENTIC = (
     (os.environ.get("MODEL_PROFILE_OPENROUTER_AGENTIC") or "").strip()
-    or "openrouter:google/gemma-4-31b-it:free"
+    or "openrouter:google/gemma-4-31b-it"
 )
 _OPENROUTER_OVERFLOW = (os.environ.get("MODEL_PROFILE_OPENROUTER_OVERFLOW") or "").strip() or None
+
+# Ollama (OpenAI-compatible). Used when model_spec uses `ollama:` prefix or profile "ollama".
+# The local-edge path documented in the writeup. Default model id matches what
+# the user has pulled (`ollama pull gemma4:26b`). Override via env vars.
+_OLLAMA_SIMPLE = (
+    (os.environ.get("MODEL_PROFILE_OLLAMA_SIMPLE") or "").strip()
+    or "ollama:gemma4:26b"
+)
+_OLLAMA_AGENTIC = (
+    (os.environ.get("MODEL_PROFILE_OLLAMA_AGENTIC") or "").strip()
+    or "ollama:gemma4:26b"
+)
 
 # Keys are used as profile identifiers in the API; values map prompt_mode -> model spec.
 # Special key "overflow" holds a fallback model used only when the primary model hits context limits.
@@ -67,6 +79,11 @@ MODEL_PROFILES: dict[str, dict[str, str | None]] = {
         "agentic": _OPENROUTER_AGENTIC,
         "overflow": _OPENROUTER_OVERFLOW,
     },
+    "ollama": {
+        "simple": _OLLAMA_SIMPLE,
+        "agentic": _OLLAMA_AGENTIC,
+        "overflow": None,
+    },
 }
 DEFAULT_MODEL_PROFILE = (os.environ.get("MODEL_PROFILE") or "production").strip().lower() or "production"
 if DEFAULT_MODEL_PROFILE not in MODEL_PROFILES:
@@ -84,6 +101,12 @@ DEEPSEEK_BASE_URL = (os.environ.get("DEEPSEEK_BASE_URL") or "https://api.deepsee
 OPENROUTER_API_KEY = (os.environ.get("OPENROUTER_API_KEY") or "").strip() or None
 OPENROUTER_BASE_URL = (
     (os.environ.get("OPENROUTER_BASE_URL") or "https://openrouter.ai/api/v1").strip() or "https://openrouter.ai/api/v1"
+)
+
+# Ollama (OpenAI-compatible). Used when model_spec uses `ollama:` prefix. No API key —
+# the daemon binds to localhost. Override base URL for remote Ollama installs.
+OLLAMA_BASE_URL = (
+    (os.environ.get("OLLAMA_BASE_URL") or "http://localhost:11434/v1").strip() or "http://localhost:11434/v1"
 )
 
 # Memory (persistent conversation context for agentic nodes)
@@ -121,14 +144,14 @@ CODE_NODE_TIMEOUT_SEC = float((os.environ.get("CODE_NODE_TIMEOUT_SEC") or "").st
 CODE_NODE_MAX_INPUT_BYTES = int((os.environ.get("CODE_NODE_MAX_INPUT_BYTES") or "").strip() or 100_000_000)
 CODE_NODE_MAX_RESULT_BYTES = int((os.environ.get("CODE_NODE_MAX_RESULT_BYTES") or "").strip() or 8_000_000)
 # Token budgets for model responses. Per-node `flow_definitions.max_tokens` overrides these defaults.
-# Keep very high by default to avoid incomplete tool-call arguments in long guideline steps.
-# If a provider rejects this value, override via env to that provider's accepted ceiling.
+# Picked to fit Gemma 4 31B's 262 144-token context with comfortable headroom for tool I/O.
+# Frontier models with 1M-token contexts can override via env vars without touching code.
 MAX_APP_LLM_MAX_TOKENS = 1_000_000
 DEFAULT_SIMPLE_LLM_MAX_TOKENS = int(
-    (os.environ.get("DEFAULT_SIMPLE_LLM_MAX_TOKENS") or "").strip() or MAX_APP_LLM_MAX_TOKENS
+    (os.environ.get("DEFAULT_SIMPLE_LLM_MAX_TOKENS") or "").strip() or 4_000
 )
 DEFAULT_AGENTIC_LLM_MAX_TOKENS = int(
-    (os.environ.get("DEFAULT_AGENTIC_LLM_MAX_TOKENS") or "").strip() or MAX_APP_LLM_MAX_TOKENS
+    (os.environ.get("DEFAULT_AGENTIC_LLM_MAX_TOKENS") or "").strip() or 32_000
 )
 PUBMED_TOOL_HTTP_TIMEOUT_SEC = float((os.environ.get("PUBMED_TOOL_HTTP_TIMEOUT_SEC") or "").strip() or 900.0)
 PUBMED_BROWSER_FALLBACK_ENABLED = (os.environ.get("PUBMED_BROWSER_FALLBACK_ENABLED") or "1").strip().lower() in (

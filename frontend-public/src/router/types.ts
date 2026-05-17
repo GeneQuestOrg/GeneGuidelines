@@ -10,6 +10,7 @@ export type Route =
   | { name: "doctors"; disease?: string }
   | { name: "doctor"; slug: string }
   | { name: "startResearch"; diseaseSlug?: string }
+  | { name: "addDisease" }
   | { name: "about" }
   | { name: "account" }
   | { name: "researchRun"; id: string; query?: string; diseaseSlug?: string }

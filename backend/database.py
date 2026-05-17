@@ -194,6 +194,11 @@ def init_db():
     _ensure_pubmed_eval_tail()
     _ensure_pubmed_seed_ticket_wording()
     _ensure_doctor_finder_flow()
+    try:
+        from .flows.specs._loader import ensure_flows_from_specs
+    except ImportError:
+        from flows.specs._loader import ensure_flows_from_specs  # type: ignore[no-redef]
+    ensure_flows_from_specs()
     _ensure_doctor_finder_geo_node()
     _ensure_parent_pathway_flow()
     _upgrade_parent_pathway_flow_add_plan_node()

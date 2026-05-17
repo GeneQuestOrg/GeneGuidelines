@@ -210,6 +210,53 @@ def list_pipeline_runs():
             )
         )
 
+    # Disease-bootstrap finder workflows (official_guidelines / trials / therapies /
+    # foundations) log to guideline_run_results. Surface them in the admin runs
+    # panel so operators can audit failures and rerun individual steps.
+    try:
+        from ..database import get_connection
+    except ImportError:
+        from database import get_connection  # type: ignore[no-redef]
+    bootstrap_pipelines = (
+        "official_guidelines_finder",
+        "trials_finder",
+        "therapies_finder",
+        "foundations_finder",
+    )
+    conn = get_connection()
+    try:
+        placeholders = ",".join(["?"] * len(bootstrap_pipelines))
+        cur = conn.execute(
+            f"""SELECT execution_id, pipeline, disease_slug, label, done,
+                       started_at, finished_at, error
+                FROM guideline_run_results
+                WHERE pipeline IN ({placeholders})
+                ORDER BY started_at DESC
+                LIMIT 200""",
+            bootstrap_pipelines,
+        )
+        for row in cur.fetchall():
+            eid = str(row["execution_id"] or "")
+            if not eid:
+                continue
+            label = str(row["label"] or "").strip() or str(row["disease_slug"] or "").strip()
+            err = row["error"]
+            done = bool(row["done"])
+            status = "failed" if err else ("done" if done else "running")
+            items.append(
+                _pipeline_run_row(
+                    execution_id=eid,
+                    pipeline=str(row["pipeline"]),
+                    label=label or str(row["pipeline"]),
+                    status=status,
+                    done=done,
+                    error=err,
+                    started_at=row["started_at"],
+                )
+            )
+    finally:
+        conn.close()
+
     items.sort(key=lambda r: str(r.get("started_at") or ""), reverse=True)
     return {"runs": items}
 
@@ -257,6 +304,143 @@ async def start_guideline_run(body: GuidelineRunBody):
         pipeline="guideline",
         disease_slug=str(disease["slug"]),
     )
+
+
+class OfficialGuidelinesRunBody(BaseModel):
+    """Start the find-the-consensus workflow for one disease."""
+
+    disease_slug: str = Field(..., min_length=1, max_length=64)
+
+
+@router.post("/official-guidelines-run")
+async def start_official_guidelines_run(body: OfficialGuidelinesRunBody):
+    """Run the Gemma 4-powered find-the-consensus workflow for a disease.
+
+    Returns immediately with ``execution_id``; the workflow runs in the
+    background. Progress is surfaced via ``GET /api/research-runs`` and
+    ``GET /api/diseases/{slug}/official-guideline`` (once the pointer is
+    persisted, ``source`` flips to ``workflow``).
+    """
+    slug = body.disease_slug.strip()
+    if not slug:
+        raise HTTPException(status_code=400, detail="disease_slug is required")
+
+    loop = asyncio.get_event_loop()
+    disease = await loop.run_in_executor(
+        None, lambda: get_disease_by_slug(slug)
+    )
+    if disease is None:
+        raise HTTPException(status_code=404, detail=f"Disease '{slug}' not found")
+
+    from ..services.official_guidelines_finder import (
+        find_official_guideline_for_disease,
+    )
+    import uuid
+
+    execution_id = f"ogf-{uuid.uuid4().hex[:12]}"
+
+    # Fire-and-forget background task; the service logs to
+    # guideline_run_results so progress shows up in /api/research-runs.
+    asyncio.create_task(
+        find_official_guideline_for_disease(
+            disease_slug=slug,
+            disease_name=str(disease["name"]),
+            execution_id=execution_id,
+        )
+    )
+
+    return {
+        "execution_id": execution_id,
+        "flow_key": "official_guidelines_finder",
+        "disease_slug": slug,
+        "status": "running",
+    }
+
+
+class BootstrapDiseaseBody(BaseModel):
+    """Create a catalog disease (minimal payload) and fan out all research workflows.
+
+    Required: ``slug`` and ``name``. Everything else can be filled in by reviewers
+    later; the workflows assume only that ``name`` is the term to search PubMed /
+    ClinicalTrials.gov with.
+    """
+
+    slug: str = Field(..., min_length=2, max_length=64, pattern=r"^[a-z0-9][a-z0-9_-]*$")
+    name: str = Field(..., min_length=2, max_length=200)
+    name_short: str = Field(default="", max_length=80)
+    gene: str = Field(default="", max_length=80)
+    omim: str = Field(default="", max_length=40)
+    inheritance: str = Field(default="", max_length=80)
+    summary: str = Field(default="", max_length=2000)
+    prevalence_text: str = Field(default="Rare disease", max_length=200)
+    profile: str = Field(default=DEFAULT_MODEL_PROFILE)
+
+
+@router.post("/bootstrap-disease")
+async def bootstrap_disease(body: BootstrapDiseaseBody):
+    """One-action workflow: create a disease row, then fire all research workflows.
+
+    Idempotent on the disease row (INSERT OR IGNORE on slug); workflows always
+    fire, so calling twice is safe but will run the research workflows a second
+    time. Returns the dict of execution ids the frontend can poll
+    ``/api/research-runs`` against to render progress.
+    """
+    import json as _json
+
+    slug = body.slug.strip()
+    if not slug:
+        raise HTTPException(status_code=400, detail="slug is required")
+
+    loop = asyncio.get_event_loop()
+    existing = await loop.run_in_executor(None, lambda: get_disease_by_slug(slug))
+    if existing is None:
+        def _insert_disease():
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute(
+                """INSERT OR IGNORE INTO diseases (
+                    slug, name, name_short, omim, gene, inheritance, summary,
+                    types_json, related_json, prevalence_text, status, status_by,
+                    status_date, ai_draft_date, open_prs, doctors_count, trials_count,
+                    coverage, accent, guideline_prompt_profile_json
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, '[]', '[]', ?, 'ai-draft', NULL,
+                          NULL, NULL, 0, 0, 0, 'skeleton', 'indigo', '{}')""",
+                (
+                    slug,
+                    body.name.strip(),
+                    (body.name_short or body.name[:24]).strip(),
+                    body.omim.strip(),
+                    body.gene.strip(),
+                    body.inheritance.strip(),
+                    body.summary.strip(),
+                    body.prevalence_text.strip(),
+                ),
+            )
+            conn.commit()
+            conn.close()
+
+        await loop.run_in_executor(None, _insert_disease)
+
+    from ..services.disease_bootstrap import bootstrap_disease_research
+
+    profile_norm = (body.profile or DEFAULT_MODEL_PROFILE).strip().lower() or DEFAULT_MODEL_PROFILE
+    if profile_norm not in MODEL_PROFILES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unknown profile '{body.profile}'. Allowed: {sorted(MODEL_PROFILES.keys())}",
+        )
+
+    execution_ids = await bootstrap_disease_research(
+        disease_slug=slug,
+        disease_name=body.name.strip(),
+        profile=profile_norm,
+    )
+    return {
+        "disease_slug": slug,
+        "created": existing is None,
+        "execution_ids": execution_ids,
+        "status": "running",
+    }
 
 
 @router.post("/pathway-run")

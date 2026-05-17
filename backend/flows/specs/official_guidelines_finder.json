@@ -1,0 +1,99 @@
+{
+  "flow_key": "official_guidelines_finder",
+  "description": "Auto-discover the recognised international consensus paper for a disease. Triggers when a new disease is added; promotes its top-ranked PubMed result into the official-guideline pointer block once a reviewer confirms.",
+  "nodes": [
+    {
+      "node_id": "start",
+      "node_type": "trigger",
+      "label": "Start",
+      "description": "Entry point. Receives disease_slug and disease_name from the ticket description.",
+      "prompt_mode": "agentic",
+      "loop_policy": "none",
+      "execution_policy": "auto",
+      "max_retry": 1
+    },
+    {
+      "node_id": "pubmed-esearch",
+      "node_type": "http_request",
+      "label": "PubMed esearch",
+      "description": "Query PubMed for consensus / best-practice reviews matching the disease name.",
+      "prompt_mode": "agentic",
+      "http_url": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=%22{{ context.start.result.disease_name }}%22+AND+%28consensus+OR+guideline+OR+%22best+practice%22%29+AND+Review%5Bptyp%5D&retmode=json&retmax=10&sort=relevance",
+      "http_method": "GET",
+      "max_retry": 3
+    },
+    {
+      "node_id": "parse-pmids",
+      "node_type": "code",
+      "label": "Parse PMIDs",
+      "description": "Extract the PMID list from the esearch response.",
+      "python_source": "import json\nbody = json.loads(input.get('pubmed-esearch', {}).get('result', {}).get('body', '{}'))\npmids = body.get('esearchresult', {}).get('idlist', [])\nreturn {'pmids': pmids}",
+      "prompt_mode": "agentic",
+      "max_retry": 1
+    },
+    {
+      "node_id": "pubmed-esummary",
+      "node_type": "http_request",
+      "label": "PubMed esummary",
+      "description": "Fetch title/authors/journal/year for every candidate PMID.",
+      "prompt_mode": "agentic",
+      "http_url": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&id={{ context.parse-pmids.result.pmids | join:',' }}&retmode=json",
+      "http_method": "GET",
+      "max_retry": 3
+    },
+    {
+      "node_id": "format-candidates",
+      "node_type": "code",
+      "label": "Format candidate list",
+      "description": "Project each PMID's metadata into the {pmid, title, authors, journal, year} shape Gemma reads.",
+      "python_source": "# See backend/services/official_guidelines_finder.py:_pubmed_metadata + _format_candidates\nreturn {'candidates_text': '...'}",
+      "prompt_mode": "agentic",
+      "max_retry": 1
+    },
+    {
+      "node_id": "rank-with-gemma",
+      "node_type": "prompt",
+      "label": "Rank with Gemma 4",
+      "description": "Structured-output Gemma call: pick the recognised consensus document, return confidence + reasoning. Refuses to invent PMIDs that were not in the candidate list.",
+      "prompt_mode": "simple",
+      "model_name": "openrouter:google/gemma-4-31b-it:free",
+      "prompt": "You are a clinical librarian. Pick the recognised international consensus / best-practice guideline for {{ context.start.result.disease_name }} from the candidate PubMed papers in {{ context.format-candidates.result.candidates_text }}. NEVER invent a PMID. Return best_pmid, title, authors, year, journal, confidence (0-1), reasoning.",
+      "output_schema": "{\"type\":\"object\",\"properties\":{\"best_pmid\":{\"type\":\"string\"},\"title\":{\"type\":\"string\"},\"authors\":{\"type\":\"string\"},\"year\":{\"type\":\"integer\"},\"journal\":{\"type\":\"string\"},\"confidence\":{\"type\":\"number\",\"minimum\":0,\"maximum\":1},\"reasoning\":{\"type\":\"string\"}},\"required\":[\"best_pmid\",\"title\",\"authors\",\"year\",\"journal\",\"confidence\"]}",
+      "max_retry": 2
+    },
+    {
+      "node_id": "verify-candidate",
+      "node_type": "code",
+      "label": "Reject hallucinated PMIDs",
+      "description": "Guard: refuse to persist a PMID Gemma did not see in the candidate list.",
+      "python_source": "best = input.get('rank-with-gemma', {}).get('result', {}).get('best_pmid', '')\ncandidates = input.get('parse-pmids', {}).get('result', {}).get('pmids', [])\nif best not in candidates:\n    raise ValueError(f'Ranker returned non-candidate PMID {best}')\nreturn input.get('rank-with-gemma', {}).get('result', {})",
+      "prompt_mode": "agentic",
+      "max_retry": 1
+    },
+    {
+      "node_id": "persist-pointer",
+      "node_type": "code",
+      "label": "Persist pointer",
+      "description": "Write the chosen paper to official_guideline_pointers with source='workflow'. A reviewer can promote it to source='reviewer' or replace it.",
+      "python_source": "# See SqlaOfficialGuidelineRepo.upsert\nreturn {'ok': True}",
+      "prompt_mode": "agentic",
+      "max_retry": 1
+    },
+    {
+      "node_id": "end",
+      "node_type": "end",
+      "label": "End",
+      "prompt_mode": "agentic"
+    }
+  ],
+  "edges": [
+    {"source_node_id": "start", "target_node_id": "pubmed-esearch"},
+    {"source_node_id": "pubmed-esearch", "target_node_id": "parse-pmids"},
+    {"source_node_id": "parse-pmids", "target_node_id": "pubmed-esummary"},
+    {"source_node_id": "pubmed-esummary", "target_node_id": "format-candidates"},
+    {"source_node_id": "format-candidates", "target_node_id": "rank-with-gemma"},
+    {"source_node_id": "rank-with-gemma", "target_node_id": "verify-candidate"},
+    {"source_node_id": "verify-candidate", "target_node_id": "persist-pointer"},
+    {"source_node_id": "persist-pointer", "target_node_id": "end"}
+  ]
+}

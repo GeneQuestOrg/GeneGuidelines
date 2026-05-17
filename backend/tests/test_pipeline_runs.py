@@ -36,10 +36,16 @@ class PipelineRunsTests(unittest.TestCase):
             ):
                 payload = pipeline_router.list_pipeline_runs()
             runs = payload["runs"]
-            self.assertEqual(len(runs), 2)
-            self.assertEqual(runs[0]["execution_id"], "g-1")
-            self.assertEqual(runs[0]["pipeline"], "guideline")
-            pipelines = {r["pipeline"] for r in runs}
+            # The endpoint also surfaces bootstrap finder runs from
+            # guideline_run_results, so we assert on the contents of the
+            # in-memory fixture rather than the total length.
+            in_memory_runs = [
+                r for r in runs if r["execution_id"] in {"g-1", "d-1"}
+            ]
+            self.assertEqual(len(in_memory_runs), 2)
+            guideline = next(r for r in in_memory_runs if r["execution_id"] == "g-1")
+            self.assertEqual(guideline["pipeline"], "guideline")
+            pipelines = {r["pipeline"] for r in in_memory_runs}
             self.assertIn("doctor_finder", pipelines)
         finally:
             with agent_router._AGENT_STORAGE_LOCK:

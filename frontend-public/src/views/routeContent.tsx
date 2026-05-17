@@ -12,6 +12,7 @@ import { DoctorProfileView } from "./DoctorProfileView";
 import { AccountView } from "./AccountView";
 import { ResearchRunView } from "./ResearchRunView";
 import { StartResearchView } from "./StartResearchView";
+import { AddDiseaseView } from "./AddDiseaseView";
 import { TrialsView } from "./TrialsView";
 
 export interface RouteContentProps {
@@ -70,6 +71,8 @@ export function routeContent({
           onNav={onNav}
         />
       );
+    case "addDisease":
+      return <AddDiseaseView onNav={onNav} />;
     case "trials":
       return <TrialsView initialQuery={route.query} onNav={onNav} />;
     case "flowchart":
