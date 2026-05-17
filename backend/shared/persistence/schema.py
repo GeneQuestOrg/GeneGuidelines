@@ -245,6 +245,36 @@ disease_foundations = Table(
 )
 
 
+# Private case context uploaded by a parent / clinician. We store the
+# Gemma-extracted, PII-free JSON. The original text is held only in memory
+# while the redaction runs and is discarded immediately afterwards — the
+# raw bytes never reach disk and never reach the synthesis model.
+private_contexts = Table(
+    "private_contexts",
+    metadata,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column(
+        "disease_slug",
+        Text,
+        ForeignKey("diseases.slug", ondelete="CASCADE"),
+        nullable=False,
+    ),
+    Column("original_filename", Text, nullable=False),
+    Column("original_chars", Integer, nullable=False, server_default="0"),
+    Column("uploaded_at", Text, nullable=False),
+    Column("redacted_json", Text, nullable=False, server_default="{}"),
+    Column("pii_tokens_removed", Integer, nullable=False, server_default="0"),
+    Column("clinical_facts_extracted", Integer, nullable=False, server_default="0"),
+    Column("model_used", Text, nullable=False, server_default=""),
+    Column("status", Text, nullable=False, server_default="pending"),
+    Column("error", Text),
+    CheckConstraint(
+        "status IN ('pending','ready','failed')",
+        name="private_context_status_enum",
+    ),
+)
+
+
 __all__ = [
     "metadata",
     "diseases",
@@ -257,4 +287,5 @@ __all__ = [
     "therapies",
     "foundations",
     "disease_foundations",
+    "private_contexts",
 ]

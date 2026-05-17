@@ -14,6 +14,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from .foundations import Foundation
 from .models import Disease
+from .private_context import PrivateContext, RedactedFacts
 from .therapies import Therapy
 from .trials_models import Trial
 
@@ -154,9 +155,48 @@ class FoundationResponse(BaseModel):
         )
 
 
+class PrivateContextResponse(BaseModel):
+    """Public-safe view of a private context — already redacted by Gemma 4.
+
+    The ``redacted`` field carries the Pydantic-validated, PII-free clinical
+    facts. The original text is never persisted and never serialised here.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    id: int
+    diseaseSlug: str
+    originalFilename: str
+    originalChars: int
+    uploadedAt: str
+    redacted: RedactedFacts
+    piiTokensRemoved: int
+    clinicalFactsExtracted: int
+    modelUsed: str
+    status: Literal["pending", "ready", "failed"]
+    error: str | None = None
+
+    @classmethod
+    def from_domain(cls, ctx: PrivateContext) -> "PrivateContextResponse":
+        return cls(
+            id=ctx.id,
+            diseaseSlug=ctx.disease_slug,
+            originalFilename=ctx.original_filename,
+            originalChars=ctx.original_chars,
+            uploadedAt=ctx.uploaded_at,
+            redacted=ctx.redacted,
+            piiTokensRemoved=ctx.pii_tokens_removed,
+            clinicalFactsExtracted=ctx.clinical_facts_extracted,
+            modelUsed=ctx.model_used,
+            status=ctx.status,  # type: ignore[arg-type]
+            error=ctx.error,
+        )
+
+
 __all__ = [
     "DiseaseResponse",
     "TrialResponse",
     "TherapyResponse",
     "FoundationResponse",
+    "PrivateContextResponse",
 ]

@@ -195,6 +195,23 @@ def ensure_content_schema() -> None:
         )
         """
     )
+    cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS private_contexts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            disease_slug TEXT NOT NULL REFERENCES diseases(slug) ON DELETE CASCADE,
+            original_filename TEXT NOT NULL,
+            original_chars INTEGER NOT NULL DEFAULT 0,
+            uploaded_at TEXT NOT NULL,
+            redacted_json TEXT NOT NULL DEFAULT '{}',
+            pii_tokens_removed INTEGER NOT NULL DEFAULT 0,
+            clinical_facts_extracted INTEGER NOT NULL DEFAULT 0,
+            model_used TEXT NOT NULL DEFAULT '',
+            status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','ready','failed')),
+            error TEXT
+        )
+        """
+    )
     conn.commit()
     conn.close()
     ensure_guideline_prompt_column()

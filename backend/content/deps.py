@@ -15,6 +15,11 @@ from .foundations import (
     FoundationService,
     SqlaFoundationRepo,
 )
+from .private_context import (
+    PrivateContextRepo,
+    PrivateContextService,
+    SqlaPrivateContextRepo,
+)
 from .repository import DiseaseRepo, SqlaDiseaseRepo
 from .service import DiseaseService, DoctorCountProvider
 from .therapies import SqlaTherapyRepo, TherapyRepo, TherapyService
@@ -85,6 +90,17 @@ def provide_foundation_service(
     )
 
 
+def provide_private_context_repo() -> PrivateContextRepo:
+    return SqlaPrivateContextRepo()
+
+
+def provide_private_context_service(
+    repo: PrivateContextRepo = Depends(provide_private_context_repo),
+    disease_repo: DiseaseRepo = Depends(provide_disease_repo),
+) -> PrivateContextService:
+    return PrivateContextService(repo=repo, disease_repo=disease_repo)
+
+
 __all__ = [
     "provide_disease_repo",
     "provide_doctor_count",
@@ -95,4 +111,6 @@ __all__ = [
     "provide_therapy_service",
     "provide_foundation_repo",
     "provide_foundation_service",
+    "provide_private_context_repo",
+    "provide_private_context_service",
 ]

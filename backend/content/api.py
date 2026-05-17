@@ -6,25 +6,31 @@ live in :mod:`backend.content.service` and :mod:`backend.content.repository`.
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 
 from .contracts import (
     DiseaseResponse,
     FoundationResponse,
+    PrivateContextResponse,
     TherapyResponse,
     TrialResponse,
 )
 from .deps import (
     provide_disease_service,
     provide_foundation_service,
+    provide_private_context_service,
     provide_therapy_service,
     provide_trial_service,
 )
 from .foundations import FoundationService
+from .private_context import PrivateContextService
 from .research_runs import list_active_runs, to_payload
 from .service import DiseaseService
 from .therapies import TherapyService
 from .trials_service import TrialService
+
+
+_MAX_UPLOAD_BYTES = 4 * 1024 * 1024  # 4 MB; discharges are typically <1 MB
 
 router = APIRouter(tags=["content"])
 
@@ -104,6 +110,56 @@ def list_foundations(
 ) -> list[FoundationResponse]:
     """Every foundation in the catalog, sorted by name."""
     return [FoundationResponse.from_domain(f) for f in service.list_all()]
+
+
+@router.post(
+    "/diseases/{slug}/private-context",
+    response_model=PrivateContextResponse,
+)
+async def upload_private_context(
+    slug: str,
+    file: UploadFile = File(..., description="Discharge summary, lab result, or report (.txt, .md, .pdf)."),
+    service: PrivateContextService = Depends(provide_private_context_service),
+) -> PrivateContextResponse:
+    """Upload a private discharge / report. Gemma 4 strips PII before anything persists.
+
+    The endpoint reads the upload into memory, hands the bytes to the service,
+    and returns once Gemma 4 has produced a validated :class:`RedactedFacts`
+    payload. The original text is **never** written to disk; only the
+    de-identified JSON is persisted.
+    """
+    raw_bytes = await file.read()
+    if len(raw_bytes) > _MAX_UPLOAD_BYTES:
+        raise HTTPException(
+            status_code=413,
+            detail=f"File too large ({len(raw_bytes)} bytes > {_MAX_UPLOAD_BYTES}).",
+        )
+    if len(raw_bytes) == 0:
+        raise HTTPException(status_code=400, detail="Empty upload.")
+
+    context = await service.upload_and_redact(
+        slug=slug,
+        filename=file.filename or "upload",
+        raw_bytes=raw_bytes,
+    )
+    if context is None:
+        raise HTTPException(status_code=404, detail="Disease not found")
+    return PrivateContextResponse.from_domain(context)
+
+
+@router.get(
+    "/diseases/{slug}/private-contexts",
+    response_model=list[PrivateContextResponse],
+)
+def list_private_contexts(
+    slug: str,
+    service: PrivateContextService = Depends(provide_private_context_service),
+) -> list[PrivateContextResponse]:
+    """List the private contexts uploaded for ``slug``, newest first."""
+    contexts = service.list_for_disease(slug)
+    if contexts is None:
+        raise HTTPException(status_code=404, detail="Disease not found")
+    return [PrivateContextResponse.from_domain(c) for c in contexts]
 
 
 @router.get("/research-runs")
