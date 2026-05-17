@@ -102,6 +102,36 @@ We intend that record (the **audit corpus**) to feed the training and alignment 
 
 Every reviewer decision counts twice: once for the patient on the page, once for the model that learns from the trace.
 
+## Why Gemma 4 specifically
+
+Three properties of the Gemma 4 family decide the architecture, not the
+marketing:
+
+1. **Edge-deployable.** The E4B variant runs on a clinician's laptop or a
+   hospital server. A discharge summary uploaded by a parent is parsed,
+   PII-stripped, and turned into a structured `RedactedFacts` JSON
+   **without the raw text ever leaving the operator's infrastructure**. The
+   cloud-hosted synthesis model only ever sees de-identified facts. That is
+   not a policy promise — it is a property of the data flow.
+2. **Cost profile that fits a foundation.** PubMed produces ~30 new
+   rare-disease papers a day; a real living guideline workflow needs to
+   triage and extract from thousands of documents a month per disease.
+   Running Gemma 4 on the operator's own hardware (or a flat-rate
+   inference endpoint) keeps that volume affordable, which keeps the
+   evidence horizon long. A token-priced API would force triage shortcuts
+   that the architecture is explicitly designed to avoid.
+3. **Function-calling + structured output.** Every Gemma 4 call in the
+   system returns a Pydantic-validated payload. `RedactedFacts`,
+   `ClinicalFinding`, the per-paragraph PR diff schemas — the model is held
+   to a contract on every step. A clinician's downstream rules can rely on
+   field types, not on prompt vibes.
+
+We are aware of the context problem in long-form clinical reasoning. The
+workflow is built around it: cheap edge calls triage and extract structured
+fragments, a heavier model synthesises against the *fragments* (not the raw
+abstract pile), and the deterministic engine controls flow between calls.
+The agent is free *inside* a node; the engine is in charge *between* nodes.
+
 ## Clinical partnerships
 
 We are working with researchers in fibrous dysplasia and McCune–Albright syndrome at the **International FD/MAS Consortium (Leiden University Medical Center)**, **Sapienza University of Rome**, and **UCSF**, alongside a Polish network of specialists. These groups inform the design of the platform and will be among the first to use it for guideline review. Individual reviewers are credited on the documents they sign off, not in the repository front matter.
@@ -127,6 +157,50 @@ make ship       # the gate that must be green before a release tag
 | [`docs/adr/`](docs/adr/) | Architecture Decision Records |
 | [`CLAUDE.md`](CLAUDE.md) | Developer reference: env vars, conventions, commands |
 | [`backend/README.md`](backend/README.md) | Backend folder layout (current vs target module-first structure) |
+
+## What's next
+
+The Kaggle submission ships the engine, the FD living guideline with PMID
+provenance, the doctor / trial / therapy / foundation modules, the
+private-context upload with Gemma 4 PII redaction, the editable workflow,
+and the live "active research" projection. The next layer of the product —
+the pieces we did not build in the deadline window — is concrete and short:
+
+- **Official guideline pointer per disease.** Every disease detail page
+  surfaces a "ground truth" block alongside the AI-maintained living
+  document: the international consensus paper, with title, authors,
+  journal, PMID, and a link to the source. For fibrous dysplasia that is
+  Javaid, Boyce, Appelman-Dijkstra et al. 2019
+  ([Orphanet J Rare Dis, PMID 31337488](https://link.springer.com/article/10.1186/s13023-019-1102-9));
+  for MAS and Noonan the same slot is populated by a small "find-the-consensus"
+  workflow that queries PubMed for the recognised guideline paper and
+  promotes it to the disease record once a reviewer confirms it.
+- **Three parent pathways per disease, not one.** The current
+  `care_pathways` table holds a single diagnosis pathway; the design
+  splits it into three flowcharts a parent can navigate independently:
+  *Confirming the diagnosis and its subtype* (which test, in what order,
+  what counts as definitive), *Long-term monitoring* (what to measure, how
+  often, and at what threshold to escalate to a therapy decision), and
+  *On treatment / after surgery* (drug-specific follow-up, post-operative
+  rehabilitation, when a deviation warrants a return to the specialist).
+  Schema extension: `care_pathways.kind` enum
+  (`diagnosis | monitoring | post_treatment`).
+- **Reviewer accounts with verification.** A clinician submits an ORCID +
+  institutional affiliation, an admin approves, and the reviewer can then
+  edit paragraphs by instruction ("change X because Y") or directly
+  (commit-message style explanation). Disagreement between two verified
+  reviewers on the same paragraph surfaces as a meta-PR — "experts
+  disagree, here is why" — instead of the system pretending consensus.
+- **Subscriptions for families.** A parent attaches a private context for
+  their child's condition and opts in to a notification when a new trial
+  matches the extracted facts, when a PR changes the recommendation for
+  the documented mutation, or when a new specialist is added to the
+  catalog in their region. Schema is straightforward; the policy work
+  (cadence, opt-out, language, who owns the email channel) is where the
+  care needs to go.
+
+These four pieces are in `docs/produkty/geneguidelines/workbench-live-demo.md`
+in the design folder; the order above is the order we ship them in.
 
 ## License
 
