@@ -25,9 +25,8 @@
 
 .foundation-card__head {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 10px;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .foundation-card__name {
@@ -35,6 +34,7 @@
   color: var(--ink);
   font-size: var(--fs-md);
   text-decoration: none;
+  line-height: 1.25;
 }
 
 .foundation-card__name:hover {
@@ -44,8 +44,9 @@
 .foundation-card__scope {
   font-family: var(--font-mono);
   font-size: var(--fs-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
   color: var(--ink-3);
-  white-space: nowrap;
 }
 
 .foundation-card__loc {

@@ -125,7 +125,40 @@ export function DiseaseTabs({
               </div>
             </Section>
 
+            {previewDoctors.length > 0 ? (
+              <Section
+                title="Specialists"
+                sub={copy.doctorsSub(disease.doctorsCount)}
+                divider
+              >
+                <div className="d-doctors-preview">
+                  {previewDoctors.slice(0, 3).map((doctor) => (
+                    <DoctorCard
+                      key={doctor.slug}
+                      doctor={doctor}
+                      km={doctor.km}
+                      compact
+                      onNav={onNav}
+                    />
+                  ))}
+                </div>
+                <div className="page__actions">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => setTab("doctors")}
+                  >
+                    See all specialists →
+                  </Button>
+                </div>
+              </Section>
+            ) : null}
+
             <Section title="Therapies" divider>
+              <p className="d-panel-note">
+                These options manage symptoms and slow progression — none of them fully reverses
+                established disease changes.
+              </p>
               {therapiesError != null ? (
                 <p className="d-panel-empty" role="alert">{therapiesError}</p>
               ) : therapiesLoading ? (

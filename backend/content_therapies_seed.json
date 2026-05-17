@@ -24,7 +24,7 @@
       {
         "name": "Surgery",
         "status": "pending",
-        "note": "Only after skeletal maturity and a compelling reason (optic nerve compression, severe deformity). Not in children."
+        "note": "Reserved for clinical necessity — optic nerve compression, severe pain unresponsive to medical therapy, severe deformity. Generally deferred until skeletal maturity because of high recurrence in growing bone, but exceptions exist when function or vision is at risk."
       },
       {
         "name": "MEK inhibitors",

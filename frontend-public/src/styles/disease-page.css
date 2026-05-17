@@ -253,6 +253,15 @@
   line-height: 1.5;
 }
 
+.d-panel-note {
+  font-size: var(--fs-sm);
+  color: var(--ink-3);
+  font-style: italic;
+  margin: 0 0 12px;
+  max-width: 62ch;
+  line-height: 1.5;
+}
+
 .new-disease-card {
   display: flex;
   flex-direction: column;

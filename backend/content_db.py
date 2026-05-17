@@ -1086,24 +1086,31 @@ def seed_therapies_from_file() -> None:
                 "preclinical",
             ):
                 continue
+            note = str(therapy.get("note") or "")
             cur.execute(
-                "SELECT 1 FROM therapies WHERE disease_slug = ? AND name = ?",
+                "SELECT id FROM therapies WHERE disease_slug = ? AND name = ?",
                 (slug, name),
             )
-            if cur.fetchone() is not None:
+            existing = cur.fetchone()
+            if existing is not None:
+                # Re-apply the seed text on every boot. The seed file is the
+                # source of truth; if a clinician edits notes via an admin
+                # tool we will need a dirty flag — Phase 2 concern.
+                cur.execute(
+                    """
+                    UPDATE therapies
+                    SET status = ?, note = ?, sort_order = ?
+                    WHERE id = ?
+                    """,
+                    (status, note, index, int(existing["id"])),
+                )
                 continue
             cur.execute(
                 """
                 INSERT INTO therapies (disease_slug, name, status, note, sort_order)
                 VALUES (?, ?, ?, ?, ?)
                 """,
-                (
-                    slug,
-                    name,
-                    status,
-                    str(therapy.get("note") or ""),
-                    index,
-                ),
+                (slug, name, status, note, index),
             )
     conn.commit()
     conn.close()
