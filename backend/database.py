@@ -208,6 +208,7 @@ def init_db():
             seed_official_guidelines_from_file,
             seed_therapies_from_file,
             seed_trials_from_file,
+            sync_guideline_document_bodies_from_file,
         )
     except ImportError:
         from content_db import (  # type: ignore[no-redef]
@@ -218,6 +219,7 @@ def init_db():
             seed_official_guidelines_from_file,
             seed_therapies_from_file,
             seed_trials_from_file,
+            sync_guideline_document_bodies_from_file,
         )
     ensure_content_schema()
     seed_content_if_empty()
@@ -226,6 +228,13 @@ def init_db():
     seed_therapies_from_file()
     seed_foundations_from_file()
     seed_official_guidelines_from_file()
+    # Re-run the guideline body sync now that diseases + guideline_documents
+    # rows exist. ensure_content_schema() already calls this once, but at
+    # that point guideline_documents has no rows yet (seed_content_if_empty
+    # populates them next). Running it again here fills sections_json on a
+    # cold-start DB so the PR approve flow has a document body to apply
+    # diffs against without depending on a lazy-load read first.
+    sync_guideline_document_bodies_from_file()
     try:
         from .guideline_run_store import ensure_guideline_run_results_schema
     except ImportError:
