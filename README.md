@@ -28,7 +28,17 @@ The workflow itself is treated as a living artefact: reviewer feedback on
 each PR feeds the next iteration, and the clinicians we collaborate with also
 shape the workflow shape — adjusting prompts, evidence tiers, approval gates —
 so it converges on how a rare-disease consortium actually works, not on how a
-solo engineer guessed.
+solo engineer guessed. The target shape is the way Javaid, Boyce,
+Appelman-Dijkstra et al. drafted the [2019 FD/MAS international consensus](https://link.springer.com/article/10.1186/s13023-019-1102-9) —
+structured rounds of evidence review, explicit evidence tiers, named votes —
+expressed as a flow definition that any member of the consortium can edit.
+
+The corpus that feeds those reviews isn't only PubMed. Parents can attach
+the hospital discharge summary or histopathology report that never made it
+into the literature, and that private context is used when drafting the next
+update for their child's condition — the same case material that would
+otherwise sit in a folder waiting to become a case report nobody had time to
+write.
 
 Two surfaces over one backend:
 
