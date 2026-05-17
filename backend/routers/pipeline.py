@@ -4,7 +4,11 @@ from __future__ import annotations
 import asyncio
 from typing import Literal
 
-from fastapi import APIRouter, Depends, HTTPException
+import os
+import threading
+import time
+
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field, model_validator
 
 from .. import database as db
@@ -357,6 +361,64 @@ async def start_official_guidelines_run(body: OfficialGuidelinesRunBody):
     }
 
 
+# --- per-IP rate limit for the public bootstrap endpoint -----------------
+# Jurors hit a public demo URL; one /bootstrap-disease call fans out 6
+# AI workflows, so an unthrottled loop could rack up real spend fast. We
+# enforce a small per-IP sliding-window cap in memory. The OpenRouter
+# dashboard's per-month spending cap is the hard-stop backstop the
+# operator should also set.
+_BOOTSTRAP_RATE_LIMIT_WINDOW_SEC = int(
+    (os.environ.get("BOOTSTRAP_RATE_LIMIT_WINDOW_SEC") or "").strip() or 86_400
+)
+_BOOTSTRAP_RATE_LIMIT_MAX_PER_IP = int(
+    (os.environ.get("BOOTSTRAP_RATE_LIMIT_MAX_PER_IP") or "").strip() or 3
+)
+_BOOTSTRAP_RATE_LIMIT_MAX_PER_WINDOW = int(
+    (os.environ.get("BOOTSTRAP_RATE_LIMIT_MAX_PER_WINDOW") or "").strip() or 50
+)
+_BOOTSTRAP_RATE_HISTORY: dict[str, list[float]] = {}
+_BOOTSTRAP_RATE_LOCK = threading.Lock()
+
+
+def _check_bootstrap_rate_limit(ip: str) -> None:
+    """Raise 429 when the caller IP has exceeded its share of the window.
+
+    Maintains a sliding window per IP plus a global cap so one IP cannot
+    burn the whole budget and a botnet rotating IPs cannot either.
+    """
+    now = time.time()
+    cutoff = now - _BOOTSTRAP_RATE_LIMIT_WINDOW_SEC
+    with _BOOTSTRAP_RATE_LOCK:
+        # Drop entries outside the window and prune empty buckets.
+        for stored_ip, stamps in list(_BOOTSTRAP_RATE_HISTORY.items()):
+            stamps[:] = [t for t in stamps if t >= cutoff]
+            if not stamps:
+                _BOOTSTRAP_RATE_HISTORY.pop(stored_ip, None)
+        per_ip = _BOOTSTRAP_RATE_HISTORY.get(ip, [])
+        total = sum(len(v) for v in _BOOTSTRAP_RATE_HISTORY.values())
+        if len(per_ip) >= _BOOTSTRAP_RATE_LIMIT_MAX_PER_IP:
+            raise HTTPException(
+                status_code=429,
+                detail=(
+                    f"Demo rate limit: {_BOOTSTRAP_RATE_LIMIT_MAX_PER_IP} disease "
+                    f"bootstraps per address per "
+                    f"{_BOOTSTRAP_RATE_LIMIT_WINDOW_SEC // 3600}h. "
+                    "Contact hello@genequest.org for higher quota."
+                ),
+            )
+        if total >= _BOOTSTRAP_RATE_LIMIT_MAX_PER_WINDOW:
+            raise HTTPException(
+                status_code=429,
+                detail=(
+                    f"Demo rate limit: global cap of "
+                    f"{_BOOTSTRAP_RATE_LIMIT_MAX_PER_WINDOW} bootstraps per "
+                    f"{_BOOTSTRAP_RATE_LIMIT_WINDOW_SEC // 3600}h reached. "
+                    "Try again later."
+                ),
+            )
+        _BOOTSTRAP_RATE_HISTORY.setdefault(ip, []).append(now)
+
+
 class BootstrapDiseaseBody(BaseModel):
     """Create a catalog disease (minimal payload) and fan out all research workflows.
 
@@ -377,15 +439,21 @@ class BootstrapDiseaseBody(BaseModel):
 
 
 @router.post("/bootstrap-disease")
-async def bootstrap_disease(body: BootstrapDiseaseBody):
+async def bootstrap_disease(body: BootstrapDiseaseBody, request: Request):
     """One-action workflow: create a disease row, then fire all research workflows.
 
     Idempotent on the disease row (INSERT OR IGNORE on slug); workflows always
     fire, so calling twice is safe but will run the research workflows a second
     time. Returns the dict of execution ids the frontend can poll
     ``/api/research-runs`` against to render progress.
+
+    Rate-limited per caller IP (default 3 per 24 h) to keep public demos from
+    burning model spend.
     """
     import json as _json
+
+    client_ip = (request.client.host if request.client else "") or "unknown"
+    _check_bootstrap_rate_limit(client_ip)
 
     slug = body.slug.strip()
     if not slug:

@@ -17,7 +17,7 @@ load_dotenv(BACKEND_DIR.parent / ".env")
 load_dotenv(BACKEND_DIR / ".env")
 
 # Agent model (Pydantic AI) — global default
-DEFAULT_MODEL_NAME = os.environ.get("DEFAULT_LLM_MODEL", "openai:gpt-4o-mini").strip() or "openai:gpt-4o-mini"
+DEFAULT_MODEL_NAME = os.environ.get("DEFAULT_LLM_MODEL", "openai:gpt-5.4-mini").strip() or "openai:gpt-5.4-mini"
 
 # Model profiles selectable per run (?profile=production|test|openrouter):
 #   - "production": OpenAI (DEFAULT_SIMPLE_LLM_MODEL / DEFAULT_AGENTIC_LLM_MODEL)
@@ -32,10 +32,27 @@ _TEST_AGENTIC = (os.environ.get("MODEL_PROFILE_TEST_AGENTIC") or "").strip() or 
 # Optional per-profile overflow fallback: when the primary model rejects a request with a
 # "context length exceeded" error, the runner retries that node ONCE with this model.
 # Use a big-context model here (e.g. OpenAI gpt-4.1-mini ~1M). Empty/None disables fallback.
-_PROD_OVERFLOW = (os.environ.get("MODEL_PROFILE_PRODUCTION_OVERFLOW") or "").strip() or None
+_PROD_OVERFLOW = (
+    (os.environ.get("MODEL_PROFILE_PRODUCTION_OVERFLOW") or "").strip()
+    or "openai:gpt-5.5"
+)
 _TEST_OVERFLOW = (
     (os.environ.get("MODEL_PROFILE_TEST_OVERFLOW") or "").strip()
-    or "openai:gpt-4.1-mini"
+    or "openai:gpt-5.4-mini"
+)
+
+# Synthesis profile: heavier frontier model for the final guideline-draft step,
+# the "synthesis layer" from the writeup. Gemma 4 stays in the librarian role
+# (fast structured extraction); operators opt in to gpt-5.5 by passing
+# `profile=synthesis` to /api/pipeline/guideline-run when they want a polished
+# clinician-reviewed draft instead of the cheaper everyday run.
+_SYNTHESIS_SIMPLE = (
+    (os.environ.get("MODEL_PROFILE_SYNTHESIS_SIMPLE") or "").strip()
+    or "openai:gpt-5.4"
+)
+_SYNTHESIS_AGENTIC = (
+    (os.environ.get("MODEL_PROFILE_SYNTHESIS_AGENTIC") or "").strip()
+    or "openai:gpt-5.5"
 )
 
 # OpenRouter (OpenAI-compatible). Used when model_spec uses `openrouter:` prefix or profile "openrouter".
@@ -83,6 +100,11 @@ MODEL_PROFILES: dict[str, dict[str, str | None]] = {
         "simple": _OLLAMA_SIMPLE,
         "agentic": _OLLAMA_AGENTIC,
         "overflow": None,
+    },
+    "synthesis": {
+        "simple": _SYNTHESIS_SIMPLE,
+        "agentic": _SYNTHESIS_AGENTIC,
+        "overflow": _PROD_OVERFLOW,
     },
 }
 DEFAULT_MODEL_PROFILE = (os.environ.get("MODEL_PROFILE") or "production").strip().lower() or "production"
