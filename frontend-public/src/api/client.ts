@@ -112,6 +112,33 @@ export async function apiGet<T>(path: string): Promise<T> {
   return parseSuccessJson<T>(res);
 }
 
+export async function apiPostFormData<T>(
+  path: string,
+  formData: FormData,
+): Promise<T> {
+  const base = getApiBaseUrl();
+  const url = `${base}${path.startsWith("/") ? path : `/${path}`}`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { Accept: "application/json", ...apiAuthHeaders() },
+    body: formData,
+  });
+  if (!res.ok) {
+    let detail = res.statusText;
+    try {
+      const raw: unknown = await res.json();
+      detail = errorDetailFromBody(raw) ?? detail;
+    } catch {
+      // ignore parse errors
+    }
+    throw new ApiRequestError(
+      res.status,
+      `Upload failed (${res.status}): ${detail}`,
+    );
+  }
+  return parseSuccessJson<T>(res);
+}
+
 export async function apiPostJson<T>(
   path: string,
   body: unknown,

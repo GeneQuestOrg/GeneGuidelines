@@ -7,6 +7,7 @@ import { DiseaseCard } from "./DiseaseCard";
 import { DoctorCard } from "./DoctorCard";
 import { DiseaseOpenPrList } from "./DiseaseOpenPrList";
 import { FoundationsList } from "./FoundationsList";
+import { PrivateContextPanel } from "./PrivateContextPanel";
 import { TherapiesList } from "./TherapiesList";
 import { TrialsList } from "./TrialsList";
 import { useContentPrs } from "../hooks/useContentPrs";
@@ -176,6 +177,14 @@ export function DiseaseTabs({
               ) : (
                 <FoundationsList foundations={foundations} />
               )}
+            </Section>
+
+            <Section
+              title="Private case context"
+              sub="Powered by Gemma 4 · runs locally · data never leaves this server"
+              divider
+            >
+              <PrivateContextPanel diseaseSlug={slug} />
             </Section>
 
             {disease.related.length > 0 ? (

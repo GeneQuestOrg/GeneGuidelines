@@ -5,6 +5,7 @@ import { apiDoctorRepository } from "./apiDoctorRepository";
 import { apiGuidelineRepository } from "./apiGuidelineRepository";
 import { apiResearchRunsRepository } from "./apiResearchRunsRepository";
 import { apiFoundationRepository } from "./apiFoundationRepository";
+import { apiPrivateContextRepository } from "./apiPrivateContextRepository";
 import { apiTherapyRepository } from "./apiTherapyRepository";
 import { apiTrialRepository } from "./apiTrialRepository";
 import { fixtureContentPrRepository } from "./fixtureContentPrRepository";
@@ -12,6 +13,7 @@ import { fixtureDoctorRepository } from "./fixtureDoctorRepository";
 import { fixtureDiseaseRepository } from "./fixtureDiseaseRepository";
 import { fixtureFoundationRepository } from "./fixtureFoundationRepository";
 import { fixtureGuidelineRepository } from "./fixtureGuidelineRepository";
+import { fixturePrivateContextRepository } from "./fixturePrivateContextRepository";
 import { fixtureResearchRunsRepository } from "./fixtureResearchRunsRepository";
 import { fixtureTherapyRepository } from "./fixtureTherapyRepository";
 import { fixtureTrialRepository } from "./fixtureTrialRepository";
@@ -21,6 +23,7 @@ import type {
   DiseaseRepository,
   FoundationRepository,
   GuidelineRepository,
+  PrivateContextRepository,
   ResearchRunsRepository,
   TherapyRepository,
   TrialRepository,
@@ -32,6 +35,7 @@ export type {
   DiseaseRepository,
   FoundationRepository,
   GuidelineRepository,
+  PrivateContextRepository,
   ResearchRunsRepository,
   TherapyRepository,
   TrialRepository,
@@ -48,6 +52,7 @@ export interface Repositories {
   trials: TrialRepository;
   therapies: TherapyRepository;
   foundations: FoundationRepository;
+  privateContexts: PrivateContextRepository;
 }
 
 export function getRepositories(): Repositories {
@@ -62,6 +67,7 @@ export function getRepositories(): Repositories {
       trials: apiTrialRepository,
       therapies: apiTherapyRepository,
       foundations: apiFoundationRepository,
+      privateContexts: apiPrivateContextRepository,
     };
   }
   return {
@@ -73,6 +79,7 @@ export function getRepositories(): Repositories {
     trials: fixtureTrialRepository,
     therapies: fixtureTherapyRepository,
     foundations: fixtureFoundationRepository,
+    privateContexts: fixturePrivateContextRepository,
   };
 }
 

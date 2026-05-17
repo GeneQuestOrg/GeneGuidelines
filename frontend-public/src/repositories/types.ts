@@ -3,6 +3,7 @@ import type { GuidelinePrDetail } from "../types/contentPr";
 import type { DiseaseDoctorsPayload, PublicDoctor } from "../types/doctor";
 import type { Foundation } from "../types/foundation";
 import type { GuidelineDocument } from "../types/guidelineDocument";
+import type { PrivateContext } from "../types/privateContext";
 import type { ResearchRun } from "../types/researchRun";
 import type { Therapy } from "../types/therapy";
 import type { Trial } from "../types/trial";
@@ -50,4 +51,9 @@ export interface TherapyRepository {
 
 export interface FoundationRepository {
   listForDisease(diseaseSlug: string): Promise<readonly Foundation[]>;
+}
+
+export interface PrivateContextRepository {
+  upload(diseaseSlug: string, file: File): Promise<PrivateContext | null>;
+  listForDisease(diseaseSlug: string): Promise<readonly PrivateContext[]>;
 }
