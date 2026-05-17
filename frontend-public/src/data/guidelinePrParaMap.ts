@@ -16,7 +16,7 @@ export const GUIDELINE_PR_PARA_MAP: Readonly<
     addedParagraph: {
       id: "sx-optic-add",
       text: "For asymptomatic patients with radiologically confirmed optic canal involvement: orbital MRI with contrast every 12 months. Clinically: visual fields and OCT every 6 months.",
-      citations: ["38445566", "38556677"],
+      citations: ["37184453", "30176400"],
       lastChange: { type: "pending", by: "PR-141", date: "2026-05-05" },
     },
   },

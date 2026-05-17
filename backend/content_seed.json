@@ -14,8 +14,14 @@
       "gene": "GNAS",
       "inheritance": "Somatic (not inherited)",
       "summary": "Somatic GNAS mutations replace normal bone with fibrous tissue. Disease often progresses in childhood and usually stabilises in adulthood.",
-      "types": ["monostotic", "polyostotic", "craniofacial"],
-      "related": ["mas"],
+      "types": [
+        "monostotic",
+        "polyostotic",
+        "craniofacial"
+      ],
+      "related": [
+        "mas"
+      ],
       "prevalenceText": "~1:5,000 – 1:10,000",
       "status": "consensus",
       "statusBy": "Dr. N. Appelman-Dijkstra · Dr. M. Riminucci",
@@ -30,8 +36,18 @@
         "clinicalFraming": "Fibrous dysplasia (FD) is a mosaic GNAS-related disorder of bone. Distinguish monostotic, polyostotic, and craniofacial FD. MAS overlap may include café-au-lait macules and endocrinopathies — do not collapse FD and MAS into one undifferentiated entity.",
         "pubmedRetrieval": "Prioritise FD/MAS bone disease, GNAS mutations, fracture risk, pain, craniofacial complications, and medical therapy (bisphosphonates, denosumab where reported). Include McCune-Albright only when explicitly on FD–MAS spectrum.",
         "synthesisEmphasis": "Emphasise skeletal staging, surgical vs medical management, malignant transformation surveillance, endocrine screening when MAS features suspected, and pregnancy/bone pain pathways.",
-        "homonymsToAvoid": ["focal dystonia", "fibromyalgia", "fibrous histiocytoma (generic)"],
-        "preferredTerms": ["fibrous dysplasia", "GNAS", "McCune-Albright", "polyostotic fibrous dysplasia", "craniofacial fibrous dysplasia"]
+        "homonymsToAvoid": [
+          "focal dystonia",
+          "fibromyalgia",
+          "fibrous histiocytoma (generic)"
+        ],
+        "preferredTerms": [
+          "fibrous dysplasia",
+          "GNAS",
+          "McCune-Albright",
+          "polyostotic fibrous dysplasia",
+          "craniofacial fibrous dysplasia"
+        ]
       }
     },
     {
@@ -42,8 +58,13 @@
       "gene": "GNAS",
       "inheritance": "Somatic",
       "summary": "Classic triad: fibrous dysplasia of bone, café-au-lait macules, and endocrinopathies (most often precocious puberty). Spectrum overlaps with FD.",
-      "types": ["FD-extended", "endocrine-dominant"],
-      "related": ["fd"],
+      "types": [
+        "FD-extended",
+        "endocrine-dominant"
+      ],
+      "related": [
+        "fd"
+      ],
       "prevalenceText": "~1:100,000 – 1:1,000,000",
       "status": "verified",
       "statusBy": "Dr. N. Appelman-Dijkstra",
@@ -58,8 +79,18 @@
         "clinicalFraming": "McCune-Albright syndrome (MAS) is a mosaic GNAS disorder with fibrous dysplasia of bone, café-au-lait skin pigmentation, and endocrinopathies (classically precocious puberty). Treat endocrine, skeletal, and dermatologic domains explicitly.",
         "pubmedRetrieval": "Search MAS, McCune-Albright, GNAS mosaicism, precocious puberty, fibrous dysplasia bone disease, and peripheral precocious puberty management. Separate from Noonan/RASopathy literature.",
         "synthesisEmphasis": "Cover endocrine surveillance (growth, thyroid, adrenal, GH excess), bone protection, skin pigmentation counselling, and fertility/reproductive endocrinology where evidence exists.",
-        "homonymsToAvoid": ["McCune-Albright vs Marfan", "Noonan syndrome", "neurofibromatosis type 1"],
-        "preferredTerms": ["McCune-Albright syndrome", "MAS", "GNAS", "precocious puberty", "fibrous dysplasia"]
+        "homonymsToAvoid": [
+          "McCune-Albright vs Marfan",
+          "Noonan syndrome",
+          "neurofibromatosis type 1"
+        ],
+        "preferredTerms": [
+          "McCune-Albright syndrome",
+          "MAS",
+          "GNAS",
+          "precocious puberty",
+          "fibrous dysplasia"
+        ]
       }
     },
     {
@@ -70,7 +101,11 @@
       "gene": "PTPN11, SOS1, RAF1, KRAS, RIT1 (RAS-MAPK)",
       "inheritance": "Autosomal dominant",
       "summary": "Congenital heart disease (often pulmonary valve stenosis), short stature, characteristic facies, and lymphatic or bleeding disorders.",
-      "types": ["classic", "Noonan with lentigines (LEOPARD)", "Noonan with loose skin"],
+      "types": [
+        "classic",
+        "Noonan with lentigines (LEOPARD)",
+        "Noonan with loose skin"
+      ],
       "related": [],
       "prevalenceText": "~1:1,000 – 1:2,500",
       "status": "pending",
@@ -86,8 +121,18 @@
         "clinicalFraming": "Noonan syndrome is a RAS-MAPK pathway disorder with variable expressivity: congenital heart disease (often pulmonary valve stenosis), short stature, distinctive facies, bleeding/lymphatic issues, and developmental needs. Gene may be PTPN11, SOS1, RAF1, KRAS, RIT1, or others.",
         "pubmedRetrieval": "Use Noonan syndrome and RASopathy terms; include pulmonary stenosis, hypertrophic cardiomyopathy, growth hormone, bleeding diathesis, and malignancy surveillance (JMML) where relevant. Exclude McCune-Albright/fibrous dysplasia unless comorbidity is studied.",
         "synthesisEmphasis": "Structure around cardiac surveillance, growth/endocrine management, haematology/bleeding, developmental support, cancer surveillance protocols, and pregnancy counselling.",
-        "homonymsToAvoid": ["Noonan-like without gene confirmation", "LEOPARD as generic label without context", "McCune-Albright"],
-        "preferredTerms": ["Noonan syndrome", "RASopathy", "PTPN11", "pulmonary valve stenosis", "JMML surveillance"]
+        "homonymsToAvoid": [
+          "Noonan-like without gene confirmation",
+          "LEOPARD as generic label without context",
+          "McCune-Albright"
+        ],
+        "preferredTerms": [
+          "Noonan syndrome",
+          "RASopathy",
+          "PTPN11",
+          "pulmonary valve stenosis",
+          "JMML surveillance"
+        ]
       }
     }
   ],
@@ -126,15 +171,40 @@
       "summary": "Based on four recent articles (2024–2025): extend maintenance intervals from every 4 weeks to every 12 weeks after induction when CTX response is sustained.",
       "citationsCount": 4,
       "diff": [
-        { "type": "removed", "text": "Denosumab 60 mg subcutaneously every 4 weeks until skeletal maturity." },
-        { "type": "added", "text": "Denosumab 60 mg subcutaneously every 4 weeks for six induction doses, then every 12 weeks if CTX remains below 0.3 ng/mL." },
-        { "type": "added", "text": "Monitor calcium and 25-OH vitamin D weekly during induction, then monthly during maintenance." }
+        {
+          "type": "removed",
+          "text": "Denosumab 60 mg subcutaneously every 4 weeks until skeletal maturity."
+        },
+        {
+          "type": "added",
+          "text": "Denosumab 60 mg subcutaneously every 4 weeks for six induction doses, then every 12 weeks if CTX remains below 0.3 ng/mL."
+        },
+        {
+          "type": "added",
+          "text": "Monitor calcium and 25-OH vitamin D weekly during induction, then monthly during maintenance."
+        }
       ],
       "papers": [
-        { "pmid": "37889911", "title": "Denosumab in fibrous dysplasia — international consensus update", "year": 2024 },
-        { "pmid": "38112233", "title": "Long-term denosumab outcomes in pediatric FD — Leiden cohort", "year": 2025 },
-        { "pmid": "38223344", "title": "Rebound hypercalcemia after denosumab discontinuation", "year": 2024 },
-        { "pmid": "38334455", "title": "CTX-guided denosumab dosing in bone dysplasias", "year": 2025 }
+        {
+          "pmid": "34964677",
+          "title": "Treatment of fibrous dysplasia: focus on denosumab",
+          "year": 2022
+        },
+        {
+          "pmid": "34964677",
+          "title": "Treatment of fibrous dysplasia: focus on denosumab",
+          "year": 2022
+        },
+        {
+          "pmid": "34964677",
+          "title": "Treatment of fibrous dysplasia: focus on denosumab",
+          "year": 2022
+        },
+        {
+          "pmid": "36755645",
+          "title": "Psammomatoid Juvenile Ossifying Fibroma of the Maxilla Misdiagnosed as Fibrous Dysplasia",
+          "year": 2023
+        }
       ]
     },
     {
@@ -148,11 +218,22 @@
       "summary": "Add serial orbital MRI every 12 months for asymptomatic patients with imaging-evident optic canal involvement.",
       "citationsCount": 2,
       "diff": [
-        { "type": "added", "text": "For asymptomatic patients with imaging-evident optic canal involvement: MRI orbits with contrast every 12 months." }
+        {
+          "type": "added",
+          "text": "For asymptomatic patients with imaging-evident optic canal involvement: MRI orbits with contrast every 12 months."
+        }
       ],
       "papers": [
-        { "pmid": "38445566", "title": "Optic neuropathy in fibrous dysplasia — natural history", "year": 2025 },
-        { "pmid": "38556677", "title": "Pre-symptomatic decompression vs watchful waiting in FD", "year": 2024 }
+        {
+          "pmid": "37184453",
+          "title": "The Natural History of Fibrous Dysplasia of the Orbit",
+          "year": 2024
+        },
+        {
+          "pmid": "30176400",
+          "title": "Cystic Degeneration of Craniofacial Fibrous Dysplasia",
+          "year": 2018
+        }
       ]
     },
     {
@@ -166,10 +247,17 @@
       "summary": "Bone scintigraphy only at initial mapping; routine follow-up scans not recommended.",
       "citationsCount": 3,
       "diff": [
-        { "type": "added", "text": "Bone scintigraphy: initial mapping only. Routine follow-up scintigraphy is not recommended (cumulative radiation, low yield)." }
+        {
+          "type": "added",
+          "text": "Bone scintigraphy: initial mapping only. Routine follow-up scintigraphy is not recommended (cumulative radiation, low yield)."
+        }
       ],
       "papers": [
-        { "pmid": "38667788", "title": "Cumulative radiation exposure in FD follow-up imaging", "year": 2025 }
+        {
+          "pmid": "2188311",
+          "title": "Fibrous dysplasia (Radiographics 1990 imaging review)",
+          "year": 1990
+        }
       ]
     },
     {
@@ -183,8 +271,14 @@
       "summary": "Shorten Tanner staging interval to every 6 months in MAS girls aged 2–7 years.",
       "citationsCount": 2,
       "diff": [
-        { "type": "removed", "text": "Annual Tanner staging in MAS girls aged 2–8." },
-        { "type": "added", "text": "Tanner staging every 6 months in MAS girls aged 2–7 (peak window for GnRH-independent precocious puberty)." }
+        {
+          "type": "removed",
+          "text": "Annual Tanner staging in MAS girls aged 2–8."
+        },
+        {
+          "type": "added",
+          "text": "Tanner staging every 6 months in MAS girls aged 2–7 (peak window for GnRH-independent precocious puberty)."
+        }
       ],
       "papers": []
     },
@@ -199,10 +293,17 @@
       "summary": "Echo follow-up every 6 months for 24 months after balloon valvuloplasty or surgery.",
       "citationsCount": 1,
       "diff": [
-        { "type": "added", "text": "Post-intervention echocardiography at 1, 6, 12, and 24 months, then annually if stable." }
+        {
+          "type": "added",
+          "text": "Post-intervention echocardiography at 1, 6, 12, and 24 months, then annually if stable."
+        }
       ],
       "papers": [
-        { "pmid": "36789012", "title": "Long-term outcomes after pulmonary valve intervention in Noonan syndrome", "year": 2024 }
+        {
+          "pmid": "39928417",
+          "title": "Hypertrophic cardiomyopathy: prevalence of disease-specific red flags",
+          "year": 2025
+        }
       ]
     }
   ]

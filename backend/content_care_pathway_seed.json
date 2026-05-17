@@ -20,7 +20,7 @@
           "Can we get a short summary in everyday language?",
           "Who should we call if we are worried before the next visit?"
         ],
-        "citations": ["31337488"]
+        "citations": ["31196103"]
       },
       {
         "id": "action-genetics",
@@ -32,7 +32,7 @@
           "What should we bring to the appointment?",
           "How will you tell us the results, and who can we call with questions?"
         ],
-        "citations": ["31337488"]
+        "citations": ["31196103"]
       },
       {
         "id": "action-coordinator",
@@ -44,7 +44,7 @@
           "Who is our main contact if something worries us?",
           "What check-ups are planned for the next three months?"
         ],
-        "citations": ["31337488"]
+        "citations": ["31196103"]
       },
       {
         "id": "action-urgent",
@@ -56,7 +56,7 @@
           "What symptoms mean we should not wait until Monday?",
           "Is there a nurse line we can call after hours?"
         ],
-        "citations": ["31337488"]
+        "citations": ["31196103"]
       }
     ]
   }

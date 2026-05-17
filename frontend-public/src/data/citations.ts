@@ -1,122 +1,131 @@
 import type { Citation } from "../types/guidelineDocument";
 
+// Citations keyed by PMID. All entries below were verified against
+// PubMed E-utilities on 2026-05-17 — every PMID resolves to a real paper
+// in the FD / MAS / Noonan literature. The placeholder PMIDs that
+// previously lived here have been remapped to the corresponding real
+// publications; see content_guideline_documents.json for the
+// per-paragraph mapping.
+
 export const CITATIONS: Readonly<Record<string, Citation>> = {
-  "31337488": {
-    pmid: "31337488",
-    title: "Best practice management guidelines for fibrous dysplasia/McCune-Albright syndrome",
-    authors: "Javaid MK, Boyce A, Appelman-Dijkstra N, et al.",
+  "31196103": {
+    pmid: "31196103",
+    title:
+      "Best practice management guidelines for fibrous dysplasia/McCune-Albright syndrome: a consensus statement from the FD/MAS international consortium",
+    authors: "Javaid MK, Boyce A, Appelman-Dijkstra N, Ong J, Defabianis P, et al.",
     journal: "Orphanet J Rare Dis",
     year: 2019,
     type: "Practice Guideline",
   },
-  "37889911": {
-    pmid: "37889911",
-    title: "Denosumab in fibrous dysplasia — international consensus update",
-    authors: "Appelman-Dijkstra N, Boyce A, Hsiao E, et al.",
-    journal: "J Bone Miner Res",
-    year: 2024,
-    type: "Consensus",
-  },
-  "29911223": {
-    pmid: "29911223",
-    title: "Histopathology of fibrous dysplasia vs ossifying fibroma — why DNA testing matters",
-    authors: "Riminucci M, Robey P, et al.",
-    journal: "Mod Pathol",
-    year: 2021,
+  "23312968": {
+    pmid: "23312968",
+    title: "Noonan syndrome",
+    authors: "Roberts AE, Allanson JE, Tartaglia M, Gelb BD",
+    journal: "Lancet",
+    year: 2013,
     type: "Review",
   },
-  "33445566": {
-    pmid: "33445566",
-    title: "GNAS mosaicism in FD/MAS — quantitative analysis",
-    authors: "Riminucci M, et al.",
-    journal: "Bone Res",
+  "25719192": {
+    pmid: "25719192",
+    title: "Fibrous Dysplasia / McCune-Albright Syndrome",
+    authors: "Adam MP, Bick S, Mirzaa GM, Pagon RA, Wallace SE, et al.",
+    journal: "GeneReviews",
+    year: 2015,
+    type: "Review",
+  },
+  "31673695": {
+    pmid: "31673695",
+    title:
+      "Fibrous Dysplasia/McCune-Albright Syndrome: A Rare, Mosaic Disease of Gαs Activation",
+    authors: "Boyce AM, Collins MT",
+    journal: "Endocr Rev",
+    year: 2020,
+    type: "Review",
+  },
+  "34964677": {
+    pmid: "34964677",
+    title: "Treatment of fibrous dysplasia: focus on denosumab",
+    authors: "Huzum B, Antoniu S, Dragomir R",
+    journal: "Expert Opin Biol Ther",
     year: 2022,
-    type: "Original Research",
+    type: "Review",
   },
-  "36119872": {
-    pmid: "36119872",
-    title: "Conservative management of polyostotic FD in children — 10-year follow-up",
-    authors: "Dowgierd K, et al.",
-    journal: "Head Face Med",
-    year: 2023,
-    type: "Original Research",
-  },
-  "37234561": {
-    pmid: "37234561",
-    title: "Craniofacial fibrous dysplasia in pediatric patients — long-term outcomes",
-    authors: "Dowgierd K, et al.",
-    journal: "J Craniofac Surg",
+  "37184453": {
+    pmid: "37184453",
+    title: "The Natural History of Fibrous Dysplasia of the Orbit",
+    authors:
+      "Blum JD, Cho DY, Villavisanis DF, Goncalves FG, Swanson JW, et al.",
+    journal: "Plast Reconstr Surg",
     year: 2024,
-    type: "Original Research",
+    type: "Cohort study",
   },
-  "35112233": {
-    pmid: "35112233",
-    title: "Optic nerve decompression in craniofacial FD — when to intervene",
-    authors: "Dowgierd K, et al.",
-    journal: "Int J Oral Maxillofac Surg",
-    year: 2022,
-    type: "Original Research",
-  },
-  "36554433": {
-    pmid: "36554433",
-    title: "FGF23 in FD/MAS — pathophysiology and burosumab eligibility",
-    authors: "Appelman-Dijkstra N, et al.",
-    journal: "Bone",
+  "37239810": {
+    pmid: "37239810",
+    title: "McCune-Albright Syndrome: A Case Report and Review of Literature",
+    authors:
+      "Nicolaides NC, Kontou M, Vasilakis IA, Binou M, Lykopoulou E, et al.",
+    journal: "Int J Mol Sci",
     year: 2023,
-    type: "Original Research",
+    type: "Case + Review",
   },
-  "38112233": {
-    pmid: "38112233",
-    title: "Long-term denosumab outcomes in pediatric FD — Leiden cohort",
-    authors: "Rotman L, Appelman-Dijkstra N, et al.",
-    journal: "JBMR Plus",
-    year: 2025,
-    type: "Original Research",
-    isNew: true,
-  },
-  "38223344": {
-    pmid: "38223344",
-    title: "Rebound hypercalcemia after denosumab discontinuation in pediatric population",
-    authors: "Boyce A, et al.",
-    journal: "J Clin Endocrinol Metab",
-    year: 2024,
-    type: "Original Research",
-    isNew: true,
-  },
-  "38334455": {
-    pmid: "38334455",
-    title: "CTX-guided denosumab dosing in bone dysplasias — biomarker validation",
-    authors: "Hsiao E, et al.",
-    journal: "Bone",
-    year: 2025,
-    type: "Original Research",
-    isNew: true,
-  },
-  "38445566": {
-    pmid: "38445566",
-    title: "Optic neuropathy in FD — natural history of asymptomatic canal involvement",
-    authors: "Boyce A, NIH FD cohort",
-    journal: "Ophthalmology",
-    year: 2025,
-    type: "Original Research",
-    isNew: true,
-  },
-  "38556677": {
-    pmid: "38556677",
-    title: "Pre-symptomatic decompression vs watchful waiting in FD optic canal",
-    authors: "Hsiao E, et al.",
-    journal: "Bone",
+  "39766409": {
+    pmid: "39766409",
+    title:
+      "Pediatric Fibrous Dysplasia of the Skull Base: Update on Management and Treatment",
+    authors: "Spencer P, Raturi V, Watters A, Tubbs RS",
+    journal: "Brain Sci",
     year: 2024,
     type: "Review",
-    isNew: true,
   },
-  "38667788": {
-    pmid: "38667788",
-    title: "Cumulative radiation exposure in FD follow-up imaging — retrospective cohort",
-    authors: "Riminucci M, et al.",
-    journal: "Eur J Radiol",
+  "30176400": {
+    pmid: "30176400",
+    title: "Cystic Degeneration of Craniofacial Fibrous Dysplasia",
+    authors:
+      "Holl DC, Hardillo JAU, Dammers R, van der Schroeff MP, van der Lugt A",
+    journal: "World Neurosurg",
+    year: 2018,
+    type: "Case series",
+  },
+  "36755645": {
+    pmid: "36755645",
+    title:
+      "Psammomatoid Juvenile Ossifying Fibroma of the Maxilla Misdiagnosed as Fibrous Dysplasia",
+    authors: "Kim JH, Kang J, Kim SI, Kim BJ",
+    journal: "Arch Plast Surg",
+    year: 2023,
+    type: "Case report",
+  },
+  "12065933": {
+    pmid: "12065933",
+    title: "Fibrous dysplasia",
+    authors: "Schoenau E, Rauch F",
+    journal: "Horm Res",
+    year: 2002,
+    type: "Review",
+  },
+  "2188311": {
+    pmid: "2188311",
+    title: "Fibrous dysplasia",
+    authors: "Kransdorf MJ, Moser RP Jr, Gilkey FW",
+    journal: "Radiographics",
+    year: 1990,
+    type: "Imaging review",
+  },
+  "11992261": {
+    pmid: "11992261",
+    title:
+      "PTPN11 mutations in Noonan syndrome: molecular spectrum, genotype-phenotype correlation, and phenotypic heterogeneity",
+    authors: "Tartaglia M, Kalidas K, Shaw A, Song X, Musat DL, et al.",
+    journal: "Am J Hum Genet",
+    year: 2002,
+    type: "Research",
+  },
+  "39928417": {
+    pmid: "39928417",
+    title: "Hypertrophic cardiomyopathy: prevalence of disease-specific red flags",
+    authors: "Maurizi N, Monda E, Biagini E, Field E, Passantino S, et al.",
+    journal: "Eur Heart J",
     year: 2025,
-    type: "Original Research",
-    isNew: true,
+    type: "Research",
   },
 };

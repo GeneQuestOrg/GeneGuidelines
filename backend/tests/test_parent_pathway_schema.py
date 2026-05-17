@@ -99,7 +99,7 @@ def test_rejects_copy_paste_three_steps() -> None:
                     "What should we bring to this visit?",
                     "Who can we call if symptoms change before the next appointment?",
                 ],
-                "citations": ["31337488"],
+                "citations": ["31196103"],
                 "evidenceGap": False,
             }
             for i in (1, 2, 3)
@@ -127,7 +127,7 @@ def test_rejects_hollow_concrete_step_title() -> None:
                 "specialty": "GP",
                 "whatToExpect": wt,
                 "questions": ["What papers help you most?", "Can we bring a relative?"],
-                "citations": ["31337488"],
+                "citations": ["31196103"],
                 "evidenceGap": False,
             },
             {
@@ -137,7 +137,7 @@ def test_rejects_hollow_concrete_step_title() -> None:
                 "specialty": "Clinical genetics",
                 "whatToExpect": wt.replace("nurse", "genetic counsellor").replace("height", "family tree"),
                 "questions": ["How long until results?", "Who phones us?"],
-                "citations": ["31337488"],
+                "citations": ["31196103"],
                 "evidenceGap": False,
             },
             {
@@ -147,7 +147,7 @@ def test_rejects_hollow_concrete_step_title() -> None:
                 "specialty": "Orthopedic clinic",
                 "whatToExpect": wt.replace("nurse", "surgeon").replace("height", "pain diary"),
                 "questions": ["What sports are safe now?", "When is the next scan?"],
-                "citations": ["31337488"],
+                "citations": ["31196103"],
                 "evidenceGap": False,
             },
         ],
@@ -244,4 +244,4 @@ def test_pmid_must_be_in_guideline_when_allowed_set() -> None:
         "children": three_action_steps(bad_pmid_step=3),
     }
     with pytest.raises(ParentPathwayValidationError, match="99999999"):
-        validate_parent_pathway_tree(tree, allowed_pmids={"31337488"})
+        validate_parent_pathway_tree(tree, allowed_pmids={"31196103"})

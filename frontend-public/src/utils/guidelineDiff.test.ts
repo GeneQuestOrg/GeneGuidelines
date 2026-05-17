@@ -39,7 +39,7 @@ const insertMap: GuidelinePrParagraphMap = {
   addedParagraph: {
     id: "sx-optic-add",
     text: "MRI every 12 months",
-    citations: ["38445566"],
+    citations: ["37184453"],
   },
 };
 

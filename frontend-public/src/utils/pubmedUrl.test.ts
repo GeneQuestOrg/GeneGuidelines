@@ -3,8 +3,8 @@ import { pubmedArticleUrl } from "./pubmedUrl";
 
 describe("pubmedArticleUrl", () => {
   it("builds PubMed URL from PMID", () => {
-    expect(pubmedArticleUrl("31337488")).toBe(
-      "https://pubmed.ncbi.nlm.nih.gov/31337488/",
+    expect(pubmedArticleUrl("31196103")).toBe(
+      "https://pubmed.ncbi.nlm.nih.gov/31196103/",
     );
   });
 

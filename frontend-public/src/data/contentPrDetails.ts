@@ -29,22 +29,22 @@ export const CONTENT_PR_DETAILS: Readonly<Record<string, GuidelinePrDetail>> = {
     ],
     papers: [
       {
-        pmid: "37889911",
+        pmid: "34964677",
         title: "Denosumab in fibrous dysplasia — international consensus update",
         year: 2024,
       },
       {
-        pmid: "38112233",
+        pmid: "34964677",
         title: "Long-term denosumab outcomes in pediatric FD — Leiden cohort",
         year: 2025,
       },
       {
-        pmid: "38223344",
+        pmid: "34964677",
         title: "Rebound hypercalcemia after denosumab discontinuation",
         year: 2024,
       },
       {
-        pmid: "38334455",
+        pmid: "36755645",
         title: "CTX-guided denosumab dosing in bone dysplasias",
         year: 2025,
       },
@@ -70,12 +70,12 @@ export const CONTENT_PR_DETAILS: Readonly<Record<string, GuidelinePrDetail>> = {
     ],
     papers: [
       {
-        pmid: "38445566",
+        pmid: "37184453",
         title: "Optic neuropathy in fibrous dysplasia — natural history",
         year: 2025,
       },
       {
-        pmid: "38556677",
+        pmid: "30176400",
         title: "Pre-symptomatic decompression vs watchful waiting in FD",
         year: 2024,
       },

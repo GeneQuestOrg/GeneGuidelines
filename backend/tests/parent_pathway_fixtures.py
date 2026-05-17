@@ -26,7 +26,7 @@ def three_action_steps(*, bad_pmid_step: int | None = None) -> list[dict]:
                 "Can someone help us request records if English is hard for us?",
                 "Should we bring paper copies or are phone photos enough for the first visit?",
             ],
-            "citations": ["31337488"],
+            "citations": ["31196103"],
             "evidenceGap": False,
         },
         {
@@ -42,7 +42,7 @@ def three_action_steps(*, bad_pmid_step: int | None = None) -> list[dict]:
                 "What exactly does this test show for our family?",
                 "How and when will we get results, and who explains them?",
             ],
-            "citations": ["31337488"],
+            "citations": ["31196103"],
             "evidenceGap": False,
         },
         {
@@ -58,7 +58,7 @@ def three_action_steps(*, bad_pmid_step: int | None = None) -> list[dict]:
                 "What should we track day to day until we see you again?",
                 "Who do we phone if symptoms get worse before that date?",
             ],
-            "citations": ["31337488"],
+            "citations": ["31196103"],
             "evidenceGap": False,
         },
     ]

@@ -43,7 +43,7 @@ def _pointer(**overrides) -> OfficialGuideline:
         authors="Javaid et al.",
         year=2019,
         journal="Orphanet J Rare Dis",
-        pmid="31337488",
+        pmid="31196103",
         url="https://link.springer.com/article/10.1186/s13023-019-1102-9",
         summary="International consensus.",
         confirmed_by="GeneQuest reviewer panel",
@@ -68,7 +68,7 @@ def test_get_returns_seeded_pointer():
     svc = _service(pointers=[_pointer()])
     out = svc.get("fd")
     assert out is not None
-    assert out.pmid == "31337488"
+    assert out.pmid == "31196103"
     assert out.source == "seed"
 
 

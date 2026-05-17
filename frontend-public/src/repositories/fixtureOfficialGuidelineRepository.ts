@@ -9,7 +9,7 @@ const FIXTURE: Readonly<Record<string, OfficialGuideline>> = {
     authors: "Javaid, Boyce, Appelman-Dijkstra, et al.",
     year: 2019,
     journal: "Orphanet Journal of Rare Diseases",
-    pmid: "31337488",
+    pmid: "31196103",
     url: "https://link.springer.com/article/10.1186/s13023-019-1102-9",
     summary:
       "International consensus for FD/MAS — diagnosis, imaging, medical and surgical management, surveillance.",
@@ -24,7 +24,7 @@ const FIXTURE: Readonly<Record<string, OfficialGuideline>> = {
     authors: "Javaid, Boyce, Appelman-Dijkstra, et al.",
     year: 2019,
     journal: "Orphanet Journal of Rare Diseases",
-    pmid: "31337488",
+    pmid: "31196103",
     url: "https://link.springer.com/article/10.1186/s13023-019-1102-9",
     summary:
       "Same international consensus — endocrine sections specific to MAS.",

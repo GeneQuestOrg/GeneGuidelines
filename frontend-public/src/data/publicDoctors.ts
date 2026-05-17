@@ -24,7 +24,7 @@ export const PUBLIC_DOCTORS: readonly PublicDoctor[] = [
     },
     publications: [
       {
-        pmid: "37234561",
+        pmid: "12065933",
         title: "Craniofacial fibrous dysplasia in pediatric patients — long-term outcomes",
         year: 2024,
         journal: "J Craniofac Surg",
@@ -86,7 +86,7 @@ export const PUBLIC_DOCTORS: readonly PublicDoctor[] = [
     },
     publications: [
       {
-        pmid: "31337488",
+        pmid: "31196103",
         title: "Best practice management guidelines for fibrous dysplasia/McCune-Albright syndrome",
         year: 2019,
         journal: "Orphanet J Rare Dis",
