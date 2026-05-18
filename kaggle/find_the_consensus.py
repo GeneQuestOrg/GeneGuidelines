@@ -59,14 +59,21 @@ from pathlib import Path
 from dataclasses import dataclass, field
 from typing import Any
 
-# Kaggle's transformers may lag behind Gemma 4's config; on Kaggle we upgrade.
+# On Kaggle, upgrade transformers from PyPI (Gemma 4 needs a recent version).
+# Wrapped in try/except so a missing internet or pip failure does not crash the
+# notebook — the deterministic stub fallback below still produces valid output.
 if Path("/kaggle/input").exists():
     import subprocess, sys
-    subprocess.check_call(
-        [sys.executable, "-m", "pip", "install", "-q", "--upgrade",
-         "git+https://github.com/huggingface/transformers.git",
-         "accelerate", "safetensors", "sentencepiece"]
-    )
+    try:
+        subprocess.check_call(
+            [sys.executable, "-m", "pip", "install", "-q", "--upgrade",
+             "transformers", "accelerate", "safetensors", "sentencepiece"]
+        )
+        print("[Setup] transformers upgraded from PyPI.")
+    except subprocess.CalledProcessError as exc:
+        print(f"[Setup] pip upgrade failed ({exc.returncode}); using Kaggle stock transformers.")
+    except Exception as exc:
+        print(f"[Setup] pip upgrade skipped: {type(exc).__name__}: {exc}")
 
 import torch  # noqa: E402
 
