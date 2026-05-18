@@ -1,7 +1,14 @@
 import { apiGet, apiPostJson } from "./client";
 
-/** Server profile for guideline runs + alias suggest. Use `production` (OpenAI) or `vllm`. */
-export const DEFAULT_GUIDELINE_PROFILE = "production";
+/**
+ * Optional override for guideline runs. When unset, POST omits `profile` and the
+ * backend uses `MODEL_PROFILE` from server `.env` (typically `vllm`).
+ */
+export const DEFAULT_GUIDELINE_PROFILE: string | undefined =
+  typeof import.meta.env.VITE_GUIDELINE_PROFILE === "string" &&
+  import.meta.env.VITE_GUIDELINE_PROFILE.trim().length > 0
+    ? import.meta.env.VITE_GUIDELINE_PROFILE.trim()
+    : undefined;
 
 export interface StartGuidelineRunResponse {
   execution_id: string;
@@ -33,13 +40,13 @@ export async function startGuidelineRunPublic(
   if (input.mode === "catalog") {
     return apiPostJson<StartGuidelineRunResponse>("/api/pipeline/guideline-run", {
       disease_slug: input.diseaseSlug,
-      profile,
+      ...(profile != null ? { profile } : {}),
     });
   }
   return apiPostJson<StartGuidelineRunResponse>("/api/pipeline/guideline-run", {
     disease_name: input.diseaseName,
     disease_aliases: input.diseaseAliases,
-    profile,
+    ...(profile != null ? { profile } : {}),
   });
 }
 

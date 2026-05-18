@@ -234,8 +234,11 @@ export function StartResearchView({
       )}
 
       <p className="research__hint">
-        Uses model profile <code>{DEFAULT_GUIDELINE_PROFILE}</code> (server{" "}
-        <code>MODEL_PROFILES</code>). {API_KEY_HINT}{" "}
+        Model profile:{" "}
+        <code>
+          {DEFAULT_GUIDELINE_PROFILE ?? "server default (MODEL_PROFILE in .env)"}
+        </code>
+        . {API_KEY_HINT}{" "}
         {hasDevKey ? (
           <span>
             A dev key is <strong>present</strong> in this build.

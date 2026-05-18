@@ -5,6 +5,12 @@ from typing import Optional
 from pydantic import BaseModel, Field, field_validator
 
 
+def _default_model_profile() -> str:
+    from backend.config import DEFAULT_MODEL_PROFILE
+
+    return DEFAULT_MODEL_PROFILE
+
+
 def _normalize_model_profile(v: str) -> str:
     """Validate model profile against configured MODEL_PROFILES."""
     from backend.config import DEFAULT_MODEL_PROFILE, MODEL_PROFILES
@@ -30,7 +36,11 @@ class DoctorFinderInput(BaseModel, frozen=True):
     ai_justification: bool = False
     ai_justification_threshold: float = Field(default=50.0, ge=0.0, le=100.0)
     """Profile for all LLM steps in this run (alias generation, AI justifications). Same keys as /api/agent/run ?profile=."""
-    model_profile: str = Field(default="production", min_length=1, max_length=32)
+    model_profile: str = Field(
+        default_factory=_default_model_profile,
+        min_length=1,
+        max_length=32,
+    )
     """Optional provider:model override (e.g. openai:gpt-4o-mini). When set, overrides profile simple model for LLM calls."""
     llm_model_override: Optional[str] = Field(default=None, max_length=120)
     """If true, before PubMed search the backend merges AI-suggested synonyms into disease_aliases (deduped, max 20)."""
@@ -46,7 +56,11 @@ class DoctorFinderAliasSuggestInput(BaseModel, frozen=True):
     """Body for POST /api/doctor-finder/suggest-aliases — generate aliases only."""
 
     disease_name: str = Field(min_length=1, max_length=500)
-    model_profile: str = Field(default="production", min_length=1, max_length=32)
+    model_profile: str = Field(
+        default_factory=_default_model_profile,
+        min_length=1,
+        max_length=32,
+    )
     llm_model_override: Optional[str] = Field(default=None, max_length=120)
 
     @field_validator("model_profile")

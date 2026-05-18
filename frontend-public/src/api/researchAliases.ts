@@ -7,13 +7,14 @@ export interface SuggestDiseaseAliasesResponse {
 
 export async function suggestDiseaseAliases(
   diseaseName: string,
-  profile: string = DEFAULT_GUIDELINE_PROFILE,
+  profile?: string,
 ): Promise<SuggestDiseaseAliasesResponse> {
+  const resolved = profile ?? DEFAULT_GUIDELINE_PROFILE;
   return apiPostJson<SuggestDiseaseAliasesResponse>(
     "/api/doctor-finder/suggest-aliases",
     {
       disease_name: diseaseName.trim(),
-      model_profile: profile,
+      ...(resolved != null ? { model_profile: resolved } : {}),
     },
   );
 }
