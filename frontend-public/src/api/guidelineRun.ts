@@ -58,10 +58,14 @@ export interface AgentRunPayloadV1 {
   missing_tool_requests: unknown[];
 }
 
+/** Status poll while a PubMed/guideline job runs — backend may be busy for minutes. */
+const AGENT_RUN_POLL_TIMEOUT_MS = 120_000;
+
 export async function fetchAgentRun(
   executionId: string,
 ): Promise<AgentRunPayloadV1> {
   return apiGet<AgentRunPayloadV1>(
     `/api/agent/run/${encodeURIComponent(executionId)}`,
+    { timeoutMs: AGENT_RUN_POLL_TIMEOUT_MS },
   );
 }

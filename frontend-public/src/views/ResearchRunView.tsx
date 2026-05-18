@@ -72,6 +72,11 @@ export function ResearchRunView({
           setPollError(
             "Run not found — it may have expired from server memory. Try starting a new job from Start research.",
           );
+        } else if (e instanceof ApiRequestError && e.status === 0) {
+          // Transient timeout/network while the job may still be running on the server.
+          setPollError(
+            `${e.message} Status below may still update — refresh the page or wait.`,
+          );
         } else if (e instanceof Error) {
           setPollError(e.message);
         } else {
