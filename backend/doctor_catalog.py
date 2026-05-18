@@ -31,15 +31,17 @@ _MIN_CATALOG_NAME_MATCH_SCORE = 45
 
 _FINDER_DOCS_INDEX: dict[str, list[dict[str, Any]] | None] | None = None
 _ALL_DOCTORS_CACHE: list[dict[str, Any]] | None = None
+_CONTENT_DOCTORS_CACHE: list[dict[str, Any]] | None = None
 _CATALOG_CACHE_LOCK = threading.RLock()
 
 
 def clear_finder_docs_index() -> None:
     """Drop cached doctor_finder rows (call after a run finishes)."""
-    global _FINDER_DOCS_INDEX, _ALL_DOCTORS_CACHE
+    global _FINDER_DOCS_INDEX, _ALL_DOCTORS_CACHE, _CONTENT_DOCTORS_CACHE
     with _CATALOG_CACHE_LOCK:
         _FINDER_DOCS_INDEX = None
         _ALL_DOCTORS_CACHE = None
+        _CONTENT_DOCTORS_CACHE = None
 
 
 def slugify_doctor_name(display_name: str, author_key: str | None = None) -> str:
@@ -350,14 +352,22 @@ def _parse_affiliation_location(affiliation: str, country_code: str) -> tuple[st
 
 
 def _load_content_doctors_file() -> list[dict[str, Any]]:
-    path = Path(CONTENT_DOCTORS_PATH)
-    if not path.exists():
-        return []
-    data = json.loads(path.read_text(encoding="utf-8"))
-    rows = data.get("doctors", data) if isinstance(data, dict) else data
-    if not isinstance(rows, list):
-        return []
-    return [r for r in rows if isinstance(r, dict)]
+    """Load curated doctors seed once per process (invalidated with finder index)."""
+    global _CONTENT_DOCTORS_CACHE
+    with _CATALOG_CACHE_LOCK:
+        if _CONTENT_DOCTORS_CACHE is not None:
+            return _CONTENT_DOCTORS_CACHE
+        path = Path(CONTENT_DOCTORS_PATH)
+        if not path.exists():
+            _CONTENT_DOCTORS_CACHE = []
+            return _CONTENT_DOCTORS_CACHE
+        data = json.loads(path.read_text(encoding="utf-8"))
+        rows = data.get("doctors", data) if isinstance(data, dict) else data
+        if not isinstance(rows, list):
+            _CONTENT_DOCTORS_CACHE = []
+            return _CONTENT_DOCTORS_CACHE
+        _CONTENT_DOCTORS_CACHE = [r for r in rows if isinstance(r, dict)]
+        return _CONTENT_DOCTORS_CACHE
 
 
 def _disease_slug_for_name(disease_name: str) -> str | None:
@@ -504,11 +514,14 @@ def _finder_docs_index() -> dict[str, list[dict[str, Any]] | None]:
 def _merged_doctors_for_catalog_slug(
     normalized: str,
     finder_index: dict[str, list[dict[str, Any]] | None],
+    *,
+    seeded_docs: list[dict[str, Any]] | None = None,
 ) -> tuple[str, list[dict[str, Any]]]:
     """Merge seed file + doctor_finder hits for one catalog disease slug."""
+    doctors_seed = seeded_docs if seeded_docs is not None else _load_content_doctors_file()
     seeded = [
         doc
-        for doc in _load_content_doctors_file()
+        for doc in doctors_seed
         if normalized in (doc.get("diseases") or [])
     ]
     live = finder_index.get(normalized)
@@ -541,11 +554,33 @@ def get_doctors_for_disease(disease_slug: str) -> dict[str, Any]:
 
 def effective_public_doctor_count_for_disease(disease_slug: str) -> int:
     """Public directory size for one disease (seed + merged doctor_finder when present)."""
-    payload = get_doctors_for_disease(disease_slug)
-    doctors = payload.get("doctors")
-    if not isinstance(doctors, list):
+    normalized = normalize_disease_slug(disease_slug)
+    if normalized is None:
         return 0
-    return len(doctors)
+    counts = public_doctor_counts_by_slug([normalized])
+    return counts.get(normalized, 0)
+
+
+def public_doctor_counts_by_slug(slugs: list[str] | tuple[str, ...]) -> dict[str, int]:
+    """Live public doctor counts for many catalog slugs in one pass.
+
+    Used by GET /api/diseases so listing the catalog does not re-read the seed
+    file and rebuild the finder index once per disease row.
+    """
+    finder_index = _finder_docs_index()
+    seeded_docs = _load_content_doctors_file()
+    counts: dict[str, int] = {}
+    for raw in slugs:
+        normalized = normalize_disease_slug(str(raw or ""))
+        if normalized is None or normalized in counts:
+            continue
+        _src, doctors = _merged_doctors_for_catalog_slug(
+            normalized,
+            finder_index,
+            seeded_docs=seeded_docs,
+        )
+        counts[normalized] = len(doctors)
+    return counts
 
 
 def total_distinct_public_doctor_profiles() -> int:

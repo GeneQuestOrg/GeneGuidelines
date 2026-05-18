@@ -40,7 +40,18 @@ class DiseaseService:
             q = query.strip().lower()
             if q:
                 items = [d for d in items if _matches(d, q)]
-        return [self._with_live_doctor_count(d) for d in items]
+        if not items:
+            return []
+        try:
+            from ..doctor_catalog import public_doctor_counts_by_slug
+
+            live_counts = public_doctor_counts_by_slug([d.slug for d in items])
+        except Exception:
+            return [self._with_live_doctor_count(d) for d in items]
+        return [
+            d.with_doctors_count(live_counts.get(d.slug, d.doctors_count))
+            for d in items
+        ]
 
     def get(self, slug: str) -> Disease | None:
         normalized = normalize_slug(slug)

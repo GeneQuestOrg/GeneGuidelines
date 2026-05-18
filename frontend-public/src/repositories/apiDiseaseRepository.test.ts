@@ -37,9 +37,13 @@ describe("apiDiseaseRepository", () => {
 
     const list = await apiDiseaseRepository.listDiseases();
     expect(list).toHaveLength(1);
-    expect(fetch).toHaveBeenCalledWith("/api/diseases", {
-      headers: { Accept: "application/json" },
-    });
+    expect(fetch).toHaveBeenCalledWith(
+      "/api/diseases",
+      expect.objectContaining({
+        headers: { Accept: "application/json" },
+        signal: expect.any(AbortSignal),
+      }),
+    );
   });
 
   it("returns null for 404 disease", async () => {

@@ -40,6 +40,7 @@ from .prompt_formatting import (
 )
 from ..executors.base import FlowRuntimeBundle, NodeInput
 from ..executors.decision_executor import DecisionExecutor
+from ..flows.parent_pathway.submit_guard import parent_pathway_synth_missing_draft_error
 
 
 def _doctor_finder_executor_hard_error(flow_key: str, node_id: str, payload: Any) -> str | None:
@@ -1235,6 +1236,15 @@ async def run_flow_step_by_step_async(
                 }
         store["node_outputs"][node_id] = node_out
 
+        if prompt_mode != "simple":
+            synth_err = parent_pathway_synth_missing_draft_error(flow_key, node_id, store)
+            if synth_err:
+                store["error"] = synth_err
+                emit_fn(
+                    event_queue,
+                    {"kind": "sys", "text": f"[SYSTEM] {synth_err}"},
+                )
+
         # #region Memory write-back (agentic only)
         # Persist this step as a new memory turn (best-effort).
         if prompt_mode != "simple" and (config_mod.MEMORY_POSTGRES_DSN or "").strip():
@@ -2116,6 +2126,14 @@ async def run_flow_fork_parallel_async(
                         }
 
                 local_store["node_outputs"][nid] = node_out
+
+                synth_err = parent_pathway_synth_missing_draft_error(flow_key, nid, local_store)
+                if synth_err:
+                    local_store["error"] = synth_err
+                    emit_fn(
+                        event_queue,
+                        {"kind": "sys", "text": f"[SYSTEM] {synth_err}"},
+                    )
 
                 # Memory write-back (best-effort)
                 if (config_mod.MEMORY_POSTGRES_DSN or "").strip():

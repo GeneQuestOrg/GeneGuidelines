@@ -1,7 +1,12 @@
 """Global doctor list includes doctor_finder-only disease catalogs."""
 from __future__ import annotations
 
-from backend.doctor_catalog import clear_finder_docs_index, get_doctors_for_disease, list_all_doctors
+from backend.doctor_catalog import (
+    clear_finder_docs_index,
+    get_doctors_for_disease,
+    list_all_doctors,
+    public_doctor_counts_by_slug,
+)
 
 
 def _noonan_finder_row() -> dict:
@@ -33,6 +38,18 @@ def _noonan_finder_row() -> dict:
         "source": "doctor_finder",
         "executionId": "exec-noonan-test",
     }
+
+
+def test_public_doctor_counts_by_slug_batch(monkeypatch) -> None:
+    clear_finder_docs_index()
+    monkeypatch.setattr(
+        "backend.doctor_catalog._build_finder_docs_index",
+        lambda: {"noonan": [_noonan_finder_row()], "fd": None},
+    )
+    counts = public_doctor_counts_by_slug(["noonan", "fd", "noonan"])
+    assert counts["noonan"] == 1
+    assert counts["fd"] >= 1
+    assert len(counts) == 2
 
 
 def test_list_all_doctors_includes_finder_only_disease(monkeypatch) -> None:

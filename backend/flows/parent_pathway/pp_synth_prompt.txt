@@ -65,6 +65,59 @@ Each action: `title`, `specialty` (human role), `whatToExpect` (2–3 sentences)
 
 Limits: depth ≤ 3, ≤ 18 nodes, top-level checklist size capped by the server (prioritise clarity over count).
 
+## Exact JSON shape for tools (copy this structure)
+
+Pass **one JSON object** to `validate_parent_pathway_json` / `submit_parent_pathway` — the object **is** the chart root. Do **not** wrap it as `{ "root": { ... } }` or `{ "pathway": { ... } }` (the server may unwrap those, but you waste retries).
+
+Required camelCase fields on action steps: `whatToExpect`, `evidenceGap` (optional), `citations` (PMID strings from the guideline only).
+
+Minimal skeleton (replace every placeholder with disease-specific content from pp-plan + evidence):
+
+```json
+{
+  "id": "root",
+  "title": "What to do after a <disease> diagnosis",
+  "subtitle": "One step at a time — you do not need to fix everything this week.",
+  "about": {
+    "title": "What is <disease>?",
+    "summary": "Three to six short paragraphs in plain language (≥180 characters total). What the diagnosis means, how it is confirmed, what visits usually involve, main care themes, monitoring, when to seek help. No invented dosing."
+  },
+  "locale": "en",
+  "basedOn": "GeneGuidelines clinician summary",
+  "children": [
+    {
+      "id": "step-records",
+      "action": true,
+      "title": "Gather diagnosis letters and test results at home",
+      "specialty": "Your GP or family doctor",
+      "whatToExpect": "Two or three sentences about what happens in this step only — paperwork, who to call, timelines.",
+      "questions": ["Warm question families can ask aloud?", "Second question for this visit only?"],
+      "citations": ["12345678"]
+    },
+    {
+      "id": "step-genetics",
+      "action": true,
+      "title": "Book genetics if your team recommended DNA confirmation",
+      "specialty": "Clinical genetics service",
+      "whatToExpect": "Different paragraph from step one — blood test, wait time, how results are explained.",
+      "questions": ["What should we bring?", "How will you tell us the results?"],
+      "citations": ["12345678"]
+    },
+    {
+      "id": "step-followup",
+      "action": true,
+      "title": "Schedule the specialist follow-up already mentioned in your letter",
+      "specialty": "Named specialist clinic or coordinator",
+      "whatToExpect": "Different again — monitoring, symptoms to note, who is the main contact.",
+      "questions": ["What should we track until the visit?", "Who do we call if symptoms worsen?"],
+      "citations": ["12345678"]
+    }
+  ]
+}
+```
+
+When a tool returns `ok:false`, read `message` / `errors` verbatim, fix **only** what it names, call `validate_parent_pathway_json` again, then `submit_parent_pathway`. Do not reply with a long essay instead of saving.
+
 ## Workflow
 
 1. `get_parent_pathway_context(disease_slug="{{ context.initial.disease_slug }}")`
