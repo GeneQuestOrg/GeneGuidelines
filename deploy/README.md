@@ -62,6 +62,7 @@ After browser login (basic auth prompt):
 
 | Symptom | Fix |
 |---------|-----|
+| Blank / black page, no UI | HTTP Basic Auth — Arc often skips the prompt on raw IPs. Use `http://demo:PASSWORD@YOUR_HOST:5173/` or Chrome/Safari; confirm `deploy/htpasswd` exists |
 | 401 on start research | Remove `GENEGUIDELINES_API_KEY` from `.env` |
 | Infinite 401 loop | Check `deploy/htpasswd` exists and is mounted |
 | API works without login | Missing `docker-compose.deploy.yml` overlay |

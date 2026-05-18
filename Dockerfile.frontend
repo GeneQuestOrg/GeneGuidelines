@@ -35,5 +35,7 @@ COPY deploy/nginx/snippets/basic-auth.conf /etc/nginx/snippets/basic-auth.conf
 # Copy the built bundles from the build stage.
 COPY --from=build /repo/frontend-public/dist /usr/share/nginx/html/public
 COPY --from=build /repo/frontend-admin/dist /usr/share/nginx/html/admin
+COPY deploy/nginx/errors/401.html /usr/share/nginx/html/public/errors/401.html
+COPY deploy/nginx/errors/401.html /usr/share/nginx/html/admin/errors/401.html
 
 EXPOSE 80 81
