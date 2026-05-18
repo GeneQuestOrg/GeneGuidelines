@@ -2,14 +2,18 @@
 #
 #   docker compose up --build
 #
+# Production demo (HTTP basic auth on whole site):
+#   docker compose -f docker-compose.yml -f docker-compose.deploy.yml up --build
+#   See deploy/README.md
+#
 # Public site:   http://localhost:5173
 # Admin app:     http://localhost:5174
 # Backend API:   http://localhost:8000  (also reachable via /api from either frontend)
 #
-# Requires an `.env` file in the repo root with at minimum:
-#   OPENAI_API_KEY=...                (or DEEPSEEK_API_KEY / OPENROUTER_API_KEY)
-#   MODEL_PROFILE=production          (or test / openrouter)
-# Copy backend/.env.example to .env and fill in the values you need.
+# Requires a repo-root `.env` (copy backend/.env.example → .env). Examples:
+#   MODEL_PROFILE=openrouter + OPENROUTER_API_KEY=...
+#   MODEL_PROFILE=vllm + LLM_BASE_URL + LLM_API_KEY (from inside Docker use host.docker.internal, not 127.0.0.1)
+#   MODEL_PROFILE=production + OPENAI_API_KEY=...
 #
 # Production-mode (no hot reload). For hot-reload development install Python +
 # Node locally and run `make dev` instead.

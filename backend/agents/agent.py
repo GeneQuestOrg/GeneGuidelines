@@ -326,7 +326,3 @@ def get_simple_structured_agent(
         model_settings=model_settings,
     )
     return ag
-
-
-# Backward-compatible default agent (flow=None → fallback prompt).
-agent = get_agent(None, use_mcp=False)
