@@ -66,7 +66,7 @@ class RunPm1RetrievalTests(unittest.TestCase):
         ):
             out = retrieval_mod.run_pm1_retrieval(initial_context, retmax=50, max_analyze=50)
 
-        self.assertEqual(out["query_text"], "fibrous dysplasia")
+        self.assertIn("fibrous dysplasia", out["query_text"])
         self.assertGreaterEqual(len(out["query_variants"]), 5)
         self.assertFalse(out["fallback_used"])
         self.assertGreaterEqual(len(fake.calls), 5)
@@ -250,8 +250,61 @@ class QueryNormalizationTests(unittest.TestCase):
 
         for q in recorded_queries:
             self.assertNotIn("clinical guideline", q, msg=f"query still contains suffix: {q!r}")
-        self.assertEqual(out["query_text"], "Fibrous dysplasia clinical guideline")
+        self.assertIn("Fibrous dysplasia", out["query_text"])
+        self.assertNotIn("clinical guideline", out["query_text"])
         self.assertEqual(out["normalized_query_text"], "Fibrous dysplasia")
+
+    def test_aliases_or_block_in_query_variants(self) -> None:
+        recorded_queries: list[str] = []
+
+        def _stub_search(
+            query: str,
+            *,
+            query_variants: list[str] | None = None,
+            retmax: int | None = None,
+            max_analyze: int | None = None,
+            mindate: str = "",
+            maxdate: str = "",
+            article_types: list[str] | None = None,
+        ) -> dict[str, Any]:
+            recorded_queries.append(query)
+            return {
+                "pmids": ["9001"],
+                "request_count": 1,
+                "http_status_stats": {"http_429": 0, "http_5xx": 0, "http_4xx": 0, "timeout": 0, "network": 0},
+                "transport_error_classes": [],
+                "raw_runs": [{"total_found": 1}],
+            }
+
+        def _stub_fetch(pmids: list[str], **kwargs: Any) -> dict[str, Any]:
+            return {
+                "articles": [{"pmid": p, "title": f"Study {p}", "abstract": "x"} for p in pmids],
+                "evidence_cards": [{"pmid": p} for p in pmids],
+                "request_count": 1,
+                "http_status_stats": {},
+                "total_requested": len(pmids),
+                "total_analyzed": len(pmids),
+                "total_with_abstract": len(pmids),
+                "retrieval_channel": "primary_get",
+            }
+
+        ctx = {
+            "initial": {
+                "disease_name": "Fibrodysplasia ossificans progressiva",
+                "disease_aliases": "FOP, myositis ossificans progressiva",
+                "title": "Fibrodysplasia ossificans progressiva",
+            }
+        }
+        with (
+            patch.object(retrieval_mod, "search_articles_impl", side_effect=_stub_search),
+            patch.object(retrieval_mod, "fetch_article_details_impl", side_effect=_stub_fetch),
+        ):
+            out = retrieval_mod.run_pm1_retrieval(ctx, retmax=10, max_analyze=10)
+
+        self.assertEqual(out["disease_aliases"], ["FOP", "myositis ossificans progressiva"])
+        joined = " ".join(recorded_queries).lower()
+        self.assertIn("fop", joined)
+        self.assertIn("fibrodysplasia", joined)
 
 class GeneticsFilterAndConfigTests(unittest.TestCase):
     """Tests for genetics filter in domain queries and updated config defaults."""

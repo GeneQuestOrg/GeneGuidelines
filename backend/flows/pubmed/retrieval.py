@@ -18,6 +18,7 @@ from ...tools.pubmed_runtime import (
     pubmed_browser_search_impl,
     search_articles_impl,
 )
+from ..doctor_finder.pubmed_relevance import build_doctor_finder_pubmed_query
 from .pmid_reference_table import build_reference_table
 from ...config import (
     PUBMED_RETRIEVAL_MIN_PMIDS_PER_DOMAIN,
@@ -123,6 +124,65 @@ def _coerce_title(context: dict[str, Any]) -> str:
     return ""
 
 
+def _parse_aliases_from_initial(initial: dict[str, Any]) -> list[str]:
+    """Extract alias strings from flow initial_context (list or comma-separated)."""
+    raw = initial.get("disease_aliases")
+    aliases: list[str] = []
+    if isinstance(raw, list):
+        aliases = [str(a).strip() for a in raw if str(a).strip()]
+    elif isinstance(raw, str):
+        for part in raw.split(","):
+            s = part.strip()
+            if s and s.lower() not in ("n/a", "none"):
+                aliases.append(s)
+    seen: set[str] = set()
+    out: list[str] = []
+    for a in aliases:
+        key = a.casefold()
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(a)
+    return out
+
+
+def _coerce_disease_name_and_aliases(context: dict[str, Any]) -> tuple[str, list[str]]:
+    """Prefer catalog/custom disease_name over ticket title; include search aliases."""
+    initial = context.get("initial") if isinstance(context, dict) else None
+    initial_dict = initial if isinstance(initial, dict) else {}
+    name = str(initial_dict.get("disease_name") or "").strip()
+    title = _coerce_title(context)
+    primary = _normalize_query_term(name or title)
+    return primary, _parse_aliases_from_initial(initial_dict)
+
+
+def _build_retrieval_disease_block(disease_name: str, aliases: list[str]) -> str:
+    """PubMed OR block for disease + aliases (human clinical literature)."""
+    return build_doctor_finder_pubmed_query(
+        disease_name,
+        aliases,
+        clinical_focus=True,
+        min_alias_or_chars=3,
+    )
+
+
+def _format_retrieval_pattern(pattern: str, disease_block: str) -> str:
+    """Substitute disease block into pm-1 query templates without breaking PubMed syntax."""
+    block = disease_block.strip()
+    if not block:
+        return pattern.format(title="")
+    if pattern == "{title}":
+        return block
+    if "({title})" in pattern:
+        return pattern.format(title=block)
+    if pattern.startswith("{title}"):
+        suffix = pattern[len("{title}") :].strip()
+        if suffix:
+            return f"({block}) AND ({suffix})"
+        return block
+    return pattern.format(title=block)
+
+
 _QUERY_STRIP_SUFFIXES: tuple[str, ...] = (
     "evidence-based guideline",
     "management guideline",
@@ -175,9 +235,11 @@ def run_pm1_retrieval(
         Dict matching the ``PubmedRetrievalContract`` Pydantic shape so downstream
         normalizer (pm-2) can consume it unchanged.
     """
-    title = _coerce_title(context)
-    normalized_term = _normalize_query_term(title)
-    if not title:
+    disease_name, aliases = _coerce_disease_name_and_aliases(context)
+    normalized_term = disease_name
+    disease_block = _build_retrieval_disease_block(normalized_term, aliases)
+    title = normalized_term
+    if not disease_name:
         return {
             "query_text": "",
             "normalized_query_text": "",
@@ -207,7 +269,7 @@ def run_pm1_retrieval(
     per_domain_pmids: dict[str, list[str]] = {}
 
     for domain, pattern, article_types in _DOMAIN_QUERIES:
-        variant = pattern.format(title=normalized_term).strip()
+        variant = _format_retrieval_pattern(pattern, disease_block).strip()
         query_variants.append(variant)
         try:
             payload = search_articles_impl(
@@ -254,7 +316,7 @@ def run_pm1_retrieval(
         # Quality-first backfill: if core clinical domains are under-covered, run extra query variants.
         if domain in _DOMAIN_BACKFILL_PATTERNS and len(pmids) < _MIN_PMIDS_PER_DOMAIN:
             for extra_pattern in _DOMAIN_BACKFILL_PATTERNS[domain]:
-                extra_variant = extra_pattern.format(title=normalized_term).strip()
+                extra_variant = _format_retrieval_pattern(extra_pattern, disease_block).strip()
                 query_variants.append(extra_variant)
                 try:
                     extra_payload = search_articles_impl(
@@ -322,7 +384,7 @@ def run_pm1_retrieval(
         for pattern in _GLOBAL_BACKFILL_PATTERNS:
             if len(unique_pmids) >= _TARGET_UNIQUE_PMIDS:
                 break
-            variant = pattern.format(title=normalized_term).strip()
+            variant = _format_retrieval_pattern(pattern, disease_block).strip()
             query_variants.append(variant)
             try:
                 payload = search_articles_impl(
@@ -407,8 +469,9 @@ def run_pm1_retrieval(
                 "unique_pmid_count": 0,
             }
             return {
-                "query_text": title,
+                "query_text": disease_block or title,
                 "normalized_query_text": normalized_term,
+                "disease_aliases": aliases,
                 "query_variants": query_variants,
                 "fallback_used": True,
                 "total_found_estimate": total_found_estimate,
@@ -431,7 +494,7 @@ def run_pm1_retrieval(
     except PubmedToolError as exc:
         log.error("run_pm1_retrieval: esummary failed: %s", exc.message)
         return {
-            "query_text": title,
+            "query_text": disease_block or title,
             "normalized_query_text": normalized_term,
             "query_variants": query_variants,
             "fallback_used": True,
@@ -454,9 +517,11 @@ def run_pm1_retrieval(
     evidence_cards = list(fetch_payload.get("evidence_cards") or [])
 
     # Relevance ordering: stable sort by number of disease-term matches in title.
+    _token_source = " ".join([normalized_term, *aliases])
     _disease_tokens = frozenset(
         t.lower()
-        for t in _re.findall(r"[A-Za-z][A-Za-z0-9-]{2,}", normalized_term)
+        for t in _re.findall(r"[A-Za-z][A-Za-z0-9-]{2,}", _token_source)
+        if len(t) >= 4
     )
 
     def _relevance_score(article: dict) -> int:
@@ -498,8 +563,9 @@ def run_pm1_retrieval(
     }
 
     return {
-        "query_text": title,
+        "query_text": disease_block or title,
         "normalized_query_text": normalized_term,
+        "disease_aliases": aliases,
         "query_variants": query_variants,
         "total_found_estimate": total_found_estimate,
         "total_requested": int(fetch_payload.get("total_requested") or len(unique_pmids)),

@@ -147,7 +147,24 @@ async def _execute_agent_async_body(
         AGENT_RUNS[execution_id] = store
 
     if flow:
-        if disease_slug and flow_key in ("pubmed", "parent_pathway"):
+        preloaded_initial = store.get("disease_initial")
+        if (
+            flow_key in ("pubmed", "parent_pathway")
+            and isinstance(preloaded_initial, dict)
+            and preloaded_initial.get("disease_name")
+            and not (disease_slug or "").strip()
+        ):
+            _emit(
+                event_queue,
+                {
+                    "kind": "sys",
+                    "text": (
+                        f"[SYSTEM] Using custom disease context for "
+                        f"{preloaded_initial.get('disease_name') or 'this run'}."
+                    ),
+                },
+            )
+        elif disease_slug and flow_key in ("pubmed", "parent_pathway"):
             from ..content_db import get_disease_by_slug
             from ..guideline_prompt_profile import build_disease_flow_initial_fields
 
@@ -297,6 +314,7 @@ async def start_agent_run(
     label: str | None = None,
     pipeline: str | None = None,
     disease_slug: str | None = None,
+    disease_initial: dict[str, str] | None = None,
     pathway_locale: str = "en",
     refresh_pubmed: bool = False,
 ) -> dict:
@@ -315,23 +333,26 @@ async def start_agent_run(
     execution_id = str(uuid4())
     event_queue: Queue = Queue()
     started_at = datetime.now(UTC).isoformat()
+    run_record: dict = {
+        "execution_id": execution_id,
+        "ticket_id": ticket_id,
+        "flow_key": flow_key,
+        "pipeline": pipeline
+        or ("guideline" if flow_key == "pubmed" else "parent_pathway" if flow_key == "parent_pathway" else "legacy"),
+        "label": (label or ticket.get("title") or "").strip() or f"Job #{ticket_id}",
+        "status": "starting",
+        "done": False,
+        "profile": profile_norm,
+        "started_at": started_at,
+        "disease_slug": (disease_slug or "").strip().lower() or None,
+        "pathway_locale": (pathway_locale or "en").strip()[:2] or "en",
+        "refresh_pubmed": bool(refresh_pubmed),
+    }
+    if isinstance(disease_initial, dict) and disease_initial:
+        run_record["disease_initial"] = dict(disease_initial)
     with _AGENT_STORAGE_LOCK:
         TRACE_QUEUES[execution_id] = event_queue
-        AGENT_RUNS[execution_id] = {
-            "execution_id": execution_id,
-            "ticket_id": ticket_id,
-            "flow_key": flow_key,
-            "pipeline": pipeline
-            or ("guideline" if flow_key == "pubmed" else "parent_pathway" if flow_key == "parent_pathway" else "legacy"),
-            "label": (label or ticket.get("title") or "").strip() or f"Job #{ticket_id}",
-            "status": "starting",
-            "done": False,
-            "profile": profile_norm,
-            "started_at": started_at,
-            "disease_slug": (disease_slug or "").strip().lower() or None,
-            "pathway_locale": (pathway_locale or "en").strip()[:2] or "en",
-            "refresh_pubmed": bool(refresh_pubmed),
-        }
+        AGENT_RUNS[execution_id] = run_record
     models = MODEL_PROFILES[profile_norm]
     event_queue.put(
         {
@@ -421,7 +442,7 @@ async def run_agent(
 
     Query params:
         flow_key: which flow to execute (e.g. "pubmed", "doctor_finder", "parent_pathway").
-        profile:  model profile — production (OpenAI), test (DeepSeek), openrouter (OpenRouter). Default from env.
+        profile:  model profile — vllm, production (OpenAI), test (DeepSeek), openrouter (OpenRouter). Default from env.
     """
     _ = background_tasks
     return await start_agent_run(ticket_id, flow_key=flow_key, profile=profile)

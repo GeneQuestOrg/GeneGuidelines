@@ -9,8 +9,8 @@ AI agent configuration (Pydantic AI) — the model wrapper used by node executor
   interceptor only requests human approval for tools with ``execution_mode=approval``.
 
 Requires ``OPENAI_API_KEY`` for the production profile, ``DEEPSEEK_API_KEY`` for
-the deepseek profile, or ``OPENROUTER_API_KEY`` for openrouter (in ``.env`` or
-environment variables).
+the deepseek profile, ``OPENROUTER_API_KEY`` for openrouter, or ``VLLM_API_KEY``
++ ``VLLM_BASE_URL`` for vllm (in ``.env`` or environment variables).
 """
 from __future__ import annotations
 
@@ -38,10 +38,39 @@ from ..config import (
     OPENAI_CLIENT_TIMEOUT_SEC,
     OPENROUTER_API_KEY,
     OPENROUTER_BASE_URL,
+    VLLM_API_KEY,
+    VLLM_AUTH_HEADER_STYLE,
+    VLLM_BASE_URL,
 )
 from . import flow_prompt
+from .llm_limits import cap_completion_tokens
 
-_SUPPORTED_PROVIDERS = ("openai", "deepseek", "openrouter", "ollama")
+_SUPPORTED_PROVIDERS = ("openai", "deepseek", "openrouter", "ollama", "vllm")
+
+# OpenAI SDK requires a non-empty api_key even when Authorization is overridden.
+_VLLM_OPENAI_PLACEHOLDER_KEY = "gene-guidelines-vllm"
+
+
+def _vllm_async_openai_client() -> Any:
+    """Build AsyncOpenAI for self-hosted OpenAI-compatible servers.
+
+    Many vLLM gateways expect ``Authorization: <token>`` (raw), not ``Bearer <token>``.
+    Set ``LLM_AUTH_HEADER_STYLE=raw`` in ``.env`` for those hosts.
+    """
+    from openai import AsyncOpenAI
+
+    if VLLM_AUTH_HEADER_STYLE == "raw":
+        return AsyncOpenAI(
+            api_key=_VLLM_OPENAI_PLACEHOLDER_KEY,
+            base_url=VLLM_BASE_URL,
+            default_headers={"Authorization": VLLM_API_KEY or ""},
+            timeout=OPENAI_CLIENT_TIMEOUT_SEC,
+        )
+    return AsyncOpenAI(
+        api_key=VLLM_API_KEY,
+        base_url=VLLM_BASE_URL,
+        timeout=OPENAI_CLIENT_TIMEOUT_SEC,
+    )
 
 # Default model id without provider prefix (e.g. "gpt-4o-mini" from "openai:gpt-4o-mini")
 _MODEL_NAME = DEFAULT_MODEL_NAME.split(":", 1)[-1] if ":" in DEFAULT_MODEL_NAME else DEFAULT_MODEL_NAME
@@ -75,10 +104,10 @@ def _resolve_model_spec(model_spec: str) -> tuple[str, str]:
 
 
 def get_openai_chat_model(model_spec: str | None) -> OpenAIChatModel:
-    """Chat model for given spec (openai:<id>, deepseek:<id>, openrouter:<id>, or bare model id).
+    """Chat model for given spec (openai:<id>, deepseek:<id>, openrouter:<id>, vllm:<id>, or bare model id).
 
-    DeepSeek and OpenRouter use OpenAI-compatible HTTP APIs; we reuse OpenAIChatModel with a custom
-    AsyncOpenAI client (base_url + api_key from env).
+    DeepSeek, OpenRouter, and vLLM use OpenAI-compatible HTTP APIs; we reuse OpenAIChatModel with a
+    custom AsyncOpenAI client (base_url + api_key from env).
     """
     provider, mid = _resolve_model_spec(model_spec or DEFAULT_MODEL_NAME)
     cache_key = f"{provider}:{mid}"
@@ -116,6 +145,13 @@ def get_openai_chat_model(model_spec: str | None) -> OpenAIChatModel:
             base_url=OLLAMA_BASE_URL,
             timeout=OPENAI_CLIENT_TIMEOUT_SEC,
         )
+    elif provider == "vllm":
+        if not VLLM_API_KEY or not VLLM_BASE_URL:
+            raise RuntimeError(
+                "LLM_API_KEY and LLM_BASE_URL (or VLLM_API_KEY and VLLM_BASE_URL) must be set; "
+                "cannot use vllm provider. Add both to .env or choose another model profile."
+            )
+        client = _vllm_async_openai_client()
     else:
         client = AsyncOpenAI(timeout=OPENAI_CLIENT_TIMEOUT_SEC)
 
@@ -251,8 +287,14 @@ def get_agent(
     if system_prompt is None:
         system_prompt = build_system_prompt(flow)
     toolsets = [_make_mcp_server()] if use_mcp else []
+    eff_spec = (model_spec or "").strip() or DEFAULT_MODEL_NAME
     model = get_openai_chat_model(model_spec) if model_spec else _get_openai_model()
-    model_settings = {"max_tokens": int(max_tokens)} if isinstance(max_tokens, int) and max_tokens > 0 else None
+    capped_tokens = (
+        cap_completion_tokens(eff_spec, int(max_tokens))
+        if isinstance(max_tokens, int) and max_tokens > 0
+        else None
+    )
+    model_settings = {"max_tokens": capped_tokens} if capped_tokens else None
     return Agent(
         model,
         system_prompt=system_prompt,
@@ -270,7 +312,12 @@ def get_simple_structured_agent(
 ) -> Agent:
     """LLM Call (Simple): no MCP, single structured output (Pydantic)."""
     model = get_openai_chat_model(model_spec)
-    model_settings = {"max_tokens": int(max_tokens)} if isinstance(max_tokens, int) and max_tokens > 0 else None
+    capped_tokens = (
+        cap_completion_tokens(model_spec, int(max_tokens))
+        if isinstance(max_tokens, int) and max_tokens > 0
+        else None
+    )
+    model_settings = {"max_tokens": capped_tokens} if capped_tokens else None
     ag = Agent(
         model,
         system_prompt=system_prompt,

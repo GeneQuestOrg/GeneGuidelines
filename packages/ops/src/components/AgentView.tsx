@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   fetchTickets,
   fetchTicket,
@@ -19,6 +19,7 @@ import {
   registerRunStart,
   saveRunSnapshot,
 } from "../runHistory";
+import { useDefaultModelProfile } from "../hooks/useDefaultModelProfile";
 
 interface TicketRow {
   id: number;
@@ -291,8 +292,16 @@ export function AgentView({
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [flowKey, setFlowKey] = useState("pubmed");
-  const [modelProfile, setModelProfile] = useState<ModelProfile>("production");
+  const defaultModelProfile = useDefaultModelProfile();
+  const [modelProfile, setModelProfile] = useState<ModelProfile>(defaultModelProfile);
+  const profileSynced = useRef(false);
   const [availableFlows, setAvailableFlows] = useState(DEFAULT_FLOWS);
+
+  useEffect(() => {
+    if (profileSynced.current) return;
+    setModelProfile(defaultModelProfile);
+    profileSynced.current = true;
+  }, [defaultModelProfile]);
   const [selectedTicket, setSelectedTicket] = useState<TicketRow | null>(null);
   const [runStatus, setRunStatus] = useState<string>("");
   const [trace, setTrace] = useState<AgentTraceEvent[]>([]);
@@ -1135,7 +1144,7 @@ export function AgentView({
                       setModelProfile(e.target.value as ModelProfile)
                     }
                     disabled={runInProgress}
-                    title="Model profile: production (OpenAI), test (DeepSeek), openrouter (OpenRouter)"
+                    title="Model profile: vllm (self-hosted), production (OpenAI), test (DeepSeek), openrouter (OpenRouter)"
                     style={{
                       padding: "9px 12px",
                       borderRadius: 6,
@@ -1147,6 +1156,7 @@ export function AgentView({
                       cursor: runInProgress ? "default" : "pointer",
                     }}
                   >
+                    <option value="vllm">vLLM (Gemma)</option>
                     <option value="production">Production (OpenAI)</option>
                     <option value="test">Test (DeepSeek)</option>
                     <option value="openrouter">OpenRouter (Gemma 4 31B free)</option>

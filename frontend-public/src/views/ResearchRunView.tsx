@@ -14,6 +14,7 @@ const MAX_TRACE_LINES = 80;
 export interface ResearchRunViewProps {
   readonly executionId: string;
   readonly diseaseSlug?: string;
+  readonly diseaseName?: string;
   readonly queryTag?: string;
   readonly onNav: (path: string) => void;
 }
@@ -40,6 +41,7 @@ function formatTraceLine(raw: string): string {
 export function ResearchRunView({
   executionId,
   diseaseSlug,
+  diseaseName,
   queryTag,
   onNav,
 }: ResearchRunViewProps) {
@@ -122,6 +124,12 @@ export function ResearchRunView({
       <h1>Research run</h1>
       <p className="research__lead">
         <code>{executionId}</code>
+        {diseaseName != null ? (
+          <>
+            {" "}
+            · <span>{diseaseName}</span>
+          </>
+        ) : null}
         {diseaseSlug != null ? (
           <>
             {" "}

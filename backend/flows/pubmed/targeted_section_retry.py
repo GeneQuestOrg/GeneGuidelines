@@ -63,6 +63,7 @@ async def execute_pubmed_targeted_section_retry(
         )
         from backend.engine.context_interpolation import interpolate_context_placeholders
         from backend.engine.flow_engine import _SIMPLE_NODE_SYSTEM_PROMPT_HEAD
+        from backend.engine.prompt_formatting import build_simple_llm_prompts
     except ImportError:
         from ... import database as db
         from ...agents.schemas import resolve_simple_result_model
@@ -73,6 +74,7 @@ async def execute_pubmed_targeted_section_retry(
         )
         from ...engine.context_interpolation import interpolate_context_placeholders
         from ...engine.flow_engine import _SIMPLE_NODE_SYSTEM_PROMPT_HEAD
+        from ...engine.prompt_formatting import build_simple_llm_prompts
 
     comments_lines = [
         f"{c.get('author', '')}: {c.get('content', '')}" for c in (comments or [])
@@ -103,11 +105,17 @@ async def execute_pubmed_targeted_section_retry(
         max_retry = int(node.get("max_retry") or 3)
         model_spec = resolve_model_spec_for_node(node)
         max_tokens = resolve_max_tokens_for_node(node)
-        sys_simple = f"{_SIMPLE_NODE_SYSTEM_PROMPT_HEAD}\n\n--- Task ---\n{node_prompt}"
-        user_simple = (
-            f"Ticket #{ticket_id}\nTitle: {title}\nDescription: {description}\n"
-            + (f"Discussion: {comments_text}\n" if comments_text else "")
-            + f"Targeted retry for section {section_id}. Rubric reasons: {retry_reasons}\n"
+        sys_simple, user_simple = build_simple_llm_prompts(
+            node_prompt,
+            system_head=_SIMPLE_NODE_SYSTEM_PROMPT_HEAD,
+            ticket_id=ticket_id,
+            title=title,
+            description=description,
+            comments_text=comments_text,
+        )
+        user_simple += (
+            f"\n\nTargeted retry for section {section_id}."
+            f" Rubric reasons: {retry_reasons}\n"
         )
 
         emit_fn(

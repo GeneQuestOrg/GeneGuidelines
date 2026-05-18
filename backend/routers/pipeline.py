@@ -2,14 +2,14 @@
 from __future__ import annotations
 
 import asyncio
-from typing import Literal
+from typing import Literal, Self
 
 import os
 import threading
 import time
 
 from fastapi import APIRouter, Depends, HTTPException, Request
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 from .. import database as db
 from ..auth import require_api_key_if_set
@@ -28,7 +28,10 @@ from ..content_models import (
     GuidelinePrDetailResponse,
     GuidelinePromptProfile,
 )
-from ..guideline_prompt_profile import normalize_guideline_prompt_profile
+from ..guideline_prompt_profile import (
+    build_custom_disease_flow_initial_fields,
+    normalize_guideline_prompt_profile,
+)
 from ..operator_settings import get_operator_settings
 from . import agent as agent_router
 from . import doctor_finder as doctor_finder_router
@@ -37,10 +40,40 @@ router = APIRouter(dependencies=[Depends(require_api_key_if_set)])
 
 
 class GuidelineRunBody(BaseModel):
-    """Start guideline pipeline for a catalog disease (slug → rich ticket context)."""
+    """Start guideline pipeline for a catalog disease or a custom disease name."""
 
-    disease_slug: str = Field(..., min_length=1, max_length=64)
+    disease_slug: str | None = Field(default=None, max_length=64)
+    disease_name: str | None = Field(default=None, max_length=500)
+    disease_aliases: list[str] = Field(default_factory=list, max_length=20)
     profile: str = DEFAULT_MODEL_PROFILE
+
+    @field_validator("disease_aliases")
+    @classmethod
+    def _strip_aliases(cls, values: list[str]) -> list[str]:
+        out: list[str] = []
+        seen: set[str] = set()
+        for raw in values:
+            s = str(raw).strip()
+            if not s:
+                continue
+            key = s.casefold()
+            if key in seen:
+                continue
+            seen.add(key)
+            out.append(s[:80])
+            if len(out) >= 20:
+                break
+        return out
+
+    @model_validator(mode="after")
+    def _require_slug_or_name(self) -> Self:
+        slug = (self.disease_slug or "").strip()
+        name = (self.disease_name or "").strip()
+        if slug and name:
+            raise ValueError("Provide either disease_slug (catalog) or disease_name (custom), not both.")
+        if not slug and not name:
+            raise ValueError("Provide disease_slug or disease_name.")
+        return self
 
 
 class PathwayRunBody(BaseModel):
@@ -80,9 +113,23 @@ class RuntimeSettingsResponse(BaseModel):
 
 class OperatorSettingsResponse(BaseModel):
     defaultModelProfile: str
+    singleLlmMode: bool = False
+    singleLlmModel: str | None = None
     modelProfiles: list[ModelProfileSettingsResponse]
     integrations: list[IntegrationSettingResponse]
     runtime: RuntimeSettingsResponse
+
+
+def _custom_guideline_ticket_description(disease_name: str, aliases: list[str]) -> str:
+    alias_lines = "\n".join(f"- {a}" for a in aliases) if aliases else "- (none — consider generating aliases before the run)"
+    return (
+        "Evidence-based clinical guideline research for a user-specified rare disease "
+        "(not in the published catalog).\n"
+        f"Preferred name: {disease_name}\n"
+        f"Search aliases / synonyms:\n{alias_lines}\n\n"
+        "Use disease-specific clinical framing and terminology for this entity. "
+        "PubMed queries must target this exact rare disease, not unrelated homonyms."
+    )
 
 
 def _guideline_ticket_description(disease: dict) -> str:
@@ -267,20 +314,10 @@ def list_pipeline_runs():
 
 @router.post("/guideline-run")
 async def start_guideline_run(body: GuidelineRunBody):
-    """Start PubMed guideline pipeline for a catalog disease (no manual ticket in UI)."""
-    slug = body.disease_slug.strip()
-    if not slug:
-        raise HTTPException(status_code=400, detail="disease_slug is required")
-
-    loop = asyncio.get_event_loop()
-    disease = await loop.run_in_executor(
-        None, lambda: get_disease_by_slug(slug, include_prompt_profile=True)
-    )
-    if disease is None:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Disease '{slug}' not found in catalog. Pick a disease from the list.",
-        )
+    """Start PubMed guideline pipeline for a catalog disease or a custom disease name."""
+    slug = (body.disease_slug or "").strip()
+    custom_name = (body.disease_name or "").strip()
+    aliases = list(body.disease_aliases or [])
 
     profile_norm = (body.profile or "").strip().lower() or DEFAULT_MODEL_PROFILE
     if profile_norm not in MODEL_PROFILES:
@@ -289,24 +326,55 @@ async def start_guideline_run(body: GuidelineRunBody):
             detail=f"Unknown profile '{body.profile}'. Allowed: {sorted(MODEL_PROFILES.keys())}",
         )
 
-    label = str(disease["name"]).strip()
+    loop = asyncio.get_event_loop()
+
+    if slug:
+        disease = await loop.run_in_executor(
+            None, lambda: get_disease_by_slug(slug, include_prompt_profile=True)
+        )
+        if disease is None:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Disease '{slug}' not found in catalog. Pick a disease from the list.",
+            )
+        label = str(disease["name"]).strip()
+        ticket_id = await loop.run_in_executor(
+            None,
+            lambda: db.create_ticket(
+                title=label,
+                description=_guideline_ticket_description(disease),
+                reporter_name="GeneGuidelines",
+                category="guideline_research",
+            ),
+        )
+        return await agent_router.start_agent_run(
+            ticket_id,
+            flow_key="pubmed",
+            profile=profile_norm,
+            label=label,
+            pipeline="guideline",
+            disease_slug=str(disease["slug"]),
+        )
+
+    label = custom_name
     ticket_id = await loop.run_in_executor(
         None,
         lambda: db.create_ticket(
             title=label,
-            description=_guideline_ticket_description(disease),
+            description=_custom_guideline_ticket_description(custom_name, aliases),
             reporter_name="GeneGuidelines",
             category="guideline_research",
         ),
     )
-
+    disease_initial = build_custom_disease_flow_initial_fields(custom_name, aliases)
     return await agent_router.start_agent_run(
         ticket_id,
         flow_key="pubmed",
         profile=profile_norm,
         label=label,
         pipeline="guideline",
-        disease_slug=str(disease["slug"]),
+        disease_slug=None,
+        disease_initial=disease_initial,
     )
 
 

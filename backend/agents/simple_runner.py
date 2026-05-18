@@ -12,6 +12,7 @@ from pydantic import BaseModel
 
 from . import agent as agent_module
 from ..config import SIMPLE_LLM_CALL_TIMEOUT_SEC
+from ..engine.prompt_formatting import prepare_llm_message_text
 
 # Active model profile for the current async context (set per request by the router).
 # Falls back to DEFAULT_MODEL_PROFILE from config when unset.
@@ -50,6 +51,7 @@ def resolve_model_spec_for_node(node: dict) -> str:
 def resolve_max_tokens_for_node(node: dict) -> int:
     """Resolve response token limit for a node (per-node override first, then prompt_mode default)."""
     from ..config import DEFAULT_AGENTIC_LLM_MAX_TOKENS, DEFAULT_SIMPLE_LLM_MAX_TOKENS
+    from .llm_limits import cap_completion_tokens
 
     raw = node.get("max_tokens")
     try:
@@ -57,9 +59,11 @@ def resolve_max_tokens_for_node(node: dict) -> int:
     except (TypeError, ValueError):
         parsed = 0
     if parsed > 0:
-        return parsed
-    mode = (node.get("prompt_mode") or "agentic").strip().lower()
-    return DEFAULT_SIMPLE_LLM_MAX_TOKENS if mode == "simple" else DEFAULT_AGENTIC_LLM_MAX_TOKENS
+        budget = parsed
+    else:
+        mode = (node.get("prompt_mode") or "agentic").strip().lower()
+        budget = DEFAULT_SIMPLE_LLM_MAX_TOKENS if mode == "simple" else DEFAULT_AGENTIC_LLM_MAX_TOKENS
+    return cap_completion_tokens(resolve_model_spec_for_node(node), budget)
 
 
 def resolve_overflow_model_spec() -> str | None:
@@ -122,11 +126,14 @@ async def run_llm_simple_async(
     active_spec = model_spec
     overflow_used = False
 
+    sys_clean = prepare_llm_message_text(system_prompt)
+    user_clean = prepare_llm_message_text(user_prompt)
+
     while attempt < tries:
         attempt += 1
-        full_user = user_prompt + extra
+        full_user = prepare_llm_message_text(user_clean + extra)
         agent = agent_module.get_simple_structured_agent(
-            system_prompt,
+            sys_clean,
             result_type,
             model_spec=active_spec,
             max_tokens=max_tokens,
