@@ -972,7 +972,7 @@ async def run_flow_step_by_step_async(
                 "initial": store.get("initial_context") or {},
                 "outputs": store.get("node_outputs") or {},
             }
-            out = run_pm1_retrieval(retrieval_ctx)
+            out = await asyncio.to_thread(run_pm1_retrieval, retrieval_ctx)
             store["output"] = _json.dumps(out, ensure_ascii=False)
             store["node_outputs"][node_id] = {
                 "result": out,
@@ -1886,7 +1886,7 @@ async def run_flow_fork_parallel_async(
                 "initial": local_store.get("initial_context") or {},
                 "outputs": local_store.get("node_outputs") or {},
             }
-            out = run_pm1_retrieval(retrieval_ctx)
+            out = await asyncio.to_thread(run_pm1_retrieval, retrieval_ctx)
             local_store["output"] = _json.dumps(out, ensure_ascii=False)
             node_out = {
                 "result": out,
