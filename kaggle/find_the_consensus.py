@@ -21,7 +21,7 @@ audit trail.
 **Submission**: GeneGuidelines · *Living clinical guidelines for rare genetic diseases* · Health & Sciences (Impact Track) · GeneQuest Foundation
 **Live demo**: <code>https://geneguidelines.genequest.org</code> · **Repo**: <code>github.com/GeneQuestOrg/GeneGuidelines</code> · **Writeup**: see Kaggle Writeup attached to this submission · CC-BY 4.0.
 
-> **The verifiable claim:** Given a fixed PubMed candidate list, Gemma 4 names the recognised international guideline paper for four unrelated rare diseases — **4 / 4 canonical PMIDs, 0 hallucinations**. The verifier rejects any PMID Gemma proposes that is not in the candidate set. This is what one of six workflows behind the full GeneGuidelines product looks like, in isolation, fully runnable in this notebook.
+> **The architectural contract this notebook backs:** every pick must be a PMID from the supplied candidate list — the verifier rejects anything else, so fabricated citations are impossible *by construction*. The benchmark replays this workflow against four unrelated rare diseases; with the deterministic-stub fallback (default when Gemma 4 weights aren't mounted as a Kaggle input) it returns the canonical guideline PMID for each. The chart in §5 shows which loader produced each row — `loader: stub` means the stub-fallback table answered; `loader: real` means Gemma 4 itself did. This is what one of the six workflows behind the full GeneGuidelines product looks like, in isolation, fully runnable in this notebook.
 
 This notebook isolates **one named workflow** from the GeneGuidelines product so a judge can verify the role Gemma 4 plays.
 
@@ -842,8 +842,8 @@ print(review_contract.to_string(index=False))
 | Metric | Value |
 |---|---|
 | Workflow executor types registered in the live engine | **17** |
-| Disease consensus PMIDs verified in this notebook | **4 / 4** (FD · Marfan · PKU · CF) |
-| Hallucinated PMIDs the verifier accepts | **0** (rejects anything not on the candidate list) |
+| Benchmark accuracy in the stub-fallback default | **4 / 4** canonical PMIDs (FD · Marfan · PKU · CF); chart title shows which loader produced each row |
+| Hallucinated PMIDs the verifier accepts | **0** (rejects anything not on the supplied candidate list — architectural property, independent of loader) |
 | Same workflow runs against | **7,000+** rare diseases via the public *Add a disease* form |
 | Citations per guideline paragraph | **1+ PubMed ID**, every recommendation traceable |
 | Reviewer model | **Named clinician** per signed PR; full version history |
