@@ -14,7 +14,7 @@ docker compose up --build      # → http://localhost:5173
 
 PubMed indexes **~30 new rare-disease publications per day**. There are **~7,000 rare diseases**. The median lag from solid evidence appearing to incorporation into formal clinical guidelines is **~6 years**. A primary-care doctor or even a specialist surgeon cannot read enough to keep up with any single rare disease, let alone with all of them.
 
-The result is what one family describes plainly in [the public site's About page](http://localhost:5173/#/about): a child with a rare disease can be misdiagnosed in one major hospital, scheduled for the wrong operation in a second, and saved at the last minute by one doctor with deep experience in that specific entity — *if you find them*. That should not depend on luck.
+The result is plain: a child with a rare disease can be misdiagnosed in one major hospital, scheduled for the wrong operation in a second, and saved at the last minute by one doctor with deep experience in that specific entity — *if you find them*. That should not depend on luck. The full family story behind this project is in [`docs/STORY.md`](docs/STORY.md).
 
 ## What GeneGuidelines is
 
