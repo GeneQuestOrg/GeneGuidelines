@@ -155,6 +155,18 @@ export function DiseaseTabs({
               </Section>
             ) : null}
 
+            <Section title={copy.trialsTitle} sub={copy.trialsSub(trials.length)} divider>
+              {trialsError != null ? (
+                <p className="d-panel-empty" role="alert">{trialsError}</p>
+              ) : trialsLoading ? (
+                <p className="d-panel-empty">Loading trials…</p>
+              ) : trials.length === 0 ? (
+                <p className="d-panel-empty">No active trials matching this disease right now.</p>
+              ) : (
+                <TrialsList trials={trials} />
+              )}
+            </Section>
+
             <Section title="Therapies" divider>
               <p className="d-panel-note">
                 These options manage symptoms and slow progression — none of them fully reverses
@@ -178,6 +190,22 @@ export function DiseaseTabs({
                 <FoundationsList foundations={foundations} />
               )}
             </Section>
+
+            {openPrs.length > 0 ? (
+              <Section
+                title={copy.openPrsTitle}
+                sub={copy.openPrsSub(openPrs.length)}
+                divider
+              >
+                <DiseaseOpenPrList
+                  prs={openPrs}
+                  loading={prsLoading}
+                  error={prsError}
+                  diseaseSlug={slug}
+                  onNav={onNav}
+                />
+              </Section>
+            ) : null}
 
             <Section
               title="Private case context"

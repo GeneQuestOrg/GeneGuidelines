@@ -3,9 +3,9 @@
   flex-direction: column;
   gap: 8px;
   padding: 18px 22px;
-  margin: 0 0 24px;
-  background: color-mix(in oklch, var(--accent-ink, #0f766e) 6%, var(--bg-elev));
-  border: 1px solid color-mix(in oklch, var(--accent-ink, #0f766e) 30%, var(--line));
+  margin: 32px 0 24px;
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
   border-left: 4px solid var(--accent-ink, #0f766e);
   border-radius: var(--r-lg);
 }
