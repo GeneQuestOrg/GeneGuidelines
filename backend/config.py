@@ -46,9 +46,27 @@ VLLM_AUTH_HEADER_STYLE = "raw" if _LLM_AUTH_STYLE in ("raw", "token", "plain") e
 # When set, every model profile routes to this endpoint (single provider for the whole app).
 SINGLE_LLM_MODE = bool(VLLM_API_KEY and VLLM_BASE_URL)
 UNIFIED_LLM_MODEL_SPEC = f"vllm:{LLM_MODEL_ID}" if SINGLE_LLM_MODE else None
+_VLLM_MODEL_SPEC = f"vllm:{LLM_MODEL_ID}"
+
+_env_model_profile_early = (os.environ.get("MODEL_PROFILE") or "").strip().lower()
+
+
+def _default_llm_model_spec() -> str:
+    """Fallback when DEFAULT_LLM_MODEL is unset — follow MODEL_PROFILE / vLLM env, not OpenAI."""
+    if SINGLE_LLM_MODE or _env_model_profile_early == "vllm":
+        return _VLLM_MODEL_SPEC
+    if _env_model_profile_early == "openrouter":
+        return "openrouter:google/gemma-4-31b-it"
+    if _env_model_profile_early == "test":
+        return "deepseek:deepseek-chat"
+    if _env_model_profile_early == "ollama":
+        return "ollama:gemma4:26b"
+    return "openai:gpt-5.4-mini"
+
 
 # Agent model (Pydantic AI) — global default
-DEFAULT_MODEL_NAME = os.environ.get("DEFAULT_LLM_MODEL", "openai:gpt-5.4-mini").strip() or "openai:gpt-5.4-mini"
+_DEFAULT_LLM_MODEL_ENV = (os.environ.get("DEFAULT_LLM_MODEL") or "").strip()
+DEFAULT_MODEL_NAME = _DEFAULT_LLM_MODEL_ENV or _default_llm_model_spec()
 
 # Model profiles selectable per run (?profile=production|test|openrouter|vllm):
 #   - "production": OpenAI (DEFAULT_SIMPLE_LLM_MODEL / DEFAULT_AGENTIC_LLM_MODEL)
@@ -156,13 +174,12 @@ if SINGLE_LLM_MODE and UNIFIED_LLM_MODEL_SPEC:
             "overflow": None,
         }
 
-_env_model_profile = (os.environ.get("MODEL_PROFILE") or "").strip().lower()
 if SINGLE_LLM_MODE:
     DEFAULT_MODEL_PROFILE = (
-        _env_model_profile if _env_model_profile in MODEL_PROFILES else "vllm"
+        _env_model_profile_early if _env_model_profile_early in MODEL_PROFILES else "vllm"
     )
-elif _env_model_profile and _env_model_profile in MODEL_PROFILES:
-    DEFAULT_MODEL_PROFILE = _env_model_profile
+elif _env_model_profile_early and _env_model_profile_early in MODEL_PROFILES:
+    DEFAULT_MODEL_PROFILE = _env_model_profile_early
 else:
     DEFAULT_MODEL_PROFILE = "production"
 

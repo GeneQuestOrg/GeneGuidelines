@@ -37,7 +37,20 @@ def resolve_model_spec_for_node(node: dict) -> str:
 
     raw = (node.get("model_name") or "").strip()
     if raw:
-        return raw if ":" in raw else f"openai:{raw}"
+        if ":" in raw:
+            return raw
+        profile = resolve_active_profile()
+        from ..config import LLM_MODEL_ID, SINGLE_LLM_MODE
+
+        if profile == "vllm" or SINGLE_LLM_MODE:
+            return f"vllm:{raw}"
+        if profile == "openrouter":
+            return f"openrouter:{raw}"
+        if profile == "ollama":
+            return f"ollama:{raw}"
+        if profile == "test":
+            return f"deepseek:{raw}"
+        return f"openai:{raw}"
 
     profile = resolve_active_profile()
     profile_models = MODEL_PROFILES[profile]

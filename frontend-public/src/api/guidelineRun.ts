@@ -65,8 +65,12 @@ export interface AgentRunPayloadV1 {
   missing_tool_requests: unknown[];
 }
 
-/** Status poll while a PubMed/guideline job runs — backend may be busy for minutes. */
-const AGENT_RUN_POLL_TIMEOUT_MS = 120_000;
+/**
+ * Status poll while a PubMed/guideline job runs.
+ * GET /api/agent/run/{id} is a fast in-memory read; keep this short so quick
+ * tunnels (trycloudflare.com) and nginx do not cancel long-lived connections.
+ */
+const AGENT_RUN_POLL_TIMEOUT_MS = 20_000;
 
 export async function fetchAgentRun(
   executionId: string,

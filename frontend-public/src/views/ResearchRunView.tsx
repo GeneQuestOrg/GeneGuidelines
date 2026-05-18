@@ -11,6 +11,13 @@ import "../styles/research.css";
 const POLL_MS = 2000;
 const MAX_TRACE_LINES = 80;
 
+/** Quick tunnels often drop long-lived SSE; polling alone is enough there. */
+function shouldUseTraceSse(): boolean {
+  if (typeof window === "undefined") return true;
+  const host = window.location.hostname.toLowerCase();
+  return !host.endsWith(".trycloudflare.com");
+}
+
 export interface ResearchRunViewProps {
   readonly executionId: string;
   readonly diseaseSlug?: string;
@@ -58,8 +65,11 @@ export function ResearchRunView({
 
   useEffect(() => {
     let cancelled = false;
+    let inFlight = false;
 
     const poll = async () => {
+      if (inFlight) return;
+      inFlight = true;
       try {
         const payload = await fetchAgentRun(executionId);
         if (!cancelled) {
@@ -82,6 +92,8 @@ export function ResearchRunView({
         } else {
           setPollError("Could not load run status.");
         }
+      } finally {
+        inFlight = false;
       }
     };
 
@@ -94,6 +106,12 @@ export function ResearchRunView({
   }, [executionId]);
 
   useEffect(() => {
+    if (!shouldUseTraceSse()) {
+      appendLines([
+        "[trace] Live SSE disabled on trycloudflare.com — status updates via polling only.",
+      ]);
+      return;
+    }
     const base = getApiBaseUrl();
     const path = appendApiKeyQueryForSse(
       `/api/agent/trace/${encodeURIComponent(executionId)}`,
