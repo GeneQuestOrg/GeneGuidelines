@@ -1,3 +1,5 @@
-from .context import ExecutionContext
-from .registry import get_executor_registry, get_executor_for_node_type
+"""Flow execution engine (import submodules directly to avoid import cycles)."""
 
+from .context import ExecutionContext
+
+__all__ = ["ExecutionContext"]

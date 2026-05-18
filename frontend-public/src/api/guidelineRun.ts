@@ -1,6 +1,7 @@
 import { apiGet, apiPostJson } from "./client";
 
-export const DEFAULT_GUIDELINE_PROFILE = "vllm";
+/** Server profile for guideline runs + alias suggest. Use `production` (OpenAI) or `vllm`. */
+export const DEFAULT_GUIDELINE_PROFILE = "production";
 
 export interface StartGuidelineRunResponse {
   execution_id: string;

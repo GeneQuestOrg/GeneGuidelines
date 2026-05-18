@@ -19,8 +19,6 @@ from typing import Any, Callable
 from .. import database as db
 from ..config import (
     AGENTIC_NODE_OUTPUT_MAX_CHARS,
-    PUBMED_PROMPT_PM2_ARTICLES_TEXT_MAX_CHARS,
-    PUBMED_PROMPT_PM2_EVIDENCE_CARDS_MAX,
     QUALITY_FIRST_HARD_MODE,
     QUALITY_FIRST_MAX_RETRY,
 )
@@ -176,56 +174,11 @@ def _slim_pm2(raw: Any) -> Any:
     return {"result": slimmed} if has_result else slimmed
 
 
-_PM2_PROMPT_METADATA_KEYS: tuple[str, ...] = (
-    "query_text",
-    "article_count",
-    "fallback_used",
-    "total_found_estimate",
-    "total_requested",
-    "total_analyzed",
-    "total_with_abstract",
-    "evidence_score",
-    "confidence_level",
-    "source_links_html",
-)
+def _slim_pm2_for_prompt(node_id: str, raw: Any) -> Any:
+    """Task-scoped pm-2 view for PubMed LLM prompt interpolation (see flows.pubmed.prompt_context)."""
+    from ..flows.pubmed.prompt_context import pm2_view_for_llm_prompt
 
-_PM2_CORPUS_PROMPT_NODE_IDS: frozenset[str] = frozenset({"pm-3", "pm-4", "pm_fix"})
-
-
-def _pubmed_node_needs_pm2_corpus_slim(node_id: str) -> bool:
-    if node_id in _PM2_CORPUS_PROMPT_NODE_IDS:
-        return True
-    if node_id.startswith("pass1-"):
-        return True
-    return node_id.startswith("pm-4-") and node_id not in ("pm-4-build",)
-
-
-def _slim_pm2_for_prompt(raw: Any) -> Any:
-    """Bound pm-2 corpus fields before PubMed LLM prompt interpolation."""
-    result_dict, has_result = _get_result_dict(raw)
-    slimmed: dict[str, Any] = {
-        k: result_dict[k] for k in _PM2_PROMPT_METADATA_KEYS if k in result_dict
-    }
-    cards = result_dict.get("evidence_cards")
-    if isinstance(cards, list) and cards:
-        max_cards = max(1, PUBMED_PROMPT_PM2_EVIDENCE_CARDS_MAX)
-        if len(cards) > max_cards:
-            slimmed["evidence_cards"] = cards[:max_cards]
-            slimmed["evidence_cards_truncated"] = True
-            slimmed["evidence_cards_total"] = len(cards)
-        else:
-            slimmed["evidence_cards"] = cards
-    articles_text = str(result_dict.get("articles_text") or "")
-    max_chars = max(4_000, PUBMED_PROMPT_PM2_ARTICLES_TEXT_MAX_CHARS)
-    if len(articles_text) > max_chars:
-        slimmed["articles_text"] = (
-            articles_text[:max_chars] + "\n\n[... truncated for LLM request size limit ...]"
-        )
-        slimmed["articles_text_truncated"] = True
-        slimmed["articles_text_original_chars"] = len(articles_text)
-    elif articles_text:
-        slimmed["articles_text"] = articles_text
-    return {"result": slimmed} if has_result else slimmed
+    return pm2_view_for_llm_prompt(node_id, raw)
 
 
 def _store_for_prompt_interpolation(
@@ -233,14 +186,14 @@ def _store_for_prompt_interpolation(
     node_id: str,
     store: dict[str, Any],
 ) -> dict[str, Any]:
-    if flow_key != "pubmed" or not _pubmed_node_needs_pm2_corpus_slim(node_id):
+    if flow_key != "pubmed":
         return store
     outputs = store.get("node_outputs") or {}
     if "pm-2" not in outputs:
         return store
     return {
         **store,
-        "node_outputs": {**outputs, "pm-2": _slim_pm2_for_prompt(outputs["pm-2"])},
+        "node_outputs": {**outputs, "pm-2": _slim_pm2_for_prompt(node_id, outputs["pm-2"])},
     }
 
 

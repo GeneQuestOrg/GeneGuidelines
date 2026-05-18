@@ -210,6 +210,12 @@ AGENT_PYDANTIC_AI_REQUEST_LIMIT = (
 )
 AGENT_PYDANTIC_AI_REQUEST_LIMIT = max(10, min(10_000, AGENT_PYDANTIC_AI_REQUEST_LIMIT))
 SIMPLE_LLM_CALL_TIMEOUT_SEC = float((os.environ.get("SIMPLE_LLM_CALL_TIMEOUT_SEC") or "").strip() or 5400.0)
+# Max concurrent simple LLM calls (PubMed pass1/pm-4 waves). Lower for self-hosted vLLM behind nginx.
+_SIMPLE_LLM_PARALLEL_DEFAULT = "2" if SINGLE_LLM_MODE else "6"
+SIMPLE_LLM_PARALLEL_CONCURRENCY = max(
+    1,
+    int((os.environ.get("SIMPLE_LLM_PARALLEL_CONCURRENCY") or "").strip() or _SIMPLE_LLM_PARALLEL_DEFAULT),
+)
 OPENAI_CLIENT_TIMEOUT_SEC = float((os.environ.get("OPENAI_CLIENT_TIMEOUT_SEC") or "").strip() or 2700.0)
 QUALITY_FIRST_HARD_MODE = (os.environ.get("QUALITY_FIRST_HARD_MODE") or "1").strip().lower() in (
     "1",
@@ -299,12 +305,13 @@ PUBMED_PM1_DETERMINISTIC_RETRIEVAL = (
     (os.environ.get("PUBMED_PM1_DETERMINISTIC_RETRIEVAL") or "1").strip().lower()
     in ("1", "true", "yes", "on")
 )
-# Cap pm-2 corpus injected into PubMed LLM prompts (avoids 413 from reverse proxies).
-PUBMED_PROMPT_PM2_ARTICLES_TEXT_MAX_CHARS = int(
-    (os.environ.get("PUBMED_PROMPT_PM2_ARTICLES_TEXT_MAX_CHARS") or "").strip() or 32_000
+# OpenAI org TPM per-request budget (e.g. gpt-5.5-long-context = 400k). Caps articles_text in LLM prompts.
+OPENAI_TPM_REQUEST_TOKEN_BUDGET = int(
+    (os.environ.get("OPENAI_TPM_REQUEST_TOKEN_BUDGET") or "").strip() or 380_000
 )
-PUBMED_PROMPT_PM2_EVIDENCE_CARDS_MAX = int(
-    (os.environ.get("PUBMED_PROMPT_PM2_EVIDENCE_CARDS_MAX") or "").strip() or 40
+# Abstract chars per article line inside prompt ``articles_text`` (pm-2 code node may use more).
+PUBMED_ARTICLES_TEXT_ABSTRACT_MAX_CHARS = int(
+    (os.environ.get("PUBMED_ARTICLES_TEXT_ABSTRACT_MAX_CHARS") or "").strip() or 3000
 )
 
 # Guidelines RAG — comma-separated anchor PMIDs override (env var)
