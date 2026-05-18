@@ -6,6 +6,8 @@ import unittest
 from backend.engine.flow_engine import (
     _compact_pubmed_code_outputs,
     _pubmed_rubric_empty_sections,
+    _slim_pm2_for_prompt,
+    _store_for_prompt_interpolation,
 )
 from backend.engine.flow_output import (
     derive_flow_output_from_node_outputs,
@@ -15,6 +17,49 @@ from backend.engine.flow_output import (
 
 
 class PubmedCodeContextCompactionTests(unittest.TestCase):
+    def test_slim_pm2_for_prompt_truncates_articles_and_cards(self) -> None:
+        raw = {
+            "result": {
+                "query_text": "Noonan syndrome",
+                "article_count": 120,
+                "evidence_cards": [{"pmid": str(i)} for i in range(100)],
+                "articles_text": "A" * 200_000,
+            }
+        }
+        slim = _slim_pm2_for_prompt(raw)
+        result = slim["result"]
+        self.assertTrue(result.get("articles_text_truncated"))
+        self.assertLessEqual(len(result.get("articles_text") or ""), 32_500)
+        self.assertTrue(result.get("evidence_cards_truncated"))
+        self.assertEqual(result.get("evidence_cards_total"), 100)
+        self.assertLessEqual(len(result.get("evidence_cards") or []), 40)
+
+    def test_store_for_prompt_interpolation_pm3_does_not_mutate_original(self) -> None:
+        pm2 = {"result": {"articles_text": "B" * 50_000, "query_text": "X"}}
+        store = {"node_outputs": {"pm-2": pm2}}
+        interp = _store_for_prompt_interpolation("pubmed", "pm-3", store)
+        self.assertTrue(
+            (interp["node_outputs"]["pm-2"]["result"].get("articles_text_truncated"))
+        )
+        self.assertNotIn("articles_text_truncated", pm2["result"])
+
+    def test_pm3_interpolated_context_size_bounded(self) -> None:
+        store = {
+            "node_outputs": {
+                "pm-2": {
+                    "result": {
+                        "query_text": "Fibrous dysplasia",
+                        "article_count": 80,
+                        "evidence_cards": [{"pmid": str(i), "note": "x" * 200} for i in range(80)],
+                        "articles_text": "Z" * 300_000,
+                    }
+                }
+            }
+        }
+        interp = _store_for_prompt_interpolation("pubmed", "pm-3", store)
+        size = len(json.dumps(interp["node_outputs"], ensure_ascii=False).encode())
+        self.assertLess(size, 120_000, f"pm-3 interp context is {size} bytes")
+
     def test_pm_targeted_retry_keeps_only_rubric(self) -> None:
         outputs = {
             "pm-rubric": {"result": {"coverage_score": 42}},

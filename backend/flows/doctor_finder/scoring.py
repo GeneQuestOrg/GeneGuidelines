@@ -86,6 +86,9 @@ def normalize(authors: list[dict[str, Any]]) -> list[dict[str, Any]]:
     Returns:
         New list of author dicts with 'score' replaced by normalized value.
     """
+    if not authors:
+        return []
+
     if len(authors) == 1:
         return [{**a, "score": 100.0} for a in authors]
 
@@ -117,6 +120,13 @@ def run(context: dict[str, Any], *, now: Optional[date] = None) -> dict[str, Any
         now = date.today()
 
     authors: list[dict[str, Any]] = context.get("aggregated_authors") or []
+
+    if not authors:
+        log.info(
+            "scoring: no aggregated_authors — PubMed returned no matchable authors "
+            "(check disease name, aliases, and max_results)"
+        )
+        return {**context, "aggregated_authors": []}
 
     with_raw = [{**a, "score": compute_raw(a, now)} for a in authors]
     normalized = normalize(with_raw)

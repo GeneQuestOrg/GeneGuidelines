@@ -35,6 +35,7 @@ from ..doctor_catalog import (
     get_doctor_by_slug,
     get_doctors_for_disease,
     list_all_doctors,
+    public_doctor_counts_by_slug,
     total_distinct_public_doctor_profiles,
 )
 
@@ -46,16 +47,29 @@ def _run_sync(fn, *args):
     return loop.run_in_executor(None, lambda: fn(*args))
 
 
+def _rows_with_live_doctor_counts(rows: list[dict]) -> list[dict]:
+    """Batch doctor-count enrichment for disease list rows (one finder index build)."""
+    slugs = [str(r.get("slug") or "").strip() for r in rows if r.get("slug")]
+    counts: dict[str, int] = {}
+    if slugs:
+        try:
+            counts = public_doctor_counts_by_slug(slugs)
+        except Exception:
+            counts = {}
+    out: list[dict] = []
+    for row in rows:
+        r = dict(row)
+        slug = str(r.get("slug") or "").strip()
+        if slug and slug in counts:
+            r["doctorsCount"] = counts[slug]
+        out.append(r)
+    return out
+
+
 def _disease_payload_with_live_doctor_count(row: dict) -> dict:
     """API diseases carry doctorsCount aligned with GET /diseases/{slug}/doctors (finder merge)."""
-    r = dict(row)
-    slug = str(r.get("slug") or "").strip()
-    if slug:
-        try:
-            r["doctorsCount"] = effective_public_doctor_count_for_disease(slug)
-        except Exception:
-            pass
-    return r
+    enriched = _rows_with_live_doctor_counts([row])
+    return enriched[0] if enriched else dict(row)
 
 
 def _catalog_stats_with_live_doctor_total() -> dict:
@@ -75,7 +89,10 @@ async def get_diseases(
         rows = await _run_sync(search_diseases, q)
     else:
         rows = await _run_sync(list_diseases)
-    return [DiseaseResponse.model_validate(_disease_payload_with_live_doctor_count(r)) for r in rows]
+    return [
+        DiseaseResponse.model_validate(r)
+        for r in _rows_with_live_doctor_counts(rows)
+    ]
 
 
 @router.get("/diseases/{slug}", response_model=DiseaseResponse)

@@ -134,7 +134,7 @@ export interface DoctorFinderInput {
   top_n_authors?: number;
   ai_justification?: boolean;
   ai_justification_threshold?: number;
-  /** Backend LLM profile: production | test | openrouter */
+  /** Backend LLM profile: vllm | production | test | openrouter */
   model_profile?: string;
   /** e.g. openai:gpt-4o-mini — overrides profile simple model for LLM steps */
   llm_model_override?: string | null;

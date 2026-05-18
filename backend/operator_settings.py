@@ -15,30 +15,38 @@ try:
         OPENROUTER_API_KEY,
         QUALITY_FIRST_HARD_MODE,
         AGENT_RUN_TIMEOUT_SEC,
+        SINGLE_LLM_MODE,
+        VLLM_API_KEY,
+        LLM_MODEL_ID,
     )
 except ImportError:
     from config import (
         BRAVE_API_KEY,
         DEEPSEEK_API_KEY,
         DEFAULT_MODEL_PROFILE,
+        LLM_MODEL_ID,
         MEMORY_POSTGRES_DSN,
         MODEL_PROFILES,
         NCBI_API_KEY,
         OPENROUTER_API_KEY,
         QUALITY_FIRST_HARD_MODE,
         AGENT_RUN_TIMEOUT_SEC,
+        SINGLE_LLM_MODE,
+        VLLM_API_KEY,
     )
 
 PROFILE_LABELS: dict[str, str] = {
     "production": "Production (OpenAI)",
     "test": "Test (DeepSeek)",
     "openrouter": "OpenRouter",
+    "vllm": "vLLM (Gemma)",
 }
 
 _PROVIDER_ENV: dict[str, str] = {
     "openai": "OPENAI_API_KEY",
     "deepseek": "DEEPSEEK_API_KEY",
     "openrouter": "OPENROUTER_API_KEY",
+    "vllm": "LLM_API_KEY",
 }
 
 
@@ -62,6 +70,10 @@ def _provider_configured(provider: str) -> bool:
         return bool(DEEPSEEK_API_KEY)
     if provider == "openrouter":
         return bool(OPENROUTER_API_KEY)
+    if provider == "vllm":
+        return bool(VLLM_API_KEY) and (
+            _env_configured("LLM_BASE_URL") or _env_configured("VLLM_BASE_URL")
+        )
     return False
 
 
@@ -83,13 +95,15 @@ def _profile_readiness(profile_id: str, spec: dict[str, str | None]) -> tuple[bo
 
 def get_operator_settings() -> dict[str, Any]:
     """Build settings payload for admin UI (camelCase keys)."""
+    vllm_label = f"Gemma ({LLM_MODEL_ID})" if SINGLE_LLM_MODE else PROFILE_LABELS.get("vllm", "vllm")
+
     profiles: list[dict[str, Any]] = []
     for profile_id, spec in MODEL_PROFILES.items():
         ready, missing = _profile_readiness(profile_id, spec)
         profiles.append(
             {
                 "id": profile_id,
-                "label": PROFILE_LABELS.get(profile_id, profile_id),
+                "label": vllm_label if SINGLE_LLM_MODE and profile_id == "vllm" else PROFILE_LABELS.get(profile_id, profile_id),
                 "simpleModel": spec.get("simple") or "",
                 "agenticModel": spec.get("agentic") or "",
                 "overflowModel": spec.get("overflow"),
@@ -97,6 +111,8 @@ def get_operator_settings() -> dict[str, Any]:
                 "missingEnvVars": missing,
             }
         )
+    if SINGLE_LLM_MODE:
+        profiles = [p for p in profiles if p["id"] == "vllm"]
 
     integrations: list[dict[str, Any]] = [
         {
@@ -132,6 +148,15 @@ def get_operator_settings() -> dict[str, Any]:
             "description": "Required for openrouter: model specs.",
         },
         {
+            "id": "vllm",
+            "label": "Self-hosted LLM",
+            "envVar": "LLM_API_KEY",
+            "configured": bool(VLLM_API_KEY)
+            and (_env_configured("LLM_BASE_URL") or _env_configured("VLLM_BASE_URL")),
+            "optional": not SINGLE_LLM_MODE,
+            "description": "OpenAI-compatible endpoint (LLM_BASE_URL, LLM_MODEL, LLM_API_KEY).",
+        },
+        {
             "id": "brave",
             "label": "Brave Search",
             "envVar": "BRAVE_API_KEY",
@@ -165,6 +190,8 @@ def get_operator_settings() -> dict[str, Any]:
 
     return {
         "defaultModelProfile": DEFAULT_MODEL_PROFILE,
+        "singleLlmMode": SINGLE_LLM_MODE,
+        "singleLlmModel": LLM_MODEL_ID if SINGLE_LLM_MODE else None,
         "modelProfiles": profiles,
         "integrations": integrations,
         "runtime": {

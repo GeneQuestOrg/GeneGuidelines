@@ -8,6 +8,7 @@ import pytest
 
 from backend.parent_pathway_schema import (
     ParentPathwayValidationError,
+    coerce_pathway_tree_object,
     validate_parent_pathway_tree,
 )
 from backend.tests.parent_pathway_fixtures import ABOUT_SUMMARY_MIN, three_action_steps
@@ -25,6 +26,25 @@ def test_validate_fd_seed_tree() -> None:
     assert 3 <= len(tree["children"]) <= 7
     assert "diagnosis" in tree["title"].lower() or "after" in tree["title"].lower()
     assert isinstance(warnings, list)
+
+
+def test_coerce_root_wrapper() -> None:
+    inner = _load_fd_seed_tree()
+    wrapped = {"root": inner}
+    coerced = coerce_pathway_tree_object(wrapped)
+    tree, _warnings = validate_parent_pathway_tree(coerced)
+    assert tree["id"] == "root"
+    assert len(tree["children"]) >= 3
+
+
+def test_schema_error_includes_field_hint() -> None:
+    tree = {
+        "id": "root",
+        "title": "Test",
+        "children": [],
+    }
+    with pytest.raises(ParentPathwayValidationError, match="about"):
+        validate_parent_pathway_tree(tree)
 
 
 def test_requires_about_on_root() -> None:

@@ -20,8 +20,8 @@ def test_get_pipeline_settings(client: TestClient) -> None:
     resp = client.get("/api/pipeline/settings")
     assert resp.status_code == 200
     body = resp.json()
-    assert body["defaultModelProfile"] in ("production", "test", "openrouter")
-    assert len(body["modelProfiles"]) >= 3
+    assert body["defaultModelProfile"] in ("production", "test", "openrouter", "vllm")
+    assert len(body["modelProfiles"]) >= 4
     prod = next(p for p in body["modelProfiles"] if p["id"] == "production")
     assert prod["simpleModel"]
     assert prod["agenticModel"]

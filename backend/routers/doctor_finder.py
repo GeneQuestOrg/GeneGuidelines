@@ -289,13 +289,16 @@ async def suggest_disease_aliases(body: DoctorFinderAliasSuggestInput):
     try:
         ctx = body.model_dump()
         spec = _resolve_llm_model_spec(ctx)
-        aliases = await generate_disease_aliases_async(
-            body.disease_name,
-            model_spec=spec,
-            store=empty_store,
-            event_queue=None,
-            emit_fn=lambda _q, _p: None,
-        )
+        try:
+            aliases = await generate_disease_aliases_async(
+                body.disease_name,
+                model_spec=spec,
+                store=empty_store,
+                event_queue=None,
+                emit_fn=lambda _q, _p: None,
+            )
+        except RuntimeError as exc:
+            raise HTTPException(status_code=503, detail=str(exc)) from exc
         return {"aliases": aliases}
     finally:
         current_model_profile.reset(token)

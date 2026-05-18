@@ -126,6 +126,25 @@ def test_run_invalid_model_profile_422(client):
     assert resp.status_code == 422
 
 
+def test_suggest_aliases_llm_misconfig_503(client):
+    """Misconfigured model profile should return 503 with an actionable message, not 500."""
+    from unittest.mock import AsyncMock, patch
+
+    with patch(
+        "backend.routers.doctor_finder.generate_disease_aliases_async",
+        new_callable=AsyncMock,
+    ) as mock_gen:
+        mock_gen.side_effect = RuntimeError(
+            "VLLM_API_KEY and VLLM_BASE_URL must be set; cannot use vllm provider."
+        )
+        resp = client.post(
+            "/api/doctor-finder/suggest-aliases",
+            json={"disease_name": "Noonan syndrome", "model_profile": "vllm"},
+        )
+    assert resp.status_code == 503
+    assert "VLLM" in resp.json()["detail"]
+
+
 def test_suggest_aliases_returns_list(client):
     """POST /suggest-aliases should return aliases from the generator."""
     from unittest.mock import AsyncMock, patch

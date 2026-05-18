@@ -463,7 +463,7 @@ export async function fetchTicket(id: number): Promise<unknown> {
 
 // --- Agent (run + SSE trace) ---
 
-export type ModelProfile = "production" | "test" | "openrouter";
+export type ModelProfile = "production" | "test" | "openrouter" | "vllm";
 
 export async function agentRun(
   ticketId: number,
@@ -723,6 +723,8 @@ export interface RuntimeSettings {
 
 export interface OperatorSettings {
   defaultModelProfile: ModelProfile;
+  singleLlmMode?: boolean;
+  singleLlmModel?: string | null;
   modelProfiles: ModelProfileSettings[];
   integrations: IntegrationSetting[];
   runtime: RuntimeSettings;
@@ -740,7 +742,7 @@ export async function startGuidelineRun(
 ): Promise<{ execution_id: string; status: string }> {
   return request<{ execution_id: string; status: string }>("/api/pipeline/guideline-run", {
     method: "POST",
-    body: JSON.stringify({ disease_slug: diseaseSlug, profile: profile ?? "production" }),
+    body: JSON.stringify({ disease_slug: diseaseSlug, profile: profile ?? "vllm" }),
   });
 }
 
@@ -753,7 +755,7 @@ export async function startPathwayRun(
     method: "POST",
     body: JSON.stringify({
       disease_slug: diseaseSlug,
-      profile: profile ?? "production",
+      profile: profile ?? "vllm",
       locale: options?.locale ?? "en",
       refresh_pubmed: Boolean(options?.refreshPubmed),
     }),

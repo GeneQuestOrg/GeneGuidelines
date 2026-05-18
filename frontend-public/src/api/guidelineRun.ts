@@ -1,6 +1,6 @@
 import { apiGet, apiPostJson } from "./client";
 
-export const DEFAULT_GUIDELINE_PROFILE = "production";
+export const DEFAULT_GUIDELINE_PROFILE = "vllm";
 
 export interface StartGuidelineRunResponse {
   execution_id: string;
@@ -8,12 +8,36 @@ export interface StartGuidelineRunResponse {
   ticket_id?: number;
 }
 
+export interface StartGuidelineRunCatalogInput {
+  mode: "catalog";
+  diseaseSlug: string;
+  profile?: string;
+}
+
+export interface StartGuidelineRunCustomInput {
+  mode: "custom";
+  diseaseName: string;
+  diseaseAliases: string[];
+  profile?: string;
+}
+
+export type StartGuidelineRunInput =
+  | StartGuidelineRunCatalogInput
+  | StartGuidelineRunCustomInput;
+
 export async function startGuidelineRunPublic(
-  diseaseSlug: string,
-  profile: string = DEFAULT_GUIDELINE_PROFILE,
+  input: StartGuidelineRunInput,
 ): Promise<StartGuidelineRunResponse> {
+  const profile = input.profile ?? DEFAULT_GUIDELINE_PROFILE;
+  if (input.mode === "catalog") {
+    return apiPostJson<StartGuidelineRunResponse>("/api/pipeline/guideline-run", {
+      disease_slug: input.diseaseSlug,
+      profile,
+    });
+  }
   return apiPostJson<StartGuidelineRunResponse>("/api/pipeline/guideline-run", {
-    disease_slug: diseaseSlug,
+    disease_name: input.diseaseName,
+    disease_aliases: input.diseaseAliases,
     profile,
   });
 }

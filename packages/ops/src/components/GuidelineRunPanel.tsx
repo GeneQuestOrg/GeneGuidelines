@@ -6,6 +6,7 @@ import {
   startGuidelineRun,
   type ModelProfile,
 } from "../api/client";
+import { useDefaultModelProfile } from "../hooks/useDefaultModelProfile";
 import { useDiseaseCatalog } from "../hooks/useDiseaseCatalog";
 import { useLiveRunTrace } from "../hooks/useLiveRunTrace";
 import {
@@ -26,7 +27,7 @@ import { GuidelinePromptEditor } from "./GuidelinePromptEditor";
 import { RunTracePanel } from "./RunTracePanel";
 import "../styles/ops-forms.css";
 
-const MODEL_PROFILES: ModelProfile[] = ["production", "test", "openrouter"];
+const MODEL_PROFILES: ModelProfile[] = ["production", "openrouter", "test", "vllm"];
 
 export interface GuidelineRunPanelProps {
   onRunStarted?: (meta: {
@@ -45,8 +46,16 @@ export function GuidelineRunPanel({
   runLive = false,
 }: GuidelineRunPanelProps) {
   const { diseases, loading: catalogLoading, error: catalogError } = useDiseaseCatalog();
+  const defaultModelProfile = useDefaultModelProfile();
   const [diseaseSlug, setDiseaseSlug] = useState("");
-  const [profile, setProfile] = useState<ModelProfile>("production");
+  const [profile, setProfile] = useState<ModelProfile>(defaultModelProfile);
+  const profileSynced = useRef(false);
+
+  useEffect(() => {
+    if (profileSynced.current) return;
+    setProfile(defaultModelProfile);
+    profileSynced.current = true;
+  }, [defaultModelProfile]);
   const [submitting, setSubmitting] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);

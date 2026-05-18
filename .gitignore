@@ -4,6 +4,8 @@ __pycache__/
 node_modules/
 .env
 .env.local
+deploy/htpasswd
+deploy/backups/
 *.db
 *.db-shm
 *.db-wal

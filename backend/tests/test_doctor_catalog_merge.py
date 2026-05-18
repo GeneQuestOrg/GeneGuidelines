@@ -1,7 +1,7 @@
 """Merge seed specialists with doctor_finder hits (same slug / name)."""
 from __future__ import annotations
 
-from backend.doctor_catalog import get_doctors_for_disease
+from backend.doctor_catalog import clear_finder_docs_index, get_doctors_for_disease
 
 
 def _finder_hit_dowgierd() -> list[dict]:
@@ -74,9 +74,10 @@ def _finder_hit_dowgierd() -> list[dict]:
 
 
 def test_get_doctors_merges_seed_and_finder(monkeypatch) -> None:
+    clear_finder_docs_index()
     monkeypatch.setattr(
-        "backend.doctor_catalog._doctors_from_live_doctor_finder",
-        lambda slug: _finder_hit_dowgierd() if slug == "fd" else None,
+        "backend.doctor_catalog._build_finder_docs_index",
+        lambda: {"fd": _finder_hit_dowgierd()},
     )
     payload = get_doctors_for_disease("fd")
     assert payload["source"] == "merged"
@@ -101,7 +102,11 @@ def test_get_doctors_name_match_without_slug_overlap(monkeypatch) -> None:
         row["slug"] = "different-slug-from-model"
         return [row]
 
-    monkeypatch.setattr("backend.doctor_catalog._doctors_from_live_doctor_finder", lambda slug: finder() if slug == "fd" else None)
+    clear_finder_docs_index()
+    monkeypatch.setattr(
+        "backend.doctor_catalog._build_finder_docs_index",
+        lambda: {"fd": finder()},
+    )
     payload = get_doctors_for_disease("fd")
     assert payload["source"] == "merged"
     merged = next(d for d in payload["doctors"] if d["slug"] == "dowgierd")

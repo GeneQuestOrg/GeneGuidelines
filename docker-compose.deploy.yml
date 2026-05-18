@@ -1,0 +1,14 @@
+# Production / Kaggle demo overlay — use with:
+#
+#   docker compose -f docker-compose.yml -f docker-compose.deploy.yml up -d --build
+#
+# Requires deploy/htpasswd (see deploy/README.md). Never commit htpasswd.
+
+services:
+  backend:
+    ports: !reset []
+
+  frontend:
+    volumes:
+      - ./deploy/htpasswd:/etc/nginx/htpasswd:ro
+      - ./deploy/nginx/snippets/basic-auth-enabled.conf:/etc/nginx/snippets/basic-auth.conf:ro
