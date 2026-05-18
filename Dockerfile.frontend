@@ -14,7 +14,8 @@ COPY packages/ui/package.json packages/ui/
 COPY packages/ops/package.json packages/ops/
 COPY frontend-public/package.json frontend-public/
 COPY frontend-admin/package.json frontend-admin/
-RUN npm ci
+# Dev deps (typescript, vite) required for production builds in workspaces.
+RUN npm ci --include=dev
 
 # Copy the workspace source.
 COPY packages packages
@@ -23,8 +24,7 @@ COPY frontend-admin frontend-admin
 
 # Production build — relative API paths (the nginx proxy rewrites /api → backend:8000).
 ENV VITE_API_URL=""
-RUN npm run build:public
-RUN npm run build:admin
+RUN npm run build:frontends
 
 # ---------- Runtime stage ----------
 FROM nginx:1.27-alpine AS runtime

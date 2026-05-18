@@ -17,6 +17,11 @@ def test_completion_token_ceiling_gemma() -> None:
     assert completion_token_ceiling("openrouter:google/gemma-4-31b-it:free") == 8192
 
 
+def test_completion_token_ceiling_gpt55() -> None:
+    assert completion_token_ceiling("openai:gpt-5.5") == 128_000
+    assert cap_completion_tokens("openai:gpt-5.5", 200_000) == 128_000
+
+
 def test_resolve_max_tokens_for_node_clamps_default() -> None:
     node = {"prompt_mode": "simple", "model_name": "openai:gpt-4o-mini"}
     assert resolve_max_tokens_for_node(node) == 16_384

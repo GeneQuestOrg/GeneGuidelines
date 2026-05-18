@@ -17,40 +17,45 @@ from backend.engine.flow_output import (
 
 
 class PubmedCodeContextCompactionTests(unittest.TestCase):
-    def test_slim_pm2_for_prompt_truncates_articles_and_cards(self) -> None:
+    def test_slim_pm2_for_prompt_pm3_includes_articles_text(self) -> None:
         raw = {
             "result": {
                 "query_text": "Noonan syndrome",
-                "article_count": 120,
-                "evidence_cards": [{"pmid": str(i)} for i in range(100)],
+                "article_count": 2,
+                "articles": [
+                    {"pmid": "1", "title": "T1", "abstract": "body"},
+                    {"pmid": "2", "title": "T2", "abstract": "body2"},
+                ],
+                "evidence_cards": [{"pmid": "1"}, {"pmid": "2"}],
                 "articles_text": "A" * 200_000,
+                "source_links_html": "<ul>" + ("<li>PMID</li>" * 5_000) + "</ul>",
             }
         }
-        slim = _slim_pm2_for_prompt(raw)
-        result = slim["result"]
-        self.assertTrue(result.get("articles_text_truncated"))
-        self.assertLessEqual(len(result.get("articles_text") or ""), 32_500)
-        self.assertTrue(result.get("evidence_cards_truncated"))
-        self.assertEqual(result.get("evidence_cards_total"), 100)
-        self.assertLessEqual(len(result.get("evidence_cards") or []), 40)
+        slim = _slim_pm2_for_prompt("pm-3", raw)
+        self.assertIn("articles_text", slim["result"])
+        self.assertNotIn("source_links_html", slim["result"])
 
-    def test_store_for_prompt_interpolation_pm3_does_not_mutate_original(self) -> None:
-        pm2 = {"result": {"articles_text": "B" * 50_000, "query_text": "X"}}
+    def test_store_for_prompt_interpolation_pm3_keeps_original_pm2(self) -> None:
+        pm2 = {"result": {"articles_text": "B" * 50_000, "query_text": "X", "evidence_cards": [], "articles": []}}
         store = {"node_outputs": {"pm-2": pm2}}
         interp = _store_for_prompt_interpolation("pubmed", "pm-3", store)
-        self.assertTrue(
-            (interp["node_outputs"]["pm-2"]["result"].get("articles_text_truncated"))
-        )
-        self.assertNotIn("articles_text_truncated", pm2["result"])
+        self.assertEqual(len(pm2["result"]["articles_text"]), 50_000)
+        self.assertIn("articles_text", interp["node_outputs"]["pm-2"]["result"])
 
-    def test_pm3_interpolated_context_size_bounded(self) -> None:
+    def test_pm3_interpolated_context_under_tpm_budget(self) -> None:
+        articles = [
+            {"pmid": str(i), "title": f"T{i}", "abstract": "word " * 200, "topic_bucket": "general"}
+            for i in range(200)
+        ]
         store = {
             "node_outputs": {
                 "pm-2": {
                     "result": {
                         "query_text": "Fibrous dysplasia",
-                        "article_count": 80,
-                        "evidence_cards": [{"pmid": str(i), "note": "x" * 200} for i in range(80)],
+                        "article_count": 200,
+                        "total_analyzed": 200,
+                        "articles": articles,
+                        "evidence_cards": [{"pmid": str(i)} for i in range(200)],
                         "articles_text": "Z" * 300_000,
                     }
                 }
@@ -58,7 +63,8 @@ class PubmedCodeContextCompactionTests(unittest.TestCase):
         }
         interp = _store_for_prompt_interpolation("pubmed", "pm-3", store)
         size = len(json.dumps(interp["node_outputs"], ensure_ascii=False).encode())
-        self.assertLess(size, 120_000, f"pm-3 interp context is {size} bytes")
+        self.assertLess(size, 2_000_000, f"pm-3 interp context is {size} bytes")
+        self.assertIn("articles_text", interp["node_outputs"]["pm-2"]["result"])
 
     def test_pm_targeted_retry_keeps_only_rubric(self) -> None:
         outputs = {
