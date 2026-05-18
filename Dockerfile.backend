@@ -36,6 +36,10 @@ COPY backend ./backend
 COPY alembic ./alembic
 COPY alembic.ini ./
 
+# Bundle the built public frontend so a single container serves API + SPA.
+# The directory must exist (npm run build:public) before docker build.
+COPY frontend-public/dist /app/static
+
 # The SQLite file lives in /data so it survives container recreation. The
 # compose file binds this to a named volume.
 ENV DB_PATH=/data/tickets.db

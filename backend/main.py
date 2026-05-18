@@ -52,7 +52,7 @@ app.add_middleware(
 
 
 def _content_security_policy_for_path(path: str) -> str:
-    """Strict default for JSON API; relaxed policy so Swagger/ReDoc/OpenAPI UIs keep working."""
+    """Strict default for JSON API; relaxed for Swagger/ReDoc + bundled SPA."""
     if path.startswith("/docs") or path.startswith("/redoc") or path == "/openapi.json":
         return (
             "default-src 'self'; "
@@ -60,6 +60,19 @@ def _content_security_policy_for_path(path: str) -> str:
             "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
             "img-src 'self' data: https://fastapi.tiangolo.com https://cdn.jsdelivr.net; "
             "font-src 'self' https://cdn.jsdelivr.net; "
+            "connect-src 'self'; "
+            "frame-ancestors 'none'; "
+            "base-uri 'self'"
+        )
+    # API responses keep the strict policy; bundled SPA at / needs a relaxed
+    # one so Vite-built assets, Google Fonts, and same-origin XHR all work.
+    if not path.startswith("/api") and path != "/health":
+        return (
+            "default-src 'self'; "
+            "script-src 'self'; "
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+            "img-src 'self' data: blob:; "
+            "font-src 'self' data: https://fonts.gstatic.com; "
             "connect-src 'self'; "
             "frame-ancestors 'none'; "
             "base-uri 'self'"
@@ -114,8 +127,8 @@ app.include_router(doctor_finder.router, prefix="/api/doctor-finder", tags=["doc
 app.include_router(pipeline.router, prefix="/api/pipeline", tags=["pipeline"])
 
 
-@app.get("/")
-def root():
+@app.get("/api-info")
+def api_info():
     """API root – links to docs and API sections."""
     return {
         "app": "GeneGuidelines API",
@@ -138,3 +151,14 @@ def health():
     """Health check."""
     logger.debug("health called")
     return {"status": "ok"}
+
+
+# Serve frontend static files from /app/static if present (bundled into the
+# Docker image at build time). HTML history-mode SPA: html=True makes
+# StaticFiles return index.html for unmatched paths.
+from pathlib import Path as _Path
+from fastapi.staticfiles import StaticFiles as _StaticFiles
+_static_dir = _Path("/app/static")
+if _static_dir.exists():
+    app.mount("/", _StaticFiles(directory=str(_static_dir), html=True), name="static")
+    logger.info("Mounted frontend static files from %s", _static_dir)
