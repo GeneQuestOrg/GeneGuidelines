@@ -9,6 +9,11 @@ services:
     ports: !reset []
 
   frontend:
+    # Override host port mapping so the demo is reachable on the standard HTTP
+    # port — OVH Public Cloud Anti-DDoS blocks non-standard ports by default.
+    ports: !override
+      - "80:80"     # public site
+      - "8080:81"   # admin app
     volumes:
       - ./deploy/htpasswd:/etc/nginx/htpasswd:ro
       - ./deploy/nginx/snippets/basic-auth-enabled.conf:/etc/nginx/snippets/basic-auth.conf:ro
