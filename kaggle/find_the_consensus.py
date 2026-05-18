@@ -21,6 +21,8 @@ audit trail.
 **Submission**: GeneGuidelines · *Living clinical guidelines for rare genetic diseases* · Health & Sciences (Impact Track) · GeneQuest Foundation
 **Live demo**: <code>https://geneguidelines.genequest.org</code> · **Repo**: <code>github.com/GeneQuestOrg/GeneGuidelines</code> · **Writeup**: see Kaggle Writeup attached to this submission · CC-BY 4.0.
 
+> **The verifiable claim:** Given a fixed PubMed candidate list, Gemma 4 names the recognised international guideline paper for four unrelated rare diseases — **4 / 4 canonical PMIDs, 0 hallucinations**. The verifier rejects any PMID Gemma proposes that is not in the candidate set. This is what one of six workflows behind the full GeneGuidelines product looks like, in isolation, fully runnable in this notebook.
+
 This notebook isolates **one named workflow** from the GeneGuidelines product so a judge can verify the role Gemma 4 plays.
 
 > A dentist noticed a suspicious mass in our founder's son's jaw. Histopathology said *juvenile trabecular ossifying fibroma* — a bone disease normally treated by surgery. The family ordered a genetic test privately: a GNAS c.601C>T mutation. **Fibrous dysplasia**. In children: observation, not surgery. Two famous surgeons in two cities, knowing the corrected diagnosis, still recommended cutting. They had not read every new paper on this disease — no general doctor can keep up with the literature on any one of the 7 000 rare conditions, let alone all of them. **A research consortium can.** GeneGuidelines is the workflow engine that lets one operate at scale.
@@ -596,6 +598,50 @@ with open(OUT_DIR / "benchmark.json", "w") as f:
     json.dump({"mode": GEMMA.mode, "results": results}, f, indent=2)
 print(f"Saved {OUT_DIR / 'benchmark.json'}")
 
+# %% [CODE]
+# Visual summary of the benchmark — confidence per disease, colour-coded by hit/miss.
+try:
+    import matplotlib.pyplot as plt
+
+    diseases = [r["name"] for r in results]
+    confidences = [float(r.get("confidence") or 0.0) for r in results]
+    matched = [bool(r.get("match")) for r in results]
+    colors = ["#2ea043" if m else "#cf222e" for m in matched]
+
+    fig, ax = plt.subplots(figsize=(10, max(2.8, 0.8 * len(diseases) + 1.4)),
+                           facecolor="#0d1117")
+    ax.set_facecolor("#0d1117")
+    bars = ax.barh(diseases, confidences, color=colors, edgecolor="#30363d")
+    ax.set_xlim(0, 1.05)
+    ax.set_xlabel("Gemma confidence", color="#c9d1d9")
+    hits = sum(matched)
+    ax.set_title(
+        f"Find-the-consensus benchmark  ·  {hits}/{len(results)} canonical PMIDs picked  ·  "
+        f"loader: {GEMMA.mode}",
+        color="#c9d1d9",
+        pad=12,
+        fontsize=12,
+    )
+    ax.tick_params(colors="#c9d1d9")
+    for spine in ax.spines.values():
+        spine.set_color("#30363d")
+    for bar, r in zip(bars, results):
+        pmid_label = r.get("pick_pmid") or "—"
+        ax.text(
+            min(0.98, bar.get_width()) + 0.02,
+            bar.get_y() + bar.get_height() / 2,
+            f"PMID {pmid_label}",
+            color="#c9d1d9",
+            va="center",
+            fontsize=10,
+        )
+    plt.tight_layout()
+    plt.savefig(OUT_DIR / "benchmark_chart.png", dpi=120, facecolor="#0d1117")
+    plt.show()
+    print("Saved benchmark_chart.png")
+except Exception as exc:
+    print(f"[viz] matplotlib chart skipped: {type(exc).__name__}: {exc}")
+
 # %% [MARKDOWN]
 """
 ## 6. Bonus — same model, PII-redacting role
@@ -791,7 +837,25 @@ print(review_contract.to_string(index=False))
 
 # %% [MARKDOWN]
 """
-## 8. What this notebook is — and is not
+## 8. Impact metrics — at a glance
+
+| Metric | Value |
+|---|---|
+| Workflow executor types registered in the live engine | **17** |
+| Disease consensus PMIDs verified in this notebook | **4 / 4** (FD · Marfan · PKU · CF) |
+| Hallucinated PMIDs the verifier accepts | **0** (rejects anything not on the candidate list) |
+| Same workflow runs against | **7,000+** rare diseases via the public *Add a disease* form |
+| Citations per guideline paragraph | **1+ PubMed ID**, every recommendation traceable |
+| Reviewer model | **Named clinician** per signed PR; full version history |
+| Patient identifiers persisted from uploaded discharge notes | **0** (architectural property — see cell 12) |
+| Live demo | <https://geneguidelines.genequest.org> |
+| Source repo | <https://github.com/GeneQuestOrg/GeneGuidelines> · tag `kaggle-submission-2026-05-19` |
+| License | CC-BY 4.0 |
+"""
+
+# %% [MARKDOWN]
+"""
+## 9. What this notebook is — and is not
 
 This notebook is the **reproducible audit trail** for one workflow in the GeneGuidelines product. The full product is a webapp (FastAPI + Pydantic AI + MCP + SQLite + React + React Flow) and adds five more Gemma 4-driven workflows on top of this one — trials, therapies, foundations, specialist directory, parent-pathway diagrams. Those are best shown in the **live demo URL and the 3-minute video** linked from the Writeup, not in a notebook.
 
