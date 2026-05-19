@@ -6,6 +6,8 @@ import unittest
 from backend.engine.flow_engine import (
     _compact_pubmed_code_outputs,
     _pubmed_rubric_empty_sections,
+    _slim_pm2_for_prompt,
+    _store_for_prompt_interpolation,
 )
 from backend.engine.flow_output import (
     derive_flow_output_from_node_outputs,
@@ -15,6 +17,55 @@ from backend.engine.flow_output import (
 
 
 class PubmedCodeContextCompactionTests(unittest.TestCase):
+    def test_slim_pm2_for_prompt_pm3_includes_articles_text(self) -> None:
+        raw = {
+            "result": {
+                "query_text": "Noonan syndrome",
+                "article_count": 2,
+                "articles": [
+                    {"pmid": "1", "title": "T1", "abstract": "body"},
+                    {"pmid": "2", "title": "T2", "abstract": "body2"},
+                ],
+                "evidence_cards": [{"pmid": "1"}, {"pmid": "2"}],
+                "articles_text": "A" * 200_000,
+                "source_links_html": "<ul>" + ("<li>PMID</li>" * 5_000) + "</ul>",
+            }
+        }
+        slim = _slim_pm2_for_prompt("pm-3", raw)
+        self.assertIn("articles_text", slim["result"])
+        self.assertNotIn("source_links_html", slim["result"])
+
+    def test_store_for_prompt_interpolation_pm3_keeps_original_pm2(self) -> None:
+        pm2 = {"result": {"articles_text": "B" * 50_000, "query_text": "X", "evidence_cards": [], "articles": []}}
+        store = {"node_outputs": {"pm-2": pm2}}
+        interp = _store_for_prompt_interpolation("pubmed", "pm-3", store)
+        self.assertEqual(len(pm2["result"]["articles_text"]), 50_000)
+        self.assertIn("articles_text", interp["node_outputs"]["pm-2"]["result"])
+
+    def test_pm3_interpolated_context_under_tpm_budget(self) -> None:
+        articles = [
+            {"pmid": str(i), "title": f"T{i}", "abstract": "word " * 200, "topic_bucket": "general"}
+            for i in range(200)
+        ]
+        store = {
+            "node_outputs": {
+                "pm-2": {
+                    "result": {
+                        "query_text": "Fibrous dysplasia",
+                        "article_count": 200,
+                        "total_analyzed": 200,
+                        "articles": articles,
+                        "evidence_cards": [{"pmid": str(i)} for i in range(200)],
+                        "articles_text": "Z" * 300_000,
+                    }
+                }
+            }
+        }
+        interp = _store_for_prompt_interpolation("pubmed", "pm-3", store)
+        size = len(json.dumps(interp["node_outputs"], ensure_ascii=False).encode())
+        self.assertLess(size, 2_000_000, f"pm-3 interp context is {size} bytes")
+        self.assertIn("articles_text", interp["node_outputs"]["pm-2"]["result"])
+
     def test_pm_targeted_retry_keeps_only_rubric(self) -> None:
         outputs = {
             "pm-rubric": {"result": {"coverage_score": 42}},

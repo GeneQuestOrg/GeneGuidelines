@@ -11,9 +11,17 @@ import "../styles/research.css";
 const POLL_MS = 2000;
 const MAX_TRACE_LINES = 80;
 
+/** Quick tunnels often drop long-lived SSE; polling alone is enough there. */
+function shouldUseTraceSse(): boolean {
+  if (typeof window === "undefined") return true;
+  const host = window.location.hostname.toLowerCase();
+  return !host.endsWith(".trycloudflare.com");
+}
+
 export interface ResearchRunViewProps {
   readonly executionId: string;
   readonly diseaseSlug?: string;
+  readonly diseaseName?: string;
   readonly queryTag?: string;
   readonly onNav: (path: string) => void;
 }
@@ -40,6 +48,7 @@ function formatTraceLine(raw: string): string {
 export function ResearchRunView({
   executionId,
   diseaseSlug,
+  diseaseName,
   queryTag,
   onNav,
 }: ResearchRunViewProps) {
@@ -56,8 +65,11 @@ export function ResearchRunView({
 
   useEffect(() => {
     let cancelled = false;
+    let inFlight = false;
 
     const poll = async () => {
+      if (inFlight) return;
+      inFlight = true;
       try {
         const payload = await fetchAgentRun(executionId);
         if (!cancelled) {
@@ -70,11 +82,18 @@ export function ResearchRunView({
           setPollError(
             "Run not found — it may have expired from server memory. Try starting a new job from Start research.",
           );
+        } else if (e instanceof ApiRequestError && e.status === 0) {
+          // Transient timeout/network while the job may still be running on the server.
+          setPollError(
+            `${e.message} Status below may still update — refresh the page or wait.`,
+          );
         } else if (e instanceof Error) {
           setPollError(e.message);
         } else {
           setPollError("Could not load run status.");
         }
+      } finally {
+        inFlight = false;
       }
     };
 
@@ -87,6 +106,12 @@ export function ResearchRunView({
   }, [executionId]);
 
   useEffect(() => {
+    if (!shouldUseTraceSse()) {
+      appendLines([
+        "[trace] Live SSE disabled on trycloudflare.com — status updates via polling only.",
+      ]);
+      return;
+    }
     const base = getApiBaseUrl();
     const path = appendApiKeyQueryForSse(
       `/api/agent/trace/${encodeURIComponent(executionId)}`,
@@ -122,6 +147,12 @@ export function ResearchRunView({
       <h1>Research run</h1>
       <p className="research__lead">
         <code>{executionId}</code>
+        {diseaseName != null ? (
+          <>
+            {" "}
+            · <span>{diseaseName}</span>
+          </>
+        ) : null}
         {diseaseSlug != null ? (
           <>
             {" "}

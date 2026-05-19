@@ -333,17 +333,51 @@ def _walk_nodes(
             )
 
 
+def _format_pydantic_validation_error(exc: ValidationError) -> str:
+    """Short, agent-actionable summary of schema mismatches."""
+    parts: list[str] = []
+    for err in exc.errors()[:10]:
+        loc = ".".join(str(x) for x in err.get("loc") or ())
+        msg = str(err.get("msg") or "invalid")
+        parts.append(f"{loc}: {msg}" if loc else msg)
+    return "; ".join(parts) if parts else "fix required fields and retry."
+
+
+def coerce_pathway_tree_object(data: Any) -> dict[str, Any]:
+    """Normalize common LLM wrapper shapes to the root tree object.
+
+    Accepts the tree at the top level or under ``root``, ``tree``, or ``pathway``.
+    """
+    if not isinstance(data, dict):
+        raise ParentPathwayValidationError("Pathway must be a JSON object.")
+
+    if "children" in data and ("title" in data or str(data.get("id") or "") == "root"):
+        return data
+
+    for key in ("root", "tree"):
+        inner = data.get(key)
+        if isinstance(inner, dict):
+            return coerce_pathway_tree_object(inner)
+
+    pathway = data.get("pathway")
+    if isinstance(pathway, dict):
+        return coerce_pathway_tree_object(pathway)
+
+    return data
+
+
 def validate_parent_pathway_tree(
     tree: dict[str, Any],
     *,
     allowed_pmids: set[str] | None = None,
 ) -> tuple[dict[str, Any], list[str]]:
     """Parse, structurally validate, and return normalized tree + warnings."""
+    tree = coerce_pathway_tree_object(tree)
     try:
         model = ParentPathwayTreeModel.model_validate(tree)
     except ValidationError as exc:
         raise ParentPathwayValidationError(
-            "Pathway JSON does not match schema — fix fields and retry."
+            f"Pathway JSON does not match schema — {_format_pydantic_validation_error(exc)}"
         ) from exc
 
     normalized = model.model_dump(mode="json", exclude_none=True)
@@ -402,6 +436,7 @@ def validate_parent_pathway_json(
         raise ParentPathwayValidationError(f"Invalid JSON: {exc}") from exc
     if not isinstance(data, dict):
         raise ParentPathwayValidationError("Pathway must be a JSON object.")
+    data = coerce_pathway_tree_object(data)
     allowed: set[str] = set(extra_pmids or [])
     if guideline_document:
         allowed |= _collect_pmids_from_guideline(guideline_document)

@@ -101,3 +101,23 @@ def build_disease_flow_initial_fields(disease: dict[str, Any] | None) -> dict[st
         "disease_name": str(disease.get("name") or ""),
         "guideline_prompt_block": format_guideline_prompt_block(profile, disease),
     }
+
+
+def build_custom_disease_flow_initial_fields(
+    disease_name: str,
+    aliases: list[str],
+) -> dict[str, str]:
+    """Fields for pubmed runs when the disease is not in the catalog."""
+    alias_s = ", ".join(aliases) if aliases else "n/a"
+    block = (
+        "Custom rare-disease research (not in the published catalog).\n"
+        f"Preferred name: {disease_name}\n"
+        f"Search aliases / synonyms: {alias_s}\n"
+        "PubMed queries must target this exact clinical entity — avoid unrelated homonyms."
+    )
+    return {
+        "disease_slug": "",
+        "disease_name": disease_name,
+        "disease_aliases": alias_s,
+        "guideline_prompt_block": block,
+    }

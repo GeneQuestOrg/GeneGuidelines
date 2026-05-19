@@ -90,12 +90,34 @@ async function parseSuccessJson<T>(res: Response): Promise<T> {
   }
 }
 
-export async function apiGet<T>(path: string): Promise<T> {
+const DEFAULT_GET_TIMEOUT_MS = 30_000;
+
+export async function apiGet<T>(
+  path: string,
+  options?: { timeoutMs?: number },
+): Promise<T> {
   const base = getApiBaseUrl();
   const url = `${base}${path.startsWith("/") ? path : `/${path}`}`;
-  const res = await fetch(url, {
-    headers: { Accept: "application/json", ...apiAuthHeaders() },
-  });
+  const timeoutMs = options?.timeoutMs ?? DEFAULT_GET_TIMEOUT_MS;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      headers: { Accept: "application/json", ...apiAuthHeaders() },
+      signal: controller.signal,
+    });
+  } catch (e) {
+    if (e instanceof Error && e.name === "AbortError") {
+      throw new ApiRequestError(
+        0,
+        `Request timed out after ${timeoutMs / 1000} s — the API may still be busy (e.g. a long agent run). Try again in a moment.`,
+      );
+    }
+    throw e;
+  } finally {
+    clearTimeout(timeoutId);
+  }
   if (!res.ok) {
     let detail = res.statusText;
     try {

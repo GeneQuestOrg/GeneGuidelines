@@ -17,7 +17,11 @@ import re
 from queue import Queue
 from typing import Any, Callable
 from .. import database as db
-from ..config import AGENTIC_NODE_OUTPUT_MAX_CHARS, QUALITY_FIRST_HARD_MODE, QUALITY_FIRST_MAX_RETRY
+from ..config import (
+    AGENTIC_NODE_OUTPUT_MAX_CHARS,
+    QUALITY_FIRST_HARD_MODE,
+    QUALITY_FIRST_MAX_RETRY,
+)
 from .context_interpolation import (
     interpolate_body_recursive as _interpolate_body_recursive,
     interpolate_context_placeholders,
@@ -27,9 +31,14 @@ from .flow_output import finalize_flow_output
 from .merge import merge_values, parse_merge_fields as _parse_merge_fields
 from .disease_initial_context import merge_disease_into_initial_context
 from .order import get_execution_order
-from .prompt_formatting import build_node_prompt, format_tools_list_for_prompt
+from .prompt_formatting import (
+    build_node_prompt,
+    build_simple_llm_prompts,
+    format_tools_list_for_prompt,
+)
 from ..executors.base import FlowRuntimeBundle, NodeInput
 from ..executors.decision_executor import DecisionExecutor
+from ..flows.parent_pathway.submit_guard import parent_pathway_synth_missing_draft_error
 
 
 def _doctor_finder_executor_hard_error(flow_key: str, node_id: str, payload: Any) -> str | None:
@@ -165,10 +174,45 @@ def _slim_pm2(raw: Any) -> Any:
     return {"result": slimmed} if has_result else slimmed
 
 
+def _slim_pm2_for_prompt(node_id: str, raw: Any) -> Any:
+    """Task-scoped pm-2 view for PubMed LLM prompt interpolation (see flows.pubmed.prompt_context)."""
+    from ..flows.pubmed.prompt_context import pm2_view_for_llm_prompt
+
+    return pm2_view_for_llm_prompt(node_id, raw)
+
+
+def _store_for_prompt_interpolation(
+    flow_key: str,
+    node_id: str,
+    store: dict[str, Any],
+) -> dict[str, Any]:
+    if flow_key != "pubmed":
+        return store
+    outputs = store.get("node_outputs") or {}
+    if "pm-2" not in outputs:
+        return store
+    return {
+        **store,
+        "node_outputs": {**outputs, "pm-2": _slim_pm2_for_prompt(node_id, outputs["pm-2"])},
+    }
+
+
+def _interpolate_node_prompt(
+    node_prompt: str,
+    store: dict[str, Any],
+    *,
+    flow_key: str,
+    node_id: str,
+) -> str:
+    interp_store = _store_for_prompt_interpolation(flow_key, node_id, store)
+    return interpolate_context_placeholders(node_prompt, interp_store)
+
+
 def _compact_pubmed_code_outputs(node_id: str, outputs_ctx: dict[str, Any]) -> dict[str, Any]:
     """Reduce PubMed code-node context size to avoid sandbox input overflow.
 
     Handled node IDs: pm-targeted-retry, pm-4-build, pm-5, pm-merge.
+    PubMed prompt nodes use _store_for_prompt_interpolation instead.
     All other nodes receive the full context unchanged.
     """
     if node_id == "pm-targeted-retry":
@@ -888,7 +932,9 @@ async def run_flow_step_by_step_async(
 
         previous_output = get_previous_output_summary(store)
         node_prompt = build_node_prompt(node_prompt_raw, ticket_summary, tools_list_str, previous_output)
-        node_prompt = interpolate_context_placeholders(node_prompt, store)
+        node_prompt = _interpolate_node_prompt(
+            node_prompt, store, flow_key=flow_key, node_id=node_id
+        )
         max_retry = node.get("max_retry")
         try:
             max_retry = int(max_retry) if max_retry is not None else 3
@@ -915,10 +961,9 @@ async def run_flow_step_by_step_async(
         )
 
         # PubMed pm-1 deterministic retrieval path (no LLM).
-        # This preserves retrieval quality while avoiding model context/quotas in test profile.
-        from ..agents.simple_runner import resolve_active_profile
+        from ..config import PUBMED_PM1_DETERMINISTIC_RETRIEVAL
 
-        if flow_key == "pubmed" and node_id == "pm-1" and resolve_active_profile() == "test":
+        if flow_key == "pubmed" and node_id == "pm-1" and PUBMED_PM1_DETERMINISTIC_RETRIEVAL:
             import json as _json
             from ..flows.pubmed.retrieval import run_pm1_retrieval
 
@@ -927,7 +972,7 @@ async def run_flow_step_by_step_async(
                 "initial": store.get("initial_context") or {},
                 "outputs": store.get("node_outputs") or {},
             }
-            out = run_pm1_retrieval(retrieval_ctx)
+            out = await asyncio.to_thread(run_pm1_retrieval, retrieval_ctx)
             store["output"] = _json.dumps(out, ensure_ascii=False)
             store["node_outputs"][node_id] = {
                 "result": out,
@@ -979,7 +1024,9 @@ async def run_flow_step_by_step_async(
                 finally:
                     store["memory_loaded"] = True
             # Re-run interpolation so templates can resolve {{ context.memory.* }}.
-            node_prompt = interpolate_context_placeholders(node_prompt, store)
+            node_prompt = _interpolate_node_prompt(
+                node_prompt, store, flow_key=flow_key, node_id=node_id
+            )
         # #endregion Memory retrieval injection (agentic only)
 
         if prompt_mode == "simple":
@@ -1000,14 +1047,13 @@ async def run_flow_step_by_step_async(
                 break
             model_spec = resolve_model_spec_for_node(node)
             max_tokens = resolve_max_tokens_for_node(node)
-            sys_simple = (
-                f"{_SIMPLE_NODE_SYSTEM_PROMPT_HEAD}\n\n"
-                "--- Task ---\n"
-                f"{node_prompt}"
-            )
-            user_simple = (
-                f"Ticket #{ticket_id}\nTitle: {title}\nDescription: {description}\n"
-                + (f"Discussion: {comments_text}\n" if comments_text else "")
+            sys_simple, user_simple = build_simple_llm_prompts(
+                node_prompt,
+                system_head=_SIMPLE_NODE_SYSTEM_PROMPT_HEAD,
+                ticket_id=ticket_id,
+                title=title,
+                description=description,
+                comments_text=comments_text,
             )
             out_dict = await run_llm_simple_async(
                 system_prompt=sys_simple,
@@ -1142,6 +1188,15 @@ async def run_flow_step_by_step_async(
                     "step_summary": "",
                 }
         store["node_outputs"][node_id] = node_out
+
+        if prompt_mode != "simple":
+            synth_err = parent_pathway_synth_missing_draft_error(flow_key, node_id, store)
+            if synth_err:
+                store["error"] = synth_err
+                emit_fn(
+                    event_queue,
+                    {"kind": "sys", "text": f"[SYSTEM] {synth_err}"},
+                )
 
         # #region Memory write-back (agentic only)
         # Persist this step as a new memory turn (best-effort).
@@ -1794,7 +1849,9 @@ async def run_flow_fork_parallel_async(
 
         previous_output = get_previous_output_summary(local_store)
         node_prompt = build_node_prompt(node_prompt_raw, ticket_summary, tools_list_str, previous_output)
-        node_prompt = interpolate_context_placeholders(node_prompt, local_store)
+        node_prompt = _interpolate_node_prompt(
+            node_prompt, local_store, flow_key=flow_key, node_id=nid
+        )
 
         max_retry = node.get("max_retry")
         try:
@@ -1818,9 +1875,9 @@ async def run_flow_fork_parallel_async(
         )
 
         # PubMed pm-1 deterministic retrieval path (no LLM).
-        from ..agents.simple_runner import resolve_active_profile
+        from ..config import PUBMED_PM1_DETERMINISTIC_RETRIEVAL
 
-        if flow_key == "pubmed" and nid == "pm-1" and resolve_active_profile() == "test":
+        if flow_key == "pubmed" and nid == "pm-1" and PUBMED_PM1_DETERMINISTIC_RETRIEVAL:
             import json as _json
             from ..flows.pubmed.retrieval import run_pm1_retrieval
 
@@ -1829,7 +1886,7 @@ async def run_flow_fork_parallel_async(
                 "initial": local_store.get("initial_context") or {},
                 "outputs": local_store.get("node_outputs") or {},
             }
-            out = run_pm1_retrieval(retrieval_ctx)
+            out = await asyncio.to_thread(run_pm1_retrieval, retrieval_ctx)
             local_store["output"] = _json.dumps(out, ensure_ascii=False)
             node_out = {
                 "result": out,
@@ -1863,7 +1920,9 @@ async def run_flow_fork_parallel_async(
             # With parallelism we treat memory as read-only (preloaded at coordinator).
             local_store.setdefault("memory", {"latest_summary_text": "", "recent_as_text": ""})
             local_store.setdefault("memory_loaded", False)
-            node_prompt = interpolate_context_placeholders(node_prompt, local_store)
+            node_prompt = _interpolate_node_prompt(
+                node_prompt, local_store, flow_key=flow_key, node_id=nid
+            )
 
         if prompt_mode == "simple":
             from ..agents.schemas import resolve_simple_result_model
@@ -1881,14 +1940,13 @@ async def run_flow_fork_parallel_async(
 
             model_spec = resolve_model_spec_for_node(node)
             max_tokens = resolve_max_tokens_for_node(node)
-            sys_simple = (
-                f"{_SIMPLE_NODE_SYSTEM_PROMPT_HEAD}\n\n"
-                "--- Task ---\n"
-                f"{node_prompt}"
-            )
-            user_simple = (
-                f"Ticket #{ticket_id}\nTitle: {title}\nDescription: {description}\n"
-                + (f"Discussion: {comments_text}\n" if comments_text else "")
+            sys_simple, user_simple = build_simple_llm_prompts(
+                node_prompt,
+                system_head=_SIMPLE_NODE_SYSTEM_PROMPT_HEAD,
+                ticket_id=ticket_id,
+                title=title,
+                description=description,
+                comments_text=comments_text,
             )
             out_dict = await run_llm_simple_async(
                 system_prompt=sys_simple,
@@ -2021,6 +2079,14 @@ async def run_flow_fork_parallel_async(
                         }
 
                 local_store["node_outputs"][nid] = node_out
+
+                synth_err = parent_pathway_synth_missing_draft_error(flow_key, nid, local_store)
+                if synth_err:
+                    local_store["error"] = synth_err
+                    emit_fn(
+                        event_queue,
+                        {"kind": "sys", "text": f"[SYSTEM] {synth_err}"},
+                    )
 
                 # Memory write-back (best-effort)
                 if (config_mod.MEMORY_POSTGRES_DSN or "").strip():

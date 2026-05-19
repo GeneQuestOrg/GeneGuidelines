@@ -274,10 +274,7 @@ export function DiseaseTabs({
                 </div>
               </>
             ) : null}
-            {!doctorsLoading &&
-            doctorsError == null &&
-            previewDoctors.length === 0 &&
-            disease.doctorsCount === 0 ? (
+            {!doctorsLoading && doctorsError == null && previewDoctors.length === 0 ? (
               <p className="d-panel-empty">{copy.doctorsEmpty}</p>
             ) : null}
           </Section>

@@ -16,13 +16,63 @@ SEED_DATA_PATH = BACKEND_DIR / "seed_data.json"
 load_dotenv(BACKEND_DIR.parent / ".env")
 load_dotenv(BACKEND_DIR / ".env")
 
-# Agent model (Pydantic AI) — global default
-DEFAULT_MODEL_NAME = os.environ.get("DEFAULT_LLM_MODEL", "openai:gpt-5.4-mini").strip() or "openai:gpt-5.4-mini"
 
-# Model profiles selectable per run (?profile=production|test|openrouter):
+def normalize_openai_compatible_base_url(url: str) -> str:
+    """Ensure base URL ends with ``/v1`` for OpenAI SDK clients."""
+    u = url.strip().rstrip("/")
+    return u if u.endswith("/v1") else f"{u}/v1"
+
+
+def _env_first(*keys: str) -> str:
+    """Return the first non-empty environment value among ``keys``."""
+    for key in keys:
+        value = (os.environ.get(key) or "").strip()
+        if value:
+            return value
+    return ""
+
+
+# Self-hosted / custom OpenAI-compatible LLM (canonical: LLM_*; legacy alias: VLLM_*).
+LLM_MODEL_ID = _env_first("LLM_MODEL", "VLLM_MODEL") or "google/gemma-4-26B-A4B-it"
+_LLM_API_KEY_RAW = _env_first("LLM_API_KEY", "VLLM_API_KEY")
+_LLM_BASE_RAW = _env_first("LLM_BASE_URL", "VLLM_BASE_URL")
+
+VLLM_API_KEY = _LLM_API_KEY_RAW or None
+VLLM_BASE_URL = normalize_openai_compatible_base_url(_LLM_BASE_RAW) if _LLM_BASE_RAW else None
+# "bearer" (OpenAI default) or "raw" (Authorization: <key> without Bearer prefix).
+_LLM_AUTH_STYLE = (_env_first("LLM_AUTH_HEADER_STYLE", "VLLM_AUTH_HEADER_STYLE") or "bearer").lower()
+VLLM_AUTH_HEADER_STYLE = "raw" if _LLM_AUTH_STYLE in ("raw", "token", "plain") else "bearer"
+
+# When set, every model profile routes to this endpoint (single provider for the whole app).
+SINGLE_LLM_MODE = bool(VLLM_API_KEY and VLLM_BASE_URL)
+UNIFIED_LLM_MODEL_SPEC = f"vllm:{LLM_MODEL_ID}" if SINGLE_LLM_MODE else None
+_VLLM_MODEL_SPEC = f"vllm:{LLM_MODEL_ID}"
+
+_env_model_profile_early = (os.environ.get("MODEL_PROFILE") or "").strip().lower()
+
+
+def _default_llm_model_spec() -> str:
+    """Fallback when DEFAULT_LLM_MODEL is unset — follow MODEL_PROFILE / vLLM env, not OpenAI."""
+    if SINGLE_LLM_MODE or _env_model_profile_early == "vllm":
+        return _VLLM_MODEL_SPEC
+    if _env_model_profile_early == "openrouter":
+        return "openrouter:google/gemma-4-31b-it"
+    if _env_model_profile_early == "test":
+        return "deepseek:deepseek-chat"
+    if _env_model_profile_early == "ollama":
+        return "ollama:gemma4:26b"
+    return "openai:gpt-5.4-mini"
+
+
+# Agent model (Pydantic AI) — global default
+_DEFAULT_LLM_MODEL_ENV = (os.environ.get("DEFAULT_LLM_MODEL") or "").strip()
+DEFAULT_MODEL_NAME = _DEFAULT_LLM_MODEL_ENV or _default_llm_model_spec()
+
+# Model profiles selectable per run (?profile=production|test|openrouter|vllm):
 #   - "production": OpenAI (DEFAULT_SIMPLE_LLM_MODEL / DEFAULT_AGENTIC_LLM_MODEL)
 #   - "test":       DeepSeek via MODEL_PROFILE_TEST_*
 #   - "openrouter": OpenRouter via MODEL_PROFILE_OPENROUTER_* (requires OPENROUTER_API_KEY)
+#   - "vllm":       Self-hosted vLLM (VLLM_BASE_URL + VLLM_API_KEY + VLLM_MODEL)
 # DEFAULT_MODEL_PROFILE sets the fallback when the request omits ?profile=...
 _ENV_DEFAULT_SIMPLE = (os.environ.get("DEFAULT_SIMPLE_LLM_MODEL") or "").strip() or DEFAULT_MODEL_NAME
 _ENV_DEFAULT_AGENTIC = (os.environ.get("DEFAULT_AGENTIC_LLM_MODEL") or "").strip() or DEFAULT_MODEL_NAME
@@ -77,6 +127,9 @@ _OLLAMA_AGENTIC = (
     (os.environ.get("MODEL_PROFILE_OLLAMA_AGENTIC") or "").strip()
     or "ollama:gemma4:26b"
 )
+_VLLM_SIMPLE = (os.environ.get("MODEL_PROFILE_VLLM_SIMPLE") or "").strip() or f"vllm:{LLM_MODEL_ID}"
+_VLLM_AGENTIC = (os.environ.get("MODEL_PROFILE_VLLM_AGENTIC") or "").strip() or f"vllm:{LLM_MODEL_ID}"
+_VLLM_OVERFLOW = (os.environ.get("MODEL_PROFILE_VLLM_OVERFLOW") or "").strip() or None
 
 # Keys are used as profile identifiers in the API; values map prompt_mode -> model spec.
 # Special key "overflow" holds a fallback model used only when the primary model hits context limits.
@@ -101,19 +154,41 @@ MODEL_PROFILES: dict[str, dict[str, str | None]] = {
         "agentic": _OLLAMA_AGENTIC,
         "overflow": None,
     },
+    "vllm": {
+        "simple": _VLLM_SIMPLE,
+        "agentic": _VLLM_AGENTIC,
+        "overflow": _VLLM_OVERFLOW,
+    },
     "synthesis": {
         "simple": _SYNTHESIS_SIMPLE,
         "agentic": _SYNTHESIS_AGENTIC,
         "overflow": _PROD_OVERFLOW,
     },
 }
-DEFAULT_MODEL_PROFILE = (os.environ.get("MODEL_PROFILE") or "production").strip().lower() or "production"
-if DEFAULT_MODEL_PROFILE not in MODEL_PROFILES:
+
+if SINGLE_LLM_MODE and UNIFIED_LLM_MODEL_SPEC:
+    for _profile_id in MODEL_PROFILES:
+        MODEL_PROFILES[_profile_id] = {
+            "simple": UNIFIED_LLM_MODEL_SPEC,
+            "agentic": UNIFIED_LLM_MODEL_SPEC,
+            "overflow": None,
+        }
+
+if SINGLE_LLM_MODE:
+    DEFAULT_MODEL_PROFILE = (
+        _env_model_profile_early if _env_model_profile_early in MODEL_PROFILES else "vllm"
+    )
+elif _env_model_profile_early and _env_model_profile_early in MODEL_PROFILES:
+    DEFAULT_MODEL_PROFILE = _env_model_profile_early
+else:
     DEFAULT_MODEL_PROFILE = "production"
 
 # Back-compat: a few modules still read these as module-level constants.
 DEFAULT_SIMPLE_LLM_MODEL = MODEL_PROFILES[DEFAULT_MODEL_PROFILE]["simple"]
 DEFAULT_AGENTIC_LLM_MODEL = MODEL_PROFILES[DEFAULT_MODEL_PROFILE]["agentic"]
+
+if SINGLE_LLM_MODE and UNIFIED_LLM_MODEL_SPEC:
+    DEFAULT_MODEL_NAME = UNIFIED_LLM_MODEL_SPEC
 
 # DeepSeek (OpenAI-compatible API). Required when any model_spec uses `deepseek:` prefix.
 DEEPSEEK_API_KEY = (os.environ.get("DEEPSEEK_API_KEY") or "").strip() or None
@@ -152,6 +227,12 @@ AGENT_PYDANTIC_AI_REQUEST_LIMIT = (
 )
 AGENT_PYDANTIC_AI_REQUEST_LIMIT = max(10, min(10_000, AGENT_PYDANTIC_AI_REQUEST_LIMIT))
 SIMPLE_LLM_CALL_TIMEOUT_SEC = float((os.environ.get("SIMPLE_LLM_CALL_TIMEOUT_SEC") or "").strip() or 5400.0)
+# Max concurrent simple LLM calls (PubMed pass1/pm-4 waves). Lower for self-hosted vLLM behind nginx.
+_SIMPLE_LLM_PARALLEL_DEFAULT = "2" if SINGLE_LLM_MODE else "6"
+SIMPLE_LLM_PARALLEL_CONCURRENCY = max(
+    1,
+    int((os.environ.get("SIMPLE_LLM_PARALLEL_CONCURRENCY") or "").strip() or _SIMPLE_LLM_PARALLEL_DEFAULT),
+)
 OPENAI_CLIENT_TIMEOUT_SEC = float((os.environ.get("OPENAI_CLIENT_TIMEOUT_SEC") or "").strip() or 2700.0)
 QUALITY_FIRST_HARD_MODE = (os.environ.get("QUALITY_FIRST_HARD_MODE") or "1").strip().lower() in (
     "1",
@@ -166,7 +247,7 @@ CODE_NODE_TIMEOUT_SEC = float((os.environ.get("CODE_NODE_TIMEOUT_SEC") or "").st
 CODE_NODE_MAX_INPUT_BYTES = int((os.environ.get("CODE_NODE_MAX_INPUT_BYTES") or "").strip() or 100_000_000)
 CODE_NODE_MAX_RESULT_BYTES = int((os.environ.get("CODE_NODE_MAX_RESULT_BYTES") or "").strip() or 8_000_000)
 # Token budgets for model responses. Per-node `flow_definitions.max_tokens` overrides these defaults.
-# Picked to fit Gemma 4 31B's 262 144-token context with comfortable headroom for tool I/O.
+# App-wide ceiling; per-model caps applied at call time (see agents.llm_limits).
 # Frontier models with 1M-token contexts can override via env vars without touching code.
 MAX_APP_LLM_MAX_TOKENS = 1_000_000
 DEFAULT_SIMPLE_LLM_MAX_TOKENS = int(
@@ -234,6 +315,21 @@ PUBMED_RETRIEVAL_MIN_PMIDS_PER_DOMAIN = int(
     (os.environ.get("PUBMED_RETRIEVAL_MIN_PMIDS_PER_DOMAIN") or "").strip() or 50
 )
 PUBMED_RETRIEVAL_TARGET_PMIDS = int((os.environ.get("PUBMED_RETRIEVAL_TARGET_PMIDS") or "").strip() or 800)
+# pm-1: deterministic multi-domain PubMed orchestration (default). Runs every clinical
+# query variant + high-recall backfill; uses disease aliases when present. Set to 0 only
+# to restore the legacy agentic pm-1 step (not recommended — skips domains, TPM failures).
+PUBMED_PM1_DETERMINISTIC_RETRIEVAL = (
+    (os.environ.get("PUBMED_PM1_DETERMINISTIC_RETRIEVAL") or "1").strip().lower()
+    in ("1", "true", "yes", "on")
+)
+# OpenAI org TPM per-request budget (e.g. gpt-5.5-long-context = 400k). Caps articles_text in LLM prompts.
+OPENAI_TPM_REQUEST_TOKEN_BUDGET = int(
+    (os.environ.get("OPENAI_TPM_REQUEST_TOKEN_BUDGET") or "").strip() or 380_000
+)
+# Abstract chars per article line inside prompt ``articles_text`` (pm-2 code node may use more).
+PUBMED_ARTICLES_TEXT_ABSTRACT_MAX_CHARS = int(
+    (os.environ.get("PUBMED_ARTICLES_TEXT_ABSTRACT_MAX_CHARS") or "").strip() or 3000
+)
 
 # Guidelines RAG — comma-separated anchor PMIDs override (env var)
 _GUIDELINES_RAG_PMIDS_RAW = (os.environ.get("GUIDELINES_RAG_ANCHOR_PMIDS") or "").strip()

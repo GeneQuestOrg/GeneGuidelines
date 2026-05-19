@@ -104,6 +104,36 @@ class PipelineRunsTests(unittest.TestCase):
             self.assertIn("Disease slug: fd", ticket_kwargs["description"])
             self.assertEqual(kwargs.get("disease_slug"), "fd")
 
+    def test_start_guideline_run_custom_disease(self) -> None:
+        with patch(
+            "backend.routers.pipeline.db.create_ticket",
+            return_value=99,
+        ) as mock_ticket, patch(
+            "backend.routers.pipeline.agent_router.start_agent_run",
+            new=AsyncMock(return_value={"execution_id": "custom-1", "status": "started"}),
+        ) as mock_start:
+            import asyncio
+
+            result = asyncio.run(
+                pipeline_router.start_guideline_run(
+                    pipeline_router.GuidelineRunBody(
+                        disease_name="Example rare syndrome",
+                        disease_aliases=["ERS", "example syndrome"],
+                    )
+                )
+            )
+            self.assertEqual(result["execution_id"], "custom-1")
+            mock_ticket.assert_called_once()
+            ticket_kwargs = mock_ticket.call_args.kwargs
+            self.assertIn("Example rare syndrome", ticket_kwargs["title"])
+            self.assertIn("ERS", ticket_kwargs["description"])
+            _args, kwargs = mock_start.await_args
+            self.assertEqual(_args[0], 99)
+            self.assertIsNone(kwargs.get("disease_slug"))
+            initial = kwargs.get("disease_initial") or {}
+            self.assertEqual(initial.get("disease_name"), "Example rare syndrome")
+            self.assertIn("ERS", initial.get("disease_aliases", ""))
+
 
 if __name__ == "__main__":
     unittest.main()

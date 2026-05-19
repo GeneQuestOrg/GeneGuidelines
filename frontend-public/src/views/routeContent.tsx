@@ -91,6 +91,7 @@ export function routeContent({
         <ResearchRunView
           executionId={route.id}
           diseaseSlug={route.diseaseSlug}
+          diseaseName={route.diseaseName}
           queryTag={route.query}
           onNav={onNav}
         />

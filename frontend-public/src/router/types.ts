@@ -13,7 +13,13 @@ export type Route =
   | { name: "addDisease" }
   | { name: "about" }
   | { name: "account" }
-  | { name: "researchRun"; id: string; query?: string; diseaseSlug?: string }
+  | {
+      name: "researchRun";
+      id: string;
+      query?: string;
+      diseaseSlug?: string;
+      diseaseName?: string;
+    }
   | { name: "trials"; query?: string };
 
 export interface UserLocation {

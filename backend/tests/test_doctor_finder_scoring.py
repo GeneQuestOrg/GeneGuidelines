@@ -105,6 +105,16 @@ def test_equal_raw_scores_all_normalized_to_100() -> None:
         assert a["score"] == pytest.approx(100.0)
 
 
+def test_normalize_empty_list() -> None:
+    assert normalize([]) == []
+
+
+def test_run_empty_authors_does_not_raise() -> None:
+    result = run({"aggregated_authors": [], "query": "noonan"}, now=NOW)
+    assert result["aggregated_authors"] == []
+    assert result["query"] == "noonan"
+
+
 def test_run_returns_context_with_float_scores() -> None:
     authors = [
         _author("guideline_author"),

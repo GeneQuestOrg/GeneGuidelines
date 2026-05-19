@@ -6,7 +6,11 @@ live in :mod:`backend.content.service` and :mod:`backend.content.repository`.
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
+import asyncio
+
+from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, Response, UploadFile
+
+from backend.shared.cache import cache_response
 
 from .contracts import (
     DiseaseResponse,
@@ -43,12 +47,17 @@ _RESEARCH_RUNS_MAX_LIMIT = 10
 
 
 @router.get("/diseases", response_model=list[DiseaseResponse])
-def list_diseases(
+@cache_response(ttl_seconds=60)
+async def list_diseases(
+    request: Request,
+    response: Response,
     q: str | None = Query(None, max_length=200, description="Optional search filter"),
     service: DiseaseService = Depends(provide_disease_service),
 ) -> list[DiseaseResponse]:
     """List diseases or search by name, gene, slug, or summary."""
-    return [DiseaseResponse.from_domain(d) for d in service.list(query=q)]
+    del request, response  # injected for cache_response
+    diseases = await asyncio.to_thread(service.list, q)
+    return [DiseaseResponse.from_domain(d) for d in diseases]
 
 
 @router.get("/diseases/{slug}", response_model=DiseaseResponse)

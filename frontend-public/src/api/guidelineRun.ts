@@ -1,6 +1,14 @@
 import { apiGet, apiPostJson } from "./client";
 
-export const DEFAULT_GUIDELINE_PROFILE = "production";
+/**
+ * Optional override for guideline runs. When unset, POST omits `profile` and the
+ * backend uses `MODEL_PROFILE` from server `.env` (typically `vllm`).
+ */
+export const DEFAULT_GUIDELINE_PROFILE: string | undefined =
+  typeof import.meta.env.VITE_GUIDELINE_PROFILE === "string" &&
+  import.meta.env.VITE_GUIDELINE_PROFILE.trim().length > 0
+    ? import.meta.env.VITE_GUIDELINE_PROFILE.trim()
+    : undefined;
 
 export interface StartGuidelineRunResponse {
   execution_id: string;
@@ -8,13 +16,37 @@ export interface StartGuidelineRunResponse {
   ticket_id?: number;
 }
 
+export interface StartGuidelineRunCatalogInput {
+  mode: "catalog";
+  diseaseSlug: string;
+  profile?: string;
+}
+
+export interface StartGuidelineRunCustomInput {
+  mode: "custom";
+  diseaseName: string;
+  diseaseAliases: string[];
+  profile?: string;
+}
+
+export type StartGuidelineRunInput =
+  | StartGuidelineRunCatalogInput
+  | StartGuidelineRunCustomInput;
+
 export async function startGuidelineRunPublic(
-  diseaseSlug: string,
-  profile: string = DEFAULT_GUIDELINE_PROFILE,
+  input: StartGuidelineRunInput,
 ): Promise<StartGuidelineRunResponse> {
+  const profile = input.profile ?? DEFAULT_GUIDELINE_PROFILE;
+  if (input.mode === "catalog") {
+    return apiPostJson<StartGuidelineRunResponse>("/api/pipeline/guideline-run", {
+      disease_slug: input.diseaseSlug,
+      ...(profile != null ? { profile } : {}),
+    });
+  }
   return apiPostJson<StartGuidelineRunResponse>("/api/pipeline/guideline-run", {
-    disease_slug: diseaseSlug,
-    profile,
+    disease_name: input.diseaseName,
+    disease_aliases: input.diseaseAliases,
+    ...(profile != null ? { profile } : {}),
   });
 }
 
@@ -33,10 +65,18 @@ export interface AgentRunPayloadV1 {
   missing_tool_requests: unknown[];
 }
 
+/**
+ * Status poll while a PubMed/guideline job runs.
+ * GET /api/agent/run/{id} is a fast in-memory read; keep this short so quick
+ * tunnels (trycloudflare.com) and nginx do not cancel long-lived connections.
+ */
+const AGENT_RUN_POLL_TIMEOUT_MS = 20_000;
+
 export async function fetchAgentRun(
   executionId: string,
 ): Promise<AgentRunPayloadV1> {
   return apiGet<AgentRunPayloadV1>(
     `/api/agent/run/${encodeURIComponent(executionId)}`,
+    { timeoutMs: AGENT_RUN_POLL_TIMEOUT_MS },
   );
 }

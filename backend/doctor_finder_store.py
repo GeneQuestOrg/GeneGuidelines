@@ -90,6 +90,11 @@ def save_doctor_finder_run_result(
     )
     conn.commit()
     conn.close()
+    try:
+        from .doctor_catalog import clear_finder_docs_index
+    except ImportError:
+        from doctor_catalog import clear_finder_docs_index
+    clear_finder_docs_index()
 
 
 def load_doctor_finder_run_result(execution_id: str) -> dict[str, Any] | None:
@@ -148,6 +153,49 @@ def _parse_latest_report_row(row: Any) -> tuple[str, dict[str, Any], str] | None
         return None
     started = str(row.get("started_at") or "")
     return (eid, report, started)
+
+
+def load_successful_reports_for_catalog_index() -> dict[str, tuple[str, dict[str, Any], str]]:
+    """Newest successful doctor_finder snapshot per catalog slug (one DB round-trip).
+
+    Values are ``(execution_id, doctor_report, started_at)``. Rows with a missing
+    ``catalog_slug`` are mapped via ``catalog_slug_for_finder_input(disease_name)``.
+    """
+    try:
+        from .doctor_catalog import catalog_slug_for_finder_input
+    except ImportError:
+        from doctor_catalog import catalog_slug_for_finder_input
+
+    ensure_doctor_finder_run_results_schema()
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute(
+        """
+        SELECT execution_id, disease_name, catalog_slug, doctor_report_json, started_at
+        FROM doctor_finder_run_results
+        WHERE done = 1
+          AND (error IS NULL OR TRIM(error) = '')
+          AND doctor_report_json IS NOT NULL
+          AND TRIM(doctor_report_json) != ''
+        ORDER BY started_at DESC
+        """
+    )
+    rows = cur.fetchall() or []
+    conn.close()
+
+    best: dict[str, tuple[str, dict[str, Any], str]] = {}
+    for row in rows:
+        slug = str(row.get("catalog_slug") or "").strip().lower()
+        if not slug:
+            slug = catalog_slug_for_finder_input(str(row.get("disease_name") or "")) or ""
+        if not slug:
+            continue
+        if slug in best:
+            continue
+        parsed = _parse_latest_report_row(row)
+        if parsed is not None:
+            best[slug] = parsed
+    return best
 
 
 def load_latest_successful_report_for_catalog_slug(

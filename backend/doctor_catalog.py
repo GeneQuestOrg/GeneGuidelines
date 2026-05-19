@@ -3,15 +3,18 @@ from __future__ import annotations
 
 import json
 import re
+import threading
 from pathlib import Path
 from typing import Any, Literal
 
 try:
     from .config import BACKEND_DIR
     from .content_db import get_disease_by_slug, list_diseases, list_diseases_catalog, normalize_disease_slug
+    from .doctor_geo_coords import coords_for_city_country
 except ImportError:
     from config import BACKEND_DIR
     from content_db import get_disease_by_slug, list_diseases, list_diseases_catalog, normalize_disease_slug
+    from doctor_geo_coords import coords_for_city_country
 
 CONTENT_DOCTORS_PATH = BACKEND_DIR / "content_doctors.json"
 
@@ -25,6 +28,20 @@ PubmedRole = Literal[
 _SLUG_RE = re.compile(r"[^a-z0-9]+")
 _TOKEN_RE = re.compile(r"[a-z0-9]+", re.I)
 _MIN_CATALOG_NAME_MATCH_SCORE = 45
+
+_FINDER_DOCS_INDEX: dict[str, list[dict[str, Any]] | None] | None = None
+_ALL_DOCTORS_CACHE: list[dict[str, Any]] | None = None
+_CONTENT_DOCTORS_CACHE: list[dict[str, Any]] | None = None
+_CATALOG_CACHE_LOCK = threading.RLock()
+
+
+def clear_finder_docs_index() -> None:
+    """Drop cached doctor_finder rows (call after a run finishes)."""
+    global _FINDER_DOCS_INDEX, _ALL_DOCTORS_CACHE, _CONTENT_DOCTORS_CACHE
+    with _CATALOG_CACHE_LOCK:
+        _FINDER_DOCS_INDEX = None
+        _ALL_DOCTORS_CACHE = None
+        _CONTENT_DOCTORS_CACHE = None
 
 
 def slugify_doctor_name(display_name: str, author_key: str | None = None) -> str:
@@ -83,7 +100,7 @@ def _entry_to_public_doctor(
         )
         if explicit_city and (not city or city == "—"):
             city = explicit_city
-    lat, lng = _coords_for_city_country(city, country)
+    lat, lng = coords_for_city_country(city, country)
     key_papers = entry.get("key_papers") or []
     publications = [
         {
@@ -323,64 +340,34 @@ def _parse_affiliation_location(affiliation: str, country_code: str) -> tuple[st
             city_guess = parts[-1].split(",")[0].strip()
             if len(city_guess) <= 40:
                 return city_guess, country
-    for city_name in _CITY_COORDS:
-        if city_name.lower() in affiliation.lower():
-            return city_name, country
+    try:
+        from .doctor_geo_coords import _CITY_COORDS_LOWER
+    except ImportError:
+        from doctor_geo_coords import _CITY_COORDS_LOWER
+
+    for city_name in _CITY_COORDS_LOWER:
+        if city_name in affiliation.lower():
+            return city_name.title(), country
     return "—", country
 
 
-def _coords_for_city_country(city: str, country: str) -> tuple[float, float]:
-    if city in _CITY_COORDS:
-        lat, lng = _CITY_COORDS[city]
-        return lat, lng
-    if country in _COUNTRY_COORDS:
-        return _COUNTRY_COORDS[country]
-    return 52.0, 10.0
-
-
-_CITY_COORDS: dict[str, tuple[float, float]] = {
-    "Olsztyn": (53.778, 20.48),
-    "Poznań": (52.408, 16.934),
-    "Poznan": (52.408, 16.934),
-    "Zielona Góra": (51.935, 15.506),
-    "Zielona Gora": (51.935, 15.506),
-    "Warsaw": (52.229, 21.012),
-    "Warszawa": (52.229, 21.012),
-    "Kraków": (50.0647, 19.9450),
-    "Krakow": (50.0647, 19.9450),
-    "Gdańsk": (54.3520, 18.6466),
-    "Gdansk": (54.3520, 18.6466),
-    "Wrocław": (51.1079, 17.0385),
-    "Wroclaw": (51.1079, 17.0385),
-    "Łódź": (51.7592, 19.4550),
-    "Lodz": (51.7592, 19.4550),
-    "Berlin": (52.52, 13.405),
-    "London": (51.5074, -0.1278),
-    "Paris": (48.8566, 2.3522),
-    "Amsterdam": (52.3676, 4.9041),
-    "Leiden": (52.166, 4.49),
-    "Rome": (41.902, 12.496),
-    "Boston": (42.36, -71.06),
-}
-
-_COUNTRY_COORDS: dict[str, tuple[float, float]] = {
-    "PL": (52.0, 19.0),
-    "NL": (52.16, 5.0),
-    "IT": (41.9, 12.5),
-    "US": (39.0, -98.0),
-    "DE": (51.0, 10.0),
-}
-
-
 def _load_content_doctors_file() -> list[dict[str, Any]]:
-    path = Path(CONTENT_DOCTORS_PATH)
-    if not path.exists():
-        return []
-    data = json.loads(path.read_text(encoding="utf-8"))
-    rows = data.get("doctors", data) if isinstance(data, dict) else data
-    if not isinstance(rows, list):
-        return []
-    return [r for r in rows if isinstance(r, dict)]
+    """Load curated doctors seed once per process (invalidated with finder index)."""
+    global _CONTENT_DOCTORS_CACHE
+    with _CATALOG_CACHE_LOCK:
+        if _CONTENT_DOCTORS_CACHE is not None:
+            return _CONTENT_DOCTORS_CACHE
+        path = Path(CONTENT_DOCTORS_PATH)
+        if not path.exists():
+            _CONTENT_DOCTORS_CACHE = []
+            return _CONTENT_DOCTORS_CACHE
+        data = json.loads(path.read_text(encoding="utf-8"))
+        rows = data.get("doctors", data) if isinstance(data, dict) else data
+        if not isinstance(rows, list):
+            _CONTENT_DOCTORS_CACHE = []
+            return _CONTENT_DOCTORS_CACHE
+        _CONTENT_DOCTORS_CACHE = [r for r in rows if isinstance(r, dict)]
+        return _CONTENT_DOCTORS_CACHE
 
 
 def _disease_slug_for_name(disease_name: str) -> str | None:
@@ -449,51 +436,15 @@ def catalog_slug_for_finder_input(disease_name: str) -> str | None:
     return _disease_slug_for_name(disease_name)
 
 
-def _doctors_from_live_doctor_finder(disease_slug: str) -> list[dict[str, Any]] | None:
-    try:
-        from .routers import doctor_finder as df_router
-    except ImportError:
-        from routers import doctor_finder as df_router
-    try:
-        from .doctor_finder_store import load_latest_successful_report_for_catalog_slug
-    except ImportError:
-        from doctor_finder_store import load_latest_successful_report_for_catalog_slug
-
-    best: tuple[str, str, dict[str, Any]] | None = None
-
-    persisted = load_latest_successful_report_for_catalog_slug(disease_slug)
-    if persisted is not None:
-        eid, report, started_db = persisted
-        best = (started_db, eid, report)
-
-    with df_router._DOCTOR_FINDER_RUNS_LOCK:
-        runs = list(df_router.DOCTOR_FINDER_RUNS.items())
-
-    for execution_id, run in runs:
-        if not run.get("done") or run.get("error"):
-            continue
-        run_slug = _disease_slug_for_name(str(run.get("disease_name") or ""))
-        if run_slug != disease_slug:
-            continue
-        report = run.get("doctor_report")
-        if not isinstance(report, dict):
-            report = df_router._extract_doctor_report_from_node_outputs(
-                run.get("node_outputs") or {},
-            )
-        if not isinstance(report, dict):
-            continue
-        started = str(run.get("started_at") or "")
-        if best is None or started > best[0]:
-            best = (started, execution_id, report)
-
-    if best is None:
-        return None
-
-    _started, execution_id, report = best
+def _public_doctors_from_finder_report(
+    disease_slug: str,
+    report: dict[str, Any],
+    *,
+    execution_id: str | None,
+) -> list[dict[str, Any]] | None:
     authors = report.get("top_authors") or []
     if not isinstance(authors, list) or not authors:
         return None
-
     return [
         _entry_to_public_doctor(
             entry if isinstance(entry, dict) else {},
@@ -506,81 +457,192 @@ def _doctors_from_live_doctor_finder(disease_slug: str) -> list[dict[str, Any]] 
     ]
 
 
+def _build_finder_docs_index() -> dict[str, list[dict[str, Any]] | None]:
+    """One pass over persisted + in-memory doctor_finder runs (cached per process)."""
+    try:
+        from .routers import doctor_finder as df_router
+    except ImportError:
+        from routers import doctor_finder as df_router
+    try:
+        from .doctor_finder_store import load_successful_reports_for_catalog_index
+    except ImportError:
+        from doctor_finder_store import load_successful_reports_for_catalog_index
+
+    best_reports: dict[str, tuple[str, str, dict[str, Any]]] = {}
+    for slug, (eid, report, started) in load_successful_reports_for_catalog_index().items():
+        best_reports[slug] = (started, eid, report)
+
+    with df_router._DOCTOR_FINDER_RUNS_LOCK:
+        runs = list(df_router.DOCTOR_FINDER_RUNS.items())
+
+    for execution_id, run in runs:
+        if not run.get("done") or run.get("error"):
+            continue
+        run_slug = _disease_slug_for_name(str(run.get("disease_name") or ""))
+        if not run_slug:
+            continue
+        report = run.get("doctor_report")
+        if not isinstance(report, dict):
+            report = df_router._extract_doctor_report_from_node_outputs(
+                run.get("node_outputs") or {},
+            )
+        if not isinstance(report, dict):
+            continue
+        started = str(run.get("started_at") or "")
+        prev = best_reports.get(run_slug)
+        if prev is None or started > prev[0]:
+            best_reports[run_slug] = (started, execution_id, report)
+
+    index: dict[str, list[dict[str, Any]] | None] = {}
+    for slug, (_started, execution_id, report) in best_reports.items():
+        index[slug] = _public_doctors_from_finder_report(
+            slug,
+            report,
+            execution_id=execution_id or None,
+        )
+    return index
+
+
+def _finder_docs_index() -> dict[str, list[dict[str, Any]] | None]:
+    global _FINDER_DOCS_INDEX
+    with _CATALOG_CACHE_LOCK:
+        if _FINDER_DOCS_INDEX is None:
+            _FINDER_DOCS_INDEX = _build_finder_docs_index()
+        return _FINDER_DOCS_INDEX
+
+
+def _merged_doctors_for_catalog_slug(
+    normalized: str,
+    finder_index: dict[str, list[dict[str, Any]] | None],
+    *,
+    seeded_docs: list[dict[str, Any]] | None = None,
+) -> tuple[str, list[dict[str, Any]]]:
+    """Merge seed file + doctor_finder hits for one catalog disease slug."""
+    doctors_seed = seeded_docs if seeded_docs is not None else _load_content_doctors_file()
+    seeded = [
+        doc
+        for doc in doctors_seed
+        if normalized in (doc.get("diseases") or [])
+    ]
+    live = finder_index.get(normalized)
+
+    if live and seeded:
+        return "merged", _merge_seed_and_finder_docs(normalized, seeded, live)
+    if live:
+        return "doctor_finder", live
+    if seeded:
+        return "content_seed", seeded
+    return "none", []
+
+
+def _doctors_from_live_doctor_finder(disease_slug: str) -> list[dict[str, Any]] | None:
+    normalized = normalize_disease_slug(disease_slug)
+    if normalized is None:
+        return None
+    return _finder_docs_index().get(normalized)
+
+
 def get_doctors_for_disease(disease_slug: str) -> dict[str, Any]:
     """Doctors for a disease: merge latest doctor_finder with curated seed when both exist."""
     normalized = normalize_disease_slug(disease_slug)
     if normalized is None:
         return {"diseaseSlug": disease_slug, "source": "none", "doctors": []}
 
-    seeded = [
-        doc
-        for doc in _load_content_doctors_file()
-        if normalized in (doc.get("diseases") or [])
-    ]
-    live = _doctors_from_live_doctor_finder(normalized)
-
-    if live and seeded:
-        return {
-            "diseaseSlug": normalized,
-            "source": "merged",
-            "doctors": _merge_seed_and_finder_docs(normalized, seeded, live),
-        }
-    if live:
-        return {
-            "diseaseSlug": normalized,
-            "source": "doctor_finder",
-            "doctors": live,
-        }
-    if seeded:
-        return {
-            "diseaseSlug": normalized,
-            "source": "content_seed",
-            "doctors": seeded,
-        }
-
-    return {"diseaseSlug": normalized, "source": "none", "doctors": []}
+    source, doctors = _merged_doctors_for_catalog_slug(normalized, _finder_docs_index())
+    return {"diseaseSlug": normalized, "source": source, "doctors": doctors}
 
 
 def effective_public_doctor_count_for_disease(disease_slug: str) -> int:
     """Public directory size for one disease (seed + merged doctor_finder when present)."""
-    payload = get_doctors_for_disease(disease_slug)
-    doctors = payload.get("doctors")
-    if not isinstance(doctors, list):
+    normalized = normalize_disease_slug(disease_slug)
+    if normalized is None:
         return 0
-    return len(doctors)
+    counts = public_doctor_counts_by_slug([normalized])
+    return counts.get(normalized, 0)
+
+
+def public_doctor_counts_by_slug(slugs: list[str] | tuple[str, ...]) -> dict[str, int]:
+    """Live public doctor counts for many catalog slugs in one pass.
+
+    Used by GET /api/diseases so listing the catalog does not re-read the seed
+    file and rebuild the finder index once per disease row.
+    """
+    finder_index = _finder_docs_index()
+    seeded_docs = _load_content_doctors_file()
+    counts: dict[str, int] = {}
+    for raw in slugs:
+        normalized = normalize_disease_slug(str(raw or ""))
+        if normalized is None or normalized in counts:
+            continue
+        _src, doctors = _merged_doctors_for_catalog_slug(
+            normalized,
+            finder_index,
+            seeded_docs=seeded_docs,
+        )
+        counts[normalized] = len(doctors)
+    return counts
 
 
 def total_distinct_public_doctor_profiles() -> int:
     """Distinct specialist profile slugs across all diseases (union for home-page stats)."""
-    seen: set[str] = set()
-    try:
-        rows = list_diseases_catalog()
-    except Exception:
-        return 0
-    for row in rows:
-        dslug = str(row.get("slug") or "").strip()
-        if not dslug:
-            continue
-        doctors = get_doctors_for_disease(dslug).get("doctors")
-        if not isinstance(doctors, list):
-            continue
-        for d in doctors:
-            if not isinstance(d, dict):
-                continue
-            k = str(d.get("slug") or "").strip().lower()
-            if k:
-                seen.add(k)
-    return len(seen)
+    return len(list_all_doctors())
+
+
+def _merge_global_doctor_entries(a: dict[str, Any], b: dict[str, Any]) -> dict[str, Any]:
+    """Combine the same profile slug when listed under multiple diseases."""
+    return _merge_public_doctor_rows(a, b, disease_slug="")
 
 
 def list_all_doctors() -> list[dict[str, Any]]:
-    """All doctors from content file (deduped by slug)."""
-    by_slug: dict[str, dict[str, Any]] = {}
-    for doc in _load_content_doctors_file():
-        slug = doc.get("slug")
-        if isinstance(slug, str) and slug:
-            by_slug[slug] = doc
-    return list(by_slug.values())
+    """All doctors: seed file + per-disease doctor_finder merge, deduped by slug."""
+    global _ALL_DOCTORS_CACHE
+    with _CATALOG_CACHE_LOCK:
+        if _ALL_DOCTORS_CACHE is not None:
+            return _ALL_DOCTORS_CACHE
+
+        by_slug: dict[str, dict[str, Any]] = {}
+        for doc in _load_content_doctors_file():
+            if not isinstance(doc, dict):
+                continue
+            key = str(doc.get("slug") or "").strip().lower()
+            if key:
+                by_slug[key] = doc
+
+        finder_index = _finder_docs_index()
+        try:
+            rows = list_diseases_catalog()
+        except Exception:
+            rows = []
+
+        catalog_slugs: set[str] = set()
+        for row in rows:
+            normalized = normalize_disease_slug(str(row.get("slug") or "").strip())
+            if normalized:
+                catalog_slugs.add(normalized)
+
+        for doc in by_slug.values():
+            for disease in doc.get("diseases") or []:
+                dslug = str(disease).strip().lower()
+                if dslug:
+                    catalog_slugs.add(dslug)
+
+        for normalized in catalog_slugs:
+            source, doctors = _merged_doctors_for_catalog_slug(normalized, finder_index)
+            if source == "none":
+                continue
+            for doc in doctors:
+                if not isinstance(doc, dict):
+                    continue
+                key = str(doc.get("slug") or "").strip().lower()
+                if not key:
+                    continue
+                if key not in by_slug:
+                    by_slug[key] = doc
+                else:
+                    by_slug[key] = _merge_global_doctor_entries(by_slug[key], doc)
+
+        _ALL_DOCTORS_CACHE = list(by_slug.values())
+        return _ALL_DOCTORS_CACHE
 
 
 def get_doctor_by_slug(slug: str) -> dict[str, Any] | None:
@@ -588,18 +650,4 @@ def get_doctor_by_slug(slug: str) -> dict[str, Any] | None:
     trimmed = slug.strip().lower()
     if not trimmed:
         return None
-    for doc in list_all_doctors():
-        if doc.get("slug") == trimmed:
-            return doc
-    # Search live doctor_finder authors across catalog diseases
-    for row in list_diseases():
-        disease = row.get("slug")
-        if not isinstance(disease, str) or not disease:
-            continue
-        payload = get_doctors_for_disease(disease)
-        if payload.get("source") == "none":
-            continue
-        for doc in payload.get("doctors") or []:
-            if doc.get("slug") == trimmed:
-                return doc
-    return None
+    return next((doc for doc in list_all_doctors() if doc.get("slug") == trimmed), None)

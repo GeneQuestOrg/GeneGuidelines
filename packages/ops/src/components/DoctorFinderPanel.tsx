@@ -5,6 +5,8 @@ import {
   doctorFinderGetResult,
   doctorFinderSuggestAliases,
 } from "../api/client";
+import { useDefaultModelProfile } from "../hooks/useDefaultModelProfile";
+import { usePipelineModelSettings } from "../hooks/usePipelineModelSettings";
 import { useDiseaseCatalog } from "../hooks/useDiseaseCatalog";
 import { useLiveRunTrace } from "../hooks/useLiveRunTrace";
 import { registerRunStart, markRunFinished } from "../runHistory";
@@ -36,7 +38,8 @@ function formatUnknownError(value: unknown): string {
 
 const CONTINENTS = ["Africa", "Asia", "Europe", "North America", "Oceania", "South America"];
 
-const MODEL_PROFILE_OPTIONS = ["production", "test", "openrouter"] as const;
+const MODEL_PROFILE_OPTIONS = ["production", "openrouter", "test", "vllm"] as const;
+type ModelProfileOption = (typeof MODEL_PROFILE_OPTIONS)[number];
 
 const ROLE_BADGE: Record<string, { label: string; color: string }> = {
   guideline_author: { label: "Guideline Author", color: "#22c55e" },
@@ -53,7 +56,7 @@ interface FormState {
   max_results: number;
   top_n_authors: number;
   ai_justification: boolean;
-  model_profile: (typeof MODEL_PROFILE_OPTIONS)[number];
+  model_profile: ModelProfileOption;
   llm_model_override: string;
   ai_generate_aliases: boolean;
 }
@@ -75,6 +78,12 @@ export function DoctorFinderPanel({
   runLive = false,
 }: DoctorFinderPanelProps = {}) {
   const { diseases, loading: catalogLoading } = useDiseaseCatalog();
+  const defaultModelProfile = useDefaultModelProfile();
+  const {
+    profileOptions,
+    singleLlmMode,
+    singleLlmModel,
+  } = usePipelineModelSettings();
   const [catalogSlug, setCatalogSlug] = useState("");
   const [form, setForm] = useState<FormState>({
     disease_name: "",
@@ -83,7 +92,7 @@ export function DoctorFinderPanel({
     max_results: 200,
     top_n_authors: 20,
     ai_justification: false,
-    model_profile: "production",
+    model_profile: defaultModelProfile,
     llm_model_override: "",
     ai_generate_aliases: false,
   });
@@ -94,6 +103,13 @@ export function DoctorFinderPanel({
   const [error, setError] = useState<string | null>(null);
   const [selectedEntry, setSelectedEntry] = useState<DoctorEntry | null>(null);
   const esRef = useRef<EventSource | null>(null);
+  const modelProfileSynced = useRef(false);
+
+  useEffect(() => {
+    if (modelProfileSynced.current) return;
+    setForm((f) => ({ ...f, model_profile: defaultModelProfile }));
+    modelProfileSynced.current = true;
+  }, [defaultModelProfile]);
 
   const liveTraceUrl =
     runLive && viewExecutionId ? doctorFinderTraceUrl(viewExecutionId) : null;
@@ -396,7 +412,12 @@ export function DoctorFinderPanel({
 
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
           <div>
-            <label style={labelStyle}>Model profile (LLM)</label>
+            <label style={labelStyle}>Model (LLM)</label>
+            {singleLlmMode ? (
+              <p style={{ margin: 0, fontSize: 13, color: "#cbd5e1" }}>
+                Self-hosted: <strong>{singleLlmModel ?? "gemma"}</strong> (all runs use this endpoint)
+              </p>
+            ) : (
             <select
               style={inputStyle}
               value={form.model_profile}
@@ -407,14 +428,15 @@ export function DoctorFinderPanel({
                 }))
               }
             >
-              {MODEL_PROFILE_OPTIONS.map((p) => (
+              {profileOptions.map((p) => (
                 <option key={p} value={p}>
                   {p}
                 </option>
               ))}
             </select>
+            )}
             <p style={{ margin: "6px 0 0", fontSize: 11, color: "#64748b" }}>
-              Same profile used for agent runs — applies to aliases and AI justifications.
+              Same model for agent runs — applies to aliases and AI justifications.
             </p>
           </div>
           <div>

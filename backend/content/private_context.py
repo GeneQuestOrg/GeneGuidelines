@@ -317,15 +317,25 @@ async def extract_redacted_facts_async(
             DEEPSEEK_API_KEY,
             MODEL_PROFILES,
             OPENROUTER_API_KEY,
+            VLLM_API_KEY,
+            VLLM_BASE_URL,
         )
 
         openai_key = (os.environ.get("OPENAI_API_KEY") or "").strip() or None
 
         # Pick the first profile whose required provider has its key set.
-        # We try the configured default first (so MODEL_PROFILE=openrouter
-        # wins when the key is present), then degrade gracefully.
-        candidates = [DEFAULT_MODEL_PROFILE, "openrouter", "production", "test"]
+        # We try the configured default first, then degrade gracefully.
+        try:
+            from ..config import SINGLE_LLM_MODE
+        except ImportError:
+            from config import SINGLE_LLM_MODE
+
+        if SINGLE_LLM_MODE:
+            candidates = ["vllm"]
+        else:
+            candidates = [DEFAULT_MODEL_PROFILE, "production", "openrouter", "test", "vllm"]
         key_for_profile = {
+            "vllm": VLLM_API_KEY if VLLM_BASE_URL else None,
             "openrouter": OPENROUTER_API_KEY,
             "production": openai_key,
             "test": DEEPSEEK_API_KEY,
@@ -338,7 +348,8 @@ async def extract_redacted_facts_async(
         if chosen is None:
             raise RuntimeError(
                 "No model profile has its API key set. Configure one of "
-                "OPENROUTER_API_KEY / OPENAI_API_KEY / DEEPSEEK_API_KEY in .env."
+                "LLM_API_KEY+LLM_BASE_URL / OPENAI_API_KEY / OPENROUTER_API_KEY / "
+                "DEEPSEEK_API_KEY in .env."
             )
         profile_models = MODEL_PROFILES[chosen]
         model_spec = profile_models.get("simple") or profile_models.get("agentic")
