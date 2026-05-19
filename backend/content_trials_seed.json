@@ -1,63 +1,6 @@
 {
   "trials": [
     {
-      "nct": "NCT05882211",
-      "title": "Denosumab in progressive polyostotic FD in children",
-      "phase": "Phase 2",
-      "status": "recruiting",
-      "sponsor": "Leiden University Medical Center",
-      "city": "Leiden",
-      "country": "NL",
-      "lat": 52.166,
-      "lng": 4.490,
-      "diseases": ["fd"],
-      "ageRange": "6-17",
-      "principalInvestigator": "Dr. Appelman-Dijkstra",
-      "eligibilitySummary": "Patients 6-17 with polyostotic FD confirmed by GNAS, ≥2 pain episodes in the last 12 months.",
-      "enrollmentTarget": 60,
-      "enrolled": 23,
-      "contact": "fdmas-trials@lumc.nl",
-      "lastSeen": "2026-05-12"
-    },
-    {
-      "nct": "NCT06112233",
-      "title": "Burosumab in FD/MAS with FGF23-dependent hypophosphataemia",
-      "phase": "Phase 3",
-      "status": "recruiting",
-      "sponsor": "Kyowa Kirin",
-      "city": "Berlin",
-      "country": "DE",
-      "lat": 52.520,
-      "lng": 13.405,
-      "diseases": ["fd", "mas"],
-      "ageRange": "12+",
-      "principalInvestigator": "Prof. T. Schwarz",
-      "eligibilitySummary": "FGF23 > 100 RU/mL, serum phosphate < 0.8 mmol/L, no prior burosumab exposure.",
-      "enrollmentTarget": 120,
-      "enrolled": 89,
-      "contact": "trials@kyowa-kirin.eu",
-      "lastSeen": "2026-05-10"
-    },
-    {
-      "nct": "NCT06223344",
-      "title": "Natural history study — adult craniofacial FD",
-      "phase": "Observational",
-      "status": "recruiting",
-      "sponsor": "NIH NIDCR",
-      "city": "Bethesda",
-      "country": "US",
-      "lat": 38.999,
-      "lng": -77.110,
-      "diseases": ["fd"],
-      "ageRange": "18+",
-      "principalInvestigator": "Dr. A. Boyce",
-      "eligibilitySummary": "Adult patients with craniofacial FD willing to travel to NIH for an annual visit.",
-      "enrollmentTarget": 200,
-      "enrolled": 134,
-      "contact": "fdstudy@nih.gov",
-      "lastSeen": "2026-05-08"
-    },
-    {
       "nct": "NCT05998877",
       "title": "GαS inhibitor pilot in McCune-Albright syndrome",
       "phase": "Phase 1",
@@ -67,7 +10,9 @@
       "country": "US",
       "lat": 37.763,
       "lng": -122.458,
-      "diseases": ["mas"],
+      "diseases": [
+        "mas"
+      ],
       "ageRange": "18+",
       "principalInvestigator": "Dr. E. Hsiao",
       "eligibilitySummary": "Adult MAS with documented endocrinopathy and FD lesions, GNAS-confirmed.",
@@ -86,7 +31,9 @@
       "country": "NL",
       "lat": 51.923,
       "lng": 4.469,
-      "diseases": ["noonan"],
+      "diseases": [
+        "noonan"
+      ],
       "ageRange": "5-17",
       "principalInvestigator": "Prof. de Graaf-Schoenmakers",
       "eligibilitySummary": "Noonan syndrome with hypertrophic cardiomyopathy and PTPN11 or RIT1 mutation.",
@@ -96,23 +43,130 @@
       "lastSeen": "2026-05-09"
     },
     {
-      "nct": "NCT05779922",
-      "title": "Long-term follow-up after pamidronate cycles in monostotic FD (closed)",
-      "phase": "Phase 4",
+      "nct": "NCT04125862",
+      "title": "Pain in Fibrous Dysplasia",
+      "phase": "Observational",
       "status": "completed",
-      "sponsor": "Hospital for Special Surgery",
-      "city": "New York",
-      "country": "US",
-      "lat": 40.7644,
-      "lng": -73.9555,
-      "diseases": ["fd"],
-      "ageRange": "18-65",
-      "principalInvestigator": "Dr. R. Bone",
-      "eligibilitySummary": "Closed enrolment. Adult monostotic FD, IV pamidronate completed ≥2 years ago.",
-      "enrollmentTarget": 48,
-      "enrolled": 48,
-      "contact": "fd-fu@hss.edu",
-      "lastSeen": "2026-04-22"
+      "sponsor": "Boston Children's Hospital",
+      "city": "Boston",
+      "country": "UN",
+      "lat": 42.35843,
+      "lng": -71.05977,
+      "ageRange": "10+",
+      "principalInvestigator": "",
+      "eligibilitySummary": "Inclusion Criteria (FD/MAS patients):  * Male and Female subjects * 10-45 years of age * English Speaking ability sufficient to comprehend consent (with parental assistance if minor) * Diagnosis of Fibrous Dysplasia  Exclusion Criteria for",
+      "enrollmentTarget": 37,
+      "enrolled": null,
+      "contact": "",
+      "lastSeen": "2025-12-04",
+      "diseases": [
+        "fd"
+      ]
+    },
+    {
+      "nct": "NCT06177327",
+      "title": "Hepato-pancreato-biliary Abnormalities in Fibrous Dysplasia of Bone/McCune Albright Syndrome",
+      "phase": "Observational",
+      "status": "recruiting",
+      "sponsor": "Hospices Civils de Lyon",
+      "city": "Angers",
+      "country": "FR",
+      "lat": 47.47156,
+      "lng": -0.55202,
+      "ageRange": "18+",
+      "principalInvestigator": "",
+      "eligibilitySummary": "Inclusion Criteria:  * Adults ≥18 years with polyostotic FD/MAS * Followed up in the national FD reference center (Lyon) or in a FD French expert center: Angers, Bordeaux, Brest, Caen, Clermont-Ferrand, Lille, Marseille, Montpellier, Nice,",
+      "enrollmentTarget": 545,
+      "enrolled": null,
+      "contact": "",
+      "lastSeen": "2024-02-27",
+      "diseases": [
+        "fd"
+      ]
+    },
+    {
+      "nct": "NCT05509595",
+      "title": "Burosumab for Fibroblast Growth Factor-23 Mediated Hypophosphatemia in Fibrous Dysplasia",
+      "phase": "Phase 2",
+      "status": "completed",
+      "sponsor": "National Institute of Dental and Craniofacial Research (NIDCR)",
+      "city": "Bethesda",
+      "country": "UN",
+      "lat": 38.98067,
+      "lng": -77.10026,
+      "ageRange": "1+",
+      "principalInvestigator": "",
+      "eligibilitySummary": "* INCLUSION CRITERIA:  In order to be eligible to participate in this study, an individual must meet all of the following criteria:  * Confirmed diagnosis of fibrous dysplasia * Serum phosphate \\<10th percentile for age and sex, AND intact",
+      "enrollmentTarget": 12,
+      "enrolled": null,
+      "contact": "",
+      "lastSeen": "2026-01-14",
+      "diseases": [
+        "fd"
+      ]
+    },
+    {
+      "nct": "NCT00001727",
+      "title": "Screening and Natural History of Patients With Polyostotic Fibrous Dysplasia and the McCune-Albright Syndrome",
+      "phase": "Observational",
+      "status": "recruiting",
+      "sponsor": "National Institute of Dental and Craniofacial Research (NIDCR)",
+      "city": "Bethesda",
+      "country": "UN",
+      "lat": 38.98067,
+      "lng": -77.10026,
+      "ageRange": "1 Day",
+      "principalInvestigator": "",
+      "eligibilitySummary": "* INCLUSION CRITERIA    1. Any patient, age 1 day of life and older, with a likelihood of having PFD or MAS, based on information from an appropriate referring physician or surgeon or provided by the patient or guardian. The diagnosis will",
+      "enrollmentTarget": 500,
+      "enrolled": null,
+      "contact": "",
+      "lastSeen": "2026-03-26",
+      "diseases": [
+        "fd"
+      ]
+    },
+    {
+      "nct": "NCT07569731",
+      "title": "Fibrous Dysplasia: An Epidemiological and Correlational Evaluation of Multimodal Data",
+      "phase": "Observational",
+      "status": "recruiting",
+      "sponsor": "Istituto Ortopedico Rizzoli",
+      "city": "Bologna",
+      "country": "IT",
+      "lat": 44.49381,
+      "lng": 11.33875,
+      "ageRange": "all",
+      "principalInvestigator": "",
+      "eligibilitySummary": "Inclusion Criteria:  * All patients affected by Fibrous Dysplasia, McCune-Albright syndrome and Mazabraud syndrome (retrospectively included from 2009) * Availability of clinical and radiological data collected during their recovery at the",
+      "enrollmentTarget": 200,
+      "enrolled": null,
+      "contact": "",
+      "lastSeen": "2026-05-07",
+      "diseases": [
+        "fd"
+      ]
+    },
+    {
+      "nct": "NCT00001973",
+      "title": "Studies on Abnormal Bone From Patients With Polyostotic Fibrous Dysplasia and McCune Albright Syndrome",
+      "phase": "Observational",
+      "status": "completed",
+      "sponsor": "National Institute of Dental and Craniofacial Research (NIDCR)",
+      "city": "Bethesda",
+      "country": "UN",
+      "lat": 38.98067,
+      "lng": -77.10026,
+      "ageRange": "all",
+      "principalInvestigator": "",
+      "eligibilitySummary": "* INCLUSION CRITERIA:  All patients who are scheduled to have orthopedic surgery for treatment of polyostotic fibrous dysplasia (PFD).  Tissue will only be obtained from those patients in whom the procedure is clinically indicated for stand",
+      "enrollmentTarget": null,
+      "enrolled": null,
+      "contact": "",
+      "lastSeen": "2017-06-30",
+      "diseases": [
+        "fd"
+      ]
     }
   ]
 }
