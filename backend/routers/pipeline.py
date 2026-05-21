@@ -487,6 +487,61 @@ def _check_bootstrap_rate_limit(ip: str) -> None:
         _BOOTSTRAP_RATE_HISTORY.setdefault(ip, []).append(now)
 
 
+class LookupDiseaseMetadataBody(BaseModel):
+    """Resolve canonical metadata from one user query (name, gene, or OMIM).
+
+    Backs the public *Add a disease* form: a single input field; the AI fills
+    in canonical name + OMIM + gene + inheritance + summary before bootstrap.
+    """
+
+    name: str = Field(
+        ...,
+        min_length=2,
+        max_length=200,
+        description="Disease name, HGNC gene symbol, or OMIM phenotype number.",
+    )
+
+
+class LookupDiseaseMetadataResponse(BaseModel):
+    canonical_name: str
+    omim: str = ""
+    gene: str = ""
+    inheritance: str = ""
+    summary: str = ""
+    model_used: str = "unknown"
+
+
+@router.post(
+    "/lookup-disease-metadata",
+    response_model=LookupDiseaseMetadataResponse,
+)
+async def lookup_disease_metadata_endpoint(
+    body: LookupDiseaseMetadataBody, request: Request
+) -> LookupDiseaseMetadataResponse:
+    """Look up canonical metadata for the typed disease name via Gemma 4.
+
+    Cheap, non-persistent — the frontend uses this before calling
+    ``/bootstrap-disease`` so the user does not have to know OMIM / gene
+    / inheritance by hand. Same per-IP rate limit as bootstrap so a public
+    URL cannot be used to spend Gemma budget freely.
+    """
+
+    client_ip = (request.client.host if request.client else "") or "unknown"
+    _check_bootstrap_rate_limit(client_ip)
+
+    from ..services.disease_metadata_lookup import lookup_disease_metadata
+
+    metadata, model_spec = await lookup_disease_metadata(body.name)
+    return LookupDiseaseMetadataResponse(
+        canonical_name=metadata.canonical_name,
+        omim=metadata.omim,
+        gene=metadata.gene,
+        inheritance=metadata.inheritance,
+        summary=metadata.summary,
+        model_used=model_spec,
+    )
+
+
 class BootstrapDiseaseBody(BaseModel):
     """Create a catalog disease (minimal payload) and fan out all research workflows.
 
