@@ -119,3 +119,99 @@
   gap: 10px;
   margin-top: 20px;
 }
+
+/* Progress bar + stepped status for AI lookup + bootstrap in Add a disease */
+.research__progress {
+  margin-top: 22px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--line, #e6e6e9);
+  overflow: hidden;
+}
+
+.research__progress-bar {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(
+    90deg,
+    var(--accent-ink, #0f766e),
+    color-mix(in oklch, var(--accent-ink, #0f766e) 70%, #2ea043)
+  );
+  transition: width 0.45s ease;
+}
+
+.research__steps {
+  list-style: none;
+  padding: 0;
+  margin: 22px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.research__step {
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  grid-template-rows: auto auto;
+  column-gap: 12px;
+  row-gap: 2px;
+  align-items: baseline;
+  padding: 12px 14px;
+  border: 1px solid var(--line, #e6e6e9);
+  border-radius: var(--r-md, 8px);
+  background: var(--bg-soft, #fafafa);
+}
+
+.research__step-icon {
+  grid-row: 1 / span 2;
+  font-size: 16px;
+  line-height: 1;
+  padding-top: 2px;
+  color: var(--ink-3, #777);
+}
+
+.research__step-label {
+  font-weight: 500;
+  color: var(--ink, #111);
+}
+
+.research__step-detail {
+  grid-column: 2;
+  font-size: 13px;
+  color: var(--ink-2, #555);
+  word-break: break-word;
+}
+
+.research__step--running .research__step-icon {
+  color: var(--accent-ink, #0f766e);
+  animation: research-pulse 1.2s ease-in-out infinite;
+}
+.research__step--running { border-color: color-mix(in oklch, var(--accent-ink, #0f766e) 35%, var(--line, #e6e6e9)); }
+
+.research__step--done .research__step-icon { color: #2ea043; }
+.research__step--done {
+  border-color: color-mix(in oklch, #2ea043 25%, var(--line, #e6e6e9));
+  background: color-mix(in oklch, #2ea043 4%, var(--bg-soft, #fafafa));
+}
+
+.research__step--error .research__step-icon { color: #cf222e; }
+.research__step--error {
+  border-color: color-mix(in oklch, #cf222e 35%, var(--line, #e6e6e9));
+  background: color-mix(in oklch, #cf222e 5%, var(--bg-soft, #fafafa));
+}
+
+@keyframes research-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+
+.research__summary {
+  margin: 16px 0 0;
+  padding: 14px 18px;
+  border-left: 3px solid var(--accent-ink, #0f766e);
+  background: color-mix(in oklch, var(--accent-ink, #0f766e) 5%, var(--bg-soft, #fafafa));
+  border-radius: 0 var(--r-md, 8px) var(--r-md, 8px) 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--ink-2, #444);
+}

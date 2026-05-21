@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "@gene-guidelines/ui";
 import { ApiRequestError } from "../api/client";
 import { bootstrapDisease } from "../api/bootstrapDisease";
+import { lookupDiseaseMetadata, type LookupDiseaseMetadataResponse } from "../api/lookupDisease";
 import { repositories } from "../repositories";
 import type { Disease } from "../types";
 import "../styles/research.css";
@@ -18,51 +19,44 @@ function slugify(name: string): string {
     .slice(0, 64);
 }
 
+type StepStatus = "idle" | "running" | "done" | "error";
+
+interface Step {
+  key: "lookup" | "bootstrap";
+  status: StepStatus;
+  label: string;
+  detail?: string;
+}
+
 export interface AddDiseaseViewProps {
   readonly onNav: (path: string) => void;
 }
 
 export function AddDiseaseView({ onNav }: AddDiseaseViewProps) {
   const [name, setName] = useState("");
-  const [slug, setSlug] = useState("");
-  const [slugTouched, setSlugTouched] = useState(false);
-  const [gene, setGene] = useState("");
-  const [omim, setOmim] = useState("");
-  const [inheritance, setInheritance] = useState("");
-  const [summary, setSummary] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [matches, setMatches] = useState<readonly Disease[]>([]);
-
-  const derivedSlug = useMemo(() => (slugTouched ? slug : slugify(name)), [
-    name,
-    slug,
-    slugTouched,
+  const [steps, setSteps] = useState<Step[]>([
+    { key: "lookup", status: "idle", label: "Search disease databases" },
+    { key: "bootstrap", status: "idle", label: "Start research workflows" },
   ]);
+  const [metadata, setMetadata] = useState<LookupDiseaseMetadataResponse | null>(null);
 
   const exactDuplicate = useMemo(
     () =>
       matches.find(
-        (d) =>
-          d.slug === derivedSlug ||
-          d.name.toLowerCase() === name.trim().toLowerCase(),
+        (d) => d.name.toLowerCase() === name.trim().toLowerCase(),
       ),
-    [matches, derivedSlug, name],
+    [matches, name],
   );
 
   useEffect(() => {
     const q = name.trim();
     let cancelled = false;
     if (q.length < 2) {
-      const handle = window.setTimeout(() => {
-        if (!cancelled) {
-          setMatches([]);
-        }
-      }, 0);
-      return () => {
-        cancelled = true;
-        window.clearTimeout(handle);
-      };
+      setMatches([]);
+      return;
     }
     const t = window.setTimeout(async () => {
       try {
@@ -83,51 +77,128 @@ export function AddDiseaseView({ onNav }: AddDiseaseViewProps) {
     };
   }, [name]);
 
-  const slugInvalid = derivedSlug.length > 0 && !SLUG_PATTERN.test(derivedSlug);
+  const updateStep = useCallback(
+    (key: Step["key"], patch: Partial<Step>) => {
+      setSteps((prev) =>
+        prev.map((s) => (s.key === key ? { ...s, ...patch } : s)),
+      );
+    },
+    [],
+  );
+
   const canSubmit =
-    !busy &&
-    name.trim().length >= 2 &&
-    derivedSlug.length >= 2 &&
-    !slugInvalid &&
-    !exactDuplicate;
+    !busy && name.trim().length >= 2 && !exactDuplicate;
+
+  const progressPct = useMemo(() => {
+    const lookup = steps.find((s) => s.key === "lookup");
+    const bootstrap = steps.find((s) => s.key === "bootstrap");
+    if (bootstrap?.status === "done") return 100;
+    if (bootstrap?.status === "running") return 75;
+    if (lookup?.status === "done") return 50;
+    if (lookup?.status === "running") return 25;
+    return 0;
+  }, [steps]);
 
   const start = useCallback(async () => {
     setError(null);
-    if (!canSubmit) {
+    setMetadata(null);
+    if (!canSubmit) return;
+    setBusy(true);
+    setSteps([
+      { key: "lookup", status: "running", label: "Searching disease databases…" },
+      { key: "bootstrap", status: "idle", label: "Start research workflows" },
+    ]);
+
+    let resolved: LookupDiseaseMetadataResponse;
+    try {
+      resolved = await lookupDiseaseMetadata({ name: name.trim() });
+      setMetadata(resolved);
+      const fields: string[] = [];
+      if (resolved.omim) fields.push(`OMIM ${resolved.omim}`);
+      if (resolved.gene) fields.push(resolved.gene);
+      if (resolved.inheritance) fields.push(resolved.inheritance);
+      const lookupDetail =
+        resolved.model_used === "unavailable"
+          ? `${resolved.canonical_name} (AI lookup unavailable — using your typed name)`
+          : `${resolved.canonical_name}${
+              fields.length ? "  ·  " + fields.join("  ·  ") : ""
+            }`;
+      updateStep("lookup", {
+        status: "done",
+        label: resolved.model_used === "unavailable" ? "Name accepted" : "Match found",
+        detail: lookupDetail,
+      });
+    } catch (e) {
+      const msg =
+        e instanceof ApiRequestError && e.status === 401
+          ? "Server rejected (401). API key gate is on."
+          : e instanceof Error
+            ? e.message
+            : "Lookup failed.";
+      updateStep("lookup", { status: "error", detail: msg });
+      setError(msg);
+      setBusy(false);
       return;
     }
-    setBusy(true);
+
+    const canonical = resolved.canonical_name || name.trim();
+    const slug = slugify(canonical);
+    const existing = await repositories().diseases.getDiseaseBySlug(slug);
+    if (existing) {
+      const msg = `"${existing.name}" is already in the catalog.`;
+      updateStep("bootstrap", { status: "error", detail: msg });
+      setError(msg);
+      setBusy(false);
+      return;
+    }
+    if (!slug || !SLUG_PATTERN.test(slug)) {
+      const msg = `Could not derive a URL-safe slug from "${canonical}".`;
+      updateStep("bootstrap", { status: "error", detail: msg });
+      setError(msg);
+      setBusy(false);
+      return;
+    }
+
+    updateStep("bootstrap", {
+      status: "running",
+      label: "Starting 6 research workflows…",
+    });
     try {
       const res = await bootstrapDisease({
-        slug: derivedSlug,
-        name: name.trim(),
-        gene: gene.trim(),
-        omim: omim.trim(),
-        inheritance: inheritance.trim(),
-        summary: summary.trim(),
+        slug,
+        name: canonical,
+        gene: resolved.gene,
+        omim: resolved.omim,
+        inheritance: resolved.inheritance,
+        summary: resolved.summary,
       });
-      onNav(`/diseases/${encodeURIComponent(res.disease_slug)}`);
+      updateStep("bootstrap", {
+        status: "done",
+        detail: "All 6 workflows running — redirecting to disease page…",
+      });
+      window.setTimeout(() => {
+        onNav(`/diseases/${encodeURIComponent(res.disease_slug)}`);
+      }, 700);
     } catch (e) {
-      if (e instanceof ApiRequestError && e.status === 401) {
-        setError("Server rejected (401). API key gate is on — set VITE_GENEGUIDELINES_API_KEY locally or use the operator console.");
-      } else if (e instanceof Error) {
-        setError(e.message);
-      } else {
-        setError("Could not start the bootstrap.");
-      }
-    } finally {
+      const msg =
+        e instanceof ApiRequestError && e.status === 401
+          ? "Server rejected (401). API key gate is on."
+          : e instanceof Error
+            ? e.message
+            : "Bootstrap failed.";
+      updateStep("bootstrap", { status: "error", detail: msg });
+      setError(msg);
       setBusy(false);
     }
-  }, [canSubmit, derivedSlug, name, gene, omim, inheritance, summary, onNav]);
+  }, [canSubmit, name, onNav, updateStep]);
 
   return (
     <section className="page page--research">
       <h1>Add a disease</h1>
       <p className="research__lead">
-        Creates a new catalog entry and fans out six AI workflows in parallel
-        (official consensus paper, clinical trials, therapies, foundations,
-        specialist directory, and the clinician living guideline). Live progress
-        appears on the disease page.
+        Enter one thing you know — disease name, gene symbol, or OMIM number.
+        The AI resolves the official disease record (canonical name, OMIM, gene,
+        inheritance) and then fans out six research workflows in parallel.
       </p>
 
       {error != null ? (
@@ -137,16 +208,20 @@ export function AddDiseaseView({ onNav }: AddDiseaseViewProps) {
       ) : null}
 
       <div className="research__field">
-        <label htmlFor="add-name">Preferred name *</label>
+        <label htmlFor="add-query">Disease name, gene, or OMIM *</label>
         <input
-          id="add-name"
+          id="add-query"
           className="research__input"
           type="text"
           value={name}
           maxLength={200}
           onChange={(e) => setName(e.target.value)}
-          placeholder="e.g. Alkaptonuria"
+          placeholder="e.g. Marfan, FBN1, 154700, PKU"
           autoComplete="off"
+          disabled={busy}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && canSubmit) void start();
+          }}
         />
         {exactDuplicate ? (
           <small className="research__error" role="alert">
@@ -184,88 +259,6 @@ export function AddDiseaseView({ onNav }: AddDiseaseViewProps) {
         ) : null}
       </div>
 
-      <div className="research__field">
-        <label htmlFor="add-slug">URL slug</label>
-        <input
-          id="add-slug"
-          className="research__input"
-          type="text"
-          value={derivedSlug}
-          maxLength={64}
-          onChange={(e) => {
-            setSlug(e.target.value);
-            setSlugTouched(true);
-          }}
-          placeholder="lowercase, dashes or underscores"
-        />
-        {slugInvalid ? (
-          <small className="research__error">
-            Slug must start with a letter or digit and use only lowercase letters,
-            digits, dashes, or underscores.
-          </small>
-        ) : null}
-      </div>
-
-      <div className="research__field-row">
-        <div className="research__field">
-          <label htmlFor="add-gene">Gene</label>
-          <input
-            id="add-gene"
-            className="research__input"
-            type="text"
-            value={gene}
-            maxLength={80}
-            onChange={(e) => setGene(e.target.value)}
-            placeholder="e.g. HGD"
-          />
-        </div>
-        <div className="research__field">
-          <label htmlFor="add-omim">OMIM</label>
-          <input
-            id="add-omim"
-            className="research__input"
-            type="text"
-            value={omim}
-            maxLength={40}
-            onChange={(e) => setOmim(e.target.value)}
-            placeholder="e.g. 203500"
-          />
-        </div>
-      </div>
-
-      <div className="research__field">
-        <label htmlFor="add-inheritance">Inheritance</label>
-        <input
-          id="add-inheritance"
-          className="research__input"
-          type="text"
-          value={inheritance}
-          maxLength={80}
-          onChange={(e) => setInheritance(e.target.value)}
-          placeholder="e.g. Autosomal recessive"
-        />
-      </div>
-
-      <div className="research__field">
-        <label htmlFor="add-summary">Clinical summary</label>
-        <textarea
-          id="add-summary"
-          className="research__input"
-          value={summary}
-          rows={3}
-          maxLength={2000}
-          onChange={(e) => setSummary(e.target.value)}
-          placeholder="One-paragraph clinical description"
-        />
-      </div>
-
-      <p className="research__hint">
-        Six workflows will fan out in parallel. The four fast ones
-        (official guidelines, trials, therapies, foundations) complete in
-        roughly a minute; the doctor finder and living guideline pipelines
-        run longer.
-      </p>
-
       <div className="research__actions">
         <Button
           variant="primary"
@@ -273,12 +266,55 @@ export function AddDiseaseView({ onNav }: AddDiseaseViewProps) {
           disabled={!canSubmit}
           onClick={() => void start()}
         >
-          {busy ? "Bootstrapping…" : "Add disease & run research"}
+          {busy ? "Working…" : "Search & start research"}
         </Button>
-        <Button type="button" onClick={() => onNav("/diseases")}>
+        <Button type="button" disabled={busy} onClick={() => onNav("/diseases")}>
           Cancel
         </Button>
       </div>
+
+      {busy || steps.some((s) => s.status !== "idle") ? (
+        <div
+          className="research__progress"
+          role="progressbar"
+          aria-valuenow={progressPct}
+          aria-valuemin={0}
+          aria-valuemax={100}
+        >
+          <div
+            className="research__progress-bar"
+            style={{ width: `${progressPct}%` }}
+          />
+        </div>
+      ) : null}
+
+      {busy || steps.some((s) => s.status !== "idle") ? (
+        <ol className="research__steps" aria-live="polite">
+          {steps.map((s) => (
+            <li key={s.key} className={`research__step research__step--${s.status}`}>
+              <span className="research__step-icon" aria-hidden="true">
+                {s.status === "running"
+                  ? "⏳"
+                  : s.status === "done"
+                    ? "✓"
+                    : s.status === "error"
+                      ? "✕"
+                      : "○"}
+              </span>
+              <span className="research__step-label">{s.label}</span>
+              {s.detail ? (
+                <span className="research__step-detail">{s.detail}</span>
+              ) : null}
+            </li>
+          ))}
+        </ol>
+      ) : null}
+
+      {metadata?.summary && steps[0].status === "done" ? (
+        <blockquote className="research__summary">
+          {metadata.summary}
+        </blockquote>
+      ) : null}
     </section>
   );
 }
