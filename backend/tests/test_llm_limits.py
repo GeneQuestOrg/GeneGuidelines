@@ -24,4 +24,5 @@ def test_completion_token_ceiling_gpt55() -> None:
 
 def test_resolve_max_tokens_for_node_clamps_default() -> None:
     node = {"prompt_mode": "simple", "model_name": "openai:gpt-4o-mini"}
-    assert resolve_max_tokens_for_node(node) == 16_384
+    # DEFAULT_SIMPLE_LLM_MAX_TOKENS (4000) applies before model ceiling (16_384).
+    assert resolve_max_tokens_for_node(node) == 4_000
