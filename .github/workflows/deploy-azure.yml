@@ -1,0 +1,108 @@
+# Build backend+public SPA image in ACR and roll Azure Container App `gg-public`.
+# Trigger: push to `demo-polish` (after tests pass). Secrets: see deploy/AZURE.md.
+
+name: Deploy Azure (demo-polish)
+
+on:
+  push:
+    branches: [demo-polish]
+
+concurrency:
+  group: azure-demo-polish-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  AZURE_RESOURCE_GROUP: geneguidelines-demo
+  AZURE_CONTAINER_APP: gg-public
+  AZURE_REGISTRY: ggdemo45223
+  IMAGE_REPOSITORY: geneguidelines-backend
+
+jobs:
+  verify:
+    name: Verify (lint, types, tests)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck -w frontend-public
+      - run: npm run typecheck -w @gene-guidelines/ops
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - run: pip install -r requirements-dev.txt
+
+      - name: pytest
+        env:
+          OPENAI_API_KEY: sk-test-dummy
+          AGENT_NO_MCP: "1"
+        run: |
+          python3 -m pytest backend/tests backend/content/tests -q \
+            --ignore=backend/tests/test_pubmed_flow_agentic.py \
+            --ignore=backend/tests/test_pubmed_authors_fetch_executor.py
+
+  deploy:
+    name: Build image and update Container App
+    needs: verify
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Build public SPA (same-origin API on Azure)
+        run: |
+          npm ci
+          VITE_API_BASE_URL="" npm run build:public
+
+      - uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Set image tag
+        id: image
+        run: echo "tag=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+
+      - name: ACR build (remote)
+        run: |
+          az acr build \
+            --registry "${{ env.AZURE_REGISTRY }}" \
+            --image "${{ env.IMAGE_REPOSITORY }}:${{ steps.image.outputs.tag }}" \
+            --image "${{ env.IMAGE_REPOSITORY }}:demo-polish" \
+            --file Dockerfile.backend \
+            .
+
+      - name: Update Container App revision
+        run: |
+          az containerapp update \
+            --name "${{ env.AZURE_CONTAINER_APP }}" \
+            --resource-group "${{ env.AZURE_RESOURCE_GROUP }}" \
+            --image "${{ env.AZURE_REGISTRY }}.azurecr.io/${{ env.IMAGE_REPOSITORY }}:${{ steps.image.outputs.tag }}"
+
+      - name: Smoke test /health
+        run: |
+          for i in 1 2 3 4 5 6 7 8 9 10; do
+            if curl -fsS --max-time 15 "https://geneguidelines.genequest.org/health" | grep -q '"status":"ok"'; then
+              echo "Health OK"
+              exit 0
+            fi
+            echo "Waiting for new revision… ($i/10)"
+            sleep 15
+          done
+          echo "Health check failed after deploy"
+          exit 1
