@@ -101,7 +101,7 @@ class EvaluationCheckExecutorAsyncTests(unittest.IsolatedAsyncioTestCase):
             }
         )
         with patch(
-            "backend.executors.evaluation_check_executor.run_llm_simple_async",
+            "backend.agents.simple_runner.run_llm_simple_async",
             mock_llm,
         ):
             ex = EvaluationCheckExecutor()

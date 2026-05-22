@@ -43,19 +43,23 @@ export function AddDiseaseView({ onNav }: AddDiseaseViewProps) {
   ]);
   const [metadata, setMetadata] = useState<LookupDiseaseMetadataResponse | null>(null);
 
+  const displayMatches = useMemo(
+    () => (name.trim().length < 2 ? [] : matches),
+    [matches, name],
+  );
+
   const exactDuplicate = useMemo(
     () =>
-      matches.find(
+      displayMatches.find(
         (d) => d.name.toLowerCase() === name.trim().toLowerCase(),
       ),
-    [matches, name],
+    [displayMatches, name],
   );
 
   useEffect(() => {
     const q = name.trim();
     let cancelled = false;
     if (q.length < 2) {
-      setMatches([]);
       return;
     }
     const t = window.setTimeout(async () => {
@@ -237,10 +241,10 @@ export function AddDiseaseView({ onNav }: AddDiseaseViewProps) {
             </a>{" "}
             — open that page instead of creating a duplicate.
           </small>
-        ) : matches.length > 0 ? (
+        ) : displayMatches.length > 0 ? (
           <small className="research__hint" style={{ display: "block", marginTop: "0.35rem" }}>
             Similar in catalog:{" "}
-            {matches.map((d, i) => (
+            {displayMatches.map((d, i) => (
               <span key={d.slug}>
                 {i > 0 ? ", " : ""}
                 <a

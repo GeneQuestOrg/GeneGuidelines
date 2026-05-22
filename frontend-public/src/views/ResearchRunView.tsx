@@ -54,7 +54,13 @@ export function ResearchRunView({
 }: ResearchRunViewProps) {
   const [run, setRun] = useState<AgentRunPayloadV1 | null>(null);
   const [pollError, setPollError] = useState<string | null>(null);
-  const [lines, setLines] = useState<string[]>([]);
+  const [lines, setLines] = useState<string[]>(() =>
+    shouldUseTraceSse()
+      ? []
+      : [
+          "[trace] Live SSE disabled on trycloudflare.com — status updates via polling only.",
+        ],
+  );
 
   const appendLines = useCallback((next: string[]) => {
     setLines((prev) => {
@@ -107,9 +113,6 @@ export function ResearchRunView({
 
   useEffect(() => {
     if (!shouldUseTraceSse()) {
-      appendLines([
-        "[trace] Live SSE disabled on trycloudflare.com — status updates via polling only.",
-      ]);
       return;
     }
     const base = getApiBaseUrl();
