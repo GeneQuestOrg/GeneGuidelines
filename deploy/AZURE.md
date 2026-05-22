@@ -55,8 +55,8 @@ az acr build --registry ggdemo45223 \
 
 | Element | Wartość |
 |---|---|
-| Gałąź deploy | **`demo-polish`** (push → GitHub Actions → Azure) |
-| Historia | Krótko istniała gałąź `production` z tym samym workflow — produkcja wraca na `demo-polish` |
+| Gałąź deploy | **`production`** (push → GitHub Actions → Azure) |
+| Historia | Wcześniej gałąź `demo-polish` — przemianowana na `production` |
 | Merge main (vLLM) | commit **`540a373`** — provider `LLM_*`, `SINGLE_LLM_MODE`, poprawki pipeline |
 | Fix trials FD | commit **`375dbfe`** — prawdziwe NCT z ClinicalTrials.gov w seedzie |
 | Tag snapshot | **`azure-deploy-v4-2026-05-19`** (obraz v4; v5 to ten sam kod + rebuild po fixie seed) |
@@ -148,10 +148,10 @@ Workflow: **`.github/workflows/deploy-azure.yml`**
 
 | Krok | Co robi |
 |---|---|
-| Trigger | `push` na gałąź **`demo-polish`** |
+| Trigger | `push` na gałąź **`production`** |
 | `verify` | `npm` lint + typecheck, `pytest` (jak `ci.yml`) |
 | `deploy` | `npm run build:public` → `az acr build` → `az containerapp update` |
-| Tag obrazu | `geneguidelines-backend:<7-znaków-SHA>` + alias `:demo-polish` |
+| Tag obrazu | `geneguidelines-backend:<7-znaków-SHA>` + alias `:production` |
 | Smoke | `curl https://geneguidelines.genequest.org/health` (do 10× co 15 s) |
 
 **Nie zmienia** env ani sekretów LLM w Container App — tylko nowy obraz. Klucze SiliconFlow zostają w Azure.
@@ -188,12 +188,12 @@ az role assignment create \
   --scope "$ACR_ID"
 ```
 
-4. Gałąź produkcyjna to **`demo-polish`**. Każdy push uruchamia workflow — upewnij się, że secret `AZURE_CREDENTIALS` jest ustawiony w GitHub Actions.
+4. Gałąź produkcyjna to **`production`**. Każdy push uruchamia workflow — upewnij się, że secret `AZURE_CREDENTIALS` jest ustawiony w GitHub Actions.
 
 ### Ręczny deploy (awaryjnie)
 
 ```bash
-git checkout demo-polish && git pull origin demo-polish
+git checkout production && git pull origin production
 VITE_API_BASE_URL="" npm run build:public
 az acr build --registry ggdemo45223 \
   --image geneguidelines-backend:manual-$(date +%Y%m%d) \
@@ -240,7 +240,7 @@ curl -sS "https://geneguidelines.genequest.org/api/diseases/fd/trials?nocache=$(
 
 | | Lokalnie (`make dev`) | Azure `gg-public` |
 |---|---|---|
-| Gałąź | feature branches → merge do `demo-polish` | **`demo-polish`** (auto-deploy) |
+| Gałąź | feature branches → merge do `production` | **`production`** (auto-deploy) |
 | Frontend | Vite :5173 → API :8000 | SPA z `/app/static` |
 | LLM | `.env` — ten sam SiliconFlow co prod | sekrety Container App |
 | Deploy | brak | ACR build + `containerapp update` |

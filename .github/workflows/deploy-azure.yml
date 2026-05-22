@@ -1,14 +1,14 @@
 # Build backend+public SPA image in ACR and roll Azure Container App `gg-public`.
-# Trigger: push to `demo-polish` (after tests pass). Secrets: see deploy/AZURE.md.
+# Trigger: push to `production` (after tests pass). Secrets: see deploy/AZURE.md.
 
-name: Deploy Azure (demo-polish)
+name: Deploy Azure (production)
 
 on:
   push:
-    branches: [demo-polish]
+    branches: [production]
 
 concurrency:
-  group: azure-demo-polish-${{ github.ref }}
+  group: azure-production-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:
@@ -83,7 +83,7 @@ jobs:
           az acr build \
             --registry "${{ env.AZURE_REGISTRY }}" \
             --image "${{ env.IMAGE_REPOSITORY }}:${{ steps.image.outputs.tag }}" \
-            --image "${{ env.IMAGE_REPOSITORY }}:demo-polish" \
+            --image "${{ env.IMAGE_REPOSITORY }}:production" \
             --file Dockerfile.backend \
             .
 
