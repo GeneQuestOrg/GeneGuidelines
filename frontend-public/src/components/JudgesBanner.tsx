@@ -14,8 +14,9 @@ const JB_STATE_KEY = "gg-judges-banner-state-v2";
 const JB_LINKS = {
   snapshot: "https://kaggle-geneguidelines.genequest.org",
   snapshotAdmin: "https://kaggle-admin-geneguidelines.genequest.org",
-  video: "#",
-  writeup: "#",
+  video: "https://www.youtube.com/watch?v=aMtnFdvQ3iA",
+  writeup:
+    "https://www.kaggle.com/competitions/gemma-4-good-hackathon/writeups/geneguidelines-living-clinical-guidelines-for-ra",
   repo: "https://github.com/GeneQuestOrg/GeneGuidelines/tree/kaggle-submission-2026-05-18",
 };
 
@@ -216,6 +217,17 @@ function JudgesBannerExpanded({ onNav, onCollapse, route }: JudgesBannerExpanded
               ↗
             </span>
           </a>
+          <a
+            className="jb__snapshot-admin"
+            href={JB_LINKS.snapshotAdmin}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Or peek into the snapshot admin · engine inspector
+            <span className="jb__arrow" aria-hidden>
+              ↗
+            </span>
+          </a>
         </div>
 
         <div className="jb__guide">
@@ -284,17 +296,6 @@ function JudgesBannerExpanded({ onNav, onCollapse, route }: JudgesBannerExpanded
               ⌥
             </span>
             GitHub Repo
-          </a>
-          <a
-            className="jb__link"
-            href={JB_LINKS.snapshotAdmin}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <span aria-hidden className="jb__link-icon">
-              ⚙
-            </span>
-            Engine inspector (admin)
           </a>
         </footer>
       </div>
