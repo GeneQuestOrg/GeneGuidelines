@@ -211,6 +211,9 @@
 
 /* Lede column (left) */
 .jb__lede {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
   min-width: 0;
 }
 .jb__lede p {
@@ -254,6 +257,30 @@
   color: oklch(0.55 0.02 70);
   font-size: 13px;
   margin-left: 2px;
+}
+.jb__snapshot-admin {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 0 2px 1px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: oklch(0.45 0.04 70);
+  text-decoration: none;
+  border-bottom: 1px dotted var(--jb-line);
+  align-self: flex-start;
+  transition: color 120ms, border-color 120ms;
+}
+.jb__snapshot-admin:hover {
+  color: var(--jb-accent-ink);
+  border-bottom-color: var(--jb-accent);
+}
+.jb__snapshot-admin .jb__arrow {
+  font-size: 12px;
+  color: inherit;
 }
 
 /* Guide column (right) */
