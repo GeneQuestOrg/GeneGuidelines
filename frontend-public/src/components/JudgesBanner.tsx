@@ -153,7 +153,7 @@ function JudgesBannerExpanded({ onNav, onCollapse, route }: JudgesBannerExpanded
   const goToFD = useCallback(
     (e: MouseEvent<HTMLAnchorElement>) => {
       e.preventDefault();
-      onNav("/choroby/fd/moj-przypadek");
+      onNav("/diseases/fd");
     },
     [onNav],
   );
@@ -238,12 +238,16 @@ function JudgesBannerExpanded({ onNav, onCollapse, route }: JudgesBannerExpanded
                 ①
               </span>
               <div className="jb__step-body">
-                <div className="jb__step-title">Live PubMed Triage</div>
+                <div className="jb__step-title">Six parallel workflows per disease</div>
                 <p className="jb__step-text">
-                  <a href="#active-research" onClick={scrollToActiveResearch} className="jb__step-link">
-                    Scroll down to <em>Active research</em>
+                  <a href="#/add-disease" onClick={goToStartResearch} className="jb__step-link">
+                    Click <em>Add a disease</em>
                   </a>{" "}
-                  to watch Gemma 4 extract and evaluate data from new medical papers in real time.
+                  to fan out six concurrent Gemma 4 workflows for a new entry: the consensus-paper
+                  finder, the recruiting clinical trials extractor, the therapy-line classifier,
+                  the specialist directory builder (PubMed authors → geo-resolved), the patient
+                  foundations finder, and the long-form clinical guideline drafter. Every
+                  recommendation anchored to a PMID.
                 </p>
               </div>
             </li>
@@ -252,12 +256,15 @@ function JudgesBannerExpanded({ onNav, onCollapse, route }: JudgesBannerExpanded
                 ②
               </span>
               <div className="jb__step-body">
-                <div className="jb__step-title">Parallel Orchestration</div>
+                <div className="jb__step-title">Gemma 4 as a librarian for a heavier model</div>
                 <p className="jb__step-text">
-                  <a href="#/start-research" onClick={goToStartResearch} className="jb__step-link">
-                    Click <em>Add a disease</em>
+                  <a href="#active-research" onClick={scrollToActiveResearch} className="jb__step-link">
+                    Scroll down to <em>Active research</em>
                   </a>{" "}
-                  to see the engine fan out six distinct Gemma 4 workflows concurrently.
+                  to follow live SSE traces. Gemma 4 reads each paper, extracts structured
+                  fragments, and writes them into the graph the synthesis model later navigates —
+                  cheap edge calls extract evidence, a frontier model reasons against the index.
+                  Every reviewer decision is signed; the resulting corpus is rare on its own.
                 </p>
               </div>
             </li>
@@ -266,12 +273,15 @@ function JudgesBannerExpanded({ onNav, onCollapse, route }: JudgesBannerExpanded
                 ③
               </span>
               <div className="jb__step-body">
-                <div className="jb__step-title">Privacy-First Processing</div>
+                <div className="jb__step-title">Privacy by data flow, not policy</div>
                 <p className="jb__step-text">
-                  <a href="#/choroby/fd/moj-przypadek" onClick={goToFD} className="jb__step-link">
-                    Open the FD page <em>· Private case context</em>
+                  <a href="#/diseases/fd" onClick={goToFD} className="jb__step-link">
+                    Open the FD page → <em>Private case context</em>
                   </a>{" "}
-                  — Gemma 4 strips all PII directly on-device before any further processing.
+                  and upload a discharge summary. Gemma 4 strips identifiers in-memory across
+                  five PII categories (names, IDs, dates, addresses, contacts) and returns only
+                  structured facts. The original bytes never reach disk — the audit badge proves
+                  zero identifiers reached the synthesis model.
                 </p>
               </div>
             </li>
