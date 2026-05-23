@@ -4,6 +4,7 @@ import type { TweaksState } from "./hooks/useTweaks";
 import { useHashRouter } from "./router/useHashRouter";
 import { useTweaks } from "./hooks/useTweaks";
 import { useAudienceView } from "./hooks/useAudienceView";
+import { JudgesBanner } from "./components/JudgesBanner";
 import { PublicHeader } from "./components/PublicHeader";
 import { AppFooter } from "./components/AppFooter";
 import { ErrorBoundary } from "./components/ErrorBoundary";
@@ -51,6 +52,7 @@ export default function App() {
 
   return (
     <div className="app-shell">
+      <JudgesBanner route={route} onNav={navigate} />
       <PublicHeader
         route={route}
         onNav={navigate}

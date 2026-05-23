@@ -1,48 +1,52 @@
-# Azure — demo produkcyjne (GeneGuidelines)
+# Azure deployment (GeneGuidelines)
 
-Stan zweryfikowany **`az containerapp show`** (maj 2026, subskrypcja GeneQuest). Po każdym deployu odśwież sekcję [Stan na żywo](#stan-na-żywo).
+**GeneGuidelines** is an open-source project maintained by the [**GeneQuest Foundation**](https://genequest.org) — living clinical guidelines for rare genetic diseases, built on a controlled AI workflow over PubMed evidence. The codebase is published under **CC-BY 4.0**; see the [project README](../README.md) for scope and motivation.
 
-## Publiczny adres
+This document describes how the **GeneQuest-hosted instance** at [geneguidelines.genequest.org](https://geneguidelines.genequest.org) is deployed on **Azure Container Apps**. Custom domain and TLS are configured in the Azure portal (not in this repo).
 
-| Co | Wartość |
+Contributors who fork the project can reuse these patterns on their own Azure subscription; resource names below refer to the foundation’s deployment.
+
+## Live site
+
+| Item | Value |
 |---|---|
 | **URL** | https://geneguidelines.genequest.org |
 | **Health** | `GET /health` → `{"status":"ok"}` |
-| **API** | Ten sam host — SPA i `/api/*` w jednym kontenerze |
+| **API** | Same host — SPA and `/api/*` served from one container |
 
-## Zasoby Azure
+## Azure resources
 
-| Zasób | Nazwa / ID |
+These names are required for deploy scripts and GitHub Actions. They are not secrets; scope your service principal to the resource group only.
+
+| Resource | Name |
 |---|---|
 | Resource group | `geneguidelines-demo` |
 | Container App | `gg-public` |
 | Azure Container Registry | `ggdemo45223` |
-| Obraz | `ggdemo45223.azurecr.io/geneguidelines-backend:<tag>` |
-| **Aktywna rewizja** | **`gg-public--0000005`** |
-| **Aktywny obraz** | `ggdemo45223.azurecr.io/geneguidelines-backend:v5` |
-| Poprzedni deploy merge + LLM | **`v4`** (`gg-public--0000004`, tag git `azure-deploy-v4-2026-05-19`) |
-| Wcześniejszy demo (bez merga main) | **`v3`** — sprzed merga `main` na gałęź produkcyjną |
+| Image | `ggdemo45223.azurecr.io/geneguidelines-backend:<tag>` |
 
-### Subskrypcja Azure (tenant)
+> Resource group and registry names retain a `-demo` suffix from early hosting; the instance serves the public GeneGuidelines product, not a throwaway prototype.
 
-| Pole | Wartość |
-|---|---|
-| Tenant | `genequest.onmicrosoft.com` — FUNDACJA GENEQUEST |
-| Tenant ID | `951bbbb1-2e7a-4fca-9f8c-6109474ce866` |
-| Subskrypcja (domyślna) | `Azure subscription 1` |
+To inspect the currently running revision and image:
 
-Custom domain `geneguidelines.genequest.org` jest podpięty do ingress Container App (szczegóły cert/DNS w portalu Azure — nie są w repo).
+```bash
+az containerapp show \
+  --name gg-public \
+  --resource-group geneguidelines-demo \
+  --query "properties.{revision:latestRevisionName,image:template.containers[0].image}" \
+  -o json
+```
 
-## Co jest w obrazie Docker
+## Docker image
 
-Build: **`Dockerfile.backend`** z katalogu głównego repo.
+Build from repo root using **`Dockerfile.backend`**.
 
-- **Backend**: FastAPI + Uvicorn na porcie **8000**, jeden worker (SSE / stan w procesie).
-- **Frontend public**: `frontend-public/dist` skopiowany do **`/app/static`** — FastAPI serwuje SPA + API (CSP w `backend/main.py`).
-- **Baza**: SQLite `DB_PATH=/data/tickets.db` w kontenerze.
-- **Seed**: przy pustej bazie ładuje m.in. `backend/content_*_seed.json` (choroby, trials, therapies, foundations).
+- **Backend**: FastAPI + Uvicorn on port **8000**, single worker (SSE / in-process state).
+- **Public frontend**: `frontend-public/dist` copied to **`/app/static`** — FastAPI serves SPA + API (CSP in `backend/main.py`).
+- **Database**: SQLite at `DB_PATH=/data/tickets.db` inside the container.
+- **Seed**: on an empty database, loads `backend/content_*_seed.json` (diseases, trials, therapies, foundations).
 
-Przed buildem na ACR:
+Before building to ACR:
 
 ```bash
 VITE_API_BASE_URL="" npm run build:public
@@ -51,114 +55,74 @@ az acr build --registry ggdemo45223 \
   --file Dockerfile.backend .
 ```
 
-## Kod źródłowy na produkcji (gałąź Git)
+## Source branch
 
-| Element | Wartość |
+| Item | Value |
 |---|---|
-| Gałąź deploy | **`production`** (push → GitHub Actions → Azure) |
-| Historia | Wcześniej gałąź `demo-polish` — przemianowana na `production` |
-| Merge main (vLLM) | commit **`540a373`** — provider `LLM_*`, `SINGLE_LLM_MODE`, poprawki pipeline |
-| Fix trials FD | commit **`375dbfe`** — prawdziwe NCT z ClinicalTrials.gov w seedzie |
-| Tag snapshot | **`azure-deploy-v4-2026-05-19`** (obraz v4; v5 to ten sam kod + rebuild po fixie seed) |
+| Deploy branch | **`production`** (push → GitHub Actions → Azure) |
 
-### Czego **nie ma** na Azure (tylko lokalnie / inna gałąź)
+Features merged to `production` are deployed to the hosted instance automatically. Work on other branches stays local until merged.
 
-Gałąź **`ai-disease-lookup`** (commit `428ed28` i nowsze) — **nie wdrożone**:
+## LLM configuration (SiliconFlow)
 
-- `POST /api/pipeline/lookup-disease-metadata` (Gemma uzupełnia OMIM / gen / dziedziczenie z samej nazwy)
-- Uproszczony formularz **Add disease** (jedno pole + kroki postępu)
-- Pliki: `backend/services/disease_metadata_lookup.py`, `frontend-public/src/views/AddDiseaseView.tsx`, `frontend-public/src/api/lookupDisease.ts`
+The backend runs in **vLLM-compatible** mode (`MODEL_PROFILE=vllm` + `LLM_BASE_URL` + `LLM_API_KEY` → `SINGLE_LLM_MODE` in `backend/config.py`). The hosted instance uses **SiliconFlow** as the primary LLM provider.
 
-Na produkcji nadal widać **stary, wielopolowy** formularz pod `/#/add-disease` (gene, OMIM, inheritance, summary itd.).
-
-## Stan na żywo
-
-Potwierdzone `az containerapp show` (Container App `gg-public`):
-
-```
-Revision   gg-public--0000005
-Image      ggdemo45223.azurecr.io/geneguidelines-backend:v5
-```
-
-## LLM na produkcji (SiliconFlow)
-
-Backend w trybie **vLLM-compatible** (`MODEL_PROFILE=vllm` + `LLM_BASE_URL` + `LLM_API_KEY` → `SINGLE_LLM_MODE` w `backend/config.py`). Główny ruch LLM idzie przez **SiliconFlow**, nie OpenRouter.
-
-| Zmienna (Container App) | Wartość na produkcji |
+| Container App env var | Hosted value |
 |---|---|
 | `MODEL_PROFILE` | `vllm` |
 | `LLM_BASE_URL` | `https://api.siliconflow.com/v1` |
 | `LLM_MODEL` | `google/gemma-4-31B-it` |
 | `LLM_API_KEY` | `secretref:llm-api-key` |
 | `LLM_AUTH_HEADER_STYLE` | `bearer` |
-| `OPENAI_API_KEY` | `sk-placeholder-unused-in-vllm-mode` (plain env — gate/API compatibility, nie używane w vLLM mode) |
+| `OPENAI_API_KEY` | placeholder (API compatibility; unused in vLLM mode) |
 | `OPENROUTER_API_KEY` | `secretref:openrouter-key` |
 
-### Sekrety w Container App (nazwy — wartości tylko w Azure Portal / CLI)
+### Container App secrets (names only — values live in Azure)
 
-| Secret name | Przeznaczenie |
+| Secret name | Purpose |
 |---|---|
-| `llm-api-key` | Klucz **SiliconFlow** (`sk-…`) |
-| `openai-key` | OpenAI (secret w Azure; na prod `OPENAI_API_KEY` to osobno ustawiony placeholder w env, patrz tabela wyżej) |
-| `openrouter-key` | OpenRouter (używany gdy nie ma `LLM_BASE_URL` + `LLM_API_KEY`) |
+| `llm-api-key` | SiliconFlow API key |
+| `openai-key` | OpenAI (optional fallback) |
+| `openrouter-key` | OpenRouter (used when `LLM_BASE_URL` + `LLM_API_KEY` are not set) |
 
-Wcześniejsza konfiguracja (Vast.ai, **nieaktywna** po przełączeniu na SiliconFlow):
+When both `LLM_BASE_URL` and `LLM_API_KEY` are set, `backend/config.py` enables `SINGLE_LLM_MODE=True` and routes all profiles to that endpoint.
 
-- `LLM_BASE_URL=http://154.42.3.11:22711/v1`
-- `LLM_MODEL=gemma4:31b`
-- `LLM_AUTH_HEADER_STYLE=raw`
+**Never commit API keys.** Set and rotate them only in Azure Portal or via `az containerapp secret set`. Self-hosters supply their own keys in `.env` (see `backend/.env.example`).
 
-Logika w kodzie: `backend/config.py` — gdy ustawione `LLM_BASE_URL` + `LLM_API_KEY` → `SINGLE_LLM_MODE=True`, wszystkie profile mapowane na ten endpoint.
+## Product behavior on the hosted instance
 
-## Zachowanie produktu na żywo
+### Supported
 
-### Działa (po v4/v5)
+- Browse the disease catalog, flowcharts, doctors, therapies, and foundations (seed data + prior workflow runs).
+- **`POST /api/pipeline/bootstrap-disease`** — fans out **6 workflows** (official guidelines, trials, therapies, foundations, doctor finder, living guideline) via the configured LLM provider.
 
-- Przeglądanie katalogu chorób, flowchart, lekarze, terapie, fundacje (dane seed + wcześniejsze workflow).
-- **`POST /api/pipeline/bootstrap-disease`** — fanout **6 workflowów** (official guidelines, trials, therapies, foundations, doctor finder, living guideline) z LLM przez SiliconFlow (~kilkadziesiąt sekund na szybkie pipeline’y).
-- **FD clinical trials** (po **v5**): linki NCT prowadzą do realnych badań na clinicaltrials.gov (seed `backend/content_trials_seed.json`, commit `375dbfe`).
+### Known limitations
 
-### Ograniczenia / znane problemy
-
-| Temat | Opis |
+| Topic | Notes |
 |---|---|
-| **Rate limit bootstrap** | Domyślnie **3** bootstrapy na IP na **24 h** (`BOOTSTRAP_RATE_LIMIT_*` w `backend/routers/pipeline.py`). Demo publiczne — nie spamować „Add disease”. |
-| **Cache odpowiedzi API** | Krótki cache in-process (~60 s) — po deployu przez ~minutę można widzieć stare trials; `?nocache=…` lub odczekać. |
-| **Summary choroby** | Endpoint `GET /api/diseases/{slug}` może nie odświeżyć `trialsCount` / `coverage` od razu po workflow — szczegóły w sub-zasobach (`/trials`, `/therapies`, …) są aktualniejsze. |
-| **UI „research w toku”** | Brak sekcji progress z draft4 na stronie nowej choroby — do zrobienia (gałąź `ai-disease-lookup` lub osobny PR). |
-| **SQLite w kontenerze** | Jeśli **nie** ma trwałego volume na `/data`, nowa rewizja Container App = **nowa baza** (tylko seed). Sprawdź w Azure czy podpięty jest Azure Files / volume — w repo nie ma definicji Terraform dla tego. |
-| **HTTP do własnego vLLM** | Vast.ai porzucony (CPU ~0.6 tok/s, reasoning → puste `content`). Produkcja: SiliconFlow. |
-| **OpenRouter** | Rate limity przy burst 6× workflow — nie używane jako primary po v4. |
-
-### Trials inne niż FD
-
-W seedzie nadal mogą być wpisy dla **MAS / Noonan** itd. — FD naprawione w `375dbfe`; reszta katalogu nie była audytowana w tej samej sesji.
-
-## Historia rewizji (znana)
-
-| Rewizja | Obraz | Co weszło |
-|---|---|---|
-| wcześniej | `v3` | `demo-polish` bez merga main, OpenRouter / placeholder, UI hackathon |
-| `gg-public--0000004` | `v4` | merge `540a373`, SiliconFlow Gemma 4 31B, env `MODEL_PROFILE=vllm` |
-| `gg-public--0000005` | `v5` | ten sam kod co v4 + przebudowany `dist` + seed FD trials (`375dbfe`) |
+| **Bootstrap rate limit** | The hosted instance rate-limits bootstrap requests per client IP (see `BOOTSTRAP_RATE_LIMIT_*` in `backend/routers/pipeline.py`). Shared infrastructure — please use responsibly. |
+| **API response cache** | Short in-process cache (~60 s) — after a deploy, responses may be stale briefly; use `?nocache=…` or wait. |
+| **Disease summary** | `GET /api/diseases/{slug}` may lag `trialsCount` / `coverage` after a workflow; sub-resources (`/trials`, `/therapies`, …) are usually fresher. |
+| **SQLite in container** | Without a persistent volume on `/data`, a new Container App revision starts with a **fresh database** (seed only). Check Azure for mounted storage — there is no Terraform definition in this repo. |
+| **OpenRouter** | Not used as the primary provider on the hosted instance due to rate limits when bursting multiple workflows. |
 
 ## CI/CD (GitHub Actions)
 
 Workflow: **`.github/workflows/deploy-azure.yml`**
 
-| Krok | Co robi |
+| Step | Action |
 |---|---|
-| Trigger | `push` na gałąź **`production`** |
-| `verify` | `npm` lint + typecheck, `pytest` (jak `ci.yml`) |
+| Trigger | `push` to **`production`** |
+| `verify` | `npm` lint + typecheck, `pytest` (same as `ci.yml`) |
 | `deploy` | `npm run build:public` → `az acr build` → `az containerapp update` |
-| Tag obrazu | `geneguidelines-backend:<7-znaków-SHA>` + alias `:production` |
-| Smoke | `curl https://geneguidelines.genequest.org/health` (do 10× co 15 s) |
+| Image tags | `geneguidelines-backend:<7-char-SHA>` + alias `:production` |
+| Smoke test | `curl https://geneguidelines.genequest.org/health` (up to 10× every 15 s) |
 
-**Nie zmienia** env ani sekretów LLM w Container App — tylko nowy obraz. Klucze SiliconFlow zostają w Azure.
+The workflow **does not** change Container App env vars or LLM secrets — it only deploys a new image.
 
-### Jednorazowa konfiguracja GitHub
+### One-time GitHub setup (foundation maintainers)
 
-1. **Service principal** (u Ciebie lokalnie, po `az login`):
+1. Create a **service principal** locally (after `az login`):
 
 ```bash
 SUBSCRIPTION_ID=$(az account show --query id -o tsv)
@@ -170,27 +134,27 @@ az ad sp create-for-rbac \
   --sdk-auth
 ```
 
-Skopiuj **cały JSON** z outputu.
+Copy the **entire JSON** from the output. Do **not** commit it to the repo.
 
-2. W repo GitHub → **Settings → Secrets and variables → Actions** → **New repository secret**:
+2. In GitHub → **Settings → Secrets and variables → Actions** → **New repository secret**:
 
-| Secret | Wartość |
+| Secret | Value |
 |---|---|
-| `AZURE_CREDENTIALS` | JSON z `create-for-rbac` |
+| `AZURE_CREDENTIALS` | JSON from `create-for-rbac` |
 
-3. **Opcjonalnie:** nadaj SP dodatkowo **AcrPush** na registry `ggdemo45223` (jeśli `acr build` zwróci 403):
+3. **Optional:** grant the service principal **AcrPush** on registry `ggdemo45223` if `acr build` returns 403:
 
 ```bash
 ACR_ID=$(az acr show --name ggdemo45223 --query id -o tsv)
 az role assignment create \
-  --assignee "<appId z JSON>" \
+  --assignee "<appId from JSON>" \
   --role AcrPush \
   --scope "$ACR_ID"
 ```
 
-4. Gałąź produkcyjna to **`production`**. Każdy push uruchamia workflow — upewnij się, że secret `AZURE_CREDENTIALS` jest ustawiony w GitHub Actions.
+4. Production branch is **`production`**. Every push runs the workflow — ensure `AZURE_CREDENTIALS` is set in GitHub Actions.
 
-### Ręczny deploy (awaryjnie)
+### Manual deploy (emergency)
 
 ```bash
 git checkout production && git pull origin production
@@ -204,19 +168,19 @@ az containerapp update \
   --image ggdemo45223.azurecr.io/geneguidelines-backend:manual-$(date +%Y%m%d)
 ```
 
-Zmiana klucza LLM tylko w Azure (nie w workflow):
+Rotate the LLM key in Azure only (not in the workflow):
 
 ```bash
 az containerapp secret set --name gg-public --resource-group geneguidelines-demo \
   --secrets llm-api-key="<SILICONFLOW_KEY>"
 ```
 
-**Nie** ustawiaj `GENEGUIDELINES_API_KEY` na publicznym demo — wtedy bootstrap z przeglądarki dostaje 401.
+**Do not** set `GENEGUIDELINES_API_KEY` on the GeneQuest-hosted instance — browser-initiated bootstrap (e.g. “Add disease”) will return 401.
 
-## Weryfikacja (u Ciebie z `az` / `curl`)
+## Verification
 
 ```bash
-# Rewizja + obraz + env (bez wartości sekretów)
+# Revision, image, and env (secret values are not shown)
 az containerapp show \
   --name gg-public \
   --resource-group geneguidelines-demo \
@@ -230,32 +194,33 @@ az containerapp secret list \
 ```
 
 ```bash
-# Produkcja — health + FD trials (powinno być 6 realnych NCT po v5)
 curl -sS https://geneguidelines.genequest.org/health
-curl -sS "https://geneguidelines.genequest.org/api/diseases/fd/trials?nocache=$(date +%s)" \
-  | python3 -c "import json,sys; t=json.load(sys.stdin); print(len(t), [x.get('nct_id') for x in t[:3]])"
+curl -sS "https://geneguidelines.genequest.org/api/diseases/fd/trials?nocache=$(date +%s)"
 ```
 
-## Lokalnie vs Azure
+## Local development vs GeneQuest-hosted instance
 
-| | Lokalnie (`make dev`) | Azure `gg-public` |
+| | Local (`make dev`) | Azure (`gg-public`) |
 |---|---|---|
-| Gałąź | feature branches → merge do `production` | **`production`** (auto-deploy) |
-| Frontend | Vite :5173 → API :8000 | SPA z `/app/static` |
-| LLM | `.env` — ten sam SiliconFlow co prod | sekrety Container App |
-| Deploy | brak | ACR build + `containerapp update` |
+| Branch | feature branches → merge to `production` | **`production`** (auto-deploy) |
+| Frontend | Vite :5173 → API :8000 | SPA from `/app/static` |
+| LLM | `.env` (your own provider keys) | Container App secrets |
+| Deploy | none | ACR build + `containerapp update` |
 
-## Koszty / dostawca LLM (decyzja architektoniczna)
+## LLM provider notes
 
-- **Produkcja demo**: SiliconFlow, model `google/gemma-4-31B-it`, ~kilka sekund na lookup, ~30 s na fanout 6 workflowów (lokalnie zweryfikowane).
-- **Odrzucone na demo**: Vast.ai (wolne CPU + reasoning), OpenRouter (rate limit przy burst).
-- **Docelowo (nie wdrożone)**: Azure AI Foundry Gemma 4 na nonprofit credit; ewentualnie Mac Studio / dedykowany GPU na biurko.
+- **GeneQuest-hosted instance**: SiliconFlow, model `google/gemma-4-31B-it`.
+- **Not used on hosted instance**: self-hosted vLLM on slow CPU, OpenRouter as primary (rate limits on workflow bursts).
+- **Future (not deployed)**: Azure AI Foundry with nonprofit credits, or dedicated on-prem GPU.
 
-## Powiązane pliki w repo
+Self-hosters can point `LLM_*` at any vLLM-compatible endpoint; see `backend/.env.example`.
 
-- `Dockerfile.backend` — obraz produkcyjny
-- `backend/config.py` — `SINGLE_LLM_MODE`, profile LLM
-- `backend/routers/pipeline.py` — `bootstrap-disease`, rate limit, `lookup-disease-metadata` (tylko po merge `ai-disease-lookup`)
-- `deploy/README.md` — deploy VPS / Docker Compose (inna ścieżka niż Azure)
-- `backend/.env.example` — zmienne `LLM_*` / `MODEL_PROFILE=vllm`
+## Related files
 
+- [README.md](../README.md) — project overview, quick start, GeneQuest Foundation
+- [SECURITY.md](../SECURITY.md) — vulnerability reporting
+- `Dockerfile.backend` — production image
+- `backend/config.py` — `SINGLE_LLM_MODE`, LLM profiles
+- `backend/routers/pipeline.py` — `bootstrap-disease`, rate limits
+- `deploy/README.md` — VPS / Docker Compose self-hosting (alternative to Azure)
+- `backend/.env.example` — `LLM_*` / `MODEL_PROFILE=vllm`
