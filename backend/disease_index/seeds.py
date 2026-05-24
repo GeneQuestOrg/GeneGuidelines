@@ -26,9 +26,19 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from pathlib import Path
+from typing import IO
 
 from .models import DiseaseAlias, DiseaseIndexEntry
+from .orphanet_loader import (
+    build_aliases as _build_orphanet_aliases,
+    now_iso,
+    parse_disorders,
+    parse_gene_associations,
+    to_index_entry as _orphanet_to_entry,
+)
 from .repository import (
+    BulkUpsertResult,
     DiseaseIndexRepo,
     SqlaDiseaseIndexRepo,
     normalize_term,
@@ -396,7 +406,112 @@ def seed_disease_index_if_empty(repo: DiseaseIndexRepo | None = None) -> int:
     return written
 
 
+# --- Orphanet bulk import ----------------------------------------------------
+
+
+@dataclass(frozen=True)
+class OrphanetImportResult:
+    """Counters returned by :func:`import_orphanet_disorders`."""
+
+    parsed: int           # disorders read from the master XML
+    inserted: int         # net new rows in disease_index
+    updated: int          # existing non-manual rows refreshed
+    skipped_manual: int   # rows preserved because source = 'manual'
+    aliases_written: int  # total alias rows replaced for inserted/updated
+
+
+def import_orphanet_disorders(
+    *,
+    disorders_xml: str | Path | IO[bytes],
+    genes_xml: str | Path | IO[bytes] | None = None,
+    source_version: str | None = None,
+    repo: SqlaDiseaseIndexRepo | None = None,
+    batch_size: int = 500,
+) -> OrphanetImportResult:
+    """Import every disorder from ``en_product1.xml`` into ``disease_index``.
+
+    Optional ``genes_xml`` (Orphadata's ``en_product6.xml``) adds
+    ``gene`` aliases on top. The bulk path uses :class:`BulkUpsertResult`
+    so manual-source rows (the 31 hand-curated entries) keep their
+    Polish synonyms and ``local_slug`` untouched.
+
+    Idempotent: running the loader twice with the same input is
+    equivalent to running it once.
+    """
+    target = repo or SqlaDiseaseIndexRepo()
+    refreshed_at = now_iso()
+    version = source_version or f"orphanet-{refreshed_at[:10]}"
+
+    genes_by_orpha: dict[str, tuple[str, ...]] = (
+        parse_gene_associations(genes_xml) if genes_xml is not None else {}
+    )
+
+    parsed = 0
+    inserted = 0
+    updated = 0
+    skipped_manual = 0
+    aliases_written = 0
+
+    # Buffer parsed disorders into batches so the bulk upsert path
+    # processes a few hundred rows per round trip — without batching
+    # 11k+ disorders the alias REPLACE step becomes a per-row chatter.
+    pending_disorders: list = []  # list[OrphanetDisorder]
+
+    def flush(batch: list) -> None:
+        nonlocal inserted, updated, skipped_manual, aliases_written
+        if not batch:
+            return
+        entries = [
+            _orphanet_to_entry(
+                disorder,
+                gene_symbols=genes_by_orpha.get(disorder.orpha_code, ()),
+                refreshed_at=refreshed_at,
+                source_version=version,
+            )
+            for disorder in batch
+        ]
+        result: BulkUpsertResult = target.bulk_upsert_orphanet(entries)
+        inserted += result.inserted
+        updated += result.updated
+        skipped_manual += result.skipped_manual
+
+        if result.affected_disease_ids:
+            disorder_by_pid = {f"ORPHA:{d.orpha_code}": d for d in batch}
+            aliases_by_disease_id: dict[int, list[DiseaseAlias]] = {}
+            for disease_id, primary_id in result.affected_disease_ids:
+                disorder = disorder_by_pid.get(primary_id)
+                if disorder is None:
+                    continue
+                aliases = _build_orphanet_aliases(
+                    disorder,
+                    gene_symbols=genes_by_orpha.get(disorder.orpha_code, ()),
+                )
+                aliases_by_disease_id[disease_id] = aliases
+                aliases_written += len(aliases)
+            target.bulk_replace_aliases(aliases_by_disease_id)
+
+    for disorder in parse_disorders(disorders_xml):
+        if not disorder.orpha_code or not disorder.name:
+            continue
+        parsed += 1
+        pending_disorders.append(disorder)
+        if len(pending_disorders) >= batch_size:
+            flush(pending_disorders)
+            pending_disorders = []
+    flush(pending_disorders)
+
+    return OrphanetImportResult(
+        parsed=parsed,
+        inserted=inserted,
+        updated=updated,
+        skipped_manual=skipped_manual,
+        aliases_written=aliases_written,
+    )
+
+
 __all__ = [
     "SEED_VERSION",
     "seed_disease_index_if_empty",
+    "import_orphanet_disorders",
+    "OrphanetImportResult",
 ]

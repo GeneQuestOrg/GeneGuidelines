@@ -24,16 +24,24 @@ Search algorithm (token-AND fuzzy):
    ORPHA / gene bonus.
 4. We keep the highest-scoring alias per disease and return the top
    ``limit`` diseases.
+
+Bulk import:
+
+- :meth:`SqlaDiseaseIndexRepo.bulk_upsert_orphanet` is the path the
+  Orphanet seeder calls. It explicitly **preserves manual entries**
+  (rows whose ``source = 'manual'``) so a re-import of Orphadata never
+  clobbers hand-curated rows and their Polish synonyms.
 """
 
 from __future__ import annotations
 
 import json
 import unicodedata
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Iterable, Iterator, Mapping, Protocol, Sequence
 
-from sqlalchemy import Engine, and_, delete, insert, select, update
+from sqlalchemy import Engine, and_, delete, func, insert, select, update
 from sqlalchemy.engine import Connection
 
 from ..shared.persistence.base_repo import BaseSqlalchemyRepo
@@ -53,6 +61,24 @@ from .models import (
 
 
 # --- Public contract ---------------------------------------------------------
+
+
+@dataclass(frozen=True, slots=True)
+class BulkUpsertResult:
+    """Outcome of a bulk Orphanet ingest pass.
+
+    ``affected_disease_ids`` lists the row ids whose aliases the caller
+    is expected to refresh — it covers both newly-inserted and updated
+    rows, but never the manual-source rows we deliberately skipped.
+    """
+
+    inserted: int
+    updated: int
+    skipped_manual: int
+    affected_disease_ids: tuple[tuple[int, str], ...]
+    """Pairs of ``(row_id, primary_id)`` for the rows whose aliases need
+    to be replaced after this pass — used as the input to
+    :meth:`SqlaDiseaseIndexRepo.bulk_replace_aliases`."""
 
 
 class DiseaseIndexRepo(Protocol):
@@ -306,6 +332,136 @@ class SqlaDiseaseIndexRepo(BaseSqlalchemyRepo):
                 ],
             )
 
+    # --------------------------------- bulk -----------------------------
+
+    def bulk_upsert_orphanet(
+        self, entries: Sequence[DiseaseIndexEntry]
+    ) -> BulkUpsertResult:
+        """Idempotent bulk import of Orphanet entries.
+
+        Existing rows with ``source = 'manual'`` are *preserved* — the
+        loader does not overwrite hand-curated entries and their
+        Polish synonyms. Existing rows with any other source (typically
+        a previous Orphanet ingest) get refreshed. ``local_slug`` is
+        always preserved when a row already has one, so a previously
+        bootstrapped local disease never loses its catalog link on a
+        re-seed.
+
+        Aliases are *not* touched here — the caller pairs this with
+        :meth:`bulk_replace_aliases` using the returned
+        ``affected_disease_ids``.
+        """
+        if not entries:
+            return BulkUpsertResult(0, 0, 0, ())
+
+        di = disease_index_table
+        primary_ids = [entry.primary_id for entry in entries]
+
+        with self._conn() as conn:
+            existing_rows = conn.execute(
+                select(di.c.id, di.c.primary_id, di.c.source).where(
+                    di.c.primary_id.in_(primary_ids)
+                )
+            ).all()
+            existing_by_pid: dict[str, tuple[int, str]] = {
+                str(row.primary_id): (int(row.id), str(row.source))
+                for row in existing_rows
+            }
+
+            to_insert: list[DiseaseIndexEntry] = []
+            to_update: list[tuple[int, DiseaseIndexEntry]] = []
+            skipped_manual = 0
+            for entry in entries:
+                existing = existing_by_pid.get(entry.primary_id)
+                if existing is None:
+                    to_insert.append(entry)
+                elif existing[1] == "manual":
+                    skipped_manual += 1
+                else:
+                    to_update.append((existing[0], entry))
+
+            inserted_ids: list[tuple[int, str]] = []
+            for batch in _chunked(to_insert, 500):
+                payload = [_entry_to_db(entry) for entry in batch]
+                result = conn.execute(
+                    insert(di).returning(di.c.id, di.c.primary_id),
+                    payload,
+                )
+                inserted_ids.extend(
+                    (int(row.id), str(row.primary_id)) for row in result
+                )
+
+            updated_ids: list[tuple[int, str]] = []
+            for row_id, entry in to_update:
+                payload = _entry_to_db(entry)
+                # Preserve local_slug if existing has one — Orphanet
+                # entries always pass ``local_slug=None`` and we don't
+                # want to erase a previously bootstrapped catalog link.
+                payload["local_slug"] = func.coalesce(
+                    di.c.local_slug, payload["local_slug"]
+                )
+                # Same idea for category — never downgrade a hand-set
+                # classification to ``unknown`` because Orphanet did not
+                # surface one.
+                if entry.category is None:
+                    payload["category"] = func.coalesce(
+                        di.c.category, payload["category"]
+                    )
+                conn.execute(
+                    update(di).where(di.c.id == row_id).values(**payload)
+                )
+                updated_ids.append((row_id, entry.primary_id))
+
+            affected = tuple(inserted_ids + updated_ids)
+            return BulkUpsertResult(
+                inserted=len(inserted_ids),
+                updated=len(updated_ids),
+                skipped_manual=skipped_manual,
+                affected_disease_ids=affected,
+            )
+
+    def bulk_replace_aliases(
+        self,
+        aliases_by_disease_id: Mapping[int, Sequence[DiseaseAlias]],
+    ) -> None:
+        """Replace aliases for many diseases in one transaction.
+
+        Used after :meth:`bulk_upsert_orphanet` so the alias rows stay
+        in sync with the freshly upserted parent rows. Does nothing for
+        diseases not present in the mapping — manual rows we skipped
+        keep their hand-curated aliases untouched.
+        """
+        if not aliases_by_disease_id:
+            return
+
+        a = aliases_table
+        with self._conn() as conn:
+            for batch_ids in _chunked(list(aliases_by_disease_id), 500):
+                conn.execute(
+                    delete(a).where(a.c.disease_id.in_(list(batch_ids)))
+                )
+                payload: list[dict[str, object]] = []
+                for disease_id in batch_ids:
+                    for alias in aliases_by_disease_id[disease_id]:
+                        payload.append(
+                            {
+                                "disease_id": disease_id,
+                                "alias": alias.alias,
+                                "alias_norm": alias.alias_norm,
+                                "kind": alias.kind,
+                                "locale": alias.locale,
+                                "weight": alias.weight,
+                            }
+                        )
+                if payload:
+                    conn.execute(insert(a), payload)
+
+
+def _chunked(items: Sequence, size: int) -> Iterator[Sequence]:
+    """Yield ``items`` in slices of at most ``size``."""
+    for start in range(0, len(items), size):
+        yield items[start : start + size]
+
 
 def _entry_to_db(entry: DiseaseIndexEntry) -> dict[str, object]:
     """Serialise a domain entry into a row-shaped dict ready for INSERT/UPDATE."""
@@ -416,6 +572,7 @@ def ensure_disease_index_schema(engine: Engine | None = None) -> None:
 
 
 __all__ = [
+    "BulkUpsertResult",
     "DiseaseIndexRepo",
     "SqlaDiseaseIndexRepo",
     "InMemoryDiseaseIndexRepo",

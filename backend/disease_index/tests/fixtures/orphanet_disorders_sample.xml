@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<JDBOR date="2025-12-09 07:06:32" version="1.3.42 / 4.1.8 [2025-03-03]" copyright="Orphanet (c) 2025">
+  <Availability>
+    <Licence>
+      <FullName lang="en">Creative Commons Attribution 4.0 International</FullName>
+      <ShortIdentifier>CC-BY-4.0</ShortIdentifier>
+    </Licence>
+  </Availability>
+  <DisorderList count="4">
+    <Disorder id="17601">
+      <OrphaCode>558</OrphaCode>
+      <ExpertLink lang="en">http://www.orpha.net/consor/cgi-bin/OC_Exp.php?lng=en&amp;Expert=558</ExpertLink>
+      <Name lang="en">Marfan syndrome</Name>
+      <SynonymList count="1">
+        <Synonym lang="en">MFS</Synonym>
+      </SynonymList>
+      <DisorderType id="21394">
+        <Name lang="en">Disease</Name>
+      </DisorderType>
+      <DisorderGroup id="36547">
+        <Name lang="en">Disorder</Name>
+      </DisorderGroup>
+      <ExternalReferenceList count="2">
+        <ExternalReference id="1">
+          <Source>OMIM</Source>
+          <Reference>154700</Reference>
+        </ExternalReference>
+        <ExternalReference id="2">
+          <Source>ICD-10</Source>
+          <Reference>Q87.4</Reference>
+        </ExternalReference>
+      </ExternalReferenceList>
+    </Disorder>
+    <Disorder id="17602">
+      <OrphaCode>79318</OrphaCode>
+      <Name lang="en">PMM2-CDG</Name>
+      <SynonymList count="2">
+        <Synonym lang="en">CDG syndrome type Ia</Synonym>
+        <Synonym lang="en">Phosphomannomutase 2 deficiency</Synonym>
+      </SynonymList>
+      <DisorderType id="21394">
+        <Name lang="en">Disease</Name>
+      </DisorderType>
+      <DisorderGroup id="36547">
+        <Name lang="en">Disorder</Name>
+      </DisorderGroup>
+      <ExternalReferenceList count="1">
+        <ExternalReference id="3">
+          <Source>OMIM</Source>
+          <Reference>212065</Reference>
+        </ExternalReference>
+      </ExternalReferenceList>
+    </Disorder>
+    <Disorder id="17603">
+      <OrphaCode>3389</OrphaCode>
+      <Name lang="en">Tuberculosis</Name>
+      <DisorderType id="21394">
+        <Name lang="en">Disease</Name>
+      </DisorderType>
+      <DisorderGroup id="36547">
+        <Name lang="en">Disorder</Name>
+      </DisorderGroup>
+    </Disorder>
+    <Disorder id="17604">
+      <OrphaCode>166024</OrphaCode>
+      <Name lang="en">Multiple epiphyseal dysplasia-macrocephaly-facial dysmorphism syndrome</Name>
+      <SynonymList count="1">
+        <Synonym lang="en">Multiple epiphyseal dysplasia, Al-Gazali type</Synonym>
+      </SynonymList>
+      <DisorderType id="21394">
+        <Name lang="en">Disease</Name>
+      </DisorderType>
+      <DisorderGroup id="36547">
+        <Name lang="en">Disorder</Name>
+      </DisorderGroup>
+    </Disorder>
+  </DisorderList>
+</JDBOR>
