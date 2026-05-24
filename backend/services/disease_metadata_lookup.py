@@ -66,6 +66,31 @@ class DiseaseMetadata(BaseModel):
             "not list management — that comes from the guideline workflow."
         ),
     )
+    category: str = Field(
+        default="unknown",
+        description=(
+            "Editorial scope classification — one of: 'genetic' (canonical "
+            "Mendelian disease), 'predominantly_genetic' (mostly genetic, "
+            "may have environmental modifier), 'multifactorial' (complex, "
+            "mixed genetic + environmental like SLE), 'infectious' (caused "
+            "by a pathogen, e.g. Tuberculosis), 'acquired' (sporadic / "
+            "non-inherited, e.g. most common cancers), or 'unknown' when "
+            "you cannot decide confidently. GeneGuidelines covers 'genetic' "
+            "and 'predominantly_genetic' only; the field is the gate the UI "
+            "uses to decide whether to offer a 'Run research' button."
+        ),
+    )
+    confidence: float = Field(
+        default=0.7,
+        ge=0,
+        le=1,
+        description=(
+            "Subjective 0..1 confidence in the classification (not the "
+            "individual fields). 0.7 is the default when the model has "
+            "neither high certainty nor reason to doubt; values <0.5 mean "
+            "the frontend should soft-warn and ask the user to confirm."
+        ),
+    )
 
 
 _OMIM_RE = re.compile(r"^(?:omim[:\s#]*)?(\d{5,6})$", re.IGNORECASE)
@@ -117,6 +142,26 @@ Strict rules:
 - Inheritance must be one of the short forms in the schema description.
 - The summary is one paragraph (<=600 chars), plain English, focused on
   pathophysiology + dominant clinical picture. Do NOT list management.
+- Always classify `category` honestly:
+    * 'genetic'              — canonical Mendelian / chromosomal disease
+                               (e.g. Marfan, FD, Wilson, Duchenne).
+    * 'predominantly_genetic' — strong inherited component, environmental
+                               modifiers possible (e.g. familial cancer
+                               predisposition syndromes, hereditary heart
+                               disease).
+    * 'multifactorial'        — complex disorders with mixed genetic and
+                               environmental causes (e.g. SLE, type-2
+                               diabetes, common asthma).
+    * 'infectious'            — caused by a pathogen (e.g. Tuberculosis,
+                               COVID-19, malaria).
+    * 'acquired'              — sporadic, non-inherited; includes most
+                               sporadic cancers.
+    * 'unknown'               — you cannot decide confidently.
+  GeneGuidelines is a registry of *rare genetic* diseases. If the typed
+  term is clearly outside that scope (e.g. 'tuberculosis', 'common cold',
+  'type 2 diabetes'), still fill the canonical_name and summary so the
+  UI can render a sensible 'out of scope' notice — but classify the
+  category honestly as 'infectious' / 'multifactorial' / 'acquired'.
 - Return ONLY a valid JSON object matching the schema. No prose, no
   preface, no markdown.
 """
@@ -169,6 +214,8 @@ async def lookup_disease_metadata(name: str) -> tuple[DiseaseMetadata, str]:
                 gene="",
                 inheritance="",
                 summary="",
+                category="unknown",
+                confidence=0.0,
             ),
             "unavailable",
         )

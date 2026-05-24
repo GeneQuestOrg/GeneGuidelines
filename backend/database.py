@@ -238,6 +238,14 @@ def init_db():
     except ImportError:
         from doctor_finder_store import repair_doctor_finder_catalog_slugs_from_disease_name
     repair_doctor_finder_catalog_slugs_from_disease_name()
+    try:
+        from .disease_index.repository import ensure_disease_index_schema
+        from .disease_index.seeds import seed_disease_index_if_empty
+    except ImportError:
+        from disease_index.repository import ensure_disease_index_schema  # type: ignore[no-redef]
+        from disease_index.seeds import seed_disease_index_if_empty  # type: ignore[no-redef]
+    ensure_disease_index_schema()
+    seed_disease_index_if_empty()
 
 
 def _ensure_pubmed_flow():
