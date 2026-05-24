@@ -17,19 +17,18 @@ def client():
 
 
 def test_get_pipeline_settings(client: TestClient) -> None:
-    from backend.config import SINGLE_LLM_MODE
-
     resp = client.get("/api/pipeline/settings")
     assert resp.status_code == 200
     body = resp.json()
     assert body["defaultModelProfile"] in ("production", "test", "openrouter", "vllm")
-    if SINGLE_LLM_MODE:
-        assert len(body["modelProfiles"]) == 1
-        profile = body["modelProfiles"][0]
+    profiles = body["modelProfiles"]
+    if body.get("singleLlmMode"):
+        assert len(profiles) == 1
+        profile = profiles[0]
         assert profile["id"] == "vllm"
     else:
-        assert len(body["modelProfiles"]) >= 4
-        profile = next(p for p in body["modelProfiles"] if p["id"] == "production")
+        assert len(profiles) >= 4
+        profile = next(p for p in profiles if p["id"] == "production")
     assert profile["simpleModel"]
     assert profile["agenticModel"]
     assert "ready" in profile

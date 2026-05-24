@@ -34,7 +34,12 @@ def _build_engine() -> Engine:
         raise RuntimeError(
             "DB_URL is required for SQLAlchemy engine (postgresql://user:pass@host:5432/dbname)."
         )
-    return create_engine(DB_URL, future=True, echo=False)
+    url = DB_URL
+    if url.startswith("postgresql://"):
+        url = "postgresql+psycopg://" + url[len("postgresql://") :]
+    elif url.startswith("postgres://"):
+        url = "postgresql+psycopg://" + url[len("postgres://") :]
+    return create_engine(url, future=True, echo=False)
 
 
 def reset_engine_for_tests() -> None:
