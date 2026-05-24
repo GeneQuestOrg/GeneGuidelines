@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> **Kaggle submission snapshot.** The codebase as submitted to the Gemma 4 Good Hackathon (deadline **18 May 2026**) is frozen on tag [`kaggle-submission-2026-05-18`](https://github.com/GeneQuestOrg/GeneGuidelines/tree/kaggle-submission-2026-05-18) — **not** on `main`. This branch is active post-submission development. Judging demos (May 18 image): [public](https://kaggle-geneguidelines.genequest.org) · [admin](https://kaggle-admin-geneguidelines.genequest.org).
+
 # GeneGuidelines
 
 **Living clinical guidelines for rare genetic diseases** — generated and kept current by a controlled AI workflow over PubMed evidence, with every change reviewed and signed off by a senior clinician.
