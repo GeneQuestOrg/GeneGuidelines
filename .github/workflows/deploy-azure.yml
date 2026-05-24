@@ -24,6 +24,20 @@ jobs:
   verify:
     name: Verify (lint, types, tests)
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: ggapp
+          POSTGRES_PASSWORD: testpass
+          POSTGRES_DB: geneguidelines
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ggapp -d geneguidelines"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - uses: actions/checkout@v4
 
@@ -48,6 +62,7 @@ jobs:
         env:
           OPENAI_API_KEY: sk-test-dummy
           AGENT_NO_MCP: "1"
+          DB_URL: postgresql://ggapp:testpass@localhost:5432/geneguidelines
         run: |
           python3 -m pytest backend/tests backend/content/tests -q \
             --ignore=backend/tests/test_pubmed_flow_agentic.py \

@@ -99,14 +99,14 @@ def _persist_foundations(disease_slug: str, foundations: list[_Foundation]) -> i
         for f in foundations:
             if f.confidence < 0.6 or not f.name.strip():
                 continue
-            cur.execute("SELECT id FROM foundations WHERE LOWER(name) = LOWER(?)", (f.name.strip(),))
+            cur.execute("SELECT id FROM foundations WHERE LOWER(name) = LOWER(%s)", (f.name.strip(),))
             row = cur.fetchone()
             if row is not None:
                 found_id = row["id"]
             else:
                 cur.execute(
                     """INSERT INTO foundations (name, scope, url, city, country, services_json)
-                       VALUES (?, ?, ?, ?, ?, ?)""",
+                       VALUES (%s, %s, %s, %s, %s, %s) RETURNING id""",
                     (
                         f.name.strip(),
                         f.scope.strip().lower() or "global",
@@ -116,10 +116,10 @@ def _persist_foundations(disease_slug: str, foundations: list[_Foundation]) -> i
                         _json.dumps(f.services[:6]),
                     ),
                 )
-                found_id = cur.lastrowid
+                found_id = cur.fetchone()["id"]
             cur.execute(
-                """INSERT OR IGNORE INTO disease_foundations (disease_slug, foundation_id)
-                   VALUES (?, ?)""",
+                """INSERT INTO disease_foundations (disease_slug, foundation_id)
+                   VALUES (%s, %s) ON CONFLICT DO NOTHING""",
                 (disease_slug, found_id),
             )
             inserted += 1
@@ -139,13 +139,13 @@ def _log_run(execution_id: str, disease_slug: str, status: str, error: str | Non
     cur = conn.cursor()
     now = datetime.now(timezone.utc).isoformat()
     try:
-        cur.execute("SELECT 1 FROM guideline_run_results WHERE execution_id = ?", (execution_id,))
+        cur.execute("SELECT 1 FROM guideline_run_results WHERE execution_id = %s", (execution_id,))
         if cur.fetchone() is None:
             cur.execute(
                 """INSERT INTO guideline_run_results
                    (execution_id, pipeline, flow_key, disease_slug, label,
                     done, started_at, finished_at, error)
-                   VALUES (?, 'foundations_finder', 'foundations_finder', ?, ?, ?, ?, ?, ?)""",
+                   VALUES (%s, 'foundations_finder', 'foundations_finder', %s, %s, %s, %s, %s, %s)""",
                 (
                     execution_id,
                     disease_slug,
@@ -159,8 +159,8 @@ def _log_run(execution_id: str, disease_slug: str, status: str, error: str | Non
         else:
             cur.execute(
                 """UPDATE guideline_run_results
-                   SET done = ?, finished_at = ?, error = COALESCE(?, error)
-                   WHERE execution_id = ?""",
+                   SET done = %s, finished_at = %s, error = COALESCE(%s, error)
+                   WHERE execution_id = %s""",
                 (
                     1 if status in ("ready", "failed") else 0,
                     now if status in ("ready", "failed") else None,

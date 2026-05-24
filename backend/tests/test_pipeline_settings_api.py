@@ -17,16 +17,23 @@ def client():
 
 
 def test_get_pipeline_settings(client: TestClient) -> None:
+    from backend.config import SINGLE_LLM_MODE
+
     resp = client.get("/api/pipeline/settings")
     assert resp.status_code == 200
     body = resp.json()
     assert body["defaultModelProfile"] in ("production", "test", "openrouter", "vllm")
-    assert len(body["modelProfiles"]) >= 4
-    prod = next(p for p in body["modelProfiles"] if p["id"] == "production")
-    assert prod["simpleModel"]
-    assert prod["agenticModel"]
-    assert "ready" in prod
-    assert isinstance(prod["missingEnvVars"], list)
+    if SINGLE_LLM_MODE:
+        assert len(body["modelProfiles"]) == 1
+        profile = body["modelProfiles"][0]
+        assert profile["id"] == "vllm"
+    else:
+        assert len(body["modelProfiles"]) >= 4
+        profile = next(p for p in body["modelProfiles"] if p["id"] == "production")
+    assert profile["simpleModel"]
+    assert profile["agenticModel"]
+    assert "ready" in profile
+    assert isinstance(profile["missingEnvVars"], list)
 
     integration_ids = {i["id"] for i in body["integrations"]}
     assert "openai" in integration_ids

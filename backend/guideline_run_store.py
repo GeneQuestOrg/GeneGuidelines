@@ -5,6 +5,8 @@ import json
 from datetime import UTC, datetime
 from typing import Any
 
+import psycopg.errors as pg_errors
+
 try:
     from .database import get_connection
     from .engine.flow_output import finalize_flow_output
@@ -34,10 +36,11 @@ def ensure_guideline_run_results_schema() -> None:
         )
         """
     )
+    conn.commit()
     try:
         cur.execute("ALTER TABLE guideline_run_results ADD COLUMN quality_json TEXT")
         conn.commit()
-    except Exception:
+    except pg_errors.DuplicateColumn:
         conn.rollback()
     conn.close()
 
@@ -85,7 +88,7 @@ def save_guideline_run_result(execution_id: str, store: dict[str, Any]) -> None:
         INSERT INTO guideline_run_results (
             execution_id, pipeline, flow_key, disease_slug, ticket_id, label,
             output, error, quality_json, done, started_at, finished_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         ON CONFLICT(execution_id) DO UPDATE SET
             pipeline = excluded.pipeline,
             flow_key = excluded.flow_key,
@@ -128,7 +131,7 @@ def load_guideline_run_result(execution_id: str) -> dict[str, Any] | None:
         SELECT execution_id, pipeline, flow_key, disease_slug, ticket_id, label,
                output, error, quality_json, done, started_at, finished_at
         FROM guideline_run_results
-        WHERE execution_id = ?
+        WHERE execution_id = %s
         """,
         (execution_id,),
     )
