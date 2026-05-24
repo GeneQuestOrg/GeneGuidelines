@@ -386,16 +386,19 @@ def _record_to_entry(record: _SeedRecord, *, refreshed_at: str) -> DiseaseIndexE
 
 
 def seed_disease_index_if_empty(repo: DiseaseIndexRepo | None = None) -> int:
-    """Populate the index from :data:`_SEED_RECORDS` when the table is empty.
+    """Re-assert the 31 hand-curated rows. Always runs (idempotent).
 
-    Returns the number of entries written (0 when the table already has
-    rows — bail-out is intentional, the seed is *only* a starter). Use the
-    Orphanet refresh job for ongoing updates.
+    Despite the historical name kept for backwards compatibility, this
+    function does **not** bail out when the table is non-empty. It must
+    re-mark the 31 records as ``source = 'manual'`` on every startup so
+    a prior Orphanet ingest cannot leave them stranded as
+    ``source = 'orphanet'`` and erase their ``local_slug`` + Polish
+    synonyms on the next refresh.
+
+    The cost is low — 31 ``UPSERT`` round trips per ``init_db()`` (well
+    under a second against either local Postgres or Azure).
     """
     target = repo or SqlaDiseaseIndexRepo()
-    if target.count() > 0:
-        return 0
-
     refreshed_at = datetime.now(UTC).isoformat()
     written = 0
     for record in _SEED_RECORDS:

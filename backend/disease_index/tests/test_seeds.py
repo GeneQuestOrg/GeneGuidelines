@@ -30,8 +30,12 @@ def test_seeder_is_idempotent() -> None:
     repo = InMemoryDiseaseIndexRepo()
     first = seed_disease_index_if_empty(repo)
     second = seed_disease_index_if_empty(repo)
+    # Both calls report the count because the seeder unconditionally
+    # re-asserts the manual records — the contract is that the table
+    # always ends up with exactly the 31 hand-curated rows, regardless
+    # of whether a prior Orphanet ingest had stamped over them.
     assert first == EXPECTED_SEED_COUNT
-    assert second == 0
+    assert second == EXPECTED_SEED_COUNT
     assert repo.count() == EXPECTED_SEED_COUNT
 
 

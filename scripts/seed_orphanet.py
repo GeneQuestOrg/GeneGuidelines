@@ -36,6 +36,7 @@ from backend.disease_index.repository import (  # noqa: E402  — sys.path tweak
 )
 from backend.disease_index.seeds import (  # noqa: E402
     import_orphanet_disorders,
+    seed_disease_index_if_empty,
 )
 
 
@@ -78,6 +79,15 @@ def main(argv: list[str] | None = None) -> int:
 
     started = time.monotonic()
     ensure_disease_index_schema()
+    # Re-assert the 31 hand-curated entries first so the bulk Orphanet
+    # path that follows can correctly ``skip_manual`` them. Without this
+    # step a fresh DB or one whose manual rows had previously been
+    # stamped over by a stray Orphanet run loses Polish synonyms and
+    # ``local_slug`` values forever.
+    manual_count = seed_disease_index_if_empty(SqlaDiseaseIndexRepo())
+    print(f"Manual rows asserted: {manual_count}")
+    print()
+
     result = import_orphanet_disorders(
         disorders_xml=args.disorders_source,
         genes_xml=None if args.no_genes else args.genes_source,
