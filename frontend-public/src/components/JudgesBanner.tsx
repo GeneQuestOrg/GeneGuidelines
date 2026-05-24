@@ -240,7 +240,7 @@ function JudgesBannerExpanded({ onNav, onCollapse, route }: JudgesBannerExpanded
               <div className="jb__step-body">
                 <div className="jb__step-title">Six parallel workflows per disease</div>
                 <p className="jb__step-text">
-                  <a href="#/add-disease" onClick={goToStartResearch} className="jb__step-link">
+                  <a href="#/start-research" onClick={goToStartResearch} className="jb__step-link">
                     Click <em>Add a disease</em>
                   </a>{" "}
                   to fan out six concurrent Gemma 4 workflows for a new entry: the consensus-paper

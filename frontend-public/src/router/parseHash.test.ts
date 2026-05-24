@@ -59,6 +59,10 @@ describe("parseHash", () => {
     });
   });
 
+  it("maps legacy add-disease hash to start research", () => {
+    expect(parseHash("#/add-disease")).toEqual({ name: "startResearch" });
+  });
+
   it("parses research run with query", () => {
     expect(parseHash("#/research/run-1?q=fabry")).toEqual({
       name: "researchRun",

@@ -20,9 +20,6 @@ function routeMatchesNav(route: Route, href: string): boolean {
   if (path === "/doctors") {
     return route.name === "doctors" || route.name === "doctor";
   }
-  if (path === "/add-disease") {
-    return route.name === "addDisease";
-  }
   if (path === "/start-research") {
     return route.name === "startResearch" || route.name === "researchRun";
   }
@@ -38,7 +35,7 @@ function buildNavLinks(route: Route): NavLink[] {
   // disease detail views, not as a top-level destination.
   const base = [
     { href: "#/doctors", label: "Doctors" },
-    { href: "#/add-disease", label: "New research" },
+    { href: "#/start-research", label: "New research" },
     { href: "#/about", label: "About" },
   ];
   return base.map((link) => ({

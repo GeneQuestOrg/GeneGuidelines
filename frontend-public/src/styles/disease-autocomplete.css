@@ -10,43 +10,54 @@
 }
 
 .ac__inputwrap {
-  position: relative;
   display: flex;
   align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  background: var(--bg-elev, #fff);
+  border: 1px solid var(--line, #e2e8f0);
+  border-radius: var(--r-md, 8px);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.ac--open .ac__inputwrap {
+  border-color: var(--accent-teal, #0f766e);
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.15);
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
 }
 
 .ac__icon {
-  position: absolute;
-  left: 12px;
   color: var(--ink-3, #64748b);
+  flex-shrink: 0;
+  display: inline-flex;
   pointer-events: none;
 }
 
 .ac__input {
-  width: 100%;
-  padding: 11px 36px 11px 36px;
-  border-radius: var(--r-md, 8px);
-  border: 1px solid var(--line, #e2e8f0);
+  flex: 1 1 auto;
+  min-width: 0;
   font: inherit;
-  background: var(--bg-elev, #fff);
+  font-size: inherit;
+  padding: 12px 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink-1, #0f172a);
+  outline: none;
   box-sizing: border-box;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
-.ac__input:focus {
-  outline: none;
-  border-color: var(--accent-teal, #0f766e);
-  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.15);
+.ac__input::placeholder {
+  color: var(--ink-4, #94a3b8);
 }
 
 .ac__input:disabled {
-  background: var(--bg-2, #f8fafc);
   cursor: not-allowed;
+  opacity: 0.7;
 }
 
 .ac__clear {
-  position: absolute;
-  right: 8px;
+  flex-shrink: 0;
   width: 24px;
   height: 24px;
   display: inline-flex;
@@ -59,6 +70,7 @@
   line-height: 1;
   cursor: pointer;
   border-radius: 4px;
+  padding: 0;
 }
 
 .ac__clear:hover {
@@ -68,13 +80,14 @@
 
 .ac__panel {
   position: absolute;
-  top: calc(100% + 4px);
+  top: 100%;
   left: 0;
   right: 0;
   background: var(--bg-elev, #fff);
-  border: 1px solid var(--line, #e2e8f0);
-  border-radius: var(--r-md, 8px);
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+  border: 1px solid var(--accent-teal, #0f766e);
+  border-top: 1px solid var(--line, #e2e8f0);
+  border-radius: 0 0 var(--r-md, 8px) var(--r-md, 8px);
+  box-shadow: 0 16px 40px -8px rgba(15, 23, 42, 0.16);
   max-height: 380px;
   overflow-y: auto;
   z-index: 30;
