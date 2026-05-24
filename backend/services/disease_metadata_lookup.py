@@ -202,9 +202,14 @@ async def lookup_disease_metadata(name: str) -> tuple[DiseaseMetadata, str]:
         )
         return result, model_spec
     except Exception as exc:
+        # ``asyncio.TimeoutError`` and several pydantic_ai wrappers stringify
+        # to ``''`` — losing that detail makes prod debugging impossible.
+        # Capture the type and a repr() so the failure mode is unambiguous in
+        # the container log.
         log.warning(
-            "disease_metadata_lookup: extractor failed for %r (%s); returning name-only stub",
+            "disease_metadata_lookup: extractor failed for %r — %s: %r; returning name-only stub",
             name,
+            type(exc).__name__,
             exc,
         )
         return (
