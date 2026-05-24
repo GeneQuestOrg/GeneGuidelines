@@ -181,3 +181,145 @@ def test_idempotent_reimport(fresh_index):
     assert second.inserted == 0
     assert second.updated == 4
     assert second.skipped_manual == 0
+
+
+def test_curated_marfan_outranks_orphanet_after_full_seed(fresh_index):
+    """Regression — the manual ``Marfan Syndrome`` row must rank first
+    even after Orphanet ingest. Reproduces the production bug observed
+    2026-05-24 where the curated entry sank to the bottom of the
+    ``q=marfan`` results because the SQL ``LIMIT`` truncated it out
+    before the post-fetch scoring step could rank it.
+    """
+    repo = SqlaDiseaseIndexRepo()
+    engine = get_engine()
+    with engine.connect() as conn:
+        with conn.begin():
+            conn.execute(
+                insert(disease_index_table).values(
+                    primary_id="ORPHA:558",
+                    source="manual",
+                    canonical_name="Marfan Syndrome",
+                    canonical_name_norm="marfan syndrome",
+                    category="genetic",
+                    is_in_scope=True,
+                    omim_codes_json=json.dumps(["154700"]),
+                    gene_symbols_json=json.dumps(["FBN1"]),
+                    local_slug="marfan-syndrome",
+                    refreshed_at=datetime.now(UTC).isoformat(),
+                )
+            )
+            from backend.disease_index.repository import normalize_term
+
+            manual_aliases = [
+                {
+                    "disease_id": conn.execute(
+                        disease_index_table.select().where(
+                            disease_index_table.c.primary_id == "ORPHA:558"
+                        )
+                    ).scalar_one(),
+                    "alias": "Marfan Syndrome",
+                    "alias_norm": "marfan syndrome",
+                    "kind": "canonical",
+                    "locale": "en",
+                    "weight": 1.6,
+                },
+                {
+                    "disease_id": conn.execute(
+                        disease_index_table.select().where(
+                            disease_index_table.c.primary_id == "ORPHA:558"
+                        )
+                    ).scalar_one(),
+                    "alias": "FBN1",
+                    "alias_norm": normalize_term("FBN1"),
+                    "kind": "gene",
+                    "locale": None,
+                    "weight": 1.2,
+                },
+            ]
+            conn.execute(insert(aliases_table), manual_aliases)
+
+    import_orphanet_disorders(
+        disorders_xml=_DISORDERS,
+        genes_xml=_GENES,
+        repo=repo,
+    )
+
+    service = DiseaseSuggestionService(
+        repo=SqlaDiseaseIndexRepo(),
+        disease_repo=InMemoryDiseaseRepo(),
+    )
+
+    # ``q=marfan`` — manual Marfan Syndrome must beat Orphanet's
+    # ``Marfan syndrome type 1`` even though both are token-prefix
+    # matches on the canonical name.
+    hits = service.suggest("marfan", limit=5)
+    assert hits, "expected at least one Marfan hit after seed"
+    top = hits[0].entry
+    assert top.primary_id == "ORPHA:558", (
+        f"Manual Marfan Syndrome must rank #1; got "
+        f"{[(h.entry.canonical_name, round(h.score, 2)) for h in hits[:5]]}"
+    )
+    assert top.source == "manual"
+
+    # ``q=FBN1`` — the gene match on the manual row must win against
+    # other FBN1-associated Orphanet entries (Marfan syndrome type 1
+    # in the fixture).
+    hits = service.suggest("FBN1", limit=5)
+    assert hits and hits[0].entry.primary_id == "ORPHA:558"
+
+
+def test_short_prefix_returns_curated_entry(fresh_index):
+    """Regression — short prefixes like ``mar`` must still surface the
+    manual ``Marfan Syndrome`` row. Pre-fix, the SQL ``LIMIT`` truncated
+    manual entries out when thousands of Orphanet aliases shared the
+    same substring, leaving the user with no curated answer at all.
+    """
+    repo = SqlaDiseaseIndexRepo()
+    engine = get_engine()
+    with engine.connect() as conn:
+        with conn.begin():
+            conn.execute(
+                insert(disease_index_table).values(
+                    primary_id="ORPHA:558",
+                    source="manual",
+                    canonical_name="Marfan Syndrome",
+                    canonical_name_norm="marfan syndrome",
+                    category="genetic",
+                    is_in_scope=True,
+                    omim_codes_json=json.dumps(["154700"]),
+                    gene_symbols_json=json.dumps(["FBN1"]),
+                    local_slug="marfan-syndrome",
+                    refreshed_at=datetime.now(UTC).isoformat(),
+                )
+            )
+            disease_id = conn.execute(
+                disease_index_table.select().where(
+                    disease_index_table.c.primary_id == "ORPHA:558"
+                )
+            ).scalar_one()
+            conn.execute(
+                insert(aliases_table).values(
+                    disease_id=disease_id,
+                    alias="Marfan Syndrome",
+                    alias_norm="marfan syndrome",
+                    kind="canonical",
+                    locale="en",
+                    weight=1.6,
+                )
+            )
+
+    import_orphanet_disorders(
+        disorders_xml=_DISORDERS,
+        genes_xml=_GENES,
+        repo=repo,
+    )
+
+    service = DiseaseSuggestionService(
+        repo=SqlaDiseaseIndexRepo(),
+        disease_repo=InMemoryDiseaseRepo(),
+    )
+
+    hits = service.suggest("mar", limit=5)
+    assert any(
+        h.entry.primary_id == "ORPHA:558" for h in hits
+    ), f"Manual Marfan must appear for short-prefix queries; got {[h.entry.canonical_name for h in hits]}"

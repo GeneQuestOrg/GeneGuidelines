@@ -169,33 +169,77 @@ def score_match(
 ) -> float:
     """Composite score for a (disease, matching alias) candidate.
 
-    Mirrors the algorithm in
-    :file:`docs/produkty/geneguidelines/draft6/src/views-research.jsx`.
     Higher = better; relative ordering is what matters, the absolute scale
-    is an internal detail.
+    is an internal detail. The function distinguishes:
+
+    1. Match shape — exact > word-boundary prefix > in-word prefix >
+       whole-word substring. ``"marfan"`` should beat ``"marfanoid"``
+       and the canonical ``"Marfan Syndrome"`` should beat the long-tail
+       ``"Marfan syndrome and Marfan-related disorders"``.
+    2. Match focus — a query that covers most of the alias is a tighter
+       hit than the same query buried inside a much longer alias.
+    3. Curatorial signal — manual (hand-curated) entries and entries
+       linked to a bootstrapped local disease (``local_slug`` set)
+       outrank Orphanet long-tail matches on tied raw scores. These are
+       the high-confidence "this is the disease the user actually
+       wants" rows; the 11k Orphanet entries are valuable for coverage
+       but should yield to a curated answer when both match.
     """
     score = 1.0  # base reward for a token-AND match
 
-    if alias.alias_norm == query_norm:
-        score += 8.0
-    elif alias.alias_norm.startswith(query_norm):
-        score += 5.0
+    alias_norm = alias.alias_norm
+    canonical_norm = entry.canonical_name_norm
 
-    if entry.canonical_name_norm == query_norm:
-        score += 4.0
-    elif entry.canonical_name_norm.startswith(query_norm):
+    # Alias-level match shape -------------------------------------------------
+    if alias_norm == query_norm:
+        score += 8.0
+    elif alias_norm.startswith(query_norm + " "):
+        # Word-boundary prefix: "marfan syndrome" matches "marfan".
+        score += 6.0
+    elif alias_norm.startswith(query_norm):
+        # In-word prefix: "marfanoid" matches "marfan" — still useful,
+        # just a weaker signal than a whole-word match.
         score += 3.0
+    elif f" {query_norm} " in f" {alias_norm} ":
+        # Whole-word match somewhere in the alias.
+        score += 2.0
+
+    # Canonical-name bonus (same shape, smaller magnitude) -------------------
+    if canonical_norm == query_norm:
+        score += 4.0
+    elif canonical_norm.startswith(query_norm + " "):
+        score += 3.0
+    elif canonical_norm.startswith(query_norm):
+        score += 1.5
+
+    # Length proximity — the query covering most of the alias is a much
+    # more focused match than the same query buried inside a long alias.
+    # Capped at +2.0 so it does not swamp the exact-match bonus.
+    alias_len = max(len(alias_norm), 1)
+    score += min(2.0, (len(query_norm) / alias_len) * 2.5)
 
     # Exact-id bonuses — these are the high-confidence "I know exactly
     # what I'm looking for" inputs. They beat any name match.
-    if alias.kind == "omim" and alias.alias_norm == query_norm:
+    if alias.kind == "omim" and alias_norm == query_norm:
         score += 10.0
-    elif alias.kind == "orpha" and alias.alias_norm == query_norm:
+    elif alias.kind == "orpha" and alias_norm == query_norm:
         score += 8.0
-    elif alias.kind == "gene" and alias.alias_norm == query_norm:
+    elif alias.kind == "gene" and alias_norm == query_norm:
         score += 6.0
 
     score *= alias.weight
+
+    # Curated-source / local-record boost -------------------------------------
+    # Applied after the weight multiplier so it acts as a flat tie-break
+    # rather than getting amplified for canonical aliases. Manual rows
+    # are the 31 hand-curated entries (preserved across Orphanet re-imports);
+    # ``local_slug`` is set when the disease is wired into the catalogue
+    # of bootstrapped GeneGuidelines records (FD, MAS, Noonan, Marfan, …).
+    if entry.source == "manual":
+        score += 2.0
+    if entry.local_slug:
+        score += 1.5
+
     return score
 
 
@@ -229,41 +273,70 @@ class SqlaDiseaseIndexRepo(BaseSqlalchemyRepo):
         # cased so that's fine and faster than ``ILIKE``.
         conditions = [a.c.alias_norm.like(f"%{token}%") for token in tokens]
 
-        stmt = (
-            select(
-                di.c.id.label("entry_id"),
-                di.c.primary_id,
-                di.c.source,
-                di.c.canonical_name,
-                di.c.canonical_name_norm,
-                di.c.category,
-                di.c.is_in_scope,
-                di.c.inheritance,
-                di.c.summary,
-                di.c.omim_codes_json,
-                di.c.gene_symbols_json,
-                di.c.orpha_url,
-                di.c.omim_url,
-                di.c.local_slug,
-                di.c.source_version,
-                di.c.refreshed_at,
-                a.c.alias,
-                a.c.alias_norm,
-                a.c.kind,
-                a.c.locale,
-                a.c.weight,
+        cols = (
+            di.c.id.label("entry_id"),
+            di.c.primary_id,
+            di.c.source,
+            di.c.canonical_name,
+            di.c.canonical_name_norm,
+            di.c.category,
+            di.c.is_in_scope,
+            di.c.inheritance,
+            di.c.summary,
+            di.c.omim_codes_json,
+            di.c.gene_symbols_json,
+            di.c.orpha_url,
+            di.c.omim_url,
+            di.c.local_slug,
+            di.c.source_version,
+            di.c.refreshed_at,
+            a.c.alias,
+            a.c.alias_norm,
+            a.c.kind,
+            a.c.locale,
+            a.c.weight,
+        )
+        join = di.join(a, a.c.disease_id == di.c.id)
+
+        # Step 1 — pull every alias row of every hand-curated (or
+        # local-slug-linked) entry that token-AND-matches. There are
+        # only ~31 manual entries; the LIMIT is generous and effectively
+        # unbounded for them, so the manual long-tail never gets
+        # truncated away by Orphanet's 11k+ alias rows. Without this
+        # guarantee, short queries like ``"mar"`` or ``"eh"`` would
+        # silently drop ``Marfan Syndrome`` / ``Ehlers-Danlos`` from
+        # the result set even though they obviously match.
+        manual_stmt = (
+            select(*cols)
+            .select_from(join)
+            .where(
+                and_(
+                    *conditions,
+                    (di.c.source == "manual") | (di.c.local_slug.isnot(None)),
+                )
             )
-            .select_from(di.join(a, a.c.disease_id == di.c.id))
-            .where(and_(*conditions))
-            .limit(limit * 8)  # over-fetch — we keep best alias per disease
+            .limit(500)
+        )
+
+        # Step 2 — over-fetch a wide-enough Orphanet slice for the same
+        # query. ``limit * 16`` is generous: at limit=10 we look at up
+        # to 160 alias rows, which is plenty of headroom for the
+        # post-scoring rank to pick the right top-10 even when the
+        # raw substring set is huge.
+        orphanet_stmt = (
+            select(*cols)
+            .select_from(join)
+            .where(and_(*conditions, di.c.source != "manual"))
+            .limit(max(limit * 16, 64))
         )
 
         with self._conn() as conn:
-            rows = conn.execute(stmt).mappings().all()
+            manual_rows = conn.execute(manual_stmt).mappings().all()
+            orphanet_rows = conn.execute(orphanet_stmt).mappings().all()
 
         # Reduce to one (entry, alias) per disease, keeping the highest score.
         best: dict[str, tuple[DiseaseIndexEntry, DiseaseAlias, float]] = {}
-        for row in rows:
+        for row in list(manual_rows) + list(orphanet_rows):
             entry = entry_from_row(row)
             alias = alias_from_row(row)
             score = score_match(query_norm, entry, alias)
