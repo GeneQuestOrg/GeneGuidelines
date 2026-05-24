@@ -104,8 +104,8 @@ export function AboutView({ view, onViewChange, onNav }: AboutViewProps) {
                 </li>
                 <li>
                   <b>Or point them at the guideline document.</b> Each disease has a <em>living guideline</em>{" "}
-                  maintained by specialists, updated monthly, with full citations. The same thing an expert in
-                  Leiden or Rome would read.
+                  maintained by specialists, with full citations and an audit trail of every update. The same
+                  thing an expert in Leiden or Rome would read.
                 </li>
               </ol>
             </>
@@ -130,9 +130,10 @@ export function AboutView({ view, onViewChange, onNav }: AboutViewProps) {
                   approved it and when).
                 </li>
                 <li>
-                  <b>If you are a specialist in a given disease</b> — you can join as a reviewer. Each month an
-                  AI Watcher analyses new publications and proposes guideline updates. A review typically takes
-                  15–30 minutes, and every decision is auditable (GitHub PR review model).
+                  <b>If you are a specialist in a given disease</b> — you can join as a reviewer. An AI Watcher
+                  analyses new publications and proposes guideline updates on a rolling basis, focused on the
+                  diseases requested by readers. A review typically takes 15–30 minutes, and every decision is
+                  auditable (GitHub PR review model).
                 </li>
               </ul>
             </>

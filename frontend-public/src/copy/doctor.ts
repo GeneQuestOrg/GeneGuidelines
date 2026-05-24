@@ -6,7 +6,7 @@ export const doctorCopy: AudienceCopy = {
     titleLine1: "Evidence-based guidelines for",
     titleEmphasis: "rare genetic disease.",
     subtitle:
-      "Monthly-reviewed pathways, literature, and PR workflows — built for clinical practice.",
+      "Specialist-reviewed pathways, literature, and PR workflows — built for clinical practice.",
     searchPlaceholder: "Search diseases, genes, OMIM, or phenotype…",
     aboutLinkLabel: "About the platform",
     browseCta: "Browse diseases",
@@ -73,6 +73,6 @@ export const doctorCopy: AudienceCopy = {
     openPrsSub: (count) =>
       count === 0 ? "No drafts pending review." : `${count} drafts awaiting reviewer sign-off.`,
     officialGuidelineTitle: "Current consensus guideline",
-    officialGuidelineSub: "Reference document — monthly AI watch with specialist approval.",
+    officialGuidelineSub: "Reference document — AI evidence watch, specialist-approved updates.",
   },
 };
