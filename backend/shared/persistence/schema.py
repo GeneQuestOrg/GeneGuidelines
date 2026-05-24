@@ -418,6 +418,129 @@ Index(
 )
 
 
+# -- evidence audit domain ----------------------------------------------------
+#
+# Two tables that together form the audit-grade record of *what the AI knew
+# and decided* for each disease over time. Written by major workflow runs
+# (``pubmed`` guideline draft, ``incremental_guideline_update`` from F7,
+# parent-pathway flows from F6) and read by the public timeline endpoint
+# plus the upcoming admin evidence dashboard (F8 v0.2).
+#
+# Why two tables instead of one big one:
+# - ``disease_evidence_snapshots`` is the aggregate. One row per run that
+#   touches literature for a disease; the series of rows for a disease is
+#   a sparkline-ready timeline (article counts, citation counts, knowledge
+#   gaps, quality / confidence scores).
+# - ``article_category_audits`` is the per-article ledger. One row per
+#   (PMID, disease, execution_id) capturing the categorisation Gemma 4
+#   applied during triage plus optional reviewer override. Joins to the
+#   snapshot via ``triggered_by_execution_id`` when needed.
+#
+# Category vocabulary lives in :mod:`backend.evidence.models` as a
+# ``Literal`` rather than a SQL CHECK constraint — the set can grow
+# without a migration and JSON storage is flexible.
+disease_evidence_snapshots = Table(
+    "disease_evidence_snapshots",
+    metadata,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column(
+        "disease_slug",
+        Text,
+        ForeignKey("diseases.slug", ondelete="CASCADE"),
+        nullable=False,
+    ),
+    Column("taken_at", Text, nullable=False),
+    Column("triggered_by_execution_id", Text),
+    Column("triggered_by_flow_key", Text),
+    Column("articles_seen_total", Integer, nullable=False, server_default="0"),
+    Column(
+        "articles_cited_in_guideline",
+        Integer,
+        nullable=False,
+        server_default="0",
+    ),
+    Column("pmids_verified_ok", Integer, nullable=False, server_default="0"),
+    Column("pmids_scrubbed", Integer, nullable=False, server_default="0"),
+    Column("category_counts_json", Text, nullable=False, server_default="{}"),
+    Column("quality_counts_json", Text, nullable=False, server_default="{}"),
+    Column("knowledge_gaps_json", Text, nullable=False, server_default="[]"),
+    Column("paragraphs_total", Integer, nullable=False, server_default="0"),
+    Column(
+        "paragraphs_passed_eval", Integer, nullable=False, server_default="0"
+    ),
+    Column("avg_synthesis_confidence", Float),
+    Column("evidence_score", Integer, nullable=False, server_default="0"),
+    Column("confidence_index", Integer, nullable=False, server_default="0"),
+    Column("notes", Text, nullable=False, server_default=""),
+)
+
+# Primary read pattern — "latest N snapshots for this disease".
+Index(
+    "ix_disease_evidence_snapshots_disease_slug",
+    disease_evidence_snapshots.c.disease_slug,
+)
+# Used by the admin trend chart that orders snapshots chronologically
+# across all diseases.
+Index(
+    "ix_disease_evidence_snapshots_taken_at",
+    disease_evidence_snapshots.c.taken_at,
+)
+
+
+article_category_audits = Table(
+    "article_category_audits",
+    metadata,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column("pmid", Text, nullable=False),
+    Column(
+        "disease_slug",
+        Text,
+        ForeignKey("diseases.slug", ondelete="CASCADE"),
+        nullable=False,
+    ),
+    Column("triggered_by_execution_id", Text),
+    Column("ai_categories_json", Text, nullable=False, server_default="[]"),
+    Column("ai_rationale", Text, nullable=False, server_default=""),
+    Column("ai_model", Text, nullable=False, server_default=""),
+    Column("ai_confidence", Float),
+    # Quality tier mirrors :mod:`backend.evidence_tiering` — one of
+    # 'high' / 'moderate' / 'low' / 'very_low'. Nullable for audits
+    # written before evidence tiering is computed (rare).
+    Column("quality_tier", Text),
+    Column("reviewer_categories_json", Text),
+    Column("reviewer_id", Text),
+    Column("reviewer_at", Text),
+    Column("created_at", Text, nullable=False),
+    # Natural key: a single workflow execution emits at most one audit
+    # per (article, disease). Re-running the workflow generates a new
+    # execution id and a new row, preserving the historical trail.
+    UniqueConstraint(
+        "pmid",
+        "disease_slug",
+        "triggered_by_execution_id",
+        name="uq_article_category_audits_per_run",
+    ),
+    CheckConstraint(
+        "quality_tier IS NULL OR quality_tier IN "
+        "('high','moderate','low','very_low')",
+        name="ck_article_category_audits_quality_tier",
+    ),
+)
+
+# "Show me everything we know about this disease's evidence" — common
+# admin dashboard query.
+Index(
+    "ix_article_category_audits_disease_slug",
+    article_category_audits.c.disease_slug,
+)
+# "Show me every disease this PMID has been audited under" — supports
+# the cross-disease article inspector view.
+Index(
+    "ix_article_category_audits_pmid",
+    article_category_audits.c.pmid,
+)
+
+
 __all__ = [
     "metadata",
     "diseases",
@@ -434,4 +557,6 @@ __all__ = [
     "official_guideline_pointers",
     "disease_index",
     "disease_index_aliases",
+    "disease_evidence_snapshots",
+    "article_category_audits",
 ]
