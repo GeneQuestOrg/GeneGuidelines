@@ -246,6 +246,11 @@ def init_db():
         from disease_index.seeds import seed_disease_index_if_empty  # type: ignore[no-redef]
     ensure_disease_index_schema()
     seed_disease_index_if_empty()
+    try:
+        from .evidence.repository import ensure_evidence_audit_schema
+    except ImportError:
+        from evidence.repository import ensure_evidence_audit_schema  # type: ignore[no-redef]
+    ensure_evidence_audit_schema()
 
 
 def _ensure_pubmed_flow():
