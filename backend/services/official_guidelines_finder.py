@@ -234,7 +234,7 @@ def _log_run(execution_id: str, disease_slug: str, status: str, error: str | Non
     now = datetime.now(timezone.utc).isoformat()
     try:
         cur.execute(
-            "SELECT 1 FROM guideline_run_results WHERE execution_id = ?",
+            "SELECT 1 FROM guideline_run_results WHERE execution_id = %s",
             (execution_id,),
         )
         if cur.fetchone() is None:
@@ -243,8 +243,8 @@ def _log_run(execution_id: str, disease_slug: str, status: str, error: str | Non
                 INSERT INTO guideline_run_results
                   (execution_id, pipeline, flow_key, disease_slug, label,
                    done, started_at, finished_at, error)
-                VALUES (?, 'official_guidelines_finder', 'official_guidelines_finder',
-                        ?, ?, ?, ?, ?, ?)
+                VALUES (%s, 'official_guidelines_finder', 'official_guidelines_finder',
+                        %s, %s, %s, %s, %s, %s)
                 """,
                 (
                     execution_id,
@@ -259,8 +259,8 @@ def _log_run(execution_id: str, disease_slug: str, status: str, error: str | Non
         else:
             cur.execute(
                 """UPDATE guideline_run_results
-                   SET done = ?, finished_at = ?, error = COALESCE(?, error)
-                   WHERE execution_id = ?""",
+                   SET done = %s, finished_at = %s, error = COALESCE(%s, error)
+                   WHERE execution_id = %s""",
                 (
                     1 if status in ("ready", "failed") else 0,
                     now if status in ("ready", "failed") else None,

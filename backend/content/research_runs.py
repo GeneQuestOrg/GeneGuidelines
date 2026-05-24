@@ -16,15 +16,18 @@ render without leaking workflow internals.
 
 from __future__ import annotations
 
-import sqlite3
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any, Iterable
 
+import psycopg
+
 try:
     from ..database import get_connection
+    from ..db import table_exists
 except ImportError:
     from database import get_connection  # type: ignore[no-redef]
+    from db import table_exists  # type: ignore[no-redef]
 
 
 @dataclass(frozen=True, slots=True)
@@ -62,7 +65,7 @@ def _elapsed_seconds(started_at: object, now: datetime | None = None) -> int | N
 
 
 def _rows_from_guideline_store(
-    conn: sqlite3.Connection, limit: int
+    conn: psycopg.Connection, limit: int
 ) -> list[ActiveResearchRun]:
     rows = conn.execute(
         """
@@ -70,7 +73,7 @@ def _rows_from_guideline_store(
         FROM guideline_run_results
         WHERE done = 0 AND finished_at IS NULL
         ORDER BY COALESCE(started_at, '') DESC
-        LIMIT ?
+        LIMIT %s
         """,
         (limit,),
     ).fetchall()
@@ -94,27 +97,16 @@ def _rows_from_guideline_store(
 
 
 def _resolve_disease_slug_for_catalog(catalog_slug: str | None) -> str | None:
-    """Map a doctor-finder catalog slug back to a disease slug.
-
-    For Phase 0 the project's three diseases use catalog slugs identical to
-    their disease slugs. Falling back to a string identity keeps the
-    projection functional if a doctor-finder run is recorded for a disease
-    we have not yet special-cased.
-    """
+    """Map a doctor-finder catalog slug back to a disease slug."""
     if not isinstance(catalog_slug, str) or not catalog_slug:
         return None
     return catalog_slug
 
 
 def _rows_from_doctor_finder_store(
-    conn: sqlite3.Connection, limit: int
+    conn: psycopg.Connection, limit: int
 ) -> list[ActiveResearchRun]:
-    # The doctor_finder_run_results table is created lazily on the first
-    # finder run; older clean databases may not have it yet.
-    has_table = conn.execute(
-        "SELECT name FROM sqlite_master WHERE type='table' AND name='doctor_finder_run_results'"
-    ).fetchone()
-    if not has_table:
+    if not table_exists(conn, "doctor_finder_run_results"):
         return []
     rows = conn.execute(
         """
@@ -122,7 +114,7 @@ def _rows_from_doctor_finder_store(
         FROM doctor_finder_run_results
         WHERE done = 0 AND finished_at IS NULL
         ORDER BY COALESCE(started_at, '') DESC
-        LIMIT ?
+        LIMIT %s
         """,
         (limit,),
     ).fetchall()
@@ -154,22 +146,15 @@ def _sorted_by_started_desc(runs: Iterable[ActiveResearchRun]) -> list[ActiveRes
 def list_active_runs(
     limit: int = 3,
     *,
-    conn: sqlite3.Connection | None = None,
+    conn: psycopg.Connection | None = None,
 ) -> list[ActiveResearchRun]:
-    """Return the most recent in-flight runs, newest first, capped at ``limit``.
-
-    Combines guideline runs and doctor-finder runs into one ordered list.
-    The function is read-only and safe to call from a hot public endpoint.
-    """
+    """Return the most recent in-flight runs, newest first, capped at ``limit``."""
     if limit <= 0:
         return []
     owned = conn is None
     if owned:
         conn = get_connection()
     try:
-        # Per-store ``limit`` is an over-approximation; the union is then
-        # trimmed. A run in either store at position > limit is irrelevant
-        # because the union is also sorted by started_at.
         guideline = _rows_from_guideline_store(conn, limit)
         finder = _rows_from_doctor_finder_store(conn, limit)
         combined = _sorted_by_started_desc([*guideline, *finder])

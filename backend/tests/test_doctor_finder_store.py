@@ -1,4 +1,4 @@
-"""doctor_finder SQLite persistence for catalog and GET /run fallback."""
+"""doctor_finder Postgres persistence for catalog and GET /run fallback."""
 from __future__ import annotations
 
 import uuid
@@ -15,7 +15,7 @@ from backend.database import get_connection
 def _delete_run(execution_id: str) -> None:
     ensure_doctor_finder_run_results_schema()
     conn = get_connection()
-    conn.execute("DELETE FROM doctor_finder_run_results WHERE execution_id = ?", (execution_id,))
+    conn.execute("DELETE FROM doctor_finder_run_results WHERE execution_id = %s", (execution_id,))
     conn.commit()
     conn.close()
 
@@ -74,7 +74,7 @@ def test_repair_backfills_catalog_slug() -> None:
         repair_doctor_finder_catalog_slugs_from_disease_name()
         conn = get_connection()
         cur = conn.cursor()
-        cur.execute("SELECT catalog_slug FROM doctor_finder_run_results WHERE execution_id = ?", (eid,))
+        cur.execute("SELECT catalog_slug FROM doctor_finder_run_results WHERE execution_id = %s", (eid,))
         row = cur.fetchone()
         conn.close()
         assert row is not None

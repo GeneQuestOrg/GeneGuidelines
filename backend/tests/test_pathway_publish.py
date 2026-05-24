@@ -29,7 +29,7 @@ def _insert_isolated_pathway_catalog_disease(slug: str) -> None:
 
     conn = get_connection()
     cur = conn.cursor()
-    cur.execute("SELECT 1 FROM diseases WHERE slug = ?", (slug,))
+    cur.execute("SELECT 1 FROM diseases WHERE slug = %s", (slug,))
     if cur.fetchone():
         conn.close()
         return
@@ -40,7 +40,7 @@ def _insert_isolated_pathway_catalog_disease(slug: str) -> None:
             types_json, related_json, prevalence_text, status, status_by,
             status_date, ai_draft_date, open_prs, doctors_count, trials_count,
             coverage, accent, guideline_prompt_profile_json
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """,
         (
             slug,
@@ -74,8 +74,8 @@ def _delete_isolated_pathway_catalog_disease(slug: str) -> None:
 
     conn = get_connection()
     cur = conn.cursor()
-    cur.execute("DELETE FROM care_pathways WHERE disease_slug = ?", (slug,))
-    cur.execute("DELETE FROM diseases WHERE slug = ?", (slug,))
+    cur.execute("DELETE FROM care_pathways WHERE disease_slug = %s", (slug,))
+    cur.execute("DELETE FROM diseases WHERE slug = %s", (slug,))
     conn.commit()
     conn.close()
 

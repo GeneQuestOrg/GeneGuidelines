@@ -5,14 +5,12 @@ DB calls run in run_in_executor so they do not block the event loop.
 import asyncio
 import logging
 import time
-import sqlite3
 
 from fastapi import APIRouter, Depends, HTTPException
 
 from ..auth import require_api_key_if_set
 from .. import database as db
 from ..config import DB_PATH
-from ..database import SQLITE_TIMEOUT
 from ..agents.dynamic_output_schema import validate_output_schema_json
 from ..agents.runner import _dbg
 from ..models import (
@@ -91,25 +89,13 @@ def _edge_row_to_response(e):
 
 
 def _get_flow_keys_safe():
-    """Fetch flow_key. Force tuple rows (row_factory=None) so row[0] always works."""
-    conn = sqlite3.connect(DB_PATH, timeout=SQLITE_TIMEOUT)
-    conn.row_factory = None
-    cur = conn.cursor()
-    cur.execute("PRAGMA journal_mode = WAL")
-    cur.execute("SELECT DISTINCT flow_key FROM flow_definitions ORDER BY flow_key")
-    rows = cur.fetchall()
+    """Fetch distinct flow keys."""
+    conn = db.get_connection()
+    rows = conn.execute(
+        "SELECT DISTINCT flow_key FROM flow_definitions ORDER BY flow_key"
+    ).fetchall()
     conn.close()
-    return [str(r[0]) for r in rows]
-
-
-def _row_to_dict(cur, row):
-    """Row -> dict. row MUST be a tuple (conn.row_factory=None); otherwise row[i] on a dict raises KeyError."""
-    if cur.description is None:
-        return {}
-    col_names = [cur.description[i][0] for i in range(len(cur.description))]
-    if isinstance(row, (tuple, list)):
-        return dict(zip(col_names, row))
-    return {col_names[i]: row[col_names[i]] for i in range(len(col_names))}
+    return [str(r["flow_key"]) for r in rows]
 
 
 def _get_nodes_and_edges_safe(flow_key: str):
@@ -124,24 +110,22 @@ def _get_nodes_and_edges_safe(flow_key: str):
     db._ensure_merge_columns()
     db._ensure_integration_columns()
     db._ensure_flow_edge_label_column()
-    conn = sqlite3.connect(DB_PATH, timeout=SQLITE_TIMEOUT)
-    conn.row_factory = None
+    conn = db.get_connection()
     cur = conn.cursor()
-    cur.execute("PRAGMA journal_mode = WAL")
     cur.execute(
         """SELECT flow_key, node_id, node_type, label, description, prompt, loop_policy, execution_policy,
                   max_retry, version, updated_at, position_x, position_y, prompt_mode, model_name, output_schema_key, output_schema, agentic_step_close, python_source,
                   http_url, http_method, http_headers, http_body, rag_operation, rag_body_json,
                   merge_strategy, merge_fields, merge_key_field, integration_operation, integration_params_json, integration_credentials_json
-           FROM flow_definitions WHERE flow_key = ? ORDER BY id""",
+           FROM flow_definitions WHERE flow_key = %s ORDER BY id""",
         (flow_key,),
     )
-    nodes = [_row_to_dict(cur, r) for r in cur.fetchall()]
+    nodes = [dict(r) for r in cur.fetchall()]
     cur.execute(
-        "SELECT flow_key, source_node_id, target_node_id, label FROM flow_edges WHERE flow_key = ? ORDER BY id",
+        "SELECT flow_key, source_node_id, target_node_id, label FROM flow_edges WHERE flow_key = %s ORDER BY id",
         (flow_key,),
     )
-    edges = [_row_to_dict(cur, r) for r in cur.fetchall()]
+    edges = [dict(r) for r in cur.fetchall()]
     conn.close()
     return nodes, edges
 

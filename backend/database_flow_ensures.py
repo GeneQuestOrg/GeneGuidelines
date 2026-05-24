@@ -8,7 +8,7 @@ Imported back into database.py via a circular-import-safe pattern
 from __future__ import annotations
 
 import json
-import sqlite3
+import psycopg.errors as pg_errors
 from datetime import datetime
 from pathlib import Path
 
@@ -54,7 +54,7 @@ def _ensure_doctor_finder_flow() -> None:
                 http_url, http_method, http_headers, http_body, rag_operation, rag_body_json, step_name,
                 merge_strategy, merge_fields, merge_key_field,
                 integration_operation, integration_params_json, integration_credentials_json
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
             (
                 fd["flow_key"],
                 fd["node_id"],
@@ -91,10 +91,10 @@ def _ensure_doctor_finder_flow() -> None:
     for fe in edges:
         try:
             cur.execute(
-                "INSERT INTO flow_edges (flow_key, source_node_id, target_node_id) VALUES (?, ?, ?)",
+                "INSERT INTO flow_edges (flow_key, source_node_id, target_node_id) VALUES (%s, %s, %s) ON CONFLICT DO NOTHING",
                 (fe["flow_key"], fe["source_node_id"], fe["target_node_id"]),
             )
-        except sqlite3.IntegrityError:
+        except pg_errors.UniqueViolation:
             pass
     conn.commit()
     conn.close()
@@ -142,7 +142,7 @@ def _ensure_doctor_finder_geo_node() -> None:
             http_url, http_method, http_headers, http_body, rag_operation, rag_body_json, step_name,
             merge_strategy, merge_fields, merge_key_field,
             integration_operation, integration_params_json, integration_credentials_json
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
         (
             fd["flow_key"],
             fd["node_id"],
@@ -177,16 +177,16 @@ def _ensure_doctor_finder_geo_node() -> None:
         ),
     )
     cur.execute(
-        "DELETE FROM flow_edges WHERE flow_key = ? AND source_node_id = ? AND target_node_id = ?",
+        "DELETE FROM flow_edges WHERE flow_key = %s AND source_node_id = %s AND target_node_id = %s",
         ("doctor_finder", "df-2", "df-3"),
     )
     for src, tgt in (("df-2", "df-20"), ("df-20", "df-3")):
         try:
             cur.execute(
-                "INSERT INTO flow_edges (flow_key, source_node_id, target_node_id) VALUES (?, ?, ?)",
+                "INSERT INTO flow_edges (flow_key, source_node_id, target_node_id) VALUES (%s, %s, %s) ON CONFLICT DO NOTHING",
                 ("doctor_finder", src, tgt),
             )
-        except sqlite3.IntegrityError:
+        except pg_errors.UniqueViolation:
             pass
     conn.commit()
     conn.close()
@@ -198,7 +198,7 @@ _PARENT_PATHWAY_FLOW_DEFINITION_INSERT_SQL = """INSERT INTO flow_definitions (
                 http_url, http_method, http_headers, http_body, rag_operation, rag_body_json, step_name,
                 merge_strategy, merge_fields, merge_key_field,
                 integration_operation, integration_params_json, integration_credentials_json
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"""
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
 
 
 def _parent_pathway_flow_definition_insert_params(fd: dict, now: str) -> tuple:
@@ -261,10 +261,10 @@ def _ensure_parent_pathway_flow() -> None:
         ("submit_parent_pathway", "Medical", "auto", "operational", 1),
     ]
     for name, category, execution_mode, scope, enabled in pathway_tools:
-        cur.execute("SELECT id FROM tool_catalog WHERE name = ?", (name,))
+        cur.execute("SELECT id FROM tool_catalog WHERE name = %s", (name,))
         if cur.fetchone() is None:
             cur.execute(
-                "INSERT INTO tool_catalog (name, category, execution_mode, scope, enabled) VALUES (?, ?, ?, ?, ?)",
+                "INSERT INTO tool_catalog (name, category, execution_mode, scope, enabled) VALUES (%s, %s, %s, %s, %s)",
                 (name, category, execution_mode, scope, enabled),
             )
 
@@ -347,10 +347,10 @@ def _ensure_parent_pathway_flow() -> None:
     for src, tgt in edges:
         try:
             cur.execute(
-                "INSERT INTO flow_edges (flow_key, source_node_id, target_node_id) VALUES (?, ?, ?)",
+                "INSERT INTO flow_edges (flow_key, source_node_id, target_node_id) VALUES (%s, %s, %s) ON CONFLICT DO NOTHING",
                 ("parent_pathway", src, tgt),
             )
-        except sqlite3.IntegrityError:
+        except pg_errors.UniqueViolation:
             pass
     conn.commit()
     conn.close()
@@ -364,14 +364,14 @@ def _upgrade_parent_pathway_flow_add_plan_node() -> None:
     conn = get_connection()
     cur = conn.cursor()
     cur.execute(
-        "SELECT 1 FROM flow_definitions WHERE flow_key = ? AND node_id = ? LIMIT 1",
+        "SELECT 1 FROM flow_definitions WHERE flow_key = %s AND node_id = %s LIMIT 1",
         ("parent_pathway", "pp-plan"),
     )
     if cur.fetchone() is not None:
         conn.close()
         return
     cur.execute(
-        "SELECT 1 FROM flow_definitions WHERE flow_key = ? AND node_id = ? LIMIT 1",
+        "SELECT 1 FROM flow_definitions WHERE flow_key = %s AND node_id = %s LIMIT 1",
         ("parent_pathway", "pp-synth"),
     )
     if cur.fetchone() is None:
@@ -407,12 +407,12 @@ def _upgrade_parent_pathway_flow_add_plan_node() -> None:
         _parent_pathway_flow_definition_insert_params(fd, now),
     )
     cur.execute(
-        "DELETE FROM flow_edges WHERE flow_key = ? AND source_node_id = ? AND target_node_id = ?",
+        "DELETE FROM flow_edges WHERE flow_key = %s AND source_node_id = %s AND target_node_id = %s",
         ("parent_pathway", "pp-evidence", "pp-synth"),
     )
     for src, tgt in (("pp-evidence", "pp-plan"), ("pp-plan", "pp-synth")):
         cur.execute(
-            "INSERT OR IGNORE INTO flow_edges (flow_key, source_node_id, target_node_id) VALUES (?, ?, ?)",
+            "INSERT INTO flow_edges (flow_key, source_node_id, target_node_id) VALUES (%s, %s, %s) ON CONFLICT DO NOTHING",
             ("parent_pathway", src, tgt),
         )
     conn.commit()
@@ -428,7 +428,7 @@ def _sync_parent_pathway_synth_prompt_from_disk() -> None:
     conn = get_connection()
     cur = conn.cursor()
     cur.execute(
-        "SELECT prompt FROM flow_definitions WHERE flow_key = ? AND node_id = ?",
+        "SELECT prompt FROM flow_definitions WHERE flow_key = %s AND node_id = %s",
         ("parent_pathway", "pp-synth"),
     )
     row = cur.fetchone()
@@ -439,7 +439,7 @@ def _sync_parent_pathway_synth_prompt_from_disk() -> None:
         conn.close()
         return
     cur.execute(
-        "UPDATE flow_definitions SET prompt = ?, updated_at = ? WHERE flow_key = ? AND node_id = ?",
+        "UPDATE flow_definitions SET prompt = %s, updated_at = %s WHERE flow_key = %s AND node_id = %s",
         (text, datetime.now().isoformat(), "parent_pathway", "pp-synth"),
     )
     conn.commit()
@@ -455,7 +455,7 @@ def _sync_parent_pathway_plan_prompt_from_disk() -> None:
     conn = get_connection()
     cur = conn.cursor()
     cur.execute(
-        "SELECT prompt FROM flow_definitions WHERE flow_key = ? AND node_id = ?",
+        "SELECT prompt FROM flow_definitions WHERE flow_key = %s AND node_id = %s",
         ("parent_pathway", "pp-plan"),
     )
     row = cur.fetchone()
@@ -466,7 +466,7 @@ def _sync_parent_pathway_plan_prompt_from_disk() -> None:
         conn.close()
         return
     cur.execute(
-        "UPDATE flow_definitions SET prompt = ?, updated_at = ? WHERE flow_key = ? AND node_id = ?",
+        "UPDATE flow_definitions SET prompt = %s, updated_at = %s WHERE flow_key = %s AND node_id = %s",
         (text, datetime.now().isoformat(), "parent_pathway", "pp-plan"),
     )
     conn.commit()

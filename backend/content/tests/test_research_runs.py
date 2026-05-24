@@ -1,58 +1,31 @@
-"""Unit tests for the public ``research-runs`` projection.
-
-Each test builds its own in-memory SQLite database with just the two
-run-state tables the projection reads, so the assertions stay independent
-of any cross-cutting fixture state.
-"""
+"""Unit tests for the public ``research-runs`` projection."""
 
 from __future__ import annotations
 
-import sqlite3
 from datetime import datetime, timezone
 
+import psycopg
 import pytest
 
 from backend.content import research_runs
+from backend.db import get_connection
+from backend.doctor_finder_store import ensure_doctor_finder_run_results_schema
+from backend.guideline_run_store import ensure_guideline_run_results_schema
 
 
 @pytest.fixture
-def conn() -> sqlite3.Connection:
-    conn = sqlite3.connect(":memory:")
-    conn.row_factory = sqlite3.Row
-    conn.executescript(
-        """
-        CREATE TABLE guideline_run_results (
-            execution_id TEXT PRIMARY KEY,
-            pipeline TEXT NOT NULL,
-            flow_key TEXT,
-            disease_slug TEXT,
-            ticket_id INTEGER,
-            label TEXT,
-            output TEXT,
-            error TEXT,
-            quality_json TEXT,
-            done INTEGER NOT NULL DEFAULT 0,
-            started_at TEXT,
-            finished_at TEXT
-        );
-        CREATE TABLE doctor_finder_run_results (
-            execution_id TEXT PRIMARY KEY,
-            disease_name TEXT NOT NULL,
-            catalog_slug TEXT,
-            doctor_report_json TEXT,
-            error TEXT,
-            done INTEGER NOT NULL DEFAULT 0,
-            started_at TEXT,
-            finished_at TEXT
-        );
-        """
-    )
-    yield conn
-    conn.close()
+def conn() -> psycopg.Connection:
+    ensure_guideline_run_results_schema()
+    ensure_doctor_finder_run_results_schema()
+    c = get_connection()
+    c.execute("TRUNCATE guideline_run_results, doctor_finder_run_results")
+    c.commit()
+    yield c
+    c.close()
 
 
 def _insert_guideline_run(
-    conn: sqlite3.Connection,
+    conn: psycopg.Connection,
     *,
     execution_id: str,
     disease_slug: str | None = "fd",
@@ -67,7 +40,15 @@ def _insert_guideline_run(
         INSERT INTO guideline_run_results
           (execution_id, pipeline, flow_key, disease_slug, label,
            done, started_at, finished_at)
-        VALUES (?, 'guideline', ?, ?, ?, ?, ?, ?)
+        VALUES (%s, 'guideline', %s, %s, %s, %s, %s, %s)
+        ON CONFLICT (execution_id) DO UPDATE SET
+          pipeline = EXCLUDED.pipeline,
+          flow_key = EXCLUDED.flow_key,
+          disease_slug = EXCLUDED.disease_slug,
+          label = EXCLUDED.label,
+          done = EXCLUDED.done,
+          started_at = EXCLUDED.started_at,
+          finished_at = EXCLUDED.finished_at
         """,
         (
             execution_id,
@@ -79,10 +60,11 @@ def _insert_guideline_run(
             finished_at,
         ),
     )
+    conn.commit()
 
 
 def _insert_doctor_finder_run(
-    conn: sqlite3.Connection,
+    conn: psycopg.Connection,
     *,
     execution_id: str,
     disease_name: str = "fibrous dysplasia",
@@ -96,10 +78,17 @@ def _insert_doctor_finder_run(
         INSERT INTO doctor_finder_run_results
           (execution_id, disease_name, catalog_slug,
            done, started_at, finished_at)
-        VALUES (?, ?, ?, ?, ?, ?)
+        VALUES (%s, %s, %s, %s, %s, %s)
+        ON CONFLICT (execution_id) DO UPDATE SET
+          disease_name = EXCLUDED.disease_name,
+          catalog_slug = EXCLUDED.catalog_slug,
+          done = EXCLUDED.done,
+          started_at = EXCLUDED.started_at,
+          finished_at = EXCLUDED.finished_at
         """,
         (execution_id, disease_name, catalog_slug, done, started_at, finished_at),
     )
+    conn.commit()
 
 
 def test_empty_when_no_runs(conn):
@@ -127,7 +116,6 @@ def test_combines_guideline_and_finder(conn):
     _insert_guideline_run(conn, execution_id="g1", started_at="2026-05-17T22:00:00+00:00")
     _insert_doctor_finder_run(conn, execution_id="d1", started_at="2026-05-17T22:10:00+00:00")
     runs = research_runs.list_active_runs(conn=conn)
-    # Doctor finder is newer → first.
     assert [r.run_id for r in runs] == ["d1", "g1"]
     assert [r.flow_key for r in runs] == ["doctor_finder", "pubmed"]
 
@@ -185,8 +173,10 @@ def test_to_payload_shape(conn):
 
 
 def test_missing_doctor_finder_table_is_tolerated(conn):
-    conn.execute("DROP TABLE doctor_finder_run_results")
+    conn.execute("DROP TABLE IF EXISTS doctor_finder_run_results")
+    conn.commit()
     _insert_guideline_run(conn, execution_id="g1")
     runs = research_runs.list_active_runs(conn=conn)
     assert len(runs) == 1
     assert runs[0].run_id == "g1"
+    ensure_doctor_finder_run_results_schema()

@@ -167,14 +167,14 @@ def _persist_therapies(disease_slug: str, therapies: list[_Therapy]) -> int:
             if status not in valid or not t.name.strip():
                 continue
             cur.execute(
-                """SELECT id FROM therapies WHERE disease_slug = ? AND LOWER(name) = LOWER(?)""",
+                """SELECT id FROM therapies WHERE disease_slug = %s AND LOWER(name) = LOWER(%s)""",
                 (disease_slug, t.name.strip()),
             )
             if cur.fetchone() is not None:
                 continue
             cur.execute(
                 """INSERT INTO therapies (disease_slug, name, status, note, sort_order)
-                   VALUES (?, ?, ?, ?, ?)""",
+                   VALUES (%s, %s, %s, %s, %s)""",
                 (disease_slug, t.name.strip(), status, t.note.strip(), t.sort_order),
             )
             inserted += 1
@@ -194,13 +194,13 @@ def _log_run(execution_id: str, disease_slug: str, status: str, error: str | Non
     cur = conn.cursor()
     now = datetime.now(timezone.utc).isoformat()
     try:
-        cur.execute("SELECT 1 FROM guideline_run_results WHERE execution_id = ?", (execution_id,))
+        cur.execute("SELECT 1 FROM guideline_run_results WHERE execution_id = %s", (execution_id,))
         if cur.fetchone() is None:
             cur.execute(
                 """INSERT INTO guideline_run_results
                    (execution_id, pipeline, flow_key, disease_slug, label,
                     done, started_at, finished_at, error)
-                   VALUES (?, 'therapies_finder', 'therapies_finder', ?, ?, ?, ?, ?, ?)""",
+                   VALUES (%s, 'therapies_finder', 'therapies_finder', %s, %s, %s, %s, %s, %s)""",
                 (
                     execution_id,
                     disease_slug,
@@ -214,8 +214,8 @@ def _log_run(execution_id: str, disease_slug: str, status: str, error: str | Non
         else:
             cur.execute(
                 """UPDATE guideline_run_results
-                   SET done = ?, finished_at = ?, error = COALESCE(?, error)
-                   WHERE execution_id = ?""",
+                   SET done = %s, finished_at = %s, error = COALESCE(%s, error)
+                   WHERE execution_id = %s""",
                 (
                     1 if status in ("ready", "failed") else 0,
                     now if status in ("ready", "failed") else None,

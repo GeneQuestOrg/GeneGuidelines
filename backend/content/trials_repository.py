@@ -9,10 +9,11 @@ from __future__ import annotations
 
 from typing import Iterable, Protocol, Sequence
 
-from sqlalchemy import collate, select
+from sqlalchemy import select
 from sqlalchemy.engine import Engine
 
 from ..shared.persistence.base_repo import BaseSqlalchemyRepo
+from ..shared.persistence.dialect import nocase_order
 from ..shared.persistence.schema import disease_trials, trials as trials_table
 from .trials_models import Trial, trial_from_row
 
@@ -58,7 +59,7 @@ class SqlaTrialRepo(BaseSqlalchemyRepo):
             .order_by(
                 # Active studies first, then by phase descending.
                 trials_table.c.status.notin_(ACTIVE_STATUSES),
-                collate(trials_table.c.phase, "NOCASE"),
+                nocase_order(trials_table.c.phase),
             )
         )
         with self._conn() as conn:
@@ -68,7 +69,7 @@ class SqlaTrialRepo(BaseSqlalchemyRepo):
         return [trial_from_row(dict(r), diseases=groups.get(str(r["nct"]), ())) for r in rows]
 
     def list_all(self) -> list[Trial]:
-        stmt = select(trials_table).order_by(collate(trials_table.c.title, "NOCASE"))
+        stmt = select(trials_table).order_by(nocase_order(trials_table.c.title))
         with self._conn() as conn:
             rows = conn.execute(stmt).mappings().all()
         ncts = [str(r["nct"]) for r in rows]

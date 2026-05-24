@@ -1,40 +1,23 @@
 """
-SQLite database – clean schema, init, seed from JSON (only when tables are empty).
+Postgres database – schema, init, seed from JSON (only when tables are empty).
 """
 import json
-import sqlite3
 import re
 from datetime import datetime
 from pathlib import Path
 
+import psycopg.errors as pg_errors
+
 try:
-    from .config import DB_PATH, SEED_DATA_PATH
+    from .config import SEED_DATA_PATH
+    from .db import get_connection, table_columns
     from .flows.pubmed.code_nodes import PM4_BUILD_SOURCE, PM5_SOURCE, PM_GATE_SOURCE, PM_MERGE_SOURCE
     from .guideline_prompt_profile import append_disease_prompt_block
 except ImportError:
-    from config import DB_PATH, SEED_DATA_PATH
+    from config import SEED_DATA_PATH
+    from db import get_connection, table_columns
     from flows.pubmed.code_nodes import PM4_BUILD_SOURCE, PM5_SOURCE, PM_GATE_SOURCE, PM_MERGE_SOURCE
     from guideline_prompt_profile import append_disease_prompt_block
-
-
-def _row_to_dict(cursor, row):
-    """Row factory: zwraca dict z kluczami = nazwy kolumn (dla JSON / Pydantic)."""
-    if cursor.description is None:
-        return {}
-    return {cursor.description[i][0]: row[i] for i in range(len(row))}
-
-
-# Higher timeout + WAL reduce "database is locked" when multiple requests hit DB (e.g. add node + refresh).
-SQLITE_TIMEOUT = 20.0
-
-
-def get_connection():
-    """Return SQLite connection. WAL + higher timeout reduce lock contention."""
-    conn = sqlite3.connect(DB_PATH, timeout=SQLITE_TIMEOUT)
-    conn.row_factory = _row_to_dict
-    conn.execute("PRAGMA foreign_keys = ON")
-    conn.execute("PRAGMA journal_mode = WAL")
-    return conn
 
 
 # Circular-import safe: database_flow_ensures imports get_connection which is already defined above.
@@ -69,7 +52,7 @@ def init_db():
 
     cur.execute("""
         CREATE TABLE IF NOT EXISTS tickets (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             title TEXT NOT NULL,
             description TEXT NOT NULL,
             status TEXT NOT NULL DEFAULT 'not_started',
@@ -84,7 +67,7 @@ def init_db():
 
     cur.execute("""
         CREATE TABLE IF NOT EXISTS comments (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             ticket_id INTEGER NOT NULL REFERENCES tickets(id) ON DELETE CASCADE,
             author TEXT NOT NULL,
             content TEXT NOT NULL,
@@ -94,7 +77,7 @@ def init_db():
 
     cur.execute("""
         CREATE TABLE IF NOT EXISTS tool_catalog (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             name TEXT NOT NULL UNIQUE,
             category TEXT NOT NULL DEFAULT 'General',
             execution_mode TEXT NOT NULL DEFAULT 'auto',
@@ -105,7 +88,7 @@ def init_db():
 
     cur.execute("""
         CREATE TABLE IF NOT EXISTS tool_requests (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             name TEXT NOT NULL,
             status TEXT NOT NULL DEFAULT 'requested',
             similarity_key TEXT,
@@ -119,7 +102,7 @@ def init_db():
 
     cur.execute("""
         CREATE TABLE IF NOT EXISTS tool_implementations (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             name TEXT NOT NULL,
             status TEXT NOT NULL DEFAULT 'pr_created',
             pr_number TEXT,
@@ -130,7 +113,7 @@ def init_db():
 
     cur.execute("""
         CREATE TABLE IF NOT EXISTS flow_definitions (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             flow_key TEXT NOT NULL,
             node_id TEXT NOT NULL,
             node_type TEXT NOT NULL,
@@ -160,7 +143,7 @@ def init_db():
 
     cur.execute("""
         CREATE TABLE IF NOT EXISTS flow_edges (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             flow_key TEXT NOT NULL,
             source_node_id TEXT NOT NULL,
             target_node_id TEXT NOT NULL,
@@ -269,10 +252,10 @@ def _ensure_pubmed_flow():
         ("pubmed_browser_search", "Medical", "auto", "operational", 1),
     ]
     for name, category, execution_mode, scope, enabled in required_tools:
-        cur.execute("SELECT id FROM tool_catalog WHERE name = ?", (name,))
+        cur.execute("SELECT id FROM tool_catalog WHERE name = %s", (name,))
         if cur.fetchone() is None:
             cur.execute(
-                "INSERT INTO tool_catalog (name, category, execution_mode, scope, enabled) VALUES (?, ?, ?, ?, ?)",
+                "INSERT INTO tool_catalog (name, category, execution_mode, scope, enabled) VALUES (%s, %s, %s, %s, %s) RETURNING id",
                 (name, category, execution_mode, scope, enabled),
             )
 
@@ -1128,7 +1111,7 @@ def _ensure_pubmed_flow():
         if nid in _nodes_with_disease_prompt and node.get("prompt"):
             node["prompt"] = append_disease_prompt_block(str(node["prompt"]))
     for node in pubmed_nodes:
-        cur.execute("SELECT 1 FROM flow_definitions WHERE flow_key = 'pubmed' AND node_id = ? LIMIT 1", (node["node_id"],))
+        cur.execute("SELECT 1 FROM flow_definitions WHERE flow_key = 'pubmed' AND node_id = %s LIMIT 1", (node["node_id"],))
         exists = cur.fetchone() is not None
         params = (
             node["node_type"],
@@ -1157,11 +1140,11 @@ def _ensure_pubmed_flow():
         if exists:
             cur.execute(
                 """UPDATE flow_definitions
-                   SET node_type = ?, label = ?, description = ?, prompt = ?, max_retry = ?, version = ?, updated_at = ?,
-                       position_x = ?, position_y = ?, prompt_mode = ?, model_name = ?, output_schema_key = ?, output_schema = ?,
-                       agentic_step_close = ?, python_source = ?, http_url = ?, http_method = ?, http_headers = ?, http_body = ?,
-                       rag_operation = ?, rag_body_json = ?
-                   WHERE flow_key = 'pubmed' AND node_id = ?""",
+                   SET node_type = %s, label = %s, description = %s, prompt = %s, max_retry = %s, version = %s, updated_at = %s,
+                       position_x = %s, position_y = %s, prompt_mode = %s, model_name = %s, output_schema_key = %s, output_schema = %s,
+                       agentic_step_close = %s, python_source = %s, http_url = %s, http_method = %s, http_headers = %s, http_body = %s,
+                       rag_operation = %s, rag_body_json = %s
+                   WHERE flow_key = 'pubmed' AND node_id = %s""",
                 params,
             )
         else:
@@ -1170,7 +1153,7 @@ def _ensure_pubmed_flow():
                     flow_key, node_id, node_type, label, description, prompt, loop_policy, execution_policy, max_retry, version, updated_at,
                     position_x, position_y, prompt_mode, model_name, output_schema_key, output_schema, agentic_step_close, python_source,
                     http_url, http_method, http_headers, http_body, rag_operation, rag_body_json
-                ) VALUES (?, ?, ?, ?, ?, ?, 'none', 'auto', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                ) VALUES (%s, %s, %s, %s, %s, %s, 'none', 'auto', %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
                 (
                     "pubmed",
                     node["node_id"],
@@ -1200,16 +1183,15 @@ def _ensure_pubmed_flow():
         eval_sources = node.get("evaluation_source_nodes_json")
         if eval_sources and node.get("node_id") == "pm_eval":
             cur.execute(
-                """UPDATE flow_definitions SET evaluation_source_nodes_json = ?
+                """UPDATE flow_definitions SET evaluation_source_nodes_json = %s
                    WHERE flow_key = 'pubmed' AND node_id = 'pm_eval'""",
                 (eval_sources,),
             )
 
     valid_node_ids = tuple(n["node_id"] for n in pubmed_nodes)
-    placeholders = ",".join("?" for _ in valid_node_ids)
     cur.execute(
-        f"DELETE FROM flow_definitions WHERE flow_key = 'pubmed' AND node_id NOT IN ({placeholders})",
-        valid_node_ids,
+        "DELETE FROM flow_definitions WHERE flow_key = 'pubmed' AND NOT (node_id = ANY(%s))",
+        (list(valid_node_ids),),
     )
 
     cur.execute("DELETE FROM flow_edges WHERE flow_key = 'pubmed'")
@@ -1257,7 +1239,7 @@ def _ensure_pubmed_flow():
         ("pubmed", "pm_fix", "end"),
     ]
     for e in edges:
-        cur.execute("INSERT INTO flow_edges (flow_key, source_node_id, target_node_id) VALUES (?, ?, ?)", e)
+        cur.execute("INSERT INTO flow_edges (flow_key, source_node_id, target_node_id) VALUES (%s, %s, %s) ON CONFLICT DO NOTHING", e)
     conn.commit()
     conn.close()
 
@@ -1268,9 +1250,9 @@ def _ensure_pubmed_seed_ticket_wording() -> None:
     cur = conn.cursor()
     cur.execute(
         """UPDATE tickets
-           SET title = ?,
-               description = ?,
-               updated_at = ?
+           SET title = %s,
+               description = %s,
+               updated_at = %s
            WHERE category = 'PubMed_research'
              AND title = 'Fibrous dysplasia recent research'""",
         (
@@ -1293,7 +1275,7 @@ def run_seed_if_empty():
         return
     path = Path(SEED_DATA_PATH)
     if not path.exists():
-        cur.execute("INSERT INTO _seed_done (version) VALUES (?)", ("1",))
+        cur.execute("INSERT INTO _seed_done (version) VALUES (%s)", ("1",))
         conn.commit()
         conn.close()
         return
@@ -1303,7 +1285,7 @@ def run_seed_if_empty():
     for t in data.get("tickets", []):
         cur.execute(
             """INSERT INTO tickets (title, description, status, resolution_summary, diagnostic_steps, reporter_name, created_at, updated_at, category)
-               VALUES (?, ?, 'not_started', NULL, NULL, ?, ?, ?, ?)""",
+               VALUES (%s, %s, 'not_started', NULL, NULL, %s, %s, %s, %s)""",
             (
                 t["title"],
                 t["description"],
@@ -1317,7 +1299,7 @@ def run_seed_if_empty():
 
     for c in data.get("comments", []):
         cur.execute(
-            "INSERT INTO comments (ticket_id, author, content, created_at) VALUES (?, ?, ?, ?)",
+            "INSERT INTO comments (ticket_id, author, content, created_at) VALUES (%s, %s, %s, %s)",
             (c["ticket_id"], c["author"], c["content"], now),
         )
     conn.commit()
@@ -1327,8 +1309,9 @@ def run_seed_if_empty():
         # ensure_*_flow time, so the seed_data.json list can re-add overlapping
         # rows. OR IGNORE makes the seed idempotent.
         cur.execute(
-            """INSERT OR IGNORE INTO tool_catalog (name, category, execution_mode, scope, enabled)
-               VALUES (?, ?, ?, ?, ?)""",
+            """INSERT INTO tool_catalog (name, category, execution_mode, scope, enabled)
+               VALUES (%s, %s, %s, %s, %s)
+               ON CONFLICT (name) DO NOTHING""",
             (
                 tc["name"],
                 tc.get("category", "General"),
@@ -1344,11 +1327,12 @@ def run_seed_if_empty():
         # already seed parent_pathway / doctor_finder flows on init, so re-applying
         # seed_data.json on the same DB must be idempotent.
         cur.execute(
-            """INSERT OR IGNORE INTO flow_definitions (
+            """INSERT INTO flow_definitions (
                 flow_key, node_id, node_type, label, description, prompt, loop_policy, execution_policy,
                 max_retry, version, updated_at, prompt_mode, model_name, output_schema_key, output_schema, agentic_step_close, python_source,
                 http_url, http_method, http_headers, http_body, rag_operation, rag_body_json
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            ON CONFLICT (flow_key, node_id) DO NOTHING""",
             (
                 fd["flow_key"],
                 fd["node_id"],
@@ -1379,12 +1363,12 @@ def run_seed_if_empty():
 
     for fe in data.get("flow_edges", []):
         cur.execute(
-            "INSERT OR IGNORE INTO flow_edges (flow_key, source_node_id, target_node_id) VALUES (?, ?, ?)",
+            "INSERT INTO flow_edges (flow_key, source_node_id, target_node_id) VALUES (%s, %s, %s) ON CONFLICT DO NOTHING",
             (fe["flow_key"], fe["source_node_id"], fe["target_node_id"]),
         )
     conn.commit()
 
-    cur.execute("INSERT INTO _seed_done (version) VALUES (?)", ("1",))
+    cur.execute("INSERT INTO _seed_done (version) VALUES (%s)", ("1",))
     conn.commit()
     conn.close()
     _ensure_flow_texts_english()
@@ -1409,7 +1393,7 @@ def get_ticket_by_id(ticket_id: int):
     conn = get_connection()
     cur = conn.cursor()
     cur.execute(
-        "SELECT id, title, description, status, resolution_summary, diagnostic_steps, reporter_name, created_at, updated_at, category FROM tickets WHERE id = ?",
+        "SELECT id, title, description, status, resolution_summary, diagnostic_steps, reporter_name, created_at, updated_at, category FROM tickets WHERE id = %s",
         (ticket_id,),
     )
     row = cur.fetchone()
@@ -1429,10 +1413,10 @@ def create_ticket(
     cur = conn.cursor()
     cur.execute(
         """INSERT INTO tickets (title, description, status, resolution_summary, diagnostic_steps, reporter_name, created_at, updated_at, category)
-           VALUES (?, ?, 'not_started', NULL, NULL, ?, ?, ?, ?)""",
+           VALUES (%s, %s, 'not_started', NULL, NULL, %s, %s, %s, %s) RETURNING id""",
         (title, description, reporter_name, now, now, category),
     )
-    new_id = cur.lastrowid
+    new_id = cur.fetchone()["id"]
     conn.commit()
     conn.close()
     return new_id
@@ -1452,7 +1436,7 @@ def update_ticket_status(
     cur = conn.cursor()
     steps_text = "\n".join(steps_taken) if steps_taken else None
     cur.execute(
-        """UPDATE tickets SET resolution_summary = ?, status = ?, diagnostic_steps = ?, updated_at = ? WHERE id = ?""",
+        """UPDATE tickets SET resolution_summary = %s, status = %s, diagnostic_steps = %s, updated_at = %s WHERE id = %s""",
         (summary or None, status, steps_text, now, ticket_id),
     )
     ok = cur.rowcount > 0
@@ -1478,34 +1462,34 @@ def update_ticket(
     now = datetime.now().isoformat()
     conn = get_connection()
     cur = conn.cursor()
-    updates = ["updated_at = ?"]
+    updates = ["updated_at = %s"]
     params = [now]
     if title is not None:
-        updates.append("title = ?")
+        updates.append("title = %s")
         params.append(title)
     if description is not None:
-        updates.append("description = ?")
+        updates.append("description = %s")
         params.append(description)
     if status is not None:
-        updates.append("status = ?")
+        updates.append("status = %s")
         params.append(status)
     if resolution_summary is not None:
-        updates.append("resolution_summary = ?")
+        updates.append("resolution_summary = %s")
         params.append(resolution_summary)
     if diagnostic_steps is not None:
-        updates.append("diagnostic_steps = ?")
+        updates.append("diagnostic_steps = %s")
         params.append(diagnostic_steps)
     if reporter_name is not None:
-        updates.append("reporter_name = ?")
+        updates.append("reporter_name = %s")
         params.append(reporter_name)
     if category is not None:
-        updates.append("category = ?")
+        updates.append("category = %s")
         params.append(category)
     if len(params) == 1:
         conn.close()
         return True
     params.append(ticket_id)
-    cur.execute(f"UPDATE tickets SET {', '.join(updates)} WHERE id = ?", params)
+    cur.execute(f"UPDATE tickets SET {', '.join(updates)} WHERE id = %s", params)
     ok = cur.rowcount > 0
     conn.commit()
     conn.close()
@@ -1518,7 +1502,7 @@ def reset_all_tickets_to_not_started() -> int:
     conn = get_connection()
     cur = conn.cursor()
     cur.execute(
-        "UPDATE tickets SET status = ?, resolution_summary = NULL, diagnostic_steps = NULL, updated_at = ?",
+        "UPDATE tickets SET status = %s, resolution_summary = NULL, diagnostic_steps = NULL, updated_at = %s",
         ("not_started", now),
     )
     n = cur.rowcount
@@ -1531,8 +1515,8 @@ def delete_ticket(ticket_id: int) -> bool:
     """Delete ticket. CASCADE removes comments. tool_requests.ticket_id set to NULL."""
     conn = get_connection()
     cur = conn.cursor()
-    cur.execute("UPDATE tool_requests SET ticket_id = NULL, updated_at = ? WHERE ticket_id = ?", (datetime.now().isoformat(), ticket_id))
-    cur.execute("DELETE FROM tickets WHERE id = ?", (ticket_id,))
+    cur.execute("UPDATE tool_requests SET ticket_id = NULL, updated_at = %s WHERE ticket_id = %s", (datetime.now().isoformat(), ticket_id))
+    cur.execute("DELETE FROM tickets WHERE id = %s", (ticket_id,))
     ok = cur.rowcount > 0
     conn.commit()
     conn.close()
@@ -1546,7 +1530,7 @@ def get_comments_for_ticket(ticket_id: int):
     conn = get_connection()
     cur = conn.cursor()
     cur.execute(
-        "SELECT id, ticket_id, author, content, created_at FROM comments WHERE ticket_id = ? ORDER BY created_at, id",
+        "SELECT id, ticket_id, author, content, created_at FROM comments WHERE ticket_id = %s ORDER BY created_at, id",
         (ticket_id,),
     )
     rows = cur.fetchall()
@@ -1560,7 +1544,7 @@ def add_comment(ticket_id: int, author: str, content: str):
     conn = get_connection()
     cur = conn.cursor()
     cur.execute(
-        "INSERT INTO comments (ticket_id, author, content, created_at) VALUES (?, ?, ?, ?)",
+        "INSERT INTO comments (ticket_id, author, content, created_at) VALUES (%s, %s, %s, %s)",
         (ticket_id, author, content, now),
     )
     conn.commit()
@@ -1575,7 +1559,7 @@ def get_tool_requests(ticket_id: int | None = None):
     cur = conn.cursor()
     if ticket_id is not None:
         cur.execute(
-            "SELECT id, name, status, similarity_key, note, ticket_id, builder_agent_id, created_at, updated_at FROM tool_requests WHERE ticket_id = ? ORDER BY id",
+            "SELECT id, name, status, similarity_key, note, ticket_id, builder_agent_id, created_at, updated_at FROM tool_requests WHERE ticket_id = %s ORDER BY id",
             (ticket_id,),
         )
     else:
@@ -1611,7 +1595,7 @@ def add_tool_request(
     cur = conn.cursor()
     cur.execute(
         """SELECT id, name FROM tool_requests
-           WHERE ((? IS NULL AND ticket_id IS NULL) OR ticket_id = ?)
+           WHERE ((%s IS NULL AND ticket_id IS NULL) OR ticket_id = %s)
            AND status IN ('requested', 'in_progress')
            ORDER BY id""",
         (ticket_id, ticket_id),
@@ -1631,10 +1615,10 @@ def add_tool_request(
     now = datetime.now().isoformat()
     cur.execute(
         """INSERT INTO tool_requests (name, status, note, ticket_id, created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?)""",
+           VALUES (%s, %s, %s, %s, %s, %s) RETURNING id""",
         (name, status, note or "", ticket_id, now, now),
     )
-    new_id = cur.lastrowid
+    new_id = cur.fetchone()["id"]
     conn.commit()
     conn.close()
     return new_id
@@ -1649,8 +1633,7 @@ def delete_tool_catalog_by_names(names: list[str]) -> int:
         return 0
     conn = get_connection()
     cur = conn.cursor()
-    placeholders = ", ".join(["?"] * len(cleaned))
-    cur.execute(f"DELETE FROM tool_catalog WHERE name IN ({placeholders})", cleaned)
+    cur.execute("DELETE FROM tool_catalog WHERE name = ANY(%s)", (cleaned,))
     n = cur.rowcount
     conn.commit()
     conn.close()
@@ -1662,7 +1645,7 @@ def get_tool_request_by_id(request_id: int):
     conn = get_connection()
     cur = conn.cursor()
     cur.execute(
-        "SELECT id, name, status, similarity_key, note, ticket_id, builder_agent_id, created_at, updated_at FROM tool_requests WHERE id = ?",
+        "SELECT id, name, status, similarity_key, note, ticket_id, builder_agent_id, created_at, updated_at FROM tool_requests WHERE id = %s",
         (request_id,),
     )
     row = cur.fetchone()
@@ -1679,8 +1662,8 @@ def claim_tool_request(request_id: int, builder_agent_id: str) -> dict:
     conn = get_connection()
     cur = conn.cursor()
     cur.execute(
-        "UPDATE tool_requests SET status = 'in_progress', builder_agent_id = ?, updated_at = ? "
-        "WHERE id = ? AND status = 'requested'",
+        "UPDATE tool_requests SET status = 'in_progress', builder_agent_id = %s, updated_at = %s "
+        "WHERE id = %s AND status = 'requested'",
         (builder_agent_id, now, request_id),
     )
     if cur.rowcount != 1:
@@ -1690,7 +1673,7 @@ def claim_tool_request(request_id: int, builder_agent_id: str) -> dict:
     conn.commit()
     cur.execute(
         "SELECT id, name, status, similarity_key, note, ticket_id, builder_agent_id, created_at, updated_at "
-        "FROM tool_requests WHERE id = ?",
+        "FROM tool_requests WHERE id = %s",
         (request_id,),
     )
     row = cur.fetchone()
@@ -1715,24 +1698,24 @@ def register_tool_status(
     conn = get_connection()
     cur = conn.cursor()
     cur.execute(
-        "UPDATE tool_requests SET status = ?, similarity_key = COALESCE(?, similarity_key), updated_at = ? "
-        "WHERE id = ?",
+        "UPDATE tool_requests SET status = %s, similarity_key = COALESCE(%s, similarity_key), updated_at = %s "
+        "WHERE id = %s",
         (status, similarity_key, now, request_id),
     )
     ok = cur.rowcount == 1
     conn.commit()
     if ok and (pr_url or status in ("ready_for_pr", "pr_created")):
         name = (implemented_name or "").strip() or f"request#{request_id}"
-        cur.execute("SELECT id FROM tool_implementations WHERE name = ? ORDER BY id LIMIT 1", (name,))
+        cur.execute("SELECT id FROM tool_implementations WHERE name = %s ORDER BY id LIMIT 1", (name,))
         existing = cur.fetchone()
         if existing and existing.get("id") is not None:
             cur.execute(
-                "UPDATE tool_implementations SET status = ?, pr_url = COALESCE(?, pr_url) WHERE id = ?",
+                "UPDATE tool_implementations SET status = %s, pr_url = COALESCE(%s, pr_url) WHERE id = %s",
                 (status, pr_url, existing["id"]),
             )
         else:
             cur.execute(
-                "INSERT INTO tool_implementations (name, status, pr_number, pr_url, created_at) VALUES (?, ?, ?, ?, ?)",
+                "INSERT INTO tool_implementations (name, status, pr_number, pr_url, created_at) VALUES (%s, %s, %s, %s, %s)",
                 (name, status, None, pr_url, now),
             )
         conn.commit()
@@ -1798,15 +1781,15 @@ def add_tool_to_catalog(
         return None
     conn = get_connection()
     cur = conn.cursor()
-    cur.execute("SELECT id FROM tool_catalog WHERE name = ?", (name,))
+    cur.execute("SELECT id FROM tool_catalog WHERE name = %s", (name,))
     if cur.fetchone():
         conn.close()
         return None
     cur.execute(
-        "INSERT INTO tool_catalog (name, category, execution_mode, scope, enabled) VALUES (?, ?, ?, ?, ?)",
+        "INSERT INTO tool_catalog (name, category, execution_mode, scope, enabled) VALUES (%s, %s, %s, %s, %s) RETURNING id",
         (name, category or "General", execution_mode or "auto", scope or "operational", 1 if enabled else 0),
     )
-    new_id = cur.lastrowid
+    new_id = cur.fetchone()["id"]
     conn.commit()
     conn.close()
     return new_id
@@ -1832,12 +1815,12 @@ def get_tool_catalog_for_scope(scope: str, enabled_only: bool = True):
     scope_val = (scope or "operational").strip()
     if enabled_only:
         cur.execute(
-            "SELECT id, name, category, execution_mode, scope, enabled FROM tool_catalog WHERE enabled = 1 AND scope = ? ORDER BY id",
+            "SELECT id, name, category, execution_mode, scope, enabled FROM tool_catalog WHERE enabled = 1 AND scope = %s ORDER BY id",
             (scope_val,),
         )
     else:
         cur.execute(
-            "SELECT id, name, category, execution_mode, scope, enabled FROM tool_catalog WHERE scope = ? ORDER BY id",
+            "SELECT id, name, category, execution_mode, scope, enabled FROM tool_catalog WHERE scope = %s ORDER BY id",
             (scope_val,),
         )
     rows = cur.fetchall()
@@ -1850,7 +1833,7 @@ def get_tool_catalog_by_id(catalog_id: int):
     conn = get_connection()
     cur = conn.cursor()
     cur.execute(
-        "SELECT id, name, category, execution_mode, scope, enabled FROM tool_catalog WHERE id = ?",
+        "SELECT id, name, category, execution_mode, scope, enabled FROM tool_catalog WHERE id = %s",
         (catalog_id,),
     )
     row = cur.fetchone()
@@ -1864,7 +1847,7 @@ def update_tool_catalog_execution_mode(catalog_id: int, execution_mode: str) -> 
         return False
     conn = get_connection()
     cur = conn.cursor()
-    cur.execute("UPDATE tool_catalog SET execution_mode = ? WHERE id = ?", (execution_mode, catalog_id))
+    cur.execute("UPDATE tool_catalog SET execution_mode = %s WHERE id = %s", (execution_mode, catalog_id))
     ok = cur.rowcount > 0
     conn.commit()
     conn.close()
@@ -1917,13 +1900,13 @@ def _backfill_tool_implementations_from_requests() -> None:
         req_name = r.get("name") or ""
         status = r.get("status") or "ready_for_pr"
         impl_name = _to_tool_function_name(req_name)
-        cur.execute("SELECT id FROM tool_implementations WHERE name = ? ORDER BY id LIMIT 1", (impl_name,))
+        cur.execute("SELECT id FROM tool_implementations WHERE name = %s ORDER BY id LIMIT 1", (impl_name,))
         existing = cur.fetchone()
         if existing and existing.get("id") is not None:
-            cur.execute("UPDATE tool_implementations SET status = ? WHERE id = ?", (status, existing["id"]))
+            cur.execute("UPDATE tool_implementations SET status = %s WHERE id = %s", (status, existing["id"]))
         else:
             cur.execute(
-                "INSERT INTO tool_implementations (name, status, pr_number, pr_url, created_at) VALUES (?, ?, ?, ?, ?)",
+                "INSERT INTO tool_implementations (name, status, pr_number, pr_url, created_at) VALUES (%s, %s, %s, %s, %s)",
                 (impl_name, status, None, None, r.get("updated_at") or datetime.now().isoformat()),
             )
     conn.commit()
@@ -1951,7 +1934,7 @@ def _ensure_position_columns():
         try:
             cur.execute(f"ALTER TABLE flow_definitions ADD COLUMN {col} REAL")
             conn.commit()
-        except sqlite3.OperationalError:
+        except pg_errors.DuplicateColumn:
             conn.rollback()
         finally:
             pass
@@ -1965,17 +1948,17 @@ def _ensure_flow_execution_columns():
     try:
         cur.execute("ALTER TABLE flow_definitions ADD COLUMN prompt_mode TEXT NOT NULL DEFAULT 'agentic'")
         conn.commit()
-    except sqlite3.OperationalError:
+    except pg_errors.DuplicateColumn:
         conn.rollback()
     try:
         cur.execute("ALTER TABLE flow_definitions ADD COLUMN model_name TEXT")
         conn.commit()
-    except sqlite3.OperationalError:
+    except pg_errors.DuplicateColumn:
         conn.rollback()
     try:
         cur.execute("ALTER TABLE flow_definitions ADD COLUMN output_schema_key TEXT")
         conn.commit()
-    except sqlite3.OperationalError:
+    except pg_errors.DuplicateColumn:
         conn.rollback()
     # One-time: operational op-1 = LLM Call (Simple) + ai_summary preset
     try:
@@ -1985,7 +1968,7 @@ def _ensure_flow_execution_columns():
                AND (output_schema_key IS NULL OR output_schema_key = '')"""
         )
         conn.commit()
-    except sqlite3.OperationalError:
+    except pg_errors.DuplicateColumn:
         conn.rollback()
     # Legacy seed: op-1 used to call set_ai_summary — swap to Simple (no tools).
     _op1_simple_prompt = (
@@ -1996,13 +1979,13 @@ def _ensure_flow_execution_columns():
     )
     try:
         cur.execute(
-            """UPDATE flow_definitions SET prompt = ?, prompt_mode = 'simple', output_schema_key = 'ai_summary'
+            """UPDATE flow_definitions SET prompt = %s, prompt_mode = 'simple', output_schema_key = 'ai_summary'
                WHERE flow_key = 'operational' AND node_id = 'op-1'
-               AND prompt LIKE '%set_ai_summary%'""",
+               AND prompt LIKE '%%set_ai_summary%%'""",
             (_op1_simple_prompt,),
         )
         conn.commit()
-    except sqlite3.OperationalError:
+    except pg_errors.DuplicateColumn:
         conn.rollback()
     conn.close()
 
@@ -2014,7 +1997,7 @@ def _ensure_output_schema_column():
     try:
         cur.execute("ALTER TABLE flow_definitions ADD COLUMN output_schema TEXT")
         conn.commit()
-    except sqlite3.OperationalError:
+    except pg_errors.DuplicateColumn:
         conn.rollback()
     conn.close()
 
@@ -2028,7 +2011,7 @@ def _ensure_agentic_step_close_column():
             "ALTER TABLE flow_definitions ADD COLUMN agentic_step_close INTEGER NOT NULL DEFAULT 0"
         )
         conn.commit()
-    except sqlite3.OperationalError:
+    except pg_errors.DuplicateColumn:
         conn.rollback()
     conn.close()
 
@@ -2040,7 +2023,7 @@ def _ensure_python_source_column():
     try:
         cur.execute("ALTER TABLE flow_definitions ADD COLUMN python_source TEXT")
         conn.commit()
-    except sqlite3.OperationalError:
+    except pg_errors.DuplicateColumn:
         conn.rollback()
     conn.close()
 
@@ -2052,7 +2035,7 @@ def _ensure_step_name_column():
     try:
         cur.execute("ALTER TABLE flow_definitions ADD COLUMN step_name TEXT")
         conn.commit()
-    except sqlite3.OperationalError:
+    except pg_errors.DuplicateColumn:
         conn.rollback()
     conn.close()
 
@@ -2070,7 +2053,7 @@ def _ensure_http_request_columns():
         try:
             cur.execute(col_sql)
             conn.commit()
-        except sqlite3.OperationalError:
+        except pg_errors.DuplicateColumn:
             conn.rollback()
     conn.close()
 
@@ -2086,7 +2069,7 @@ def _ensure_rag_assist_columns():
         try:
             cur.execute(col_sql)
             conn.commit()
-        except sqlite3.OperationalError:
+        except pg_errors.DuplicateColumn:
             conn.rollback()
     conn.close()
 
@@ -2103,7 +2086,7 @@ def _ensure_merge_columns():
         try:
             cur.execute(col_sql)
             conn.commit()
-        except sqlite3.OperationalError:
+        except pg_errors.DuplicateColumn:
             conn.rollback()
     conn.close()
 
@@ -2120,7 +2103,7 @@ def _ensure_integration_columns():
         try:
             cur.execute(col_sql)
             conn.commit()
-        except sqlite3.OperationalError:
+        except pg_errors.DuplicateColumn:
             conn.rollback()
     conn.close()
 
@@ -2235,8 +2218,8 @@ def _ensure_flow_texts_english():
     for flow_key, node_id, label_en, desc_en, prompt_en in updates:
         cur.execute(
             """UPDATE flow_definitions
-               SET label = ?, description = ?, prompt = ?
-               WHERE flow_key = ? AND node_id = ?""",
+               SET label = %s, description = %s, prompt = %s
+               WHERE flow_key = %s AND node_id = %s""",
             (label_en, desc_en, prompt_en, flow_key, node_id),
         )
     conn.commit()
@@ -2274,7 +2257,7 @@ def get_flow_definition_nodes(flow_key: str):
                   http_url, http_method, http_headers, http_body, rag_operation, rag_body_json,
                   merge_strategy, merge_fields, merge_key_field, integration_operation, integration_params_json, integration_credentials_json,
                   evaluation_source_nodes_json
-           FROM flow_definitions WHERE flow_key = ? ORDER BY id""",
+           FROM flow_definitions WHERE flow_key = %s ORDER BY id""",
         (flow_key,),
     )
     rows = cur.fetchall()
@@ -2288,7 +2271,7 @@ def get_flow_edges(flow_key: str):
     conn = get_connection()
     cur = conn.cursor()
     cur.execute(
-        "SELECT flow_key, source_node_id, target_node_id, label FROM flow_edges WHERE flow_key = ? ORDER BY id",
+        "SELECT flow_key, source_node_id, target_node_id, label FROM flow_edges WHERE flow_key = %s ORDER BY id",
         (flow_key,),
     )
     rows = cur.fetchall()
@@ -2316,7 +2299,7 @@ def get_flow_node(flow_key: str, node_id: str):
                   http_url, http_method, http_headers, http_body, rag_operation, rag_body_json,
                   merge_strategy, merge_fields, merge_key_field, integration_operation, integration_params_json, integration_credentials_json,
                   evaluation_source_nodes_json
-           FROM flow_definitions WHERE flow_key = ? AND node_id = ?""",
+           FROM flow_definitions WHERE flow_key = %s AND node_id = %s""",
         (flow_key, node_id),
     )
     row = cur.fetchone()
@@ -2365,88 +2348,88 @@ def update_flow_node(
     now = datetime.now().isoformat()
     conn = get_connection()
     cur = conn.cursor()
-    updates = ["updated_at = ?", "version = version + 1"]
+    updates = ["updated_at = %s", "version = version + 1"]
     params = [now]
     if prompt is not None:
-        updates.append("prompt = ?")
+        updates.append("prompt = %s")
         params.append(prompt)
     if loop_policy is not None:
-        updates.append("loop_policy = ?")
+        updates.append("loop_policy = %s")
         params.append(loop_policy)
     if execution_policy is not None:
-        updates.append("execution_policy = ?")
+        updates.append("execution_policy = %s")
         params.append(execution_policy)
     if max_retry is not None:
-        updates.append("max_retry = ?")
+        updates.append("max_retry = %s")
         params.append(max_retry)
     if description is not None:
-        updates.append("description = ?")
+        updates.append("description = %s")
         params.append(description)
     if label is not None:
-        updates.append("label = ?")
+        updates.append("label = %s")
         params.append(label)
     if position_x is not None:
-        updates.append("position_x = ?")
+        updates.append("position_x = %s")
         params.append(position_x)
     if position_y is not None:
-        updates.append("position_y = ?")
+        updates.append("position_y = %s")
         params.append(position_y)
     if prompt_mode is not None:
-        updates.append("prompt_mode = ?")
+        updates.append("prompt_mode = %s")
         params.append(prompt_mode)
     if model_name is not None:
-        updates.append("model_name = ?")
+        updates.append("model_name = %s")
         params.append(model_name)
     if output_schema_key is not None:
-        updates.append("output_schema_key = ?")
+        updates.append("output_schema_key = %s")
         params.append(output_schema_key)
     if output_schema is not None:
-        updates.append("output_schema = ?")
+        updates.append("output_schema = %s")
         params.append(output_schema if str(output_schema).strip() else None)
     if agentic_step_close is not None:
-        updates.append("agentic_step_close = ?")
+        updates.append("agentic_step_close = %s")
         params.append(1 if agentic_step_close else 0)
     if python_source is not None:
-        updates.append("python_source = ?")
+        updates.append("python_source = %s")
         params.append(python_source if str(python_source).strip() else None)
     if http_url is not None:
-        updates.append("http_url = ?")
+        updates.append("http_url = %s")
         params.append(http_url if str(http_url).strip() else None)
     if http_method is not None:
-        updates.append("http_method = ?")
+        updates.append("http_method = %s")
         params.append(http_method if str(http_method).strip() else None)
     if http_headers is not None:
-        updates.append("http_headers = ?")
+        updates.append("http_headers = %s")
         params.append(http_headers if str(http_headers).strip() else None)
     if http_body is not None:
-        updates.append("http_body = ?")
+        updates.append("http_body = %s")
         params.append(http_body if str(http_body).strip() else None)
     if rag_operation is not None:
-        updates.append("rag_operation = ?")
+        updates.append("rag_operation = %s")
         params.append(rag_operation.strip() or None)
     if rag_body_json is not None:
-        updates.append("rag_body_json = ?")
+        updates.append("rag_body_json = %s")
         params.append(rag_body_json if str(rag_body_json).strip() else None)
     if merge_strategy is not None:
-        updates.append("merge_strategy = ?")
+        updates.append("merge_strategy = %s")
         params.append(merge_strategy.strip() or None)
     if merge_fields is not None:
-        updates.append("merge_fields = ?")
+        updates.append("merge_fields = %s")
         params.append(merge_fields if str(merge_fields).strip() else None)
     if merge_key_field is not None:
-        updates.append("merge_key_field = ?")
+        updates.append("merge_key_field = %s")
         params.append(merge_key_field.strip() or None)
     if integration_operation is not None:
-        updates.append("integration_operation = ?")
+        updates.append("integration_operation = %s")
         params.append(integration_operation.strip() or None)
     if integration_params_json is not None:
-        updates.append("integration_params_json = ?")
+        updates.append("integration_params_json = %s")
         params.append(integration_params_json if str(integration_params_json).strip() else None)
     if integration_credentials_json is not None:
-        updates.append("integration_credentials_json = ?")
+        updates.append("integration_credentials_json = %s")
         params.append(integration_credentials_json if str(integration_credentials_json).strip() else None)
     params.extend([flow_key, node_id])
-    cur.execute(f"UPDATE flow_definitions SET {', '.join(updates)} WHERE flow_key = ? AND node_id = ?", params)
+    cur.execute(f"UPDATE flow_definitions SET {', '.join(updates)} WHERE flow_key = %s AND node_id = %s", params)
     conn.commit()
     conn.close()
     return get_flow_node(flow_key, node_id)
@@ -2458,7 +2441,7 @@ def _next_node_id(flow_key: str) -> str:
     conn = get_connection()
     cur = conn.cursor()
     cur.execute(
-        "SELECT node_id FROM flow_definitions WHERE flow_key = ? AND node_id LIKE ?",
+        "SELECT node_id FROM flow_definitions WHERE flow_key = %s AND node_id LIKE %s",
         (flow_key, f"{prefix}%"),
     )
     rows = cur.fetchall()
@@ -2525,7 +2508,7 @@ def create_flow_node(
                     http_url, http_method, http_headers, http_body, rag_operation, rag_body_json,
                     merge_strategy, merge_fields, merge_key_field,
                     integration_operation, integration_params_json, integration_credentials_json
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'agentic', NULL, NULL, NULL, 0, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'agentic', NULL, NULL, NULL, 0, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
                 (flow_key, node_id)
                 + vals
                 + (
@@ -2549,7 +2532,7 @@ def create_flow_node(
             conn.commit()
             conn.close()
             return get_flow_node(flow_key, node_id)
-        except sqlite3.IntegrityError:
+        except pg_errors.UniqueViolation:
             conn.rollback()
             conn.close()
             # UNIQUE (flow_key, node_id) – race with another insert; retry with new id
@@ -2564,8 +2547,8 @@ def delete_flow_node(flow_key: str, node_id: str) -> bool:
     """Delete flow node and all edges involving it. Returns True if node was deleted."""
     conn = get_connection()
     cur = conn.cursor()
-    cur.execute("DELETE FROM flow_edges WHERE flow_key = ? AND (source_node_id = ? OR target_node_id = ?)", (flow_key, node_id, node_id))
-    cur.execute("DELETE FROM flow_definitions WHERE flow_key = ? AND node_id = ?", (flow_key, node_id))
+    cur.execute("DELETE FROM flow_edges WHERE flow_key = %s AND (source_node_id = %s OR target_node_id = %s)", (flow_key, node_id, node_id))
+    cur.execute("DELETE FROM flow_definitions WHERE flow_key = %s AND node_id = %s", (flow_key, node_id))
     n = cur.rowcount
     conn.commit()
     conn.close()
@@ -2581,11 +2564,11 @@ def create_flow_edge(flow_key: str, source_node_id: str, target_node_id: str, la
     try:
         _ensure_flow_edge_label_column()
         cur.execute(
-            "INSERT INTO flow_edges (flow_key, source_node_id, target_node_id, label) VALUES (?, ?, ?, ?)",
+            "INSERT INTO flow_edges (flow_key, source_node_id, target_node_id, label) VALUES (%s, %s, %s, %s)",
             (flow_key, source_node_id, target_node_id, label),
         )
         conn.commit()
-    except sqlite3.IntegrityError:
+    except pg_errors.UniqueViolation:
         conn.rollback()
         conn.close()
         return None
@@ -2600,7 +2583,7 @@ def _ensure_flow_edge_label_column():
     try:
         cur.execute("ALTER TABLE flow_edges ADD COLUMN label TEXT")
         conn.commit()
-    except sqlite3.OperationalError:
+    except pg_errors.DuplicateColumn:
         conn.rollback()
     conn.close()
 
@@ -2612,7 +2595,7 @@ def _ensure_evaluation_source_nodes_column() -> None:
     try:
         cur.execute("ALTER TABLE flow_definitions ADD COLUMN evaluation_source_nodes_json TEXT")
         conn.commit()
-    except sqlite3.OperationalError:
+    except pg_errors.DuplicateColumn:
         conn.rollback()
     conn.close()
 
@@ -2634,7 +2617,7 @@ def _ensure_pubmed_eval_tail() -> None:
         return
 
     cur.execute(
-        """UPDATE flow_definitions SET evaluation_source_nodes_json = ?
+        """UPDATE flow_definitions SET evaluation_source_nodes_json = %s
            WHERE flow_key = 'pubmed' AND node_id = 'pm_eval'""",
         (_PUBMED_EVAL_SOURCE_NODES_JSON,),
     )
@@ -2648,12 +2631,12 @@ def _ensure_pubmed_eval_tail() -> None:
     ):
         cur.execute(
             """SELECT 1 FROM flow_edges
-               WHERE flow_key = 'pubmed' AND source_node_id = ? AND target_node_id = ? LIMIT 1""",
+               WHERE flow_key = 'pubmed' AND source_node_id = %s AND target_node_id = %s LIMIT 1""",
             (source_id, target_id),
         )
         if cur.fetchone() is None:
             cur.execute(
-                "INSERT INTO flow_edges (flow_key, source_node_id, target_node_id) VALUES (?, ?, ?)",
+                "INSERT INTO flow_edges (flow_key, source_node_id, target_node_id) VALUES (%s, %s, %s) ON CONFLICT DO NOTHING",
                 ("pubmed", source_id, target_id),
             )
     conn.commit()
@@ -2667,7 +2650,7 @@ def _ensure_guidelines_rag_column():
     try:
         cur.execute("ALTER TABLE flow_definitions ADD COLUMN guidelines_rag_anchor_pmids_json TEXT")
         conn.commit()
-    except sqlite3.OperationalError:
+    except pg_errors.DuplicateColumn:
         conn.rollback()
     conn.close()
 
@@ -2677,7 +2660,7 @@ def delete_flow_edge(flow_key: str, source_node_id: str, target_node_id: str) ->
     conn = get_connection()
     cur = conn.cursor()
     cur.execute(
-        "DELETE FROM flow_edges WHERE flow_key = ? AND source_node_id = ? AND target_node_id = ?",
+        "DELETE FROM flow_edges WHERE flow_key = %s AND source_node_id = %s AND target_node_id = %s",
         (flow_key, source_node_id, target_node_id),
     )
     n = cur.rowcount

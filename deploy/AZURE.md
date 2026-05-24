@@ -43,7 +43,7 @@ Build from repo root using **`Dockerfile.backend`**.
 
 - **Backend**: FastAPI + Uvicorn on port **8000**, single worker (SSE / in-process state).
 - **Public frontend**: `frontend-public/dist` copied to **`/app/static`** — FastAPI serves SPA + API (CSP in `backend/main.py`).
-- **Database**: SQLite at `DB_PATH=/data/tickets.db` inside the container.
+- **Database**: Postgres via `DB_URL` (see `backend/.env.example`). Local Compose uses the `postgres-data` volume.
 - **Seed**: on an empty database, loads `backend/content_*_seed.json` (diseases, trials, therapies, foundations).
 
 Before building to ACR:
@@ -73,6 +73,7 @@ The backend runs in **vLLM-compatible** mode (`MODEL_PROFILE=vllm` + `LLM_BASE_U
 | `LLM_BASE_URL` | `https://api.siliconflow.com/v1` |
 | `LLM_MODEL` | `google/gemma-4-31B-it` |
 | `LLM_API_KEY` | `secretref:llm-api-key` |
+| `DB_URL` | Azure PostgreSQL connection string (`secretref:db-url` or env) |
 | `LLM_AUTH_HEADER_STYLE` | `bearer` |
 | `OPENAI_API_KEY` | placeholder (API compatibility; unused in vLLM mode) |
 | `OPENROUTER_API_KEY` | `secretref:openrouter-key` |
@@ -103,7 +104,7 @@ When both `LLM_BASE_URL` and `LLM_API_KEY` are set, `backend/config.py` enables 
 | **Bootstrap rate limit** | The hosted instance rate-limits bootstrap requests per client IP (see `BOOTSTRAP_RATE_LIMIT_*` in `backend/routers/pipeline.py`). Shared infrastructure — please use responsibly. |
 | **API response cache** | Short in-process cache (~60 s) — after a deploy, responses may be stale briefly; use `?nocache=…` or wait. |
 | **Disease summary** | `GET /api/diseases/{slug}` may lag `trialsCount` / `coverage` after a workflow; sub-resources (`/trials`, `/therapies`, …) are usually fresher. |
-| **SQLite in container** | Without a persistent volume on `/data`, a new Container App revision starts with a **fresh database** (seed only). Check Azure for mounted storage — there is no Terraform definition in this repo. |
+| **Postgres** | Set `DB_URL` on the Container App (Azure Database for PostgreSQL or equivalent). Without it the backend refuses to start. |
 | **OpenRouter** | Not used as the primary provider on the hosted instance due to rate limits when bursting multiple workflows. |
 
 ## CI/CD (GitHub Actions)

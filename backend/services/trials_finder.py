@@ -212,12 +212,11 @@ def _persist_trials(disease_slug: str, trials: list[_ExtractedTrial], min_releva
                 continue
             cur.execute(
                 """
-                INSERT OR IGNORE INTO trials
+                INSERT INTO trials
                   (nct, title, phase, status, sponsor, city, country, age_range,
                    principal_investigator, eligibility_summary, enrollment_target,
                    enrolled, contact, last_seen)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, ?)
-                """,
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NULL, NULL, %s) ON CONFLICT DO NOTHING""",
                 (
                     t.nct,
                     t.title,
@@ -234,7 +233,7 @@ def _persist_trials(disease_slug: str, trials: list[_ExtractedTrial], min_releva
                 ),
             )
             cur.execute(
-                "INSERT OR IGNORE INTO disease_trials (disease_slug, nct) VALUES (?, ?)",
+                "INSERT INTO disease_trials (disease_slug, nct) VALUES (%s, %s) ON CONFLICT DO NOTHING",
                 (disease_slug, t.nct),
             )
             inserted += 1
@@ -255,7 +254,7 @@ def _log_run(execution_id: str, disease_slug: str, status: str, error: str | Non
     now = datetime.now(timezone.utc).isoformat()
     try:
         cur.execute(
-            "SELECT 1 FROM guideline_run_results WHERE execution_id = ?",
+            "SELECT 1 FROM guideline_run_results WHERE execution_id = %s",
             (execution_id,),
         )
         if cur.fetchone() is None:
@@ -264,8 +263,8 @@ def _log_run(execution_id: str, disease_slug: str, status: str, error: str | Non
                 INSERT INTO guideline_run_results
                   (execution_id, pipeline, flow_key, disease_slug, label,
                    done, started_at, finished_at, error)
-                VALUES (?, 'trials_finder', 'trials_finder',
-                        ?, ?, ?, ?, ?, ?)
+                VALUES (%s, 'trials_finder', 'trials_finder',
+                        %s, %s, %s, %s, %s, %s)
                 """,
                 (
                     execution_id,
@@ -280,8 +279,8 @@ def _log_run(execution_id: str, disease_slug: str, status: str, error: str | Non
         else:
             cur.execute(
                 """UPDATE guideline_run_results
-                   SET done = ?, finished_at = ?, error = COALESCE(?, error)
-                   WHERE execution_id = ?""",
+                   SET done = %s, finished_at = %s, error = COALESCE(%s, error)
+                   WHERE execution_id = %s""",
                 (
                     1 if status in ("ready", "failed") else 0,
                     now if status in ("ready", "failed") else None,
