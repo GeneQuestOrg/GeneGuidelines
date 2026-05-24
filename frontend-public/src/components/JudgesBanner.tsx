@@ -307,6 +307,25 @@ function JudgesBannerExpanded({ onNav, onCollapse, route }: JudgesBannerExpanded
             </span>
             GitHub Repo
           </a>
+          <button
+            type="button"
+            className="jb__close jb__close--bottom"
+            onClick={onCollapse}
+            aria-label="Collapse juror note"
+            title="Collapse"
+          >
+            <svg viewBox="0 0 14 14" width="12" height="12" aria-hidden>
+              <path
+                d="M3 8 L7 4 L11 8"
+                stroke="currentColor"
+                strokeWidth="1.6"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                fill="none"
+              />
+            </svg>
+            <span className="jb__close-label">Collapse</span>
+          </button>
         </footer>
       </div>
     </aside>
