@@ -520,10 +520,14 @@ article_category_audits = Table(
         "triggered_by_execution_id",
         name="uq_article_category_audits_per_run",
     ),
+    # Naming convention prefixes ``ck_article_category_audits_`` so the
+    # final constraint name is ``ck_article_category_audits_quality_tier``.
+    # Do NOT include the prefix here or you get a double prefix that
+    # Postgres truncates to 63 chars and tacks a hash onto.
     CheckConstraint(
         "quality_tier IS NULL OR quality_tier IN "
         "('high','moderate','low','very_low')",
-        name="ck_article_category_audits_quality_tier",
+        name="quality_tier",
     ),
 )
 

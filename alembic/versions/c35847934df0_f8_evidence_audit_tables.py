@@ -162,6 +162,9 @@ def upgrade() -> None:
         sa.CheckConstraint(
             "quality_tier IS NULL OR quality_tier IN "
             "('high','moderate','low','very_low')",
+            # ``op.f`` says "this is the fully conventionalized name"; the
+            # convention prefixes ``ck_article_category_audits_`` so the
+            # raw constraint fragment in schema.py is just ``quality_tier``.
             name=op.f("ck_article_category_audits_quality_tier"),
         ),
         sa.ForeignKeyConstraint(
