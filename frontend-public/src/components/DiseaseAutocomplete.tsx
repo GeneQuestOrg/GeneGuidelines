@@ -168,7 +168,9 @@ export function DiseaseAutocomplete({
   return (
     <div ref={wrapRef} className={`ac ${showPanel ? "ac--open" : ""}`}>
       <div className="ac__inputwrap">
-        <SearchIcon />
+        <span className="ac__icon-slot" aria-hidden="true">
+          <SearchIcon />
+        </span>
         <input
           ref={inputRef}
           type="text"
@@ -351,6 +353,7 @@ function SearchIcon() {
       stroke="currentColor"
       strokeWidth="2"
       aria-hidden="true"
+      focusable="false"
     >
       <circle cx="11" cy="11" r="7" />
       <path d="m20 20-3.5-3.5" />

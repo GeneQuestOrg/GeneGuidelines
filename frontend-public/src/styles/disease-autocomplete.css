@@ -27,10 +27,17 @@
   border-bottom-right-radius: 0;
 }
 
+.ac__icon-slot {
+  flex-shrink: 0;
+  width: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .ac__icon {
   color: var(--ink-3, #64748b);
-  flex-shrink: 0;
-  display: inline-flex;
+  display: block;
   pointer-events: none;
 }
 
