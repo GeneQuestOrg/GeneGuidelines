@@ -41,11 +41,19 @@ import { MissingDiseaseDialog } from "../components/MissingDiseaseDialog";
 import "../styles/research.css";
 import "../styles/start-research.css";
 
-const _STAGE_LIST: ReadonlyArray<{ label: string; sub: string }> = [
-  { label: "Stage 1 (5–8 min)", sub: "PubMed search + abstract categorisation" },
-  { label: "Stage 2 (3–5 min)", sub: "Therapy + diagnostic path extraction" },
-  { label: "Stage 3 (4–6 min)", sub: "Doctor identification + scoring" },
-  { label: "Stage 4 (2–3 min)", sub: "Trials + foundations + final assembly" },
+/** Six finder pipelines fan out in parallel from the bootstrap endpoint
+ *  (``backend/services/disease_bootstrap.py``). The fast ones write to
+ *  the disease page in under a minute; the long-running guideline draft
+ *  takes ~9 minutes. The /research/<id> page mirrors this structure. */
+const WORKSTREAM_LIST: ReadonlyArray<{ label: string; sub: string }> = [
+  {
+    label: "Guideline draft (~9 min)",
+    sub: "PubMed mining → therapy + diagnostic extraction → drafted sections with PMID citations",
+  },
+  {
+    label: "Five fast finders (~45 s each, in parallel)",
+    sub: "Doctors · clinical trials · therapies · patient foundations · recognised consensus paper",
+  },
 ];
 
 export interface StartResearchViewProps {
@@ -94,7 +102,7 @@ export function StartResearchView({ onNav }: StartResearchViewProps) {
     setError(null);
     try {
       const { execution_ids } = await bootstrapDisease(body);
-      const q = `?name=${encodeURIComponent(diseaseName)}`;
+      const q = `?name=${encodeURIComponent(diseaseName)}&disease=${encodeURIComponent(body.slug)}`;
       // Hand the user to the long-running guideline trace — the five
       // finders complete in <45 s and surface on /diseases/<slug>/...
       // automatically once the disease row exists.
@@ -126,13 +134,15 @@ export function StartResearchView({ onNav }: StartResearchViewProps) {
         <div className="start__intro">
           <h1>Start research for a new disease</h1>
           <p>
-            Our AI pipeline will scan PubMed (10 years back), pull the
-            recognised guidelines, identify clinicians with documented
-            expertise, check active clinical trials and assemble a
-            first-pass guideline draft for clinician review.
+            One click fans out six parallel workstreams: PubMed mining and
+            the long guideline draft, plus five fast finders that pull
+            specialist doctors, recruiting clinical trials, therapies,
+            patient foundations and the recognised consensus paper. Each
+            workstream writes its results directly to the disease page as
+            it lands — you don't need to wait for the whole run to finish.
           </p>
           <ol className="start__how">
-            {_STAGE_LIST.map((stage) => (
+            {WORKSTREAM_LIST.map((stage) => (
               <li key={stage.label}>
                 <b>{stage.label}</b> · {stage.sub}
               </li>
