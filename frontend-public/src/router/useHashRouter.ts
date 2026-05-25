@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { parseHash } from "./parseHash";
 import type { Route } from "./types";
 
@@ -24,6 +24,7 @@ export interface HashRouter {
 export function useHashRouter(): HashRouter {
   const [hash, setHash] = useState(() => canonicalizeHash(readHash()));
   const route = parseHash(hash);
+  const hashRef = useRef(hash);
 
   useEffect(() => {
     const syncHash = () => {
@@ -31,8 +32,11 @@ export function useHashRouter(): HashRouter {
       if (window.location.hash !== canonical) {
         window.history.replaceState(null, "", canonical);
       }
+      if (hashRef.current !== canonical) {
+        window.scrollTo(0, 0);
+      }
+      hashRef.current = canonical;
       setHash(canonical);
-      window.scrollTo(0, 0);
     };
     syncHash();
     window.addEventListener("hashchange", syncHash);

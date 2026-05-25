@@ -65,6 +65,8 @@ export function DiseaseAutocomplete({
     const wrap = wrapRef.current;
     const panel = panelRef.current;
     if (!wrap || !panel) return;
+    const scrollX = window.scrollX;
+    const scrollY = window.scrollY;
     const rect = wrap.getBoundingClientRect();
     panel.style.top = `${rect.bottom}px`;
     panel.style.left = `${rect.left}px`;
@@ -73,6 +75,9 @@ export function DiseaseAutocomplete({
       _PANEL_MAX_HEIGHT,
       Math.max(120, window.innerHeight - rect.bottom - _PANEL_VIEWPORT_GAP),
     )}px`;
+    if (window.scrollX !== scrollX || window.scrollY !== scrollY) {
+      window.scrollTo(scrollX, scrollY);
+    }
   }, []);
 
   // Display the empty state immediately when the user backspaces below
@@ -195,7 +200,7 @@ export function DiseaseAutocomplete({
       window.removeEventListener("scroll", applyPanelPlacement, opts);
       window.removeEventListener("resize", applyPanelPlacement);
     };
-  }, [showPanel, applyPanelPlacement]);
+  }, [showPanel, loading, displayResults.length, applyPanelPlacement]);
 
   return (
     <div ref={wrapRef} className={`ac ${showPanel ? "ac--open" : ""}`}>
