@@ -5,20 +5,19 @@
  *
  * - the disease already has full GeneGuidelines content
  *   (``hasLocalRecord``) → we navigate straight to that disease page;
- * - the disease is in the index but not yet bootstrapped → we launch a
- *   guideline pipeline run (``POST /api/pipeline/guideline-run`` in
- *   custom mode) and forward the user to the run progress screen.
+ * - the disease is in the index but not yet bootstrapped → we fire the
+ *   six-workflow bootstrap (``POST /api/pipeline/bootstrap-disease``)
+ *   and forward the user to the guideline run progress screen. The
+ *   finders (doctors, trials, therapies, foundations, official
+ *   guidelines) populate ``/diseases/<slug>/...`` in parallel within
+ *   ~45 s; the guideline pipeline is the long-running one (~9 min) and
+ *   owns the SSE trace the user watches.
  *
  * If the user types something the local index does not know, the
  * autocomplete shows a "Help us find this disease" CTA which opens the
  * :class:`MissingDiseaseDialog` modal — Tier 2 wider search backed by
  * Gemma 4. Out-of-scope categories (infectious / acquired) are blocked
  * inside the modal so a research run cannot be triggered for them.
- *
- * The legacy multi-mode form (radio + custom-name + AI-generated aliases
- * textarea) was the previous incarnation of this view; it is replaced
- * here by the streamlined single-field flow approved in
- * ``draft6/src/views-research.jsx``.
  */
 
 import {
@@ -29,10 +28,14 @@ import {
 import { Button } from "@gene-guidelines/ui";
 import { ApiRequestError } from "../api/client";
 import {
+  bootstrapDisease,
+  type BootstrapDiseaseRequest,
+} from "../api/bootstrapDisease";
+import {
   type DiseaseSuggestion,
   type WiderSearchCandidate,
 } from "../api/diseaseIndex";
-import { startGuidelineRunPublic } from "../api/guidelineRun";
+import { DEFAULT_GUIDELINE_PROFILE } from "../api/guidelineRun";
 import { DiseaseAutocomplete } from "../components/DiseaseAutocomplete";
 import { MissingDiseaseDialog } from "../components/MissingDiseaseDialog";
 import "../styles/research.css";
@@ -84,25 +87,26 @@ export function StartResearchView({ onNav }: StartResearchViewProps) {
       }
     }
 
-    const diseaseName =
-      picked.kind === "indexed"
-        ? picked.suggestion.canonicalName
-        : picked.candidate.canonicalName;
+    const body = bootstrapBodyFromPicked(picked);
+    const diseaseName = body.name;
 
     setBusy(true);
     setError(null);
     try {
-      const { execution_id } = await startGuidelineRunPublic({
-        mode: "custom",
-        diseaseName,
-        diseaseAliases: collectAliases(picked),
-      });
+      const { execution_ids } = await bootstrapDisease(body);
       const q = `?name=${encodeURIComponent(diseaseName)}`;
-      onNav(`/research/${encodeURIComponent(execution_id)}${q}`);
+      // Hand the user to the long-running guideline trace — the five
+      // finders complete in <45 s and surface on /diseases/<slug>/...
+      // automatically once the disease row exists.
+      onNav(`/research/${encodeURIComponent(execution_ids.guideline)}${q}`);
     } catch (e) {
       if (e instanceof ApiRequestError && e.status === 401) {
         setError(
           "The server rejected the request (401). Set VITE_GENEGUIDELINES_API_KEY when the backend has its API gate enabled, or run jobs from the operator console.",
+        );
+      } else if (e instanceof ApiRequestError && e.status === 429) {
+        setError(
+          "The public demo limit was reached for now. Please try again in a few hours.",
         );
       } else if (e instanceof Error) {
         setError(e.message);
@@ -258,18 +262,61 @@ function pickSubmitLabel(picked: Picked | null, busy: boolean): string {
   return "Run research →";
 }
 
-function collectAliases(picked: Picked): string[] {
-  if (picked.kind === "indexed") {
-    return [
-      ...picked.suggestion.geneSymbols,
-      ...picked.suggestion.omimCodes,
-    ];
-  }
-  // Wider-search candidates already flatten to single strings.
-  const aliases: string[] = [];
-  if (picked.candidate.gene) aliases.push(picked.candidate.gene);
-  if (picked.candidate.omim) aliases.push(picked.candidate.omim);
-  return aliases;
+/** Slugify a disease name for bootstrap. Mirrors the backend regex
+ * ``^[a-z0-9][a-z0-9_-]*$`` and the 2–64 char window declared in
+ * :class:`BootstrapDiseaseBody`. NFKD-strips diacritics so European
+ * spellings ("McCune–Albright") round-trip safely. */
+function slugifyForBootstrap(name: string): string {
+  const ascii = name
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+  const slug = ascii
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+/, "")
+    .replace(/-+$/, "")
+    .slice(0, 64);
+  // Backend requires the first char to be alphanumeric. If the cleaned
+  // string somehow starts with nothing valid, fall back to a stable
+  // marker so the API rejects with a clean 400 rather than silently
+  // erroring.
+  return /^[a-z0-9]/.test(slug) ? slug : "disease";
+}
+
+function bootstrapBodyFromPicked(picked: Picked): BootstrapDiseaseRequest {
+  const isIndexed = picked.kind === "indexed";
+  const name = isIndexed
+    ? picked.suggestion.canonicalName
+    : picked.candidate.canonicalName;
+  const slug =
+    isIndexed && picked.suggestion.localSlug
+      ? picked.suggestion.localSlug
+      : slugifyForBootstrap(name);
+
+  const omim = isIndexed
+    ? picked.suggestion.omimCodes[0] ?? ""
+    : picked.candidate.omim;
+  const gene = isIndexed
+    ? picked.suggestion.geneSymbols[0] ?? ""
+    : picked.candidate.gene;
+  const inheritance = isIndexed
+    ? picked.suggestion.inheritance ?? ""
+    : picked.candidate.inheritance;
+  const summary = isIndexed
+    ? picked.suggestion.summary
+    : picked.candidate.summary;
+
+  const body: BootstrapDiseaseRequest = {
+    slug,
+    name,
+    name_short: name.slice(0, 24),
+  };
+  if (omim) body.omim = omim;
+  if (gene) body.gene = gene;
+  if (inheritance) body.inheritance = inheritance;
+  if (summary) body.summary = summary;
+  if (DEFAULT_GUIDELINE_PROFILE != null) body.profile = DEFAULT_GUIDELINE_PROFILE;
+  return body;
 }
 
 function PickedCard({
