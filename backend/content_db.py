@@ -895,6 +895,45 @@ def get_catalog_stats() -> dict[str, int]:
     }
 
 
+
+def upsert_guideline_document(
+    *,
+    disease_slug: str,
+    document: dict[str, Any],
+    version: str,
+    section_count: int,
+    last_reviewed: str | None,
+) -> None:
+    """Insert or replace one row in ``guideline_documents``.
+
+    Used by the post-run publish bridge to land a fresh AI-draft document
+    after a successful PubMed pipeline run, and by future publish flows.
+    ``document`` is the dict that round-trips through
+    :class:`backend.content_models.GuidelineDocumentResponse` — callers are
+    expected to have validated it already.
+    """
+    normalized = normalize_disease_slug(disease_slug)
+    if normalized is None:
+        raise ValueError(f"invalid disease_slug: {disease_slug!r}")
+    payload = json.dumps(document, ensure_ascii=False)
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute(
+        """
+        INSERT INTO guideline_documents (
+            disease_slug, version, locale, section_count, last_reviewed, sections_json
+        ) VALUES (%s, %s, 'en', %s, %s, %s)
+        ON CONFLICT (disease_slug) DO UPDATE SET
+            version = excluded.version,
+            section_count = excluded.section_count,
+            last_reviewed = excluded.last_reviewed,
+            sections_json = excluded.sections_json
+        """,
+        (normalized, version, int(section_count), last_reviewed, payload),
+    )
+    conn.commit()
+    conn.close()
+
 def sync_guideline_document_bodies_from_file() -> None:
     """Backfill full guideline JSON bodies when sections_json is still empty."""
     path = Path(GUIDELINE_BODIES_PATH)
