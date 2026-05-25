@@ -86,18 +86,14 @@
 }
 
 .ac__panel {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
+  position: fixed;
   background: var(--bg-elev, #fff);
   border: 1px solid var(--accent-teal, #0f766e);
   border-top: 1px solid var(--line, #e2e8f0);
   border-radius: 0 0 var(--r-md, 8px) var(--r-md, 8px);
   box-shadow: 0 16px 40px -8px rgba(15, 23, 42, 0.16);
-  max-height: 380px;
   overflow-y: auto;
-  z-index: 30;
+  z-index: 100;
 }
 
 .ac__loading,

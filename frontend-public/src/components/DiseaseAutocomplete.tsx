@@ -20,6 +20,7 @@ import {
   type ReactNode,
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -32,6 +33,15 @@ import "../styles/disease-autocomplete.css";
 
 const _DEBOUNCE_MS = 300;
 const _MIN_QUERY_CHARS = 1;
+const _PANEL_MAX_HEIGHT = 380;
+const _PANEL_VIEWPORT_GAP = 8;
+
+type PanelPlacement = {
+  readonly top: number;
+  readonly left: number;
+  readonly width: number;
+  readonly maxHeight: number;
+};
 
 export interface DiseaseAutocompleteProps {
   readonly disabled?: boolean;
@@ -56,6 +66,24 @@ export function DiseaseAutocomplete({
   const [error, setError] = useState<string | null>(null);
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const [panelPlacement, setPanelPlacement] = useState<PanelPlacement | null>(
+    null,
+  );
+
+  const syncPanelPlacement = useCallback(() => {
+    const wrap = wrapRef.current;
+    if (!wrap) return;
+    const rect = wrap.getBoundingClientRect();
+    setPanelPlacement({
+      top: rect.bottom,
+      left: rect.left,
+      width: rect.width,
+      maxHeight: Math.min(
+        _PANEL_MAX_HEIGHT,
+        Math.max(120, window.innerHeight - rect.bottom - _PANEL_VIEWPORT_GAP),
+      ),
+    });
+  }, []);
 
   // Display the empty state immediately when the user backspaces below
   // the minimum length — derived rather than reset via setState in an
@@ -165,6 +193,23 @@ export function DiseaseAutocomplete({
 
   const showPanel = open && !isQueryTooShort;
 
+  // Keep the dropdown viewport-anchored so an absolute panel cannot extend
+  // document height and nudge scroll position (which makes sticky headers jump).
+  useLayoutEffect(() => {
+    if (!showPanel) {
+      setPanelPlacement(null);
+      return;
+    }
+    syncPanelPlacement();
+    const opts: AddEventListenerOptions = { capture: true, passive: true };
+    window.addEventListener("scroll", syncPanelPlacement, opts);
+    window.addEventListener("resize", syncPanelPlacement);
+    return () => {
+      window.removeEventListener("scroll", syncPanelPlacement, opts);
+      window.removeEventListener("resize", syncPanelPlacement);
+    };
+  }, [showPanel, syncPanelPlacement]);
+
   return (
     <div ref={wrapRef} className={`ac ${showPanel ? "ac--open" : ""}`}>
       <div className="ac__inputwrap">
@@ -206,8 +251,17 @@ export function DiseaseAutocomplete({
         ) : null}
       </div>
 
-      {showPanel ? (
-        <div className="ac__panel" role="listbox">
+      {showPanel && panelPlacement ? (
+        <div
+          className="ac__panel"
+          role="listbox"
+          style={{
+            top: panelPlacement.top,
+            left: panelPlacement.left,
+            width: panelPlacement.width,
+            maxHeight: panelPlacement.maxHeight,
+          }}
+        >
           {loading && displayResults.length === 0 ? (
             <div className="ac__loading">Searching…</div>
           ) : null}
