@@ -33,11 +33,15 @@ from ..agents import agent as agent_module
 from .. import database as db
 from ..agents.runner import run_agent_async  # async runner (one event loop) to avoid MCP lock issues on Windows
 from ..contracts.agent_api_v1 import build_agent_run_payload, normalize_trace_event
-from ..auth import require_api_key_if_set
+from ..bootstrap_rate_limit import check_bootstrap_rate_limit
+from ..clerk_auth import AuthUser, assert_run_owner, get_current_user, require_admin
+from ..guideline_run_store import get_run_owner_clerk_id
 
-router = APIRouter(dependencies=[Depends(require_api_key_if_set)])  # prefix set in main: /api/agent
+router = APIRouter()  # prefix set in main: /api/agent
 
 MAX_KEPT_AGENT_RUNS = 200
+_SSE_FALLBACK_POLL_SEC: int = 20
+_SSE_FALLBACK_MAX_POLLS: int = 300  # ~100 minutes ceiling
 _AGENT_STORAGE_LOCK = threading.RLock()
 
 
@@ -323,7 +327,7 @@ async def _execute_agent_async_body(
 
 
 @router.get("/approval-pending")
-def get_approval_pending():
+def get_approval_pending(_admin: AuthUser = Depends(require_admin)):
     """Return the pending action awaiting approval (e.g. restart_service), if the agent is waiting on one."""
     state = getattr(agent_module, "approval_state", None)
     if not state or not state.get("pending"):
@@ -341,7 +345,7 @@ def get_approval_pending():
 
 
 @router.post("/approval")
-def post_approval(body: ApprovalAction):
+def post_approval(body: ApprovalAction, _admin: AuthUser = Depends(require_admin)):
     """Approve or reject the pending action (e.g. server restart). Unblocks the agent."""
     state = getattr(agent_module, "approval_state", None)
     if not state or not state.get("pending"):
@@ -404,6 +408,7 @@ async def start_agent_run(
     disease_initial: dict[str, str] | None = None,
     pathway_locale: str = "en",
     refresh_pubmed: bool = False,
+    owner_clerk_id: str | None = None,
 ) -> dict:
     """Start agent run; shared by POST /run/{ticket_id} and pipeline guideline-run."""
     profile_norm = (profile or "").strip().lower() or DEFAULT_MODEL_PROFILE
@@ -434,9 +439,28 @@ async def start_agent_run(
         "disease_slug": (disease_slug or "").strip().lower() or None,
         "pathway_locale": (pathway_locale or "en").strip()[:2] or "en",
         "refresh_pubmed": bool(refresh_pubmed),
+        "owner_clerk_id": owner_clerk_id,
     }
     if isinstance(disease_initial, dict) and disease_initial:
         run_record["disease_initial"] = dict(disease_initial)
+    pipeline_name = str(
+        run_record["pipeline"]
+        or ("guideline" if flow_key == "pubmed" else "parent_pathway" if flow_key == "parent_pathway" else "legacy")
+    )
+    try:
+        from ..guideline_run_store import record_agent_run_start
+    except ImportError:
+        from guideline_run_store import record_agent_run_start
+
+    record_agent_run_start(
+        execution_id=execution_id,
+        pipeline=pipeline_name,
+        flow_key=flow_key,
+        disease_slug=run_record.get("disease_slug"),
+        label=str(run_record["label"]),
+        owner_clerk_id=owner_clerk_id,
+        started_at=started_at,
+    )
     with _AGENT_STORAGE_LOCK:
         TRACE_QUEUES[execution_id] = event_queue
         AGENT_RUNS[execution_id] = run_record
@@ -522,7 +546,7 @@ async def start_agent_run(
 
 
 @router.get("/runs")
-def list_agent_runs():
+def list_agent_runs(_admin: AuthUser = Depends(require_admin)):
     """List in-memory agent runs (newest first). Use execution_id with GET /run/{id} for detail."""
     with _AGENT_STORAGE_LOCK:
         items = [_run_list_item(eid, run) for eid, run in AGENT_RUNS.items()]
@@ -531,10 +555,14 @@ def list_agent_runs():
 
 
 @router.get("/run/{execution_id}")
-def get_agent_run(execution_id: str):
+def get_agent_run(
+    execution_id: str,
+    user: AuthUser = Depends(get_current_user),
+):
     """Return agent run result: ai_summary, diagnostics_entries, output, done, error."""
     with _AGENT_STORAGE_LOCK:
         run = AGENT_RUNS.get(execution_id)
+    owner = run.get("owner_clerk_id") if run else None
     if run is None:
         try:
             from ..guideline_run_store import load_guideline_run_result
@@ -542,8 +570,13 @@ def get_agent_run(execution_id: str):
             from guideline_run_store import load_guideline_run_result
 
         run = load_guideline_run_result(execution_id)
+        if run:
+            owner = run.get("owner_clerk_id")
     if not run:
         raise HTTPException(status_code=404, detail="Unknown execution_id")
+    if owner is None:
+        owner = get_run_owner_clerk_id(execution_id)
+    assert_run_owner(user, owner)
     return build_agent_run_payload(run)
 
 
@@ -551,6 +584,7 @@ def get_agent_run(execution_id: str):
 async def run_agent(
     ticket_id: int,
     background_tasks: BackgroundTasks,
+    user: AuthUser = Depends(get_current_user),
     flow_key: str = "pubmed",
     profile: str = DEFAULT_MODEL_PROFILE,
 ):
@@ -560,31 +594,116 @@ async def run_agent(
         flow_key: which flow to execute (e.g. "pubmed", "doctor_finder", "parent_pathway").
         profile:  model profile — vllm, production (OpenAI), test (DeepSeek), openrouter (OpenRouter). Default from env.
     """
+    check_bootstrap_rate_limit(user)
     _ = background_tasks
-    return await start_agent_run(ticket_id, flow_key=flow_key, profile=profile)
+    return await start_agent_run(
+        ticket_id,
+        flow_key=flow_key,
+        profile=profile,
+        owner_clerk_id=user.clerk_id,
+    )
+
+
+def _load_agent_run_state(execution_id: str) -> dict | None:
+    """Return run state from in-memory AGENT_RUNS or DB fallback."""
+    with _AGENT_STORAGE_LOCK:
+        run = AGENT_RUNS.get(execution_id)
+    if run is not None:
+        return run
+    try:
+        from ..guideline_run_store import load_guideline_run_result
+    except ImportError:
+        from guideline_run_store import load_guideline_run_result
+    return load_guideline_run_result(execution_id)
 
 
 def sse_trace_generator(execution_id: str):
-    """Generator of SSE events from the trace queue. Keepalive sent as an SSE comment (no dots in the UI)."""
+    """Generator of SSE events from the trace queue.
+
+    Graceful fallback when the queue is absent (multi-worker deployment or
+    server restart after the run was started):
+    - Queue present → normal streaming (unchanged behaviour).
+    - Queue absent, run not found → yield Unknown execution_id (true 404).
+    - Queue absent, run done in DB → yield terminal sys + done event pair.
+    - Queue absent, run still in-flight → yield informational sys message
+      then poll DB every _SSE_FALLBACK_POLL_SEC seconds, emitting SSE
+      keepalive comments until the run finishes or the ceiling is reached.
+    """
     queue = TRACE_QUEUES.get(execution_id)
-    if not queue:
+    if queue:
+        while True:
+            try:
+                event = normalize_trace_event(queue.get(timeout=30))
+                if event.get("done") is True:
+                    yield f"data: {json.dumps(event)}\n\n"
+                    break
+                yield f"data: {json.dumps(event)}\n\n"
+            except Empty:
+                yield ": keepalive\n\n"
+        return
+
+    run = _load_agent_run_state(execution_id)
+    if run is None:
         yield f"data: {json.dumps(normalize_trace_event({'error': 'Unknown execution_id'}))}\n\n"
         return
-    while True:
-        try:
-            event = normalize_trace_event(queue.get(timeout=30))
-            if event.get("done") is True:
-                yield f"data: {json.dumps(event)}\n\n"
-                break
-            yield f"data: {json.dumps(event)}\n\n"
-        except Empty:
-            # SSE comment — browser does not fire onmessage, avoids thousands of dots in the UI
-            yield ": keepalive\n\n"
+
+    if run.get("done"):
+        msg = (
+            f"Run finished with error: {run['error']}"
+            if run.get("error")
+            else "Run finished."
+        )
+        yield f"data: {json.dumps(normalize_trace_event({'kind': 'sys', 'text': f'[SYSTEM] {msg}'}))}\n\n"
+        done_payload: dict = {"done": True}
+        if run.get("error"):
+            done_payload["error"] = run["error"]
+        yield f"data: {json.dumps(normalize_trace_event(done_payload))}\n\n"
+        return
+
+    # Run is in-flight but its queue lives on a different process.
+    yield (
+        "data: "
+        + json.dumps(
+            normalize_trace_event(
+                {
+                    "kind": "sys",
+                    "text": (
+                        "[SYSTEM] Live trace unavailable on this server process; "
+                        "status updates via polling."
+                    ),
+                }
+            )
+        )
+        + "\n\n"
+    )
+
+    try:
+        from ..guideline_run_store import load_guideline_run_result as _load_db
+    except ImportError:
+        from guideline_run_store import load_guideline_run_result as _load_db
+
+    for _ in range(_SSE_FALLBACK_MAX_POLLS):
+        time.sleep(_SSE_FALLBACK_POLL_SEC)
+        current = _load_db(execution_id)
+        if current and current.get("done"):
+            done_payload = {"done": True}
+            if current.get("error"):
+                done_payload["error"] = current["error"]
+            yield f"data: {json.dumps(normalize_trace_event(done_payload))}\n\n"
+            return
+        yield ": keepalive\n\n"
 
 
 @router.get("/trace/{execution_id}")
-def trace_sse(execution_id: str):
+def trace_sse(
+    execution_id: str,
+    user: AuthUser = Depends(get_current_user),
+):
     """Stream trace events (SSE) for a given run."""
+    with _AGENT_STORAGE_LOCK:
+        run = AGENT_RUNS.get(execution_id)
+    owner = run.get("owner_clerk_id") if run else get_run_owner_clerk_id(execution_id)
+    assert_run_owner(user, owner)
     return StreamingResponse(
         sse_trace_generator(execution_id),
         media_type="text/event-stream",
