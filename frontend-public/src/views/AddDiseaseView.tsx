@@ -187,9 +187,11 @@ export function AddDiseaseView({ onNav }: AddDiseaseViewProps) {
       const msg =
         e instanceof ApiRequestError && e.status === 401
           ? "Server rejected (401). API key gate is on."
-          : e instanceof Error
+          : e instanceof ApiRequestError && e.status === 429
             ? e.message
-            : "Bootstrap failed.";
+            : e instanceof Error
+              ? e.message
+              : "Bootstrap failed.";
       updateStep("bootstrap", { status: "error", detail: msg });
       setError(msg);
       setBusy(false);

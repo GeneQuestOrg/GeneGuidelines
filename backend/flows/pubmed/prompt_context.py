@@ -2,12 +2,11 @@
 from __future__ import annotations
 
 import json
+import math
 from typing import Any
 
-from ...config import (
-    OPENAI_TPM_REQUEST_TOKEN_BUDGET,
-    PUBMED_ARTICLES_TEXT_ABSTRACT_MAX_CHARS,
-)
+from ...agents.llm_limits import prompt_input_token_budget
+from ...config import PUBMED_ARTICLES_TEXT_ABSTRACT_MAX_CHARS
 
 _PM3_PM2_KEYS: tuple[str, ...] = (
     "query_text",
@@ -31,6 +30,9 @@ _PM3_PM2_KEYS: tuple[str, ...] = (
 
 # Reserve tokens for cards + metadata so articles_text can share the TPM budget with evidence_cards.
 _PM3_METADATA_TOKEN_RESERVE = 12_000
+
+# Reserve for system prompt, template, and ticket metadata in the pm-3 branch.
+_PM3_PROMPT_OVERHEAD_RESERVE = 4_000
 
 _PASS1_TOPIC_BUCKET: dict[str, str | None] = {
     "pass1-overview": None,
@@ -187,7 +189,12 @@ def _corpus_fields_for_prompt(
     return payload, corpus_capped
 
 
-def pm2_view_for_llm_prompt(node_id: str, raw: Any) -> Any:
+def pm2_view_for_llm_prompt(
+    node_id: str,
+    raw: Any,
+    *,
+    model_spec: str | None = None,
+) -> Any:
     """Return a pm-2-shaped payload scoped for this node's prompt (full store unchanged)."""
     if not isinstance(raw, dict):
         return raw
@@ -211,15 +218,18 @@ def pm2_view_for_llm_prompt(node_id: str, raw: Any) -> Any:
         return raw
 
     abstract_max = PUBMED_ARTICLES_TEXT_ABSTRACT_MAX_CHARS
-    budget = OPENAI_TPM_REQUEST_TOKEN_BUDGET
+    budget = prompt_input_token_budget(model_spec)
 
     if node_id == "pm-3":
         payload = {k: result_dict[k] for k in _PM3_PM2_KEYS if k in result_dict}
+        metadata_tokens = _estimate_json_tokens(payload)
+        overhead = math.ceil(metadata_tokens * 1.3) + _PM3_PROMPT_OVERHEAD_RESERVE
+        corpus_budget = min(budget, max(8_000, budget - overhead))
         corpus_fields, _ = _corpus_fields_for_prompt(
             result_dict,
             articles if isinstance(articles, list) else [],
             evidence_cards,
-            token_budget=budget,
+            token_budget=corpus_budget,
             abstract_max=abstract_max,
         )
         payload.update(corpus_fields)

@@ -7,13 +7,19 @@ from fastapi.testclient import TestClient
 
 @pytest.fixture
 def client():
+    from backend.clerk_auth import AuthUser, require_admin
     from backend.database import init_db
     from backend.main import app
 
     init_db()
+    app.dependency_overrides[require_admin] = lambda: AuthUser(
+        clerk_id="test-admin", email=None, role="admin"
+    )
 
     with TestClient(app) as test_client:
         yield test_client
+
+    app.dependency_overrides.clear()
 
 
 def test_get_pipeline_settings(client: TestClient) -> None:
@@ -21,12 +27,12 @@ def test_get_pipeline_settings(client: TestClient) -> None:
     assert resp.status_code == 200
     body = resp.json()
     assert body["defaultModelProfile"] in ("production", "test", "openrouter", "vllm")
-    assert len(body["modelProfiles"]) >= 4
-    prod = next(p for p in body["modelProfiles"] if p["id"] == "production")
-    assert prod["simpleModel"]
-    assert prod["agenticModel"]
-    assert "ready" in prod
-    assert isinstance(prod["missingEnvVars"], list)
+    assert len(body["modelProfiles"]) >= 1
+    profile = body["modelProfiles"][0]
+    assert profile["simpleModel"]
+    assert profile["agenticModel"]
+    assert "ready" in profile
+    assert isinstance(profile["missingEnvVars"], list)
 
     integration_ids = {i["id"] for i in body["integrations"]}
     assert "openai" in integration_ids

@@ -1,7 +1,11 @@
 """Completion token ceiling helpers."""
 from __future__ import annotations
 
-from backend.agents.llm_limits import cap_completion_tokens, completion_token_ceiling
+from backend.agents.llm_limits import (
+    cap_completion_tokens,
+    completion_token_ceiling,
+    prompt_input_token_budget,
+)
 from backend.agents.simple_runner import resolve_max_tokens_for_node
 
 
@@ -26,3 +30,9 @@ def test_resolve_max_tokens_for_node_clamps_default() -> None:
     node = {"prompt_mode": "simple", "model_name": "openai:gpt-4o-mini"}
     # DEFAULT_SIMPLE_LLM_MAX_TOKENS (4000) applies before model ceiling (16_384).
     assert resolve_max_tokens_for_node(node) == 4_000
+
+
+def test_prompt_input_token_budget_gemma_under_262k() -> None:
+    budget = prompt_input_token_budget("openrouter:google/gemma-4-31B-it")
+    assert budget <= 250_144
+    assert budget >= 8_000

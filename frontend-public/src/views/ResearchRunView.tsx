@@ -32,6 +32,9 @@ function formatTraceLine(raw: string): string {
     if (ev.done === true) {
       return "[done]";
     }
+    if (ev.error === "Unknown execution_id") {
+      return "[sys] Trace not available on this server instance — run status via polling below.";
+    }
     const kind = typeof ev.kind === "string" ? ev.kind : "";
     const text =
       typeof ev.text === "string"
@@ -115,21 +118,29 @@ export function ResearchRunView({
     if (!shouldUseTraceSse()) {
       return;
     }
-    const base = getApiBaseUrl();
-    const path = appendApiKeyQueryForSse(
-      `/api/agent/trace/${encodeURIComponent(executionId)}`,
-    );
-    const url = base ? `${base}${path}` : path;
-    const es = new EventSource(url);
-    es.onmessage = (event) => {
-      appendLines([formatTraceLine(event.data)]);
-    };
-    es.onerror = () => {
-      appendLines(["[sse] connection interrupted — polling still runs"]);
-      es.close();
-    };
+    let es: EventSource | null = null;
+    let cancelled = false;
+
+    void (async () => {
+      const base = getApiBaseUrl();
+      const path = await appendApiKeyQueryForSse(
+        `/api/agent/trace/${encodeURIComponent(executionId)}`,
+      );
+      if (cancelled) return;
+      const url = base ? `${base}${path}` : path;
+      es = new EventSource(url);
+      es.onmessage = (event) => {
+        appendLines([formatTraceLine(event.data)]);
+      };
+      es.onerror = () => {
+        appendLines(["[sse] connection interrupted — polling still runs"]);
+        es?.close();
+      };
+    })();
+
     return () => {
-      es.close();
+      cancelled = true;
+      es?.close();
     };
   }, [appendLines, executionId]);
 

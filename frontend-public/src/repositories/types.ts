@@ -5,7 +5,7 @@ import type { Foundation } from "../types/foundation";
 import type { GuidelineDocument } from "../types/guidelineDocument";
 import type { OfficialGuideline } from "../types/officialGuideline";
 import type { PrivateContext } from "../types/privateContext";
-import type { ResearchRun } from "../types/researchRun";
+import type { ResearchRun, ResearchRunHistoryItem } from "../types/researchRun";
 import type { Therapy } from "../types/therapy";
 import type { Trial } from "../types/trial";
 
@@ -39,6 +39,8 @@ export interface DoctorRepository {
 
 export interface ResearchRunsRepository {
   listActiveRuns(limit?: number): Promise<readonly ResearchRun[]>;
+  listMyActiveRuns(limit?: number): Promise<readonly ResearchRun[]>;
+  listMyRunHistory(limit?: number): Promise<readonly ResearchRunHistoryItem[]>;
 }
 
 export interface TrialRepository {

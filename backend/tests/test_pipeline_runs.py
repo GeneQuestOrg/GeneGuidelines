@@ -3,9 +3,13 @@ from __future__ import annotations
 import unittest
 from unittest.mock import AsyncMock, patch
 
+from backend.clerk_auth import AuthUser
 from backend.routers import agent as agent_router
 from backend.routers import doctor_finder as df_router
 from backend.routers import pipeline as pipeline_router
+
+_TEST_USER = AuthUser(clerk_id="test-user", email=None, role="user")
+_TEST_ADMIN = AuthUser(clerk_id="test-admin", email=None, role="admin")
 
 
 class PipelineRunsTests(unittest.TestCase):
@@ -18,6 +22,7 @@ class PipelineRunsTests(unittest.TestCase):
                 "flow_key": "pubmed",
                 "pipeline": "guideline",
                 "label": "Fibrous dysplasia",
+                "disease_slug": "fd",
                 "done": True,
                 "started_at": "2026-05-15T12:00:00+00:00",
             }
@@ -34,7 +39,7 @@ class PipelineRunsTests(unittest.TestCase):
                 "backend.doctor_finder_store.list_persisted_doctor_finder_run_rows",
                 return_value=[],
             ):
-                payload = pipeline_router.list_pipeline_runs()
+                payload = pipeline_router.list_pipeline_runs(_admin=_TEST_ADMIN)
             runs = payload["runs"]
             # The endpoint also surfaces bootstrap finder runs from
             # guideline_run_results, so we assert on the contents of the
@@ -45,6 +50,7 @@ class PipelineRunsTests(unittest.TestCase):
             self.assertEqual(len(in_memory_runs), 2)
             guideline = next(r for r in in_memory_runs if r["execution_id"] == "g-1")
             self.assertEqual(guideline["pipeline"], "guideline")
+            self.assertEqual(guideline.get("disease_slug"), "fd")
             pipelines = {r["pipeline"] for r in in_memory_runs}
             self.assertIn("doctor_finder", pipelines)
         finally:
@@ -89,7 +95,8 @@ class PipelineRunsTests(unittest.TestCase):
 
             result = asyncio.run(
                 pipeline_router.start_guideline_run(
-                    pipeline_router.GuidelineRunBody(disease_slug="fd")
+                    pipeline_router.GuidelineRunBody(disease_slug="fd"),
+                    user=_TEST_USER,
                 )
             )
             self.assertEqual(result["execution_id"], "x")
@@ -103,6 +110,7 @@ class PipelineRunsTests(unittest.TestCase):
             ticket_kwargs = mock_ticket.call_args.kwargs
             self.assertIn("Disease slug: fd", ticket_kwargs["description"])
             self.assertEqual(kwargs.get("disease_slug"), "fd")
+            self.assertEqual(kwargs.get("owner_clerk_id"), "test-user")
 
     def test_start_guideline_run_custom_disease(self) -> None:
         with patch(
@@ -119,7 +127,8 @@ class PipelineRunsTests(unittest.TestCase):
                     pipeline_router.GuidelineRunBody(
                         disease_name="Example rare syndrome",
                         disease_aliases=["ERS", "example syndrome"],
-                    )
+                    ),
+                    user=_TEST_USER,
                 )
             )
             self.assertEqual(result["execution_id"], "custom-1")

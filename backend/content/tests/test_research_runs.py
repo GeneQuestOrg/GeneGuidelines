@@ -33,7 +33,8 @@ def conn() -> sqlite3.Connection:
             quality_json TEXT,
             done INTEGER NOT NULL DEFAULT 0,
             started_at TEXT,
-            finished_at TEXT
+            finished_at TEXT,
+            owner_clerk_id TEXT
         );
         CREATE TABLE doctor_finder_run_results (
             execution_id TEXT PRIMARY KEY,
@@ -61,13 +62,15 @@ def _insert_guideline_run(
     done: int = 0,
     started_at: str | None = "2026-05-17T22:00:00+00:00",
     finished_at: str | None = None,
+    owner_clerk_id: str | None = None,
+    error: str | None = None,
 ) -> None:
     conn.execute(
         """
         INSERT INTO guideline_run_results
           (execution_id, pipeline, flow_key, disease_slug, label,
-           done, started_at, finished_at)
-        VALUES (?, 'guideline', ?, ?, ?, ?, ?, ?)
+           done, started_at, finished_at, owner_clerk_id, error)
+        VALUES (?, 'guideline', ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             execution_id,
@@ -77,6 +80,8 @@ def _insert_guideline_run(
             done,
             started_at,
             finished_at,
+            owner_clerk_id,
+            error,
         ),
     )
 
@@ -176,10 +181,15 @@ def test_to_payload_shape(conn):
         "runId",
         "diseaseSlug",
         "flowKey",
+        "pipeline",
         "label",
         "startedAt",
         "elapsedSec",
+        "progressPct",
+        "activity",
     }
+    assert isinstance(payload["progressPct"], int)
+    assert isinstance(payload["activity"], str)
     assert payload["diseaseSlug"] == "noonan"
     assert payload["label"] == "Noonan run"
 
@@ -190,3 +200,66 @@ def test_missing_doctor_finder_table_is_tolerated(conn):
     runs = research_runs.list_active_runs(conn=conn)
     assert len(runs) == 1
     assert runs[0].run_id == "g1"
+
+
+def test_history_empty_when_no_runs(conn):
+    assert research_runs.list_my_run_history("u_1", conn=conn) == []
+
+
+def test_history_skips_active_runs(conn):
+    _insert_guideline_run(conn, execution_id="active", done=0, owner_clerk_id="u_1")
+    assert research_runs.list_my_run_history("u_1", conn=conn) == []
+
+
+def test_history_returns_completed_run(conn):
+    _insert_guideline_run(
+        conn, execution_id="done-1", done=1,
+        finished_at="2026-05-17T22:30:00+00:00",
+        owner_clerk_id="u_1",
+    )
+    runs = research_runs.list_my_run_history("u_1", conn=conn)
+    assert len(runs) == 1
+    assert runs[0].run_id == "done-1"
+    assert runs[0].status == "completed"
+    assert runs[0].error_snippet is None
+
+
+def test_history_failed_run_has_snippet(conn):
+    _insert_guideline_run(
+        conn, execution_id="failed-1", done=1,
+        finished_at="2026-05-17T22:30:00+00:00",
+        error="LLM timeout after 90 seconds",
+        owner_clerk_id="u_1",
+    )
+    runs = research_runs.list_my_run_history("u_1", conn=conn)
+    assert runs[0].status == "failed"
+    assert runs[0].error_snippet == "LLM timeout after 90 seconds"
+
+
+def test_history_only_own_runs(conn):
+    _insert_guideline_run(conn, execution_id="own", done=1,
+        finished_at="2026-05-17T22:30:00+00:00", owner_clerk_id="u_1")
+    _insert_guideline_run(conn, execution_id="other", done=1,
+        finished_at="2026-05-17T22:30:00+00:00", owner_clerk_id="u_2")
+    runs = research_runs.list_my_run_history("u_1", conn=conn)
+    assert [r.run_id for r in runs] == ["own"]
+
+
+def test_history_ordered_newest_first(conn):
+    _insert_guideline_run(conn, execution_id="old", done=1,
+        finished_at="2026-05-17T22:00:00+00:00", owner_clerk_id="u_1")
+    _insert_guideline_run(conn, execution_id="new", done=1,
+        finished_at="2026-05-17T23:00:00+00:00", owner_clerk_id="u_1")
+    runs = research_runs.list_my_run_history("u_1", conn=conn)
+    assert [r.run_id for r in runs] == ["new", "old"]
+
+
+def test_to_history_payload_shape(conn):
+    _insert_guideline_run(conn, execution_id="h1", done=1,
+        finished_at="2026-05-17T22:30:00+00:00", owner_clerk_id="u_1")
+    [run] = research_runs.list_my_run_history("u_1", conn=conn)
+    payload = research_runs.to_history_payload(run)
+    assert set(payload.keys()) == {
+        "runId", "diseaseSlug", "flowKey", "label", "status",
+        "startedAt", "finishedAt", "errorSnippet",
+    }

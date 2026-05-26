@@ -101,6 +101,8 @@ export function StartResearchView({
     } catch (e) {
       if (e instanceof ApiRequestError && e.status === 401) {
         setError(`The server rejected the request (401). ${API_KEY_HINT}`);
+      } else if (e instanceof ApiRequestError && e.status === 429) {
+        setError(e.message);
       } else if (e instanceof Error) {
         setError(e.message);
       } else {
