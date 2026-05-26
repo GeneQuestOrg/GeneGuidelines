@@ -5,6 +5,7 @@ import json
 from typing import Any
 
 from ...config import (
+    LLM_PROMPT_TOKEN_CAP,
     OPENAI_TPM_REQUEST_TOKEN_BUDGET,
     PUBMED_ARTICLES_TEXT_ABSTRACT_MAX_CHARS,
 )
@@ -211,7 +212,7 @@ def pm2_view_for_llm_prompt(node_id: str, raw: Any) -> Any:
         return raw
 
     abstract_max = PUBMED_ARTICLES_TEXT_ABSTRACT_MAX_CHARS
-    budget = OPENAI_TPM_REQUEST_TOKEN_BUDGET
+    budget = min(OPENAI_TPM_REQUEST_TOKEN_BUDGET, LLM_PROMPT_TOKEN_CAP)
 
     if node_id == "pm-3":
         payload = {k: result_dict[k] for k in _PM3_PM2_KEYS if k in result_dict}

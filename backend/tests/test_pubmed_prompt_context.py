@@ -84,6 +84,37 @@ class PubmedPromptContextTests(unittest.TestCase):
         self.assertTrue(result.get("articles_text_corpus_capped"))
         self.assertLess(result["article_count"], 500)
 
+    def test_llm_prompt_token_cap_tightens_pm3_corpus(self) -> None:
+        """K6: min(TPM budget, LLM_PROMPT_TOKEN_CAP) must cap pm-3 below the TPM ceiling alone."""
+        articles = [
+            {
+                "pmid": str(i),
+                "title": f"Paper {i}",
+                "abstract": "word " * 400,
+                "topic_bucket": "general",
+            }
+            for i in range(500)
+        ]
+        raw = {"result": {"query_text": "Marfan", "articles": articles, "evidence_cards": []}}
+        tpm_budget = 380_000
+
+        with mock.patch.object(pc, "OPENAI_TPM_REQUEST_TOKEN_BUDGET", tpm_budget):
+            with mock.patch.object(pc, "LLM_PROMPT_TOKEN_CAP", tpm_budget):
+                view_tpm_only = pc.pm2_view_for_llm_prompt("pm-3", raw)
+            with mock.patch.object(pc, "LLM_PROMPT_TOKEN_CAP", 200_000):
+                view_k6 = pc.pm2_view_for_llm_prompt("pm-3", raw)
+
+        tpm_result = view_tpm_only["result"]
+        k6_result = view_k6["result"]
+        self.assertGreater(tpm_result["article_count"], k6_result["article_count"])
+        self.assertTrue(k6_result.get("articles_text_corpus_capped"))
+        self.assertLess(
+            pc.estimated_pm2_prompt_tokens(view_k6),
+            pc.estimated_pm2_prompt_tokens(view_tpm_only),
+        )
+        # Headroom for Gemma 4 (262_144 ctx): K6 view should stay under a safe ceiling.
+        self.assertLess(pc.estimated_pm2_prompt_tokens(view_k6), 220_000)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -328,6 +328,14 @@ PUBMED_PM1_DETERMINISTIC_RETRIEVAL = (
 OPENAI_TPM_REQUEST_TOKEN_BUDGET = int(
     (os.environ.get("OPENAI_TPM_REQUEST_TOKEN_BUDGET") or "").strip() or 380_000
 )
+# Model-context cap for the assembled LLM prompt (separate from OpenAI TPM rate limit above).
+# Effective articles_text budget is min(OPENAI_TPM_REQUEST_TOKEN_BUDGET, LLM_PROMPT_TOKEN_CAP).
+# Default 200_000 leaves ~60K headroom inside Gemma 4's 262_144 context for prompt template,
+# system instructions, and output. Override with LLM_PROMPT_TOKEN_CAP env var if a model has
+# more headroom (e.g. 350_000 for GPT-5.5 long-context).
+LLM_PROMPT_TOKEN_CAP = int(
+    (os.environ.get("LLM_PROMPT_TOKEN_CAP") or "").strip() or 200_000
+)
 # Abstract chars per article line inside prompt ``articles_text`` (pm-2 code node may use more).
 PUBMED_ARTICLES_TEXT_ABSTRACT_MAX_CHARS = int(
     (os.environ.get("PUBMED_ARTICLES_TEXT_ABSTRACT_MAX_CHARS") or "").strip() or 3000
