@@ -1,4 +1,6 @@
 import type { ReactNode } from "react";
+import { RequireSignedIn } from "../auth/RequireSignedIn";
+import { ResearchSignInPrompt } from "../auth/ResearchSignInPrompt";
 import type { AudienceView, Route, UserLocation } from "../router/types";
 import { HomeView } from "./HomeView";
 import { DiseaseView } from "./DiseaseView";
@@ -48,7 +50,7 @@ export function routeContent({
     case "diseaseIndex":
       return <DiseaseIndexView initialQuery={route.query} onNav={onNav} />;
     case "account":
-      return <AccountView onNav={onNav} onSignIn={onSignIn} />;
+      return <AccountView onNav={onNav} onSignIn={onSignIn} view={view} onViewChange={onViewChange} />;
     case "about":
       return <AboutView view={view} onViewChange={onViewChange} onNav={onNav} />;
     case "doctors":
@@ -65,14 +67,36 @@ export function routeContent({
       );
     case "startResearch":
       return (
-        <StartResearchView
-          key={route.diseaseSlug ?? "__none__"}
-          initialDiseaseSlug={route.diseaseSlug}
-          onNav={onNav}
-        />
+        <RequireSignedIn
+          fallback={
+            <ResearchSignInPrompt
+              title="Start research"
+              lead="Sign in to launch a guideline research run for a catalog disease or a custom name."
+              onNav={onNav}
+            />
+          }
+        >
+          <StartResearchView
+            key={route.diseaseSlug ?? "__none__"}
+            initialDiseaseSlug={route.diseaseSlug}
+            onNav={onNav}
+          />
+        </RequireSignedIn>
       );
     case "addDisease":
-      return <AddDiseaseView onNav={onNav} />;
+      return (
+        <RequireSignedIn
+          fallback={
+            <ResearchSignInPrompt
+              title="New research"
+              lead="Sign in to add a disease and run the six parallel research workflows (PubMed, doctors, trials, and more)."
+              onNav={onNav}
+            />
+          }
+        >
+          <AddDiseaseView onNav={onNav} />
+        </RequireSignedIn>
+      );
     case "trials":
       return <TrialsView initialQuery={route.query} onNav={onNav} />;
     case "flowchart":
@@ -88,13 +112,23 @@ export function routeContent({
       );
     case "researchRun":
       return (
-        <ResearchRunView
-          executionId={route.id}
-          diseaseSlug={route.diseaseSlug}
-          diseaseName={route.diseaseName}
-          queryTag={route.query}
-          onNav={onNav}
-        />
+        <RequireSignedIn
+          fallback={
+            <ResearchSignInPrompt
+              title="Research run"
+              lead="Sign in to view live trace output and results for this research run."
+              onNav={onNav}
+            />
+          }
+        >
+          <ResearchRunView
+            executionId={route.id}
+            diseaseSlug={route.diseaseSlug}
+            diseaseName={route.diseaseName}
+            queryTag={route.query}
+            onNav={onNav}
+          />
+        </RequireSignedIn>
       );
     default:
       return (

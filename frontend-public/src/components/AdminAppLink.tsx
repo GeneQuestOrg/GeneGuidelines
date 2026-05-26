@@ -1,14 +1,22 @@
+import { SignedIn, useUser } from "@clerk/clerk-react";
 import {
   getAdminAppUrl,
   getLegacyOpsUrl,
   isAdminLinkVisible,
   isLegacyOpsLinkVisible,
 } from "../config/adminUrl";
+import { isClerkAdmin } from "../auth/clerkRole";
+import { isClerkEnabled } from "../auth/clerkConfig";
 import "./admin-app-link.css";
 
-export function AdminAppLink() {
+function AdminAppLinkInner() {
+  const { user, isLoaded } = useUser();
   if (!isAdminLinkVisible()) {
     return null;
+  }
+  if (isClerkEnabled()) {
+    if (!isLoaded) return null;
+    if (!isClerkAdmin(user)) return null;
   }
 
   const adminUrl = getAdminAppUrl();
@@ -40,5 +48,16 @@ export function AdminAppLink() {
         </a>
       ) : null}
     </div>
+  );
+}
+
+export function AdminAppLink() {
+  if (!isClerkEnabled()) {
+    return <AdminAppLinkInner />;
+  }
+  return (
+    <SignedIn>
+      <AdminAppLinkInner />
+    </SignedIn>
   );
 }

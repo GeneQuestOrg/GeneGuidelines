@@ -1,5 +1,7 @@
 import { useCallback, useState } from "react";
 import type { AudienceView } from "../router/types";
+import { isClerkEnabled } from "../auth/clerkConfig";
+import { patchAudienceView } from "../api/account";
 
 const STORAGE_KEY = "gg-view";
 
@@ -27,6 +29,9 @@ export function useAudienceView(defaultView: AudienceView): {
       localStorage.setItem(STORAGE_KEY, next);
     } catch {
       // ignore
+    }
+    if (isClerkEnabled()) {
+      patchAudienceView(next).catch(() => {});
     }
   }, []);
 
