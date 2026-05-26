@@ -12,11 +12,45 @@
   letter-spacing: -0.02em;
 }
 
+.ops-run-status-pill {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  margin: 0 0 14px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border, #e2e8f0);
+  background: var(--surface-2, #f8fafc);
+}
+
+.ops-run-status-pill__text {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--ink-2, #475569);
+  line-height: 1.45;
+  flex: 1 1 220px;
+}
+
 .ops-panel__lead {
   margin: 0 0 20px;
   color: var(--ink-2);
   font-size: var(--fs-sm);
   max-width: 56ch;
+}
+
+.ops-panel__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0 0 16px;
+}
+
+.ops-bootstrap-started__list {
+  margin: 8px 0 0;
+  padding-left: 1.25rem;
+  font-size: var(--fs-xs);
+  color: var(--ink-2);
 }
 
 .ops-quality-summary {

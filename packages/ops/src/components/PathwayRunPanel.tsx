@@ -32,16 +32,20 @@ export interface PathwayRunPanelProps {
   }) => void;
   viewExecutionId?: string | null;
   runLive?: boolean;
+  initialDiseaseSlug?: string;
+  onRunAgain?: () => void;
 }
 
 export function PathwayRunPanel({
   onRunStarted,
   viewExecutionId = null,
   runLive = false,
+  initialDiseaseSlug = "",
+  onRunAgain,
 }: PathwayRunPanelProps) {
   const { diseases, loading: catalogLoading, error: catalogError } = useDiseaseCatalog();
   const defaultModelProfile = useDefaultModelProfile();
-  const [diseaseSlug, setDiseaseSlug] = useState("");
+  const [diseaseSlug, setDiseaseSlug] = useState(initialDiseaseSlug);
   const [profile, setProfile] = useState<ModelProfile>(defaultModelProfile);
   const profileSynced = useRef(false);
 
@@ -50,6 +54,13 @@ export function PathwayRunPanel({
     setProfile(defaultModelProfile);
     profileSynced.current = true;
   }, [defaultModelProfile]);
+
+  useEffect(() => {
+    if (initialDiseaseSlug) {
+      setDiseaseSlug(initialDiseaseSlug);
+    }
+  }, [initialDiseaseSlug]);
+
   const [locale, setLocale] = useState("en");
   const [refreshPubmed, setRefreshPubmed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -66,7 +77,14 @@ export function PathwayRunPanel({
 
   const traceExecutionId = activeId ?? (runLive ? viewExecutionId : null);
   const traceEnabled = Boolean(traceExecutionId && (submitting || runLive || activeId));
-  const traceUrl = traceExecutionId ? agentTraceUrl(traceExecutionId) : null;
+  const [traceUrl, setTraceUrl] = useState<string | null>(null);
+  useEffect(() => {
+    if (!traceExecutionId) {
+      setTraceUrl(null);
+      return;
+    }
+    void agentTraceUrl(traceExecutionId).then(setTraceUrl);
+  }, [traceExecutionId]);
 
   const applyOutputView = useCallback(
     (view: ReturnType<typeof extractPathwayRunOutput>, runError?: string | null) => {
@@ -231,6 +249,14 @@ export function PathwayRunPanel({
         guideline.
       </p>
 
+      {viewExecutionId && onRunAgain && !submitting ? (
+        <div className="ops-panel__toolbar">
+          <Button type="button" variant="ghost" onClick={onRunAgain}>
+            Run again for this disease
+          </Button>
+        </div>
+      ) : null}
+
       <aside className="ops-pathway-output-guide" aria-label="How to read patient chart output">
         <p className="ops-field__hint">
           <strong>What you get:</strong> the agent must call the <code>submit_parent_pathway</code> tool with
@@ -381,6 +407,7 @@ export function PathwayRunPanel({
           <pre className="ops-raw-output">{rawOutput}</pre>
         </section>
       ) : null}
+
     </div>
   );
 }
