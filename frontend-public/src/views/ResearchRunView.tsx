@@ -195,7 +195,8 @@ export function ResearchRunView({
       es.close();
     };
     return () => {
-      es.close();
+      cancelled = true;
+      es?.close();
     };
   }, [appendRawLines, executionId]);
 

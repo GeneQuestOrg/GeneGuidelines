@@ -18,7 +18,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Any, Iterable
+from typing import Any, Iterable, Literal
 
 import psycopg
 
@@ -47,9 +47,12 @@ class ActiveResearchRun:
     run_id: str
     disease_slug: str | None
     flow_key: str
+    pipeline: str
     label: str
     started_at: str | None
     elapsed_sec: int | None
+    progress_pct: int
+    activity: str
 
 
 def _parse_iso(value: object) -> datetime | None:
@@ -115,18 +118,30 @@ def _rows_from_guideline_store(
     ).fetchall()
     out: list[ActiveResearchRun] = []
     for r in rows:
+        run_id = str(r["execution_id"])
+        flow_key = str(r["flow_key"] or "guideline")
+        pipeline = str(r["pipeline"] or flow_key)
+        started_at = str(r["started_at"]) if r["started_at"] is not None else None
+        elapsed = _elapsed_seconds(r["started_at"])
+        progress = resolve_run_progress(
+            run_id=run_id,
+            flow_key=flow_key,
+            pipeline=pipeline,
+            elapsed_sec=elapsed,
+        )
         out.append(
             ActiveResearchRun(
-                run_id=str(r["execution_id"]),
+                run_id=run_id,
                 disease_slug=(
                     str(r["disease_slug"]) if r["disease_slug"] is not None else None
                 ),
-                flow_key=str(r["flow_key"] or "guideline"),
+                flow_key=flow_key,
+                pipeline=pipeline,
                 label=str(r["label"] or "Research run"),
-                started_at=(
-                    str(r["started_at"]) if r["started_at"] is not None else None
-                ),
-                elapsed_sec=_elapsed_seconds(r["started_at"]),
+                started_at=started_at,
+                elapsed_sec=elapsed,
+                progress_pct=progress.progress_pct,
+                activity=progress.activity,
             )
         )
     return out
@@ -156,16 +171,26 @@ def _rows_from_doctor_finder_store(
     ).fetchall()
     out: list[ActiveResearchRun] = []
     for r in rows:
+        run_id = str(r["execution_id"])
+        started_at = str(r["started_at"]) if r["started_at"] is not None else None
+        elapsed = _elapsed_seconds(r["started_at"])
+        progress = resolve_run_progress(
+            run_id=run_id,
+            flow_key="doctor_finder",
+            pipeline="doctor_finder",
+            elapsed_sec=elapsed,
+        )
         out.append(
             ActiveResearchRun(
-                run_id=str(r["execution_id"]),
+                run_id=run_id,
                 disease_slug=_resolve_disease_slug_for_catalog(r["catalog_slug"]),
                 flow_key="doctor_finder",
+                pipeline="doctor_finder",
                 label=str(r["disease_name"] or "Doctor finder"),
-                started_at=(
-                    str(r["started_at"]) if r["started_at"] is not None else None
-                ),
-                elapsed_sec=_elapsed_seconds(r["started_at"]),
+                started_at=started_at,
+                elapsed_sec=elapsed,
+                progress_pct=progress.progress_pct,
+                activity=progress.activity,
             )
         )
     return out
@@ -207,9 +232,104 @@ def to_payload(run: ActiveResearchRun) -> dict[str, Any]:
         "runId": run.run_id,
         "diseaseSlug": run.disease_slug,
         "flowKey": run.flow_key,
+        "pipeline": run.pipeline,
         "label": run.label,
         "startedAt": run.started_at,
         "elapsedSec": run.elapsed_sec,
+        "progressPct": run.progress_pct,
+        "activity": run.activity,
+    }
+
+
+@dataclass(frozen=True, slots=True)
+class ResearchRunHistoryItem:
+    """Completed (or failed) pipeline run for the history view."""
+
+    run_id: str
+    disease_slug: str | None
+    flow_key: str
+    label: str
+    status: Literal["running", "completed", "failed"]
+    started_at: str | None
+    finished_at: str | None
+    error_snippet: str | None  # first 200 chars of error, or None
+
+
+def list_my_run_history(
+    clerk_id: str,
+    limit: int = 20,
+    *,
+    conn: sqlite3.Connection | None = None,
+) -> list[ResearchRunHistoryItem]:
+    """Return the most recent completed/failed runs for the given user, newest first.
+
+    Only queries guideline_run_results (doctor_finder runs have no owner_clerk_id).
+    Runs with done=0 are NOT included (those are active runs).
+    """
+    if limit <= 0:
+        return []
+    owned = conn is None
+    if owned:
+        conn = get_connection()
+    try:
+        rows = conn.execute(
+            """
+            SELECT execution_id, disease_slug, flow_key, label,
+                   done, started_at, finished_at, error
+            FROM guideline_run_results
+            WHERE owner_clerk_id = ? AND done = 1
+            ORDER BY COALESCE(finished_at, started_at, '') DESC
+            LIMIT ?
+            """,
+            (clerk_id, limit),
+        ).fetchall()
+        out: list[ResearchRunHistoryItem] = []
+        for r in rows:
+            done = int(r["done"])
+            error_val = r["error"]
+            error_str = str(error_val).strip() if error_val is not None else ""
+            if done == 1 and error_str:
+                status: Literal["running", "completed", "failed"] = "failed"
+            elif done == 1:
+                status = "completed"
+            else:
+                status = "running"
+            error_snippet = error_str[:200] if error_str else None
+            out.append(
+                ResearchRunHistoryItem(
+                    run_id=str(r["execution_id"]),
+                    disease_slug=(
+                        str(r["disease_slug"]) if r["disease_slug"] is not None else None
+                    ),
+                    flow_key=str(r["flow_key"] or "guideline"),
+                    label=str(r["label"] or "Research run"),
+                    status=status,
+                    started_at=(
+                        str(r["started_at"]) if r["started_at"] is not None else None
+                    ),
+                    finished_at=(
+                        str(r["finished_at"]) if r["finished_at"] is not None else None
+                    ),
+                    error_snippet=error_snippet,
+                )
+            )
+        return out
+    finally:
+        if owned:
+            conn.close()
+
+
+def to_history_payload(run: ResearchRunHistoryItem) -> dict[str, Any]:
+    """Serialise a history item to a plain dict for the public API response."""
+    return {
+        "runId": run.run_id,
+        "diseaseSlug": run.disease_slug,
+        "flowKey": run.flow_key,
+        "label": run.label,
+        "status": run.status,
+        "startedAt": run.started_at,
+        "finishedAt": run.finished_at,
+        "errorSnippet": run.error_snippet,
     }
 
 
@@ -217,4 +337,7 @@ __all__ = [
     "ActiveResearchRun",
     "list_active_runs",
     "to_payload",
+    "ResearchRunHistoryItem",
+    "list_my_run_history",
+    "to_history_payload",
 ]

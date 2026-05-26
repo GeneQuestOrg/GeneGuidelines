@@ -77,20 +77,20 @@ class PubmedFlowAgenticTests(unittest.IsolatedAsyncioTestCase):
         nodes["pm-4-overview"]["output_schema"] = '{"fields":[{"name":"disease_name","type":"string","required":true},{"name":"section_html","type":"string","required":true},{"name":"key_updates","type":"string","required":true}]}'
         nodes["pm-4-references"]["output_schema"] = '{"fields":[{"name":"section_html","type":"string","required":true},{"name":"references","type":"string","required":true},{"name":"disclaimer_html","type":"string","required":true}]}'
 
-        async def _fake_single_node_async(*args, **kwargs):
-            store = kwargs["store"]
-            store["output"] = json.dumps(
-                {
-                    "query_text": "fibrous dysplasia",
-                    "fallback_used": fallback_used,
-                    "total_found_estimate": 117,
-                    "total_requested": 117,
-                    "total_analyzed": 117,
-                    "total_with_abstract": 110,
-                    "articles": [{"pmid": "123", "title": "A", "abstract": "x"}],
-                    "evidence_cards": [{"pmid": "123", "topic_bucket": "treatment"}],
-                }
-            )
+        def _fake_pm1_retrieval(_ctx: dict) -> dict:
+            return {
+                "query_text": "fibrous dysplasia",
+                "fallback_used": fallback_used,
+                "total_found_estimate": 117,
+                "total_requested": 117,
+                "total_analyzed": 117,
+                "total_with_abstract": 110,
+                "articles": [{"pmid": "123", "title": "A", "abstract": "x"}],
+                "evidence_cards": [{"pmid": "123", "topic_bucket": "treatment"}],
+                "retrieval_channel": "api",
+                "fallback_reason": "",
+                "request_count": 1,
+            }
 
         async def _fake_simple_runner(**kwargs):
             node_id = kwargs.get("node_id")
@@ -110,6 +110,30 @@ class PubmedFlowAgenticTests(unittest.IsolatedAsyncioTestCase):
                 return {"section_html": "<p>Refs PMID:123</p>", "references": "PMID:123", "disclaimer_html": "<p>Disclaimer</p>"}
             return {"section_html": "<p>Section PMID:123</p>"}
 
+        async def _fake_code_node_async(
+            *,
+            python_source: str,
+            context: dict | None = None,
+            **_kwargs: object,
+        ) -> dict:
+            ns: dict = {}
+            exec(python_source, ns)  # noqa: S102 – test-only sandbox
+            result = ns["run"](context or {})
+            return {
+                "ok": True,
+                "result": result,
+                "error": "",
+                "error_type": "",
+                "details": "",
+                "timed_out": False,
+                "duration_ms": 1,
+                "exit_code": 0,
+                "stdout_tail": "",
+                "stderr_tail": "",
+                "stdout_truncated": False,
+                "stderr_truncated": False,
+            }
+
         with (
             patch("backend.engine.flow_engine.get_execution_order", return_value=node_order),
             patch("backend.engine.flow_engine.db.get_flow_definition_nodes", return_value=[{"node_id": nid} for nid in node_order]),
@@ -117,8 +141,12 @@ class PubmedFlowAgenticTests(unittest.IsolatedAsyncioTestCase):
             patch("backend.engine.flow_engine.db.get_flow_node", side_effect=lambda *_args: nodes[_args[1]]),
             patch("backend.engine.flow_engine.db.get_tool_catalog_for_scope", return_value=[]),
             patch("backend.engine.flow_engine.db.get_tools_with_execution_mode", return_value=[]),
-            patch("backend.agents.runner.run_single_node_async", new=AsyncMock(side_effect=_fake_single_node_async)),
+            patch("backend.flows.pubmed.retrieval.run_pm1_retrieval", side_effect=_fake_pm1_retrieval),
             patch("backend.agents.simple_runner.run_llm_simple_async", new=AsyncMock(side_effect=_fake_simple_runner)),
+            patch(
+                "backend.executors.code_node_runner.run_code_node_async",
+                new=AsyncMock(side_effect=_fake_code_node_async),
+            ),
         ):
             store: dict = {}
             await run_flow_step_by_step_async(

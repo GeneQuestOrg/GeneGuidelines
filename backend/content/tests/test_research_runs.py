@@ -34,6 +34,8 @@ def _insert_guideline_run(
     done: int = 0,
     started_at: str | None = "2026-05-17T22:00:00+00:00",
     finished_at: str | None = None,
+    owner_clerk_id: str | None = None,
+    error: str | None = None,
 ) -> None:
     conn.execute(
         """
@@ -58,6 +60,8 @@ def _insert_guideline_run(
             done,
             started_at,
             finished_at,
+            owner_clerk_id,
+            error,
         ),
     )
     conn.commit()
@@ -188,10 +192,15 @@ def test_to_payload_shape(conn):
         "runId",
         "diseaseSlug",
         "flowKey",
+        "pipeline",
         "label",
         "startedAt",
         "elapsedSec",
+        "progressPct",
+        "activity",
     }
+    assert isinstance(payload["progressPct"], int)
+    assert isinstance(payload["activity"], str)
     assert payload["diseaseSlug"] == "noonan"
     assert payload["label"] == "Noonan run"
 

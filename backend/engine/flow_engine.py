@@ -174,26 +174,36 @@ def _slim_pm2(raw: Any) -> Any:
     return {"result": slimmed} if has_result else slimmed
 
 
-def _slim_pm2_for_prompt(node_id: str, raw: Any) -> Any:
+def _slim_pm2_for_prompt(node_id: str, raw: Any, *, model_spec: str | None = None) -> Any:
     """Task-scoped pm-2 view for PubMed LLM prompt interpolation (see flows.pubmed.prompt_context)."""
     from ..flows.pubmed.prompt_context import pm2_view_for_llm_prompt
 
-    return pm2_view_for_llm_prompt(node_id, raw)
+    return pm2_view_for_llm_prompt(node_id, raw, model_spec=model_spec)
 
 
 def _store_for_prompt_interpolation(
     flow_key: str,
     node_id: str,
     store: dict[str, Any],
+    *,
+    node: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     if flow_key != "pubmed":
         return store
     outputs = store.get("node_outputs") or {}
     if "pm-2" not in outputs:
         return store
+    model_spec: str | None = None
+    if node is not None:
+        from ..agents.simple_runner import resolve_model_spec_for_node
+
+        model_spec = resolve_model_spec_for_node(node)
     return {
         **store,
-        "node_outputs": {**outputs, "pm-2": _slim_pm2_for_prompt(node_id, outputs["pm-2"])},
+        "node_outputs": {
+            **outputs,
+            "pm-2": _slim_pm2_for_prompt(node_id, outputs["pm-2"], model_spec=model_spec),
+        },
     }
 
 
@@ -203,8 +213,11 @@ def _interpolate_node_prompt(
     *,
     flow_key: str,
     node_id: str,
+    node: dict[str, Any] | None = None,
 ) -> str:
-    interp_store = _store_for_prompt_interpolation(flow_key, node_id, store)
+    interp_store = _store_for_prompt_interpolation(
+        flow_key, node_id, store, node=node
+    )
     return interpolate_context_placeholders(node_prompt, interp_store)
 
 
@@ -933,7 +946,7 @@ async def run_flow_step_by_step_async(
         previous_output = get_previous_output_summary(store)
         node_prompt = build_node_prompt(node_prompt_raw, ticket_summary, tools_list_str, previous_output)
         node_prompt = _interpolate_node_prompt(
-            node_prompt, store, flow_key=flow_key, node_id=node_id
+            node_prompt, store, flow_key=flow_key, node_id=node_id, node=node
         )
         max_retry = node.get("max_retry")
         try:
@@ -1025,7 +1038,7 @@ async def run_flow_step_by_step_async(
                     store["memory_loaded"] = True
             # Re-run interpolation so templates can resolve {{ context.memory.* }}.
             node_prompt = _interpolate_node_prompt(
-                node_prompt, store, flow_key=flow_key, node_id=node_id
+                node_prompt, store, flow_key=flow_key, node_id=node_id, node=node
             )
         # #endregion Memory retrieval injection (agentic only)
 
@@ -1863,7 +1876,7 @@ async def run_flow_fork_parallel_async(
         previous_output = get_previous_output_summary(local_store)
         node_prompt = build_node_prompt(node_prompt_raw, ticket_summary, tools_list_str, previous_output)
         node_prompt = _interpolate_node_prompt(
-            node_prompt, local_store, flow_key=flow_key, node_id=nid
+            node_prompt, local_store, flow_key=flow_key, node_id=nid, node=node
         )
 
         max_retry = node.get("max_retry")
@@ -1934,7 +1947,7 @@ async def run_flow_fork_parallel_async(
             local_store.setdefault("memory", {"latest_summary_text": "", "recent_as_text": ""})
             local_store.setdefault("memory_loaded", False)
             node_prompt = _interpolate_node_prompt(
-                node_prompt, local_store, flow_key=flow_key, node_id=nid
+                node_prompt, local_store, flow_key=flow_key, node_id=nid, node=node
             )
 
         if prompt_mode == "simple":

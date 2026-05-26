@@ -94,6 +94,7 @@ _CONTEXT_OVERFLOW_MARKERS = (
     "context_length_exceeded",
     "context length is",
     "reduce the length of the messages",
+    "reduce the length of the input prompt",
     "string too long",  # some OpenAI-compatible providers phrase it this way
 )
 
