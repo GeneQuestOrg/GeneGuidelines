@@ -21,7 +21,7 @@ from uuid import uuid4
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 
-from ..auth import require_api_key_if_set
+from ..clerk_auth import get_current_user
 from ..agents.simple_runner import current_model_profile, resolve_model_spec_for_node
 from ..flows.doctor_finder.alias_generator import generate_disease_aliases_async, merge_alias_lists
 from ..flows.doctor_finder.schemas import DoctorFinderAliasSuggestInput, DoctorFinderInput
@@ -32,7 +32,7 @@ DOCTOR_FINDER_USER_VISIBLE_ERROR = (
     "doctor_finder run failed; check server logs for details or retry with different input."
 )
 
-router = APIRouter(dependencies=[Depends(require_api_key_if_set)])
+router = APIRouter(dependencies=[Depends(get_current_user)])
 
 DOCTOR_FINDER_RUNS: dict[str, dict] = {}
 DOCTOR_FINDER_QUEUES: dict[str, Queue] = {}

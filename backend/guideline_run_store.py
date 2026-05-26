@@ -2,8 +2,11 @@
 from __future__ import annotations
 
 import json
+import logging
 from datetime import UTC, datetime
 from typing import Any
+
+_logger = logging.getLogger(__name__)
 
 try:
     from .database import get_connection
@@ -34,12 +37,154 @@ def ensure_guideline_run_results_schema() -> None:
         )
         """
     )
-    try:
-        cur.execute("ALTER TABLE guideline_run_results ADD COLUMN quality_json TEXT")
-        conn.commit()
-    except Exception:
-        conn.rollback()
+    for ddl in (
+        "ALTER TABLE guideline_run_results ADD COLUMN quality_json TEXT",
+        "ALTER TABLE guideline_run_results ADD COLUMN owner_clerk_id TEXT",
+    ):
+        try:
+            cur.execute(ddl)
+            conn.commit()
+        except Exception:
+            conn.rollback()
     conn.close()
+
+
+def get_run_owner_clerk_id(execution_id: str) -> str | None:
+    """Return the Clerk user id that owns this run, if recorded."""
+    ensure_guideline_run_results_schema()
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute(
+        "SELECT owner_clerk_id FROM guideline_run_results WHERE execution_id = ?",
+        (execution_id,),
+    )
+    row = cur.fetchone()
+    conn.close()
+    if row is None:
+        return None
+    raw = row["owner_clerk_id"] if "owner_clerk_id" in row.keys() else None
+    return str(raw).strip() if raw else None
+
+
+def upsert_pipeline_run_status(
+    *,
+    execution_id: str,
+    pipeline: str,
+    flow_key: str,
+    disease_slug: str | None,
+    label: str,
+    done: bool,
+    error: str | None = None,
+    owner_clerk_id: str | None = None,
+    started_at: str | None = None,
+    finished_at: str | None = None,
+) -> None:
+    """Insert or update a lightweight pipeline run row for progress tracking."""
+    if not execution_id:
+        return
+    ensure_guideline_run_results_schema()
+    now = datetime.now(UTC).isoformat()
+    started = started_at or now
+    finished = finished_at if done else None
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute(
+        "SELECT done, owner_clerk_id FROM guideline_run_results WHERE execution_id = ?",
+        (execution_id,),
+    )
+    existing_row = cur.fetchone()
+    exists = existing_row is not None
+    if not exists:
+        cur.execute(
+            """
+            INSERT INTO guideline_run_results (
+                execution_id, pipeline, flow_key, disease_slug, label,
+                done, started_at, finished_at, error, owner_clerk_id
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                execution_id,
+                pipeline,
+                flow_key,
+                disease_slug,
+                label,
+                1 if done else 0,
+                started,
+                finished,
+                error,
+                owner_clerk_id,
+            ),
+        )
+    else:
+        cur.execute(
+            """
+            UPDATE guideline_run_results
+            SET pipeline = ?, flow_key = ?, disease_slug = ?, label = ?,
+                done = ?, finished_at = ?, error = COALESCE(?, error),
+                owner_clerk_id = COALESCE(?, owner_clerk_id)
+            WHERE execution_id = ?
+            """,
+            (
+                pipeline,
+                flow_key,
+                disease_slug,
+                label,
+                1 if done else 0,
+                finished,
+                error,
+                owner_clerk_id,
+                execution_id,
+            ),
+        )
+    conn.commit()
+    conn.close()
+
+    # Emit an in-app notification when a run transitions from in-flight to done.
+    if exists and done and existing_row is not None:
+        prev_done = existing_row.get("done", 0) if isinstance(existing_row, dict) else 0
+        if not prev_done:
+            effective_owner = owner_clerk_id or (
+                existing_row.get("owner_clerk_id") if isinstance(existing_row, dict) else None
+            )
+            if effective_owner and effective_owner not in ("__api_key__", "__dev_local__"):
+                try:
+                    from .account_store import ensure_account_tables_schema, insert_notification
+                    ensure_account_tables_schema()
+                    insert_notification(
+                        clerk_id=effective_owner,
+                        execution_id=execution_id,
+                        disease_slug=disease_slug,
+                        flow_key=flow_key,
+                        label=label,
+                        status="failed" if error else "completed",
+                    )
+                except Exception as exc:
+                    _logger.warning(
+                        "Notification insert failed for %s: %s", execution_id, exc
+                    )
+
+
+def record_agent_run_start(
+    *,
+    execution_id: str,
+    pipeline: str,
+    flow_key: str,
+    disease_slug: str | None,
+    label: str,
+    owner_clerk_id: str | None,
+    started_at: str,
+) -> None:
+    """Persist an in-flight agent run so ownership survives server restarts."""
+    upsert_pipeline_run_status(
+        execution_id=execution_id,
+        pipeline=pipeline,
+        flow_key=flow_key,
+        disease_slug=disease_slug,
+        label=label,
+        done=False,
+        owner_clerk_id=owner_clerk_id,
+        started_at=started_at,
+    )
 
 
 def _quality_json_for_store(store: dict[str, Any]) -> str | None:
@@ -126,7 +271,7 @@ def load_guideline_run_result(execution_id: str) -> dict[str, Any] | None:
     cur.execute(
         """
         SELECT execution_id, pipeline, flow_key, disease_slug, ticket_id, label,
-               output, error, quality_json, done, started_at, finished_at
+               output, error, quality_json, done, started_at, finished_at, owner_clerk_id
         FROM guideline_run_results
         WHERE execution_id = ?
         """,
@@ -156,6 +301,11 @@ def load_guideline_run_result(execution_id: str) -> dict[str, Any] | None:
         "done": bool(row["done"]),
         "started_at": row["started_at"],
         "finished_at": row["finished_at"],
+        "owner_clerk_id": (
+            str(row["owner_clerk_id"])
+            if "owner_clerk_id" in row.keys() and row["owner_clerk_id"]
+            else None
+        ),
         "ai_summary": {"issue": "", "work_log_summary": ""},
         "diagnostics_entries": [],
         "steps_completed_by_ai": [],

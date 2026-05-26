@@ -9,7 +9,7 @@ import sqlite3
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from ..auth import require_api_key_if_set
+from ..clerk_auth import require_admin
 from .. import database as db
 from ..config import DB_PATH
 from ..database import SQLITE_TIMEOUT
@@ -27,7 +27,7 @@ from ..models import (
 
 log = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/flows", tags=["flows"], dependencies=[Depends(require_api_key_if_set)])
+router = APIRouter(prefix="/flows", tags=["flows"], dependencies=[Depends(require_admin)])
 
 
 def _run(f):

@@ -17,7 +17,7 @@ def api_key_from_env() -> str:
     return (os.environ.get("GENEGUIDELINES_API_KEY") or "").strip()
 
 
-def _api_key_matches(provided: str, secret: str) -> bool:
+def api_key_matches(provided: str, secret: str) -> bool:
     """Timing-safe comparison (fixed-length digests) for unequal-length secrets."""
     if not secret:
         return False
@@ -38,11 +38,11 @@ def require_api_key_if_set(
     key = api_key_from_env()
     if not key:
         return
-    if _api_key_matches((api_key or "").strip(), key):
+    if api_key_matches((api_key or "").strip(), key):
         return
-    if creds is not None and _api_key_matches((creds.credentials or "").strip(), key):
+    if creds is not None and api_key_matches((creds.credentials or "").strip(), key):
         return
-    if _api_key_matches((x_api_key or "").strip(), key):
+    if api_key_matches((x_api_key or "").strip(), key):
         return
     raise HTTPException(
         status_code=401,

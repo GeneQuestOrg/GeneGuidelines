@@ -4,15 +4,15 @@ from __future__ import annotations
 import asyncio
 from typing import Literal, Self
 
-import os
-import threading
-import time
-
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 from .. import database as db
-from ..auth import require_api_key_if_set
+from ..bootstrap_rate_limit import (
+    check_bootstrap_rate_limit,
+    check_metadata_lookup_rate_limit,
+)
+from ..clerk_auth import AuthUser, get_current_user, require_admin
 from ..config import DEFAULT_MODEL_PROFILE, MODEL_PROFILES
 from ..content_db import (
     get_disease_by_slug,
@@ -36,7 +36,23 @@ from ..operator_settings import get_operator_settings
 from . import agent as agent_router
 from . import doctor_finder as doctor_finder_router
 
-router = APIRouter(dependencies=[Depends(require_api_key_if_set)])
+router = APIRouter()
+
+
+def _try_ensure_watch(clerk_id: str, slug: str | None) -> None:
+    """Auto-watch the disease for the user. Never raises."""
+    if not slug or not clerk_id:
+        return
+    if clerk_id in ("__api_key__", "__dev_local__"):
+        return
+    try:
+        from ..account_store import ensure_watch
+        ensure_watch(clerk_id, slug)
+    except Exception as exc:
+        import logging
+        logging.getLogger(__name__).warning(
+            "auto-watch failed clerk=%s slug=%s: %s", clerk_id, slug, exc
+        )
 
 
 class GuidelineRunBody(BaseModel):
@@ -170,8 +186,9 @@ def _pipeline_run_row(
     done: bool,
     error: str | None,
     started_at: str | None,
+    disease_slug: str | None = None,
 ) -> dict:
-    return {
+    row = {
         "execution_id": execution_id,
         "pipeline": pipeline,
         "label": label,
@@ -180,17 +197,21 @@ def _pipeline_run_row(
         "error": error,
         "started_at": started_at,
     }
+    slug = (disease_slug or "").strip().lower()
+    if slug:
+        row["disease_slug"] = slug
+    return row
 
 
 @router.get("/settings", response_model=OperatorSettingsResponse)
-async def get_pipeline_settings():
+async def get_pipeline_settings(_admin: AuthUser = Depends(require_admin)):
     """Read-only operator settings: model profiles, integration status, runtime flags."""
     payload = await asyncio.get_event_loop().run_in_executor(None, get_operator_settings)
     return OperatorSettingsResponse.model_validate(payload)
 
 
 @router.get("/runs")
-def list_pipeline_runs():
+def list_pipeline_runs(_admin: AuthUser = Depends(require_admin)):
     """Unified run list: guideline (pubmed) agent runs + doctor_finder runs."""
     items: list[dict] = []
 
@@ -220,6 +241,7 @@ def list_pipeline_runs():
                     done=bool(run.get("done")),
                     error=run.get("error"),
                     started_at=run.get("started_at"),
+                    disease_slug=str(run.get("disease_slug") or "").strip() or None,
                 )
             )
 
@@ -303,6 +325,7 @@ def list_pipeline_runs():
                     done=done,
                     error=err,
                     started_at=row["started_at"],
+                    disease_slug=str(row["disease_slug"] or "").strip() or None,
                 )
             )
     finally:
@@ -313,8 +336,12 @@ def list_pipeline_runs():
 
 
 @router.post("/guideline-run")
-async def start_guideline_run(body: GuidelineRunBody):
+async def start_guideline_run(
+    body: GuidelineRunBody,
+    user: AuthUser = Depends(get_current_user),
+):
     """Start PubMed guideline pipeline for a catalog disease or a custom disease name."""
+    check_bootstrap_rate_limit(user)
     slug = (body.disease_slug or "").strip()
     custom_name = (body.disease_name or "").strip()
     aliases = list(body.disease_aliases or [])
@@ -347,6 +374,7 @@ async def start_guideline_run(body: GuidelineRunBody):
                 category="guideline_research",
             ),
         )
+        _try_ensure_watch(user.clerk_id, str(disease["slug"]))
         return await agent_router.start_agent_run(
             ticket_id,
             flow_key="pubmed",
@@ -354,6 +382,7 @@ async def start_guideline_run(body: GuidelineRunBody):
             label=label,
             pipeline="guideline",
             disease_slug=str(disease["slug"]),
+            owner_clerk_id=user.clerk_id,
         )
 
     label = custom_name
@@ -375,6 +404,7 @@ async def start_guideline_run(body: GuidelineRunBody):
         pipeline="guideline",
         disease_slug=None,
         disease_initial=disease_initial,
+        owner_clerk_id=user.clerk_id,
     )
 
 
@@ -385,7 +415,10 @@ class OfficialGuidelinesRunBody(BaseModel):
 
 
 @router.post("/official-guidelines-run")
-async def start_official_guidelines_run(body: OfficialGuidelinesRunBody):
+async def start_official_guidelines_run(
+    body: OfficialGuidelinesRunBody,
+    user: AuthUser = Depends(get_current_user),
+):
     """Run the Gemma 4-powered find-the-consensus workflow for a disease.
 
     Returns immediately with ``execution_id``; the workflow runs in the
@@ -393,6 +426,7 @@ async def start_official_guidelines_run(body: OfficialGuidelinesRunBody):
     ``GET /api/diseases/{slug}/official-guideline`` (once the pointer is
     persisted, ``source`` flips to ``workflow``).
     """
+    check_bootstrap_rate_limit(user)
     slug = body.disease_slug.strip()
     if not slug:
         raise HTTPException(status_code=400, detail="disease_slug is required")
@@ -418,73 +452,17 @@ async def start_official_guidelines_run(body: OfficialGuidelinesRunBody):
             disease_slug=slug,
             disease_name=str(disease["name"]),
             execution_id=execution_id,
+            owner_clerk_id=user.clerk_id,
         )
     )
 
+    _try_ensure_watch(user.clerk_id, slug)
     return {
         "execution_id": execution_id,
         "flow_key": "official_guidelines_finder",
         "disease_slug": slug,
         "status": "running",
     }
-
-
-# --- per-IP rate limit for the public bootstrap endpoint -----------------
-# Jurors hit a public demo URL; one /bootstrap-disease call fans out 6
-# AI workflows, so an unthrottled loop could rack up real spend fast. We
-# enforce a small per-IP sliding-window cap in memory. The OpenRouter
-# dashboard's per-month spending cap is the hard-stop backstop the
-# operator should also set.
-_BOOTSTRAP_RATE_LIMIT_WINDOW_SEC = int(
-    (os.environ.get("BOOTSTRAP_RATE_LIMIT_WINDOW_SEC") or "").strip() or 86_400
-)
-_BOOTSTRAP_RATE_LIMIT_MAX_PER_IP = int(
-    (os.environ.get("BOOTSTRAP_RATE_LIMIT_MAX_PER_IP") or "").strip() or 3
-)
-_BOOTSTRAP_RATE_LIMIT_MAX_PER_WINDOW = int(
-    (os.environ.get("BOOTSTRAP_RATE_LIMIT_MAX_PER_WINDOW") or "").strip() or 50
-)
-_BOOTSTRAP_RATE_HISTORY: dict[str, list[float]] = {}
-_BOOTSTRAP_RATE_LOCK = threading.Lock()
-
-
-def _check_bootstrap_rate_limit(ip: str) -> None:
-    """Raise 429 when the caller IP has exceeded its share of the window.
-
-    Maintains a sliding window per IP plus a global cap so one IP cannot
-    burn the whole budget and a botnet rotating IPs cannot either.
-    """
-    now = time.time()
-    cutoff = now - _BOOTSTRAP_RATE_LIMIT_WINDOW_SEC
-    with _BOOTSTRAP_RATE_LOCK:
-        # Drop entries outside the window and prune empty buckets.
-        for stored_ip, stamps in list(_BOOTSTRAP_RATE_HISTORY.items()):
-            stamps[:] = [t for t in stamps if t >= cutoff]
-            if not stamps:
-                _BOOTSTRAP_RATE_HISTORY.pop(stored_ip, None)
-        per_ip = _BOOTSTRAP_RATE_HISTORY.get(ip, [])
-        total = sum(len(v) for v in _BOOTSTRAP_RATE_HISTORY.values())
-        if len(per_ip) >= _BOOTSTRAP_RATE_LIMIT_MAX_PER_IP:
-            raise HTTPException(
-                status_code=429,
-                detail=(
-                    f"Demo rate limit: {_BOOTSTRAP_RATE_LIMIT_MAX_PER_IP} disease "
-                    f"bootstraps per address per "
-                    f"{_BOOTSTRAP_RATE_LIMIT_WINDOW_SEC // 3600}h. "
-                    "Contact hello@genequest.org for higher quota."
-                ),
-            )
-        if total >= _BOOTSTRAP_RATE_LIMIT_MAX_PER_WINDOW:
-            raise HTTPException(
-                status_code=429,
-                detail=(
-                    f"Demo rate limit: global cap of "
-                    f"{_BOOTSTRAP_RATE_LIMIT_MAX_PER_WINDOW} bootstraps per "
-                    f"{_BOOTSTRAP_RATE_LIMIT_WINDOW_SEC // 3600}h reached. "
-                    "Try again later."
-                ),
-            )
-        _BOOTSTRAP_RATE_HISTORY.setdefault(ip, []).append(now)
 
 
 class LookupDiseaseMetadataBody(BaseModel):
@@ -516,19 +494,16 @@ class LookupDiseaseMetadataResponse(BaseModel):
     response_model=LookupDiseaseMetadataResponse,
 )
 async def lookup_disease_metadata_endpoint(
-    body: LookupDiseaseMetadataBody, request: Request
+    body: LookupDiseaseMetadataBody,
+    user: AuthUser = Depends(get_current_user),
 ) -> LookupDiseaseMetadataResponse:
     """Look up canonical metadata for the typed disease name via Gemma 4.
 
     Cheap, non-persistent — the frontend uses this before calling
     ``/bootstrap-disease`` so the user does not have to know OMIM / gene
-    / inheritance by hand. Same per-IP rate limit as bootstrap so a public
-    URL cannot be used to spend Gemma budget freely.
+    / inheritance by hand. Does not count against the research-run quota; has its own lookup cap.
     """
-
-    client_ip = (request.client.host if request.client else "") or "unknown"
-    _check_bootstrap_rate_limit(client_ip)
-
+    check_metadata_lookup_rate_limit(user)
     from ..services.disease_metadata_lookup import lookup_disease_metadata
 
     metadata, model_spec = await lookup_disease_metadata(body.name)
@@ -562,21 +537,20 @@ class BootstrapDiseaseBody(BaseModel):
 
 
 @router.post("/bootstrap-disease")
-async def bootstrap_disease(body: BootstrapDiseaseBody, request: Request):
+async def bootstrap_disease(
+    body: BootstrapDiseaseBody,
+    user: AuthUser = Depends(get_current_user),
+):
     """One-action workflow: create a disease row, then fire all research workflows.
 
     Idempotent on the disease row (INSERT OR IGNORE on slug); workflows always
     fire, so calling twice is safe but will run the research workflows a second
     time. Returns the dict of execution ids the frontend can poll
-    ``/api/research-runs`` against to render progress.
+    ``/api/research-runs/mine`` against to render progress.
 
-    Rate-limited per caller IP (default 3 per 24 h) to keep public demos from
-    burning model spend.
+    Rate-limited per signed-in user (default 3 per 24 h for role user).
     """
-    import json as _json
-
-    client_ip = (request.client.host if request.client else "") or "unknown"
-    _check_bootstrap_rate_limit(client_ip)
+    check_bootstrap_rate_limit(user)
 
     slug = body.slug.strip()
     if not slug:
@@ -625,7 +599,9 @@ async def bootstrap_disease(body: BootstrapDiseaseBody, request: Request):
         disease_slug=slug,
         disease_name=body.name.strip(),
         profile=profile_norm,
+        owner_clerk_id=user.clerk_id,
     )
+    _try_ensure_watch(user.clerk_id, slug)
     return {
         "disease_slug": slug,
         "created": existing is None,
@@ -635,8 +611,12 @@ async def bootstrap_disease(body: BootstrapDiseaseBody, request: Request):
 
 
 @router.post("/pathway-run")
-async def start_pathway_run(body: PathwayRunBody):
+async def start_pathway_run(
+    body: PathwayRunBody,
+    user: AuthUser = Depends(get_current_user),
+):
     """Start the patient-chart pipeline for a catalog disease."""
+    check_bootstrap_rate_limit(user)
     slug = body.disease_slug.strip()
     if not slug:
         raise HTTPException(status_code=400, detail="disease_slug is required")
@@ -682,6 +662,7 @@ async def start_pathway_run(body: PathwayRunBody):
         ),
     )
 
+    _try_ensure_watch(user.clerk_id, slug)
     return await agent_router.start_agent_run(
         ticket_id,
         flow_key="parent_pathway",
@@ -691,6 +672,7 @@ async def start_pathway_run(body: PathwayRunBody):
         disease_slug=str(disease["slug"]),
         pathway_locale=locale,
         refresh_pubmed=bool(body.refresh_pubmed),
+        owner_clerk_id=user.clerk_id,
     )
 
 
@@ -701,7 +683,10 @@ class PathwayPublishBody(BaseModel):
 
 
 @router.post("/pathway-publish", response_model=ParentPathwayResponse)
-async def publish_pathway_to_public(body: PathwayPublishBody):
+async def publish_pathway_to_public(
+    body: PathwayPublishBody,
+    _admin: AuthUser = Depends(require_admin),
+):
     """Publish draft patient chart (requires API key when configured)."""
     slug = body.disease_slug.strip()
     if not slug:
@@ -727,7 +712,10 @@ def _disease_with_prompt_response(disease: dict) -> DiseaseWithPromptProfileResp
     "/diseases/{slug}/guideline-prompt-profile",
     response_model=DiseaseWithPromptProfileResponse,
 )
-async def get_disease_guideline_prompt_profile(slug: str):
+async def get_disease_guideline_prompt_profile(
+    slug: str,
+    _admin: AuthUser = Depends(require_admin),
+):
     """Read per-disease prompt profile (admin; requires API key when configured)."""
     disease = await asyncio.get_event_loop().run_in_executor(
         None,
@@ -742,7 +730,11 @@ async def get_disease_guideline_prompt_profile(slug: str):
     "/diseases/{slug}/guideline-prompt-profile",
     response_model=DiseaseWithPromptProfileResponse,
 )
-async def put_disease_guideline_prompt_profile(slug: str, body: GuidelinePromptProfile):
+async def put_disease_guideline_prompt_profile(
+    slug: str,
+    body: GuidelinePromptProfile,
+    _admin: AuthUser = Depends(require_admin),
+):
     """Update per-disease guideline prompt profile (admin; requires API key when configured)."""
     updated = await asyncio.get_event_loop().run_in_executor(
         None,
@@ -777,7 +769,11 @@ class GuidelinePrReviewBody(BaseModel):
     "/guideline-prs/{pr_id}/review",
     response_model=GuidelinePrDetailResponse,
 )
-async def post_guideline_pr_review(pr_id: str, body: GuidelinePrReviewBody):
+async def post_guideline_pr_review(
+    pr_id: str,
+    body: GuidelinePrReviewBody,
+    _admin: AuthUser = Depends(require_admin),
+):
     """Publish, reject, or request changes on a guideline PR (requires API key when configured)."""
     if normalize_pr_id(pr_id) is None:
         raise HTTPException(status_code=404, detail="Guideline PR not found")

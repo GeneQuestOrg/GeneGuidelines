@@ -37,6 +37,7 @@ async def bootstrap_disease_research(
     disease_slug: str,
     disease_name: str,
     profile: str | None = None,
+    owner_clerk_id: str | None = None,
 ) -> dict[str, str]:
     """Fan out research workflows for a (presumably newly created) disease.
 
@@ -62,6 +63,7 @@ async def bootstrap_disease_research(
             disease_slug=disease_slug,
             disease_name=disease_name,
             execution_id=ogf_id,
+            owner_clerk_id=owner_clerk_id,
         )
     )
     asyncio.create_task(
@@ -69,6 +71,7 @@ async def bootstrap_disease_research(
             disease_slug=disease_slug,
             disease_name=disease_name,
             execution_id=trf_id,
+            owner_clerk_id=owner_clerk_id,
         )
     )
     asyncio.create_task(
@@ -76,6 +79,7 @@ async def bootstrap_disease_research(
             disease_slug=disease_slug,
             disease_name=disease_name,
             execution_id=trp_id,
+            owner_clerk_id=owner_clerk_id,
         )
     )
     asyncio.create_task(
@@ -83,11 +87,14 @@ async def bootstrap_disease_research(
             disease_slug=disease_slug,
             disease_name=disease_name,
             execution_id=fdn_id,
+            owner_clerk_id=owner_clerk_id,
         )
     )
 
     doctor_finder_id = await _start_doctor_finder(disease_name, profile_norm)
-    guideline_id = await _start_guideline_run(disease_slug, disease_name, profile_norm)
+    guideline_id = await _start_guideline_run(
+        disease_slug, disease_name, profile_norm, owner_clerk_id=owner_clerk_id
+    )
 
     return {
         "official_guidelines": ogf_id,
@@ -131,7 +138,13 @@ async def _start_doctor_finder(disease_name: str, profile: str) -> str:
     return execution_id
 
 
-async def _start_guideline_run(disease_slug: str, disease_name: str, profile: str) -> str:
+async def _start_guideline_run(
+    disease_slug: str,
+    disease_name: str,
+    profile: str,
+    *,
+    owner_clerk_id: str | None = None,
+) -> str:
     """Fire the PubMed guideline pipeline by reusing the agent_router's start helper."""
     from .. import database as db
     from ..content_db import get_disease_by_slug
@@ -162,6 +175,7 @@ async def _start_guideline_run(disease_slug: str, disease_name: str, profile: st
         label=disease_name,
         pipeline="guideline",
         disease_slug=disease_slug,
+        owner_clerk_id=owner_clerk_id,
     )
     eid = str(result.get("execution_id") or "")
     log.info("disease_bootstrap: fired guideline %s for %s", eid, disease_slug)

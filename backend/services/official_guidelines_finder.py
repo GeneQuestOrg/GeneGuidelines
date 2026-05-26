@@ -222,55 +222,30 @@ async def _rank_with_gemma(
     )
 
 
-def _log_run(execution_id: str, disease_slug: str, status: str, error: str | None = None) -> None:
+def _log_run(
+    execution_id: str,
+    disease_slug: str,
+    status: str,
+    error: str | None = None,
+    *,
+    owner_clerk_id: str | None = None,
+) -> None:
     """Surface the run in ``guideline_run_results`` so it appears in /api/research-runs."""
     try:
-        from ..database import get_connection
+        from ..guideline_run_store import upsert_pipeline_run_status
     except ImportError:
-        from database import get_connection  # type: ignore[no-redef]
+        from guideline_run_store import upsert_pipeline_run_status  # type: ignore[no-redef]
 
-    conn = get_connection()
-    cur = conn.cursor()
-    now = datetime.now(timezone.utc).isoformat()
-    try:
-        cur.execute(
-            "SELECT 1 FROM guideline_run_results WHERE execution_id = ?",
-            (execution_id,),
-        )
-        if cur.fetchone() is None:
-            cur.execute(
-                """
-                INSERT INTO guideline_run_results
-                  (execution_id, pipeline, flow_key, disease_slug, label,
-                   done, started_at, finished_at, error)
-                VALUES (?, 'official_guidelines_finder', 'official_guidelines_finder',
-                        ?, ?, ?, ?, ?, ?)
-                """,
-                (
-                    execution_id,
-                    disease_slug,
-                    f"Official guideline — {disease_slug}",
-                    1 if status in ("ready", "failed") else 0,
-                    now,
-                    now if status in ("ready", "failed") else None,
-                    error,
-                ),
-            )
-        else:
-            cur.execute(
-                """UPDATE guideline_run_results
-                   SET done = ?, finished_at = ?, error = COALESCE(?, error)
-                   WHERE execution_id = ?""",
-                (
-                    1 if status in ("ready", "failed") else 0,
-                    now if status in ("ready", "failed") else None,
-                    error,
-                    execution_id,
-                ),
-            )
-        conn.commit()
-    finally:
-        conn.close()
+    upsert_pipeline_run_status(
+        execution_id=execution_id,
+        pipeline="official_guidelines_finder",
+        flow_key="official_guidelines_finder",
+        disease_slug=disease_slug,
+        label=f"Official guideline — {disease_slug}",
+        done=status in ("ready", "failed"),
+        error=error,
+        owner_clerk_id=owner_clerk_id,
+    )
 
 
 async def find_official_guideline_for_disease(
@@ -278,6 +253,7 @@ async def find_official_guideline_for_disease(
     disease_name: str,
     *,
     execution_id: str | None = None,
+    owner_clerk_id: str | None = None,
 ) -> OfficialGuideline | None:
     """Run the full find-the-consensus workflow and persist the pointer.
 
@@ -287,40 +263,42 @@ async def find_official_guideline_for_disease(
     is visible in the operator console.
     """
     exec_id = execution_id or f"ogf-{uuid.uuid4().hex[:12]}"
-    _log_run(exec_id, disease_slug, "running")
+    _log_run(exec_id, disease_slug, "running", owner_clerk_id=owner_clerk_id)
 
     disease_repo = SqlaDiseaseRepo()
     if disease_repo.get(disease_slug) is None:
-        _log_run(exec_id, disease_slug, "failed", error="disease slug not found")
+        _log_run(
+            exec_id, disease_slug, "failed", error="disease slug not found", owner_clerk_id=owner_clerk_id
+        )
         return None
 
     try:
         pmids = _pubmed_search(disease_name)
     except Exception as exc:
         log.exception("PubMed esearch failed for %s", disease_name)
-        _log_run(exec_id, disease_slug, "failed", error=f"esearch: {exc}")
+        _log_run(exec_id, disease_slug, "failed", error=f"esearch: {exc}", owner_clerk_id=owner_clerk_id)
         return None
 
     if not pmids:
-        _log_run(exec_id, disease_slug, "failed", error="no PubMed candidates")
+        _log_run(exec_id, disease_slug, "failed", error="no PubMed candidates", owner_clerk_id=owner_clerk_id)
         return None
 
     try:
         candidates = _pubmed_metadata(pmids)
     except Exception as exc:
         log.exception("PubMed esummary failed")
-        _log_run(exec_id, disease_slug, "failed", error=f"esummary: {exc}")
+        _log_run(exec_id, disease_slug, "failed", error=f"esummary: {exc}", owner_clerk_id=owner_clerk_id)
         return None
 
     if not candidates:
-        _log_run(exec_id, disease_slug, "failed", error="metadata empty")
+        _log_run(exec_id, disease_slug, "failed", error="metadata empty", owner_clerk_id=owner_clerk_id)
         return None
 
     try:
         ranked, model_spec = await _rank_with_gemma(disease_name, candidates)
     except Exception as exc:
         log.exception("Gemma ranking failed for %s", disease_name)
-        _log_run(exec_id, disease_slug, "failed", error=f"ranker: {exc}")
+        _log_run(exec_id, disease_slug, "failed", error=f"ranker: {exc}", owner_clerk_id=owner_clerk_id)
         return None
 
     # Insist on a real PMID from the candidate list — if Gemma somehow
@@ -332,6 +310,7 @@ async def find_official_guideline_for_disease(
             disease_slug,
             "failed",
             error=f"ranker returned non-candidate PMID {ranked.best_pmid}",
+            owner_clerk_id=owner_clerk_id,
         )
         return None
 
@@ -348,7 +327,7 @@ async def find_official_guideline_for_disease(
         confirmed_by=f"find-the-consensus workflow ({model_spec})",
         source="workflow",
     )
-    _log_run(exec_id, disease_slug, "ready")
+    _log_run(exec_id, disease_slug, "ready", owner_clerk_id=owner_clerk_id)
     return pointer
 
 
