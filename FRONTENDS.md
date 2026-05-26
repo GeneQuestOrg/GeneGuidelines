@@ -38,12 +38,26 @@ For static hosting without a dev server proxy, build with `VITE_API_URL=https://
 
 `packages/ui` — `@gene-guidelines/ui` (tokens, `AppHeader`, shared primitives). `packages/ops` — `@gene-guidelines/ops` (admin widgets used by `frontend-admin`: flow canvas, node editor, run trace, governance panels).
 
+## Clerk authentication
+
+Setup: [`docs/CLERK_SETUP.md`](docs/CLERK_SETUP.md).
+
+| App | Env (client) | Env (server) |
+|-----|----------------|--------------|
+| Public | `VITE_CLERK_PUBLISHABLE_KEY` | `CLERK_SECRET_KEY` (+ optional `CLERK_AUTHORIZED_PARTIES`) |
+| Admin | same publishable key | same secret |
+
+Roles live in Clerk **public metadata**: `{"role":"user"}` or `{"role":"admin"}`.
+
+- **Public catalog** (`GET /api/diseases`, …) stays open without login.
+- **Research / bootstrap** requires a signed-in user (`user` role).
+- **Admin panel** requires `admin` role (Clerk) or break-glass `GENEGUIDELINES_API_KEY` (CI/scripts).
+
+SSE trace URLs pass `?clerk_token=` (or legacy `?api_key=`) because EventSource cannot send headers.
+
 ## Security (deploy)
 
-- **Public:** never set `VITE_GENEGUIDELINES_API_KEY` in the production build — Vite exposes every `VITE_*` value in the JS bundle. The public app should call the backend over open routes only.
-- **Admin must not be on a public URL** until real user auth ships. For deploy (including the Kaggle demo):
-  1. Set `GENEGUIDELINES_API_KEY` in the backend `.env` to enable the API-key check in `backend/auth.py`.
-  2. Deploy the admin build to a non-guessable hostname (e.g. `admin-<random>.geneguidelines.example`) and **do not link it from the public site**.
-  3. Add a basic-auth or IP-allowlist gate at the edge (Cloudflare Access, Render password protect, nginx auth_basic) for double cover.
-  4. The admin app must be built with `VITE_GENEGUIDELINES_API_KEY` so SSE traces and protected endpoints work; this is acceptable only because the admin URL itself is gated.
-- Only ship `dist/` outputs from `frontend-public` and `frontend-admin` to your CDN. Nothing else from the repo.
+- **Public:** never set `VITE_GENEGUIDELINES_API_KEY` in the production bundle. Use Clerk session JWTs for `POST /api/pipeline/*` and run polling.
+- **Admin:** set `VITE_CLERK_PUBLISHABLE_KEY` on both frontends; set `CLERK_SECRET_KEY` on the API. Optionally keep `GENEGUIDELINES_API_KEY` for automation only (not in browser builds).
+- Deploy admin on a restricted hostname; edge basic-auth is optional extra cover now that Clerk gates the React shell.
+- Only ship `dist/` outputs from `frontend-public` and `frontend-admin` to your CDN.
