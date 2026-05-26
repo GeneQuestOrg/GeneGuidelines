@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Button } from "@gene-guidelines/ui";
+import { Badge, Button } from "@gene-guidelines/ui";
 import {
   agentTraceUrl,
   fetchAgentRunResult,
@@ -35,19 +35,24 @@ export interface GuidelineRunPanelProps {
     pipeline: "guideline";
     label: string;
     started_at: string;
+    disease_slug?: string;
   }) => void;
   viewExecutionId?: string | null;
   runLive?: boolean;
+  initialDiseaseSlug?: string;
+  onRunAgain?: () => void;
 }
 
 export function GuidelineRunPanel({
   onRunStarted,
   viewExecutionId = null,
   runLive = false,
+  initialDiseaseSlug = "",
+  onRunAgain,
 }: GuidelineRunPanelProps) {
   const { diseases, loading: catalogLoading, error: catalogError } = useDiseaseCatalog();
   const defaultModelProfile = useDefaultModelProfile();
-  const [diseaseSlug, setDiseaseSlug] = useState("");
+  const [diseaseSlug, setDiseaseSlug] = useState(initialDiseaseSlug);
   const [profile, setProfile] = useState<ModelProfile>(defaultModelProfile);
   const profileSynced = useRef(false);
 
@@ -56,6 +61,12 @@ export function GuidelineRunPanel({
     setProfile(defaultModelProfile);
     profileSynced.current = true;
   }, [defaultModelProfile]);
+
+  useEffect(() => {
+    if (initialDiseaseSlug) {
+      setDiseaseSlug(initialDiseaseSlug);
+    }
+  }, [initialDiseaseSlug]);
   const [submitting, setSubmitting] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -72,7 +83,14 @@ export function GuidelineRunPanel({
     traceExecutionId && (submitting || runLive || activeId),
   );
 
-  const traceUrl = traceExecutionId ? agentTraceUrl(traceExecutionId) : null;
+  const [traceUrl, setTraceUrl] = useState<string | null>(null);
+  useEffect(() => {
+    if (!traceExecutionId) {
+      setTraceUrl(null);
+      return;
+    }
+    void agentTraceUrl(traceExecutionId).then(setTraceUrl);
+  }, [traceExecutionId]);
 
   const applyOutputView = useCallback(
     (
@@ -192,12 +210,14 @@ export function GuidelineRunPanel({
         profile,
         started_at: startedAt,
         done: false,
+        disease_slug: diseaseSlug,
       });
       onRunStarted?.({
         execution_id,
         pipeline: "guideline",
         label,
         started_at: startedAt,
+        disease_slug: diseaseSlug,
       });
     } catch (err) {
       setSubmitting(false);
@@ -210,16 +230,34 @@ export function GuidelineRunPanel({
     traceEnabled || (Boolean(viewExecutionId) && runLive);
 
   const hasOutput = pubmed != null || Boolean(rawOutput?.trim());
+  const pipelineRunning = Boolean(traceExecutionId && !finished);
 
   return (
     <div className="ops-panel">
       <h2 className="ops-panel__title">
         {viewExecutionId ? "Guideline run" : "Generate clinical guideline"}
       </h2>
+      {pipelineRunning ? (
+        <p className="ops-run-status-pill" role="status" aria-live="polite">
+          <Badge variant="default">Pipeline running</Badge>
+          <span className="ops-run-status-pill__text">
+            PubMed workflow in progress — the guideline preview below updates when
+            this run finishes. Watch the live trace for step-by-step progress.
+          </span>
+        </p>
+      ) : null}
       <p className="ops-panel__lead">
         Run the PubMed evidence pipeline for a catalog disease. Output appears below
         when the run finishes and is saved to the server database and browser storage.
       </p>
+
+      {viewExecutionId && onRunAgain && !pipelineRunning ? (
+        <div className="ops-panel__toolbar">
+          <Button type="button" variant="ghost" onClick={onRunAgain}>
+            Run again for this disease
+          </Button>
+        </div>
+      ) : null}
 
       {showForm ? (
         <form onSubmit={(e) => void handleSubmit(e)}>
@@ -324,6 +362,7 @@ export function GuidelineRunPanel({
           <pre className="ops-raw-output">{rawOutput}</pre>
         </section>
       ) : null}
+
     </div>
   );
 }
