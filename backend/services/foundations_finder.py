@@ -204,11 +204,18 @@ def _persist_foundations(disease_slug: str, foundations: list[_Foundation]) -> i
     return inserted
 
 
-def _log_run(execution_id: str, disease_slug: str, status: str, error: str | None = None) -> None:
+def _log_run(
+    execution_id: str,
+    disease_slug: str,
+    status: str,
+    error: str | None = None,
+    *,
+    owner_clerk_id: str | None = None,
+) -> None:
     try:
-        from ..database import get_connection
+        from ..guideline_run_store import upsert_pipeline_run_status
     except ImportError:
-        from database import get_connection  # type: ignore[no-redef]
+        from guideline_run_store import upsert_pipeline_run_status  # type: ignore[no-redef]
 
     conn = get_connection()
     cur = conn.cursor()
@@ -254,9 +261,10 @@ async def find_foundations_for_disease(
     *,
     orphanet_id: str | None = None,
     execution_id: str | None = None,
+    owner_clerk_id: str | None = None,
 ) -> int:
     exec_id = execution_id or f"fdn-{uuid.uuid4().hex[:12]}"
-    _log_run(exec_id, disease_slug, "running")
+    _log_run(exec_id, disease_slug, "running", owner_clerk_id=owner_clerk_id)
 
     orphanet_hint = orphanet_id or _lookup_orphanet_id(disease_slug, disease_name)
     user_prompt = (
@@ -307,7 +315,7 @@ async def find_foundations_for_disease(
         used_fallback = True
 
     inserted = _persist_foundations(disease_slug, result.foundations)
-    _log_run(exec_id, disease_slug, "ready")
+    _log_run(exec_id, disease_slug, "ready", owner_clerk_id=owner_clerk_id)
     log.info(
         "foundations_finder: %d candidate(s), %d inserted (model=%s, fallback=%s)",
         len(result.foundations),

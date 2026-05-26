@@ -362,11 +362,18 @@ def _persist_trials(disease_slug: str, trials: list[_ExtractedTrial], min_releva
     return inserted
 
 
-def _log_run(execution_id: str, disease_slug: str, status: str, error: str | None = None) -> None:
+def _log_run(
+    execution_id: str,
+    disease_slug: str,
+    status: str,
+    error: str | None = None,
+    *,
+    owner_clerk_id: str | None = None,
+) -> None:
     try:
-        from ..database import get_connection
+        from ..guideline_run_store import upsert_pipeline_run_status
     except ImportError:
-        from database import get_connection  # type: ignore[no-redef]
+        from guideline_run_store import upsert_pipeline_run_status  # type: ignore[no-redef]
 
     conn = get_connection()
     cur = conn.cursor()
@@ -417,26 +424,27 @@ async def find_trials_for_disease(
     disease_name: str,
     *,
     execution_id: str | None = None,
+    owner_clerk_id: str | None = None,
 ) -> int:
     """Run the trials finder workflow. Returns the number of trials persisted."""
     exec_id = execution_id or f"trf-{uuid.uuid4().hex[:12]}"
-    _log_run(exec_id, disease_slug, "running")
+    _log_run(exec_id, disease_slug, "running", owner_clerk_id=owner_clerk_id)
 
     try:
         raw_studies = _fetch_clinicaltrials(disease_name)
     except Exception as exc:
         log.exception("ClinicalTrials.gov fetch failed for %s", disease_name)
-        _log_run(exec_id, disease_slug, "failed", error=f"ct.gov: {exc}")
+        _log_run(exec_id, disease_slug, "failed", error=f"ct.gov: {exc}", owner_clerk_id=owner_clerk_id)
         return 0
 
     if not raw_studies:
-        _log_run(exec_id, disease_slug, "ready")
+        _log_run(exec_id, disease_slug, "ready", owner_clerk_id=owner_clerk_id)
         return 0
 
     studies = [_flatten_study(s) for s in raw_studies]
     studies = [s for s in studies if s["nct"]]
     if not studies:
-        _log_run(exec_id, disease_slug, "ready")
+        _log_run(exec_id, disease_slug, "ready", owner_clerk_id=owner_clerk_id)
         return 0
 
     try:
@@ -459,7 +467,7 @@ async def find_trials_for_disease(
         used_fallback = True
     inserted = _persist_trials(disease_slug, safe_trials)
 
-    _log_run(exec_id, disease_slug, "ready")
+    _log_run(exec_id, disease_slug, "ready", owner_clerk_id=owner_clerk_id)
     log.info(
         "trials_finder: %d candidate(s), %d persisted (model=%s, fallback=%s)",
         len(safe_trials),
