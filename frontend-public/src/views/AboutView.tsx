@@ -75,6 +75,7 @@ export function AboutView({ onNav }: AboutViewProps) {
     <div className="page page--about">
       <header id="top" className="about__hero">
         <div className="about__eyebrow">Why we built this</div>
+        <div className="about__eyebrow-sub">8 min read · use the section links to jump around</div>
         <h1 className="about__lead">
           PubMed indexes on the order of <b>10,000</b> new articles on rare diseases every year — tens added every
           day.

@@ -102,6 +102,12 @@
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--gg-text-muted, #6b7280);
+  margin-bottom: 0.35rem;
+}
+
+.about__eyebrow-sub {
+  font-size: 0.8125rem;
+  color: var(--gg-text-muted, #6b7280);
   margin-bottom: 1rem;
 }
 
