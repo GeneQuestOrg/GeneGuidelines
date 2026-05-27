@@ -76,7 +76,7 @@ export function AboutView({ onNav }: AboutViewProps) {
       <header id="top" className="about__hero">
         <div className="about__eyebrow">Why we built this</div>
         <h1 className="about__lead">
-          PubMed indexes roughly <b>10,000</b> new articles on rare diseases every year — about thirty new papers a
+          PubMed indexes on the order of <b>10,000</b> new articles on rare diseases every year — tens added every
           day.
           <br />
           Most of those diseases are tracked by a handful of researchers worldwide — rarely the doctor a family
@@ -134,7 +134,7 @@ export function AboutView({ onNav }: AboutViewProps) {
                 <div className="about__stat-num">~300 M</div>
                 <div className="about__stat-label">
                   People worldwide living with a rare disease at any given time. About <b>80%</b> have a genetic
-                  cause, and most present in childhood.{" "}
+                  cause; of those, roughly <b>70%</b> present in childhood.{" "}
                   <span className="about__cite">
                     (
                     <a
@@ -165,7 +165,20 @@ export function AboutView({ onNav }: AboutViewProps) {
               <div className="about__stat">
                 <div className="about__stat-num">~1.5 M / year</div>
                 <div className="about__stat-label">
-                  New publications indexed by PubMed overall. Roughly <b>30 per day</b> in rare diseases alone.
+                  New publications indexed by PubMed overall{" "}
+                  <span className="about__cite">
+                    (
+                    <a
+                      href="https://www.nlm.nih.gov/bsd/medline_pubmed_production_stats.html"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      NLM, FY2023
+                    </a>
+                    )
+                  </span>
+                  . Tens of those are on rare diseases each day — on the order of ten thousand a year, spread across
+                  thousands of distinct entities.
                 </div>
               </div>
               <div className="about__stat">
@@ -173,7 +186,7 @@ export function AboutView({ onNav }: AboutViewProps) {
                 <div className="about__stat-label">
                   Median lag from new evidence to its incorporation into a formal clinical guideline.{" "}
                   <span className="about__cite">
-                    (Borsa et al., Surgery 2024,{" "}
+                    (Berg et al., Surgery 2025,{" "}
                     <a
                       href="https://pubmed.ncbi.nlm.nih.gov/39592333/"
                       target="_blank"
