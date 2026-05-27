@@ -1,5 +1,10 @@
 > [!IMPORTANT]
-> **Kaggle submission snapshot.** The codebase as submitted to the Gemma 4 Good Hackathon (deadline **18 May 2026**) is frozen on tag [`kaggle-submission-2026-05-18`](https://github.com/GeneQuestOrg/GeneGuidelines/tree/kaggle-submission-2026-05-18) — **not** on `main`. This branch is active post-submission development. Judging demos (May 18 image): [public](https://kaggle-geneguidelines.genequest.org) · [admin](https://kaggle-admin-geneguidelines.genequest.org).
+> **Kaggle reviewers.** There are two useful versions of GeneGuidelines:
+>
+> - **Current product** — active post-submission development: [public demo](https://geneguidelines.genequest.org) · [`main`](https://github.com/GeneQuestOrg/GeneGuidelines/tree/main)
+> - **Frozen Kaggle submission** — exact deadline snapshot from **18 May 2026**: [tag `kaggle-submission-2026-05-18`](https://github.com/GeneQuestOrg/GeneGuidelines/tree/kaggle-submission-2026-05-18) · [public demo](https://kaggle-geneguidelines.genequest.org) · [admin demo](https://kaggle-admin-geneguidelines.genequest.org)
+>
+> If you are judging deadline compliance, use the frozen snapshot. If you want to see where the project is going, use the current product.
 
 # GeneGuidelines
 
