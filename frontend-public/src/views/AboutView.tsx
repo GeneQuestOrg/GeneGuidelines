@@ -134,7 +134,7 @@ export function AboutView({ onNav }: AboutViewProps) {
                 <div className="about__stat-num">~300 M</div>
                 <div className="about__stat-label">
                   People worldwide living with a rare disease at any given time. About <b>80%</b> have a genetic
-                  cause; of those, roughly <b>70%</b> present in childhood.{" "}
+                  cause; of those, roughly <b>70%</b> present in childhood.
                   <span className="about__cite">
                     (
                     <a
@@ -163,9 +163,9 @@ export function AboutView({ onNav }: AboutViewProps) {
                 </div>
               </div>
               <div className="about__stat">
-                <div className="about__stat-num">~1.5 M / year</div>
+                <div className="about__stat-num">~1.5 M</div>
                 <div className="about__stat-label">
-                  New publications indexed by PubMed overall{" "}
+                  New publications indexed by PubMed every year
                   <span className="about__cite">
                     (
                     <a
@@ -175,16 +175,16 @@ export function AboutView({ onNav }: AboutViewProps) {
                     >
                       NLM, FY2023
                     </a>
-                    )
-                  </span>
-                  . Tens of those are on rare diseases each day — on the order of ten thousand a year, spread across
+                    ).
+                  </span>{" "}
+                  Tens of those are on rare diseases each day — on the order of ten thousand a year, spread across
                   thousands of distinct entities.
                 </div>
               </div>
               <div className="about__stat">
                 <div className="about__stat-num">~9 years</div>
                 <div className="about__stat-label">
-                  Median lag from new evidence to its incorporation into a formal clinical guideline.{" "}
+                  Median lag from new evidence to its incorporation into a formal clinical guideline.
                   <span className="about__cite">
                     (Berg et al., Surgery 2025,{" "}
                     <a
@@ -199,10 +199,20 @@ export function AboutView({ onNav }: AboutViewProps) {
                 </div>
               </div>
               <div className="about__stat">
-                <div className="about__stat-num">~30 / month</div>
+                <div className="about__stat-num">~4.8 years</div>
                 <div className="about__stat-label">
-                  Distinct disease entities a typical primary-care doctor encounters in a single month of practice.
-                  Many of them rare.
+                  Average time from symptom onset to an accurate diagnosis of a rare disease.
+                  <span className="about__cite">
+                    (
+                    <a
+                      href="https://www.thelancet.com/journals/langlo/article/PIIS2214-109X(24)00056-1/fulltext"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Lancet Global Health, 2024
+                    </a>
+                    )
+                  </span>
                 </div>
               </div>
             </div>
