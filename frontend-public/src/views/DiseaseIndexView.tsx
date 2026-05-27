@@ -20,8 +20,8 @@ export function DiseaseIndexView({ initialQuery = "", onNav }: DiseaseIndexViewP
           : "Rare genetic conditions with living, physician-reviewed guidelines."}
       </p>
       <div style={{ marginBottom: "1.25rem" }}>
-        <Button type="button" variant="primary" onClick={() => onNav("/add-disease")}>
-          + Add a disease
+        <Button type="button" variant="primary" onClick={() => onNav("/start-research")}>
+          + Start research
         </Button>
       </div>
       {error != null ? (

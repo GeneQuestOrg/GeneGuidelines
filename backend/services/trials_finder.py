@@ -18,6 +18,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import re
 import urllib.parse
 import urllib.request
 import uuid
@@ -26,6 +27,7 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from ..config import FINDER_LLM_TIMEOUT_SEC
 from ._model_resolver import (
     resolve_gemma_or_fallback_spec,
     run_structured_with_ollama_fallback,
@@ -35,7 +37,9 @@ log = logging.getLogger(__name__)
 
 _CT_GOV_API = "https://clinicaltrials.gov/api/v2/studies"
 _MAX_STUDIES = 8
-_GEMMA_TIMEOUT_SEC = 180.0
+# Smaller LLM batches finish faster on remote Gemma; one slow batch must not lose all trials.
+_EXTRACT_BATCH_SIZE = 2
+_EXTRACT_MAX_RETRIES = 1
 
 
 class _ExtractedTrial(BaseModel):
@@ -159,6 +163,78 @@ def _flatten_study(study: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _map_ctgov_status(raw: str) -> str:
+    key = re.sub(r"[^A-Z0-9]+", "_", raw.upper()).strip("_")
+    mapping = {
+        "RECRUITING": "recruiting",
+        "ACTIVE_NOT_RECRUITING": "active_not_recruiting",
+        "COMPLETED": "completed",
+        "TERMINATED": "terminated",
+        "SUSPENDED": "suspended",
+        "WITHDRAWN": "withdrawn",
+        "NOT_YET_RECRUITING": "not_yet_recruiting",
+        "ENROLLING_BY_INVITATION": "recruiting",
+        "AVAILABLE": "recruiting",
+    }
+    return mapping.get(key, "unknown")
+
+
+def _map_ctgov_phase(raw: str) -> str:
+    upper = raw.upper().replace(" ", "")
+    if "PHASE4" in upper:
+        return "Phase 4"
+    if "PHASE3" in upper:
+        return "Phase 3"
+    if "PHASE2" in upper:
+        return "Phase 2"
+    if "PHASE1" in upper:
+        return "Phase 1"
+    if "EARLYPHASE1" in upper or "EARLY_PHASE_1" in upper:
+        return "Early Phase 1"
+    if "EXPANDEDACCESS" in upper or "EXPANDED_ACCESS" in upper:
+        return "Expanded Access"
+    if "OBSERVATIONAL" in upper:
+        return "Observational"
+    return "Unknown"
+
+
+def _eligibility_summary_from_study(study: dict[str, Any]) -> str:
+    elig = (study.get("eligibility_text") or "").strip()
+    if len(elig) > 400:
+        elig = elig[:397] + "..."
+    if elig:
+        return elig
+    title = (study.get("title") or "this condition").strip()
+    return f"See ClinicalTrials.gov ({study.get('nct', '')}) for eligibility: {title[:180]}."
+
+
+def _fallback_trials_from_studies(studies: list[dict[str, Any]]) -> list[_ExtractedTrial]:
+    """Deterministic projection when Gemma extraction fails or times out."""
+    out: list[_ExtractedTrial] = []
+    for study in studies:
+        nct = (study.get("nct") or "").strip()
+        if not nct:
+            continue
+        enrollment = study.get("enrollment_target")
+        out.append(
+            _ExtractedTrial(
+                nct=nct,
+                title=(study.get("title") or nct).strip(),
+                phase=_map_ctgov_phase(str(study.get("phase") or "Unknown")),
+                status=_map_ctgov_status(str(study.get("status") or "UNKNOWN")),
+                sponsor=(study.get("sponsor") or "Unknown sponsor").strip(),
+                city=study.get("city"),
+                country=study.get("country"),
+                age_range=study.get("age_range"),
+                principal_investigator=study.get("principal_investigator"),
+                eligibility_summary=_eligibility_summary_from_study(study),
+                enrollment_target=enrollment if isinstance(enrollment, int) else None,
+                relevance=0.75,
+            )
+        )
+    return out
+
+
 def _format_studies_for_gemma(studies: list[dict[str, Any]]) -> str:
     out: list[str] = []
     for i, s in enumerate(studies, 1):
@@ -174,10 +250,13 @@ def _format_studies_for_gemma(studies: list[dict[str, Any]]) -> str:
     return "\n\n".join(out)
 
 
-async def _extract_with_gemma(
-    disease_name: str, studies: list[dict[str, Any]]
-) -> tuple[_TrialList, str]:
-    primary_spec = resolve_gemma_or_fallback_spec()
+async def _extract_batch_with_gemma(
+    disease_name: str,
+    studies: list[dict[str, Any]],
+    *,
+    primary_spec: str,
+) -> tuple[list[_ExtractedTrial], str, bool]:
+    """Extract one batch; returns (trials, model_spec, used_fallback)."""
     user_prompt = (
         f"Disease: {disease_name}\n\n"
         f"ClinicalTrials.gov studies:\n\n"
@@ -185,14 +264,54 @@ async def _extract_with_gemma(
         "Return all studies, with relevance score for each. NCT ids must "
         "be copied verbatim from the list above."
     )
-    return await run_structured_with_ollama_fallback(
-        system_prompt=_EXTRACTION_SYSTEM_PROMPT,
-        user_prompt=user_prompt,
-        result_type=_TrialList,
-        primary_spec=primary_spec,
-        max_tokens=2000,
-        timeout_sec=_GEMMA_TIMEOUT_SEC,
+    last_exc: Exception | None = None
+    for attempt in range(_EXTRACT_MAX_RETRIES + 1):
+        try:
+            result, model_spec = await run_structured_with_ollama_fallback(
+                system_prompt=_EXTRACTION_SYSTEM_PROMPT,
+                user_prompt=user_prompt,
+                result_type=_TrialList,
+                primary_spec=primary_spec,
+                max_tokens=2000,
+                timeout_sec=FINDER_LLM_TIMEOUT_SEC,
+            )
+            return list(result.trials), model_spec, False
+        except (asyncio.TimeoutError, TimeoutError) as exc:
+            last_exc = exc
+            if attempt < _EXTRACT_MAX_RETRIES:
+                log.warning(
+                    "trials_finder: batch LLM timeout (attempt %d), retrying",
+                    attempt + 1,
+                )
+                continue
+        except Exception as exc:
+            last_exc = exc
+            break
+    log.warning(
+        "trials_finder: batch LLM failed (%s), using CT.gov fallback for %d study(ies)",
+        last_exc,
+        len(studies),
     )
+    return _fallback_trials_from_studies(studies), primary_spec, True
+
+
+async def _extract_with_gemma(
+    disease_name: str, studies: list[dict[str, Any]]
+) -> tuple[_TrialList, str, bool]:
+    primary_spec = resolve_gemma_or_fallback_spec()
+    merged: list[_ExtractedTrial] = []
+    used_fallback = False
+    model_spec = primary_spec
+    for offset in range(0, len(studies), _EXTRACT_BATCH_SIZE):
+        batch = studies[offset : offset + _EXTRACT_BATCH_SIZE]
+        batch_trials, model_spec, batch_fallback = await _extract_batch_with_gemma(
+            disease_name,
+            batch,
+            primary_spec=primary_spec,
+        )
+        merged.extend(batch_trials)
+        used_fallback = used_fallback or batch_fallback
+    return _TrialList(trials=merged), model_spec, used_fallback
 
 
 def _persist_trials(disease_slug: str, trials: list[_ExtractedTrial], min_relevance: float = 0.5) -> int:
@@ -212,12 +331,11 @@ def _persist_trials(disease_slug: str, trials: list[_ExtractedTrial], min_releva
                 continue
             cur.execute(
                 """
-                INSERT OR IGNORE INTO trials
+                INSERT INTO trials
                   (nct, title, phase, status, sponsor, city, country, age_range,
                    principal_investigator, eligibility_summary, enrollment_target,
                    enrolled, contact, last_seen)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, ?)
-                """,
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NULL, NULL, %s) ON CONFLICT DO NOTHING""",
                 (
                     t.nct,
                     t.title,
@@ -234,7 +352,7 @@ def _persist_trials(disease_slug: str, trials: list[_ExtractedTrial], min_releva
                 ),
             )
             cur.execute(
-                "INSERT OR IGNORE INTO disease_trials (disease_slug, nct) VALUES (?, ?)",
+                "INSERT INTO disease_trials (disease_slug, nct) VALUES (%s, %s) ON CONFLICT DO NOTHING",
                 (disease_slug, t.nct),
             )
             inserted += 1
@@ -298,22 +416,32 @@ async def find_trials_for_disease(
         return 0
 
     try:
-        result, model_spec = await _extract_with_gemma(disease_name, studies)
+        result, model_spec, used_fallback = await _extract_with_gemma(disease_name, studies)
     except Exception as exc:
         log.exception("Gemma extraction failed for trials of %s", disease_name)
-        _log_run(exec_id, disease_slug, "failed", error=f"extractor: {exc}", owner_clerk_id=owner_clerk_id)
-        return 0
+        safe_trials = _fallback_trials_from_studies(studies)
+        inserted = _persist_trials(disease_slug, safe_trials)
+        _log_run(exec_id, disease_slug, "ready", owner_clerk_id=owner_clerk_id)
+        log.warning(
+            "trials_finder: LLM unavailable, persisted %d trial(s) via CT.gov fallback",
+            inserted,
+        )
+        return inserted
 
     candidate_ncts = {s["nct"] for s in studies}
     safe_trials = [t for t in result.trials if t.nct in candidate_ncts]
+    if not safe_trials:
+        safe_trials = _fallback_trials_from_studies(studies)
+        used_fallback = True
     inserted = _persist_trials(disease_slug, safe_trials)
 
     _log_run(exec_id, disease_slug, "ready", owner_clerk_id=owner_clerk_id)
     log.info(
-        "trials_finder: %d candidate(s), %d persisted (model=%s)",
+        "trials_finder: %d candidate(s), %d persisted (model=%s, fallback=%s)",
         len(safe_trials),
         inserted,
         model_spec,
+        used_fallback,
     )
     return inserted
 

@@ -22,8 +22,8 @@ export function AppFooter({ onNav }: AppFooterProps) {
       <div>
         <div className="site-footer__brand">GeneQuest Foundation</div>
         <p className="site-footer__desc">
-          Living guidelines for rare genetic diseases — evidence reviewed monthly by
-          specialist clinicians.
+          Living guidelines for rare genetic diseases — AI-drafted updates, reviewed by
+          specialists, refreshed on demand.
         </p>
       </div>
       <nav className="site-footer__links" aria-label="Footer">

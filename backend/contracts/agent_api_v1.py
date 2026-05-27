@@ -31,6 +31,7 @@ class AgentRunPayload(TypedDict):
     diagnostics_entries: list[Any]
     steps_completed_by_ai: list[Any]
     missing_tool_requests: list[Any]
+    current_stage: str | None
 
 
 def normalize_trace_event(event: dict[str, Any]) -> dict[str, Any]:
@@ -82,6 +83,7 @@ def build_agent_run_payload(run: dict[str, Any]) -> AgentRunPayload:
         diagnostics_entries=run.get("diagnostics_entries") or [],
         steps_completed_by_ai=run.get("steps_completed_by_ai") or [],
         missing_tool_requests=run.get("missing_tool_requests") or [],
+        current_stage=str(run.get("current_stage") or run.get("last_stage") or "").strip() or None,
     )
 
 

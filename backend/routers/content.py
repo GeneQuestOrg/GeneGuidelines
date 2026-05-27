@@ -6,7 +6,7 @@ import asyncio
 from fastapi import APIRouter, HTTPException, Query
 
 from ..content_db import (
-    get_catalog_stats,
+    compute_live_catalog_stats,
     get_content_pr_by_id,
     get_disease_by_slug,
     get_guideline_document,
@@ -72,12 +72,12 @@ def _disease_payload_with_live_doctor_count(row: dict) -> dict:
     return enriched[0] if enriched else dict(row)
 
 
-def _catalog_stats_with_live_doctor_total() -> dict:
-    base = get_catalog_stats()
+def _catalog_stats_live() -> dict:
     try:
-        return {**base, "doctorCount": total_distinct_public_doctor_profiles()}
+        doctor_count = total_distinct_public_doctor_profiles()
     except Exception:
-        return base
+        doctor_count = 0
+    return compute_live_catalog_stats(doctor_count=doctor_count)
 
 
 @router.get("/diseases", response_model=list[DiseaseResponse])
@@ -173,7 +173,7 @@ async def get_doctor_profile(slug: str):
 @router.get("/catalog/stats", response_model=CatalogStatsResponse)
 async def get_stats():
     """Aggregate catalog counters for the public home page."""
-    stats = await _run_sync(_catalog_stats_with_live_doctor_total)
+    stats = await _run_sync(_catalog_stats_live)
     return CatalogStatsResponse.model_validate(stats)
 
 

@@ -1,0 +1,262 @@
+/* Disease autocomplete — single-field input with dropdown panel.
+ * Visual language adapted from `draft6/src/styles.css` so the UI matches
+ * the approved mockup; scoped under `.ac` to avoid colliding with other
+ * autocomplete-style components in the codebase.
+ */
+
+.ac {
+  position: relative;
+  width: 100%;
+}
+
+.ac__inputwrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  background: var(--bg-elev, #fff);
+  border: 1px solid var(--line, #e2e8f0);
+  border-radius: var(--r-md, 8px);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.ac--open .ac__inputwrap {
+  border-color: var(--accent-teal, #0f766e);
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.15);
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.ac__icon-slot {
+  flex-shrink: 0;
+  width: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ac__icon {
+  color: var(--ink-3, #64748b);
+  display: block;
+  pointer-events: none;
+}
+
+.ac__input {
+  flex: 1 1 auto;
+  min-width: 0;
+  font: inherit;
+  font-size: inherit;
+  padding: 12px 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink-1, #0f172a);
+  outline: none;
+  box-sizing: border-box;
+}
+
+.ac__input::placeholder {
+  color: var(--ink-4, #94a3b8);
+}
+
+.ac__input:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.ac__clear {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--ink-3, #64748b);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: 4px;
+  padding: 0;
+}
+
+.ac__clear:hover {
+  background: var(--bg-2, #f1f5f9);
+  color: var(--ink-1, #0f172a);
+}
+
+.ac__panel {
+  position: fixed;
+  background: var(--bg-elev, #fff);
+  border: 1px solid var(--accent-teal, #0f766e);
+  border-top: 1px solid var(--line, #e2e8f0);
+  border-radius: 0 0 var(--r-md, 8px) var(--r-md, 8px);
+  box-shadow: 0 16px 40px -8px rgba(15, 23, 42, 0.16);
+  overflow-y: auto;
+  z-index: 100;
+}
+
+.ac__loading,
+.ac__error {
+  padding: 12px 14px;
+  color: var(--ink-3, #64748b);
+  font-size: 0.875rem;
+}
+
+.ac__error {
+  color: var(--accent-rose, #b91c1c);
+}
+
+.ac__list {
+  list-style: none;
+  margin: 0;
+  padding: 4px 0;
+}
+
+.ac__item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  cursor: pointer;
+  border-left: 3px solid transparent;
+}
+
+.ac__item--hover {
+  background: var(--bg-2, #f1f5f9);
+  border-left-color: var(--accent-teal, #0f766e);
+}
+
+.ac__item-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.ac__item-name {
+  font-weight: 600;
+  color: var(--ink-1, #0f172a);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ac__item-alias {
+  font-size: 0.78rem;
+  color: var(--ink-3, #64748b);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 2px;
+}
+
+.ac__item-alias em {
+  color: var(--ink-2, #475569);
+  font-style: normal;
+  text-transform: lowercase;
+}
+
+.ac__item-side {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.ac__chip {
+  font-size: 0.7rem;
+  padding: 3px 7px;
+  border-radius: 4px;
+  background: var(--bg-2, #f1f5f9);
+  color: var(--ink-2, #475569);
+  font-family: var(--font-mono, ui-monospace, "SF Mono", monospace);
+}
+
+.ac__chip--dim {
+  background: transparent;
+  color: var(--ink-3, #64748b);
+}
+
+.ac__badge {
+  font-size: 0.7rem;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: var(--bg-2, #f1f5f9);
+  color: var(--ink-2, #475569);
+  font-weight: 500;
+}
+
+.ac__badge--ok {
+  background: rgba(15, 118, 110, 0.12);
+  color: var(--accent-teal, #0f766e);
+}
+
+.ac__mark {
+  background: rgba(245, 158, 11, 0.25);
+  color: inherit;
+  border-radius: 2px;
+  padding: 0 1px;
+}
+
+.ac__empty {
+  padding: 14px 16px;
+  color: var(--ink-2, #475569);
+  font-size: 0.875rem;
+  border-top: 1px dashed var(--line, #e2e8f0);
+}
+
+.ac__empty-head {
+  font-weight: 600;
+  color: var(--ink-1, #0f172a);
+  margin-bottom: 6px;
+}
+
+.ac__empty p {
+  margin: 0 0 10px;
+  line-height: 1.45;
+}
+
+.ac__missing-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: var(--r-sm, 6px);
+  border: 1px solid var(--accent-teal, #0f766e);
+  background: var(--accent-teal, #0f766e);
+  color: #fff;
+  font: inherit;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.ac__missing-btn:hover {
+  background: var(--accent-teal-2, #0d6964);
+}
+
+.ac__missing {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 14px;
+  margin: 0;
+  border: none;
+  border-top: 1px dashed var(--line, #e2e8f0);
+  background: var(--bg-2, #f8fafc);
+  color: var(--ink-2, #475569);
+  font: inherit;
+  font-size: 0.85rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ac__missing:hover {
+  background: var(--bg-3, #f1f5f9);
+  color: var(--ink-1, #0f172a);
+}
+
+.ac__missing-arrow {
+  color: var(--accent-teal, #0f766e);
+  font-weight: 600;
+}

@@ -8,6 +8,8 @@ import pytest
 from backend.guideline_run_store import (
     load_guideline_run_result,
     save_guideline_run_result,
+    update_guideline_run_stage,
+    upsert_guideline_run_started,
 )
 from backend.engine.flow_output import pick_pubmed_canonical_payload
 
@@ -54,3 +56,41 @@ def test_save_and_load_pubmed_output_from_node_outputs(store_db) -> None:
     assert "Test guideline body" in parsed.get("guideline_html", "")
     assert loaded.get("quality_snapshot") is not None
     assert loaded["quality_snapshot"]["pm_fix"]["applied"] is True
+
+
+def test_upsert_started_and_stage_updates(store_db) -> None:
+    execution_id = "test-exec-stage-001"
+    upsert_guideline_run_started(
+        execution_id,
+        pipeline="guideline",
+        flow_key="pubmed",
+        ticket_id=42,
+        label="Stage test",
+        disease_slug="rett-syndrome",
+        started_at="2026-05-26T10:00:00Z",
+    )
+    loaded = load_guideline_run_result(execution_id)
+    assert loaded is not None
+    assert loaded["done"] is False
+    assert loaded["current_stage"] == "starting"
+
+    update_guideline_run_stage(execution_id, "node:pm-3:running")
+    loaded = load_guideline_run_result(execution_id)
+    assert loaded["current_stage"] == "node:pm-3:running"
+    assert loaded["stage_updated_at"]
+
+    save_guideline_run_result(
+        execution_id,
+        {
+            "execution_id": execution_id,
+            "pipeline": "guideline",
+            "flow_key": "pubmed",
+            "ticket_id": 42,
+            "current_stage": "node:pm-fix:done",
+            "done": True,
+            "started_at": "2026-05-26T10:00:00Z",
+        },
+    )
+    loaded = load_guideline_run_result(execution_id)
+    assert loaded["done"] is True
+    assert loaded["current_stage"] == "node:pm-fix:done"

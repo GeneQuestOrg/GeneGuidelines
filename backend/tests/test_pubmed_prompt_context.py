@@ -7,6 +7,37 @@ from backend.flows.pubmed import prompt_context as pc
 from backend.engine.flow_engine import _store_for_prompt_interpolation
 
 
+def _sma_like_articles(count: int = 80) -> list[dict]:
+    articles: list[dict] = []
+    for i in range(count):
+        tier = "guideline" if i < 5 else "review" if i < 20 else "cohort"
+        articles.append(
+            {
+                "pmid": str(30_000_000 + i),
+                "title": f"SMA clinical study {i}: nusinersen and risdiplam outcomes",
+                "abstract": (
+                    "Spinal muscular atrophy motor function and survival were assessed in "
+                    "this multicenter cohort. " * 20
+                ),
+                "topic_bucket": ["diagnostics", "treatment", "follow_up", "general"][i % 4],
+                "pubdate": f"{2015 + (i % 10)} Jan",
+            }
+        )
+    cards = [
+        {
+            "pmid": a["pmid"],
+            "topic_bucket": a["topic_bucket"],
+            "evidence_tier": "guideline" if int(a["pmid"]) < 30_000_005 else "review",
+            "confidence": "high" if int(a["pmid"]) < 30_000_010 else "medium",
+            "title": a["title"],
+            "pubdate": a["pubdate"],
+            "inclusion_reason": "SMA clinical relevance",
+        }
+        for a in articles
+    ]
+    return articles, cards
+
+
 class PubmedPromptContextTests(unittest.TestCase):
     def test_pm3_view_includes_articles_text_not_source_links(self) -> None:
         raw = {
@@ -29,6 +60,7 @@ class PubmedPromptContextTests(unittest.TestCase):
         self.assertIn("PMID: 1", result["articles_text"])
         self.assertNotIn("source_links_html", result)
         self.assertIn("evidence_cards", result)
+        self.assertLessEqual(len(result["evidence_cards"][0]), 8)
 
     def test_pass1_diagnostics_filters_by_topic_bucket(self) -> None:
         raw = {
@@ -78,63 +110,81 @@ class PubmedPromptContextTests(unittest.TestCase):
             for i in range(500)
         ]
         raw = {"result": {"query_text": "X", "articles": articles, "evidence_cards": []}}
-        with mock.patch.object(pc, "prompt_input_token_budget", return_value=5_000):
+        with mock.patch.object(pc, "effective_llm_prompt_token_cap", return_value=5_000):
             view = pc.pm2_view_for_llm_prompt("pass1-overview", raw)
         result = view["result"]
         self.assertTrue(result.get("articles_text_corpus_capped"))
         self.assertLess(result["article_count"], 500)
 
-    def test_pm3_large_evidence_manifest_reduces_corpus_budget(self) -> None:
-        """Large evidence_manifest must not crowd out the corpus token budget."""
-        large_manifest = [{"pmid": str(i), "tier": "T1", "score": 5, "details": "x" * 200} for i in range(200)]
-        articles = [{"pmid": str(i), "title": f"Article {i}", "abstract": "a" * 1000} for i in range(50)]
-        raw = {
-            "result": {
-                "query_text": "PKU",
-                "article_count": 50,
-                "total_analyzed": 50,
-                "evidence_manifest": large_manifest,
-                "articles": articles,
-                "evidence_cards": [{"pmid": str(i)} for i in range(50)],
-                "articles_text": "legacy",
-            }
-        }
-        model_spec = "openrouter:google/gemma-4-31B-it"  # 262144 context window
-        view = pc.pm2_view_for_llm_prompt("pm-3", raw, model_spec=model_spec)
-        result = view["result"]
-        # Total estimated tokens should not exceed the model's context limit (262144)
-        import json
-        total_text = json.dumps(result, ensure_ascii=False, default=str)
-        estimated_total = max(1, len(total_text) // 4)
-        self.assertLess(estimated_total, 262_144 - 12_000,
-            f"pm-3 payload too large: ~{estimated_total} estimated tokens")
-        self.assertIn("articles_text", result)
-
-    def test_pm3_respects_gemma_context_ceiling(self) -> None:
-        from backend.agents.llm_limits import prompt_input_token_budget
-
-        spec = "openrouter:google/gemma-4-31B-it"
-        budget = prompt_input_token_budget(spec)
-        self.assertLessEqual(budget, 262_144 - 12_000)
+    def test_llm_prompt_token_cap_tightens_pm3_corpus(self) -> None:
+        """K6: effective cap must shrink pm-3 below an uncapped TPM ceiling."""
         articles = [
             {
                 "pmid": str(i),
                 "title": f"Paper {i}",
-                "abstract": "word " * 500,
+                "abstract": "word " * 400,
                 "topic_bucket": "general",
             }
-            for i in range(800)
+            for i in range(500)
         ]
+        raw = {"result": {"query_text": "Marfan", "articles": articles, "evidence_cards": []}}
+        tpm_budget = 380_000
+
+        with mock.patch.object(pc, "effective_llm_prompt_token_cap", return_value=tpm_budget):
+            with mock.patch.object(pc, "PUBMED_PM3_TOP_K", 500):
+                view_tpm_only = pc.pm2_view_for_llm_prompt("pm-3", raw)
+        with mock.patch.object(pc, "effective_llm_prompt_token_cap", return_value=20_000):
+            with mock.patch.object(pc, "PUBMED_PM3_TOP_K", 500):
+                view_k6 = pc.pm2_view_for_llm_prompt("pm-3", raw)
+
+        tpm_result = view_tpm_only["result"]
+        k6_result = view_k6["result"]
+        self.assertGreater(tpm_result["article_count"], k6_result["article_count"])
+        self.assertTrue(k6_result.get("articles_text_corpus_capped"))
+        self.assertLess(
+            pc.estimated_pm2_prompt_tokens(view_k6),
+            pc.estimated_pm2_prompt_tokens(view_tpm_only),
+        )
+        self.assertLess(pc.estimated_pm2_prompt_tokens(view_k6), 220_000)
+        self.assertLess(pc.estimated_pm2_prompt_tokens(view_k6), 25_000)
+
+    def test_ranking_prefers_guideline_tier_in_pm3(self) -> None:
         raw = {
             "result": {
-                "query_text": "Marfan syndrome",
-                "articles": articles,
-                "evidence_cards": [{"pmid": str(i)} for i in range(800)],
+                "query_text": "SMA",
+                "articles": [
+                    {"pmid": "1", "title": "Low", "abstract": "a", "pubdate": "2010"},
+                    {"pmid": "2", "title": "High", "abstract": "b", "pubdate": "2024"},
+                ],
+                "evidence_cards": [
+                    {"pmid": "1", "evidence_tier": "case_report", "confidence": "low"},
+                    {"pmid": "2", "evidence_tier": "guideline", "confidence": "high"},
+                ],
             }
         }
-        view = pc.pm2_view_for_llm_prompt("pm-3", raw, model_spec=spec)
+        with mock.patch.object(pc, "PUBMED_PM3_TOP_K", 1):
+            view = pc.pm2_view_for_llm_prompt("pm-3", raw)
+        result = view["result"]
+        self.assertEqual(result["article_count"], 1)
+        self.assertIn("PMID: 2", result["articles_text"])
+
+    def test_sma_like_corpus_fits_vllm_budget(self) -> None:
+        articles, cards = _sma_like_articles(80)
+        raw = {
+            "result": {
+                "query_text": "Spinal Muscular Atrophy",
+                "total_analyzed": 80,
+                "articles": articles,
+                "evidence_cards": cards,
+            }
+        }
+        with mock.patch.object(pc, "effective_llm_prompt_token_cap", return_value=60_000):
+            view = pc.pm2_view_for_llm_prompt("pm-3", raw)
         tokens = pc.estimated_pm2_prompt_tokens(view)
-        self.assertLess(tokens, 262_144, f"pm-3 view still ~{tokens} tokens for gemma")
+        result = view["result"]
+        self.assertLessEqual(tokens, 60_000)
+        self.assertLessEqual(result["article_count"], pc.PUBMED_PM3_TOP_K)
+        self.assertGreater(result["article_count"], 0)
 
 
 if __name__ == "__main__":

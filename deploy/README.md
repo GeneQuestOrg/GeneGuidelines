@@ -2,7 +2,7 @@
 
 **Azure (live):** **[AZURE.md](./AZURE.md)** — `https://geneguidelines.genequest.org`, gałąź **`production`**, auto-deploy przez `.github/workflows/deploy-azure.yml`.
 
-Minimal stack: **Docker Compose + HTTP Basic Auth** on the whole site (public, admin, API). SQLite on the existing `sqlite-data` volume.
+Minimal stack: **Docker Compose + HTTP Basic Auth** on the whole site (public, admin, API). Postgres in the `postgres-data` volume.
 
 ## Prerequisites
 
@@ -49,9 +49,9 @@ Open **only** 80/443 (or your proxy ports) — not 8000.
 
 ## 4. Data safety
 
-- SQLite lives in Docker volume `sqlite-data` (`DB_PATH=/data/tickets.db`).
+- Postgres data lives in Docker volume `postgres-data` when using `docker compose up`.
 - **Never** run `docker compose down -v` on production (deletes the DB).
-- Before upgrades: copy the volume or stop containers and backup `/var/lib/docker/volumes/.../sqlite-data`.
+- Before upgrades: backup the volume or dump the database (`pg_dump`).
 
 ## 5. Smoke test (video / jury)
 

@@ -80,6 +80,13 @@ def test_catalog_stats(client: TestClient) -> None:
     assert "openPrCount" in stats
 
 
+def test_catalog_stats_match_live_disease_count(client: TestClient) -> None:
+    """Home intro meta must reflect live tables, not the static seed snapshot."""
+    disease_count = len(client.get("/api/diseases").json())
+    stats = client.get("/api/catalog/stats").json()
+    assert stats["diseaseCount"] == disease_count
+
+
 def test_parent_pathway_fd_seed(client: TestClient) -> None:
     from backend.content_db import seed_care_pathways_from_file
 

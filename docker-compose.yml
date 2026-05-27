@@ -15,21 +15,40 @@
 #   MODEL_PROFILE=vllm + LLM_BASE_URL + LLM_API_KEY (from inside Docker use host.docker.internal, not 127.0.0.1)
 #   MODEL_PROFILE=production + OPENAI_API_KEY=...
 #
+# Postgres data persists in the `postgres-data` volume. Do not run `docker compose down -v`
+# unless you intend to wipe the database.
+#
 # Production-mode (no hot reload). For hot-reload development install Python +
 # Node locally and run `make dev` instead.
 
 services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-ggapp}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-testpass}
+      POSTGRES_DB: ${POSTGRES_DB:-geneguidelines}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
   backend:
     build:
       context: .
       dockerfile: Dockerfile.backend
     env_file: .env
     environment:
-      # The Dockerfile sets DB_PATH=/data/tickets.db; bind it to a named volume
-      # so the SQLite file survives container recreation.
-      DB_PATH: /data/tickets.db
-    volumes:
-      - sqlite-data:/data
+      DB_URL: postgresql://${POSTGRES_USER:-ggapp}:${POSTGRES_PASSWORD:-testpass}@postgres:5432/${POSTGRES_DB:-geneguidelines}
+    depends_on:
+      postgres:
+        condition: service_healthy
     expose:
       - "8000"
     ports:
@@ -53,4 +72,4 @@ services:
       - "5174:81"   # admin app
 
 volumes:
-  sqlite-data:
+  postgres-data:

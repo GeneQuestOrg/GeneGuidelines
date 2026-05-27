@@ -298,15 +298,14 @@ def list_pipeline_runs(_admin: AuthUser = Depends(require_admin)):
     )
     conn = get_connection()
     try:
-        placeholders = ",".join(["?"] * len(bootstrap_pipelines))
         cur = conn.execute(
-            f"""SELECT execution_id, pipeline, disease_slug, label, done,
+            """SELECT execution_id, pipeline, disease_slug, label, done,
                        started_at, finished_at, error
                 FROM guideline_run_results
-                WHERE pipeline IN ({placeholders})
+                WHERE pipeline = ANY(%s)
                 ORDER BY started_at DESC
                 LIMIT 200""",
-            bootstrap_pipelines,
+            (list(bootstrap_pipelines),),
         )
         for row in cur.fetchall():
             eid = str(row["execution_id"] or "")
@@ -543,7 +542,7 @@ async def bootstrap_disease(
 ):
     """One-action workflow: create a disease row, then fire all research workflows.
 
-    Idempotent on the disease row (INSERT OR IGNORE on slug); workflows always
+    Idempotent on the disease row (INSERT on slug); workflows always
     fire, so calling twice is safe but will run the research workflows a second
     time. Returns the dict of execution ids the frontend can poll
     ``/api/research-runs/mine`` against to render progress.
@@ -563,13 +562,14 @@ async def bootstrap_disease(
             conn = db.get_connection()
             cur = conn.cursor()
             cur.execute(
-                """INSERT OR IGNORE INTO diseases (
+                """INSERT INTO diseases (
                     slug, name, name_short, omim, gene, inheritance, summary,
                     types_json, related_json, prevalence_text, status, status_by,
                     status_date, ai_draft_date, open_prs, doctors_count, trials_count,
                     coverage, accent, guideline_prompt_profile_json
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, '[]', '[]', ?, 'ai-draft', NULL,
-                          NULL, NULL, 0, 0, 0, 'skeleton', 'indigo', '{}')""",
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, '[]', '[]', %s, 'ai-draft', NULL,
+                          NULL, NULL, 0, 0, 0, 'skeleton', 'indigo', '{}')
+                ON CONFLICT (slug) DO NOTHING""",
                 (
                     slug,
                     body.name.strip(),

@@ -22,16 +22,32 @@ from pydantic import BaseModel
 
 log = logging.getLogger(__name__)
 
+_finder_llm_parallel_semaphore: asyncio.Semaphore | None = None
+
+
+def _get_finder_llm_parallel_semaphore() -> asyncio.Semaphore:
+    """Process-wide cap on concurrent finder LLM calls (bootstrap fan-out)."""
+    global _finder_llm_parallel_semaphore
+    if _finder_llm_parallel_semaphore is None:
+        from ..config import FINDER_LLM_PARALLEL_CONCURRENCY
+
+        _finder_llm_parallel_semaphore = asyncio.Semaphore(FINDER_LLM_PARALLEL_CONCURRENCY)
+    return _finder_llm_parallel_semaphore
+
+
+def reset_finder_llm_parallel_semaphore_for_tests() -> None:
+    """Allow tests to pick up a fresh semaphore after env overrides."""
+    global _finder_llm_parallel_semaphore
+    _finder_llm_parallel_semaphore = None
+
 
 def resolve_gemma_or_fallback_spec() -> str:
     """Return a primary model spec the agent layer can call.
 
     Preference order:
 
-    1. ``openrouter`` profile if ``OPENROUTER_API_KEY`` is set — that is the
-       documented Gemma 4 demo path on managed infrastructure.
-    2. The operator's ``DEFAULT_MODEL_PROFILE`` if its provider has its key.
-    3. Any other profile in ``MODEL_PROFILES`` whose provider has its key
+    1. The operator's ``DEFAULT_MODEL_PROFILE`` if its provider has its key.
+    2. Any other profile in ``MODEL_PROFILES`` whose provider has its key
        (production, test). Ollama is checked last because it is treated as
        the local-edge fallback, not the primary spec for the demo.
 
@@ -50,9 +66,17 @@ def resolve_gemma_or_fallback_spec() -> str:
         "openrouter": OPENROUTER_API_KEY,
         "production": openai_key,
         "test": DEEPSEEK_API_KEY,
+        "vllm": (os.environ.get("LLM_API_KEY") or os.environ.get("VLLM_API_KEY") or "").strip() or None,
         "ollama": "local" if _ollama_reachable() else None,
     }
-    candidates = ["openrouter", DEFAULT_MODEL_PROFILE, "production", "test", "ollama"]
+    candidates = [
+        DEFAULT_MODEL_PROFILE,
+        "production",
+        "vllm",
+        "openrouter",
+        "test",
+        "ollama",
+    ]
     seen: set[str] = set()
     for name in candidates:
         if name in seen or name not in MODEL_PROFILES:
@@ -103,7 +127,7 @@ async def run_structured_with_ollama_fallback(
     result_type: Type[BaseModel],
     primary_spec: str,
     max_tokens: int,
-    timeout_sec: float,
+    timeout_sec: float | None = None,
 ) -> tuple[BaseModel, str]:
     """Run a structured-output agent; on HTTP 429 from the primary, retry on Ollama.
 
@@ -112,14 +136,23 @@ async def run_structured_with_ollama_fallback(
 
     Only HTTP 429 (rate-limit) triggers the fallback. Other failures bubble up
     so callers can record them in ``guideline_run_results``.
+
+    Finder calls share ``FINDER_LLM_PARALLEL_CONCURRENCY`` so bootstrap fan-out
+    does not stampede the upstream LLM endpoint.
     """
     from ..agents import agent as agent_module
+    from ..config import FINDER_LLM_TIMEOUT_SEC
+
+    effective_timeout = (
+        float(timeout_sec) if timeout_sec is not None else FINDER_LLM_TIMEOUT_SEC
+    )
 
     async def _call(spec: str):
         ag = agent_module.get_simple_structured_agent(
             system_prompt, result_type, model_spec=spec, max_tokens=max_tokens
         )
-        return await asyncio.wait_for(ag.run(user_prompt), timeout=timeout_sec)
+        async with _get_finder_llm_parallel_semaphore():
+            return await asyncio.wait_for(ag.run(user_prompt), timeout=effective_timeout)
 
     try:
         res = await _call(primary_spec)
@@ -165,5 +198,6 @@ def _is_429_error(exc: BaseException) -> bool:
 __all__ = [
     "resolve_gemma_or_fallback_spec",
     "resolve_local_fallback_spec",
+    "reset_finder_llm_parallel_semaphore_for_tests",
     "run_structured_with_ollama_fallback",
 ]

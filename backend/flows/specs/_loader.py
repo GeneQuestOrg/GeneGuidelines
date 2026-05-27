@@ -54,7 +54,7 @@ from __future__ import annotations
 
 import json
 import logging
-import sqlite3
+import psycopg.errors as pg_errors
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -64,7 +64,7 @@ log = logging.getLogger(__name__)
 _SPECS_DIR = Path(__file__).parent
 
 
-def _insert_node(cur: sqlite3.Cursor, flow_key: str, node: dict[str, Any]) -> None:
+def _insert_node(cur: Any, flow_key: str, node: dict[str, Any]) -> None:
     """INSERT one node row, swallowing IntegrityError on (flow_key, node_id) duplicate."""
     now = datetime.now().isoformat()
     try:
@@ -78,7 +78,8 @@ def _insert_node(cur: sqlite3.Cursor, flow_key: str, node: dict[str, Any]) -> No
                 rag_operation, rag_body_json, step_name,
                 merge_strategy, merge_fields, merge_key_field,
                 integration_operation, integration_params_json, integration_credentials_json
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            ON CONFLICT (flow_key, node_id) DO NOTHING""",
             (
                 flow_key,
                 node["node_id"],
@@ -112,16 +113,16 @@ def _insert_node(cur: sqlite3.Cursor, flow_key: str, node: dict[str, Any]) -> No
                 node.get("integration_credentials_json", ""),
             ),
         )
-    except sqlite3.IntegrityError:
+    except pg_errors.UniqueViolation:
         # UNIQUE(flow_key, node_id) — another spec or migration already inserted.
         pass
 
 
-def _insert_edge(cur: sqlite3.Cursor, flow_key: str, edge: dict[str, Any]) -> None:
+def _insert_edge(cur: Any, flow_key: str, edge: dict[str, Any]) -> None:
     """INSERT one edge row, ignoring duplicate constraint violations."""
     try:
         cur.execute(
-            "INSERT INTO flow_edges (flow_key, source_node_id, target_node_id, label) VALUES (?, ?, ?, ?)",
+            "INSERT INTO flow_edges (flow_key, source_node_id, target_node_id, label) VALUES (%s, %s, %s, %s) ON CONFLICT DO NOTHING",
             (
                 flow_key,
                 edge["source_node_id"],
@@ -129,11 +130,11 @@ def _insert_edge(cur: sqlite3.Cursor, flow_key: str, edge: dict[str, Any]) -> No
                 edge.get("label"),
             ),
         )
-    except sqlite3.IntegrityError:
+    except pg_errors.UniqueViolation:
         pass
 
 
-def _load_spec_file(path: Path, cur: sqlite3.Cursor) -> int:
+def _load_spec_file(path: Path, cur: Any) -> int:
     """Insert one spec file. Returns the number of nodes inserted."""
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
@@ -147,7 +148,7 @@ def _load_spec_file(path: Path, cur: sqlite3.Cursor) -> int:
         return 0
 
     cur.execute(
-        "SELECT 1 FROM flow_definitions WHERE flow_key = ? LIMIT 1",
+        "SELECT 1 FROM flow_definitions WHERE flow_key = %s LIMIT 1",
         (flow_key,),
     )
     if cur.fetchone() is not None:

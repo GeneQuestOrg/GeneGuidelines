@@ -14,7 +14,6 @@ import { DoctorProfileView } from "./DoctorProfileView";
 import { AccountView } from "./AccountView";
 import { ResearchRunView } from "./ResearchRunView";
 import { StartResearchView } from "./StartResearchView";
-import { AddDiseaseView } from "./AddDiseaseView";
 import { TrialsView } from "./TrialsView";
 
 export interface RouteContentProps {
@@ -52,7 +51,7 @@ export function routeContent({
     case "account":
       return <AccountView onNav={onNav} onSignIn={onSignIn} view={view} onViewChange={onViewChange} />;
     case "about":
-      return <AboutView view={view} onViewChange={onViewChange} onNav={onNav} />;
+      return <AboutView view={view} onNav={onNav} />;
     case "doctors":
       return (
         <DoctorsView
@@ -81,20 +80,6 @@ export function routeContent({
             initialDiseaseSlug={route.diseaseSlug}
             onNav={onNav}
           />
-        </RequireSignedIn>
-      );
-    case "addDisease":
-      return (
-        <RequireSignedIn
-          fallback={
-            <ResearchSignInPrompt
-              title="New research"
-              lead="Sign in to add a disease and run the six parallel research workflows (PubMed, doctors, trials, and more)."
-              onNav={onNav}
-            />
-          }
-        >
-          <AddDiseaseView onNav={onNav} />
         </RequireSignedIn>
       );
     case "trials":

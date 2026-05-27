@@ -119,6 +119,7 @@ app.include_router(tools.router, prefix="/api")
 app.include_router(flows.router, prefix="/api")
 
 from backend.content.api import router as content_disease_router  # noqa: E402
+from backend.disease_index.api import router as disease_index_router  # noqa: E402
 from backend.routers import account, content, doctor_finder, pipeline  # noqa: E402
 
 # The new content module owns GET /api/diseases and GET /api/diseases/{slug};
@@ -128,6 +129,7 @@ from backend.routers import account, content, doctor_finder, pipeline  # noqa: E
 app.include_router(content_disease_router, prefix="/api")
 app.include_router(account.router, prefix="/api")
 app.include_router(content.router, prefix="/api")
+app.include_router(disease_index_router, prefix="/api/disease-index", tags=["disease_index"])
 app.include_router(doctor_finder.router, prefix="/api/doctor-finder", tags=["doctor_finder"])
 app.include_router(pipeline.router, prefix="/api/pipeline", tags=["pipeline"])
 
@@ -141,6 +143,8 @@ def api_info():
         "health": "/health",
         "api": {
             "diseases": "/api/diseases",
+            "disease_index_suggest": "/api/disease-index/suggest",
+            "disease_index_wider_search": "/api/disease-index/wider-search",
             "catalog_stats": "/api/catalog/stats",
             "tickets": "/api/tickets",
             "tools": "/api/tools/catalog",

@@ -67,7 +67,7 @@ def save_doctor_finder_run_result(
         INSERT INTO doctor_finder_run_results (
             execution_id, disease_name, catalog_slug, doctor_report_json,
             error, done, started_at, finished_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
         ON CONFLICT(execution_id) DO UPDATE SET
             disease_name = excluded.disease_name,
             catalog_slug = excluded.catalog_slug,
@@ -109,7 +109,7 @@ def load_doctor_finder_run_result(execution_id: str) -> dict[str, Any] | None:
         SELECT execution_id, disease_name, catalog_slug, doctor_report_json,
                error, done, started_at, finished_at
         FROM doctor_finder_run_results
-        WHERE execution_id = ?
+        WHERE execution_id = %s
         """,
         (execution_id,),
     )
@@ -225,9 +225,8 @@ def load_latest_successful_report_for_catalog_slug(
             if v and v.lower() not in disease_names_lower:
                 disease_names_lower.append(v.lower())
 
-    placeholders = ",".join("?" * len(disease_names_lower))
     cur.execute(
-        f"""
+        """
         SELECT execution_id, doctor_report_json, error, started_at
         FROM doctor_finder_run_results
         WHERE done = 1
@@ -235,16 +234,16 @@ def load_latest_successful_report_for_catalog_slug(
           AND doctor_report_json IS NOT NULL
           AND TRIM(doctor_report_json) != ''
           AND (
-            catalog_slug = ?
+            catalog_slug = %s
             OR (
               catalog_slug IS NULL
-              AND LOWER(TRIM(disease_name)) IN ({placeholders})
+              AND LOWER(TRIM(disease_name)) = ANY(%s)
             )
           )
-        ORDER BY CASE WHEN catalog_slug = ? THEN 0 ELSE 1 END, started_at DESC
+        ORDER BY CASE WHEN catalog_slug = %s THEN 0 ELSE 1 END, started_at DESC
         LIMIT 1
         """,
-        (slug, *disease_names_lower, slug),
+        (slug, disease_names_lower, slug),
     )
     row = cur.fetchone()
     conn.close()
@@ -278,7 +277,7 @@ def repair_doctor_finder_catalog_slugs_from_disease_name() -> int:
         if not inferred:
             continue
         cur.execute(
-            "UPDATE doctor_finder_run_results SET catalog_slug = ? WHERE execution_id = ?",
+            "UPDATE doctor_finder_run_results SET catalog_slug = %s WHERE execution_id = %s",
             (inferred, eid),
         )
         if cur.rowcount and int(cur.rowcount) > 0:
@@ -300,7 +299,7 @@ def list_persisted_doctor_finder_run_rows() -> list[dict[str, Any]]:
         SELECT execution_id, disease_name, error, done, started_at
         FROM doctor_finder_run_results
         ORDER BY COALESCE(started_at, finished_at, '') DESC
-        LIMIT ?
+        LIMIT %s
         """,
         (PIPELINE_LIST_LIMIT,),
     )

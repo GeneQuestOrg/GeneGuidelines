@@ -19,16 +19,20 @@ remains valid for the new Core-based repositories.
 from __future__ import annotations
 
 from sqlalchemy import (
+    Boolean,
     CheckConstraint,
     Column,
     Float,
     ForeignKey,
+    Index,
     Integer,
     MetaData,
     PrimaryKeyConstraint,
     String,
     Table,
     Text,
+    UniqueConstraint,
+    text,
 )
 
 # Naming convention so that Alembic generates predictable constraint names
@@ -322,6 +326,98 @@ private_contexts = Table(
 )
 
 
+# -- disease_index domain -----------------------------------------------------
+#
+# Global catalogue of every rare disease the platform might suggest in the
+# "Add a disease" autocomplete — ~10k rows after Orphanet seed. Distinct from
+# the ``diseases`` table above: an entry here becomes a ``diseases`` row only
+# after the bootstrap workflow has been run for it. ``local_slug`` is the
+# soft link back to that local record once it exists.
+#
+# ``is_in_scope`` is the genetic / non-genetic gate: rare infectious or
+# multifactorial diseases are kept in the index (so the UI can answer "yes,
+# Tuberculosis exists, but it is out of scope for GeneGuidelines"), they are
+# just rendered with an out-of-scope badge instead of the "Run research"
+# button.
+disease_index = Table(
+    "disease_index",
+    metadata,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column("primary_id", Text, nullable=False, unique=True),  # e.g. "ORPHA:558"
+    Column("source", Text, nullable=False, server_default="manual"),
+    Column("canonical_name", Text, nullable=False),
+    Column("canonical_name_norm", Text, nullable=False),
+    Column("category", Text),  # null until classified
+    Column("is_in_scope", Boolean, nullable=False, server_default=text("true")),
+    Column("inheritance", Text),
+    Column("summary", Text, nullable=False, server_default=""),
+    Column("omim_codes_json", Text, nullable=False, server_default="[]"),
+    Column("gene_symbols_json", Text, nullable=False, server_default="[]"),
+    Column("orpha_url", Text),
+    Column("omim_url", Text),
+    # Soft link to ``diseases.slug`` when the bootstrap workflow has been
+    # run for this entry — no FK, because a deleted local record should not
+    # cascade-delete the (still authoritative) external index row.
+    Column("local_slug", Text),
+    Column("source_version", Text),
+    Column("refreshed_at", Text, nullable=False),
+    CheckConstraint(
+        "source IN ('orphanet','mondo','gard','manual')",
+        name="disease_index_source_enum",
+    ),
+    CheckConstraint(
+        "category IS NULL OR category IN ("
+        "'genetic','predominantly_genetic','multifactorial',"
+        "'infectious','acquired','unknown')",
+        name="disease_index_category_enum",
+    ),
+)
+
+# Searchable terms (canonical name, synonyms, gene, OMIM, ORPHA, ICD-10 …)
+# stored as one row per (entry, alias, kind, locale). The ``alias_norm`` is
+# always lower-cased and ASCII-folded so a single ILIKE / pg_trgm pass
+# matches across diacritics and casing.
+disease_index_aliases = Table(
+    "disease_index_aliases",
+    metadata,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column(
+        "disease_id",
+        Integer,
+        ForeignKey("disease_index.id", ondelete="CASCADE"),
+        nullable=False,
+    ),
+    Column("alias", Text, nullable=False),
+    Column("alias_norm", Text, nullable=False),
+    Column("kind", Text, nullable=False),
+    Column("locale", Text),
+    Column("weight", Float, nullable=False, server_default="1.0"),
+    UniqueConstraint(
+        "disease_id",
+        "alias_norm",
+        "kind",
+        "locale",
+        name="uq_alias_per_kind_locale",
+    ),
+    CheckConstraint(
+        "kind IN ('canonical','synonym','omim','gene','orpha','icd10','locale_name')",
+        name="alias_kind_enum",
+    ),
+)
+
+# Searches issue a fuzzy match against ``alias_norm``; this index is the
+# single hot path for ``GET /api/disease-index/suggest``.
+Index(
+    "ix_disease_index_aliases_alias_norm",
+    disease_index_aliases.c.alias_norm,
+)
+
+Index(
+    "ix_disease_index_canonical_name_norm",
+    disease_index.c.canonical_name_norm,
+)
+
+
 __all__ = [
     "metadata",
     "diseases",
@@ -336,4 +432,6 @@ __all__ = [
     "disease_foundations",
     "private_contexts",
     "official_guideline_pointers",
+    "disease_index",
+    "disease_index_aliases",
 ]

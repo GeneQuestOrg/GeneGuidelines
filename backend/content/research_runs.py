@@ -9,24 +9,37 @@ are currently executing for a public disease. Two stores hold this state:
   ``catalog_slug`` which we resolve to a disease slug via
   :func:`backend.doctor_catalog.catalog_slug_for_finder_input`.
 
-A run is "active" when ``done = 0`` and ``finished_at IS NULL``. The
-projection trims the result to a stable shape the public frontend can
-render without leaking workflow internals.
+A run is "active" when ``done = 0`` and ``finished_at IS NULL``. Finder pipelines
+that exceed a short staleness window without finishing are reaped as failed so
+orphaned rows (e.g. after a dev-server reload) do not linger on the home view.
 """
 
 from __future__ import annotations
 
-import sqlite3
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any, Iterable, Literal
 
+import psycopg
+
 try:
     from ..database import get_connection
+    from ..db import table_exists
     from .research_run_progress import resolve_run_progress
 except ImportError:
     from database import get_connection  # type: ignore[no-redef]
+    from db import table_exists  # type: ignore[no-redef]
     from research_run_progress import resolve_run_progress  # type: ignore[no-redef]
+
+# Fast finders should finish within a few minutes; rows left ``done=0`` longer
+# are almost always orphaned tasks (crash, reload) rather than live work.
+_FINDER_PIPELINES = (
+    "trials_finder",
+    "therapies_finder",
+    "foundations_finder",
+    "official_guidelines_finder",
+)
+_FINDER_STALE_AFTER_SEC = 600
 
 
 @dataclass(frozen=True, slots=True)
@@ -66,8 +79,34 @@ def _elapsed_seconds(started_at: object, now: datetime | None = None) -> int | N
     return max(0, int((current - started).total_seconds()))
 
 
+def _reap_stale_finder_runs(conn: psycopg.Connection, *, now: datetime | None = None) -> int:
+    """Mark abandoned fast-finder rows as failed so they drop off the home feed."""
+    current = now or datetime.now(timezone.utc)
+    cutoff = current.isoformat()
+    stale_before = datetime.fromtimestamp(
+        current.timestamp() - _FINDER_STALE_AFTER_SEC, tz=timezone.utc
+    ).isoformat()
+    cur = conn.cursor()
+    cur.execute(
+        """
+        UPDATE guideline_run_results
+        SET done = 1,
+            finished_at = COALESCE(finished_at, %s),
+            error = COALESCE(NULLIF(error, ''), 'stale: run abandoned (no completion recorded)')
+        WHERE done = 0
+          AND finished_at IS NULL
+          AND pipeline = ANY(%s)
+          AND COALESCE(started_at, '') <> ''
+          AND started_at < %s
+        """,
+        (cutoff, list(_FINDER_PIPELINES), stale_before),
+    )
+    conn.commit()
+    return int(cur.rowcount or 0)
+
+
 def _rows_from_guideline_store(
-    conn: sqlite3.Connection,
+    conn: psycopg.Connection,
     limit: int,
     *,
     owner_clerk_id: str | None = None,
@@ -77,9 +116,9 @@ def _rows_from_guideline_store(
             """
             SELECT execution_id, disease_slug, flow_key, pipeline, label, started_at
             FROM guideline_run_results
-            WHERE done = 0 AND finished_at IS NULL AND owner_clerk_id = ?
+            WHERE done = 0 AND finished_at IS NULL AND owner_clerk_id = %s
             ORDER BY COALESCE(started_at, '') DESC
-            LIMIT ?
+            LIMIT %s
             """,
             (owner_clerk_id, limit),
         ).fetchall()
@@ -90,7 +129,7 @@ def _rows_from_guideline_store(
             FROM guideline_run_results
             WHERE done = 0 AND finished_at IS NULL
             ORDER BY COALESCE(started_at, '') DESC
-            LIMIT ?
+            LIMIT %s
             """,
             (limit,),
         ).fetchall()
@@ -126,27 +165,16 @@ def _rows_from_guideline_store(
 
 
 def _resolve_disease_slug_for_catalog(catalog_slug: str | None) -> str | None:
-    """Map a doctor-finder catalog slug back to a disease slug.
-
-    For Phase 0 the project's three diseases use catalog slugs identical to
-    their disease slugs. Falling back to a string identity keeps the
-    projection functional if a doctor-finder run is recorded for a disease
-    we have not yet special-cased.
-    """
+    """Map a doctor-finder catalog slug back to a disease slug."""
     if not isinstance(catalog_slug, str) or not catalog_slug:
         return None
     return catalog_slug
 
 
 def _rows_from_doctor_finder_store(
-    conn: sqlite3.Connection, limit: int
+    conn: psycopg.Connection, limit: int
 ) -> list[ActiveResearchRun]:
-    # The doctor_finder_run_results table is created lazily on the first
-    # finder run; older clean databases may not have it yet.
-    has_table = conn.execute(
-        "SELECT name FROM sqlite_master WHERE type='table' AND name='doctor_finder_run_results'"
-    ).fetchone()
-    if not has_table:
+    if not table_exists(conn, "doctor_finder_run_results"):
         return []
     rows = conn.execute(
         """
@@ -154,7 +182,7 @@ def _rows_from_doctor_finder_store(
         FROM doctor_finder_run_results
         WHERE done = 0 AND finished_at IS NULL
         ORDER BY COALESCE(started_at, '') DESC
-        LIMIT ?
+        LIMIT %s
         """,
         (limit,),
     ).fetchall()
@@ -196,23 +224,17 @@ def _sorted_by_started_desc(runs: Iterable[ActiveResearchRun]) -> list[ActiveRes
 def list_active_runs(
     limit: int = 3,
     *,
-    conn: sqlite3.Connection | None = None,
+    conn: psycopg.Connection | None = None,
     owner_clerk_id: str | None = None,
 ) -> list[ActiveResearchRun]:
-    """Return the most recent in-flight runs, newest first, capped at ``limit``.
-
-    Combines guideline runs and doctor-finder runs into one ordered list.
-    The function is read-only and safe to call from a hot public endpoint.
-    """
+    """Return the most recent in-flight runs, newest first, capped at ``limit``."""
     if limit <= 0:
         return []
     owned = conn is None
     if owned:
         conn = get_connection()
     try:
-        # Per-store ``limit`` is an over-approximation; the union is then
-        # trimmed. A run in either store at position > limit is irrelevant
-        # because the union is also sorted by started_at.
+        _reap_stale_finder_runs(conn)
         guideline = _rows_from_guideline_store(conn, limit, owner_clerk_id=owner_clerk_id)
         finder: list[ActiveResearchRun] = []
         if owner_clerk_id is None:
@@ -257,7 +279,7 @@ def list_my_run_history(
     clerk_id: str,
     limit: int = 20,
     *,
-    conn: sqlite3.Connection | None = None,
+    conn: psycopg.Connection | None = None,
 ) -> list[ResearchRunHistoryItem]:
     """Return the most recent completed/failed runs for the given user, newest first.
 
@@ -275,9 +297,9 @@ def list_my_run_history(
             SELECT execution_id, disease_slug, flow_key, label,
                    done, started_at, finished_at, error
             FROM guideline_run_results
-            WHERE owner_clerk_id = ? AND done = 1
+            WHERE owner_clerk_id = %s AND done = 1
             ORDER BY COALESCE(finished_at, started_at, '') DESC
-            LIMIT ?
+            LIMIT %s
             """,
             (clerk_id, limit),
         ).fetchall()

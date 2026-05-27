@@ -11,10 +11,11 @@ import json
 from dataclasses import dataclass, field
 from typing import Iterable, Mapping, Protocol
 
-from sqlalchemy import collate, select
+from sqlalchemy import select
 from sqlalchemy.engine import Engine
 
 from ..shared.persistence.base_repo import BaseSqlalchemyRepo
+from ..shared.persistence.dialect import nocase_order
 from ..shared.persistence.schema import (
     disease_foundations,
     foundations as foundations_table,
@@ -93,7 +94,7 @@ class SqlaFoundationRepo(BaseSqlalchemyRepo):
                 disease_foundations.c.foundation_id == foundations_table.c.id,
             )
             .where(disease_foundations.c.disease_slug == disease_slug)
-            .order_by(collate(foundations_table.c.name, "NOCASE"))
+            .order_by(nocase_order(foundations_table.c.name))
         )
         with self._conn() as conn:
             rows = conn.execute(stmt).mappings().all()
@@ -106,7 +107,7 @@ class SqlaFoundationRepo(BaseSqlalchemyRepo):
 
     def list_all(self) -> list[Foundation]:
         stmt = select(foundations_table).order_by(
-            collate(foundations_table.c.name, "NOCASE")
+            nocase_order(foundations_table.c.name)
         )
         with self._conn() as conn:
             rows = conn.execute(stmt).mappings().all()

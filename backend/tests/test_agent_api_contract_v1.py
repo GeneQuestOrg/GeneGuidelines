@@ -28,6 +28,13 @@ class AgentApiContractV1Tests(unittest.TestCase):
         self.assertEqual(payload["ai_summary"], {"issue": "", "work_log_summary": ""})
         self.assertEqual(payload["missing_tool_requests"], [])
         self.assertIsNone(payload["quality_snapshot"])
+        self.assertIsNone(payload["current_stage"])
+
+    def test_build_agent_run_payload_includes_current_stage(self) -> None:
+        payload = build_agent_run_payload(
+            {"execution_id": "x-2", "ticket_id": 1, "done": False, "last_stage": "node:pm-1:done"}
+        )
+        self.assertEqual(payload["current_stage"], "node:pm-1:done")
 
     def test_normalize_trace_event_sets_sys_kind_for_non_terminal_events(self) -> None:
         event = normalize_trace_event({"text": "hello"})

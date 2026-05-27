@@ -21,10 +21,11 @@ from __future__ import annotations
 import re
 from typing import Iterable, Protocol, Sequence
 
-from sqlalchemy import collate, select
+from sqlalchemy import select
 from sqlalchemy.engine import Engine
 
 from ..shared.persistence.base_repo import BaseSqlalchemyRepo
+from ..shared.persistence.dialect import nocase_order
 from ..shared.persistence.schema import diseases as diseases_table
 from .models import DISEASE_SLUG_MAX_LEN, Disease, disease_from_row
 
@@ -64,7 +65,7 @@ class SqlaDiseaseRepo(BaseSqlalchemyRepo):
         super().__init__(engine)
 
     def list_all(self) -> list[Disease]:
-        stmt = select(diseases_table).order_by(collate(diseases_table.c.name, "NOCASE"))
+        stmt = select(diseases_table).order_by(nocase_order(diseases_table.c.name))
         return self._fetch_all(stmt)
 
     def get(self, slug: str) -> Disease | None:

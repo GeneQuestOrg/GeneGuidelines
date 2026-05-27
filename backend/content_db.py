@@ -1,4 +1,4 @@
-"""SQLite access for public diseases and guideline metadata (Phase 4)."""
+"""Postgres access for public diseases and guideline metadata (Phase 4)."""
 from __future__ import annotations
 
 import json
@@ -10,6 +10,7 @@ from typing import Any
 try:
     from .config import BACKEND_DIR
     from .database import get_connection
+    from .db import table_columns, table_exists
     from .guideline_prompt_profile import (
         empty_guideline_prompt_profile,
         normalize_guideline_prompt_profile,
@@ -17,6 +18,7 @@ try:
 except ImportError:
     from config import BACKEND_DIR
     from database import get_connection
+    from db import table_columns, table_exists
     from guideline_prompt_profile import (
         empty_guideline_prompt_profile,
         normalize_guideline_prompt_profile,
@@ -168,7 +170,7 @@ def ensure_content_schema() -> None:
     cur.execute(
         """
         CREATE TABLE IF NOT EXISTS therapies (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             disease_slug TEXT NOT NULL REFERENCES diseases(slug) ON DELETE CASCADE,
             name TEXT NOT NULL,
             status TEXT NOT NULL CHECK (status IN ('consensus','verified','pending','preclinical')),
@@ -180,7 +182,7 @@ def ensure_content_schema() -> None:
     cur.execute(
         """
         CREATE TABLE IF NOT EXISTS foundations (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             name TEXT NOT NULL UNIQUE,
             scope TEXT NOT NULL,
             url TEXT NOT NULL DEFAULT '',
@@ -202,7 +204,7 @@ def ensure_content_schema() -> None:
     cur.execute(
         """
         CREATE TABLE IF NOT EXISTS private_contexts (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             disease_slug TEXT NOT NULL REFERENCES diseases(slug) ON DELETE CASCADE,
             original_filename TEXT NOT NULL,
             original_chars INTEGER NOT NULL DEFAULT 0,
@@ -241,8 +243,7 @@ def ensure_care_pathway_draft_columns() -> None:
     """
     conn = get_connection()
     cur = conn.cursor()
-    cur.execute("PRAGMA table_info(care_pathways)")
-    columns = {row["name"] for row in cur.fetchall()}
+    columns = table_columns(conn, "care_pathways")
     if "draft_tree_json" not in columns:
         cur.execute("ALTER TABLE care_pathways ADD COLUMN draft_tree_json TEXT")
     if "draft_updated_at" not in columns:
@@ -285,8 +286,7 @@ def ensure_guideline_prompt_column() -> None:
     """Add guideline_prompt_profile_json to diseases if missing (existing deployments)."""
     conn = get_connection()
     cur = conn.cursor()
-    cur.execute("PRAGMA table_info(diseases)")
-    columns = {row["name"] for row in cur.fetchall()}
+    columns = table_columns(conn, "diseases")
     column_added = False
     if "guideline_prompt_profile_json" not in columns:
         cur.execute(
@@ -316,7 +316,7 @@ def sync_guideline_prompts_from_seed() -> None:
         if normalized == empty_guideline_prompt_profile():
             continue
         cur.execute(
-            "SELECT guideline_prompt_profile_json FROM diseases WHERE slug = ?",
+            "SELECT guideline_prompt_profile_json FROM diseases WHERE slug = %s",
             (slug,),
         )
         row = cur.fetchone()
@@ -328,7 +328,7 @@ def sync_guideline_prompts_from_seed() -> None:
         if existing != empty_guideline_prompt_profile():
             continue
         cur.execute(
-            "UPDATE diseases SET guideline_prompt_profile_json = ? WHERE slug = ?",
+            "UPDATE diseases SET guideline_prompt_profile_json = %s WHERE slug = %s",
             (json.dumps(normalized, ensure_ascii=False), slug),
         )
     conn.commit()
@@ -360,7 +360,7 @@ def seed_content_if_empty() -> None:
                 types_json, related_json, prevalence_text, status, status_by,
                 status_date, ai_draft_date, open_prs, doctors_count, trials_count,
                 coverage, accent, guideline_prompt_profile_json
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """,
             (
                 disease["slug"],
@@ -396,7 +396,7 @@ def seed_content_if_empty() -> None:
             """
             INSERT INTO guideline_documents (
                 disease_slug, version, locale, section_count, last_reviewed
-            ) VALUES (?, ?, ?, ?, ?)
+            ) VALUES (%s, %s, %s, %s, %s)
             """,
             (
                 doc["diseaseSlug"],
@@ -413,7 +413,7 @@ def seed_content_if_empty() -> None:
         """
         INSERT INTO catalog_stats (
             id, disease_count, doctor_count, recruiting_trial_count, open_pr_count
-        ) VALUES (1, ?, ?, ?, ?)
+        ) VALUES (1, %s, %s, %s, %s)
         """,
         (
             stats.get("diseaseCount", 0),
@@ -446,11 +446,10 @@ def _insert_content_prs_from_seed(cur: Any, prs: list[dict[str, Any]]) -> None:
             continue
         cur.execute(
             """
-            INSERT OR IGNORE INTO content_prs (
+            INSERT INTO content_prs (
                 id, disease_slug, title, opened, status, author, reviewer,
                 summary, citations_count, diff_json, papers_json
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """,
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) ON CONFLICT DO NOTHING""",
             (
                 pr_id,
                 slug,
@@ -534,12 +533,12 @@ def list_content_prs(
     clauses: list[str] = []
     params: list[Any] = []
     if status is not None and status in PR_STATUSES:
-        clauses.append("status = ?")
+        clauses.append("status = %s")
         params.append(status)
     if disease_slug is not None:
         normalized = normalize_disease_slug(disease_slug)
         if normalized is not None:
-            clauses.append("disease_slug = ?")
+            clauses.append("disease_slug = %s")
             params.append(normalized)
     where = f"WHERE {' AND '.join(clauses)}" if clauses else ""
     cur.execute(
@@ -562,7 +561,7 @@ def get_content_pr_by_id(pr_id: str) -> dict[str, Any] | None:
         return None
     conn = get_connection()
     cur = conn.cursor()
-    cur.execute("SELECT * FROM content_prs WHERE id = ?", (normalized,))
+    cur.execute("SELECT * FROM content_prs WHERE id = %s", (normalized,))
     row = cur.fetchone()
     conn.close()
     if row is None:
@@ -597,7 +596,7 @@ def publish_content_pr(
     conn = get_connection()
     cur = conn.cursor()
     cur.execute(
-        "SELECT disease_slug, reviewer, status FROM content_prs WHERE id = ?",
+        "SELECT disease_slug, reviewer, status FROM content_prs WHERE id = %s",
         (normalized,),
     )
     pr_row = cur.fetchone()
@@ -609,7 +608,7 @@ def publish_content_pr(
     disease_slug = pr_row["disease_slug"]
 
     cur.execute(
-        "SELECT sections_json FROM guideline_documents WHERE disease_slug = ?",
+        "SELECT sections_json FROM guideline_documents WHERE disease_slug = %s",
         (disease_slug,),
     )
     doc_row = cur.fetchone()
@@ -634,21 +633,21 @@ def publish_content_pr(
     cur.execute(
         """
         UPDATE guideline_documents
-        SET sections_json = ?, last_reviewed = ?
-        WHERE disease_slug = ?
+        SET sections_json = %s, last_reviewed = %s
+        WHERE disease_slug = %s
         """,
         (json.dumps(updated_doc, ensure_ascii=False), _today_iso_for_pr(), disease_slug),
     )
     cur.execute(
         """
         UPDATE content_prs
-        SET status = 'verified', reviewer = ?
-        WHERE id = ?
+        SET status = 'verified', reviewer = %s
+        WHERE id = %s
         """,
         (reviewer_value, normalized),
     )
     conn.commit()
-    cur.execute("SELECT * FROM content_prs WHERE id = ?", (normalized,))
+    cur.execute("SELECT * FROM content_prs WHERE id = %s", (normalized,))
     updated = cur.fetchone()
     conn.close()
     if updated is None:
@@ -679,7 +678,7 @@ def review_content_pr(
     if action == "reject":
         conn = get_connection()
         cur = conn.cursor()
-        cur.execute("SELECT reviewer FROM content_prs WHERE id = ?", (normalized,))
+        cur.execute("SELECT reviewer FROM content_prs WHERE id = %s", (normalized,))
         row = cur.fetchone()
         if row is None:
             conn.close()
@@ -688,13 +687,13 @@ def review_content_pr(
         cur.execute(
             """
             UPDATE content_prs
-            SET status = 'rejected', reviewer = ?
-            WHERE id = ?
+            SET status = 'rejected', reviewer = %s
+            WHERE id = %s
             """,
             (reviewer_value, normalized),
         )
         conn.commit()
-        cur.execute("SELECT * FROM content_prs WHERE id = ?", (normalized,))
+        cur.execute("SELECT * FROM content_prs WHERE id = %s", (normalized,))
         updated = cur.fetchone()
         conn.close()
         if updated is None:
@@ -704,7 +703,7 @@ def review_content_pr(
     if action in ("request_changes", "request-changes"):
         conn = get_connection()
         cur = conn.cursor()
-        cur.execute("SELECT reviewer FROM content_prs WHERE id = ?", (normalized,))
+        cur.execute("SELECT reviewer FROM content_prs WHERE id = %s", (normalized,))
         row = cur.fetchone()
         if row is None:
             conn.close()
@@ -713,13 +712,13 @@ def review_content_pr(
         cur.execute(
             """
             UPDATE content_prs
-            SET status = 'under-review', reviewer = ?
-            WHERE id = ?
+            SET status = 'under-review', reviewer = %s
+            WHERE id = %s
             """,
             (reviewer_value, normalized),
         )
         conn.commit()
-        cur.execute("SELECT * FROM content_prs WHERE id = ?", (normalized,))
+        cur.execute("SELECT * FROM content_prs WHERE id = %s", (normalized,))
         updated = cur.fetchone()
         conn.close()
         if updated is None:
@@ -767,17 +766,17 @@ def update_disease_guideline_prompt_profile(slug: str, profile: dict[str, Any]) 
         return None
     conn = get_connection()
     cur = conn.cursor()
-    cur.execute("SELECT 1 FROM diseases WHERE slug = ?", (normalized,))
+    cur.execute("SELECT 1 FROM diseases WHERE slug = %s", (normalized,))
     if cur.fetchone() is None:
         conn.close()
         return None
     payload = normalize_guideline_prompt_profile(profile)
     cur.execute(
-        "UPDATE diseases SET guideline_prompt_profile_json = ? WHERE slug = ?",
+        "UPDATE diseases SET guideline_prompt_profile_json = %s WHERE slug = %s",
         (json.dumps(payload, ensure_ascii=False), normalized),
     )
     conn.commit()
-    cur.execute("SELECT * FROM diseases WHERE slug = ?", (normalized,))
+    cur.execute("SELECT * FROM diseases WHERE slug = %s", (normalized,))
     row = cur.fetchone()
     conn.close()
     if row is None:
@@ -805,7 +804,7 @@ def list_diseases_catalog() -> list[dict[str, Any]]:
         """
         SELECT slug, name, name_short, gene, summary, coverage, accent
         FROM diseases
-        ORDER BY name COLLATE NOCASE
+        ORDER BY lower(name)
         """
     )
     rows = cur.fetchall()
@@ -816,7 +815,7 @@ def list_diseases_catalog() -> list[dict[str, Any]]:
 def list_diseases() -> list[dict[str, Any]]:
     conn = get_connection()
     cur = conn.cursor()
-    cur.execute("SELECT * FROM diseases ORDER BY name COLLATE NOCASE")
+    cur.execute("SELECT * FROM diseases ORDER BY lower(name)")
     rows = cur.fetchall()
     conn.close()
     return [_row_to_disease(r, include_prompt_profile=False) for r in rows]
@@ -864,7 +863,7 @@ def get_disease_by_slug(
         return None
     conn = get_connection()
     cur = conn.cursor()
-    cur.execute("SELECT * FROM diseases WHERE slug = ?", (normalized,))
+    cur.execute("SELECT * FROM diseases WHERE slug = %s", (normalized,))
     row = cur.fetchone()
     conn.close()
     if row is None:
@@ -872,29 +871,89 @@ def get_disease_by_slug(
     return _row_to_disease(row, include_prompt_profile=include_prompt_profile)
 
 
-def get_catalog_stats() -> dict[str, int]:
+# Trial statuses counted as "active recruiting" on the public home view.
+_CATALOG_ACTIVE_TRIAL_STATUSES = ("recruiting", "active_not_recruiting")
+# Guideline PR statuses still awaiting review.
+_CATALOG_OPEN_PR_STATUSES = ("pending", "under-review")
+
+
+def compute_live_catalog_stats(*, doctor_count: int = 0) -> dict[str, int]:
+    """Aggregate counters from live catalog tables (not the seed snapshot row)."""
     conn = get_connection()
     cur = conn.cursor()
-    cur.execute("SELECT * FROM catalog_stats WHERE id = 1")
-    row = cur.fetchone()
-    if row is None:
+    try:
         cur.execute("SELECT COUNT(*) AS n FROM diseases")
         disease_count = int(cur.fetchone()["n"])
+
+        recruiting_trial_count = 0
+        if table_exists(conn, "trials"):
+            cur.execute(
+                "SELECT COUNT(*) AS n FROM trials WHERE status = ANY(%s)",
+                (list(_CATALOG_ACTIVE_TRIAL_STATUSES),),
+            )
+            recruiting_trial_count = int(cur.fetchone()["n"])
+
+        open_pr_count = 0
+        if table_exists(conn, "content_prs"):
+            cur.execute(
+                "SELECT COUNT(*) AS n FROM content_prs WHERE status = ANY(%s)",
+                (list(_CATALOG_OPEN_PR_STATUSES),),
+            )
+            open_pr_count = int(cur.fetchone()["n"])
+    finally:
         conn.close()
-        return {
-            "diseaseCount": disease_count,
-            "doctorCount": 0,
-            "recruitingTrialCount": 0,
-            "openPrCount": 0,
-        }
-    conn.close()
+
     return {
-        "diseaseCount": row["disease_count"],
-        "doctorCount": row["doctor_count"],
-        "recruitingTrialCount": row["recruiting_trial_count"],
-        "openPrCount": row["open_pr_count"],
+        "diseaseCount": disease_count,
+        "doctorCount": max(0, int(doctor_count)),
+        "recruitingTrialCount": recruiting_trial_count,
+        "openPrCount": open_pr_count,
     }
 
+
+def get_catalog_stats() -> dict[str, int]:
+    """Return live catalog counters for the public home page."""
+    return compute_live_catalog_stats()
+
+
+
+def upsert_guideline_document(
+    *,
+    disease_slug: str,
+    document: dict[str, Any],
+    version: str,
+    section_count: int,
+    last_reviewed: str | None,
+) -> None:
+    """Insert or replace one row in ``guideline_documents``.
+
+    Used by the post-run publish bridge to land a fresh AI-draft document
+    after a successful PubMed pipeline run, and by future publish flows.
+    ``document`` is the dict that round-trips through
+    :class:`backend.content_models.GuidelineDocumentResponse` — callers are
+    expected to have validated it already.
+    """
+    normalized = normalize_disease_slug(disease_slug)
+    if normalized is None:
+        raise ValueError(f"invalid disease_slug: {disease_slug!r}")
+    payload = json.dumps(document, ensure_ascii=False)
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute(
+        """
+        INSERT INTO guideline_documents (
+            disease_slug, version, locale, section_count, last_reviewed, sections_json
+        ) VALUES (%s, %s, 'en', %s, %s, %s)
+        ON CONFLICT (disease_slug) DO UPDATE SET
+            version = excluded.version,
+            section_count = excluded.section_count,
+            last_reviewed = excluded.last_reviewed,
+            sections_json = excluded.sections_json
+        """,
+        (normalized, version, int(section_count), last_reviewed, payload),
+    )
+    conn.commit()
+    conn.close()
 
 def sync_guideline_document_bodies_from_file() -> None:
     """Backfill full guideline JSON bodies when sections_json is still empty."""
@@ -909,7 +968,7 @@ def sync_guideline_document_bodies_from_file() -> None:
         if normalized is None or not isinstance(document, dict):
             continue
         cur.execute(
-            "SELECT sections_json FROM guideline_documents WHERE disease_slug = ?",
+            "SELECT sections_json FROM guideline_documents WHERE disease_slug = %s",
             (normalized,),
         )
         row = cur.fetchone()
@@ -921,8 +980,8 @@ def sync_guideline_document_bodies_from_file() -> None:
         cur.execute(
             """
             UPDATE guideline_documents
-            SET sections_json = ?
-            WHERE disease_slug = ?
+            SET sections_json = %s
+            WHERE disease_slug = %s
             """,
             (json.dumps(document, ensure_ascii=False), normalized),
         )
@@ -938,7 +997,7 @@ def get_guideline_document(disease_slug: str) -> dict[str, Any] | None:
     conn = get_connection()
     cur = conn.cursor()
     cur.execute(
-        "SELECT sections_json FROM guideline_documents WHERE disease_slug = ?",
+        "SELECT sections_json FROM guideline_documents WHERE disease_slug = %s",
         (normalized,),
     )
     row = cur.fetchone()
@@ -951,7 +1010,7 @@ def get_guideline_document(disease_slug: str) -> dict[str, Any] | None:
         conn = get_connection()
         cur = conn.cursor()
         cur.execute(
-            "SELECT sections_json FROM guideline_documents WHERE disease_slug = ?",
+            "SELECT sections_json FROM guideline_documents WHERE disease_slug = %s",
             (normalized,),
         )
         row = cur.fetchone()
@@ -974,7 +1033,7 @@ def get_guideline_meta(disease_slug: str) -> dict[str, Any] | None:
         """
         SELECT disease_slug, version, locale, section_count, last_reviewed
         FROM guideline_documents
-        WHERE disease_slug = ?
+        WHERE disease_slug = %s
         """,
         (normalized,),
     )
@@ -1006,10 +1065,10 @@ def seed_care_pathways_from_file() -> None:
         normalized = normalize_disease_slug(str(slug))
         if normalized is None or not isinstance(tree, dict):
             continue
-        cur.execute("SELECT 1 FROM care_pathways WHERE disease_slug = ?", (normalized,))
+        cur.execute("SELECT 1 FROM care_pathways WHERE disease_slug = %s", (normalized,))
         if cur.fetchone() is not None:
             continue
-        cur.execute("SELECT 1 FROM diseases WHERE slug = ?", (normalized,))
+        cur.execute("SELECT 1 FROM diseases WHERE slug = %s", (normalized,))
         if cur.fetchone() is None:
             continue
         meta = get_guideline_meta(normalized)
@@ -1018,7 +1077,7 @@ def seed_care_pathways_from_file() -> None:
             INSERT INTO care_pathways (
                 disease_slug, locale, version, based_on, generated_at,
                 source_guideline_version, source_execution_id, tree_json
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             """,
             (
                 normalized,
@@ -1038,12 +1097,11 @@ def seed_care_pathways_from_file() -> None:
 def seed_trials_from_file() -> None:
     """Load content_trials_seed.json on a fresh DB (or top up missing rows).
 
-    Idempotent: ``INSERT OR IGNORE`` for the ``trials`` table and the
+    Idempotent: ``INSERT`` for the ``trials`` table and the
     ``disease_trials`` junction makes it safe to call on every startup.
     Trials whose ``diseases`` list references a slug we have not seeded
     are still inserted into ``trials`` (so /api/trials returns them),
-    just without a junction row.
-    """
+    just without a junction row. ON CONFLICT DO NOTHING"""
     path = Path(TRIALS_SEED_PATH)
     if not path.exists():
         return
@@ -1068,13 +1126,12 @@ def seed_trials_from_file() -> None:
             continue
         cur.execute(
             """
-            INSERT OR IGNORE INTO trials (
+            INSERT INTO trials (
                 nct, title, phase, status, sponsor, city, country,
                 lat, lng, age_range, principal_investigator,
                 eligibility_summary, enrollment_target, enrolled,
                 contact, last_seen
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """,
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) ON CONFLICT DO NOTHING""",
             (
                 nct,
                 str(trial.get("title") or ""),
@@ -1099,7 +1156,7 @@ def seed_trials_from_file() -> None:
             if not slug_str or slug_str not in known_slugs:
                 continue
             cur.execute(
-                "INSERT OR IGNORE INTO disease_trials (disease_slug, nct) VALUES (?, ?)",
+                "INSERT INTO disease_trials (disease_slug, nct) VALUES (%s, %s) ON CONFLICT DO NOTHING",
                 (slug_str, nct),
             )
     conn.commit()
@@ -1147,7 +1204,7 @@ def seed_therapies_from_file() -> None:
                 continue
             note = str(therapy.get("note") or "")
             cur.execute(
-                "SELECT id FROM therapies WHERE disease_slug = ? AND name = ?",
+                "SELECT id FROM therapies WHERE disease_slug = %s AND name = %s",
                 (slug, name),
             )
             existing = cur.fetchone()
@@ -1158,8 +1215,8 @@ def seed_therapies_from_file() -> None:
                 cur.execute(
                     """
                     UPDATE therapies
-                    SET status = ?, note = ?, sort_order = ?
-                    WHERE id = ?
+                    SET status = %s, note = %s, sort_order = %s
+                    WHERE id = %s
                     """,
                     (status, note, index, int(existing["id"])),
                 )
@@ -1167,7 +1224,7 @@ def seed_therapies_from_file() -> None:
             cur.execute(
                 """
                 INSERT INTO therapies (disease_slug, name, status, note, sort_order)
-                VALUES (?, ?, ?, ?, ?)
+                VALUES (%s, %s, %s, %s, %s)
                 """,
                 (slug, name, status, note, index),
             )
@@ -1179,8 +1236,7 @@ def seed_foundations_from_file() -> None:
     """Seed foundations + disease_foundations from content_foundations_seed.json.
 
     Idempotent: foundations have a UNIQUE constraint on ``name`` so the
-    upsert is ``INSERT OR IGNORE``; junction rows use the same approach.
-    """
+    upsert is ``INSERT``; junction rows use the same approach. ON CONFLICT DO NOTHING"""
     path = Path(FOUNDATIONS_SEED_PATH)
     if not path.exists():
         return
@@ -1205,10 +1261,9 @@ def seed_foundations_from_file() -> None:
             continue
         cur.execute(
             """
-            INSERT OR IGNORE INTO foundations (
+            INSERT INTO foundations (
                 name, scope, url, city, country, services_json
-            ) VALUES (?, ?, ?, ?, ?, ?)
-            """,
+            ) VALUES (%s, %s, %s, %s, %s, %s) ON CONFLICT DO NOTHING""",
             (
                 name,
                 str(item.get("scope") or ""),
@@ -1218,7 +1273,7 @@ def seed_foundations_from_file() -> None:
                 json.dumps(item.get("services") or [], ensure_ascii=False),
             ),
         )
-        cur.execute("SELECT id FROM foundations WHERE name = ?", (name,))
+        cur.execute("SELECT id FROM foundations WHERE name = %s", (name,))
         row = cur.fetchone()
         if row is None:
             continue
@@ -1228,7 +1283,7 @@ def seed_foundations_from_file() -> None:
             if not slug_str or slug_str not in known_slugs:
                 continue
             cur.execute(
-                "INSERT OR IGNORE INTO disease_foundations (disease_slug, foundation_id) VALUES (?, ?)",
+                "INSERT INTO disease_foundations (disease_slug, foundation_id) VALUES (%s, %s) ON CONFLICT DO NOTHING",
                 (slug_str, foundation_id),
             )
     conn.commit()
@@ -1265,7 +1320,7 @@ def seed_official_guidelines_from_file() -> None:
         if not slug or slug not in known_slugs or not isinstance(entry, dict):
             continue
         cur.execute(
-            "SELECT 1 FROM official_guideline_pointers WHERE disease_slug = ?",
+            "SELECT 1 FROM official_guideline_pointers WHERE disease_slug = %s",
             (slug,),
         )
         if cur.fetchone() is not None:
@@ -1275,7 +1330,7 @@ def seed_official_guidelines_from_file() -> None:
             INSERT INTO official_guideline_pointers (
                 disease_slug, title, authors, year, journal, pmid, url,
                 summary, confirmed_by, confirmed_at, source
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """,
             (
                 slug,
@@ -1325,7 +1380,7 @@ def _fetch_pathway_row(cur: Any, normalized: str) -> Any | None:
                source_guideline_version, source_execution_id, tree_json,
                draft_tree_json, draft_updated_at
         FROM care_pathways
-        WHERE disease_slug = ?
+        WHERE disease_slug = %s
         """,
         (normalized,),
     )
@@ -1396,12 +1451,12 @@ def save_parent_pathway(
         raise ValueError("Invalid disease slug.")
     conn = get_connection()
     cur = conn.cursor()
-    cur.execute("SELECT 1 FROM diseases WHERE slug = ?", (normalized,))
+    cur.execute("SELECT 1 FROM diseases WHERE slug = %s", (normalized,))
     if cur.fetchone() is None:
         conn.close()
         raise ValueError(f"Disease '{normalized}' not found in catalog.")
     draft_updated_at = date.today().isoformat()
-    cur.execute("SELECT tree_json FROM care_pathways WHERE disease_slug = ?", (normalized,))
+    cur.execute("SELECT tree_json FROM care_pathways WHERE disease_slug = %s", (normalized,))
     existing = cur.fetchone()
     placeholder_tree = json.dumps({"id": "root", "title": "Pending", "children": []})
     if existing is None:
@@ -1411,7 +1466,7 @@ def save_parent_pathway(
                 disease_slug, locale, version, based_on, generated_at,
                 source_guideline_version, source_execution_id, tree_json,
                 draft_tree_json, draft_updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """,
             (
                 normalized,
@@ -1430,14 +1485,14 @@ def save_parent_pathway(
         cur.execute(
             """
             UPDATE care_pathways SET
-                locale = ?,
-                version = ?,
-                based_on = ?,
-                source_guideline_version = ?,
-                source_execution_id = ?,
-                draft_tree_json = ?,
-                draft_updated_at = ?
-            WHERE disease_slug = ?
+                locale = %s,
+                version = %s,
+                based_on = %s,
+                source_guideline_version = %s,
+                source_execution_id = %s,
+                draft_tree_json = %s,
+                draft_updated_at = %s
+            WHERE disease_slug = %s
             """,
             (
                 locale,
@@ -1474,8 +1529,8 @@ def publish_parent_pathway(disease_slug: str) -> dict[str, Any]:
         """
         UPDATE care_pathways SET
             tree_json = draft_tree_json,
-            generated_at = ?
-        WHERE disease_slug = ?
+            generated_at = %s
+        WHERE disease_slug = %s
         """,
         (published_at, normalized),
     )

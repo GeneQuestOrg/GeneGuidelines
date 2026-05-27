@@ -4,6 +4,7 @@ LLM Call (Simple): one model call, no MCP, structured output (Pydantic), retry u
 from __future__ import annotations
 
 import asyncio
+import time
 from contextvars import ContextVar
 from queue import Queue
 from typing import Any, Type
@@ -161,6 +162,18 @@ def reset_simple_llm_parallel_semaphore_for_tests() -> None:
     _simple_llm_parallel_semaphore = None
 
 
+def _log_llm_from_store(store: dict, event: str, node_id: str, **fields: Any) -> None:
+    execution_id = str(store.get("execution_id") or "").strip()
+    if not execution_id:
+        return
+    from ..observability.run_log import log_llm_call
+
+    flow_key = store.get("flow_key")
+    if flow_key:
+        fields.setdefault("flow_key", flow_key)
+    log_llm_call(event, execution_id=execution_id, node_id=node_id, **fields)
+
+
 def is_tpm_request_too_large_error(exc: BaseException) -> bool:
     """True when a single request exceeds the org TPM/token burst limit (OpenAI 429)."""
     msg = f"{type(exc).__name__}: {exc}".lower()
@@ -237,13 +250,45 @@ async def run_llm_simple_async(
         try:
             # Cap the call to avoid infinite hangs on OpenAI / library loops.
             _LLM_CALL_TIMEOUT_SEC = SIMPLE_LLM_CALL_TIMEOUT_SEC
+            _log_llm_from_store(
+                store,
+                "llm_call_start",
+                node_id,
+                attempt=attempt,
+                max_attempts=tries,
+                model_spec=active_spec,
+                timeout_sec=_LLM_CALL_TIMEOUT_SEC,
+                system_chars=len(sys_clean),
+                user_chars=len(full_user),
+                max_tokens=max_tokens,
+                prompt_mode="simple",
+            )
             try:
                 async with _get_simple_llm_parallel_semaphore():
+                    _log_llm_from_store(
+                        store,
+                        "llm_call_running",
+                        node_id,
+                        attempt=attempt,
+                        model_spec=active_spec,
+                    )
+                    t0 = time.monotonic()
                     res = await asyncio.wait_for(
                         agent.run(full_user),
                         timeout=_LLM_CALL_TIMEOUT_SEC,
                     )
+                    duration_ms = int((time.monotonic() - t0) * 1000)
             except asyncio.TimeoutError:
+                duration_ms = int((time.monotonic() - t0) * 1000) if "t0" in locals() else None
+                _log_llm_from_store(
+                    store,
+                    "llm_call_timeout",
+                    node_id,
+                    attempt=attempt,
+                    model_spec=active_spec,
+                    timeout_sec=_LLM_CALL_TIMEOUT_SEC,
+                    duration_ms=duration_ms,
+                )
                 last_err = f"TimeoutError: agent.run exceeded {_LLM_CALL_TIMEOUT_SEC:.0f}s (check network / OpenAI / proxy)"
                 emit_fn(
                     event_queue,
@@ -270,17 +315,36 @@ async def run_llm_simple_async(
                     await asyncio.sleep(delay)
                     extra = ""
                     continue
+                break
             out = getattr(res, "output", None)
             if out is None:
                 out = getattr(res, "data", None)
             if isinstance(out, BaseModel):
                 data = out.model_dump()
+                _log_llm_from_store(
+                    store,
+                    "llm_call_done",
+                    node_id,
+                    attempt=attempt,
+                    model_spec=active_spec,
+                    duration_ms=duration_ms,
+                    ok=True,
+                )
                 emit_fn(
                     event_queue,
                     {"kind": sse_kind, "node_id": node_id, "attempt": attempt, "ok": True},
                 )
                 return data
             if isinstance(out, dict):
+                _log_llm_from_store(
+                    store,
+                    "llm_call_done",
+                    node_id,
+                    attempt=attempt,
+                    model_spec=active_spec,
+                    duration_ms=duration_ms,
+                    ok=True,
+                )
                 emit_fn(
                     event_queue,
                     {"kind": sse_kind, "node_id": node_id, "attempt": attempt, "ok": True},
@@ -288,7 +352,17 @@ async def run_llm_simple_async(
                 return out
             last_err = "Empty or invalid structured output"
         except Exception as e:
+            duration_ms = int((time.monotonic() - t0) * 1000) if "t0" in locals() else None
             last_err = f"{type(e).__name__}: {e}"
+            _log_llm_from_store(
+                store,
+                "llm_call_error",
+                node_id,
+                attempt=attempt,
+                model_spec=active_spec,
+                duration_ms=duration_ms,
+                error=str(last_err)[:300],
+            )
             emit_fn(
                 event_queue,
                 {

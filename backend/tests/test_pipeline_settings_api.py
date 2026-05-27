@@ -27,8 +27,14 @@ def test_get_pipeline_settings(client: TestClient) -> None:
     assert resp.status_code == 200
     body = resp.json()
     assert body["defaultModelProfile"] in ("production", "test", "openrouter", "vllm")
-    assert len(body["modelProfiles"]) >= 1
-    profile = body["modelProfiles"][0]
+    profiles = body["modelProfiles"]
+    if body.get("singleLlmMode"):
+        assert len(profiles) == 1
+        profile = profiles[0]
+        assert profile["id"] == "vllm"
+    else:
+        assert len(profiles) >= 4
+        profile = next(p for p in profiles if p["id"] == "production")
     assert profile["simpleModel"]
     assert profile["agenticModel"]
     assert "ready" in profile

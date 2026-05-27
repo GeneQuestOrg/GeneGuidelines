@@ -7,12 +7,16 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 import os
 import threading
 import time
 from datetime import UTC, datetime
 from queue import Empty, Queue
+from typing import Any
 from uuid import uuid4
+
+log = logging.getLogger(__name__)
 
 from ..config import (
     AGENT_RUN_TIMEOUT_SEC,
@@ -77,6 +81,84 @@ def _emit(event_queue: Queue, payload: dict) -> None:
         event_queue.put(payload)
 
 
+def _post_run_publish_guideline_document(execution_id: str, store: dict[str, Any]) -> None:
+    """Land a successful PubMed run as a public guideline_documents row.
+
+    No-op for non-pubmed flows, runs without a disease_slug, or runs that
+    errored out. Failures (mapper rejection, DB error) are logged and
+    swallowed — the guideline_run_results write must remain authoritative.
+    """
+    if str(store.get("flow_key") or "") != "pubmed":
+        return
+    if store.get("error"):
+        return
+    disease_slug = str(store.get("disease_slug") or "").strip().lower()
+    if not disease_slug:
+        return
+    raw_output = store.get("output")
+    if not raw_output:
+        return
+
+    try:
+        output_json = (
+            raw_output
+            if isinstance(raw_output, dict)
+            else json.loads(str(raw_output))
+        )
+    except (TypeError, ValueError) as exc:
+        log.warning(
+            "publish-guideline: cannot parse pubmed output for %s (slug=%s): %s",
+            execution_id, disease_slug, exc,
+        )
+        return
+    if not isinstance(output_json, dict):
+        return
+
+    from ..content.guideline_publishing import (
+        GuidelinePublishError,
+        build_ai_draft_document_payload,
+    )
+    from ..content_db import upsert_guideline_document
+
+    disease_name = (
+        str(store.get("label") or "").strip()
+        or str(output_json.get("disease_name") or "").strip()
+        or disease_slug
+    )
+
+    try:
+        document = build_ai_draft_document_payload(
+            disease_slug=disease_slug,
+            disease_name=disease_name,
+            output_json=output_json,
+            execution_id=execution_id,
+        )
+    except GuidelinePublishError as exc:
+        log.warning(
+            "publish-guideline: skipped %s (slug=%s): %s",
+            execution_id, disease_slug, exc,
+        )
+        return
+
+    try:
+        upsert_guideline_document(
+            disease_slug=disease_slug,
+            document=document,
+            version=document["version"],
+            section_count=len(document.get("sections") or []),
+            last_reviewed=document.get("lastUpdated"),
+        )
+        log.info(
+            "publish-guideline: stored ai-draft for %s (slug=%s, sections=%d)",
+            execution_id, disease_slug, len(document.get("sections") or []),
+        )
+    except Exception:  # noqa: BLE001 — never let publish failure swallow the run
+        log.exception(
+            "publish-guideline: upsert failed for %s (slug=%s)",
+            execution_id, disease_slug,
+        )
+
+
 async def execute_agent_async(
     execution_id: str,
     ticket_id: int,
@@ -112,6 +194,10 @@ async def execute_agent_async(
         await loop.run_in_executor(
             None,
             lambda: save_guideline_run_result(execution_id, store),
+        )
+        await loop.run_in_executor(
+            None,
+            lambda: _post_run_publish_guideline_document(execution_id, store),
         )
 
 
@@ -307,6 +393,7 @@ def _run_list_item(execution_id: str, run: dict) -> dict:
         "done": bool(run.get("done")),
         "error": run.get("error"),
         "started_at": run.get("started_at"),
+        "current_stage": str(run.get("current_stage") or run.get("last_stage") or "").strip() or None,
     }
 
 
@@ -377,6 +464,35 @@ async def start_agent_run(
     with _AGENT_STORAGE_LOCK:
         TRACE_QUEUES[execution_id] = event_queue
         AGENT_RUNS[execution_id] = run_record
+    if flow_key in ("pubmed", "parent_pathway"):
+        try:
+            from ..guideline_run_store import upsert_guideline_run_started
+            from ..observability.run_log import log_run_event
+        except ImportError:
+            from guideline_run_store import upsert_guideline_run_started
+            from observability.run_log import log_run_event
+
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(
+            None,
+            lambda: upsert_guideline_run_started(
+                execution_id,
+                pipeline=str(run_record["pipeline"]),
+                flow_key=flow_key,
+                ticket_id=ticket_id,
+                label=str(run_record.get("label") or ""),
+                disease_slug=run_record.get("disease_slug"),
+                started_at=started_at,
+            ),
+        )
+        log_run_event(
+            "run_started",
+            execution_id=execution_id,
+            pipeline=run_record["pipeline"],
+            flow_key=flow_key,
+            ticket_id=ticket_id,
+            disease_slug=run_record.get("disease_slug"),
+        )
     models = MODEL_PROFILES[profile_norm]
     event_queue.put(
         {

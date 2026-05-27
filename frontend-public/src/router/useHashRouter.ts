@@ -1,9 +1,17 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { parseHash } from "./parseHash";
 import type { Route } from "./types";
 
 function readHash(): string {
   return window.location.hash || "#/";
+}
+
+/** Rewrite legacy ``#/add-disease`` bookmarks to ``#/start-research``. */
+function canonicalizeHash(raw: string): string {
+  if (raw === "#/add-disease" || raw.startsWith("#/add-disease?")) {
+    return raw.replace("#/add-disease", "#/start-research");
+  }
+  return raw;
 }
 
 export interface HashRouter {
@@ -14,16 +22,25 @@ export interface HashRouter {
 }
 
 export function useHashRouter(): HashRouter {
-  const [hash, setHash] = useState(readHash);
+  const [hash, setHash] = useState(() => canonicalizeHash(readHash()));
   const route = parseHash(hash);
+  const hashRef = useRef(hash);
 
   useEffect(() => {
-    const onHashChange = () => {
-      setHash(readHash());
-      window.scrollTo(0, 0);
+    const syncHash = () => {
+      const canonical = canonicalizeHash(readHash());
+      if (window.location.hash !== canonical) {
+        window.history.replaceState(null, "", canonical);
+      }
+      if (hashRef.current !== canonical) {
+        window.scrollTo(0, 0);
+      }
+      hashRef.current = canonical;
+      setHash(canonical);
     };
-    window.addEventListener("hashchange", onHashChange);
-    return () => window.removeEventListener("hashchange", onHashChange);
+    syncHash();
+    window.addEventListener("hashchange", syncHash);
+    return () => window.removeEventListener("hashchange", syncHash);
   }, []);
 
   const navigate = useCallback((path: string) => {

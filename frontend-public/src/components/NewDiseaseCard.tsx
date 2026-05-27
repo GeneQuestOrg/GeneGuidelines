@@ -9,11 +9,11 @@ export interface NewDiseaseCardProps {
 export function NewDiseaseCard({ copy, onNav }: NewDiseaseCardProps) {
   return (
     <a
-      href="#/add-disease"
+      href="#/start-research"
       className="new-disease-card"
       onClick={(e) => {
         e.preventDefault();
-        onNav("/add-disease");
+        onNav("/start-research");
       }}
     >
       <h3 className="new-disease-card__title">{copy.newDiseaseTitle}</h3>

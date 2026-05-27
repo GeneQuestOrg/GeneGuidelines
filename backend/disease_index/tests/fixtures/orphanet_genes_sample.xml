@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<JDBOR date="2025-12-09 07:06:32" version="1.3.42 / 4.1.8 [2025-03-03]" copyright="Orphanet (c) 2025">
+  <DisorderList count="2">
+    <Disorder id="17601">
+      <OrphaCode>558</OrphaCode>
+      <Name lang="en">Marfan syndrome</Name>
+      <DisorderGeneAssociationList count="1">
+        <DisorderGeneAssociation>
+          <Gene id="20160">
+            <Name lang="en">fibrillin 1</Name>
+            <Symbol>FBN1</Symbol>
+            <ExternalReferenceList count="1">
+              <ExternalReference id="1">
+                <Source>HGNC</Source>
+                <Reference>3603</Reference>
+              </ExternalReference>
+            </ExternalReferenceList>
+          </Gene>
+          <DisorderGeneAssociationType id="17949">
+            <Name lang="en">Disease-causing germline mutation(s) in</Name>
+          </DisorderGeneAssociationType>
+        </DisorderGeneAssociation>
+      </DisorderGeneAssociationList>
+    </Disorder>
+    <Disorder id="17602">
+      <OrphaCode>79318</OrphaCode>
+      <Name lang="en">PMM2-CDG</Name>
+      <DisorderGeneAssociationList count="1">
+        <DisorderGeneAssociation>
+          <Gene id="20161">
+            <Name lang="en">phosphomannomutase 2</Name>
+            <Symbol>PMM2</Symbol>
+          </Gene>
+          <DisorderGeneAssociationType id="17949">
+            <Name lang="en">Disease-causing germline mutation(s) in</Name>
+          </DisorderGeneAssociationType>
+        </DisorderGeneAssociation>
+      </DisorderGeneAssociationList>
+    </Disorder>
+  </DisorderList>
+</JDBOR>

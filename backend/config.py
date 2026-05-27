@@ -10,7 +10,9 @@ BACKEND_DIR = Path(__file__).resolve().parent
 # Database path. Defaults to backend/tickets.db; can be overridden via the
 # DB_PATH env var (used by docker-compose so the SQLite file can live on a
 # named volume outside /app).
+# When DB_URL is set (e.g. postgresql://...), Postgres is used instead of SQLite.
 DB_PATH = Path(os.environ.get("DB_PATH") or (BACKEND_DIR / "tickets.db"))
+DB_URL = (os.environ.get("DB_URL") or "").strip()
 SEED_DATA_PATH = BACKEND_DIR / "seed_data.json"
 
 load_dotenv(BACKEND_DIR.parent / ".env")
@@ -233,6 +235,19 @@ SIMPLE_LLM_PARALLEL_CONCURRENCY = max(
     1,
     int((os.environ.get("SIMPLE_LLM_PARALLEL_CONCURRENCY") or "").strip() or _SIMPLE_LLM_PARALLEL_DEFAULT),
 )
+# Service-layer finders (trials, therapies, …) share this cap so bootstrap fan-out
+# does not stampede the same vLLM / SiliconFlow endpoint.
+_FINDER_LLM_PARALLEL_DEFAULT = _SIMPLE_LLM_PARALLEL_DEFAULT
+FINDER_LLM_PARALLEL_CONCURRENCY = max(
+    1,
+    int(
+        (os.environ.get("FINDER_LLM_PARALLEL_CONCURRENCY") or "").strip()
+        or _FINDER_LLM_PARALLEL_DEFAULT
+    ),
+)
+FINDER_LLM_TIMEOUT_SEC = float(
+    (os.environ.get("FINDER_LLM_TIMEOUT_SEC") or "").strip() or 360.0
+)
 OPENAI_CLIENT_TIMEOUT_SEC = float((os.environ.get("OPENAI_CLIENT_TIMEOUT_SEC") or "").strip() or 2700.0)
 QUALITY_FIRST_HARD_MODE = (os.environ.get("QUALITY_FIRST_HARD_MODE") or "1").strip().lower() in (
     "1",
@@ -326,10 +341,43 @@ PUBMED_PM1_DETERMINISTIC_RETRIEVAL = (
 OPENAI_TPM_REQUEST_TOKEN_BUDGET = int(
     (os.environ.get("OPENAI_TPM_REQUEST_TOKEN_BUDGET") or "").strip() or 380_000
 )
+# Model-context cap for the assembled LLM prompt (separate from OpenAI TPM rate limit above).
+# Effective articles_text budget is min(OPENAI_TPM_REQUEST_TOKEN_BUDGET, LLM_PROMPT_TOKEN_CAP).
+# Default 200_000 leaves ~60K headroom inside Gemma 4's 262_144 context for prompt template,
+# system instructions, and output. Override with LLM_PROMPT_TOKEN_CAP env var if a model has
+# more headroom (e.g. 350_000 for GPT-5.5 long-context).
+LLM_PROMPT_TOKEN_CAP = int(
+    (os.environ.get("LLM_PROMPT_TOKEN_CAP") or "").strip() or 200_000
+)
+# Tighter prompt assembly budget when routing through self-hosted vLLM / SINGLE_LLM_MODE.
+LLM_PROMPT_TOKEN_CAP_VLLM = int(
+    (os.environ.get("LLM_PROMPT_TOKEN_CAP_VLLM") or "").strip() or 60_000
+)
+# Max articles injected into pm-3 / pass1 LLM prompts (full corpus stays in pm-2 store).
+PUBMED_PM3_TOP_K = max(
+    1,
+    int((os.environ.get("PUBMED_PM3_TOP_K") or "").strip() or 100),
+)
+PUBMED_PASS1_TOP_K = max(
+    1,
+    int((os.environ.get("PUBMED_PASS1_TOP_K") or "").strip() or 80),
+)
+# Shorter abstracts in LLM prompt views only (pm-2 store keeps PUBMED_ARTICLES_TEXT_ABSTRACT_MAX_CHARS).
+PUBMED_PROMPT_ABSTRACT_MAX_CHARS = max(
+    200,
+    int((os.environ.get("PUBMED_PROMPT_ABSTRACT_MAX_CHARS") or "").strip() or 800),
+)
 # Abstract chars per article line inside prompt ``articles_text`` (pm-2 code node may use more).
 PUBMED_ARTICLES_TEXT_ABSTRACT_MAX_CHARS = int(
     (os.environ.get("PUBMED_ARTICLES_TEXT_ABSTRACT_MAX_CHARS") or "").strip() or 3000
 )
+
+
+def effective_llm_prompt_token_cap() -> int:
+    """Model-context budget for assembled PubMed LLM prompts."""
+    if SINGLE_LLM_MODE or DEFAULT_MODEL_PROFILE == "vllm":
+        return min(LLM_PROMPT_TOKEN_CAP, LLM_PROMPT_TOKEN_CAP_VLLM)
+    return min(OPENAI_TPM_REQUEST_TOKEN_BUDGET, LLM_PROMPT_TOKEN_CAP)
 
 # Guidelines RAG — comma-separated anchor PMIDs override (env var)
 _GUIDELINES_RAG_PMIDS_RAW = (os.environ.get("GUIDELINES_RAG_ANCHOR_PMIDS") or "").strip()
