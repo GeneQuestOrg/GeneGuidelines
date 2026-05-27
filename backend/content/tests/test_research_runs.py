@@ -112,6 +112,30 @@ def test_skips_finished_runs(conn):
     assert [r.run_id for r in runs] == ["active"]
 
 
+def test_reaps_stale_finder_runs(conn):
+    _insert_guideline_run(
+        conn,
+        execution_id="stale-trials",
+        flow_key="trials_finder",
+        label="Trials — fd",
+        started_at="2020-01-01T00:00:00+00:00",
+    )
+    conn.execute(
+        "UPDATE guideline_run_results SET pipeline = 'trials_finder' WHERE execution_id = %s",
+        ("stale-trials",),
+    )
+    conn.commit()
+    _insert_guideline_run(conn, execution_id="live-guideline")
+    runs = research_runs.list_active_runs(conn=conn)
+    assert [r.run_id for r in runs] == ["live-guideline"]
+    row = conn.execute(
+        "SELECT done, error FROM guideline_run_results WHERE execution_id = %s",
+        ("stale-trials",),
+    ).fetchone()
+    assert row["done"] == 1
+    assert "stale" in str(row["error"])
+
+
 def test_combines_guideline_and_finder(conn):
     _insert_guideline_run(conn, execution_id="g1", started_at="2026-05-17T22:00:00+00:00")
     _insert_doctor_finder_run(conn, execution_id="d1", started_at="2026-05-17T22:10:00+00:00")

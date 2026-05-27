@@ -26,6 +26,7 @@ from datetime import datetime, timezone
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from ..config import FINDER_LLM_TIMEOUT_SEC
 from ._model_resolver import (
     resolve_gemma_or_fallback_spec,
     run_structured_with_ollama_fallback,
@@ -34,8 +35,9 @@ from ._model_resolver import (
 log = logging.getLogger(__name__)
 
 _PUBMED = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils"
-_GEMMA_TIMEOUT_SEC = 180.0
 _MAX_REVIEWS = 6
+_EXTRACT_BATCH_SIZE = 2
+_EXTRACT_MAX_RETRIES = 1
 
 
 class _Therapy(BaseModel):
@@ -127,10 +129,12 @@ def _pubmed_fetch_abstracts(pmids: list[str]) -> list[tuple[str, str]]:
     return out
 
 
-async def _extract_with_gemma(
-    disease_name: str, abstracts: list[tuple[str, str]]
-) -> tuple[_TherapyList, str]:
-    primary_spec = resolve_gemma_or_fallback_spec()
+async def _extract_batch_with_gemma(
+    disease_name: str,
+    abstracts: list[tuple[str, str]],
+    *,
+    primary_spec: str,
+) -> tuple[list[_Therapy], str, bool]:
     _ws_re = re.compile(r"\s+")
     bundle = "\n\n---\n\n".join(
         "[PMID " + pmid + "]\n" + _ws_re.sub(" ", body)[:2400]
@@ -141,14 +145,85 @@ async def _extract_with_gemma(
         f"PubMed reviews (excerpts):\n\n{bundle}\n\n"
         "Extract therapy lines per the rules. Up to 8."
     )
-    return await run_structured_with_ollama_fallback(
-        system_prompt=_EXTRACTION_SYSTEM_PROMPT,
-        user_prompt=user_prompt,
-        result_type=_TherapyList,
-        primary_spec=primary_spec,
-        max_tokens=2000,
-        timeout_sec=_GEMMA_TIMEOUT_SEC,
+    last_exc: Exception | None = None
+    for attempt in range(_EXTRACT_MAX_RETRIES + 1):
+        try:
+            result, model_spec = await run_structured_with_ollama_fallback(
+                system_prompt=_EXTRACTION_SYSTEM_PROMPT,
+                user_prompt=user_prompt,
+                result_type=_TherapyList,
+                primary_spec=primary_spec,
+                max_tokens=2000,
+                timeout_sec=FINDER_LLM_TIMEOUT_SEC,
+            )
+            return list(result.therapies), model_spec, False
+        except (asyncio.TimeoutError, TimeoutError) as exc:
+            last_exc = exc
+            if attempt < _EXTRACT_MAX_RETRIES:
+                log.warning(
+                    "therapies_finder: batch LLM timeout (attempt %d), retrying",
+                    attempt + 1,
+                )
+                continue
+        except Exception as exc:
+            last_exc = exc
+            break
+    log.warning(
+        "therapies_finder: batch LLM failed (%s), using PubMed title fallback for %d review(s)",
+        last_exc,
+        len(abstracts),
     )
+    return _fallback_therapies_from_abstracts(abstracts), primary_spec, True
+
+
+def _fallback_therapies_from_abstracts(
+    abstracts: list[tuple[str, str]],
+) -> list[_Therapy]:
+    """When Gemma times out, surface review-derived placeholders rather than an empty page."""
+    therapies: list[_Therapy] = []
+    seen: set[str] = set()
+    for pmid, body in abstracts:
+        title = body.split("\n\n", 1)[0].strip()
+        if len(title) < 8:
+            continue
+        key = title.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        abstract_tail = body.split("\n\n", 1)[-1].strip()
+        note = abstract_tail[:220].strip()
+        if not note:
+            note = f"Identified from PubMed review PMID {pmid}; pending structured extraction."
+        else:
+            note = f"{note} (PMID {pmid})"
+        therapies.append(
+            _Therapy(
+                name=title[:100],
+                status="pending",
+                note=note,
+                sort_order=100,
+            )
+        )
+    return therapies
+
+
+async def _extract_with_gemma(
+    disease_name: str, abstracts: list[tuple[str, str]]
+) -> tuple[_TherapyList, str, bool]:
+    primary_spec = resolve_gemma_or_fallback_spec()
+    merged: list[_Therapy] = []
+    used_fallback = False
+    model_spec = primary_spec
+    for offset in range(0, len(abstracts), _EXTRACT_BATCH_SIZE):
+        batch = abstracts[offset : offset + _EXTRACT_BATCH_SIZE]
+        batch_therapies, model_spec, batch_fallback = await _extract_batch_with_gemma(
+            disease_name,
+            batch,
+            primary_spec=primary_spec,
+        )
+        merged.extend(batch_therapies)
+        used_fallback = used_fallback or batch_fallback
+    return _TherapyList(therapies=merged), model_spec, used_fallback
 
 
 def _persist_therapies(disease_slug: str, therapies: list[_Therapy]) -> int:
@@ -250,19 +325,26 @@ async def find_therapies_for_disease(
         return 0
 
     try:
-        result, model_spec = await _extract_with_gemma(disease_name, abstracts)
+        result, model_spec, used_fallback = await _extract_with_gemma(disease_name, abstracts)
     except Exception as exc:
         log.exception("Gemma extraction failed for therapies of %s", disease_name)
-        _log_run(exec_id, disease_slug, "failed", error=f"extractor: {exc}")
-        return 0
+        fallback = _fallback_therapies_from_abstracts(abstracts)
+        inserted = _persist_therapies(disease_slug, fallback)
+        _log_run(exec_id, disease_slug, "ready")
+        log.warning(
+            "therapies_finder: LLM unavailable, persisted %d therapy placeholder(s) from PubMed",
+            inserted,
+        )
+        return inserted
 
     inserted = _persist_therapies(disease_slug, result.therapies)
     _log_run(exec_id, disease_slug, "ready")
     log.info(
-        "therapies_finder: %d candidate(s), %d inserted (model=%s)",
+        "therapies_finder: %d candidate(s), %d inserted (model=%s, fallback=%s)",
         len(result.therapies),
         inserted,
         model_spec,
+        used_fallback,
     )
     return inserted
 

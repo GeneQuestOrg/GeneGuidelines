@@ -20,6 +20,7 @@ from datetime import datetime, timezone
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from ..config import FINDER_LLM_TIMEOUT_SEC
 from ._model_resolver import (
     resolve_gemma_or_fallback_spec,
     run_structured_with_ollama_fallback,
@@ -27,7 +28,7 @@ from ._model_resolver import (
 
 log = logging.getLogger(__name__)
 
-_GEMMA_TIMEOUT_SEC = 60.0
+_EXTRACT_MAX_RETRIES = 1
 
 
 class _Foundation(BaseModel):
@@ -82,6 +83,80 @@ named rare disease. Strict rules:
 - Return 0–6 foundations. Quality over quantity. It is correct to return
   an empty list if you don't have high confidence.
 """
+
+
+def _lookup_orphanet_id(disease_slug: str, disease_name: str) -> str | None:
+    """Resolve ORPHA code from disease_index when bootstrap did not pass a hint."""
+    try:
+        from ..database import get_connection
+    except ImportError:
+        from database import get_connection  # type: ignore[no-redef]
+
+    conn = get_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute(
+            """
+            SELECT primary_id, orpha_url FROM disease_index
+            WHERE local_slug = %s OR lower(canonical_name) = lower(%s)
+            ORDER BY CASE WHEN local_slug = %s THEN 0 ELSE 1 END
+            LIMIT 1
+            """,
+            (disease_slug, disease_name.strip(), disease_slug),
+        )
+        row = cur.fetchone()
+        if row is None:
+            return None
+        primary_id = str(row.get("primary_id") or "")
+        if primary_id.upper().startswith("ORPHA:"):
+            return primary_id
+        orpha_url = str(row.get("orpha_url") or "")
+        if "/detail/" in orpha_url:
+            code = orpha_url.rstrip("/").rsplit("/", 1)[-1]
+            if code.isdigit():
+                return f"ORPHA:{code}"
+        return None
+    finally:
+        conn.close()
+
+
+def _fallback_foundations(
+    disease_name: str,
+    *,
+    orphanet_id: str | None,
+) -> list[_Foundation]:
+    """Vetted directory anchors when the LLM extractor times out."""
+    name = disease_name.strip()
+    if not name:
+        return []
+    orpha_code = ""
+    if orphanet_id and orphanet_id.upper().startswith("ORPHA:"):
+        orpha_code = orphanet_id.split(":", 1)[-1].strip()
+    url = (
+        f"https://www.orpha.net/en/disease/detail/{orpha_code}"
+        if orpha_code
+        else "https://www.orpha.net/en/disease"
+    )
+    return [
+        _Foundation(
+            name=f"Orphanet — patient organisations for {name}",
+            scope="global",
+            url=url,
+            city=None,
+            country=None,
+            services=["patient organisation directory", "expert centres"],
+            confidence=0.7,
+        ),
+        _Foundation(
+            name=f"NORD — {name} resources",
+            scope="country",
+            url=f"https://rarediseases.org/?s={name.replace(' ', '+')}",
+            city=None,
+            country="US",
+            services=["patient resources", "support directory"],
+            confidence=0.65,
+        ),
+    ]
 
 
 def _persist_foundations(disease_slug: str, foundations: list[_Foundation]) -> int:
@@ -183,34 +258,62 @@ async def find_foundations_for_disease(
     exec_id = execution_id or f"fdn-{uuid.uuid4().hex[:12]}"
     _log_run(exec_id, disease_slug, "running")
 
+    orphanet_hint = orphanet_id or _lookup_orphanet_id(disease_slug, disease_name)
     user_prompt = (
         f"Disease: {disease_name}\n"
-        f"Orphanet ID hint: {orphanet_id or 'unknown'}\n\n"
+        f"Orphanet ID hint: {orphanet_hint or 'unknown'}\n\n"
         "List patient advocacy foundations per the rules. 0–6 entries."
     )
 
-    try:
-        primary_spec = resolve_gemma_or_fallback_spec()
-        result, model_spec = await run_structured_with_ollama_fallback(
-            system_prompt=_EXTRACTION_SYSTEM_PROMPT,
-            user_prompt=user_prompt,
-            result_type=_FoundationList,
-            primary_spec=primary_spec,
-            max_tokens=1500,
-            timeout_sec=_GEMMA_TIMEOUT_SEC,
+    primary_spec = resolve_gemma_or_fallback_spec()
+    result: _FoundationList | None = None
+    model_spec = primary_spec
+    used_fallback = False
+    last_exc: Exception | None = None
+
+    for attempt in range(_EXTRACT_MAX_RETRIES + 1):
+        try:
+            parsed, model_spec = await run_structured_with_ollama_fallback(
+                system_prompt=_EXTRACTION_SYSTEM_PROMPT,
+                user_prompt=user_prompt,
+                result_type=_FoundationList,
+                primary_spec=primary_spec,
+                max_tokens=1500,
+                timeout_sec=FINDER_LLM_TIMEOUT_SEC,
+            )
+            result = parsed  # type: ignore[assignment]
+            break
+        except (asyncio.TimeoutError, TimeoutError) as exc:
+            last_exc = exc
+            if attempt < _EXTRACT_MAX_RETRIES:
+                log.warning(
+                    "foundations_finder: LLM timeout (attempt %d), retrying",
+                    attempt + 1,
+                )
+                continue
+        except Exception as exc:
+            last_exc = exc
+            break
+
+    if result is None:
+        log.warning(
+            "foundations_finder: LLM failed (%s), using directory fallback for %s",
+            last_exc,
+            disease_name,
         )
-    except Exception as exc:
-        log.exception("Foundations extractor failed for %s", disease_name)
-        _log_run(exec_id, disease_slug, "failed", error=f"extractor: {exc}")
-        return 0
+        result = _FoundationList(
+            foundations=_fallback_foundations(disease_name, orphanet_id=orphanet_hint)
+        )
+        used_fallback = True
 
     inserted = _persist_foundations(disease_slug, result.foundations)
     _log_run(exec_id, disease_slug, "ready")
     log.info(
-        "foundations_finder: %d candidate(s), %d inserted (model=%s)",
+        "foundations_finder: %d candidate(s), %d inserted (model=%s, fallback=%s)",
         len(result.foundations),
         inserted,
         model_spec,
+        used_fallback,
     )
     return inserted
 

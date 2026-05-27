@@ -67,6 +67,12 @@ export interface WorkstreamInputs {
   readonly elapsedSec: number;
   /** Workstream keys that should be sticky-done from prior renders. */
   readonly previouslyDone: ReadonlyArray<WorkstreamKey>;
+  /** Finders that have appeared in ``activeRuns`` at least once this session. */
+  readonly seenActive: ReadonlyArray<WorkstreamKey>;
+  /** Wall-clock ms when a finder last dropped off ``activeRuns``. */
+  readonly lastInactiveAtMs: Partial<Record<WorkstreamKey, number>>;
+  /** Current wall-clock ms — used for post-finder settling window. */
+  readonly nowMs: number;
   /** True while we have any trace from the guideline run. */
   readonly guidelineTraceSeen: boolean;
 }
@@ -124,12 +130,46 @@ export const WORKSTREAMS: readonly WorkstreamDef[] = [
  * instead of jumping to ``done``.
  */
 const BOOTSTRAP_GRACE_SEC = 8;
+/**
+ * After a finder leaves ``activeRuns``, keep the card running while per-disease
+ * count polls catch up. Must exceed the count poll interval plus network slack —
+ * otherwise the UI flashes ``done / 0`` one poll cycle before rows land.
+ */
+const RESULTS_SETTLING_MS = 22_000;
+
+function bootstrapSeen(inputs: WorkstreamInputs): boolean {
+  return (
+    inputs.guidelineTraceSeen ||
+    inputs.activeRuns.length > 0 ||
+    inputs.seenActive.length > 0
+  );
+}
+
+function isSettlingAfterInactive(
+  key: WorkstreamKey,
+  count: number | null,
+  inputs: WorkstreamInputs,
+): boolean {
+  if (count != null && count > 0) return false;
+  if (key === "official_guidelines" || key === "guideline") return false;
+  const inactiveAt = inputs.lastInactiveAtMs[key];
+  if (inactiveAt == null) return false;
+  return inputs.nowMs - inactiveAt < RESULTS_SETTLING_MS;
+}
 
 function flowActive(
   activeRuns: readonly ResearchRun[],
   flowKeys: readonly string[],
 ): boolean {
   return activeRuns.some((run) => flowKeys.includes(run.flowKey));
+}
+
+export function activeWorkstreamKeys(
+  activeRuns: readonly ResearchRun[],
+): readonly WorkstreamKey[] {
+  return WORKSTREAMS.filter(
+    (def) => def.key !== "guideline" && flowActive(activeRuns, def.flowKeys),
+  ).map((def) => def.key);
 }
 
 function countForKey(
@@ -184,6 +224,12 @@ function resultSummary(
     }
     return "Looking up the recognised guideline document.";
   }
+  if (
+    status === "running" &&
+    isSettlingAfterInactive(def.key, count, inputs)
+  ) {
+    return "Saving results to the disease page…";
+  }
   if (count == null) {
     return "Waiting for results.";
   }
@@ -231,6 +277,7 @@ export function deriveWorkstreams(
   inputs: WorkstreamInputs,
 ): readonly WorkstreamState[] {
   const sticky = new Set(inputs.previouslyDone);
+  const seen = new Set(inputs.seenActive);
   return WORKSTREAMS.map((def) => {
     const count = countForKey(def.key, inputs);
 
@@ -249,18 +296,31 @@ export function deriveWorkstreams(
       }
     } else {
       const active = flowActive(inputs.activeRuns, def.flowKeys);
+      const wasSeen = seen.has(def.key);
+      const settling = isSettlingAfterInactive(def.key, count, inputs);
+
       if (active) {
         status = "running";
-      } else if (sticky.has(def.key)) {
-        status = "done";
+      } else if (settling) {
+        status = "running";
       } else if (count != null && count > 0) {
+        status = "done";
+      } else if (
+        sticky.has(def.key) &&
+        (count ?? 0) > 0
+      ) {
+        // Never stick at done/0 — counts often arrive one poll after activeRuns drops.
+        status = "done";
+      } else if (
+        wasSeen &&
+        !settling &&
+        (count ?? 0) === 0
+      ) {
         status = "done";
       } else if (inputs.elapsedSec < BOOTSTRAP_GRACE_SEC) {
         status = "queued";
-      } else if (inputs.activeRuns.length > 0) {
-        // We have seen *some* runs but not this one — the finder either
-        // returned empty quickly or already finished.
-        status = "done";
+      } else if (bootstrapSeen(inputs)) {
+        status = "running";
       } else {
         status = "queued";
       }

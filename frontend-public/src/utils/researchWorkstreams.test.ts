@@ -22,6 +22,7 @@ function makeRun(flowKey: string, slug = "alport"): ResearchRun {
 }
 
 function baseInputs(overrides: Partial<WorkstreamInputs> = {}): WorkstreamInputs {
+  const nowMs = overrides.nowMs ?? Date.now();
   return {
     activeRuns: [],
     guidelineRunDone: false,
@@ -34,6 +35,9 @@ function baseInputs(overrides: Partial<WorkstreamInputs> = {}): WorkstreamInputs
     foundationsCount: 0,
     elapsedSec: 30,
     previouslyDone: [],
+    seenActive: [],
+    lastInactiveAtMs: {},
+    nowMs,
     guidelineTraceSeen: false,
     ...overrides,
   };
@@ -67,11 +71,60 @@ describe("researchWorkstreams", () => {
     const byKey = Object.fromEntries(streams.map((s) => [s.key, s]));
     expect(byKey.doctors.status).toBe("running");
     expect(byKey.trials.status).toBe("running");
-    // Therapies finder is not in active runs yet — still queued during grace
-    // window, but elapsed > grace so it falls through to "done" once we have
-    // *any* active runs. That intentional fallback keeps the UI honest when
-    // a finder finishes faster than the first 5 s poll cycle.
-    expect(byKey.therapies.status).toBe("done");
+    // Other finders stay running once bootstrap has started — never jump to
+    // done with zero counts just because their flow_key is not in this poll.
+    expect(byKey.therapies.status).toBe("running");
+  });
+
+  it("keeps a finder running while counts settle after it leaves active runs", () => {
+    const nowMs = 1_000_000;
+    const streams = deriveWorkstreams(
+      baseInputs({
+        elapsedSec: 20,
+        seenActive: ["foundations"],
+        lastInactiveAtMs: { foundations: nowMs - 5_000 },
+        nowMs,
+        foundationsCount: 0,
+        activeRuns: [],
+      }),
+    );
+    const foundations = streams.find((s) => s.key === "foundations");
+    expect(foundations?.status).toBe("running");
+    expect(foundations?.resultSummary).toMatch(/saving results/i);
+  });
+
+  it("marks done as soon as counts arrive, even inside the settling window", () => {
+    const nowMs = 1_000_000;
+    const streams = deriveWorkstreams(
+      baseInputs({
+        elapsedSec: 20,
+        seenActive: ["foundations"],
+        lastInactiveAtMs: { foundations: nowMs - 5_000 },
+        nowMs,
+        foundationsCount: 2,
+        activeRuns: [],
+      }),
+    );
+    const foundations = streams.find((s) => s.key === "foundations");
+    expect(foundations?.status).toBe("done");
+    expect(foundations?.count).toBe(2);
+  });
+
+  it("marks a seen finder done with zero only after settling window expires", () => {
+    const nowMs = 1_000_000;
+    const streams = deriveWorkstreams(
+      baseInputs({
+        elapsedSec: 40,
+        seenActive: ["trials"],
+        lastInactiveAtMs: { trials: nowMs - 25_000 },
+        nowMs,
+        trialsCount: 0,
+        activeRuns: [makeRun("pubmed")],
+      }),
+    );
+    const trials = streams.find((s) => s.key === "trials");
+    expect(trials?.status).toBe("done");
+    expect(trials?.resultSummary).toMatch(/no trials matched/i);
   });
 
   it("treats the guideline workstream as bound to the agent run flag", () => {
@@ -98,7 +151,7 @@ describe("researchWorkstreams", () => {
       baseInputs({
         elapsedSec: 30,
         previouslyDone: ["doctors"],
-        doctorsCount: 0,
+        doctorsCount: 8,
         activeRuns: [],
       }),
     );
@@ -107,10 +160,14 @@ describe("researchWorkstreams", () => {
   });
 
   it("reports a useful summary for finders that complete with zero results", () => {
+    const nowMs = 1_000_000;
     const streams = deriveWorkstreams(
       baseInputs({
         elapsedSec: 30,
         activeRuns: [makeRun("pubmed")],
+        seenActive: ["trials"],
+        lastInactiveAtMs: { trials: nowMs - 25_000 },
+        nowMs,
         trialsCount: 0,
       }),
     );

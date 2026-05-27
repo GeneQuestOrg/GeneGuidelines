@@ -1128,6 +1128,7 @@ async def run_flow_step_by_step_async(
             emit_fn=emit_fn,
             model_spec=agent_model_spec,
             max_tokens=node_max_tokens,
+            node_id=node_id,
         )
         node_out: dict[str, Any] = {
             "output_text": (store.get("output") or "")[:AGENTIC_NODE_OUTPUT_MAX_CHARS],
@@ -1271,12 +1272,13 @@ async def run_flow_fork_parallel_async(
     emit_fn: Any = None,
 ) -> None:
     from ..agents.runner import _emit, run_single_node_async, _dbg
+    from ..observability.run_log import log_run_event, record_run_stage, summarize_node_output
 
     if emit_fn is None:
         emit_fn = _emit
 
     # #region fork-timeout instrumentation (DB stage vs LLM stage)
-    store["last_stage"] = "flow_fork:init"
+    record_run_stage(store, "flow_fork:init", event="flow_fork_init", flow_key=flow_key)
     # #region UI signal (stronger than file logs)
     emit_fn(
         event_queue,
@@ -1480,6 +1482,9 @@ async def run_flow_fork_parallel_async(
             "memory": store.get("memory") or {},
             "memory_loaded": store.get("memory_loaded", False),
             "loop_counts": dict(store.get("loop_counts") or {}),
+            "execution_id": store.get("execution_id"),
+            "flow_key": flow_key,
+            "pipeline": store.get("pipeline"),
         }
 
         node = db.get_flow_node(flow_key, nid)
@@ -1490,6 +1495,14 @@ async def run_flow_fork_parallel_async(
                 "error": f"Missing node definition for {nid}",
                 "candidate": {},
             }
+
+        record_run_stage(
+            store,
+            f"node:{nid}:running",
+            event="node_start",
+            node_id=nid,
+            node_label=str(node.get("label") or nid),
+        )
 
         node_type = (node.get("node_type") or "").strip().lower()
         if node_type not in (
@@ -2010,6 +2023,7 @@ async def run_flow_fork_parallel_async(
                     emit_fn=emit_fn,
                     model_spec=agent_model_spec,
                     max_tokens=node_max_tokens,
+                    node_id=nid,
                 )
 
                 # #region agent log
@@ -2167,7 +2181,13 @@ async def run_flow_fork_parallel_async(
         wave = [nid for nid in ready if nid not in skipped_nodes]
         wave_snapshot_outputs = dict(store.get("node_outputs") or {})
 
-        store["last_stage"] = f"flow_fork:parallel_wave_start:{wave}"
+        wave_label = ",".join(wave)
+        record_run_stage(
+            store,
+            f"flow_fork:parallel_wave:{wave_label}",
+            event="wave_start",
+            wave=wave,
+        )
         _dbg(
             "H_FORK_WAVE_START",
             "parallel wave start (stage=wave)",
@@ -2188,6 +2208,16 @@ async def run_flow_fork_parallel_async(
                 break
 
             store["node_outputs"][nid] = res.get("node_out", {})
+            execution_id = str(store.get("execution_id") or "")
+            if execution_id:
+                log_run_event(
+                    "node_done",
+                    execution_id=execution_id,
+                    node_id=nid,
+                    flow_key=flow_key,
+                    **summarize_node_output(res.get("node_out")),
+                )
+                record_run_stage(store, f"node:{nid}:done", event="node_done", node_id=nid)
             if res.get("error"):
                 shared_error = str(res.get("error"))
                 emit_fn(event_queue, {"kind": "sys", "text": f"[SYSTEM] {shared_error}"})

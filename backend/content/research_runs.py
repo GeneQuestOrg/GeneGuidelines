@@ -9,9 +9,9 @@ are currently executing for a public disease. Two stores hold this state:
   ``catalog_slug`` which we resolve to a disease slug via
   :func:`backend.doctor_catalog.catalog_slug_for_finder_input`.
 
-A run is "active" when ``done = 0`` and ``finished_at IS NULL``. The
-projection trims the result to a stable shape the public frontend can
-render without leaking workflow internals.
+A run is "active" when ``done = 0`` and ``finished_at IS NULL``. Finder pipelines
+that exceed a short staleness window without finishing are reaped as failed so
+orphaned rows (e.g. after a dev-server reload) do not linger on the home view.
 """
 
 from __future__ import annotations
@@ -28,6 +28,16 @@ try:
 except ImportError:
     from database import get_connection  # type: ignore[no-redef]
     from db import table_exists  # type: ignore[no-redef]
+
+# Fast finders should finish within a few minutes; rows left ``done=0`` longer
+# are almost always orphaned tasks (crash, reload) rather than live work.
+_FINDER_PIPELINES = (
+    "trials_finder",
+    "therapies_finder",
+    "foundations_finder",
+    "official_guidelines_finder",
+)
+_FINDER_STALE_AFTER_SEC = 600
 
 
 @dataclass(frozen=True, slots=True)
@@ -62,6 +72,32 @@ def _elapsed_seconds(started_at: object, now: datetime | None = None) -> int | N
         return None
     current = now or datetime.now(timezone.utc)
     return max(0, int((current - started).total_seconds()))
+
+
+def _reap_stale_finder_runs(conn: psycopg.Connection, *, now: datetime | None = None) -> int:
+    """Mark abandoned fast-finder rows as failed so they drop off the home feed."""
+    current = now or datetime.now(timezone.utc)
+    cutoff = current.isoformat()
+    stale_before = datetime.fromtimestamp(
+        current.timestamp() - _FINDER_STALE_AFTER_SEC, tz=timezone.utc
+    ).isoformat()
+    cur = conn.cursor()
+    cur.execute(
+        """
+        UPDATE guideline_run_results
+        SET done = 1,
+            finished_at = COALESCE(finished_at, %s),
+            error = COALESCE(NULLIF(error, ''), 'stale: run abandoned (no completion recorded)')
+        WHERE done = 0
+          AND finished_at IS NULL
+          AND pipeline = ANY(%s)
+          AND COALESCE(started_at, '') <> ''
+          AND started_at < %s
+        """,
+        (cutoff, list(_FINDER_PIPELINES), stale_before),
+    )
+    conn.commit()
+    return int(cur.rowcount or 0)
 
 
 def _rows_from_guideline_store(
@@ -155,6 +191,7 @@ def list_active_runs(
     if owned:
         conn = get_connection()
     try:
+        _reap_stale_finder_runs(conn)
         guideline = _rows_from_guideline_store(conn, limit)
         finder = _rows_from_doctor_finder_store(conn, limit)
         combined = _sorted_by_started_desc([*guideline, *finder])

@@ -54,8 +54,6 @@ log = logging.getLogger(__name__)
 _PUBMED_ESEARCH = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi"
 _PUBMED_ESUMMARY = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi"
 _MAX_CANDIDATES = 10
-_GEMMA_TIMEOUT_SEC = 60.0
-
 
 class _RankedConsensus(BaseModel):
     """Gemma's structured response when picking the consensus paper."""
@@ -218,7 +216,6 @@ async def _rank_with_gemma(
         result_type=_RankedConsensus,
         primary_spec=primary_spec,
         max_tokens=600,
-        timeout_sec=_GEMMA_TIMEOUT_SEC,
     )
 
 

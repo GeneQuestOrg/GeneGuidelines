@@ -1016,6 +1016,7 @@ async def run_single_node_async(
     emit_fn=None,
     model_spec: str | None = None,
     max_tokens: int | None = None,
+    node_id: str | None = None,
 ) -> None:
     """
     Run one flow node (single LLM call with tools). Used by flow_engine step-by-step.
@@ -1229,6 +1230,21 @@ async def run_single_node_async(
             {"use_mcp": use_mcp, "max_retry": max_retry, "model_spec": model_spec},
             location="backend/agent_runner.py:run_single_node_async:start",
         )
+        execution_id = str(store.get("execution_id") or "").strip()
+        if execution_id and node_id:
+            from ..observability.run_log import log_llm_call
+
+            log_llm_call(
+                "llm_call_start",
+                execution_id=execution_id,
+                node_id=node_id,
+                prompt_mode="agentic",
+                model_spec=model_spec or "",
+                system_chars=len(node_system_prompt or ""),
+                user_chars=len(user_prompt),
+                use_mcp=use_mcp,
+                flow_key=store.get("flow_key"),
+            )
         # Keep this stage string free of user/ticket content (it may be exposed in watchdog error).
         store["last_stage"] = "run_single_node_async:before_agent_iter"
         agent = agent_module.get_agent(
@@ -1245,8 +1261,35 @@ async def run_single_node_async(
             location="backend/agent_runner.py:run_single_node_async:before_iter",
         )
         store["last_stage"] = "run_single_node_async:agent_iter"
+        t0 = time.monotonic()
         await _consume_iter(agent)
+        if execution_id and node_id:
+            from ..observability.run_log import log_llm_call
+
+            log_llm_call(
+                "llm_call_done",
+                execution_id=execution_id,
+                node_id=node_id,
+                prompt_mode="agentic",
+                model_spec=model_spec or "",
+                duration_ms=int((time.monotonic() - t0) * 1000),
+                ok=True,
+                flow_key=store.get("flow_key"),
+            )
     except BaseException as e:
+        if execution_id and node_id:
+            from ..observability.run_log import log_llm_call
+
+            log_llm_call(
+                "llm_call_error",
+                execution_id=execution_id,
+                node_id=node_id,
+                prompt_mode="agentic",
+                model_spec=model_spec or "",
+                duration_ms=int((time.monotonic() - t0) * 1000) if "t0" in locals() else None,
+                error=f"{type(e).__name__}: {e}"[:300],
+                flow_key=store.get("flow_key"),
+            )
         tb = traceback.format_exc()
         tb_mcp = _traceback_indicates_mcp_init_failure(tb)
         _dbg(

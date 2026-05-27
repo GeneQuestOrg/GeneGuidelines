@@ -9,7 +9,7 @@
  * ``researchWorkstreams.ts`` for the new derivation.
  */
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button, Section, Status } from "@gene-guidelines/ui";
 import {
   ApiRequestError,
@@ -30,6 +30,7 @@ import {
 } from "../utils/researchRunTrace";
 import {
   WORKSTREAM_LABELS,
+  activeWorkstreamKeys,
   computeOverallProgress,
   countDone,
   countQueued,
@@ -236,7 +237,13 @@ export function ResearchRunView({
   // Partial-results poll: doctors/trials/therapies/foundations counts +
   // official guideline presence + guideline document presence + active
   // runs filtered by diseaseSlug.
-  const partial = useResearchPartialResults(diseaseSlug, !succeeded);
+  const partial = useResearchPartialResults(diseaseSlug, !succeeded, {
+    pollIntervalMs: 2000,
+  });
+
+  const previouslyDoneRef = useRef<Set<WorkstreamKey>>(new Set());
+  const seenActiveRef = useRef<Set<WorkstreamKey>>(new Set());
+  const lastInactiveRef = useRef<Partial<Record<WorkstreamKey, number>>>({});
 
   // Whether we have seen *any* SSE / agent activity for the guideline
   // pipeline — gates the "running" status of the guideline workstream.
@@ -250,40 +257,65 @@ export function ResearchRunView({
   // during render).
   const elapsedSec = elapsedTick;
 
-  const streams = useMemo<readonly WorkstreamState[]>(
-    () =>
-      deriveWorkstreams({
-        activeRuns: partial.activeRuns,
-        guidelineRunDone: succeeded,
-        guidelineRunFailed: failed,
-        hasGuidelineDocument: partial.hasGuidelineDocument || succeeded,
-        hasOfficialGuideline: partial.hasOfficialGuideline,
-        doctorsCount: partial.doctors,
-        trialsCount: partial.trials,
-        therapiesCount: partial.therapies,
-        foundationsCount: partial.foundations,
-        elapsedSec,
-        // The count signals (doctors, trials, therapies, foundations,
-        // official guideline, guideline document) only ever go *up* over
-        // the life of a run, so we don't need a sticky-done memory; the
-        // derivation is already monotonic for the cases that matter.
-        previouslyDone: [],
-        guidelineTraceSeen,
-      }),
-    [
-      partial.activeRuns,
-      partial.doctors,
-      partial.trials,
-      partial.therapies,
-      partial.foundations,
-      partial.hasGuidelineDocument,
-      partial.hasOfficialGuideline,
-      succeeded,
-      failed,
+  const nowMs = startedAtMs + elapsedSec * 1000;
+
+  const streams = useMemo<readonly WorkstreamState[]>(() => {
+    const currentlyActive = new Set(activeWorkstreamKeys(partial.activeRuns));
+
+    for (const key of currentlyActive) {
+      seenActiveRef.current.add(key);
+    }
+    for (const key of seenActiveRef.current) {
+      if (!currentlyActive.has(key) && lastInactiveRef.current[key] == null) {
+        lastInactiveRef.current[key] = nowMs;
+      }
+    }
+    for (const key of currentlyActive) {
+      delete lastInactiveRef.current[key];
+    }
+
+    const derived = deriveWorkstreams({
+      activeRuns: partial.activeRuns,
+      guidelineRunDone: succeeded,
+      guidelineRunFailed: failed,
+      hasGuidelineDocument: partial.hasGuidelineDocument || succeeded,
+      hasOfficialGuideline: partial.hasOfficialGuideline,
+      doctorsCount: partial.doctors,
+      trialsCount: partial.trials,
+      therapiesCount: partial.therapies,
+      foundationsCount: partial.foundations,
       elapsedSec,
+      previouslyDone: Array.from(previouslyDoneRef.current),
+      seenActive: Array.from(seenActiveRef.current),
+      lastInactiveAtMs: { ...lastInactiveRef.current },
+      nowMs,
       guidelineTraceSeen,
-    ],
-  );
+    });
+    for (const stream of derived) {
+      if (stream.status !== "done") continue;
+      const isFinderWithZero =
+        stream.key !== "guideline" &&
+        stream.key !== "official_guidelines" &&
+        (stream.count ?? 0) === 0;
+      if (!isFinderWithZero) {
+        previouslyDoneRef.current.add(stream.key);
+      }
+    }
+    return derived;
+  }, [
+    partial.activeRuns,
+    partial.doctors,
+    partial.trials,
+    partial.therapies,
+    partial.foundations,
+    partial.hasGuidelineDocument,
+    partial.hasOfficialGuideline,
+    succeeded,
+    failed,
+    elapsedSec,
+    guidelineTraceSeen,
+    nowMs,
+  ]);
 
   const overall = computeOverallProgress(streams);
   const doneCount = countDone(streams);

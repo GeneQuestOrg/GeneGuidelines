@@ -42,6 +42,86 @@ def ensure_guideline_run_results_schema() -> None:
         conn.commit()
     except pg_errors.DuplicateColumn:
         conn.rollback()
+    for ddl in (
+        "ALTER TABLE guideline_run_results ADD COLUMN current_stage TEXT",
+        "ALTER TABLE guideline_run_results ADD COLUMN stage_updated_at TEXT",
+    ):
+        try:
+            cur.execute(ddl)
+            conn.commit()
+        except pg_errors.DuplicateColumn:
+            conn.rollback()
+    conn.close()
+
+
+def upsert_guideline_run_started(
+    execution_id: str,
+    *,
+    pipeline: str,
+    flow_key: str,
+    ticket_id: int | None = None,
+    label: str | None = None,
+    disease_slug: str | None = None,
+    started_at: str | None = None,
+) -> None:
+    """Insert a running row so admin/API can see progress before completion."""
+    if not execution_id:
+        return
+    ensure_guideline_run_results_schema()
+    started = started_at or datetime.now(UTC).isoformat()
+    stage = "starting"
+    now = datetime.now(UTC).isoformat()
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute(
+        """
+        INSERT INTO guideline_run_results (
+            execution_id, pipeline, flow_key, disease_slug, ticket_id, label,
+            output, error, quality_json, done, started_at, finished_at,
+            current_stage, stage_updated_at
+        ) VALUES (%s, %s, %s, %s, %s, %s, NULL, NULL, NULL, 0, %s, NULL, %s, %s)
+        ON CONFLICT(execution_id) DO UPDATE SET
+            pipeline = excluded.pipeline,
+            flow_key = excluded.flow_key,
+            disease_slug = COALESCE(excluded.disease_slug, guideline_run_results.disease_slug),
+            ticket_id = COALESCE(excluded.ticket_id, guideline_run_results.ticket_id),
+            label = COALESCE(excluded.label, guideline_run_results.label),
+            done = 0,
+            current_stage = excluded.current_stage,
+            stage_updated_at = excluded.stage_updated_at
+        """,
+        (
+            execution_id,
+            pipeline,
+            flow_key,
+            (disease_slug or "").strip().lower() or None,
+            ticket_id,
+            (label or "").strip() or None,
+            started,
+            stage,
+            now,
+        ),
+    )
+    conn.commit()
+    conn.close()
+
+
+def update_guideline_run_stage(execution_id: str, stage: str) -> None:
+    if not execution_id or not stage:
+        return
+    ensure_guideline_run_results_schema()
+    now = datetime.now(UTC).isoformat()
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute(
+        """
+        UPDATE guideline_run_results
+        SET current_stage = %s, stage_updated_at = %s
+        WHERE execution_id = %s
+        """,
+        (stage, now, execution_id),
+    )
+    conn.commit()
     conn.close()
 
 
@@ -81,14 +161,17 @@ def save_guideline_run_result(execution_id: str, store: dict[str, Any]) -> None:
     ensure_guideline_run_results_schema()
     output = _coerce_output(store)
     quality_json = _quality_json_for_store(store)
+    current_stage = str(store.get("current_stage") or store.get("last_stage") or "").strip() or None
+    stage_updated_at = datetime.now(UTC).isoformat() if current_stage else None
     conn = get_connection()
     cur = conn.cursor()
     cur.execute(
         """
         INSERT INTO guideline_run_results (
             execution_id, pipeline, flow_key, disease_slug, ticket_id, label,
-            output, error, quality_json, done, started_at, finished_at
-        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            output, error, quality_json, done, started_at, finished_at,
+            current_stage, stage_updated_at
+        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         ON CONFLICT(execution_id) DO UPDATE SET
             pipeline = excluded.pipeline,
             flow_key = excluded.flow_key,
@@ -100,7 +183,9 @@ def save_guideline_run_result(execution_id: str, store: dict[str, Any]) -> None:
             quality_json = excluded.quality_json,
             done = excluded.done,
             started_at = excluded.started_at,
-            finished_at = excluded.finished_at
+            finished_at = excluded.finished_at,
+            current_stage = excluded.current_stage,
+            stage_updated_at = excluded.stage_updated_at
         """,
         (
             execution_id,
@@ -115,6 +200,8 @@ def save_guideline_run_result(execution_id: str, store: dict[str, Any]) -> None:
             1 if store.get("done") else 0,
             store.get("started_at"),
             datetime.now(UTC).isoformat(),
+            current_stage,
+            stage_updated_at,
         ),
     )
     conn.commit()
@@ -129,7 +216,8 @@ def load_guideline_run_result(execution_id: str) -> dict[str, Any] | None:
     cur.execute(
         """
         SELECT execution_id, pipeline, flow_key, disease_slug, ticket_id, label,
-               output, error, quality_json, done, started_at, finished_at
+               output, error, quality_json, done, started_at, finished_at,
+               current_stage, stage_updated_at
         FROM guideline_run_results
         WHERE execution_id = %s
         """,
@@ -159,6 +247,8 @@ def load_guideline_run_result(execution_id: str) -> dict[str, Any] | None:
         "done": bool(row["done"]),
         "started_at": row["started_at"],
         "finished_at": row["finished_at"],
+        "current_stage": row["current_stage"] if "current_stage" in row.keys() else None,
+        "stage_updated_at": row["stage_updated_at"] if "stage_updated_at" in row.keys() else None,
         "ai_summary": {"issue": "", "work_log_summary": ""},
         "diagnostics_entries": [],
         "steps_completed_by_ai": [],

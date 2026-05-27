@@ -10,7 +10,7 @@ from typing import Any
 try:
     from .config import BACKEND_DIR
     from .database import get_connection
-    from .db import table_columns
+    from .db import table_columns, table_exists
     from .guideline_prompt_profile import (
         empty_guideline_prompt_profile,
         normalize_guideline_prompt_profile,
@@ -18,7 +18,7 @@ try:
 except ImportError:
     from config import BACKEND_DIR
     from database import get_connection
-    from db import table_columns
+    from db import table_columns, table_exists
     from guideline_prompt_profile import (
         empty_guideline_prompt_profile,
         normalize_guideline_prompt_profile,
@@ -871,28 +871,49 @@ def get_disease_by_slug(
     return _row_to_disease(row, include_prompt_profile=include_prompt_profile)
 
 
-def get_catalog_stats() -> dict[str, int]:
+# Trial statuses counted as "active recruiting" on the public home view.
+_CATALOG_ACTIVE_TRIAL_STATUSES = ("recruiting", "active_not_recruiting")
+# Guideline PR statuses still awaiting review.
+_CATALOG_OPEN_PR_STATUSES = ("pending", "under-review")
+
+
+def compute_live_catalog_stats(*, doctor_count: int = 0) -> dict[str, int]:
+    """Aggregate counters from live catalog tables (not the seed snapshot row)."""
     conn = get_connection()
     cur = conn.cursor()
-    cur.execute("SELECT * FROM catalog_stats WHERE id = 1")
-    row = cur.fetchone()
-    if row is None:
+    try:
         cur.execute("SELECT COUNT(*) AS n FROM diseases")
         disease_count = int(cur.fetchone()["n"])
+
+        recruiting_trial_count = 0
+        if table_exists(conn, "trials"):
+            cur.execute(
+                "SELECT COUNT(*) AS n FROM trials WHERE status = ANY(%s)",
+                (list(_CATALOG_ACTIVE_TRIAL_STATUSES),),
+            )
+            recruiting_trial_count = int(cur.fetchone()["n"])
+
+        open_pr_count = 0
+        if table_exists(conn, "content_prs"):
+            cur.execute(
+                "SELECT COUNT(*) AS n FROM content_prs WHERE status = ANY(%s)",
+                (list(_CATALOG_OPEN_PR_STATUSES),),
+            )
+            open_pr_count = int(cur.fetchone()["n"])
+    finally:
         conn.close()
-        return {
-            "diseaseCount": disease_count,
-            "doctorCount": 0,
-            "recruitingTrialCount": 0,
-            "openPrCount": 0,
-        }
-    conn.close()
+
     return {
-        "diseaseCount": row["disease_count"],
-        "doctorCount": row["doctor_count"],
-        "recruitingTrialCount": row["recruiting_trial_count"],
-        "openPrCount": row["open_pr_count"],
+        "diseaseCount": disease_count,
+        "doctorCount": max(0, int(doctor_count)),
+        "recruitingTrialCount": recruiting_trial_count,
+        "openPrCount": open_pr_count,
     }
+
+
+def get_catalog_stats() -> dict[str, int]:
+    """Return live catalog counters for the public home page."""
+    return compute_live_catalog_stats()
 
 
 

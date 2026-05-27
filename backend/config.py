@@ -235,6 +235,19 @@ SIMPLE_LLM_PARALLEL_CONCURRENCY = max(
     1,
     int((os.environ.get("SIMPLE_LLM_PARALLEL_CONCURRENCY") or "").strip() or _SIMPLE_LLM_PARALLEL_DEFAULT),
 )
+# Service-layer finders (trials, therapies, …) share this cap so bootstrap fan-out
+# does not stampede the same vLLM / SiliconFlow endpoint.
+_FINDER_LLM_PARALLEL_DEFAULT = _SIMPLE_LLM_PARALLEL_DEFAULT
+FINDER_LLM_PARALLEL_CONCURRENCY = max(
+    1,
+    int(
+        (os.environ.get("FINDER_LLM_PARALLEL_CONCURRENCY") or "").strip()
+        or _FINDER_LLM_PARALLEL_DEFAULT
+    ),
+)
+FINDER_LLM_TIMEOUT_SEC = float(
+    (os.environ.get("FINDER_LLM_TIMEOUT_SEC") or "").strip() or 360.0
+)
 OPENAI_CLIENT_TIMEOUT_SEC = float((os.environ.get("OPENAI_CLIENT_TIMEOUT_SEC") or "").strip() or 2700.0)
 QUALITY_FIRST_HARD_MODE = (os.environ.get("QUALITY_FIRST_HARD_MODE") or "1").strip().lower() in (
     "1",
