@@ -308,7 +308,9 @@ export function AboutView({ onNav }: AboutViewProps) {
                 <b>Therapy lines</b> — labelled by evidence tier (consensus / verified / pending / preclinical).
               </li>
               <li>
-                <b>Patient foundations</b> supporting that disease, where they exist.
+                <b>Patient foundations</b> supporting that disease, where they exist. An engaged foundation can carry
+                real weight for a family in diagnosis — and these are not easy to find from outside the community. The
+                catalogue surfaces what exists, even when only one organisation worldwide works on a disease.
               </li>
               <li>
                 A <b>private case-context panel</b> — paste a discharge summary, see what becomes relevant.
