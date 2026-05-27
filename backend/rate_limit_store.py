@@ -1,27 +1,25 @@
-"""SQLite-backed sliding-window rate limit events (shared across process restarts)."""
+"""Postgres-backed sliding-window rate limit events (shared across process restarts)."""
 from __future__ import annotations
 
-import sqlite3
 import threading
 import time
 
-from .config import DB_PATH
 from .database import get_connection
 
 _RATE_LIMIT_LOCK = threading.Lock()
 _TABLE_READY = False
 
 
-def _ensure_table(conn: sqlite3.Connection) -> None:
+def _ensure_table(conn) -> None:
     global _TABLE_READY
     if _TABLE_READY:
         return
     conn.execute(
         """
         CREATE TABLE IF NOT EXISTS api_rate_limit_events (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             bucket_key TEXT NOT NULL,
-            event_ts REAL NOT NULL
+            event_ts DOUBLE PRECISION NOT NULL
         )
         """
     )
@@ -49,7 +47,7 @@ def count_events(bucket_key: str, since_ts: float) -> int:
             cur = conn.execute(
                 """
                 SELECT COUNT(*) AS n FROM api_rate_limit_events
-                WHERE bucket_key = ? AND event_ts >= ?
+                WHERE bucket_key = %s AND event_ts >= %s
                 """,
                 (bucket_key, since_ts),
             )
@@ -67,7 +65,7 @@ def count_all_events(since_ts: float) -> int:
             cur = conn.execute(
                 """
                 SELECT COUNT(*) AS n FROM api_rate_limit_events
-                WHERE event_ts >= ?
+                WHERE event_ts >= %s
                 """,
                 (since_ts,),
             )
@@ -84,7 +82,7 @@ def record_event(bucket_key: str, event_ts: float | None = None) -> None:
         conn = _with_conn()
         try:
             conn.execute(
-                "INSERT INTO api_rate_limit_events (bucket_key, event_ts) VALUES (?, ?)",
+                "INSERT INTO api_rate_limit_events (bucket_key, event_ts) VALUES (%s, %s)",
                 (bucket_key, ts),
             )
             conn.commit()
@@ -98,7 +96,7 @@ def prune_events_older_than(cutoff_ts: float) -> None:
         conn = _with_conn()
         try:
             conn.execute(
-                "DELETE FROM api_rate_limit_events WHERE event_ts < ?",
+                "DELETE FROM api_rate_limit_events WHERE event_ts < %s",
                 (cutoff_ts,),
             )
             conn.commit()

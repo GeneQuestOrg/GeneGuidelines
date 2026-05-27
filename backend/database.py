@@ -160,9 +160,9 @@ def init_db():
 
     cur.execute("""
         CREATE TABLE IF NOT EXISTS api_rate_limit_events (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             bucket_key TEXT NOT NULL,
-            event_ts REAL NOT NULL
+            event_ts DOUBLE PRECISION NOT NULL
         )
     """)
     cur.execute("""

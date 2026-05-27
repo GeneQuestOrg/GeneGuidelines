@@ -174,11 +174,11 @@ def _slim_pm2(raw: Any) -> Any:
     return {"result": slimmed} if has_result else slimmed
 
 
-def _slim_pm2_for_prompt(node_id: str, raw: Any, *, model_spec: str | None = None) -> Any:
+def _slim_pm2_for_prompt(node_id: str, raw: Any) -> Any:
     """Task-scoped pm-2 view for PubMed LLM prompt interpolation (see flows.pubmed.prompt_context)."""
     from ..flows.pubmed.prompt_context import pm2_view_for_llm_prompt
 
-    return pm2_view_for_llm_prompt(node_id, raw, model_spec=model_spec)
+    return pm2_view_for_llm_prompt(node_id, raw)
 
 
 def _store_for_prompt_interpolation(
@@ -188,21 +188,17 @@ def _store_for_prompt_interpolation(
     *,
     node: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
+    del node  # reserved for future per-node prompt caps
     if flow_key != "pubmed":
         return store
     outputs = store.get("node_outputs") or {}
     if "pm-2" not in outputs:
         return store
-    model_spec: str | None = None
-    if node is not None:
-        from ..agents.simple_runner import resolve_model_spec_for_node
-
-        model_spec = resolve_model_spec_for_node(node)
     return {
         **store,
         "node_outputs": {
             **outputs,
-            "pm-2": _slim_pm2_for_prompt(node_id, outputs["pm-2"], model_spec=model_spec),
+            "pm-2": _slim_pm2_for_prompt(node_id, outputs["pm-2"]),
         },
     }
 

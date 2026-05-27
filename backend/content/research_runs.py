@@ -117,6 +117,7 @@ def _rows_from_guideline_store(
             SELECT execution_id, disease_slug, flow_key, pipeline, label, started_at
             FROM guideline_run_results
             WHERE done = 0 AND finished_at IS NULL AND owner_clerk_id = %s
+              AND COALESCE(current_stage, '') <> 'queued'
             ORDER BY COALESCE(started_at, '') DESC
             LIMIT %s
             """,
@@ -128,6 +129,7 @@ def _rows_from_guideline_store(
             SELECT execution_id, disease_slug, flow_key, pipeline, label, started_at
             FROM guideline_run_results
             WHERE done = 0 AND finished_at IS NULL
+              AND COALESCE(current_stage, '') <> 'queued'
             ORDER BY COALESCE(started_at, '') DESC
             LIMIT %s
             """,
