@@ -31,6 +31,16 @@
   font-weight: 600;
 }
 
+.about__hero-tldr {
+  font-family: var(--gg-font-serif, "Newsreader", Georgia, serif);
+  font-size: clamp(1rem, 2vw, 1.125rem);
+  font-style: italic;
+  line-height: 1.55;
+  margin: 0;
+  max-width: 42rem;
+  color: var(--gg-text-muted, #4b5563);
+}
+
 .about__article {
   padding-top: 1.5rem;
 }
@@ -50,6 +60,37 @@
   font-weight: 500;
   margin: 0 0 1rem;
   color: var(--gg-text, #111827);
+}
+
+.about__h2--cta {
+  margin-bottom: 1.25rem;
+}
+
+.about__h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 1.5rem 0 0.75rem;
+  color: var(--gg-text, #111827);
+}
+
+.about__h3:first-of-type {
+  margin-top: 0;
+}
+
+.about__link {
+  color: var(--gg-accent, #2563eb);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.about__link:hover {
+  text-decoration-thickness: 2px;
+}
+
+.about__cite a {
+  color: var(--gg-accent, #2563eb);
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 .about__lede {
