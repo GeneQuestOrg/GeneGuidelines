@@ -1,7 +1,7 @@
 > [!IMPORTANT]
 > **Kaggle reviewers.** There are two useful versions of GeneGuidelines:
 >
-> - **Current product** — active post-submission development: [public demo](https://geneguidelines.genequest.org) · [`main`](https://github.com/GeneQuestOrg/GeneGuidelines/tree/main)
+> - **Current product** — active post-submission development: [public demo](https://geneguidelines.genequest.org) · [`production`](https://github.com/GeneQuestOrg/GeneGuidelines/tree/production)
 > - **Frozen Kaggle submission** — exact deadline snapshot from **18 May 2026**: [tag `kaggle-submission-2026-05-18`](https://github.com/GeneQuestOrg/GeneGuidelines/tree/kaggle-submission-2026-05-18) · [public demo](https://kaggle-geneguidelines.genequest.org) · [admin demo](https://kaggle-admin-geneguidelines.genequest.org)
 >
 > If you are judging deadline compliance, use the frozen snapshot. If you want to see where the project is going, use the current product.
