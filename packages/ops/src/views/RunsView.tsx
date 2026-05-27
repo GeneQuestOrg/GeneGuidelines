@@ -5,7 +5,7 @@ import { DiseaseBootstrapPanel } from "../components/DiseaseBootstrapPanel";
 import { DoctorFinderPanel } from "../components/DoctorFinderPanel";
 import { GuidelineRunPanel } from "../components/GuidelineRunPanel";
 import { PathwayRunPanel } from "../components/PathwayRunPanel";
-import { mergeRunsWithServer, registerRunStart, type RunIndexEntry } from "../runHistory";
+import { mergeRunsWithServer, type RunIndexEntry } from "../runHistory";
 import {
   DISEASE_BOOTSTRAP_PIPELINE_LABEL,
   isDiseaseBootstrapPipeline,

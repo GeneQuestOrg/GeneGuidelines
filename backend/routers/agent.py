@@ -409,6 +409,7 @@ async def start_agent_run(
     pathway_locale: str = "en",
     refresh_pubmed: bool = False,
     owner_clerk_id: str | None = None,
+    execution_id: str | None = None,
 ) -> dict:
     """Start agent run; shared by POST /run/{ticket_id} and pipeline guideline-run."""
     profile_norm = (profile or "").strip().lower() or DEFAULT_MODEL_PROFILE
@@ -422,7 +423,7 @@ async def start_agent_run(
     if not ticket:
         raise HTTPException(status_code=404, detail="Ticket not found")
     _prune_agent_storage()
-    execution_id = str(uuid4())
+    execution_id = (execution_id or "").strip() or str(uuid4())
     event_queue: Queue = Queue()
     started_at = datetime.now(UTC).isoformat()
     run_record: dict = {

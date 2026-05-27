@@ -131,7 +131,7 @@ def add_watch(slug: str, user: AuthUser = Depends(get_current_user)) -> WatchedD
     try:
         cur = conn.cursor()
         cur.execute(
-            "SELECT 1 FROM user_disease_watches WHERE clerk_id = ? AND disease_slug = ?",
+            "SELECT 1 FROM user_disease_watches WHERE clerk_id = %s AND disease_slug = %s",
             (user.clerk_id, slug),
         )
         already_watching = cur.fetchone() is not None

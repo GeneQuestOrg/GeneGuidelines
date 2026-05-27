@@ -1,24 +1,18 @@
 """Disease bootstrap orchestrator — fire every research workflow for a new disease.
 
-This is the glue that turns "add disease X" into a single user action.
-Five workflows fan out in parallel, two chain sequentially (guideline →
-parent pathway, because the pathway reads the published guideline):
-
-Parallel (fire-and-forget):
+Phase 1 (parallel, awaited before guideline):
   1. official_guidelines_finder — PubMed consensus paper discovery
   2. trials_finder              — ClinicalTrials.gov + Gemma extraction
   3. therapies_finder           — PubMed review extraction
   4. foundations_finder         — Gemma-known orgs with vetted URLs
   5. doctor_finder              — PubMed author + geo enrichment
 
-Chain (fire after each predecessor completes):
+Phase 2 (after phase 1 completes):
   6. guideline pipeline         — clinician living guideline (PubMed + agentic)
-  7. (future) parent pathway    — fires after guideline publish; deferred to operator
 
-The orchestrator returns immediately with a dict of execution ids; each
-workflow logs its progress to ``guideline_run_results`` so the
-public-facing "active research" projection at ``GET /api/research-runs``
-surfaces every step in one feed for the demo.
+The orchestrator returns immediately with execution ids. Fast finders run in a
+background task; the guideline id is reserved up front (``current_stage=queued``)
+so the research UI can deep-link before the heavy pipeline starts.
 """
 
 from __future__ import annotations
@@ -28,6 +22,7 @@ import logging
 import uuid
 from datetime import datetime, timezone
 from queue import Queue
+from uuid import uuid4
 
 log = logging.getLogger(__name__)
 
@@ -41,15 +36,11 @@ async def bootstrap_disease_research(
 ) -> dict[str, str]:
     """Fan out research workflows for a (presumably newly created) disease.
 
-    Returns ``{workflow_name: execution_id}`` immediately; all workflows
-    run in background asyncio tasks. Caller is responsible for ensuring
-    the disease row exists in the catalog before calling.
+    Returns ``{workflow_name: execution_id}`` immediately. Fast finders and
+    doctor_finder run in parallel; the guideline pipeline starts only after
+    they finish so LLM capacity is not contended during bootstrap.
     """
     from ..config import DEFAULT_MODEL_PROFILE
-    from .official_guidelines_finder import find_official_guideline_for_disease
-    from .trials_finder import find_trials_for_disease
-    from .therapies_finder import find_therapies_for_disease
-    from .foundations_finder import find_foundations_for_disease
 
     profile_norm = (profile or DEFAULT_MODEL_PROFILE).strip().lower() or DEFAULT_MODEL_PROFILE
 
@@ -57,43 +48,29 @@ async def bootstrap_disease_research(
     trf_id = f"trf-{uuid.uuid4().hex[:12]}"
     trp_id = f"trp-{uuid.uuid4().hex[:12]}"
     fdn_id = f"fdn-{uuid.uuid4().hex[:12]}"
+    doctor_finder_id = str(uuid.uuid4())
+    guideline_id = str(uuid4())
+
+    _reserve_guideline_slot(
+        execution_id=guideline_id,
+        disease_slug=disease_slug,
+        disease_name=disease_name,
+        owner_clerk_id=owner_clerk_id,
+    )
 
     asyncio.create_task(
-        find_official_guideline_for_disease(
+        _run_fast_finders_then_guideline(
             disease_slug=disease_slug,
             disease_name=disease_name,
-            execution_id=ogf_id,
+            profile_norm=profile_norm,
             owner_clerk_id=owner_clerk_id,
+            ogf_id=ogf_id,
+            trf_id=trf_id,
+            trp_id=trp_id,
+            fdn_id=fdn_id,
+            doctor_finder_id=doctor_finder_id,
+            guideline_id=guideline_id,
         )
-    )
-    asyncio.create_task(
-        find_trials_for_disease(
-            disease_slug=disease_slug,
-            disease_name=disease_name,
-            execution_id=trf_id,
-            owner_clerk_id=owner_clerk_id,
-        )
-    )
-    asyncio.create_task(
-        find_therapies_for_disease(
-            disease_slug=disease_slug,
-            disease_name=disease_name,
-            execution_id=trp_id,
-            owner_clerk_id=owner_clerk_id,
-        )
-    )
-    asyncio.create_task(
-        find_foundations_for_disease(
-            disease_slug=disease_slug,
-            disease_name=disease_name,
-            execution_id=fdn_id,
-            owner_clerk_id=owner_clerk_id,
-        )
-    )
-
-    doctor_finder_id = await _start_doctor_finder(disease_name, profile_norm)
-    guideline_id = await _start_guideline_run(
-        disease_slug, disease_name, profile_norm, owner_clerk_id=owner_clerk_id
     )
 
     return {
@@ -106,12 +83,116 @@ async def bootstrap_disease_research(
     }
 
 
-async def _start_doctor_finder(disease_name: str, profile: str) -> str:
-    """Fire doctor_finder using the existing in-process queue infrastructure."""
+async def _run_fast_finders_then_guideline(
+    *,
+    disease_slug: str,
+    disease_name: str,
+    profile_norm: str,
+    owner_clerk_id: str | None,
+    ogf_id: str,
+    trf_id: str,
+    trp_id: str,
+    fdn_id: str,
+    doctor_finder_id: str,
+    guideline_id: str,
+) -> None:
+    from .official_guidelines_finder import find_official_guideline_for_disease
+    from .trials_finder import find_trials_for_disease
+    from .therapies_finder import find_therapies_for_disease
+    from .foundations_finder import find_foundations_for_disease
+
+    try:
+        results = await asyncio.gather(
+            find_official_guideline_for_disease(
+                disease_slug=disease_slug,
+                disease_name=disease_name,
+                execution_id=ogf_id,
+                owner_clerk_id=owner_clerk_id,
+            ),
+            find_trials_for_disease(
+                disease_slug=disease_slug,
+                disease_name=disease_name,
+                execution_id=trf_id,
+                owner_clerk_id=owner_clerk_id,
+            ),
+            find_therapies_for_disease(
+                disease_slug=disease_slug,
+                disease_name=disease_name,
+                execution_id=trp_id,
+                owner_clerk_id=owner_clerk_id,
+            ),
+            find_foundations_for_disease(
+                disease_slug=disease_slug,
+                disease_name=disease_name,
+                execution_id=fdn_id,
+                owner_clerk_id=owner_clerk_id,
+            ),
+            _run_doctor_finder(disease_name, execution_id=doctor_finder_id),
+            return_exceptions=True,
+        )
+        for item in results:
+            if isinstance(item, BaseException):
+                log.error(
+                    "disease_bootstrap: finder failed for %s: %s",
+                    disease_slug,
+                    item,
+                    exc_info=item,
+                )
+    except Exception:
+        log.exception(
+            "disease_bootstrap: fast-finder phase failed for %s", disease_slug
+        )
+
+    log.info(
+        "disease_bootstrap: fast finders done for %s (doctor_finder=%s); starting guideline %s",
+        disease_slug,
+        doctor_finder_id or "n/a",
+        guideline_id,
+    )
+    try:
+        await _start_guideline_run(
+            disease_slug,
+            disease_name,
+            profile_norm,
+            owner_clerk_id=owner_clerk_id,
+            execution_id=guideline_id,
+        )
+    except Exception:
+        log.exception(
+            "disease_bootstrap: guideline start failed for %s (%s)",
+            disease_slug,
+            guideline_id,
+        )
+
+
+def _reserve_guideline_slot(
+    *,
+    execution_id: str,
+    disease_slug: str,
+    disease_name: str,
+    owner_clerk_id: str | None,
+) -> None:
+    """Persist a placeholder row so GET /run and deep-links work before execution."""
+    from ..guideline_run_store import record_agent_run_start, update_guideline_run_stage
+
+    now = datetime.now(timezone.utc).isoformat()
+    record_agent_run_start(
+        execution_id=execution_id,
+        pipeline="guideline",
+        flow_key="pubmed",
+        disease_slug=disease_slug,
+        label=disease_name,
+        owner_clerk_id=owner_clerk_id,
+        started_at=now,
+    )
+    update_guideline_run_stage(execution_id, "queued")
+
+
+async def _run_doctor_finder(disease_name: str, *, execution_id: str) -> str:
+    """Run doctor_finder to completion (same store/queue wiring as the HTTP route)."""
     from ..flows.doctor_finder.schemas import DoctorFinderInput
     from ..routers import doctor_finder as df_router
 
-    execution_id = str(uuid.uuid4())
     event_queue: Queue = Queue()
     store: dict = {
         "execution_id": execution_id,
@@ -131,10 +212,8 @@ async def _start_doctor_finder(disease_name: str, profile: str) -> str:
         clinical_focus=True,
         top_n_authors=20,
     )
-    asyncio.create_task(
-        df_router._execute_doctor_finder(execution_id, input_data, event_queue)
-    )
-    log.info("disease_bootstrap: fired doctor_finder %s for %s", execution_id, disease_name)
+    await df_router._execute_doctor_finder(execution_id, input_data, event_queue)
+    log.info("disease_bootstrap: doctor_finder %s finished for %s", execution_id, disease_name)
     return execution_id
 
 
@@ -144,8 +223,9 @@ async def _start_guideline_run(
     profile: str,
     *,
     owner_clerk_id: str | None = None,
+    execution_id: str,
 ) -> str:
-    """Fire the PubMed guideline pipeline by reusing the agent_router's start helper."""
+    """Start the PubMed guideline pipeline using a pre-reserved execution id."""
     from .. import database as db
     from ..content_db import get_disease_by_slug
     from ..routers import agent as agent_router
@@ -176,8 +256,9 @@ async def _start_guideline_run(
         pipeline="guideline",
         disease_slug=disease_slug,
         owner_clerk_id=owner_clerk_id,
+        execution_id=execution_id,
     )
-    eid = str(result.get("execution_id") or "")
+    eid = str(result.get("execution_id") or execution_id)
     log.info("disease_bootstrap: fired guideline %s for %s", eid, disease_slug)
     return eid
 

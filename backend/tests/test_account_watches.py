@@ -1,10 +1,13 @@
 """Tests for account watch, preference, and notification store functions."""
 from __future__ import annotations
 
-import sqlite3
+import os
 import unittest
 from datetime import UTC, datetime
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
+
+import psycopg
+import pytest
 
 from backend.account_store import (
     MAX_WATCHES_PER_USER,
@@ -22,14 +25,16 @@ from backend.account_store import (
 from backend.clerk_auth import AuthUser
 
 
+pytestmark = pytest.mark.skipif(
+    not os.environ.get("DB_URL"),
+    reason="DB_URL required (postgresql://ggapp:testpass@localhost:5432/geneguidelines)",
+)
+
+
 class _NonClosingConn:
-    """Wraps an SQLite connection so that close() is a no-op.
+    """Wraps a Postgres connection so that close() is a no-op between store calls."""
 
-    Prevents the shared in-memory connection from being closed between
-    account_store function calls during testing.
-    """
-
-    def __init__(self, conn: sqlite3.Connection) -> None:
+    def __init__(self, conn: psycopg.Connection) -> None:
         self._conn = conn
 
     def close(self) -> None:
@@ -39,61 +44,18 @@ class _NonClosingConn:
         return getattr(self._conn, name)
 
 
-def _make_mem_conn() -> sqlite3.Connection:
-    """Create a fresh in-memory SQLite connection matching database.py conventions."""
-    conn = sqlite3.connect(":memory:")
+def _prepare_postgres_conn() -> psycopg.Connection:
+    from backend.account_store import ensure_account_tables_schema
+    from backend.db import get_connection
+    from backend.guideline_run_store import ensure_guideline_run_results_schema
 
-    def _row_factory(cursor: sqlite3.Cursor, row: tuple) -> dict:
-        if cursor.description is None:
-            return {}
-        return {cursor.description[i][0]: row[i] for i in range(len(row))}
-
-    conn.row_factory = _row_factory  # type: ignore[assignment]
-    conn.execute("PRAGMA foreign_keys = ON")
-    conn.executescript(
+    ensure_account_tables_schema()
+    ensure_guideline_run_results_schema()
+    conn = get_connection()
+    conn.execute(
         """
-        CREATE TABLE IF NOT EXISTS user_disease_watches (
-            clerk_id TEXT NOT NULL,
-            disease_slug TEXT NOT NULL,
-            created_at TEXT NOT NULL,
-            PRIMARY KEY (clerk_id, disease_slug)
-        );
-        CREATE TABLE IF NOT EXISTS user_preferences (
-            clerk_id TEXT PRIMARY KEY,
-            audience_view TEXT,
-            notify_run_email INTEGER NOT NULL DEFAULT 0,
-            updated_at TEXT NOT NULL
-        );
-        CREATE TABLE IF NOT EXISTS user_run_notifications (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            clerk_id TEXT NOT NULL,
-            execution_id TEXT NOT NULL,
-            disease_slug TEXT,
-            flow_key TEXT,
-            label TEXT,
-            status TEXT NOT NULL DEFAULT 'completed',
-            created_at TEXT NOT NULL,
-            read_at TEXT,
-            UNIQUE(clerk_id, execution_id)
-        );
-        CREATE TABLE IF NOT EXISTS diseases (
-            slug TEXT PRIMARY KEY,
-            name TEXT NOT NULL,
-            name_short TEXT,
-            status TEXT
-        );
-        CREATE TABLE IF NOT EXISTS guideline_run_results (
-            execution_id TEXT PRIMARY KEY,
-            pipeline TEXT NOT NULL,
-            flow_key TEXT,
-            disease_slug TEXT,
-            label TEXT,
-            done INTEGER NOT NULL DEFAULT 0,
-            started_at TEXT,
-            finished_at TEXT,
-            error TEXT,
-            owner_clerk_id TEXT
-        );
+        TRUNCATE user_disease_watches, user_preferences, user_run_notifications,
+                 guideline_run_results RESTART IDENTITY
         """
     )
     conn.commit()
@@ -104,7 +66,7 @@ class WatchStoreTests(unittest.TestCase):
     """Tests for disease watch CRUD functions."""
 
     def setUp(self) -> None:
-        self._conn = _make_mem_conn()
+        self._conn = _prepare_postgres_conn()
         self._wrapped = _NonClosingConn(self._conn)
         self._patch = patch(
             "backend.account_store.get_connection", side_effect=lambda: self._wrapped
@@ -167,7 +129,16 @@ class WatchStoreTests(unittest.TestCase):
     def test_watches_enrichment_with_disease(self) -> None:
         """Enrichment fills name_short from the diseases table."""
         self._conn.execute(
-            "INSERT INTO diseases (slug, name, name_short, status) VALUES ('fd', 'Fabry Disease', 'FD', 'published')"
+            """
+            INSERT INTO diseases (
+                slug, name, name_short, omim, gene, inheritance, summary,
+                prevalence_text, status, coverage, accent
+            ) VALUES (
+                'fd', 'Fabry Disease', 'FD', '301500', 'GLA', 'X-linked',
+                'Test summary', 'Rare', 'published', 'partial', 'blue'
+            )
+            ON CONFLICT (slug) DO UPDATE SET name_short = EXCLUDED.name_short, status = EXCLUDED.status
+            """
         )
         self._conn.commit()
         add_watch("u_enrich", "fd")
@@ -208,7 +179,7 @@ class WatchEndpointTests(unittest.TestCase):
     """Tests for the account router watch handlers called directly (bypassing FastAPI DI)."""
 
     def setUp(self) -> None:
-        self._conn = _make_mem_conn()
+        self._conn = _prepare_postgres_conn()
         self._wrapped = _NonClosingConn(self._conn)
         self._patch = patch(
             "backend.account_store.get_connection", side_effect=lambda: self._wrapped
@@ -254,7 +225,7 @@ class NotificationStoreTests(unittest.TestCase):
     """Tests for notification store functions."""
 
     def setUp(self) -> None:
-        self._conn = _make_mem_conn()
+        self._conn = _prepare_postgres_conn()
         self._wrapped = _NonClosingConn(self._conn)
         self._patch = patch(
             "backend.account_store.get_connection", side_effect=lambda: self._wrapped

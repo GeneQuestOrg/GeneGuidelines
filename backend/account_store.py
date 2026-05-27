@@ -43,7 +43,7 @@ def ensure_account_tables_schema() -> None:
     cur.execute(
         """
         CREATE TABLE IF NOT EXISTS user_run_notifications (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             clerk_id TEXT NOT NULL,
             execution_id TEXT NOT NULL,
             disease_slug TEXT,
@@ -80,7 +80,7 @@ def add_watch(clerk_id: str, disease_slug: str) -> None:
     conn = get_connection()
     cur = conn.cursor()
     cur.execute(
-        "SELECT 1 FROM user_disease_watches WHERE clerk_id = ? AND disease_slug = ?",
+        "SELECT 1 FROM user_disease_watches WHERE clerk_id = %s AND disease_slug = %s",
         (clerk_id, disease_slug),
     )
     already_exists = cur.fetchone() is not None
@@ -93,7 +93,11 @@ def add_watch(clerk_id: str, disease_slug: str) -> None:
 
     conn = get_connection()
     conn.execute(
-        "INSERT OR IGNORE INTO user_disease_watches (clerk_id, disease_slug, created_at) VALUES (?, ?, ?)",
+        """
+        INSERT INTO user_disease_watches (clerk_id, disease_slug, created_at)
+        VALUES (%s, %s, %s)
+        ON CONFLICT (clerk_id, disease_slug) DO NOTHING
+        """,
         (clerk_id, disease_slug, datetime.now(UTC).isoformat()),
     )
     conn.commit()
@@ -110,7 +114,7 @@ def remove_watch(clerk_id: str, disease_slug: str) -> None:
     ensure_account_tables_schema()
     conn = get_connection()
     conn.execute(
-        "DELETE FROM user_disease_watches WHERE clerk_id = ? AND disease_slug = ?",
+        "DELETE FROM user_disease_watches WHERE clerk_id = %s AND disease_slug = %s",
         (clerk_id, disease_slug),
     )
     conn.commit()
@@ -130,7 +134,7 @@ def count_watches(clerk_id: str) -> int:
     conn = get_connection()
     cur = conn.cursor()
     cur.execute(
-        "SELECT COUNT(*) as cnt FROM user_disease_watches WHERE clerk_id = ?",
+        "SELECT COUNT(*) as cnt FROM user_disease_watches WHERE clerk_id = %s",
         (clerk_id,),
     )
     row = cur.fetchone()
@@ -172,7 +176,7 @@ def list_watches_enriched(clerk_id: str) -> list[WatchedDiseaseRow]:
     cur = conn.cursor()
 
     cur.execute(
-        "SELECT disease_slug, created_at FROM user_disease_watches WHERE clerk_id = ? ORDER BY created_at DESC",
+        "SELECT disease_slug, created_at FROM user_disease_watches WHERE clerk_id = %s ORDER BY created_at DESC",
         (clerk_id,),
     )
     watches = cur.fetchall()
@@ -191,7 +195,7 @@ def list_watches_enriched(clerk_id: str) -> list[WatchedDiseaseRow]:
         for w in watches
     }
 
-    placeholders = ",".join(["?"] * len(slugs))
+    placeholders = ",".join(["%s"] * len(slugs))
 
     cur.execute(
         f"SELECT slug, name_short, status FROM diseases WHERE slug IN ({placeholders})",
@@ -290,7 +294,11 @@ def ensure_watch(clerk_id: str, disease_slug: str) -> None:
             return
         conn = get_connection()
         conn.execute(
-            "INSERT OR IGNORE INTO user_disease_watches (clerk_id, disease_slug, created_at) VALUES (?, ?, ?)",
+            """
+        INSERT INTO user_disease_watches (clerk_id, disease_slug, created_at)
+        VALUES (%s, %s, %s)
+        ON CONFLICT (clerk_id, disease_slug) DO NOTHING
+        """,
             (clerk_id, disease_slug, datetime.now(UTC).isoformat()),
         )
         conn.commit()
@@ -329,7 +337,7 @@ def get_preferences(clerk_id: str) -> UserPreferences | None:
     conn = get_connection()
     cur = conn.cursor()
     cur.execute(
-        "SELECT clerk_id, audience_view, notify_run_email, updated_at FROM user_preferences WHERE clerk_id = ?",
+        "SELECT clerk_id, audience_view, notify_run_email, updated_at FROM user_preferences WHERE clerk_id = %s",
         (clerk_id,),
     )
     row = cur.fetchone()
@@ -389,7 +397,7 @@ def upsert_preferences(
     conn.execute(
         """
         INSERT INTO user_preferences (clerk_id, audience_view, notify_run_email, updated_at)
-        VALUES (?, ?, ?, ?)
+        VALUES (%s, %s, %s, %s)
         ON CONFLICT(clerk_id) DO UPDATE SET
             audience_view = excluded.audience_view,
             notify_run_email = excluded.notify_run_email,
@@ -436,9 +444,10 @@ def insert_notification(
     conn = get_connection()
     conn.execute(
         """
-        INSERT OR IGNORE INTO user_run_notifications
+        INSERT INTO user_run_notifications
             (clerk_id, execution_id, disease_slug, flow_key, label, status, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        VALUES (%s, %s, %s, %s, %s, %s, %s)
+        ON CONFLICT (clerk_id, execution_id) DO NOTHING
         """,
         (
             clerk_id,
@@ -479,9 +488,9 @@ def list_notifications(
             """
             SELECT id, execution_id, disease_slug, flow_key, label, status, created_at, read_at
             FROM user_run_notifications
-            WHERE clerk_id = ? AND read_at IS NULL
+            WHERE clerk_id = %s AND read_at IS NULL
             ORDER BY created_at DESC
-            LIMIT ?
+            LIMIT %s
             """,
             (clerk_id, limit),
         )
@@ -490,9 +499,9 @@ def list_notifications(
             """
             SELECT id, execution_id, disease_slug, flow_key, label, status, created_at, read_at
             FROM user_run_notifications
-            WHERE clerk_id = ?
+            WHERE clerk_id = %s
             ORDER BY created_at DESC
-            LIMIT ?
+            LIMIT %s
             """,
             (clerk_id, limit),
         )
@@ -540,13 +549,13 @@ def mark_notifications_read(
     cur = conn.cursor()
     if all_:
         cur.execute(
-            "UPDATE user_run_notifications SET read_at = ? WHERE clerk_id = ? AND read_at IS NULL",
+            "UPDATE user_run_notifications SET read_at = %s WHERE clerk_id = %s AND read_at IS NULL",
             (now, clerk_id),
         )
     elif ids:
-        placeholders = ",".join(["?"] * len(ids))
+        placeholders = ",".join(["%s"] * len(ids))
         cur.execute(
-            f"UPDATE user_run_notifications SET read_at = ? WHERE clerk_id = ? AND id IN ({placeholders}) AND read_at IS NULL",
+            f"UPDATE user_run_notifications SET read_at = %s WHERE clerk_id = %s AND id IN ({placeholders}) AND read_at IS NULL",
             [now, clerk_id, *ids],
         )
     else:
@@ -571,7 +580,7 @@ def count_unread_notifications(clerk_id: str) -> int:
     conn = get_connection()
     cur = conn.cursor()
     cur.execute(
-        "SELECT COUNT(*) as cnt FROM user_run_notifications WHERE clerk_id = ? AND read_at IS NULL",
+        "SELECT COUNT(*) as cnt FROM user_run_notifications WHERE clerk_id = %s AND read_at IS NULL",
         (clerk_id,),
     )
     row = cur.fetchone()

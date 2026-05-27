@@ -176,24 +176,31 @@ export function ResearchRunView({
     if (!shouldUseTraceSse()) {
       return;
     }
-    const base = getApiBaseUrl();
-    const path = appendApiKeyQueryForSse(
-      `/api/agent/trace/${encodeURIComponent(executionId)}`,
-    );
-    const url = base ? `${base}${path}` : path;
-    const es = new EventSource(url);
-    es.onmessage = (event) => {
-      appendRawLines([event.data]);
-    };
-    es.onerror = () => {
-      appendRawLines([
-        JSON.stringify({
-          kind: "sys",
-          text: "Live stream interrupted — polling still runs.",
-        }),
-      ]);
-      es.close();
-    };
+    let es: EventSource | null = null;
+    let cancelled = false;
+
+    void (async () => {
+      const base = getApiBaseUrl();
+      const path = await appendApiKeyQueryForSse(
+        `/api/agent/trace/${encodeURIComponent(executionId)}`,
+      );
+      if (cancelled) return;
+      const url = base ? `${base}${path}` : path;
+      es = new EventSource(url);
+      es.onmessage = (event) => {
+        appendRawLines([event.data]);
+      };
+      es.onerror = () => {
+        appendRawLines([
+          JSON.stringify({
+            kind: "sys",
+            text: "Live stream interrupted — polling still runs.",
+          }),
+        ]);
+        es?.close();
+      };
+    })();
+
     return () => {
       cancelled = true;
       es?.close();
