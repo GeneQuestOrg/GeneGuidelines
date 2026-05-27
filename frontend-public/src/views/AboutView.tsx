@@ -1,15 +1,13 @@
 import { Button } from "@gene-guidelines/ui";
 import type { AudienceView } from "../router/types";
-import { PersonaSwitcher } from "../components/PersonaSwitcher";
 import "./about-view.css";
 
 export interface AboutViewProps {
   view: AudienceView;
-  onViewChange: (view: AudienceView) => void;
   onNav: (path: string) => void;
 }
 
-export function AboutView({ view, onViewChange, onNav }: AboutViewProps) {
+export function AboutView({ view, onNav }: AboutViewProps) {
   return (
     <div className="page page--about">
       <header className="about__hero">
@@ -22,9 +20,6 @@ export function AboutView({ view, onViewChange, onNav }: AboutViewProps) {
           <br />
           GeneGuidelines exists to make that flow of knowledge usable at the point of care.
         </h1>
-        <div className="about__persona">
-          <PersonaSwitcher view={view} onChange={onViewChange} />
-        </div>
       </header>
 
       <article className="about__article">

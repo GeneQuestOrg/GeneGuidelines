@@ -49,7 +49,7 @@ export function routeContent({
     case "account":
       return <AccountView onNav={onNav} onSignIn={onSignIn} />;
     case "about":
-      return <AboutView view={view} onViewChange={onViewChange} onNav={onNav} />;
+      return <AboutView view={view} onNav={onNav} />;
     case "doctors":
       return (
         <DoctorsView

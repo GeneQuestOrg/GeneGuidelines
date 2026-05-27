@@ -9,7 +9,14 @@
  * ``researchWorkstreams.ts`` for the new derivation.
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Button, Section, Status } from "@gene-guidelines/ui";
 import {
   ApiRequestError,
@@ -241,9 +248,35 @@ export function ResearchRunView({
     pollIntervalMs: 2000,
   });
 
-  const previouslyDoneRef = useRef<Set<WorkstreamKey>>(new Set());
-  const seenActiveRef = useRef<Set<WorkstreamKey>>(new Set());
-  const lastInactiveRef = useRef<Partial<Record<WorkstreamKey, number>>>({});
+  const workstreamTrackingRef = useRef<{
+    previouslyDone: Set<WorkstreamKey>;
+    seenActive: Set<WorkstreamKey>;
+    lastInactiveAtMs: Partial<Record<WorkstreamKey, number>>;
+  }>({
+    previouslyDone: new Set(),
+    seenActive: new Set(),
+    lastInactiveAtMs: {},
+  });
+
+  const [streams, setStreams] = useState<readonly WorkstreamState[]>(() =>
+    deriveWorkstreams({
+      activeRuns: [],
+      guidelineRunDone: false,
+      guidelineRunFailed: false,
+      hasGuidelineDocument: false,
+      hasOfficialGuideline: false,
+      doctorsCount: 0,
+      trialsCount: 0,
+      therapiesCount: 0,
+      foundationsCount: 0,
+      elapsedSec: 0,
+      previouslyDone: [],
+      seenActive: [],
+      lastInactiveAtMs: {},
+      nowMs: Date.now(),
+      guidelineTraceSeen: false,
+    }),
+  );
 
   // Whether we have seen *any* SSE / agent activity for the guideline
   // pipeline — gates the "running" status of the guideline workstream.
@@ -259,19 +292,21 @@ export function ResearchRunView({
 
   const nowMs = startedAtMs + elapsedSec * 1000;
 
-  const streams = useMemo<readonly WorkstreamState[]>(() => {
+  // Sticky workstream tracking mutates refs — keep it out of render (eslint react-hooks/refs).
+  useLayoutEffect(() => {
+    const tracking = workstreamTrackingRef.current;
     const currentlyActive = new Set(activeWorkstreamKeys(partial.activeRuns));
 
     for (const key of currentlyActive) {
-      seenActiveRef.current.add(key);
+      tracking.seenActive.add(key);
     }
-    for (const key of seenActiveRef.current) {
-      if (!currentlyActive.has(key) && lastInactiveRef.current[key] == null) {
-        lastInactiveRef.current[key] = nowMs;
+    for (const key of tracking.seenActive) {
+      if (!currentlyActive.has(key) && tracking.lastInactiveAtMs[key] == null) {
+        tracking.lastInactiveAtMs[key] = nowMs;
       }
     }
     for (const key of currentlyActive) {
-      delete lastInactiveRef.current[key];
+      delete tracking.lastInactiveAtMs[key];
     }
 
     const derived = deriveWorkstreams({
@@ -285,12 +320,13 @@ export function ResearchRunView({
       therapiesCount: partial.therapies,
       foundationsCount: partial.foundations,
       elapsedSec,
-      previouslyDone: Array.from(previouslyDoneRef.current),
-      seenActive: Array.from(seenActiveRef.current),
-      lastInactiveAtMs: { ...lastInactiveRef.current },
+      previouslyDone: Array.from(tracking.previouslyDone),
+      seenActive: Array.from(tracking.seenActive),
+      lastInactiveAtMs: { ...tracking.lastInactiveAtMs },
       nowMs,
       guidelineTraceSeen,
     });
+
     for (const stream of derived) {
       if (stream.status !== "done") continue;
       const isFinderWithZero =
@@ -298,10 +334,11 @@ export function ResearchRunView({
         stream.key !== "official_guidelines" &&
         (stream.count ?? 0) === 0;
       if (!isFinderWithZero) {
-        previouslyDoneRef.current.add(stream.key);
+        tracking.previouslyDone.add(stream.key);
       }
     }
-    return derived;
+
+    setStreams(derived);
   }, [
     partial.activeRuns,
     partial.doctors,

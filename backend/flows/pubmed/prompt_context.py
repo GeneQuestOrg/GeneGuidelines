@@ -2,12 +2,15 @@
 from __future__ import annotations
 
 import json
+import re
 from typing import Any
 
 from ...config import (
-    LLM_PROMPT_TOKEN_CAP,
-    OPENAI_TPM_REQUEST_TOKEN_BUDGET,
     PUBMED_ARTICLES_TEXT_ABSTRACT_MAX_CHARS,
+    PUBMED_PASS1_TOP_K,
+    PUBMED_PM3_TOP_K,
+    PUBMED_PROMPT_ABSTRACT_MAX_CHARS,
+    effective_llm_prompt_token_cap,
 )
 
 _PM3_PM2_KEYS: tuple[str, ...] = (
@@ -30,8 +33,8 @@ _PM3_PM2_KEYS: tuple[str, ...] = (
     "evidence_manifest",
 )
 
-# Reserve tokens for cards + metadata so articles_text can share the TPM budget with evidence_cards.
-_PM3_METADATA_TOKEN_RESERVE = 12_000
+# Reserve tokens for cards + metadata so articles_text can share the budget with evidence_cards.
+_PM3_METADATA_TOKEN_RESERVE = 8_000
 
 _PASS1_TOPIC_BUCKET: dict[str, str | None] = {
     "pass1-overview": None,
@@ -57,9 +60,116 @@ _PM2_METADATA_KEYS: tuple[str, ...] = (
     "unique_pmid_count",
 )
 
+_TIER_SCORES: tuple[tuple[str, int], ...] = (
+    ("systematic_review", 100),
+    ("meta_analysis", 95),
+    ("guideline", 90),
+    ("consensus", 88),
+    ("randomized", 82),
+    ("rct", 80),
+    ("clinical_trial", 78),
+    ("review", 70),
+    ("cohort", 60),
+    ("case_series", 45),
+    ("case_report", 35),
+)
+
+_CONFIDENCE_SCORE: dict[str, int] = {
+    "high": 30,
+    "medium": 15,
+    "low": 5,
+}
+
+_SLIM_CARD_KEYS: tuple[str, ...] = (
+    "pmid",
+    "title",
+    "topic_bucket",
+    "evidence_tier",
+    "tier",
+    "confidence",
+    "inclusion_reason",
+    "pubdate",
+)
+
 
 def _estimate_tokens(text: str) -> int:
     return max(1, len(text) // 4)
+
+
+def _extract_year(value: str) -> int | None:
+    digits = "".join(ch for ch in str(value or "") if ch.isdigit())
+    if len(digits) >= 4:
+        year = int(digits[:4])
+        if 1900 <= year <= 2100:
+            return year
+    return None
+
+
+def _tier_score(tier: str) -> int:
+    norm = re.sub(r"[\s\-]+", "_", str(tier or "").strip().lower())
+    for key, score in _TIER_SCORES:
+        if key in norm:
+            return score
+    return 10
+
+
+def _card_by_pmid(evidence_cards: list[Any]) -> dict[str, dict[str, Any]]:
+    out: dict[str, dict[str, Any]] = {}
+    for card in evidence_cards:
+        if not isinstance(card, dict):
+            continue
+        pmid = str(card.get("pmid") or card.get("id") or "").strip()
+        if pmid:
+            out[pmid] = card
+    return out
+
+
+def _article_rank_score(article: dict[str, Any], card: dict[str, Any] | None) -> float:
+    card = card or {}
+    score = 0.0
+    score += _tier_score(str(card.get("evidence_tier") or card.get("tier") or ""))
+    conf = str(card.get("confidence") or "medium").strip().lower()
+    score += float(_CONFIDENCE_SCORE.get(conf, 10))
+    year = _extract_year(str(article.get("pubdate") or card.get("pubdate") or ""))
+    if year is not None:
+        score += max(0.0, min(25.0, (year - 2000) * 0.6))
+    if str(article.get("abstract") or "").strip():
+        score += 8.0
+    if str(article.get("title") or "").strip():
+        score += 2.0
+    rank_hint = article.get("rank_score")
+    if isinstance(rank_hint, (int, float)):
+        score += float(rank_hint)
+    return score
+
+
+def _rank_articles(
+    articles: list[dict[str, Any]],
+    evidence_cards: list[Any],
+) -> list[dict[str, Any]]:
+    cards = _card_by_pmid(evidence_cards)
+    scored: list[tuple[float, int, dict[str, Any]]] = []
+    for index, article in enumerate(articles):
+        if not isinstance(article, dict):
+            continue
+        pmid = str(article.get("pmid") or "").strip()
+        scored.append((_article_rank_score(article, cards.get(pmid)), index, article))
+    scored.sort(key=lambda item: (-item[0], item[1]))
+    return [article for _, _, article in scored]
+
+
+def _slim_evidence_cards(cards: list[Any]) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    for card in cards:
+        if not isinstance(card, dict):
+            continue
+        pmid = str(card.get("pmid") or card.get("id") or "").strip()
+        if not pmid:
+            continue
+        slim = {k: card[k] for k in _SLIM_CARD_KEYS if k in card and card[k] not in (None, "")}
+        slim.setdefault("pmid", pmid)
+        out.append(slim)
+    return out
 
 
 def _article_line(article: dict[str, Any], *, index: int, abstract_max: int) -> str:
@@ -122,7 +232,7 @@ def _articles_within_token_budget(
     *,
     abstract_max: int,
 ) -> tuple[list[dict[str, Any]], bool]:
-    """Include articles in order until estimated prompt tokens would exceed ``budget_tokens``."""
+    """Include ranked articles in order until estimated prompt tokens would exceed ``budget_tokens``."""
     if budget_tokens <= 0:
         return list(articles), False
     selected: list[dict[str, Any]] = []
@@ -150,36 +260,55 @@ def _estimate_json_tokens(value: Any) -> int:
     return _estimate_tokens(text)
 
 
+def _top_k_for_node(node_id: str) -> int | None:
+    if node_id == "pm-3":
+        return PUBMED_PM3_TOP_K
+    if node_id.startswith("pass1-") or (
+        node_id.startswith("pm-4-") and node_id not in ("pm-4-build",)
+    ):
+        return PUBMED_PASS1_TOP_K
+    return None
+
+
 def _corpus_fields_for_prompt(
-    result_dict: dict[str, Any],
     articles: list[dict[str, Any]],
     evidence_cards: list[Any],
     *,
     token_budget: int,
     abstract_max: int,
+    top_k: int | None,
 ) -> tuple[dict[str, Any], bool]:
-    """Build ``articles_text`` + aligned ``evidence_cards`` within a TPM token budget."""
+    """Build ranked, capped ``articles_text`` + slim ``evidence_cards`` for LLM prompts."""
     total_articles = len(articles)
-    budget = token_budget
+    ranked = _rank_articles(articles, evidence_cards)
     corpus_capped = False
 
+    if top_k is not None and top_k > 0 and len(ranked) > top_k:
+        ranked = ranked[:top_k]
+        corpus_capped = True
+
+    budget = token_budget
+    slim_cards = _slim_evidence_cards(_cards_for_articles(evidence_cards, ranked))
+
     if budget > 0:
-        cards_tokens = _estimate_json_tokens(evidence_cards)
+        cards_tokens = _estimate_json_tokens(slim_cards)
         articles_budget = budget - cards_tokens - _PM3_METADATA_TOKEN_RESERVE
-        if articles_budget < 8_000:
-            articles_budget = max(8_000, budget // 2)
-        selected, corpus_capped = _articles_within_token_budget(
-            articles,
+        if articles_budget < 4_000:
+            articles_budget = max(4_000, budget // 3)
+        selected, token_capped = _articles_within_token_budget(
+            ranked,
             articles_budget,
             abstract_max=abstract_max,
         )
+        corpus_capped = corpus_capped or token_capped
+        slim_cards = _slim_evidence_cards(_cards_for_articles(evidence_cards, selected))
     else:
-        selected = list(articles)
+        selected = list(ranked)
 
     payload: dict[str, Any] = {
         "article_count": len(selected),
         "articles_text": build_articles_text(selected, abstract_max=abstract_max),
-        "evidence_cards": _cards_for_articles(evidence_cards, selected),
+        "evidence_cards": slim_cards,
     }
     if corpus_capped:
         payload["articles_text_corpus_capped"] = True
@@ -211,17 +340,18 @@ def pm2_view_for_llm_prompt(node_id: str, raw: Any) -> Any:
     if not needs_corpus and node_id != "pm-3":
         return raw
 
-    abstract_max = PUBMED_ARTICLES_TEXT_ABSTRACT_MAX_CHARS
-    budget = min(OPENAI_TPM_REQUEST_TOKEN_BUDGET, LLM_PROMPT_TOKEN_CAP)
+    abstract_max = PUBMED_PROMPT_ABSTRACT_MAX_CHARS
+    budget = effective_llm_prompt_token_cap()
+    top_k = _top_k_for_node(node_id)
 
     if node_id == "pm-3":
         payload = {k: result_dict[k] for k in _PM3_PM2_KEYS if k in result_dict}
         corpus_fields, _ = _corpus_fields_for_prompt(
-            result_dict,
             articles if isinstance(articles, list) else [],
             evidence_cards,
             token_budget=budget,
             abstract_max=abstract_max,
+            top_k=top_k,
         )
         payload.update(corpus_fields)
         return _wrap_result(payload, has_result)
@@ -231,11 +361,11 @@ def pm2_view_for_llm_prompt(node_id: str, raw: Any) -> Any:
 
     payload = {k: result_dict[k] for k in _PM2_METADATA_KEYS if k in result_dict}
     corpus_fields, _ = _corpus_fields_for_prompt(
-        result_dict,
         scoped_articles,
         evidence_cards,
         token_budget=budget,
         abstract_max=abstract_max,
+        top_k=top_k,
     )
     payload.update(corpus_fields)
     if bucket is not None:

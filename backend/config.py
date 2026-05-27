@@ -349,10 +349,35 @@ OPENAI_TPM_REQUEST_TOKEN_BUDGET = int(
 LLM_PROMPT_TOKEN_CAP = int(
     (os.environ.get("LLM_PROMPT_TOKEN_CAP") or "").strip() or 200_000
 )
+# Tighter prompt assembly budget when routing through self-hosted vLLM / SINGLE_LLM_MODE.
+LLM_PROMPT_TOKEN_CAP_VLLM = int(
+    (os.environ.get("LLM_PROMPT_TOKEN_CAP_VLLM") or "").strip() or 60_000
+)
+# Max articles injected into pm-3 / pass1 LLM prompts (full corpus stays in pm-2 store).
+PUBMED_PM3_TOP_K = max(
+    1,
+    int((os.environ.get("PUBMED_PM3_TOP_K") or "").strip() or 100),
+)
+PUBMED_PASS1_TOP_K = max(
+    1,
+    int((os.environ.get("PUBMED_PASS1_TOP_K") or "").strip() or 80),
+)
+# Shorter abstracts in LLM prompt views only (pm-2 store keeps PUBMED_ARTICLES_TEXT_ABSTRACT_MAX_CHARS).
+PUBMED_PROMPT_ABSTRACT_MAX_CHARS = max(
+    200,
+    int((os.environ.get("PUBMED_PROMPT_ABSTRACT_MAX_CHARS") or "").strip() or 800),
+)
 # Abstract chars per article line inside prompt ``articles_text`` (pm-2 code node may use more).
 PUBMED_ARTICLES_TEXT_ABSTRACT_MAX_CHARS = int(
     (os.environ.get("PUBMED_ARTICLES_TEXT_ABSTRACT_MAX_CHARS") or "").strip() or 3000
 )
+
+
+def effective_llm_prompt_token_cap() -> int:
+    """Model-context budget for assembled PubMed LLM prompts."""
+    if SINGLE_LLM_MODE or DEFAULT_MODEL_PROFILE == "vllm":
+        return min(LLM_PROMPT_TOKEN_CAP, LLM_PROMPT_TOKEN_CAP_VLLM)
+    return min(OPENAI_TPM_REQUEST_TOKEN_BUDGET, LLM_PROMPT_TOKEN_CAP)
 
 # Guidelines RAG — comma-separated anchor PMIDs override (env var)
 _GUIDELINES_RAG_PMIDS_RAW = (os.environ.get("GUIDELINES_RAG_ANCHOR_PMIDS") or "").strip()
