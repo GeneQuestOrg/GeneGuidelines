@@ -8,7 +8,7 @@ export const doctorCopy: AudienceCopy = {
     subtitle:
       "Specialist-reviewed pathways, literature, and PR workflows — built for clinical practice.",
     searchPlaceholder: "Search diseases, genes, OMIM, or phenotype…",
-    aboutLinkLabel: "About the platform",
+    aboutLinkLabel: "Why we built this",
     browseCta: "Browse diseases",
     researchCta: "New research run",
     newDiseaseTitle: "Add a new disease",

@@ -16,8 +16,20 @@ def test_summarize_node_output_extracts_article_count() -> None:
 
 
 def test_log_run_event_emits_json(capsys) -> None:
+    import sys
+
+    from backend.observability.run_log import LOGGER, _ensure_run_logger_configured
+
+    _ensure_run_logger_configured()
+    for handler in LOGGER.handlers:
+        if isinstance(handler, logging.StreamHandler):
+            handler.setStream(sys.stderr)
+
     log_run_event("node_start", execution_id="exec-1", node_id="pm-1")
-    payload = json.loads(capsys.readouterr().err.strip())
+    captured = capsys.readouterr()
+    text = captured.err.strip()
+    assert text, "expected JSON log on stderr"
+    payload = json.loads(text)
     assert payload["event"] == "node_start"
     assert payload["execution_id"] == "exec-1"
     assert payload["node_id"] == "pm-1"
