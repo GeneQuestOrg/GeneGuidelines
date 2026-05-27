@@ -1,12 +1,94 @@
 .page--about {
-  max-width: 64rem;
+  max-width: 72rem;
   margin: 0 auto;
   padding: 2rem 1.25rem 4rem;
+}
+
+.about__layout {
+  display: grid;
+  grid-template-columns: 11.5rem minmax(0, 1fr);
+  gap: 2rem 2.5rem;
+  align-items: start;
+}
+
+.about__toc {
+  position: sticky;
+  top: 5.5rem;
+  max-height: calc(100vh - 6.5rem);
+  overflow-y: auto;
+}
+
+.about__toc-label {
+  font-size: 0.625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+  color: var(--gg-text-muted, #6b7280);
+  margin-bottom: 0.5rem;
+}
+
+.about__toc-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 0.125rem;
+}
+
+.about__toc-list a {
+  display: block;
+  padding: 0.375rem 0.5rem;
+  border-radius: 0.375rem;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--gg-text-muted, #4b5563);
+  text-decoration: none;
+}
+
+.about__toc-list a:hover {
+  background: var(--gg-surface-muted, rgba(0, 0, 0, 0.04));
+  color: var(--gg-text, #111827);
+}
+
+.about__toc-item--indent a {
+  padding-left: 1rem;
+  font-size: 0.75rem;
+}
+
+.about__toc-collapse {
+  display: none;
+}
+
+.about__toc-desktop {
+  display: block;
+}
+
+.about__toc-summary {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--gg-text, #111827);
+  cursor: pointer;
+  list-style: none;
+}
+
+.about__toc-summary::-webkit-details-marker {
+  display: none;
+}
+
+.about__toc-summary::before {
+  content: "▸ ";
+  display: inline-block;
+  transition: transform 120ms ease;
+}
+
+.about__toc-collapse[open] .about__toc-summary::before {
+  transform: rotate(90deg);
 }
 
 .about__hero {
   padding: 1.5rem 0 2.5rem;
   border-bottom: 1px solid var(--gg-border, rgba(0, 0, 0, 0.08));
+  scroll-margin-top: 5.5rem;
 }
 
 .about__eyebrow {
@@ -272,4 +354,46 @@
   align-self: center;
   font-size: 1.25rem;
   color: var(--gg-accent, #2563eb);
+}
+
+.about__sec {
+  scroll-margin-top: 5.5rem;
+}
+
+@media (max-width: 900px) {
+  .about__layout {
+    grid-template-columns: 1fr;
+  }
+
+  .about__toc {
+    position: static;
+    max-height: none;
+    margin-bottom: 0.5rem;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--gg-border, rgba(0, 0, 0, 0.1));
+    border-radius: 0.5rem;
+    background: var(--gg-surface-muted, rgba(0, 0, 0, 0.02));
+  }
+
+  .about__toc-collapse {
+    display: block;
+  }
+
+  .about__toc-desktop {
+    display: none;
+  }
+
+  .about__toc-collapse .about__toc-list {
+    margin-top: 0.75rem;
+  }
+}
+
+@media print {
+  .about__toc {
+    display: none;
+  }
+
+  .about__layout {
+    grid-template-columns: 1fr;
+  }
 }
