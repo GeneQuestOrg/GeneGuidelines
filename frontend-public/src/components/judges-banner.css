@@ -408,3 +408,17 @@
   background: var(--jb-accent);
   color: var(--jb-ink);
 }
+
+@media (max-width: 900px) {
+  .jb__inner {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .jb__guide {
+    padding-left: 0;
+    border-left: 0;
+    border-top: 1px solid var(--jb-line);
+    padding-top: 14px;
+  }
+}
