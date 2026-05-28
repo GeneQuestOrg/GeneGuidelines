@@ -9,14 +9,9 @@ import { isClerkAdmin } from "../auth/clerkRole";
 import { isClerkEnabled } from "../auth/clerkConfig";
 import "./admin-app-link.css";
 
-function AdminAppLinkInner() {
-  const { user, isLoaded } = useUser();
+function AdminAppLinkContent() {
   if (!isAdminLinkVisible()) {
     return null;
-  }
-  if (isClerkEnabled()) {
-    if (!isLoaded) return null;
-    if (!isClerkAdmin(user)) return null;
   }
 
   const adminUrl = getAdminAppUrl();
@@ -51,13 +46,20 @@ function AdminAppLinkInner() {
   );
 }
 
+function ClerkAwareAdminAppLink() {
+  const { user, isLoaded } = useUser();
+  if (!isLoaded) return null;
+  if (!isClerkAdmin(user)) return null;
+  return <AdminAppLinkContent />;
+}
+
 export function AdminAppLink() {
   if (!isClerkEnabled()) {
-    return <AdminAppLinkInner />;
+    return <AdminAppLinkContent />;
   }
   return (
     <SignedIn>
-      <AdminAppLinkInner />
+      <ClerkAwareAdminAppLink />
     </SignedIn>
   );
 }
