@@ -1,27 +1,48 @@
 import { useCallback, useEffect, useState } from "react";
 import { Badge } from "@gene-guidelines/ui";
-import { fetchPipelineRuns, type PipelineKind } from "../api/client";
+import { fetchPipelineRuns } from "../api/client";
+import { DiseaseBootstrapPanel } from "../components/DiseaseBootstrapPanel";
 import { DoctorFinderPanel } from "../components/DoctorFinderPanel";
 import { GuidelineRunPanel } from "../components/GuidelineRunPanel";
 import { PathwayRunPanel } from "../components/PathwayRunPanel";
-import { mergeRunsWithServer, registerRunStart, type RunIndexEntry } from "../runHistory";
+import { mergeRunsWithServer, type RunIndexEntry } from "../runHistory";
+import {
+  DISEASE_BOOTSTRAP_PIPELINE_LABEL,
+  isDiseaseBootstrapPipeline,
+} from "../utils/pipelineKinds";
 import "../styles/ops-hub.css";
 
 const POLL_MS = 5000;
 
-type LaunchMode = "guideline" | "doctor_finder" | "parent_pathway" | null;
+type LaunchMode =
+  | "guideline"
+  | "doctor_finder"
+  | "parent_pathway"
+  | "disease_bootstrap"
+  | null;
 
-const PIPELINE_LABEL: Record<PipelineKind, string> = {
+const CORE_PIPELINE_LABEL: Record<string, string> = {
   guideline: "Guideline",
   doctor_finder: "Specialists",
   parent_pathway: "Patient chart",
   legacy: "Legacy",
 };
 
-function pipelineBadgeVariant(
-  pipeline: PipelineKind,
-): "default" | "ok" {
-  if (pipeline === "guideline" || pipeline === "parent_pathway") return "ok";
+function pipelineLabel(pipeline: string): string {
+  if (isDiseaseBootstrapPipeline(pipeline)) {
+    return DISEASE_BOOTSTRAP_PIPELINE_LABEL[pipeline];
+  }
+  return CORE_PIPELINE_LABEL[pipeline] ?? pipeline;
+}
+
+function pipelineBadgeVariant(pipeline: string): "default" | "ok" {
+  if (
+    pipeline === "guideline" ||
+    pipeline === "parent_pathway" ||
+    isDiseaseBootstrapPipeline(pipeline)
+  ) {
+    return "ok";
+  }
   return "default";
 }
 
@@ -29,6 +50,7 @@ export function RunsView() {
   const [runs, setRuns] = useState<RunIndexEntry[]>([]);
   const [launch, setLaunch] = useState<LaunchMode>("guideline");
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [prefillSlug, setPrefillSlug] = useState("");
   const [listError, setListError] = useState<string | null>(null);
 
   const refreshRuns = useCallback(async () => {
@@ -49,18 +71,42 @@ export function RunsView() {
 
   const selected = runs.find((r) => r.execution_id === selectedId) ?? null;
 
+  const openLauncher = useCallback((mode: LaunchMode, slug = "") => {
+    setLaunch(mode);
+    setSelectedId(null);
+    setPrefillSlug(slug);
+  }, []);
+
+  const rerunForSelected = useCallback(() => {
+    const slug = selected?.disease_slug ?? "";
+    if (!selected) return;
+    if (isDiseaseBootstrapPipeline(selected.pipeline)) {
+      openLauncher("disease_bootstrap", slug);
+      return;
+    }
+    if (selected.pipeline === "guideline") {
+      openLauncher("guideline", slug);
+      return;
+    }
+    if (selected.pipeline === "parent_pathway") {
+      openLauncher("parent_pathway", slug);
+      return;
+    }
+    if (selected.pipeline === "doctor_finder") {
+      openLauncher("doctor_finder", slug);
+    }
+  }, [openLauncher, selected]);
+
   const handleGuidelineStarted = useCallback(
-    (meta: { execution_id: string; label: string; started_at: string }) => {
-      registerRunStart({
-        execution_id: meta.execution_id,
-        pipeline: "guideline",
-        label: meta.label,
-        started_at: meta.started_at,
-        flow_key: "pubmed",
-        done: false,
-      });
+    (meta: {
+      execution_id: string;
+      label: string;
+      started_at: string;
+      disease_slug?: string;
+    }) => {
       setSelectedId(meta.execution_id);
       setLaunch(null);
+      setPrefillSlug("");
       void refreshRuns();
     },
     [refreshRuns],
@@ -77,14 +123,26 @@ export function RunsView() {
             <button
               type="button"
               className={
+                launch === "disease_bootstrap"
+                  ? "ops-launch-card is-active"
+                  : "ops-launch-card"
+              }
+              onClick={() => openLauncher("disease_bootstrap")}
+            >
+              <p className="ops-launch-card__title">Re-run disease research</p>
+              <p className="ops-launch-card__desc">
+                All bootstrap workflows (guidelines pointer, trials, therapies,
+                foundations, specialists, living guideline).
+              </p>
+            </button>
+            <button
+              type="button"
+              className={
                 launch === "guideline"
                   ? "ops-launch-card is-active"
                   : "ops-launch-card"
               }
-              onClick={() => {
-                setLaunch("guideline");
-                setSelectedId(null);
-              }}
+              onClick={() => openLauncher("guideline")}
             >
               <p className="ops-launch-card__title">Generate guideline</p>
               <p className="ops-launch-card__desc">
@@ -98,10 +156,7 @@ export function RunsView() {
                   ? "ops-launch-card is-active"
                   : "ops-launch-card"
               }
-              onClick={() => {
-                setLaunch("doctor_finder");
-                setSelectedId(null);
-              }}
+              onClick={() => openLauncher("doctor_finder")}
             >
               <p className="ops-launch-card__title">Find specialists</p>
               <p className="ops-launch-card__desc">
@@ -115,10 +170,7 @@ export function RunsView() {
                   ? "ops-launch-card is-active"
                   : "ops-launch-card"
               }
-              onClick={() => {
-                setLaunch("parent_pathway");
-                setSelectedId(null);
-              }}
+              onClick={() => openLauncher("parent_pathway")}
             >
               <p className="ops-launch-card__title">Generate patient chart</p>
               <p className="ops-launch-card__desc">
@@ -144,12 +196,13 @@ export function RunsView() {
                     onClick={() => {
                       setSelectedId(run.execution_id);
                       setLaunch(null);
+                      setPrefillSlug("");
                     }}
                   >
                     <div className="ops-run-item__label">{run.label}</div>
                     <div className="ops-run-item__meta">
                       <Badge variant={pipelineBadgeVariant(run.pipeline)}>
-                        {PIPELINE_LABEL[run.pipeline]}
+                        {pipelineLabel(run.pipeline)}
                       </Badge>
                       <span>{run.done ? "Done" : "Running"}</span>
                     </div>
@@ -161,32 +214,56 @@ export function RunsView() {
         </aside>
 
         <main className="ops-hub__main">
-          {launch === "guideline" ? (
-            <GuidelineRunPanel onRunStarted={handleGuidelineStarted} />
-          ) : launch === "doctor_finder" ? (
-            <DoctorFinderPanel onRunStarted={() => void refreshRuns()} />
-          ) : launch === "parent_pathway" ? (
-            <PathwayRunPanel
-              onRunStarted={() => {
-                setSelectedId(null);
+          {launch === "disease_bootstrap" ? (
+            <DiseaseBootstrapPanel
+              initialDiseaseSlug={prefillSlug}
+              onBootstrapStarted={() => {
+                setPrefillSlug("");
                 void refreshRuns();
               }}
+            />
+          ) : launch === "guideline" ? (
+            <GuidelineRunPanel
+              initialDiseaseSlug={prefillSlug}
+              onRunStarted={handleGuidelineStarted}
+            />
+          ) : launch === "doctor_finder" ? (
+            <DoctorFinderPanel
+              onRunStarted={() => void refreshRuns()}
+            />
+          ) : launch === "parent_pathway" ? (
+            <PathwayRunPanel
+              initialDiseaseSlug={prefillSlug}
+              onRunStarted={() => {
+                setSelectedId(null);
+                setPrefillSlug("");
+                void refreshRuns();
+              }}
+            />
+          ) : selected && isDiseaseBootstrapPipeline(selected.pipeline) ? (
+            <DiseaseBootstrapPanel
+              viewExecutionId={selected.execution_id}
+              viewPipeline={selected.pipeline}
+              onRunAgain={rerunForSelected}
             />
           ) : selected?.pipeline === "guideline" ? (
             <GuidelineRunPanel
               viewExecutionId={selected.execution_id}
               runLive={!selected.done}
+              onRunAgain={rerunForSelected}
             />
           ) : selected?.pipeline === "doctor_finder" ? (
             <DoctorFinderPanel
               viewExecutionId={selected.execution_id}
               runLive={!selected.done}
               onRunStarted={() => void refreshRuns()}
+              onRunAgain={rerunForSelected}
             />
           ) : selected?.pipeline === "parent_pathway" ? (
             <PathwayRunPanel
               viewExecutionId={selected.execution_id}
               runLive={!selected.done}
+              onRunAgain={rerunForSelected}
             />
           ) : selected ? (
             <div className="ops-hub__empty">

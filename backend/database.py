@@ -158,6 +158,18 @@ def init_db():
         )
     """)
 
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS api_rate_limit_events (
+            id SERIAL PRIMARY KEY,
+            bucket_key TEXT NOT NULL,
+            event_ts DOUBLE PRECISION NOT NULL
+        )
+    """)
+    cur.execute("""
+        CREATE INDEX IF NOT EXISTS idx_api_rate_limit_bucket_ts
+        ON api_rate_limit_events (bucket_key, event_ts)
+    """)
+
     conn.commit()
     conn.close()
     _ensure_position_columns()

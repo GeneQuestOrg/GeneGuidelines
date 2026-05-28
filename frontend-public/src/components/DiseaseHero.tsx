@@ -1,6 +1,10 @@
+import { useCallback, useEffect, useState } from "react";
+import { SignedIn } from "@clerk/clerk-react";
 import { Badge, Button, Status } from "@gene-guidelines/ui";
 import type { Disease, GuidelineMeta } from "../types";
 import type { DiseaseCopy } from "../copy";
+import { isClerkEnabled } from "../auth/clerkConfig";
+import { fetchWatches, watchDisease, unwatchDisease } from "../api/account";
 import "../styles/disease-page.css";
 
 export interface DiseaseHeroProps {
@@ -9,6 +13,53 @@ export interface DiseaseHeroProps {
   copy: DiseaseCopy;
   isClinician: boolean;
   onNav: (path: string) => void;
+}
+
+function WatchDiseaseButton({ slug }: { slug: string }) {
+  const [isWatched, setIsWatched] = useState<boolean | null>(null);
+  const [isPending, setIsPending] = useState(false);
+
+  useEffect(() => {
+    fetchWatches()
+      .then((watches) => {
+        setIsWatched(watches.some((w) => w.disease_slug === slug));
+      })
+      .catch(() => {
+        setIsWatched(false);
+      });
+  }, [slug]);
+
+  const toggle = useCallback(async () => {
+    if (isPending || isWatched === null) return;
+    const wasWatched = isWatched;
+    setIsWatched(!wasWatched);
+    setIsPending(true);
+    try {
+      if (wasWatched) {
+        await unwatchDisease(slug);
+      } else {
+        await watchDisease(slug);
+      }
+    } catch {
+      setIsWatched(wasWatched);
+    } finally {
+      setIsPending(false);
+    }
+  }, [slug, isWatched, isPending]);
+
+  if (isWatched === null) return null;
+
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      onClick={() => void toggle()}
+      disabled={isPending}
+      aria-pressed={isWatched}
+    >
+      {isWatched ? "★ Watched" : "☆ Watch"}
+    </Button>
+  );
 }
 
 export function DiseaseHero({
@@ -95,6 +146,11 @@ export function DiseaseHero({
         <Button variant="ghost" type="button" onClick={() => onNav(`/doctors?disease=${encodeURIComponent(slug)}`)}>
           {isClinician ? "Expert directory" : "Find specialists"} ({disease.doctorsCount})
         </Button>
+        {isClerkEnabled() ? (
+          <SignedIn>
+            <WatchDiseaseButton slug={slug} />
+          </SignedIn>
+        ) : null}
       </div>
     </div>
   );

@@ -7,13 +7,19 @@ from fastapi.testclient import TestClient
 
 @pytest.fixture
 def client():
+    from backend.clerk_auth import AuthUser, require_admin
     from backend.database import init_db
     from backend.main import app
 
     init_db()
+    app.dependency_overrides[require_admin] = lambda: AuthUser(
+        clerk_id="test-admin", email=None, role="admin"
+    )
 
     with TestClient(app) as test_client:
         yield test_client
+
+    app.dependency_overrides.clear()
 
 
 def test_get_pipeline_settings(client: TestClient) -> None:

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { repositories } from "../repositories";
 import type { ResearchRun } from "../types/researchRun";
 
-const POLL_INTERVAL_MS = 10_000;
+const POLL_INTERVAL_MS = 8_000;
 
 export interface ActiveResearchState {
   runs: readonly ResearchRun[];

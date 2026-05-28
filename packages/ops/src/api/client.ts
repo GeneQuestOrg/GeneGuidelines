@@ -19,27 +19,45 @@ function resolveApiBase(): string {
 
 export const API_BASE = resolveApiBase();
 
+export type OpsAuthTokenGetter = () => Promise<string | null>;
+
+let opsAuthTokenGetter: OpsAuthTokenGetter | null = null;
+
+/** Register Clerk ``getToken`` from the admin shell (called once at startup). */
+export function registerOpsAuthTokenGetter(getter: OpsAuthTokenGetter): void {
+  opsAuthTokenGetter = getter;
+}
+
 function getOptionalApiKey(): string | undefined {
   const k = (import.meta.env.VITE_GENEGUIDELINES_API_KEY as string | undefined)?.trim();
   return k || undefined;
 }
 
-/** Headers for optional shared-secret auth (must match backend GENEGUIDELINES_API_KEY). */
-function apiAuthHeaders(): Record<string, string> {
+async function apiAuthHeaders(): Promise<Record<string, string>> {
   const k = getOptionalApiKey();
-  if (!k) return {};
-  return { Authorization: `Bearer ${k}` };
+  if (k) return { Authorization: `Bearer ${k}` };
+  if (opsAuthTokenGetter) {
+    const token = await opsAuthTokenGetter();
+    if (token) return { Authorization: `Bearer ${token}` };
+  }
+  return {};
 }
 
-/** EventSource cannot set Authorization; append ``api_key`` query when VITE key is set. */
-function appendApiKeyQueryForSse(pathOrUrl: string): string {
+/** EventSource cannot set Authorization; append clerk_token or legacy api_key query. */
+export async function appendApiKeyQueryForSse(pathOrUrl: string): Promise<string> {
   const k = getOptionalApiKey();
-  if (!k) return pathOrUrl;
-  const withKey = (u: string) => {
-    const sep = u.includes("?") ? "&" : "?";
-    return `${u}${sep}api_key=${encodeURIComponent(k)}`;
-  };
-  return withKey(pathOrUrl);
+  if (k) {
+    const sep = pathOrUrl.includes("?") ? "&" : "?";
+    return `${pathOrUrl}${sep}api_key=${encodeURIComponent(k)}`;
+  }
+  if (opsAuthTokenGetter) {
+    const token = await opsAuthTokenGetter();
+    if (token) {
+      const sep = pathOrUrl.includes("?") ? "&" : "?";
+      return `${pathOrUrl}${sep}clerk_token=${encodeURIComponent(token)}`;
+    }
+  }
+  return pathOrUrl;
 }
 
 /** API flow node (backend response) */
@@ -132,7 +150,7 @@ async function request<T>(path: string, options?: RequestOptions): Promise<T> {
   delete (fetchOptions as RequestInit & { timeoutMs?: number }).timeoutMs;
   const hasBody = fetchOptions.body != null;
   const headers: Record<string, string> = {
-    ...apiAuthHeaders(),
+    ...(await apiAuthHeaders()),
     ...(fetchOptions.headers as Record<string, string>),
   };
   if (hasBody && !headers["Content-Type"]) {
@@ -482,7 +500,7 @@ export async function agentRun(
 }
 
 /** EventSource URL for the trace stream (SSE). */
-export function agentTraceUrl(executionId: string): string {
+export async function agentTraceUrl(executionId: string): Promise<string> {
   return appendApiKeyQueryForSse(`${API_BASE}/api/agent/trace/${executionId}`);
 }
 
@@ -554,16 +572,61 @@ export async function fetchAgentRuns(): Promise<AgentRunListItem[]> {
   }
 }
 
-export type PipelineKind = "guideline" | "doctor_finder" | "parent_pathway" | "legacy";
+export type PipelineKind =
+  | "guideline"
+  | "doctor_finder"
+  | "parent_pathway"
+  | "official_guidelines_finder"
+  | "trials_finder"
+  | "therapies_finder"
+  | "foundations_finder"
+  | "legacy";
 
 export interface PipelineRunItem {
   execution_id: string;
-  pipeline: PipelineKind;
+  pipeline: PipelineKind | string;
   label: string;
   status: string;
   done: boolean;
   error: string | null;
   started_at: string | null;
+  disease_slug?: string | null;
+}
+
+export interface BootstrapDiseaseRequest {
+  slug: string;
+  name: string;
+  name_short?: string;
+  gene?: string;
+  omim?: string;
+  inheritance?: string;
+  summary?: string;
+  prevalence_text?: string;
+  profile?: ModelProfile;
+}
+
+export interface BootstrapDiseaseResponse {
+  disease_slug: string;
+  created: boolean;
+  status: "running";
+  execution_ids: {
+    official_guidelines: string;
+    trials: string;
+    therapies: string;
+    foundations: string;
+    doctor_finder: string;
+    guideline: string;
+  };
+}
+
+export async function bootstrapDisease(
+  body: BootstrapDiseaseRequest,
+): Promise<BootstrapDiseaseResponse> {
+  return request<BootstrapDiseaseResponse>("/api/pipeline/bootstrap-disease", {
+    method: "POST",
+    body: JSON.stringify(body),
+    timeoutMs: 120_000,
+  });
 }
 
 export async function fetchPipelineRuns(): Promise<PipelineRunItem[]> {
@@ -786,7 +849,7 @@ export async function getApprovalPending(): Promise<{
 }> {
   const url = `${API_BASE}/api/agent/approval-pending`;
   try {
-    const res = await fetch(url, { method: "GET", headers: { ...apiAuthHeaders() } });
+    const res = await fetch(url, { method: "GET", headers: { ...(await apiAuthHeaders()) } });
     if (!res.ok) return { pending: null };
     const j = (await res.json()) as { pending?: ApprovalPending | null; execution_id?: string };
     return { pending: j.pending ?? null, execution_id: j.execution_id };
@@ -865,7 +928,7 @@ export async function doctorFinderRun(
   );
 }
 
-export function doctorFinderTraceUrl(executionId: string): string {
+export async function doctorFinderTraceUrl(executionId: string): Promise<string> {
   return appendApiKeyQueryForSse(`${API_BASE}/api/doctor-finder/trace/${executionId}`);
 }
 
