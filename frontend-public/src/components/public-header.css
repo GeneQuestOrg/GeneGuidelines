@@ -5,6 +5,25 @@
   gap: 8px;
 }
 
+.hdr-mobile-menu__btn {
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  font-size: var(--fs-sm);
+  padding: 8px 10px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--line);
+  background: var(--bg-elev);
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.hdr-mobile-menu__btn--primary {
+  background: var(--accent);
+  border-color: transparent;
+  color: var(--bg-elev);
+}
+
 .hdr-actions__btn {
   font: inherit;
   font-size: var(--fs-sm);
@@ -59,4 +78,10 @@
 
 .hdr-actions__menu button:hover {
   background: var(--bg-soft);
+}
+
+@media (max-width: 900px) {
+  .hdr-actions--desktop {
+    display: none;
+  }
 }

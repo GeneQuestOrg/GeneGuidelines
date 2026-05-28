@@ -58,6 +58,9 @@
 }
 .hdr__nav a:hover { background: var(--bg-soft); color: var(--ink); }
 .hdr__nav a.is-active { color: var(--ink); background: var(--bg-soft); }
+.hdr__nav-mobile-content {
+  display: none;
+}
 
 @media (max-width: 900px) {
   .hdr__row {
@@ -83,5 +86,15 @@
 
   .hdr__nav.is-open {
     display: flex;
+  }
+
+  .hdr__nav-mobile-content {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--line);
   }
 }
