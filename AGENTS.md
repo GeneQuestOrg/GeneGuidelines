@@ -164,3 +164,34 @@ tests/           — Test suite
 - Code is readable and maintainable
 - Performance is acceptable
 - User requirements are met
+
+## Cursor Cloud specific instructions
+
+### Services
+
+| Service | Start command | Port |
+|---------|--------------|------|
+| Backend (FastAPI) | `OPENAI_API_KEY=sk-test-dummy AGENT_NO_MCP=1 python3 -m uvicorn backend.main:app --reload --port 8000` | 8000 |
+| frontend-public | `npm run dev:public` | 5173 |
+| frontend-admin | `npm run dev:admin` | 5174 |
+
+The backend auto-creates its SQLite DB on first start — no migration step needed. Set `AGENT_NO_MCP=1` and a dummy `OPENAI_API_KEY` to run without real LLM credentials (all CRUD/UI works; only agentic flow execution requires a real key).
+
+### Quality checks
+
+Run before every commit — commands from `CLAUDE.md`:
+
+```bash
+npm run check:dev          # pytest + frontend-public lint/typecheck + ops typecheck
+```
+
+Or individually: `python3 -m pytest backend/tests -q`, `npm run lint`, `npm run typecheck`.
+
+The `make ship` target gates releases; it explicitly `--ignore`s `test_pubmed_flow_agentic.py` and `test_pubmed_authors_fetch_executor.py` (known flaky / WIP tests).
+
+### Gotchas
+
+- `npm run lint` currently has one pre-existing ESLint error in `frontend-public/src/views/ResearchRunView.tsx` (react-hooks/set-state-in-effect). This is not introduced by agent changes — do not attempt to fix unless explicitly asked.
+- Two backend tests (`test_evaluation_check_executor` and `test_llm_limits`) fail due to upstream code/test drift; they are not gated by `make ship`.
+- The Vite dev servers proxy `/api` to `http://127.0.0.1:8000` — always start the backend before the frontends to avoid proxy errors.
+- `AGENT_NO_MCP=1` disables MCP tool spawning; without it the backend tries to start `mcp_server.py` as a subprocess and may hang if dependencies are missing.
