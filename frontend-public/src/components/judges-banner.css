@@ -10,6 +10,7 @@
   background: var(--jb-paper);
   color: var(--jb-ink);
   font-size: var(--fs-sm);
+  overflow-x: clip;
 }
 .jb::before,
 .jb::after {
@@ -236,6 +237,7 @@
 .jb__snapshot {
   display: inline-flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
   padding: 8px 12px 8px 10px;
   background: var(--jb-paper-2);
@@ -246,6 +248,9 @@
   font-weight: 500;
   font-family: var(--font-sans);
   transition: border-color 120ms, background 120ms;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 .jb__snapshot:hover {
   border-color: var(--jb-accent);
@@ -263,6 +268,7 @@
 .jb__snapshot-admin {
   display: inline-flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 6px;
   margin-top: 8px;
   padding: 0 2px 1px;
@@ -275,6 +281,8 @@
   border-bottom: 1px dotted var(--jb-line);
   align-self: flex-start;
   transition: color 120ms, border-color 120ms;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 .jb__snapshot-admin:hover {
   color: var(--jb-accent-ink);
@@ -420,5 +428,9 @@
     border-left: 0;
     border-top: 1px solid var(--jb-line);
     padding-top: 14px;
+  }
+
+  .jb__snapshot {
+    width: 100%;
   }
 }
