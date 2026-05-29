@@ -113,6 +113,20 @@
 .jb__close-label {
   display: inline-block;
 }
+@media (max-width: 800px) {
+  .jb__inner {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    padding-top: 14px;
+    padding-bottom: 14px;
+  }
+  .jb__guide {
+    padding-left: 0;
+    border-left: 0;
+    border-top: 1px solid var(--jb-line);
+    padding-top: 18px;
+  }
+}
 @media (max-width: 520px) {
   .jb__close-label { display: none; }
   .jb__close { padding: 0; width: 28px; }
