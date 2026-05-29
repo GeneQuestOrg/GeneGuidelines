@@ -26,7 +26,7 @@ from .private_context import (
     SqlaPrivateContextRepo,
 )
 from .repository import DiseaseRepo, SqlaDiseaseRepo
-from .service import DiseaseService, DoctorCountProvider
+from .service import DiseaseService, DoctorCountProvider, TrialCountProvider
 from .therapies import SqlaTherapyRepo, TherapyRepo, TherapyService
 from .trials_repository import SqlaTrialRepo, TrialRepo
 from .trials_service import TrialService
@@ -53,11 +53,21 @@ def provide_doctor_count() -> DoctorCountProvider:
     return effective_public_doctor_count_for_disease
 
 
+def provide_trial_count() -> TrialCountProvider:
+    """Return a callable yielding the live trial count for a disease.
+
+    Delegates to :meth:`SqlaTrialRepo.count_for_disease` to count rows in
+    ``disease_trials`` for ``GET /api/diseases/{slug}``.
+    """
+    return SqlaTrialRepo().count_for_disease
+
+
 def provide_disease_service(
     repo: DiseaseRepo = Depends(provide_disease_repo),
     doctor_count: DoctorCountProvider = Depends(provide_doctor_count),
+    trial_count: TrialCountProvider = Depends(provide_trial_count),
 ) -> DiseaseService:
-    return DiseaseService(repo=repo, doctor_count=doctor_count)
+    return DiseaseService(repo=repo, doctor_count=doctor_count, trial_count=trial_count)
 
 
 def provide_trial_repo() -> TrialRepo:
@@ -120,6 +130,7 @@ def provide_private_context_service(
 __all__ = [
     "provide_disease_repo",
     "provide_doctor_count",
+    "provide_trial_count",
     "provide_disease_service",
     "provide_trial_repo",
     "provide_trial_service",

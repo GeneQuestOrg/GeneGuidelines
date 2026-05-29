@@ -38,6 +38,7 @@ from ..auth import require_api_key_if_set
 router = APIRouter(dependencies=[Depends(require_api_key_if_set)])  # prefix set in main: /api/agent
 
 MAX_KEPT_AGENT_RUNS = 200
+TRACE_BUFFER_MAX = 200
 _AGENT_STORAGE_LOCK = threading.RLock()
 
 
@@ -72,9 +73,64 @@ def get_flow_definition(flow_key: str) -> dict | None:
     return {"flow_key": flow_key, "nodes": nodes, "edges": edges}
 
 
+def _resolve_execution_id_for_queue(event_queue: Queue | None) -> str | None:
+    if event_queue is None:
+        return None
+    with _AGENT_STORAGE_LOCK:
+        for eid, q in TRACE_QUEUES.items():
+            if q is event_queue:
+                return eid
+    return None
+
+
+def _append_trace_buffer(execution_id: str, payload: dict) -> None:
+    """Keep a bounded replay log so SSE can resume after refresh or queue prune."""
+    normalized = normalize_trace_event(dict(payload))
+    with _AGENT_STORAGE_LOCK:
+        run = AGENT_RUNS.get(execution_id)
+        if run is None:
+            return
+        buf: list[dict] = run.setdefault("trace_buffer", [])
+        buf.append(normalized)
+        if len(buf) > TRACE_BUFFER_MAX:
+            del buf[: len(buf) - TRACE_BUFFER_MAX]
+
+
+def _trace_buffer_for_execution(execution_id: str) -> list[dict]:
+    with _AGENT_STORAGE_LOCK:
+        run = AGENT_RUNS.get(execution_id)
+        if run is not None:
+            buf = run.get("trace_buffer")
+            if isinstance(buf, list) and buf:
+                return list(buf)
+    try:
+        from ..guideline_run_store import load_guideline_run_trace_buffer
+    except ImportError:
+        from guideline_run_store import load_guideline_run_trace_buffer
+
+    return load_guideline_run_trace_buffer(execution_id)
+
+
+def _run_snapshot_for_trace(execution_id: str) -> dict | None:
+    with _AGENT_STORAGE_LOCK:
+        run = AGENT_RUNS.get(execution_id)
+        if run is not None:
+            return dict(run)
+    try:
+        from ..guideline_run_store import load_guideline_run_result
+    except ImportError:
+        from guideline_run_store import load_guideline_run_result
+
+    loaded = load_guideline_run_result(execution_id)
+    return dict(loaded) if loaded else None
+
+
 def _emit(event_queue: Queue, payload: dict) -> None:
     if event_queue:
         event_queue.put(payload)
+    execution_id = _resolve_execution_id_for_queue(event_queue)
+    if execution_id:
+        _append_trace_buffer(execution_id, payload)
 
 
 def _post_run_publish_guideline_document(execution_id: str, store: dict[str, Any]) -> None:
@@ -210,7 +266,7 @@ async def _execute_agent_async_body(
     ticket = await loop.run_in_executor(None, lambda: db.get_ticket_by_id(ticket_id))
     if not ticket:
         AGENT_RUNS[execution_id] = {"execution_id": execution_id, "ticket_id": ticket_id, "error": "Ticket not found", "done": True}
-        event_queue.put({"done": True, "error": "Ticket not found"})
+        _emit(event_queue, {"done": True, "error": "Ticket not found"})
         return
 
     flow = await loop.run_in_executor(None, lambda: get_flow_definition(flow_key))
@@ -470,14 +526,15 @@ async def start_agent_run(
             disease_slug=run_record.get("disease_slug"),
         )
     models = MODEL_PROFILES[profile_norm]
-    event_queue.put(
+    _emit(
+        event_queue,
         {
             "kind": "sys",
             "text": (
                 f"[SYSTEM] Starting agent (flow={flow_key}, profile={profile_norm}, "
                 f"simple={models['simple']}, agentic={models['agentic']})..."
             ),
-        }
+        },
     )
 
     def timeout_watchdog() -> None:
@@ -501,8 +558,8 @@ async def start_agent_run(
             q = TRACE_QUEUES.get(execution_id)
         if q:
             err = AGENT_RUNS.get(execution_id, {}).get("error", "Timeout")
-            q.put({"kind": "sys", "text": f"[SYSTEM] {err}"})
-            q.put({"done": True, "error": err})
+            _emit(q, {"kind": "sys", "text": f"[SYSTEM] {err}"})
+            _emit(q, {"done": True, "error": err})
 
     t = threading.Timer(AGENT_RUN_TIMEOUT_SEC, timeout_watchdog)
     t.daemon = True
@@ -568,7 +625,19 @@ def sse_trace_generator(execution_id: str):
     """Generator of SSE events from the trace queue. Keepalive sent as an SSE comment (no dots in the UI)."""
     queue = TRACE_QUEUES.get(execution_id)
     if not queue:
-        yield f"data: {json.dumps(normalize_trace_event({'error': 'Unknown execution_id'}))}\n\n"
+        buffer = _trace_buffer_for_execution(execution_id)
+        run = _run_snapshot_for_trace(execution_id)
+        if not buffer and run is None:
+            yield f"data: {json.dumps(normalize_trace_event({'error': 'Unknown execution_id'}))}\n\n"
+            return
+        for event in buffer:
+            yield f"data: {json.dumps(normalize_trace_event(dict(event)))}\n\n"
+        if run and run.get("done"):
+            terminal: dict = {"done": True}
+            err = run.get("error")
+            if err:
+                terminal["error"] = err
+            yield f"data: {json.dumps(normalize_trace_event(terminal))}\n\n"
         return
     while True:
         try:

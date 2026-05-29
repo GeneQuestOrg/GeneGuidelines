@@ -35,8 +35,14 @@ export function DiseaseCard({ disease, onNav }: DiseaseCardProps) {
         </div>
         <div>
           <dt>Inheritance</dt>
-          <dd>{disease.inheritance}</dd>
+          <dd>{disease.inheritance || "—"}</dd>
         </div>
+        {disease.types.length > 0 ? (
+          <div>
+            <dt>Types</dt>
+            <dd>{disease.types.join(" · ")}</dd>
+          </div>
+        ) : null}
       </dl>
       <div className="d-card__meta">
         <span>{disease.doctorsCount} specialists</span>

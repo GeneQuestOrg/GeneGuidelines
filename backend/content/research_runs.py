@@ -37,7 +37,20 @@ _FINDER_PIPELINES = (
     "foundations_finder",
     "official_guidelines_finder",
 )
-_FINDER_STALE_AFTER_SEC = 600
+try:
+    from ..config import FINDER_LLM_TIMEOUT_SEC
+except ImportError:
+    from config import FINDER_LLM_TIMEOUT_SEC  # type: ignore[no-redef]
+
+# Finder LLM runs batch serially (trials: up to 4×360s). Marking stale at 10m
+# abandoned in-flight jobs and left disease pages at 0 trials/therapies.
+_FINDER_STALE_AFTER_SEC = int(FINDER_LLM_TIMEOUT_SEC * 4 + 300)
+
+# PubMed guideline / pathway flows can run longer but not for days — orphaned rows
+# (crash, dev reload, tests against shared Postgres) must not linger on the home feed.
+_LONG_RUNNING_FLOW_KEYS = ("pubmed", "parent_pathway")
+_GUIDELINE_STALE_AFTER_SEC = 7200
+_DOCTOR_FINDER_STALE_AFTER_SEC = 3600
 
 
 @dataclass(frozen=True, slots=True)
@@ -74,14 +87,20 @@ def _elapsed_seconds(started_at: object, now: datetime | None = None) -> int | N
     return max(0, int((current - started).total_seconds()))
 
 
-def _reap_stale_finder_runs(conn: psycopg.Connection, *, now: datetime | None = None) -> int:
-    """Mark abandoned fast-finder rows as failed so they drop off the home feed."""
+def _reap_stale_runs(
+    conn: psycopg.Connection,
+    *,
+    now: datetime | None = None,
+) -> int:
+    """Mark abandoned workflow rows as failed so they drop off the home feed."""
     current = now or datetime.now(timezone.utc)
     cutoff = current.isoformat()
-    stale_before = datetime.fromtimestamp(
+    cur = conn.cursor()
+    updated = 0
+
+    fast_cutoff = datetime.fromtimestamp(
         current.timestamp() - _FINDER_STALE_AFTER_SEC, tz=timezone.utc
     ).isoformat()
-    cur = conn.cursor()
     cur.execute(
         """
         UPDATE guideline_run_results
@@ -94,10 +113,55 @@ def _reap_stale_finder_runs(conn: psycopg.Connection, *, now: datetime | None = 
           AND COALESCE(started_at, '') <> ''
           AND started_at < %s
         """,
-        (cutoff, list(_FINDER_PIPELINES), stale_before),
+        (cutoff, list(_FINDER_PIPELINES), fast_cutoff),
     )
+    updated += int(cur.rowcount or 0)
+
+    guideline_cutoff = datetime.fromtimestamp(
+        current.timestamp() - _GUIDELINE_STALE_AFTER_SEC, tz=timezone.utc
+    ).isoformat()
+    cur.execute(
+        """
+        UPDATE guideline_run_results
+        SET done = 1,
+            finished_at = COALESCE(finished_at, %s),
+            error = COALESCE(NULLIF(error, ''), 'stale: run abandoned (no completion recorded)')
+        WHERE done = 0
+          AND finished_at IS NULL
+          AND flow_key = ANY(%s)
+          AND COALESCE(started_at, '') <> ''
+          AND started_at < %s
+        """,
+        (cutoff, list(_LONG_RUNNING_FLOW_KEYS), guideline_cutoff),
+    )
+    updated += int(cur.rowcount or 0)
+
+    if table_exists(conn, "doctor_finder_run_results"):
+        df_cutoff = datetime.fromtimestamp(
+            current.timestamp() - _DOCTOR_FINDER_STALE_AFTER_SEC, tz=timezone.utc
+        ).isoformat()
+        cur.execute(
+            """
+            UPDATE doctor_finder_run_results
+            SET done = 1,
+                finished_at = COALESCE(finished_at, %s),
+                error = COALESCE(NULLIF(error, ''), 'stale: run abandoned (no completion recorded)')
+            WHERE done = 0
+              AND finished_at IS NULL
+              AND COALESCE(started_at, '') <> ''
+              AND started_at < %s
+            """,
+            (cutoff, df_cutoff),
+        )
+        updated += int(cur.rowcount or 0)
+
     conn.commit()
-    return int(cur.rowcount or 0)
+    return updated
+
+
+def _reap_stale_finder_runs(conn: psycopg.Connection, *, now: datetime | None = None) -> int:
+    """Backward-compatible alias for tests and callers."""
+    return _reap_stale_runs(conn, now=now)
 
 
 def _rows_from_guideline_store(

@@ -24,6 +24,15 @@ def conn() -> psycopg.Connection:
     c.close()
 
 
+def _recent_started_at(*, offset_sec: int = 0) -> str:
+    base = datetime.now(timezone.utc)
+    if offset_sec:
+        from datetime import timedelta
+
+        base = base - timedelta(seconds=offset_sec)
+    return base.isoformat()
+
+
 def _insert_guideline_run(
     conn: psycopg.Connection,
     *,
@@ -32,9 +41,11 @@ def _insert_guideline_run(
     flow_key: str = "pubmed",
     label: str = "FD synthesis",
     done: int = 0,
-    started_at: str | None = "2026-05-17T22:00:00+00:00",
+    started_at: str | None = None,
     finished_at: str | None = None,
 ) -> None:
+    if started_at is None:
+        started_at = _recent_started_at()
     conn.execute(
         """
         INSERT INTO guideline_run_results
@@ -70,9 +81,11 @@ def _insert_doctor_finder_run(
     disease_name: str = "fibrous dysplasia",
     catalog_slug: str | None = "fd",
     done: int = 0,
-    started_at: str | None = "2026-05-17T22:00:00+00:00",
+    started_at: str | None = None,
     finished_at: str | None = None,
 ) -> None:
+    if started_at is None:
+        started_at = _recent_started_at()
     conn.execute(
         """
         INSERT INTO doctor_finder_run_results
@@ -112,6 +125,25 @@ def test_skips_finished_runs(conn):
     assert [r.run_id for r in runs] == ["active"]
 
 
+def test_reaps_stale_pubmed_guideline_run(conn):
+    _insert_guideline_run(
+        conn,
+        execution_id="stale-pubmed",
+        flow_key="pubmed",
+        label="FD synthesis",
+        started_at="2020-01-01T00:00:00+00:00",
+    )
+    _insert_guideline_run(conn, execution_id="live-guideline")
+    runs = research_runs.list_active_runs(conn=conn)
+    assert [r.run_id for r in runs] == ["live-guideline"]
+    row = conn.execute(
+        "SELECT done, error FROM guideline_run_results WHERE execution_id = %s",
+        ("stale-pubmed",),
+    ).fetchone()
+    assert row["done"] == 1
+    assert "stale" in str(row["error"])
+
+
 def test_reaps_stale_finder_runs(conn):
     _insert_guideline_run(
         conn,
@@ -137,8 +169,8 @@ def test_reaps_stale_finder_runs(conn):
 
 
 def test_combines_guideline_and_finder(conn):
-    _insert_guideline_run(conn, execution_id="g1", started_at="2026-05-17T22:00:00+00:00")
-    _insert_doctor_finder_run(conn, execution_id="d1", started_at="2026-05-17T22:10:00+00:00")
+    _insert_guideline_run(conn, execution_id="g1", started_at=_recent_started_at(offset_sec=120))
+    _insert_doctor_finder_run(conn, execution_id="d1", started_at=_recent_started_at(offset_sec=60))
     runs = research_runs.list_active_runs(conn=conn)
     assert [r.run_id for r in runs] == ["d1", "g1"]
     assert [r.flow_key for r in runs] == ["doctor_finder", "pubmed"]
@@ -149,7 +181,7 @@ def test_limit_caps_result(conn):
         _insert_guideline_run(
             conn,
             execution_id=f"run-{i}",
-            started_at=f"2026-05-17T22:0{i}:00+00:00",
+            started_at=_recent_started_at(offset_sec=300 - i * 10),
         )
     runs = research_runs.list_active_runs(limit=2, conn=conn)
     assert [r.run_id for r in runs] == ["run-4", "run-3"]

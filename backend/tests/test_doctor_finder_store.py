@@ -3,13 +3,15 @@ from __future__ import annotations
 
 import uuid
 
+from backend.content_db import get_disease_by_slug, refresh_disease_doctors_count
 from backend.doctor_finder_store import (
     ensure_doctor_finder_run_results_schema,
     load_doctor_finder_run_result,
     load_latest_successful_report_for_catalog_slug,
     save_doctor_finder_run_result,
 )
-from backend.database import get_connection
+from backend.database import get_connection, init_db
+from backend.content_db import ensure_content_schema, seed_content_if_empty
 
 
 def _delete_run(execution_id: str) -> None:
@@ -80,6 +82,38 @@ def test_repair_backfills_catalog_slug() -> None:
         assert row is not None
         assert str(row.get("catalog_slug") or "") == "fd"
         assert load_latest_successful_report_for_catalog_slug("fd") is not None
+    finally:
+        _delete_run(eid)
+
+
+def test_save_refreshes_disease_doctors_count_column() -> None:
+    init_db()
+    ensure_content_schema()
+    seed_content_if_empty()
+    eid = f"test-df-count-{uuid.uuid4().hex}"
+    slug = "fd"
+    report = {
+        "disease_name": "Fibrous Dysplasia",
+        "top_authors": [
+            {"display_name": f"Dr {i}", "author_key": f"name:{i}", "role": "senior_investigator"}
+            for i in range(3)
+        ],
+    }
+    try:
+        before = get_disease_by_slug(slug)
+        assert before is not None
+        save_doctor_finder_run_result(
+            eid,
+            disease_name="Fibrous Dysplasia",
+            catalog_slug=slug,
+            doctor_report=report,
+            error=None,
+            started_at="2026-05-29T10:00:00+00:00",
+        )
+        after = get_disease_by_slug(slug)
+        assert after is not None
+        assert after["doctorsCount"] >= 3
+        assert refresh_disease_doctors_count(slug) >= 3
     finally:
         _delete_run(eid)
 
