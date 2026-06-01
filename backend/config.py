@@ -7,6 +7,9 @@ from dotenv import load_dotenv
 # Backend directory (tickets.db and seed_data.json live here by default).
 BACKEND_DIR = Path(__file__).resolve().parent
 
+load_dotenv(BACKEND_DIR.parent / ".env")
+load_dotenv(BACKEND_DIR / ".env")
+
 # Database path. Defaults to backend/tickets.db; can be overridden via the
 # DB_PATH env var (used by docker-compose so the SQLite file can live on a
 # named volume outside /app).
@@ -14,9 +17,6 @@ BACKEND_DIR = Path(__file__).resolve().parent
 DB_PATH = Path(os.environ.get("DB_PATH") or (BACKEND_DIR / "tickets.db"))
 DB_URL = (os.environ.get("DB_URL") or "").strip()
 SEED_DATA_PATH = BACKEND_DIR / "seed_data.json"
-
-load_dotenv(BACKEND_DIR.parent / ".env")
-load_dotenv(BACKEND_DIR / ".env")
 
 
 def normalize_openai_compatible_base_url(url: str) -> str:

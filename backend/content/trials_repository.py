@@ -28,6 +28,7 @@ class TrialRepo(Protocol):
 
     def list_for_disease(self, disease_slug: str) -> list[Trial]: ...
     def list_all(self) -> list[Trial]: ...
+    def count_for_disease(self, slug: str) -> int: ...
 
 
 class SqlaTrialRepo(BaseSqlalchemyRepo):
@@ -76,6 +77,18 @@ class SqlaTrialRepo(BaseSqlalchemyRepo):
         groups = self._diseases_for(ncts)
         return [trial_from_row(dict(r), diseases=groups.get(str(r["nct"]), ())) for r in rows]
 
+    def count_for_disease(self, slug: str) -> int:
+        """Return the number of trials linked to *slug* via ``disease_trials``."""
+        from sqlalchemy import func, select as sa_select
+
+        stmt = (
+            sa_select(func.count())
+            .select_from(disease_trials)
+            .where(disease_trials.c.disease_slug == slug)
+        )
+        with self._conn() as conn:
+            return conn.execute(stmt).scalar() or 0
+
 
 class InMemoryTrialRepo:
     """Dict-backed impl. Same Protocol surface as the SQL one."""
@@ -92,8 +105,33 @@ class InMemoryTrialRepo:
     def list_all(self) -> list[Trial]:
         return sorted(self._by_nct.values(), key=lambda t: t.title.lower())
 
+    def count_for_disease(self, slug: str) -> int:
+        """Return the number of trials linked to *slug* in this in-memory store."""
+        return len([t for t in self._by_nct.values() if slug in t.diseases])
+
     def add(self, trial: Trial) -> None:
         self._by_nct[trial.nct] = trial
+
+
+def trial_counts_by_slug(slugs: Sequence[str]) -> dict[str, int]:
+    """Return ``{slug: count}`` for every disease slug in *slugs*.
+
+    Used by :meth:`backend.content.service.DiseaseService.list` so the
+    catalog listing does not query ``disease_trials`` once per row.
+    """
+    if not slugs:
+        return {}
+    repo = SqlaTrialRepo()
+    from sqlalchemy import func, select as sa_select
+
+    stmt = (
+        sa_select(disease_trials.c.disease_slug, func.count().label("cnt"))
+        .where(disease_trials.c.disease_slug.in_(list(slugs)))
+        .group_by(disease_trials.c.disease_slug)
+    )
+    with repo._conn() as conn:
+        rows = conn.execute(stmt).all()
+    return {str(row[0]): int(row[1]) for row in rows}
 
 
 __all__ = [
@@ -101,4 +139,5 @@ __all__ = [
     "TrialRepo",
     "SqlaTrialRepo",
     "InMemoryTrialRepo",
+    "trial_counts_by_slug",
 ]

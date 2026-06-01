@@ -5,12 +5,14 @@ repository for data, enrich it where needed, return a domain object. No
 SQL, no HTTP framing. Routers stay thin (~20 LOC each) by delegating the
 real work here.
 
-The single non-trivial decision in this service is **doctor count
-enrichment**: the static ``diseases.doctors_count`` column drifts from the
-live doctor catalog over time, so the public API surface always returns the
-freshly computed count. Until the doctor catalog itself migrates to a
-``Protocol`` it is consumed via a small callable injected at construction
-time — same dependency-inversion pattern as the repository, just lighter.
+The service enriches two live counts on every response:
+
+- **doctor count**: the static ``diseases.doctors_count`` column drifts from
+  the live doctor catalog over time, so we always return the freshly computed
+  count via an injected callable.
+- **trial count**: the static ``diseases.trials_count`` column is set to 0 at
+  bootstrap and never updated; the real data lives in the ``disease_trials``
+  junction table, so we always return the live count via an injected callable.
 """
 
 from __future__ import annotations
@@ -25,13 +27,17 @@ from .repository import DiseaseRepo, normalize_slug
 # Type of the live doctor-count callable: ``(disease_slug) -> int``.
 DoctorCountProvider = Callable[[str], int]
 
+# Type of the live trial-count callable: ``(disease_slug) -> int``.
+TrialCountProvider = Callable[[str], int]
+
 
 @dataclass(slots=True)
 class DiseaseService:
-    """Reads diseases from the repository, applies live doctor-count enrichment."""
+    """Reads diseases from the repository, applies live enrichment for doctor and trial counts."""
 
     repo: DiseaseRepo
     doctor_count: DoctorCountProvider
+    trial_count: TrialCountProvider
 
     def list(self, query: str | None = None) -> list[Disease]:
         """Return all diseases, optionally filtered case-insensitively."""
@@ -45,11 +51,19 @@ class DiseaseService:
         try:
             from ..doctor_catalog import public_doctor_counts_by_slug
 
-            live_counts = public_doctor_counts_by_slug([d.slug for d in items])
+            live_doctor_counts = public_doctor_counts_by_slug([d.slug for d in items])
         except Exception:
-            return [self._with_live_doctor_count(d) for d in items]
+            items = [self._with_live_doctor_count(d) for d in items]
+            return [self._with_live_trial_count(d) for d in items]
+        try:
+            from .trials_repository import trial_counts_by_slug
+
+            live_trial_counts = trial_counts_by_slug([d.slug for d in items])
+        except Exception:
+            live_trial_counts = {}
         return [
-            d.with_doctors_count(live_counts.get(d.slug, d.doctors_count))
+            d.with_doctors_count(live_doctor_counts.get(d.slug, d.doctors_count))
+            .with_trials_count(live_trial_counts.get(d.slug, d.trials_count))
             for d in items
         ]
 
@@ -58,7 +72,10 @@ class DiseaseService:
         if normalized is None:
             return None
         item = self.repo.get(normalized)
-        return self._with_live_doctor_count(item) if item else None
+        if item is None:
+            return None
+        item = self._with_live_doctor_count(item)
+        return self._with_live_trial_count(item)
 
     def _with_live_doctor_count(self, disease: Disease) -> Disease:
         try:
@@ -68,6 +85,13 @@ class DiseaseService:
             # response — fall back to the row-level count we already have.
             return disease
         return disease.with_doctors_count(live)
+
+    def _with_live_trial_count(self, disease: Disease) -> Disease:
+        try:
+            live = self.trial_count(disease.slug)
+        except Exception:
+            return disease
+        return disease.with_trials_count(live)
 
 
 def _matches(disease: Disease, query_lower: str) -> bool:
@@ -88,4 +112,4 @@ def _matches(disease: Disease, query_lower: str) -> bool:
     )
 
 
-__all__ = ["DiseaseService", "DoctorCountProvider"]
+__all__ = ["DiseaseService", "DoctorCountProvider", "TrialCountProvider"]

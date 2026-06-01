@@ -2,6 +2,7 @@ import { CITATIONS } from "../../data";
 import type { Citation } from "../../types/guidelineDocument";
 import type { GuidelinePrDetail } from "../../types/contentPr";
 import { citationDisplayIndex } from "../../utils/guidelineReader";
+import { pubmedArticleUrl } from "../../utils/pubmedUrl";
 import { GuidelineCitationItem } from "./GuidelineCitationItem";
 
 export interface GuidelineCitationRailProps {
@@ -14,6 +15,40 @@ export interface GuidelineCitationRailProps {
 
 function lookupCitation(pmid: string): Citation | null {
   return CITATIONS[pmid] ?? null;
+}
+
+interface RailItem {
+  pmid: string;
+  citation: Citation | null;
+  index: number;
+}
+
+interface CitationStubProps {
+  pmid: string;
+  index: number;
+  highlight?: boolean;
+}
+
+function CitationStub({ pmid, index, highlight = false }: CitationStubProps) {
+  return (
+    <li className={["gl__cit", highlight ? "gl__cit--hl" : ""].filter(Boolean).join(" ")}>
+      <span className="gl__cit-num">{index}</span>
+      <div className="gl__cit-body">
+        <div className="gl__cit-title">
+          <a
+            href={pubmedArticleUrl(pmid)}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            View on PubMed
+          </a>
+        </div>
+        <div className="gl__cit-tags">
+          <code className="gl__cit-pmid">PMID {pmid}</code>
+        </div>
+      </div>
+    </li>
+  );
 }
 
 export function GuidelineCitationRail({
@@ -35,27 +70,17 @@ export function GuidelineCitationRail({
     ? railPmids.filter((pmid) => !prPmids.includes(pmid)).slice(0, 4)
     : [];
 
-  const items = (diffMode ? prPmids : railPmids)
-    .map((pmid) => {
-      const citation = lookupCitation(pmid);
-      if (citation == null) {
-        return null;
-      }
-      const index = citationDisplayIndex(orderedPmids, pmid);
-      return { pmid, citation, index: index ?? 0 };
-    })
-    .filter((row): row is NonNullable<typeof row> => row != null);
+  const items: RailItem[] = (diffMode ? prPmids : railPmids).map((pmid) => {
+    const citation = lookupCitation(pmid);
+    const index = citationDisplayIndex(orderedPmids, pmid);
+    return { pmid, citation, index: index ?? 0 };
+  });
 
-  const contextItems = contextPmids
-    .map((pmid) => {
-      const citation = lookupCitation(pmid);
-      if (citation == null) {
-        return null;
-      }
-      const index = citationDisplayIndex(orderedPmids, pmid);
-      return { pmid, citation, index: index ?? 0 };
-    })
-    .filter((row): row is NonNullable<typeof row> => row != null);
+  const contextItems: RailItem[] = contextPmids.map((pmid) => {
+    const citation = lookupCitation(pmid);
+    const index = citationDisplayIndex(orderedPmids, pmid);
+    return { pmid, citation, index: index ?? 0 };
+  });
 
   return (
     <aside className="gl__rail" aria-label="Citations">
@@ -71,14 +96,18 @@ export function GuidelineCitationRail({
               <p className="gl__cits-empty">No indexed citations for this PR.</p>
             ) : (
               <ol className="gl__cits">
-                {items.map(({ pmid, citation }, i) => (
-                  <GuidelineCitationItem
-                    key={pmid}
-                    citation={citation}
-                    index={i + 1}
-                    highlight
-                  />
-                ))}
+                {items.map(({ pmid, citation }, i) =>
+                  citation != null ? (
+                    <GuidelineCitationItem
+                      key={pmid}
+                      citation={citation}
+                      index={i + 1}
+                      highlight
+                    />
+                  ) : (
+                    <CitationStub key={pmid} pmid={pmid} index={i + 1} />
+                  ),
+                )}
               </ol>
             )}
             {contextItems.length > 0 ? (
@@ -86,29 +115,42 @@ export function GuidelineCitationRail({
                 <hr />
                 <p className="gl__rail-context-label">Context citations</p>
                 <ol className="gl__cits gl__cits--dim">
-                  {contextItems.map(({ pmid, citation }, i) => (
-                    <GuidelineCitationItem
-                      key={pmid}
-                      citation={citation}
-                      index={i + 1}
-                    />
-                  ))}
+                  {contextItems.map(({ pmid, citation }, i) =>
+                    citation != null ? (
+                      <GuidelineCitationItem
+                        key={pmid}
+                        citation={citation}
+                        index={i + 1}
+                      />
+                    ) : (
+                      <CitationStub key={pmid} pmid={pmid} index={i + 1} />
+                    ),
+                  )}
                 </ol>
               </>
             ) : null}
           </div>
         ) : items.length === 0 ? (
-          <p className="gl__cits-empty">No citations — this block is an AI draft.</p>
+          <p className="gl__cits-empty">No citations found for this block.</p>
         ) : (
           <ol className="gl__cits">
-            {items.slice(0, 12).map(({ pmid, citation, index }) => (
-              <GuidelineCitationItem
-                key={pmid}
-                citation={citation}
-                index={index}
-                highlight={activeParaId != null}
-              />
-            ))}
+            {items.slice(0, 12).map(({ pmid, citation, index }) =>
+              citation != null ? (
+                <GuidelineCitationItem
+                  key={pmid}
+                  citation={citation}
+                  index={index}
+                  highlight={activeParaId != null}
+                />
+              ) : (
+                <CitationStub
+                  key={pmid}
+                  pmid={pmid}
+                  index={index}
+                  highlight={activeParaId != null}
+                />
+              ),
+            )}
           </ol>
         )}
       </div>

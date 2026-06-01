@@ -27,12 +27,18 @@ import { type AgentRunPayloadV1, fetchAgentRun } from "../api/guidelineRun";
 import { repositories } from "../repositories";
 import type { Disease } from "../types/disease";
 import { useResearchPartialResults } from "../hooks/useResearchPartialResults";
+import { RESEARCH_LIVE_EXECUTION_ID } from "../utils/activeResearchNav";
+import {
+  earliestResearchStartedAtIso,
+  researchElapsedSecFromStartedAt,
+} from "../utils/researchElapsed";
 import {
   formatActivityTime,
   formatElapsed,
   formatRunDisplayId,
   humanizeRunError,
   humanizeTraceMessage,
+  isTraceTransportError,
   parseTraceLine,
 } from "../utils/researchRunTrace";
 import {
@@ -103,18 +109,40 @@ export function ResearchRunView({
   );
   const [disease, setDisease] = useState<Disease | null>(null);
 
+  const liveByDisease = executionId === RESEARCH_LIVE_EXECUTION_ID;
+
   const displayName =
     diseaseName?.trim() || queryTag?.trim() || "Research in progress";
 
   const appendRawLines = useCallback((next: string[]) => {
+    const filtered = next.filter((line) => !isTraceTransportError(line));
+    if (filtered.length === 0) {
+      return;
+    }
     setRawLines((prev) => {
-      const stamped = next.map<TimedTraceLine>((text) => ({
+      const stamped = filtered.map<TimedTraceLine>((text) => ({
         text,
         atMs: Date.now(),
       }));
       return [...prev, ...stamped].slice(-MAX_TRACE_LINES);
     });
   }, []);
+
+  const lastHydratedStageRef = useRef<string | null>(null);
+
+  const hydrateTraceFromRun = useCallback((payload: AgentRunPayloadV1) => {
+    const stage = payload.current_stage?.trim();
+    if (!stage || stage === lastHydratedStageRef.current) {
+      return;
+    }
+    lastHydratedStageRef.current = stage;
+    appendRawLines([
+      JSON.stringify({
+        kind: "sys",
+        text: `[SYSTEM] Stage: ${stage}`,
+      }),
+    ]);
+  }, [appendRawLines]);
 
   // 1-second wall-clock ticker — keeps the "elapsed" string and the
   // sticky-done detection in sync with real time without re-rendering
@@ -127,8 +155,11 @@ export function ResearchRunView({
   // Poll the agent-run payload bound to the guideline executionId. This
   // is the only run we have a deterministic handle to; everything else
   // we derive from the active-runs projection and the per-disease
-  // endpoints.
+  // endpoints. Disease-scoped "live" mirror cards skip this poll.
   useEffect(() => {
+    if (liveByDisease) {
+      return;
+    }
     let cancelled = false;
     let inFlight = false;
 
@@ -140,6 +171,9 @@ export function ResearchRunView({
         if (!cancelled) {
           setRun(payload);
           setPollError(null);
+          if (!payload.done && payload.current_stage) {
+            hydrateTraceFromRun(payload);
+          }
         }
       } catch (e) {
         if (cancelled) return;
@@ -167,13 +201,13 @@ export function ResearchRunView({
       cancelled = true;
       window.clearInterval(id);
     };
-  }, [executionId]);
+  }, [executionId, hydrateTraceFromRun, liveByDisease]);
 
   // SSE trace from the guideline pipeline. We feed the raw lines into
   // tagTraceMessage / humanizeTraceMessage to build the per-workstream
   // activity feed.
   useEffect(() => {
-    if (!shouldUseTraceSse()) {
+    if (liveByDisease || !shouldUseTraceSse()) {
       return;
     }
     const base = getApiBaseUrl();
@@ -182,22 +216,29 @@ export function ResearchRunView({
     );
     const url = base ? `${base}${path}` : path;
     const es = new EventSource(url);
+    let receivedTrace = false;
     es.onmessage = (event) => {
+      if (isTraceTransportError(event.data)) {
+        return;
+      }
+      receivedTrace = true;
       appendRawLines([event.data]);
     };
     es.onerror = () => {
-      appendRawLines([
-        JSON.stringify({
-          kind: "sys",
-          text: "Live stream interrupted — polling still runs.",
-        }),
-      ]);
+      if (!receivedTrace) {
+        appendRawLines([
+          JSON.stringify({
+            kind: "sys",
+            text: "Live stream interrupted — polling still runs.",
+          }),
+        ]);
+      }
       es.close();
     };
     return () => {
       es.close();
     };
-  }, [appendRawLines, executionId]);
+  }, [appendRawLines, executionId, liveByDisease]);
 
   // Load the disease row for the OMIM / gene chips on the hero. The row
   // is created immediately by the bootstrap endpoint, so a 404 here just
@@ -244,9 +285,13 @@ export function ResearchRunView({
   // Partial-results poll: doctors/trials/therapies/foundations counts +
   // official guideline presence + guideline document presence + active
   // runs filtered by diseaseSlug.
-  const partial = useResearchPartialResults(diseaseSlug, !succeeded, {
-    pollIntervalMs: 2000,
-  });
+  const partial = useResearchPartialResults(
+    diseaseSlug,
+    diseaseSlug != null && diseaseSlug !== "",
+    {
+      pollIntervalMs: succeeded ? 10_000 : 2000,
+    },
+  );
 
   const workstreamTrackingRef = useRef<{
     previouslyDone: Set<WorkstreamKey>;
@@ -275,6 +320,7 @@ export function ResearchRunView({
       lastInactiveAtMs: {},
       nowMs: Date.now(),
       guidelineTraceSeen: false,
+      countsReady: false,
     }),
   );
 
@@ -291,6 +337,25 @@ export function ResearchRunView({
   const elapsedSec = elapsedTick;
 
   const nowMs = startedAtMs + elapsedSec * 1000;
+
+  const researchStartedAtIso = useMemo(
+    () =>
+      earliestResearchStartedAtIso([
+        run?.started_at,
+        ...partial.activeRuns.map((activeRun) => activeRun.startedAt),
+      ]),
+    [run?.started_at, partial.activeRuns],
+  );
+
+  const researchElapsedSec = useMemo(
+    () =>
+      researchElapsedSecFromStartedAt(
+        researchStartedAtIso,
+        nowMs,
+        elapsedSec,
+      ),
+    [researchStartedAtIso, nowMs, elapsedSec],
+  );
 
   // Sticky workstream tracking mutates refs — keep it out of render (eslint react-hooks/refs).
   useLayoutEffect(() => {
@@ -319,12 +384,13 @@ export function ResearchRunView({
       trialsCount: partial.trials,
       therapiesCount: partial.therapies,
       foundationsCount: partial.foundations,
-      elapsedSec,
+      elapsedSec: researchElapsedSec,
       previouslyDone: Array.from(tracking.previouslyDone),
       seenActive: Array.from(tracking.seenActive),
       lastInactiveAtMs: { ...tracking.lastInactiveAtMs },
       nowMs,
       guidelineTraceSeen,
+      countsReady: partial.countsReady,
     });
 
     for (const stream of derived) {
@@ -347,9 +413,10 @@ export function ResearchRunView({
     partial.foundations,
     partial.hasGuidelineDocument,
     partial.hasOfficialGuideline,
+    partial.countsReady,
     succeeded,
     failed,
-    elapsedSec,
+    researchElapsedSec,
     guidelineTraceSeen,
     nowMs,
   ]);
@@ -416,12 +483,14 @@ export function ResearchRunView({
             status={failed ? "pending" : everythingDone ? "verified" : "live"}
             compact
           />
-          <code className="rrun__id">{formatRunDisplayId(executionId)}</code>
+          {!liveByDisease ? (
+            <code className="rrun__id">{formatRunDisplayId(executionId)}</code>
+          ) : null}
           <span className="rrun__sep">·</span>
           <span className="rrun__elapsed">
             elapsed{" "}
             <span className="rrun__elapsed-num">
-              {formatElapsed(elapsedSec)}
+              {formatElapsed(researchElapsedSec)}
             </span>
           </span>
         </div>
@@ -582,7 +651,7 @@ export function ResearchRunView({
               ✓
             </div>
             <div className="rrun__done-body">
-              <h3>Research finished in {formatElapsed(elapsedSec)}.</h3>
+              <h3>Research finished in {formatElapsed(researchElapsedSec)}.</h3>
               <p>
                 <b>{disease?.name ?? displayName}</b> is now in the catalogue.
                 Draft guideline, {partial.doctors} doctors, {partial.trials}{" "}
