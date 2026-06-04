@@ -22,7 +22,7 @@ from jwt import PyJWKClient
 
 from .auth import api_key_from_env, api_key_matches
 
-Role = Literal["user", "admin"]
+Role = Literal["user", "admin", "super_admin"]
 
 _logger = logging.getLogger(__name__)
 _bearer = HTTPBearer(auto_error=False)
@@ -199,9 +199,13 @@ def _role_from_claims(claims: dict[str, object]) -> Role:
         meta = claims.get(key)
         if isinstance(meta, dict):
             role = str(meta.get("role") or "").strip().lower()
+            if role == "super_admin":
+                return "super_admin"
             if role == "admin":
                 return "admin"
     role_claim = str(claims.get("role") or "").strip().lower()
+    if role_claim == "super_admin":
+        return "super_admin"
     if role_claim == "admin":
         return "admin"
     return "user"
@@ -227,7 +231,10 @@ def _fetch_role_from_clerk_api(clerk_id: str) -> Role | None:
     meta = payload.get("public_metadata")
     if not isinstance(meta, dict):
         return "user"
-    if str(meta.get("role") or "").strip().lower() == "admin":
+    role = str(meta.get("role") or "").strip().lower()
+    if role == "super_admin":
+        return "super_admin"
+    if role == "admin":
         return "admin"
     return "user"
 
@@ -255,11 +262,11 @@ def _role_from_clerk_api(clerk_id: str) -> Role | None:
 def _resolve_role(claims: dict[str, object], clerk_id: str) -> Role:
     """Role from JWT claims, then Clerk API (Dashboard public metadata)."""
     role = _role_from_claims(claims)
-    if role == "admin":
-        return "admin"
+    if role in ("admin", "super_admin"):
+        return role
     api_role = _role_from_clerk_api(clerk_id)
-    if api_role == "admin":
-        return "admin"
+    if api_role in ("admin", "super_admin"):
+        return api_role
     return role
 
 
@@ -408,15 +415,22 @@ async def get_current_user(
 
 
 def require_admin(user: Annotated[AuthUser, Depends(get_current_user)]) -> AuthUser:
-    """Require Clerk/API principal with admin role."""
-    if user.role != "admin":
+    """Require Clerk/API principal with admin or super_admin role."""
+    if user.role not in ("admin", "super_admin"):
         raise HTTPException(status_code=403, detail="Admin role required.")
+    return user
+
+
+def require_super_admin(user: Annotated[AuthUser, Depends(get_current_user)]) -> AuthUser:
+    """Require Clerk/API principal with super_admin role only."""
+    if user.role != "super_admin":
+        raise HTTPException(status_code=403, detail="Super-admin role required.")
     return user
 
 
 def assert_run_owner(user: AuthUser, owner_clerk_id: str | None) -> None:
     """Ensure the user may access a pipeline run (owner match or admin)."""
-    if user.role == "admin":
+    if user.role in ("admin", "super_admin"):
         return
     if user.clerk_id in (API_KEY_ACTOR_ID, DEV_BYPASS_ACTOR_ID):
         return
@@ -438,7 +452,7 @@ def bootstrap_rate_limit_key(user: AuthUser) -> str:
 
 def bootstrap_rate_limit_max(user: AuthUser) -> int:
     """Per-principal bootstrap cap for the sliding window."""
-    if user.role == "admin":
+    if user.role in ("admin", "super_admin"):
         return int(
             (os.environ.get("BOOTSTRAP_RATE_LIMIT_MAX_ADMIN") or "").strip() or 50
         )
@@ -455,6 +469,7 @@ __all__ = [
     "clerk_auth_enabled",
     "get_current_user",
     "require_admin",
+    "require_super_admin",
     "resolve_auth_user",
     "validate_clerk_security_config",
     "verify_clerk_session_token",

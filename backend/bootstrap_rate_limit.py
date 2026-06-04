@@ -35,7 +35,7 @@ def _global_max_per_window() -> int:
 def get_run_quota_status(user: AuthUser) -> RunQuotaStatus:
     """Current research-run quota for the signed-in principal."""
     window_hours = _window_sec() // 3600
-    if user.role == "admin":
+    if user.role in ("admin", "super_admin"):
         return RunQuotaStatus(
             unlimited=True,
             used=0,
@@ -61,7 +61,7 @@ def get_run_quota_status(user: AuthUser) -> RunQuotaStatus:
 
 def check_bootstrap_rate_limit(user: AuthUser) -> None:
     """Raise 429 when the caller has exceeded per-user research-run quota."""
-    if user.role == "admin":
+    if user.role in ("admin", "super_admin"):
         return
     key = bootstrap_rate_limit_key(user)
     per_user_max = bootstrap_rate_limit_max(user)
@@ -104,7 +104,7 @@ def _metadata_lookup_max_per_user() -> int:
 
 def check_metadata_lookup_rate_limit(user: AuthUser) -> None:
     """Raise 429 when the caller exceeds per-user disease-metadata lookup quota."""
-    if user.role == "admin":
+    if user.role in ("admin", "super_admin"):
         return
     key = f"{bootstrap_rate_limit_key(user)}:metadata"
     per_user_max = _metadata_lookup_max_per_user()

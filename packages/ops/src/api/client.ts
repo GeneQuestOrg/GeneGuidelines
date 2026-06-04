@@ -785,7 +785,9 @@ export interface RuntimeSettings {
 }
 
 export interface OperatorSettings {
-  defaultModelProfile: ModelProfile;
+  defaultModelProfile: string;
+  modelProfileOverride: string | null;
+  envDefaultModelProfile: string;
   singleLlmMode?: boolean;
   singleLlmModel?: string | null;
   modelProfiles: ModelProfileSettings[];
@@ -796,6 +798,21 @@ export interface OperatorSettings {
 export async function fetchPipelineSettings(): Promise<OperatorSettings> {
   return request<OperatorSettings>("/api/pipeline/settings", {
     timeoutMs: 30_000,
+  });
+}
+
+export async function updateModelProfileOverride(profileId: string): Promise<OperatorSettings> {
+  return request<OperatorSettings>("/api/pipeline/settings/model-profile", {
+    method: "PUT",
+    body: JSON.stringify({ profileId }),
+    timeoutMs: 15_000,
+  });
+}
+
+export async function clearModelProfileOverride(): Promise<OperatorSettings> {
+  return request<OperatorSettings>("/api/pipeline/settings/model-profile", {
+    method: "DELETE",
+    timeoutMs: 15_000,
   });
 }
 

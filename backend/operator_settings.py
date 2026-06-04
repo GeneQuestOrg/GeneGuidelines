@@ -1,7 +1,11 @@
-"""Read-only operator settings snapshot (env-backed; never exposes secret values)."""
+"""Operator settings: read-only env snapshot + runtime-writable DB overrides."""
 from __future__ import annotations
 
+import logging
 import os
+import threading
+import time
+from datetime import datetime, timezone
 from typing import Any
 
 try:
@@ -188,8 +192,11 @@ def get_operator_settings() -> dict[str, Any]:
         "yes",
     )
 
+    override = get_model_profile_override()
     return {
-        "defaultModelProfile": DEFAULT_MODEL_PROFILE,
+        "defaultModelProfile": override if override else DEFAULT_MODEL_PROFILE,
+        "modelProfileOverride": override,
+        "envDefaultModelProfile": DEFAULT_MODEL_PROFILE,
         "singleLlmMode": SINGLE_LLM_MODE,
         "singleLlmModel": LLM_MODEL_ID if SINGLE_LLM_MODE else None,
         "modelProfiles": profiles,
@@ -201,3 +208,115 @@ def get_operator_settings() -> dict[str, Any]:
             "qualityFirstHardMode": QUALITY_FIRST_HARD_MODE,
         },
     }
+
+
+# ---------------------------------------------------------------------------
+# Runtime-writable model profile override (stored in operator_kv table).
+# ---------------------------------------------------------------------------
+
+_KV_MODEL_PROFILE_KEY = "default_model_profile"
+_KV_CACHE_TTL_SEC = 60
+
+_kv_cache: dict[str, tuple[str | None, float]] = {}
+_kv_cache_lock = threading.Lock()
+_kv_log = logging.getLogger(__name__)
+
+
+def _db_get_kv(key: str) -> str | None:
+    try:
+        from .database import get_connection
+    except ImportError:
+        from database import get_connection
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute("SELECT value FROM operator_kv WHERE key = %s", (key,))
+        row = cur.fetchone()
+        conn.close()
+        return str(row["value"]) if row else None
+    except Exception as exc:
+        _kv_log.debug("operator_kv read failed for key=%r: %s", key, exc)
+        return None
+
+
+def _db_set_kv(key: str, value: str, updated_by_clerk_id: str) -> None:
+    try:
+        from .database import get_connection
+    except ImportError:
+        from database import get_connection
+    now = datetime.now(timezone.utc).isoformat()
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute(
+        """
+        INSERT INTO operator_kv (key, value, updated_by_clerk_id, updated_at)
+        VALUES (%s, %s, %s, %s)
+        ON CONFLICT (key) DO UPDATE
+            SET value = EXCLUDED.value,
+                updated_by_clerk_id = EXCLUDED.updated_by_clerk_id,
+                updated_at = EXCLUDED.updated_at
+        """,
+        (key, value, updated_by_clerk_id, now),
+    )
+    conn.commit()
+    conn.close()
+
+
+def _db_delete_kv(key: str) -> None:
+    try:
+        from .database import get_connection
+    except ImportError:
+        from database import get_connection
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("DELETE FROM operator_kv WHERE key = %s", (key,))
+    conn.commit()
+    conn.close()
+
+
+def _invalidate_kv_cache(key: str) -> None:
+    with _kv_cache_lock:
+        _kv_cache.pop(key, None)
+
+
+def get_model_profile_override() -> str | None:
+    """Return the DB-stored model profile override, or None if unset (use env default)."""
+    key = _KV_MODEL_PROFILE_KEY
+    now = time.time()
+    with _kv_cache_lock:
+        entry = _kv_cache.get(key)
+        if entry is not None:
+            value, expires_at = entry
+            if now < expires_at:
+                return value
+    value = _db_get_kv(key)
+    with _kv_cache_lock:
+        _kv_cache[key] = (value, now + _KV_CACHE_TTL_SEC)
+    return value
+
+
+def get_effective_default_model_profile() -> str:
+    """Effective default profile: DB override if set, otherwise env-backed constant."""
+    override = get_model_profile_override()
+    return override if override else DEFAULT_MODEL_PROFILE
+
+
+def set_model_profile_override(profile_id: str, updated_by_clerk_id: str) -> None:
+    """Persist a new model profile override and invalidate the local cache."""
+    if profile_id not in MODEL_PROFILES:
+        raise ValueError(f"Unknown model profile: {profile_id!r}. Valid: {sorted(MODEL_PROFILES)}")
+    _db_set_kv(_KV_MODEL_PROFILE_KEY, profile_id, updated_by_clerk_id)
+    _invalidate_kv_cache(_KV_MODEL_PROFILE_KEY)
+    _kv_log.info(
+        "operator: model profile override set to %r by clerk_id=%s",
+        profile_id, updated_by_clerk_id,
+    )
+
+
+def clear_model_profile_override(updated_by_clerk_id: str) -> None:
+    """Remove the DB override — effective profile falls back to env DEFAULT_MODEL_PROFILE."""
+    _db_delete_kv(_KV_MODEL_PROFILE_KEY)
+    _invalidate_kv_cache(_KV_MODEL_PROFILE_KEY)
+    _kv_log.info(
+        "operator: model profile override cleared by clerk_id=%s", updated_by_clerk_id
+    )

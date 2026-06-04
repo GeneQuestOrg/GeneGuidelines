@@ -1,6 +1,11 @@
 import { useEffect, useState } from "react";
 import { Badge } from "@gene-guidelines/ui";
-import { fetchPipelineSettings, type OperatorSettings } from "../api/client";
+import {
+  fetchPipelineSettings,
+  updateModelProfileOverride,
+  clearModelProfileOverride,
+  type OperatorSettings,
+} from "../api/client";
 import "../styles/ops-settings.css";
 
 function formatTimeout(sec: number): string {
@@ -9,7 +14,115 @@ function formatTimeout(sec: number): string {
   return `${sec} s`;
 }
 
-export function SettingsView() {
+interface ModelProfileOverrideSectionProps {
+  settings: OperatorSettings;
+  onSettingsChange: (updated: OperatorSettings) => void;
+}
+
+function ModelProfileOverrideSection({
+  settings,
+  onSettingsChange,
+}: ModelProfileOverrideSectionProps) {
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+
+  const availableProfiles = settings.modelProfiles.map((p) => p.id);
+  const activeOverride = settings.modelProfileOverride;
+  const envDefault = settings.envDefaultModelProfile;
+
+  async function handleSelect(profileId: string) {
+    setSaving(true);
+    setSaveError(null);
+    try {
+      const updated = await updateModelProfileOverride(profileId);
+      onSettingsChange(updated);
+    } catch (e) {
+      setSaveError(String(e));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleClear() {
+    setSaving(true);
+    setSaveError(null);
+    try {
+      const updated = await clearModelProfileOverride();
+      onSettingsChange(updated);
+    } catch (e) {
+      setSaveError(String(e));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <section className="ops-settings__section ops-settings__section--override">
+      <h2>
+        Active model profile{" "}
+        <Badge variant="ok">Super-admin</Badge>
+      </h2>
+      <p className="ops-settings__hint">
+        Override the server-default profile for runs that don't specify one explicitly.
+        Env default: <code>{envDefault}</code>.
+      </p>
+
+      <div className="ops-settings__override-row">
+        <select
+          className="ops-settings__override-select"
+          value={activeOverride ?? ""}
+          onChange={(e) => {
+            const val = e.target.value;
+            if (val) void handleSelect(val);
+          }}
+          disabled={saving}
+          aria-label="Active model profile"
+        >
+          <option value="" disabled>
+            — use env default ({envDefault}) —
+          </option>
+          {settings.modelProfiles.map((p) => (
+            <option key={p.id} value={p.id} disabled={!p.ready}>
+              {p.label ?? p.id}
+              {!p.ready ? " (missing keys)" : ""}
+            </option>
+          ))}
+        </select>
+
+        {activeOverride ? (
+          <button
+            className="ops-settings__override-clear"
+            onClick={() => void handleClear()}
+            disabled={saving}
+            aria-label="Clear profile override"
+          >
+            Reset to env default
+          </button>
+        ) : null}
+      </div>
+
+      {saving ? <p className="ops-settings__hint">Saving…</p> : null}
+      {saveError ? (
+        <p className="ops-settings__error" role="alert">
+          {saveError}
+        </p>
+      ) : null}
+
+      {activeOverride ? (
+        <p className="ops-settings__hint ops-settings__hint--active">
+          Active override: <strong>{activeOverride}</strong> — all runs using the
+          default profile will use this until cleared.
+        </p>
+      ) : null}
+    </section>
+  );
+}
+
+export interface SettingsViewProps {
+  isSuperAdmin?: boolean;
+}
+
+export function SettingsView({ isSuperAdmin = false }: SettingsViewProps) {
   const [settings, setSettings] = useState<OperatorSettings | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -55,10 +168,17 @@ export function SettingsView() {
       <header className="ops-settings__header">
         <h1>Settings</h1>
         <p>
-          Environment-backed configuration (read-only). Update values in the
-          server <code>.env</code> and restart the backend.
+          Environment-backed configuration. Model profile can be overridden at
+          runtime by super-admins.
         </p>
       </header>
+
+      {isSuperAdmin ? (
+        <ModelProfileOverrideSection
+          settings={settings}
+          onSettingsChange={setSettings}
+        />
+      ) : null}
 
       <section className="ops-settings__section">
         <h2>Runtime</h2>
@@ -67,6 +187,9 @@ export function SettingsView() {
             <dt>Default model profile</dt>
             <dd>
               <code>{settings.defaultModelProfile}</code>
+              {settings.modelProfileOverride ? (
+                <Badge variant="ok">overridden</Badge>
+              ) : null}
             </dd>
           </div>
           <div>
