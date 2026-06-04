@@ -155,6 +155,7 @@ async def upload_private_context(
         slug=slug,
         filename=file.filename or "upload",
         raw_bytes=raw_bytes,
+        uploaded_by_clerk_id=_user.clerk_id,
     )
     if context is None:
         raise HTTPException(status_code=404, detail="Disease not found")
@@ -170,8 +171,8 @@ def list_private_contexts(
     _user: AuthUser = Depends(get_current_user),
     service: PrivateContextService = Depends(provide_private_context_service),
 ) -> list[PrivateContextResponse]:
-    """List the private contexts uploaded for ``slug``, newest first."""
-    contexts = service.list_for_disease(slug)
+    """List the private contexts uploaded for ``slug`` by the calling user, newest first."""
+    contexts = service.list_for_disease(slug, clerk_id=_user.clerk_id)
     if contexts is None:
         raise HTTPException(status_code=404, detail="Disease not found")
     return [PrivateContextResponse.from_domain(c) for c in contexts]
