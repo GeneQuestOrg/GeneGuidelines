@@ -173,6 +173,32 @@ def _log_llm_from_store(store: dict, event: str, node_id: str, **fields: Any) ->
     log_llm_call(event, execution_id=execution_id, node_id=node_id, **fields)
 
 
+def _record_simple_llm_usage(
+    store: dict,
+    res: Any,
+    *,
+    node_id: str,
+    model_spec: str,
+    attempt: int,
+    duration_ms: int | None,
+    ok: bool,
+) -> None:
+    from .token_usage import ledger_for_store, record_from_pydantic_usage
+
+    execution_id = str(store.get("execution_id") or "").strip()
+    record_from_pydantic_usage(
+        getattr(res, "usage", None),
+        ledger=ledger_for_store(store),
+        node_id=node_id,
+        model_spec=model_spec,
+        prompt_mode="simple",
+        attempt=attempt,
+        duration_ms=duration_ms,
+        ok=ok,
+        execution_id=execution_id or None,
+    )
+
+
 def is_tpm_request_too_large_error(exc: BaseException) -> bool:
     """True when a single request exceeds the org TPM/token burst limit (OpenAI 429)."""
     msg = f"{type(exc).__name__}: {exc}".lower()
@@ -320,6 +346,15 @@ async def run_llm_simple_async(
                 out = getattr(res, "data", None)
             if isinstance(out, BaseModel):
                 data = out.model_dump()
+                _record_simple_llm_usage(
+                    store,
+                    res,
+                    node_id=node_id,
+                    model_spec=active_spec,
+                    attempt=attempt,
+                    duration_ms=duration_ms,
+                    ok=True,
+                )
                 _log_llm_from_store(
                     store,
                     "llm_call_done",
@@ -335,6 +370,15 @@ async def run_llm_simple_async(
                 )
                 return data
             if isinstance(out, dict):
+                _record_simple_llm_usage(
+                    store,
+                    res,
+                    node_id=node_id,
+                    model_spec=active_spec,
+                    attempt=attempt,
+                    duration_ms=duration_ms,
+                    ok=True,
+                )
                 _log_llm_from_store(
                     store,
                     "llm_call_done",
@@ -352,6 +396,16 @@ async def run_llm_simple_async(
             last_err = "Empty or invalid structured output"
         except Exception as e:
             duration_ms = int((time.monotonic() - t0) * 1000) if "t0" in locals() else None
+            if "res" in locals():
+                _record_simple_llm_usage(
+                    store,
+                    res,
+                    node_id=node_id,
+                    model_spec=active_spec,
+                    attempt=attempt,
+                    duration_ms=duration_ms,
+                    ok=False,
+                )
             last_err = f"{type(e).__name__}: {e}"
             _log_llm_from_store(
                 store,

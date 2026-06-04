@@ -72,6 +72,13 @@ def log_llm_call(
     log_run_event(event, execution_id=execution_id, node_id=node_id, **fields)
 
 
+def log_token_usage(event: str, *, execution_id: str, **fields: Any) -> None:
+    """Structured log for aggregated or per-call LLM token usage."""
+    if not execution_id:
+        return
+    log_run_event(event, execution_id=execution_id, **fields)
+
+
 def summarize_node_output(node_out: Any) -> dict[str, Any]:
     """Compact node result for logs (no full LLM payloads)."""
     if not isinstance(node_out, dict):

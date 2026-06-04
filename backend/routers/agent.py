@@ -239,6 +239,14 @@ async def execute_agent_async(
             store = dict(AGENT_RUNS.get(execution_id) or {})
             AGENT_RUNS[execution_id] = store
         try:
+            from ..agents.token_usage import finalize_token_usage_for_store
+        except ImportError:
+            from agents.token_usage import finalize_token_usage_for_store
+
+        finalize_token_usage_for_store(store)
+        with _AGENT_STORAGE_LOCK:
+            AGENT_RUNS[execution_id] = store
+        try:
             from ..guideline_run_store import save_guideline_run_result
         except ImportError:
             from guideline_run_store import save_guideline_run_result

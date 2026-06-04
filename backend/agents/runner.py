@@ -41,6 +41,30 @@ from pydantic_ai.messages import (
 _AGENT_USAGE_LIMITS = UsageLimits(request_limit=AGENT_PYDANTIC_AI_REQUEST_LIMIT)
 
 
+def _record_agentic_token_usage(
+    store: dict[str, Any],
+    usage: Any,
+    *,
+    node_id: str,
+    model_spec: str,
+    duration_ms: int | None,
+    ok: bool,
+) -> None:
+    from .token_usage import ledger_for_store, record_from_pydantic_usage
+
+    execution_id = str(store.get("execution_id") or "").strip()
+    record_from_pydantic_usage(
+        usage,
+        ledger=ledger_for_store(store),
+        node_id=node_id,
+        model_spec=model_spec,
+        prompt_mode="agentic",
+        duration_ms=duration_ms,
+        ok=ok,
+        execution_id=execution_id or None,
+    )
+
+
 def _looks_polish(text: str) -> bool:
     s = (text or "").lower()
     if not s:
@@ -409,6 +433,14 @@ def run_agent_sync(
 
                 agent = agent_module.get_agent(flow, use_mcp=False, system_prompt=text_system)
                 res = await agent.run(prompt, usage_limits=_AGENT_USAGE_LIMITS)
+                _record_agentic_token_usage(
+                    store,
+                    getattr(res, "usage", None),
+                    node_id="ticket",
+                    model_spec="",
+                    duration_ms=None,
+                    ok=True,
+                )
                 out_text = str(getattr(res, "output", "") or "")
                 payload: dict = {}
                 m = _re.search(r"\\{[\\s\\S]*\\}$", out_text.strip())
@@ -604,6 +636,15 @@ def run_agent_sync(
                 else:
                     raise
 
+            _record_agentic_token_usage(
+                store,
+                getattr(agent_run, "usage", None),
+                node_id="ticket",
+                model_spec="",
+                duration_ms=None,
+                ok=True,
+            )
+
             # The output is only available after agent_run finishes (when End is reached).
             try:
                 final = getattr(agent_run, "result", None)
@@ -750,6 +791,14 @@ async def run_agent_async(
         agent = agent_module.get_agent(flow, use_mcp=False, system_prompt=text_system)
         # Single-shot run (no tool calls expected)
         res = await agent.run(prompt, usage_limits=_AGENT_USAGE_LIMITS)
+        _record_agentic_token_usage(
+            store,
+            getattr(res, "usage", None),
+            node_id="ticket",
+            model_spec="",
+            duration_ms=None,
+            ok=True,
+        )
         out_text = str(getattr(res, "output", "") or "")
         # Extract JSON from response (robust to accidental prose). If absent/invalid, fallback to heuristics.
         payload: dict = {}
@@ -969,6 +1018,15 @@ async def run_agent_async(
                 _emit(event_queue, store["trace"][-1])
             if not (store.get("output") or "").strip() and last_model_text:
                 store["output"] = last_model_text[-1]
+            if "agent_run" in locals():
+                _record_agentic_token_usage(
+                    store,
+                    getattr(agent_run, "usage", None),
+                    node_id="ticket",
+                    model_spec="",
+                    duration_ms=None,
+                    ok=True,
+                )
             _dbg(
                 "H_LANG_FINAL_OUTPUT_ASYNC",
                 "final output language (async)",
@@ -1044,7 +1102,7 @@ async def run_single_node_async(
         "execution_id": store.get("execution_id"),
     }
 
-    async def _consume_iter(agent_obj) -> None:
+    async def _consume_iter(agent_obj) -> Any:
         async with agent_obj.iter(user_prompt, usage_limits=_AGENT_USAGE_LIMITS) as agent_run:
             async for node in agent_run:
                 if isinstance(node, CallToolsNode):
@@ -1222,6 +1280,7 @@ async def run_single_node_async(
             pass
         if not (store.get("output") or "").strip() and last_model_text:
             store["output"] = last_model_text[-1]
+        return getattr(agent_run, "usage", None)
 
     try:
         _dbg(
@@ -1262,7 +1321,16 @@ async def run_single_node_async(
         )
         store["last_stage"] = "run_single_node_async:agent_iter"
         t0 = time.monotonic()
-        await _consume_iter(agent)
+        iter_usage = await _consume_iter(agent)
+        duration_ms = int((time.monotonic() - t0) * 1000)
+        _record_agentic_token_usage(
+            store,
+            iter_usage,
+            node_id=node_id,
+            model_spec=model_spec or "",
+            duration_ms=duration_ms,
+            ok=True,
+        )
         if execution_id and node_id:
             from ..observability.run_log import log_llm_call
 
@@ -1272,7 +1340,7 @@ async def run_single_node_async(
                 node_id=node_id,
                 prompt_mode="agentic",
                 model_spec=model_spec or "",
-                duration_ms=int((time.monotonic() - t0) * 1000),
+                duration_ms=duration_ms,
                 ok=True,
                 flow_key=store.get("flow_key"),
             )
@@ -1327,7 +1395,15 @@ async def run_single_node_async(
                     model_spec=model_spec,
                     max_tokens=max_tokens,
                 )
-                await _consume_iter(agent_plain)
+                iter_usage = await _consume_iter(agent_plain)
+                _record_agentic_token_usage(
+                    store,
+                    iter_usage,
+                    node_id=node_id,
+                    model_spec=model_spec or "",
+                    duration_ms=int((time.monotonic() - t0) * 1000) if "t0" in locals() else None,
+                    ok=True,
+                )
                 _synthesize_ai_summary_and_steps_from_output(store, event_queue, emit_fn)
                 _dbg(
                     "H4b",
@@ -1374,7 +1450,15 @@ async def run_single_node_async(
                         model_spec=overflow_spec,
                         max_tokens=max_tokens,
                     )
-                    await _consume_iter(agent_overflow)
+                    iter_usage = await _consume_iter(agent_overflow)
+                    _record_agentic_token_usage(
+                        store,
+                        iter_usage,
+                        node_id=node_id,
+                        model_spec=overflow_spec,
+                        duration_ms=int((time.monotonic() - t0) * 1000) if "t0" in locals() else None,
+                        ok=True,
+                    )
                     _dbg(
                         "H4c",
                         "overflow fallback completed without exception",
