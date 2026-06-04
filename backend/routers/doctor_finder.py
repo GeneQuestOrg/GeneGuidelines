@@ -21,7 +21,8 @@ from uuid import uuid4
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 
-from ..clerk_auth import get_current_user
+from ..bootstrap_rate_limit import check_bootstrap_rate_limit
+from ..clerk_auth import AuthUser, get_current_user
 from ..agents.simple_runner import current_model_profile, resolve_model_spec_for_node
 from ..flows.doctor_finder.alias_generator import generate_disease_aliases_async, merge_alias_lists
 from ..flows.doctor_finder.schemas import DoctorFinderAliasSuggestInput, DoctorFinderInput
@@ -239,8 +240,12 @@ async def _execute_doctor_finder(
 
 
 @router.post("/run")
-async def run_doctor_finder(input_data: DoctorFinderInput):
+async def run_doctor_finder(
+    input_data: DoctorFinderInput,
+    user: AuthUser = Depends(get_current_user),
+):
     """Start a doctor_finder execution. Returns execution_id."""
+    check_bootstrap_rate_limit(user)
     _prune_finished_runs()
     execution_id = str(uuid4())
     event_queue: Queue = Queue()
@@ -282,8 +287,12 @@ async def run_doctor_finder(input_data: DoctorFinderInput):
 
 
 @router.post("/suggest-aliases")
-async def suggest_disease_aliases(body: DoctorFinderAliasSuggestInput):
+async def suggest_disease_aliases(
+    body: DoctorFinderAliasSuggestInput,
+    user: AuthUser = Depends(get_current_user),
+):
     """Generate PubMed-oriented disease aliases via LLM (does not run the full flow)."""
+    check_bootstrap_rate_limit(user)
     empty_store: dict = {}
     token = current_model_profile.set(body.model_profile)
     try:

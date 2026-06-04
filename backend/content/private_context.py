@@ -154,6 +154,7 @@ class PrivateContext:
     model_used: str
     status: str  # 'pending' | 'ready' | 'failed'
     error: str | None
+    uploaded_by_clerk_id: str = ""
 
 
 def private_context_from_row(row: Mapping[str, object]) -> PrivateContext:
@@ -163,6 +164,7 @@ def private_context_from_row(row: Mapping[str, object]) -> PrivateContext:
     except Exception:
         redacted = RedactedFacts()
     err = row.get("error")
+    owner = row.get("uploaded_by_clerk_id")
     return PrivateContext(
         id=int(row["id"]),  # type: ignore[arg-type]
         disease_slug=str(row["disease_slug"]),
@@ -176,6 +178,7 @@ def private_context_from_row(row: Mapping[str, object]) -> PrivateContext:
         model_used=str(row.get("model_used") or ""),
         status=str(row.get("status") or "pending"),
         error=None if err is None else str(err),
+        uploaded_by_clerk_id=str(owner) if owner is not None else "",
     )
 
 
@@ -388,9 +391,10 @@ class PrivateContextRepo(Protocol):
         model_used: str,
         status: str,
         error: str | None,
+        uploaded_by_clerk_id: str,
     ) -> PrivateContext: ...
 
-    def list_for_disease(self, disease_slug: str) -> list[PrivateContext]: ...
+    def list_for_disease(self, disease_slug: str, clerk_id: str) -> list[PrivateContext]: ...
 
 
 class SqlaPrivateContextRepo(BaseSqlalchemyRepo):
@@ -408,6 +412,7 @@ class SqlaPrivateContextRepo(BaseSqlalchemyRepo):
         model_used: str,
         status: str,
         error: str | None,
+        uploaded_by_clerk_id: str,
     ) -> PrivateContext:
         now = datetime.now(timezone.utc).isoformat()
         clinical_facts = (
@@ -428,6 +433,7 @@ class SqlaPrivateContextRepo(BaseSqlalchemyRepo):
             model_used=model_used,
             status=status,
             error=error,
+            uploaded_by_clerk_id=uploaded_by_clerk_id or None,
         )
         with self._engine.begin() as conn:
             result = conn.execute(stmt)
@@ -440,10 +446,11 @@ class SqlaPrivateContextRepo(BaseSqlalchemyRepo):
         assert row is not None
         return private_context_from_row(dict(row))
 
-    def list_for_disease(self, disease_slug: str) -> list[PrivateContext]:
+    def list_for_disease(self, disease_slug: str, clerk_id: str) -> list[PrivateContext]:
         stmt = (
             select(private_contexts_table)
             .where(private_contexts_table.c.disease_slug == disease_slug)
+            .where(private_contexts_table.c.uploaded_by_clerk_id == clerk_id)
             .order_by(private_contexts_table.c.uploaded_at.desc())
         )
         with self._conn() as conn:
@@ -467,6 +474,7 @@ class InMemoryPrivateContextRepo:
         model_used: str,
         status: str,
         error: str | None,
+        uploaded_by_clerk_id: str,
     ) -> PrivateContext:
         clinical_facts = (
             len(redacted.clinical_findings)
@@ -487,14 +495,15 @@ class InMemoryPrivateContextRepo:
             model_used=model_used,
             status=status,
             error=error,
+            uploaded_by_clerk_id=uploaded_by_clerk_id,
         )
         self._next_id += 1
         self._items.append(context)
         return context
 
-    def list_for_disease(self, disease_slug: str) -> list[PrivateContext]:
+    def list_for_disease(self, disease_slug: str, clerk_id: str) -> list[PrivateContext]:
         return sorted(
-            (p for p in self._items if p.disease_slug == disease_slug),
+            (p for p in self._items if p.disease_slug == disease_slug and p.uploaded_by_clerk_id == clerk_id),
             key=lambda p: p.uploaded_at,
             reverse=True,
         )
@@ -516,6 +525,7 @@ class PrivateContextService:
         slug: str,
         filename: str,
         raw_bytes: bytes,
+        uploaded_by_clerk_id: str,
     ) -> PrivateContext | None:
         """Parse → call Gemma → persist redacted facts.
 
@@ -543,6 +553,7 @@ class PrivateContextService:
                 model_used="",
                 status="failed",
                 error=str(exc),
+                uploaded_by_clerk_id=uploaded_by_clerk_id,
             )
 
         original_chars = len(raw_text)
@@ -564,6 +575,7 @@ class PrivateContextService:
                 model_used="",
                 status="failed",
                 error=f"{type(exc).__name__}: {exc}",
+                uploaded_by_clerk_id=uploaded_by_clerk_id,
             )
 
         # Drop the local references explicitly. Belt-and-braces — the GC would
@@ -580,13 +592,14 @@ class PrivateContextService:
             model_used=model_used,
             status="ready",
             error=None,
+            uploaded_by_clerk_id=uploaded_by_clerk_id,
         )
 
-    def list_for_disease(self, slug: str) -> list[PrivateContext] | None:
+    def list_for_disease(self, slug: str, clerk_id: str) -> list[PrivateContext] | None:
         normalized = normalize_slug(slug)
         if normalized is None or self.disease_repo.get(normalized) is None:
             return None
-        return self.repo.list_for_disease(normalized)
+        return self.repo.list_for_disease(normalized, clerk_id)
 
 
 __all__ = [
