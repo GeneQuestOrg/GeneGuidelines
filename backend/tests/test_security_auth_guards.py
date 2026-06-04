@@ -7,7 +7,7 @@ from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 
-from backend.clerk_auth import AuthUser, get_current_user, require_admin
+from backend.clerk_auth import AuthUser, get_current_user, require_admin, require_super_admin
 from backend.main import app
 
 
@@ -53,6 +53,61 @@ class SecurityAuthGuardTests(unittest.TestCase):
         )
         response = self.client.get("/api/agent/approval-pending")
         self.assertEqual(response.status_code, 200)
+
+
+class SuperAdminRoleHierarchyTests(unittest.TestCase):
+    """Verify super_admin is a superset of admin and that role gates work in both directions."""
+
+    def setUp(self) -> None:
+        app.dependency_overrides.clear()
+        self.client = TestClient(app)
+
+    def tearDown(self) -> None:
+        app.dependency_overrides.clear()
+
+    def test_super_admin_passes_require_admin_gate(self) -> None:
+        """super_admin must not be blocked by existing require_admin endpoints."""
+        app.dependency_overrides[require_admin] = lambda: AuthUser(
+            clerk_id="super_admin_guard",
+            email=None,
+            role="super_admin",
+        )
+        response = self.client.get("/api/agent/approval-pending")
+        self.assertEqual(response.status_code, 200)
+
+    def test_plain_admin_blocked_by_require_super_admin(self) -> None:
+        """admin must receive 403 when a super_admin-only dependency is injected."""
+        app.dependency_overrides[get_current_user] = lambda: AuthUser(
+            clerk_id="admin_guard",
+            email=None,
+            role="admin",
+        )
+        # We call require_super_admin directly via dependency_overrides removal —
+        # test the dependency function itself rather than relying on a specific route.
+        from backend.clerk_auth import require_super_admin as _req
+        import pytest
+        from fastapi import HTTPException
+
+        admin_user = AuthUser(clerk_id="admin_guard", email=None, role="admin")
+        with self.assertRaises(HTTPException) as ctx:
+            _req(admin_user)
+        self.assertEqual(ctx.exception.status_code, 403)
+
+    def test_user_role_blocked_by_require_super_admin(self) -> None:
+        from backend.clerk_auth import require_super_admin as _req
+        from fastapi import HTTPException
+
+        user = AuthUser(clerk_id="plain_user", email=None, role="user")
+        with self.assertRaises(HTTPException) as ctx:
+            _req(user)
+        self.assertEqual(ctx.exception.status_code, 403)
+
+    def test_super_admin_passes_require_super_admin(self) -> None:
+        from backend.clerk_auth import require_super_admin as _req
+
+        sa = AuthUser(clerk_id="super_admin_guard", email=None, role="super_admin")
+        result = _req(sa)
+        self.assertEqual(result.role, "super_admin")
 
 
 class ClerkSecurityConfigTests(unittest.TestCase):

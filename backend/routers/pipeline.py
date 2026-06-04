@@ -12,7 +12,7 @@ from ..bootstrap_rate_limit import (
     check_bootstrap_rate_limit,
     check_metadata_lookup_rate_limit,
 )
-from ..clerk_auth import AuthUser, get_current_user, require_admin
+from ..clerk_auth import AuthUser, get_current_user, require_admin, require_super_admin
 from ..config import DEFAULT_MODEL_PROFILE, MODEL_PROFILES
 from ..content_db import (
     get_disease_by_slug,
@@ -32,7 +32,11 @@ from ..guideline_prompt_profile import (
     build_custom_disease_flow_initial_fields,
     normalize_guideline_prompt_profile,
 )
-from ..operator_settings import get_operator_settings
+from ..operator_settings import (
+    get_operator_settings,
+    set_model_profile_override,
+    clear_model_profile_override,
+)
 from . import agent as agent_router
 from . import doctor_finder as doctor_finder_router
 
@@ -129,11 +133,17 @@ class RuntimeSettingsResponse(BaseModel):
 
 class OperatorSettingsResponse(BaseModel):
     defaultModelProfile: str
+    modelProfileOverride: str | None = None
+    envDefaultModelProfile: str = ""
     singleLlmMode: bool = False
     singleLlmModel: str | None = None
     modelProfiles: list[ModelProfileSettingsResponse]
     integrations: list[IntegrationSettingResponse]
     runtime: RuntimeSettingsResponse
+
+
+class ModelProfileOverrideRequest(BaseModel):
+    profileId: str = Field(..., min_length=1, max_length=64)
 
 
 def _custom_guideline_ticket_description(disease_name: str, aliases: list[str]) -> str:
@@ -205,7 +215,40 @@ def _pipeline_run_row(
 
 @router.get("/settings", response_model=OperatorSettingsResponse)
 async def get_pipeline_settings(_admin: AuthUser = Depends(require_admin)):
-    """Read-only operator settings: model profiles, integration status, runtime flags."""
+    """Operator settings: model profiles, integration status, runtime flags, and active override."""
+    payload = await asyncio.get_event_loop().run_in_executor(None, get_operator_settings)
+    return OperatorSettingsResponse.model_validate(payload)
+
+
+@router.put("/settings/model-profile", response_model=OperatorSettingsResponse)
+async def set_pipeline_model_profile(
+    body: ModelProfileOverrideRequest,
+    super_admin: AuthUser = Depends(require_super_admin),
+):
+    """Set the server-default model profile override (super_admin only).
+
+    Runs started without an explicit profile will use this value instead of
+    the env-backed DEFAULT_MODEL_PROFILE. The change takes effect within the
+    cache TTL (≤60 s) with no backend restart required.
+    """
+    try:
+        await asyncio.get_event_loop().run_in_executor(
+            None, set_model_profile_override, body.profileId, super_admin.clerk_id
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    payload = await asyncio.get_event_loop().run_in_executor(None, get_operator_settings)
+    return OperatorSettingsResponse.model_validate(payload)
+
+
+@router.delete("/settings/model-profile", response_model=OperatorSettingsResponse)
+async def clear_pipeline_model_profile(
+    super_admin: AuthUser = Depends(require_super_admin),
+):
+    """Remove the model profile override — effective default reverts to env DEFAULT_MODEL_PROFILE."""
+    await asyncio.get_event_loop().run_in_executor(
+        None, clear_model_profile_override, super_admin.clerk_id
+    )
     payload = await asyncio.get_event_loop().run_in_executor(None, get_operator_settings)
     return OperatorSettingsResponse.model_validate(payload)
 

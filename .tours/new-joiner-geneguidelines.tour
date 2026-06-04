@@ -1,0 +1,87 @@
+{
+  "$schema": "https://aka.ms/codetour-schema",
+  "title": "GeneGuidelines — tour dla nowego developera",
+  "description": "Przewodnik po repozytorium: od celu produktu, przez silnik workflow i MCP, po oba frontendy i wspólny pakiet ops. Nie obejmuje każdego pliku — pokazuje główne ścieżki wykonania i gdzie szukać szczegółów.",
+  "ref": "main",
+  "steps": [
+    {
+      "file": "README.md",
+      "line": 21,
+      "title": "Po co jest ten projekt",
+      "description": "**Sytuacja:** czytasz punkt wyjścia repozytorium.\n\n**Mechanizm:** GeneGuidelines to silnik „żywych” wytycznych klinicznych dla chorób rzadkich: PubMed → szkic zmiany (PR) → zatwierdzenie przez lekarza → publikacja na stronie publicznej.\n\n**Znaczenie:** wszystko inne (backend, flow, admin) służy tej pętli dowodowej, nie odwrotnie.\n\n**Pułapka:** to nie jest chatbot RAG — produktem jest audytowalny workflow z bramkami HITL i śladem PMID."
+    },
+    {
+      "file": "docs/ARCHITECTURE.md",
+      "line": 12,
+      "title": "Kontrolowana autonomia AI",
+      "description": "**Sytuacja:** rdzeń architektury w jednym akapicie.\n\n**Mechanizm:** *między* węzłami grafu decyduje silnik (deterministycznie); *wewnątrz* węzła agentycznego model ma wolność (narzędzia MCP), ale musi zwrócić wynik zgodny ze schematem Pydantic.\n\n**Znaczenie:** rozdzielasz „kto steruje” (engine vs LLM) — bez tego trudno debugować runy i approval gates.\n\n**Pułapka:** approval to gate silnika, nie „prośba do modelu o zgodę”."
+    },
+    {
+      "file": "docs/ARCHITECTURE.md",
+      "line": 121,
+      "title": "Mapa folderów",
+      "description": "**Sytuacja:** schemat layoutu z dokumentacji architektury.\n\n**Mechanizm:** `backend/` (API + silnik + executory + MCP), `frontend-public/` (pacjenci/lekarze), `frontend-admin/` (operatorzy), `packages/ui` i `packages/ops` (współdzielone UI admina).\n\n**Znaczenie:** zanim otworzysz losowy plik, wiesz w której „warstwie” szukać — treść chorób, pipeline, czy edytor flow.\n\n**Pułapka:** workflow to dane w DB (graf JSON), nie pliki Python w `flows/` — `flows/` to helpery i prompty, nie definicja grafu."
+    },
+    {
+      "file": "backend/main.py",
+      "line": 111,
+      "title": "Punkt wejścia API",
+      "description": "**Sytuacja:** montowanie routerów FastAPI.\n\n**Mechanizm:** `lifespan` woła `init_db` / `run_seed_if_empty` (`database.py`); routery `/api/agent`, `/api/flows`, `/api/pipeline`, treść chorób, doctor finder itd. trafiają tutaj. Połączenie: `backend/db.py` + `DB_URL` (Postgres).\n\n**Znaczenie:** śledząc request HTTP zaczynasz od tego pliku, potem konkretny `routers/*.py`.\n\n**Pułapka:** kolejność `include_router` ma znaczenie (np. nowy moduł `content` przed legacy)."
+    },
+    {
+      "file": "backend/engine/flow_engine.py",
+      "line": 438,
+      "title": "Silnik wykonania flow",
+      "description": "**Sytuacja:** `run_flow_step_by_step_async` — serce runtime’u.\n\n**Mechanizm:** pobiera kolejność węzłów, dla każdego wywołuje executor, emituje zdarzenia SSE (`node_started`, `approval_required`, …), scala wyniki w `store`.\n\n**Znaczenie:** gdy run „utknął” lub poszedł złą gałęzią, czytasz ten plik + log ticketu, nie frontend.\n\n**Pułapka:** fork/merge i decision nodes mają osobną logikę dalej w tym samym pliku — to nie jest prosta pętla for."
+    },
+    {
+      "file": "backend/executors/__init__.py",
+      "line": 21,
+      "title": "Rejestr typów węzłów",
+      "description": "**Sytuacja:** mapa `EXECUTOR_REGISTRY`.\n\n**Mechanizm:** każdy typ węzła (`prompt`, `agentic_prompt`, `approval`, `doctor_finder_step`, …) to klasa z metodą `execute()`; silnik nie zna szczegółów — tylko klucz z JSON flow.\n\n**Znaczenie:** nowy typ bloku = nowy plik w `executors/` + wpis tutaj; engine się nie zmienia.\n\n**Pułapka:** nazwa w DB (`pmid_verify`) może różnić się od nazwy pliku (`pmid_verifier_executor.py`)."
+    },
+    {
+      "file": "backend/agents/runner.py",
+      "line": 1,
+      "title": "Runner agenta (Pydantic AI)",
+      "description": "**Sytuacja:** moduł uruchamiający LLM z limitem czasu i trace SSE.\n\n**Mechanizm:** `run_single_node_async` buduje agenta, podłącza MCP (stdio), streamuje zdarzenia na kolejkę; klient admina czyta `GET /api/agent/trace/{execution_id}`.\n\n**Znaczenie:** błędy modelu, timeout 90s i „za dużo tool calli” diagnozujesz tutaj.\n\n**Pułapka:** importy Pydantic AI muszą być na poziomie modułu — nie w wątku (komentarz na górze pliku)."
+    },
+    {
+      "file": "backend/tools/mcp_server.py",
+      "line": 21,
+      "title": "Serwer MCP (narzędzia zewnętrzne)",
+      "description": "**Sytuacja:** FastMCP z PubMed i wygenerowanymi narzędziami.\n\n**Mechanizm:** osobny proces stdio; agent w węźle agentic widzi katalog narzędzi (kategoria, tryb APPROVAL, włącz/wyłącz w adminie).\n\n**Znaczenie:** integracje z PubMed/ClinicalTrials nie są hardcodowane w prompcie — są za MCP.\n\n**Pułapka:** `AGENT_NO_MCP=1` wyłącza MCP w testach; bez kluczy API część kroków geo (Brave) po cichu się obejdzie inną ścieżką."
+    },
+    {
+      "file": "backend/content/private_context.py",
+      "selection": {
+        "start": { "line": 1, "character": 0 },
+        "end": { "line": 19, "character": 0 }
+      },
+      "title": "Prywatny kontekst rodzica (PII)",
+      "description": "**Sytuacja:** upload dokumentów szpitalnych bez zapisu surowych bajtów.\n\n**Mechanizm:** PDF → tekst w pamięci → Gemma zwraca `RedactedFacts` (JSON) → tylko JSON ląduje w DB; synteza wytycznych widzi wyłącznie zredagowane fakty.\n\n**Znaczenie:** granica zaufania klinicznego — nie mylić z publicznym seedem chorób.\n\n**Pułapka:** surowy tekst nie powinien trafić do modelu syntezy w chmurze; lokalny Ollama to ten sam kontrakt schematu."
+    },
+    {
+      "file": "frontend-public/src/App.tsx",
+      "line": 17,
+      "title": "Aplikacja publiczna",
+      "description": "**Sytuacja:** shell strony dla pacjentów i lekarzy (port 5173).\n\n**Mechanizm:** hash-router (`useHashRouter`), widoki w `views/routeContent`, dane przez repozytoria w `repositories/` i API w `api/`.\n\n**Znaczenie:** pathway, wytyczne, mapa specjalistów — każdy widok to osobny plik w `views/`, nie jeden monolit.\n\n**Pułapka:** `TweaksPanel` i tryb dev to flagi demo — nie są „produkcją” dla rodzica."
+    },
+    {
+      "file": "frontend-admin/src/App.tsx",
+      "line": 9,
+      "title": "Panel operatora",
+      "description": "**Sytuacja:** admin na porcie 5174 — sidebar + sekcje.\n\n**Mechanizm:** `adminSectionContent(route)` przełącza workspace: flow, runy, PR wytycznych, governance narzędzi; ciężka logika UI siedzi w `@gene-guidelines/ops`.\n\n**Znaczenie:** edytujesz graf i oglądasz SSE trace tutaj, publikujesz na publicznym froncie.\n\n**Pułapka:** admin i public to dwa buildy Vite — współdzielą `packages/ui`, nie duplikują canvas flow."
+    },
+    {
+      "file": "packages/ops/src/components/FlowCanvas.tsx",
+      "line": 100,
+      "title": "Edytor grafu (React Flow)",
+      "description": "**Sytuacja:** wizualny edytor workflow w pakiecie ops.\n\n**Mechanizm:** `FlowCanvas` renderuje węzły/krawędzie z API `/api/flows`, zapis zmian node’ów wraca do backendu; `RunTracePanel` pokazuje live SSE.\n\n**Znaczenie:** zmiana promptu w UI = zmiana danych w DB, bez redeploy backendu.\n\n**Pułapka:** eksport/import YAML flow służy Git/CI — canvas i YAML muszą być zsynchronizowane po ręcznych edycjach."
+    },
+    {
+      "title": "Co dalej",
+      "description": "Masz mapę: README → architektura → API → engine/executory → agent/MCP → fronty. Następny krok: uruchom `make dev`, otwórz admin, wybierz flow „parent pathway” lub „doctor finder”, odpal run i śledź trace SSE równolegle z `flow_engine.py`. Szczegóły env: `CLAUDE.md`; testy przed commitem: `npm run check:dev`."
+    }
+  ]
+}
