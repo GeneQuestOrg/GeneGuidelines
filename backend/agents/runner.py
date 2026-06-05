@@ -411,7 +411,7 @@ def run_agent_sync(
                 res = await agent.run(prompt, usage_limits=_AGENT_USAGE_LIMITS)
                 out_text = str(getattr(res, "output", "") or "")
                 payload: dict = {}
-                m = _re.search(r"\\{[\\s\\S]*\\}$", out_text.strip())
+                m = _re.search(r"\{[\s\S]*\}$", out_text.strip())
                 if m:
                     try:
                         payload = _json.loads(m.group(0))
@@ -753,7 +753,7 @@ async def run_agent_async(
         out_text = str(getattr(res, "output", "") or "")
         # Extract JSON from response (robust to accidental prose). If absent/invalid, fallback to heuristics.
         payload: dict = {}
-        m = _re.search(r"\\{[\\s\\S]*\\}$", out_text.strip())
+        m = _re.search(r"\{[\s\S]*\}$", out_text.strip())
         if m:
             try:
                 payload = _json.loads(m.group(0))
