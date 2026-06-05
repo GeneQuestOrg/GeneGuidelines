@@ -185,7 +185,10 @@ def _store_for_prompt_interpolation(
     flow_key: str,
     node_id: str,
     store: dict[str, Any],
+    *,
+    node: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
+    del node  # reserved for future per-node prompt caps
     if flow_key != "pubmed":
         return store
     outputs = store.get("node_outputs") or {}
@@ -193,7 +196,10 @@ def _store_for_prompt_interpolation(
         return store
     return {
         **store,
-        "node_outputs": {**outputs, "pm-2": _slim_pm2_for_prompt(node_id, outputs["pm-2"])},
+        "node_outputs": {
+            **outputs,
+            "pm-2": _slim_pm2_for_prompt(node_id, outputs["pm-2"]),
+        },
     }
 
 
@@ -203,8 +209,11 @@ def _interpolate_node_prompt(
     *,
     flow_key: str,
     node_id: str,
+    node: dict[str, Any] | None = None,
 ) -> str:
-    interp_store = _store_for_prompt_interpolation(flow_key, node_id, store)
+    interp_store = _store_for_prompt_interpolation(
+        flow_key, node_id, store, node=node
+    )
     return interpolate_context_placeholders(node_prompt, interp_store)
 
 
@@ -933,7 +942,7 @@ async def run_flow_step_by_step_async(
         previous_output = get_previous_output_summary(store)
         node_prompt = build_node_prompt(node_prompt_raw, ticket_summary, tools_list_str, previous_output)
         node_prompt = _interpolate_node_prompt(
-            node_prompt, store, flow_key=flow_key, node_id=node_id
+            node_prompt, store, flow_key=flow_key, node_id=node_id, node=node
         )
         max_retry = node.get("max_retry")
         try:
@@ -1025,7 +1034,7 @@ async def run_flow_step_by_step_async(
                     store["memory_loaded"] = True
             # Re-run interpolation so templates can resolve {{ context.memory.* }}.
             node_prompt = _interpolate_node_prompt(
-                node_prompt, store, flow_key=flow_key, node_id=node_id
+                node_prompt, store, flow_key=flow_key, node_id=node_id, node=node
             )
         # #endregion Memory retrieval injection (agentic only)
 
@@ -1863,7 +1872,7 @@ async def run_flow_fork_parallel_async(
         previous_output = get_previous_output_summary(local_store)
         node_prompt = build_node_prompt(node_prompt_raw, ticket_summary, tools_list_str, previous_output)
         node_prompt = _interpolate_node_prompt(
-            node_prompt, local_store, flow_key=flow_key, node_id=nid
+            node_prompt, local_store, flow_key=flow_key, node_id=nid, node=node
         )
 
         max_retry = node.get("max_retry")
@@ -1934,7 +1943,7 @@ async def run_flow_fork_parallel_async(
             local_store.setdefault("memory", {"latest_summary_text": "", "recent_as_text": ""})
             local_store.setdefault("memory_loaded", False)
             node_prompt = _interpolate_node_prompt(
-                node_prompt, local_store, flow_key=flow_key, node_id=nid
+                node_prompt, local_store, flow_key=flow_key, node_id=nid, node=node
             )
 
         if prompt_mode == "simple":

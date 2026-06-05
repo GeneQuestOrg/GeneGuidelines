@@ -204,48 +204,29 @@ def _persist_foundations(disease_slug: str, foundations: list[_Foundation]) -> i
     return inserted
 
 
-def _log_run(execution_id: str, disease_slug: str, status: str, error: str | None = None) -> None:
+def _log_run(
+    execution_id: str,
+    disease_slug: str,
+    status: str,
+    error: str | None = None,
+    *,
+    owner_clerk_id: str | None = None,
+) -> None:
     try:
-        from ..database import get_connection
+        from ..guideline_run_store import upsert_pipeline_run_status
     except ImportError:
-        from database import get_connection  # type: ignore[no-redef]
+        from guideline_run_store import upsert_pipeline_run_status  # type: ignore[no-redef]
 
-    conn = get_connection()
-    cur = conn.cursor()
-    now = datetime.now(timezone.utc).isoformat()
-    try:
-        cur.execute("SELECT 1 FROM guideline_run_results WHERE execution_id = %s", (execution_id,))
-        if cur.fetchone() is None:
-            cur.execute(
-                """INSERT INTO guideline_run_results
-                   (execution_id, pipeline, flow_key, disease_slug, label,
-                    done, started_at, finished_at, error)
-                   VALUES (%s, 'foundations_finder', 'foundations_finder', %s, %s, %s, %s, %s, %s)""",
-                (
-                    execution_id,
-                    disease_slug,
-                    f"Foundations — {disease_slug}",
-                    1 if status in ("ready", "failed") else 0,
-                    now,
-                    now if status in ("ready", "failed") else None,
-                    error,
-                ),
-            )
-        else:
-            cur.execute(
-                """UPDATE guideline_run_results
-                   SET done = %s, finished_at = %s, error = COALESCE(%s, error)
-                   WHERE execution_id = %s""",
-                (
-                    1 if status in ("ready", "failed") else 0,
-                    now if status in ("ready", "failed") else None,
-                    error,
-                    execution_id,
-                ),
-            )
-        conn.commit()
-    finally:
-        conn.close()
+    upsert_pipeline_run_status(
+        execution_id=execution_id,
+        pipeline="foundations_finder",
+        flow_key="foundations_finder",
+        disease_slug=disease_slug,
+        label=f"Foundations — {disease_slug}",
+        done=status in ("ready", "failed"),
+        error=error,
+        owner_clerk_id=owner_clerk_id,
+    )
 
 
 async def find_foundations_for_disease(
@@ -254,9 +235,10 @@ async def find_foundations_for_disease(
     *,
     orphanet_id: str | None = None,
     execution_id: str | None = None,
+    owner_clerk_id: str | None = None,
 ) -> int:
     exec_id = execution_id or f"fdn-{uuid.uuid4().hex[:12]}"
-    _log_run(exec_id, disease_slug, "running")
+    _log_run(exec_id, disease_slug, "running", owner_clerk_id=owner_clerk_id)
 
     orphanet_hint = orphanet_id or _lookup_orphanet_id(disease_slug, disease_name)
     user_prompt = (
@@ -307,7 +289,7 @@ async def find_foundations_for_disease(
         used_fallback = True
 
     inserted = _persist_foundations(disease_slug, result.foundations)
-    _log_run(exec_id, disease_slug, "ready")
+    _log_run(exec_id, disease_slug, "ready", owner_clerk_id=owner_clerk_id)
     log.info(
         "foundations_finder: %d candidate(s), %d inserted (model=%s, fallback=%s)",
         len(result.foundations),

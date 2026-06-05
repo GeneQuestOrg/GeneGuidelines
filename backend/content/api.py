@@ -10,6 +10,7 @@ import asyncio
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, Response, UploadFile
 
+from backend.clerk_auth import AuthUser, get_current_user
 from backend.shared.cache import cache_response
 
 from .contracts import (
@@ -31,7 +32,7 @@ from .deps import (
 from .foundations import FoundationService
 from .official_guideline import OfficialGuidelineService
 from .private_context import PrivateContextService
-from .research_runs import list_active_runs, to_payload
+from .research_runs import list_active_runs, list_my_run_history, to_history_payload, to_payload
 from .service import DiseaseService
 from .therapies import TherapyService
 from .trials_service import TrialService
@@ -131,6 +132,7 @@ def list_foundations(
 async def upload_private_context(
     slug: str,
     file: UploadFile = File(..., description="Discharge summary, lab result, or report (.txt, .md, .pdf)."),
+    _user: AuthUser = Depends(get_current_user),
     service: PrivateContextService = Depends(provide_private_context_service),
 ) -> PrivateContextResponse:
     """Upload a private discharge / report. Gemma 4 strips PII before anything persists.
@@ -153,6 +155,7 @@ async def upload_private_context(
         slug=slug,
         filename=file.filename or "upload",
         raw_bytes=raw_bytes,
+        uploaded_by_clerk_id=_user.clerk_id,
     )
     if context is None:
         raise HTTPException(status_code=404, detail="Disease not found")
@@ -165,10 +168,11 @@ async def upload_private_context(
 )
 def list_private_contexts(
     slug: str,
+    _user: AuthUser = Depends(get_current_user),
     service: PrivateContextService = Depends(provide_private_context_service),
 ) -> list[PrivateContextResponse]:
-    """List the private contexts uploaded for ``slug``, newest first."""
-    contexts = service.list_for_disease(slug)
+    """List the private contexts uploaded for ``slug`` by the calling user, newest first."""
+    contexts = service.list_for_disease(slug, clerk_id=_user.clerk_id)
     if contexts is None:
         raise HTTPException(status_code=404, detail="Disease not found")
     return [PrivateContextResponse.from_domain(c) for c in contexts]
@@ -211,6 +215,40 @@ def get_active_research_runs(
     """
     runs = list_active_runs(limit=limit)
     return {"runs": [to_payload(r) for r in runs]}
+
+
+@router.get("/research-runs/mine")
+def get_my_active_research_runs(
+    user: AuthUser = Depends(get_current_user),
+    limit: int = Query(
+        _RESEARCH_RUNS_DEFAULT_LIMIT,
+        ge=1,
+        le=_RESEARCH_RUNS_MAX_LIMIT,
+        description="Maximum number of in-flight runs for the signed-in user.",
+    ),
+) -> dict[str, list[dict[str, object]]]:
+    """In-flight workflow runs owned by the authenticated Clerk user."""
+    runs = list_active_runs(limit=limit, owner_clerk_id=user.clerk_id)
+    return {"runs": [to_payload(r) for r in runs]}
+
+
+_HISTORY_DEFAULT_LIMIT = 20
+_HISTORY_MAX_LIMIT = 50
+
+
+@router.get("/research-runs/mine/history")
+def get_my_run_history(
+    user: AuthUser = Depends(get_current_user),
+    limit: int = Query(
+        _HISTORY_DEFAULT_LIMIT,
+        ge=1,
+        le=_HISTORY_MAX_LIMIT,
+        description="Maximum number of history items to return.",
+    ),
+) -> dict[str, list[dict[str, object]]]:
+    """Completed and failed pipeline runs owned by the authenticated user, newest first."""
+    runs = list_my_run_history(user.clerk_id, limit=limit)
+    return {"runs": [to_history_payload(r) for r in runs]}
 
 
 __all__ = ["router"]

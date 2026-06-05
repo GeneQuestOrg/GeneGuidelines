@@ -91,6 +91,7 @@ async def test_upload_returns_none_for_unknown_disease(monkeypatch):
         slug="noonan",
         filename="x.txt",
         raw_bytes=b"sample text",
+        uploaded_by_clerk_id="user_a",
     )
     assert out is None
 
@@ -102,6 +103,7 @@ async def test_upload_returns_none_for_malformed_slug():
         slug="../../etc/passwd",
         filename="x.txt",
         raw_bytes=b"sample",
+        uploaded_by_clerk_id="user_a",
     )
     assert out is None
 
@@ -145,6 +147,7 @@ async def test_upload_happy_path_persists_redacted_facts(monkeypatch):
         slug="fd",
         filename="jan_discharge.txt",
         raw_bytes=b"Jan Kowalski, PESEL 90010112345, was diagnosed in 2024 with FD.",
+        uploaded_by_clerk_id="user_test",
     )
     assert out is not None
     assert out.status == "ready"
@@ -178,6 +181,7 @@ async def test_gemma_failure_persists_failed_row_with_no_pii(monkeypatch):
         slug="fd",
         filename="note.txt",
         raw_bytes=b"Some text with a name: Anna Nowak",
+        uploaded_by_clerk_id="user_test",
     )
     assert out is not None
     assert out.status == "failed"
@@ -194,6 +198,7 @@ async def test_unsupported_file_persists_failed_row(monkeypatch):
         slug="fd",
         filename="scan.docx",
         raw_bytes=b"PK\x03\x04",
+        uploaded_by_clerk_id="user_test",
     )
     assert out is not None
     assert out.status == "failed"
@@ -216,9 +221,9 @@ async def test_list_returns_uploads_newest_first(monkeypatch):
     )
 
     svc = _service()
-    await svc.upload_and_redact(slug="fd", filename="a.txt", raw_bytes=b"a")
-    await svc.upload_and_redact(slug="fd", filename="b.txt", raw_bytes=b"b")
-    rows = svc.list_for_disease("fd")
+    await svc.upload_and_redact(slug="fd", filename="a.txt", raw_bytes=b"a", uploaded_by_clerk_id="user_owner")
+    await svc.upload_and_redact(slug="fd", filename="b.txt", raw_bytes=b"b", uploaded_by_clerk_id="user_owner")
+    rows = svc.list_for_disease("fd", clerk_id="user_owner")
     assert rows is not None
     # InMemory repo uses uploaded_at desc; we just check we have both records.
     assert [r.original_filename for r in rows] == ["b.txt", "a.txt"] or \
@@ -228,4 +233,29 @@ async def test_list_returns_uploads_newest_first(monkeypatch):
 
 def test_list_returns_none_for_unknown_disease():
     svc = _service()
-    assert svc.list_for_disease("noonan") is None
+    assert svc.list_for_disease("noonan", clerk_id="user_a") is None
+
+
+@pytest.mark.asyncio
+async def test_list_isolates_by_owner(monkeypatch):
+    """User B must not see uploads made by user A — cross-user IDOR guard."""
+
+    async def fake_extractor(**_kwargs):
+        return RedactedFacts(pii_breakdown=PiiBreakdown(names=1)), "test:model"
+
+    monkeypatch.setattr(
+        "backend.content.private_context.extract_redacted_facts_async",
+        fake_extractor,
+    )
+
+    svc = _service()
+    await svc.upload_and_redact(slug="fd", filename="a.txt", raw_bytes=b"a", uploaded_by_clerk_id="user_a")
+    await svc.upload_and_redact(slug="fd", filename="b.txt", raw_bytes=b"b", uploaded_by_clerk_id="user_b")
+
+    a_rows = svc.list_for_disease("fd", clerk_id="user_a")
+    b_rows = svc.list_for_disease("fd", clerk_id="user_b")
+    c_rows = svc.list_for_disease("fd", clerk_id="user_c")
+
+    assert a_rows is not None and len(a_rows) == 1 and a_rows[0].original_filename == "a.txt"
+    assert b_rows is not None and len(b_rows) == 1 and b_rows[0].original_filename == "b.txt"
+    assert c_rows is not None and len(c_rows) == 0

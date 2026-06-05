@@ -224,6 +224,8 @@ def ensure_content_schema() -> None:
     ensure_guideline_prompt_column()
     ensure_care_pathway_draft_columns()
     ensure_official_guideline_pointers_schema()
+    ensure_private_context_owner_column()
+    ensure_operator_kv_table()
     sync_guideline_document_bodies_from_file()
     # NOTE: content_prs and disease_trials have FKs to diseases(slug); their
     # seeders (seed_content_prs_if_empty / seed_trials_from_file) are invoked
@@ -231,6 +233,34 @@ def ensure_content_schema() -> None:
     # rows exist. Keeping those calls here would fire them on an empty
     # diseases table and skip the junction inserts silently.
     seed_care_pathways_from_file()
+
+
+def ensure_operator_kv_table() -> None:
+    """Create operator_kv table for runtime-writable configuration (e.g. model profile override)."""
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS operator_kv (
+            key TEXT PRIMARY KEY,
+            value TEXT NOT NULL,
+            updated_by_clerk_id TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        )
+        """
+    )
+    conn.commit()
+    conn.close()
+
+
+def ensure_private_context_owner_column() -> None:
+    """Add uploaded_by_clerk_id to private_contexts for existing deployments."""
+    conn = get_connection()
+    cur = conn.cursor()
+    if "uploaded_by_clerk_id" not in table_columns(conn, "private_contexts"):
+        cur.execute("ALTER TABLE private_contexts ADD COLUMN uploaded_by_clerk_id TEXT")
+        conn.commit()
+    conn.close()
 
 
 def ensure_care_pathway_draft_columns() -> None:

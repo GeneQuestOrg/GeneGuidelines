@@ -7,6 +7,7 @@ import { useDisease } from "../hooks/useDisease";
 import { useGuidelineDocument } from "../hooks/useGuidelineDocument";
 import { useGuidelinePr } from "../hooks/useGuidelinePr";
 import { useParentPathway } from "../hooks/useParentPathway";
+import { useActiveResearchRuns } from "../hooks/useActiveResearchRuns";
 import { ParentGuidePanel } from "../components/guidelines/ParentGuidePanel";
 import {
   buildSectionsForPrPreview,
@@ -17,6 +18,7 @@ import { collectCitationPmids } from "../utils/guidelineReader";
 import { collectPathwayCitedPmids } from "../utils/pathwayCitations";
 import type { AudienceView } from "../router/types";
 import type { ParentPathway } from "../types/parentPathway";
+import type { ResearchRun } from "../types/researchRun";
 import { ClinicalDisclaimer } from "../components/ClinicalDisclaimer";
 import { PlaceholderView } from "./PlaceholderView";
 import "../styles/guidelines.css";
@@ -42,6 +44,7 @@ interface PathwayOnlyGuidelineProps {
   pathway: ParentPathway;
   view: AudienceView;
   onNav: (path: string) => void;
+  activeRun: ResearchRun | null;
 }
 
 function PathwayOnlyLivingGuideline({
@@ -51,6 +54,7 @@ function PathwayOnlyLivingGuideline({
   pathway,
   view,
   onNav,
+  activeRun,
 }: PathwayOnlyGuidelineProps) {
   const tree = pathway.tree;
   const pathwayPmids = collectPathwayCitedPmids(tree);
@@ -81,6 +85,22 @@ function PathwayOnlyLivingGuideline({
             Print
           </Button>
         </div>
+        {activeRun != null ? (
+          <div className="gl__run-pill" role="status" aria-live="polite">
+            <span className="gl__run-pill-dot" aria-hidden="true" />
+            Pipeline running
+            <a
+              href={`#/research/${encodeURIComponent(activeRun.runId)}`}
+              className="gl__run-pill-link"
+              onClick={(e) => {
+                e.preventDefault();
+                onNav(`/research/${encodeURIComponent(activeRun.runId)}`);
+              }}
+            >
+              Watch live →
+            </a>
+          </div>
+        ) : null}
       </header>
 
       <ClinicalDisclaimer view={view} />
@@ -133,6 +153,8 @@ export function GuidelinesView({ slug, prId, view, onNav }: GuidelinesViewProps)
     loading: pathwayLoading,
     error: pathwayError,
   } = useParentPathway(slug);
+  const { runs: activeRuns } = useActiveResearchRuns(20);
+  const activeRun = activeRuns.find((r) => r.diseaseSlug === slug) ?? null;
   const [activeParaId, setActiveParaId] = useState<string | null>(null);
   const [focusedPmid, setFocusedPmid] = useState<string | null>(null);
   const observerRef = useRef<IntersectionObserver | null>(null);
@@ -239,6 +261,7 @@ export function GuidelinesView({ slug, prId, view, onNav }: GuidelinesViewProps)
         pathway={parentPathway}
         view={view}
         onNav={onNav}
+        activeRun={activeRun}
       />
     );
   }
@@ -325,6 +348,22 @@ export function GuidelinesView({ slug, prId, view, onNav }: GuidelinesViewProps)
             </Button>
           )}
         </div>
+        {activeRun != null ? (
+          <div className="gl__run-pill" role="status" aria-live="polite">
+            <span className="gl__run-pill-dot" aria-hidden="true" />
+            Pipeline running
+            <a
+              href={`#/research/${encodeURIComponent(activeRun.runId)}`}
+              className="gl__run-pill-link"
+              onClick={(e) => {
+                e.preventDefault();
+                onNav(`/research/${encodeURIComponent(activeRun.runId)}`);
+              }}
+            >
+              Watch live →
+            </a>
+          </div>
+        ) : null}
       </header>
 
       <ClinicalDisclaimer view={view} />

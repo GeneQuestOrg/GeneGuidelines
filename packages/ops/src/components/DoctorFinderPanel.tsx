@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { Button } from "@gene-guidelines/ui";
 import {
   doctorFinderRun,
   doctorFinderTraceUrl,
@@ -70,12 +71,16 @@ export interface DoctorFinderPanelProps {
   onRunStarted?: () => void;
   viewExecutionId?: string | null;
   runLive?: boolean;
+  initialDiseaseSlug?: string;
+  onRunAgain?: () => void;
 }
 
 export function DoctorFinderPanel({
   onRunStarted,
   viewExecutionId = null,
   runLive = false,
+  initialDiseaseSlug = "",
+  onRunAgain,
 }: DoctorFinderPanelProps = {}) {
   const { diseases, loading: catalogLoading } = useDiseaseCatalog();
   const defaultModelProfile = useDefaultModelProfile();
@@ -84,7 +89,7 @@ export function DoctorFinderPanel({
     singleLlmMode,
     singleLlmModel,
   } = usePipelineModelSettings();
-  const [catalogSlug, setCatalogSlug] = useState("");
+  const [catalogSlug, setCatalogSlug] = useState(initialDiseaseSlug);
   const [form, setForm] = useState<FormState>({
     disease_name: "",
     disease_aliases_raw: "",
@@ -111,8 +116,23 @@ export function DoctorFinderPanel({
     modelProfileSynced.current = true;
   }, [defaultModelProfile]);
 
-  const liveTraceUrl =
-    runLive && viewExecutionId ? doctorFinderTraceUrl(viewExecutionId) : null;
+  useEffect(() => {
+    if (!initialDiseaseSlug) return;
+    setCatalogSlug(initialDiseaseSlug);
+    const row = diseases.find((d) => d.slug === initialDiseaseSlug);
+    if (row) {
+      setForm((f) => ({ ...f, disease_name: row.name }));
+    }
+  }, [initialDiseaseSlug, diseases]);
+
+  const [liveTraceUrl, setLiveTraceUrl] = useState<string | null>(null);
+  useEffect(() => {
+    if (!runLive || !viewExecutionId) {
+      setLiveTraceUrl(null);
+      return;
+    }
+    void doctorFinderTraceUrl(viewExecutionId).then(setLiveTraceUrl);
+  }, [runLive, viewExecutionId]);
   const liveTrace = useLiveRunTrace(liveTraceUrl, Boolean(liveTraceUrl), { runKind: "doctor_finder" });
 
   useEffect(() => {
@@ -189,7 +209,7 @@ export function DoctorFinderPanel({
         done: false,
       });
       onRunStarted?.();
-      const url = doctorFinderTraceUrl(execution_id);
+      const url = await doctorFinderTraceUrl(execution_id);
       const es = new EventSource(url);
       esRef.current = es;
 
@@ -309,6 +329,14 @@ export function DoctorFinderPanel({
       <p className="ops-panel__lead">
         Rank experts by PubMed publication profile, role, and activity.
       </p>
+
+      {viewExecutionId && onRunAgain && !loading ? (
+        <div className="ops-panel__toolbar">
+          <Button type="button" variant="ghost" onClick={onRunAgain}>
+            Run again
+          </Button>
+        </div>
+      ) : null}
 
       {!viewExecutionId ? (
       <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 16, marginBottom: 32 }}>
@@ -664,6 +692,7 @@ export function DoctorFinderPanel({
           </div>
         </div>
       )}
+
     </div>
   );
 }

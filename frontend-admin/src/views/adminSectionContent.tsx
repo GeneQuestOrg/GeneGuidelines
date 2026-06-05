@@ -9,7 +9,7 @@ import {
 import type { AdminRoute } from "../router/types";
 import { PlaceholderSection } from "./PlaceholderSection";
 
-export function adminSectionContent(route: AdminRoute): ReactNode {
+export function adminSectionContent(route: AdminRoute, isSuperAdmin = false): ReactNode {
   switch (route.name) {
     case "runs":
       return <RunsPanel />;
@@ -20,7 +20,7 @@ export function adminSectionContent(route: AdminRoute): ReactNode {
     case "prs":
       return <GuidelinePrsPanel />;
     case "settings":
-      return <SettingsPanel />;
+      return <SettingsPanel isSuperAdmin={isSuperAdmin} />;
     case "devComponents":
       return (
         <PlaceholderSection

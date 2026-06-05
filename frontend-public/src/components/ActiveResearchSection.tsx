@@ -23,11 +23,20 @@ function formatElapsed(seconds: number | null): string {
   return `${hours}h ${minutes % 60}m`;
 }
 
-function targetForRun(run: ResearchRun): string {
+function liveRunPath(run: ResearchRun): string {
+  const base = `/research/${encodeURIComponent(run.runId)}`;
   if (run.diseaseSlug != null && run.diseaseSlug !== "") {
-    return `/diseases/${run.diseaseSlug}`;
+    return `${base}?disease=${encodeURIComponent(run.diseaseSlug)}`;
   }
-  return "/diseases";
+  return base;
+}
+
+function progressPct(run: ResearchRun): number {
+  const raw = run.progressPct;
+  if (typeof raw === "number" && Number.isFinite(raw)) {
+    return Math.min(99, Math.max(5, Math.round(raw)));
+  }
+  return 12;
 }
 
 export function ActiveResearchSection({
@@ -41,7 +50,13 @@ export function ActiveResearchSection({
     <Section title="Active research" count={runs.length}>
       <div className="active-research__grid">
         {runs.map((run) => {
-          const href = `#${targetForRun(run)}`;
+          const path = liveRunPath(run);
+          const href = `#${path}`;
+          const pct = progressPct(run);
+          const activity =
+            run.activity != null && run.activity.trim() !== ""
+              ? run.activity
+              : "Research in progress…";
           return (
             <a
               key={run.runId}
@@ -49,7 +64,7 @@ export function ActiveResearchSection({
               className="active-research__card"
               onClick={(e) => {
                 e.preventDefault();
-                onNav(targetForRun(run));
+                onNav(path);
               }}
             >
               <div className="active-research__top">
@@ -62,7 +77,21 @@ export function ActiveResearchSection({
                 </span>
               </div>
               <h3 className="active-research__title">{run.label}</h3>
-              <p className="active-research__cta">Watch live →</p>
+              <p className="active-research__activity">{activity}</p>
+              <div
+                className="active-research__progress"
+                role="progressbar"
+                aria-valuenow={pct}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-label={`${pct}% estimated progress`}
+              >
+                <div
+                  className="active-research__progress-fill"
+                  style={{ width: `${pct}%` }}
+                />
+              </div>
+              <p className="active-research__cta">Watch live trace →</p>
             </a>
           );
         })}

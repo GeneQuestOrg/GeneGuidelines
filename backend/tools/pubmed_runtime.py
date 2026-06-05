@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import html
 import json
 import logging
 import os
@@ -561,15 +562,10 @@ def truncate_text_on_word_boundary(text: str, max_len: int) -> str:
 
 
 def _decode_xml_entities(text: str) -> str:
-    """Decode common HTML/XML entities."""
-    return (text
-        .replace("&amp;", "&")
-        .replace("&lt;", "<")
-        .replace("&gt;", ">")
-        .replace("&quot;", '"')
-        .replace("&#39;", "'")
-        .replace("&#x27;", "'")
-    )
+    """Decode HTML/XML character references from PubMed efetch XML text nodes."""
+    if not text:
+        return text
+    return html.unescape(text)
 
 
 def fetch_authors_with_affiliations_impl(pmids: list[str]) -> dict:

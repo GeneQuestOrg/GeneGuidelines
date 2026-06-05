@@ -658,7 +658,8 @@ export function AgentView({
         job_title: selectedTicket?.title ?? jobTitleHint,
       });
       setRunStatus(`Started (${execution_id.slice(0, 8)}…)`);
-      const eventSource = new EventSource(agentTraceUrl(execution_id));
+      const traceUrl = await agentTraceUrl(execution_id);
+      const eventSource = new EventSource(traceUrl);
       eventSource.onmessage = (event) => {
         try {
           const parsed = parseAgentTraceEvent(JSON.parse(event.data));

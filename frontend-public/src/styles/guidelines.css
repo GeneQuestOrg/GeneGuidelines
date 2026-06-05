@@ -584,3 +584,36 @@
     break-inside: avoid;
   }
 }
+
+/* ── Pipeline-running pill ─────────────────────────────────────────── */
+.gl__run-pill {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  background: var(--color-info-subtle, #e0f0ff);
+  color: var(--color-info, #0066cc);
+  font-size: 0.75rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.gl__run-pill-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: currentColor;
+  animation: gl-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes gl-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.gl__run-pill-link {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}

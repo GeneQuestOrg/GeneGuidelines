@@ -1,4 +1,9 @@
-/** Public JSON client: read APIs + optional mutating calls when ops key is set (dev/staging only). */
+/** Public JSON client: read APIs + Clerk Bearer (or legacy dev API key). */
+
+import {
+  appendClerkTokenQueryForSse,
+  resolveAuthHeaders,
+} from "../auth/registerAuthFetch";
 
 export function getApiBaseUrl(): string {
   const raw = import.meta.env.VITE_API_URL;
@@ -21,22 +26,14 @@ export function getOptionalApiKey(): string | undefined {
   return undefined;
 }
 
-export function apiAuthHeaders(): Readonly<Record<string, string>> {
-  const secret = getOptionalApiKey();
-  if (secret == null) {
-    return {};
-  }
-  return { Authorization: `Bearer ${secret}` };
+/** Bearer headers for mutating API calls (Clerk session or legacy dev key). */
+export async function apiAuthHeaders(): Promise<Readonly<Record<string, string>>> {
+  return resolveAuthHeaders();
 }
 
-/** EventSource cannot send Authorization; mirror backend `require_api_key_if_set` query param. */
-export function appendApiKeyQueryForSse(pathOrUrl: string): string {
-  const secret = getOptionalApiKey();
-  if (secret == null) {
-    return pathOrUrl;
-  }
-  const sep = pathOrUrl.includes("?") ? "&" : "?";
-  return `${pathOrUrl}${sep}api_key=${encodeURIComponent(secret)}`;
+/** EventSource cannot send Authorization; append clerk_token or legacy api_key query. */
+export async function appendApiKeyQueryForSse(pathOrUrl: string): Promise<string> {
+  return appendClerkTokenQueryForSse(pathOrUrl);
 }
 
 export class ApiRequestError extends Error {
@@ -104,7 +101,7 @@ export async function apiGet<T>(
   let res: Response;
   try {
     res = await fetch(url, {
-      headers: { Accept: "application/json", ...apiAuthHeaders() },
+      headers: { Accept: "application/json", ...(await apiAuthHeaders()) },
       signal: controller.signal,
     });
   } catch (e) {
@@ -142,7 +139,7 @@ export async function apiPostFormData<T>(
   const url = `${base}${path.startsWith("/") ? path : `/${path}`}`;
   const res = await fetch(url, {
     method: "POST",
-    headers: { Accept: "application/json", ...apiAuthHeaders() },
+    headers: { Accept: "application/json", ...(await apiAuthHeaders()) },
     body: formData,
   });
   if (!res.ok) {
@@ -172,7 +169,7 @@ export async function apiPostJson<T>(
     headers: {
       Accept: "application/json",
       "Content-Type": "application/json",
-      ...apiAuthHeaders(),
+      ...(await apiAuthHeaders()),
     },
     body: JSON.stringify(body),
   });
@@ -190,4 +187,85 @@ export async function apiPostJson<T>(
     );
   }
   return parseSuccessJson<T>(res);
+}
+
+export async function apiPut<T>(path: string, body: unknown): Promise<T> {
+  const base = getApiBaseUrl();
+  const url = `${base}${path.startsWith("/") ? path : `/${path}`}`;
+  const res = await fetch(url, {
+    method: "PUT",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      ...(await apiAuthHeaders()),
+    },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    let detail = res.statusText;
+    try {
+      const raw: unknown = await res.json();
+      detail = errorDetailFromBody(raw) ?? detail;
+    } catch {
+      // ignore parse errors
+    }
+    throw new ApiRequestError(
+      res.status,
+      `Request failed (${res.status}): ${detail}`,
+    );
+  }
+  return parseSuccessJson<T>(res);
+}
+
+export async function apiPatch<T>(path: string, body: unknown): Promise<T> {
+  const base = getApiBaseUrl();
+  const url = `${base}${path.startsWith("/") ? path : `/${path}`}`;
+  const res = await fetch(url, {
+    method: "PATCH",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      ...(await apiAuthHeaders()),
+    },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    let detail = res.statusText;
+    try {
+      const raw: unknown = await res.json();
+      detail = errorDetailFromBody(raw) ?? detail;
+    } catch {
+      // ignore parse errors
+    }
+    throw new ApiRequestError(
+      res.status,
+      `Request failed (${res.status}): ${detail}`,
+    );
+  }
+  return parseSuccessJson<T>(res);
+}
+
+export async function apiDelete(path: string): Promise<void> {
+  const base = getApiBaseUrl();
+  const url = `${base}${path.startsWith("/") ? path : `/${path}`}`;
+  const res = await fetch(url, {
+    method: "DELETE",
+    headers: {
+      Accept: "application/json",
+      ...(await apiAuthHeaders()),
+    },
+  });
+  if (!res.ok) {
+    let detail = res.statusText;
+    try {
+      const raw: unknown = await res.json();
+      detail = errorDetailFromBody(raw) ?? detail;
+    } catch {
+      // ignore parse errors
+    }
+    throw new ApiRequestError(
+      res.status,
+      `Request failed (${res.status}): ${detail}`,
+    );
+  }
 }
