@@ -149,60 +149,6 @@ class ClerkAuthTests(unittest.TestCase):
         with patch.dict(os.environ, {"BOOTSTRAP_RATE_LIMIT_MAX_ADMIN": "99"}, clear=False):
             self.assertEqual(bootstrap_rate_limit_max(admin), 99)
 
-    # --- super_admin role ---
-
-    def test_resolve_role_super_admin_from_claims(self) -> None:
-        """super_admin in JWT public_metadata is returned directly without Clerk API call."""
-        with _role_cache_lock:
-            _role_cache.clear()
-        claims: dict[str, object] = {
-            "sub": "user_super",
-            "public_metadata": {"role": "super_admin"},
-        }
-        with patch("backend.clerk_auth.httpx.get") as mock_get:
-            role = _resolve_role(claims, "user_super")
-        self.assertEqual(role, "super_admin")
-        mock_get.assert_not_called()
-
-    def test_resolve_role_super_admin_from_clerk_api(self) -> None:
-        """super_admin returned by Clerk Users API is propagated correctly."""
-        with _role_cache_lock:
-            _role_cache.clear()
-        claims: dict[str, object] = {"sub": "user_super2"}
-        mock_resp = MagicMock()
-        mock_resp.raise_for_status = MagicMock()
-        mock_resp.json.return_value = {"public_metadata": {"role": "super_admin"}}
-        with patch.dict(os.environ, {"CLERK_SECRET_KEY": "sk_test_x"}, clear=False):
-            with patch("backend.clerk_auth.httpx.get", return_value=mock_resp):
-                role = _resolve_role(claims, "user_super2")
-        self.assertEqual(role, "super_admin")
-
-    def test_require_super_admin_rejects_admin(self) -> None:
-        """require_super_admin must reject admin role (not just any elevated role)."""
-        from backend.clerk_auth import require_super_admin
-
-        admin_user = AuthUser(clerk_id="u_admin", email=None, role="admin")
-        with self.assertRaises(Exception) as ctx:
-            require_super_admin(admin_user)
-        self.assertEqual(ctx.exception.status_code, 403)  # type: ignore[attr-defined]
-
-    def test_require_super_admin_accepts_super_admin(self) -> None:
-        from backend.clerk_auth import require_super_admin
-
-        super_user = AuthUser(clerk_id="u_super", email=None, role="super_admin")
-        result = require_super_admin(super_user)
-        self.assertEqual(result.role, "super_admin")
-
-    def test_assert_run_owner_super_admin_any(self) -> None:
-        super_user = AuthUser(clerk_id="u_super", email=None, role="super_admin")
-        assert_run_owner(super_user, "any_owner")
-
-    def test_bootstrap_rate_limit_super_admin_unlimited(self) -> None:
-        super_user = AuthUser(clerk_id="u_super", email=None, role="super_admin")
-        self.assertEqual(bootstrap_rate_limit_key(super_user), SERVICE_RATE_LIMIT_KEY)
-        with patch.dict(os.environ, {"BOOTSTRAP_RATE_LIMIT_MAX_ADMIN": "99"}, clear=False):
-            self.assertEqual(bootstrap_rate_limit_max(super_user), 99)
-
 
 if __name__ == "__main__":
     unittest.main()

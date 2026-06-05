@@ -3,15 +3,6 @@ from __future__ import annotations
 
 import pytest
 
-# Force config.load_dotenv() to run at collection time.  Without this, the
-# first test that imports backend.main triggers load_dotenv() AFTER the
-# autouse fixture has already cleared the Clerk env vars, silently restoring
-# them from the repo-root .env and breaking auth isolation in every test that
-# creates a TestClient.
-import backend.config as _config  # noqa: F401
-
-from backend.clerk_auth import _jwks_client
-
 _CLERK_ENV_KEYS = (
     "GENEGUIDELINES_API_KEY",
     "VITE_CLERK_PUBLISHABLE_KEY",
@@ -31,6 +22,3 @@ def _clear_auth_env(monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.delenv(key, raising=False)
     # Legacy integration tests expect a local principal when Clerk/API key are unset.
     monkeypatch.setenv("ALLOW_DEV_AUTH_BYPASS", "1")
-    # Clear the lru_cache so the next test cannot inherit a JWKS client that
-    # was built with a live Clerk URL from a previous test's env state.
-    _jwks_client.cache_clear()

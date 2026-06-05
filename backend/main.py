@@ -34,7 +34,7 @@ async def lifespan(app: FastAPI):
         except Exception as exc:
             logger.warning("Memory store init failed, running without persistent memory: %s", exc)
     yield
-    # shutdown – nothing to close (psycopg uses per-call connections, no pool)
+    # shutdown – nothing to close (SQLite, no connection pool)
 
 
 app = FastAPI(

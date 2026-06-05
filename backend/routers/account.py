@@ -144,10 +144,7 @@ def add_watch(slug: str, user: AuthUser = Depends(get_current_user)) -> WatchedD
             detail=f"Maximum watch limit ({account_store.MAX_WATCHES_PER_USER}) reached.",
         )
 
-    try:
-        account_store.add_watch(user.clerk_id, slug)
-    except ValueError as exc:
-        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    account_store.add_watch(user.clerk_id, slug)
 
     rows = account_store.list_watches_enriched(user.clerk_id)
     for r in rows:

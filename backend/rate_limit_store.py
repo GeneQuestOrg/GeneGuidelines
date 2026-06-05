@@ -10,39 +10,33 @@ _RATE_LIMIT_LOCK = threading.Lock()
 _TABLE_READY = False
 
 
-def _ensure_table() -> None:
+def _ensure_table(conn) -> None:
     global _TABLE_READY
-    if _TABLE_READY:  # fast path – avoid lock after first init
+    if _TABLE_READY:
         return
-    with _RATE_LIMIT_LOCK:
-        if _TABLE_READY:  # double-check inside lock
-            return
-        conn = get_connection()
-        try:
-            conn.execute(
-                """
-                CREATE TABLE IF NOT EXISTS api_rate_limit_events (
-                    id SERIAL PRIMARY KEY,
-                    bucket_key TEXT NOT NULL,
-                    event_ts DOUBLE PRECISION NOT NULL
-                )
-                """
-            )
-            conn.execute(
-                """
-                CREATE INDEX IF NOT EXISTS idx_api_rate_limit_bucket_ts
-                ON api_rate_limit_events (bucket_key, event_ts)
-                """
-            )
-            conn.commit()
-        finally:
-            conn.close()
-        _TABLE_READY = True
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS api_rate_limit_events (
+            id SERIAL PRIMARY KEY,
+            bucket_key TEXT NOT NULL,
+            event_ts DOUBLE PRECISION NOT NULL
+        )
+        """
+    )
+    conn.execute(
+        """
+        CREATE INDEX IF NOT EXISTS idx_api_rate_limit_bucket_ts
+        ON api_rate_limit_events (bucket_key, event_ts)
+        """
+    )
+    conn.commit()
+    _TABLE_READY = True
 
 
 def _with_conn():
-    _ensure_table()
-    return get_connection()
+    conn = get_connection()
+    _ensure_table(conn)
+    return conn
 
 
 def count_events(bucket_key: str, since_ts: float) -> int:

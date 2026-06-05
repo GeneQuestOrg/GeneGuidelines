@@ -22,6 +22,7 @@ from ..content_db import (
     update_disease_guideline_prompt_profile,
 )
 from ..operator_settings import get_effective_default_model_profile
+from ..operator_settings import get_effective_default_model_profile
 from ..content_models import ParentPathwayResponse
 from ..guideline_pr_publish import GuidelinePrPublishError
 from ..content_models import (
@@ -576,7 +577,7 @@ class BootstrapDiseaseBody(BaseModel):
     inheritance: str = Field(default="", max_length=80)
     summary: str = Field(default="", max_length=2000)
     prevalence_text: str = Field(default="Rare disease", max_length=200)
-    profile: str | None = None
+    profile: str = Field(default=DEFAULT_MODEL_PROFILE)
 
 
 @router.post("/bootstrap-disease")
@@ -632,7 +633,7 @@ async def bootstrap_disease(
 
     from ..services.disease_bootstrap import bootstrap_disease_research
 
-    profile_norm = (body.profile or "").strip().lower() or get_effective_default_model_profile()
+    profile_norm = (body.profile or DEFAULT_MODEL_PROFILE).strip().lower() or DEFAULT_MODEL_PROFILE
     if profile_norm not in MODEL_PROFILES:
         raise HTTPException(
             status_code=400,

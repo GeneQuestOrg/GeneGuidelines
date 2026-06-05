@@ -24,6 +24,7 @@ from ..config import (
     MODEL_PROFILES,
 )
 from ..operator_settings import get_effective_default_model_profile
+from ..operator_settings import get_effective_default_model_profile
 from ..agents.simple_runner import current_model_profile
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
@@ -172,7 +173,7 @@ async def execute_agent_async(
     """Run the agent in background (async task); result in AGENT_RUNS, trace events on event_queue."""
     effective_profile = (profile or "").strip().lower() or get_effective_default_model_profile()
     current_model_profile.set(effective_profile)
-    _emit(event_queue, {"kind": "sys", "text": f"[SYSTEM] Async task: start (flow={flow_key}, profile={effective_profile})…"})
+    _emit(event_queue, {"kind": "sys", "text": f"[SYSTEM] Async task: start (flow={flow_key}, profile={profile})…"})
     loop = asyncio.get_event_loop()
     try:
         await _execute_agent_async_body(
@@ -402,7 +403,7 @@ def _run_list_item(execution_id: str, run: dict) -> dict:
 async def start_agent_run(
     ticket_id: int,
     flow_key: str,
-    profile: str | None = None,
+    profile: str,
     *,
     label: str | None = None,
     pipeline: str | None = None,
