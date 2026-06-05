@@ -8,7 +8,7 @@
 
 # GeneGuidelines
 
-**Living clinical guidelines for rare genetic diseases** — generated and kept current by a controlled AI workflow over PubMed evidence, with every change reviewed and signed off by a senior clinician.
+**Living clinical guidelines for rare genetic diseases** — generated and kept current by a controlled AI workflow over PubMed evidence, designed for senior-clinician review and sign-off of every change.
 
 Powered by **Gemma 4** · 3 disease entities · PMID-grounded · `CC-BY 4.0`
 
@@ -29,7 +29,7 @@ The result is plain: a child with a rare disease can be misdiagnosed in one majo
 A **controlled AI workflow engine** that does three things end-to-end:
 
 1. **Reads PubMed weekly.** A two-tier pipeline (Gemma 4 for triage + extraction, a heavier model for synthesis) turns raw abstracts into a structured corpus of evidence anchored to PMIDs.
-2. **Drafts guideline updates as pull requests.** Each PR carries the diff, the citations, the AI's rationale, and an evidence-quality score. A senior clinician approves, requests changes, or rejects — and that decision is signed and dated.
+2. **Drafts guideline updates as pull requests.** Each PR carries the diff, the citations, the AI's rationale, and an evidence-quality score. In the current version a reviewing clinician marks each AI suggestion useful or not — a weighted signal that ranks what the next reviewer sees, without silently rewriting the official guideline. The full approve / request-changes / reject model, with signed and dated decisions by verified reviewers, is the target the workflow is built toward (and the shape a consortium actually uses).
 3. **Surfaces three things to patients and family doctors:** the current living guideline document, a flowchart of the diagnostic pathway, and a directory of specialists ranked by published evidence in the disease.
 
 The workflow itself is treated as a living artefact: reviewer feedback on
