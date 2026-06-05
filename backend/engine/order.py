@@ -10,10 +10,6 @@ def get_execution_order(flow_key: str) -> list[str]:
     Return ordered list of node_ids (topological order, supports fan-in).
     Uses flow_edges and Kahn's algorithm; assumes graph is a DAG (no cycles).
     """
-    # #region agent log
-    # Keep merge debug logs only for our smoke-test flows.
-    debug_flow = flow_key.strip().lower().startswith("merge_")
-    # #endregion agent log
     nodes = db.get_flow_definition_nodes(flow_key)
     edges = db.get_flow_edges(flow_key)
     if not nodes:
@@ -59,33 +55,9 @@ def get_execution_order(flow_key: str) -> list[str]:
 
     # Cycle guard: if graph has cycles, fall back to node order to avoid deadlock.
     if len(order) != len(indegree):
-        if debug_flow:
-            from ..agents.runner import _dbg
-
-            # #region agent log
-            _dbg(
-                "H_merge_order",
-                "cycle detected; fallback to sorted node keys",
-                {"flow_key": flow_key, "order_len": len(order), "indegree_len": len(indegree)},
-                run_id="merge_smoke",
-                location="backend/flow_engine.py:get_execution_order",
-            )
-            # #endregion agent log
         return sorted(indegree.keys(), key=_sort_key)
 
     # Only return nodes that are part of flow_definitions.
     flow_node_set = {n["node_id"] for n in nodes}
     filtered = [nid for nid in order if nid in flow_node_set]
-    if debug_flow:
-        from ..agents.runner import _dbg
-
-        # #region agent log
-        _dbg(
-            "H_merge_order",
-            "computed execution order (topological)",
-            {"flow_key": flow_key, "order": filtered},
-            run_id="merge_smoke",
-            location="backend/flow_engine.py:get_execution_order",
-        )
-        # #endregion agent log
     return filtered

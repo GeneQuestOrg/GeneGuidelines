@@ -41,12 +41,6 @@ from pydantic_ai.messages import (
 _AGENT_USAGE_LIMITS = UsageLimits(request_limit=AGENT_PYDANTIC_AI_REQUEST_LIMIT)
 
 
-def _looks_polish(text: str) -> bool:
-    s = (text or "").lower()
-    if not s:
-        return False
-    return any(ch in s for ch in "ąćęłńóśźż") or any(tok in s for tok in (" prośb", " zgłosz", " usunię", " grupa ", "technik"))
-
 
 def _shorten_mcp_content(content: Any, max_len: int = 60) -> str:
     if content is None:
@@ -113,23 +107,10 @@ def _synthesize_ai_summary_and_steps_from_output(store: dict, event_queue: Queue
                 "diagnosed",
                 steps[:10],
             )
-            _dbg(
-                "H14",
-                "fallback no-mcp: update_ticket_status",
-                {"ticket_id": ticket_id, "ok": ok, "steps_len": len(steps[:10])},
-                run_id="post-fix",
-                location="backend/agent_runner.py:_synthesize_ai_summary_and_steps_from_output",
-            )
             if ok:
                 emit_fn(event_queue, {"kind": "ticket_status", "ticket_id": ticket_id, "status": "diagnosed"})
     except Exception:
-        _dbg(
-            "H14e",
-            "fallback no-mcp: update_ticket_status failed",
-            {"ticket_id": store.get("ticket_id")},
-            run_id="post-fix",
-            location="backend/agent_runner.py:_synthesize_ai_summary_and_steps_from_output",
-        )
+        pass
 
 
 # When the first MCP attempt fails, the retry runs without a toolset; the original prompt still mentions MCP,
@@ -157,17 +138,6 @@ def _build_prompt(ticket_id: int, title: str, description: str, comments: list) 
         + "Write it in a few concrete, technical sentences — no filler. "
         + "At the end, update the run status (update_ticket_status). Do not ask — act."
     )
-    _dbg(
-        "H_LANG_INPUT_PL",
-        "built user prompt language indicators",
-        {
-            "title_has_pl": _looks_polish(title),
-            "description_has_pl": _looks_polish(description),
-            "comments_has_pl": _looks_polish(comments_text),
-        },
-        run_id="lang_dbg",
-        location="backend/agents/runner.py:_build_prompt",
-    )
     return prompt_text
 
 
@@ -176,29 +146,6 @@ def _emit(event_queue: Queue | None, payload: dict) -> None:
     if event_queue is not None:
         event_queue.put(payload)
 
-
-def _dbg(hypothesis_id: str, message: str, data: dict[str, Any] | None = None, *, run_id: str = "pre-fix", location: str = "") -> None:
-    # #region agent log
-    try:
-        root = Path(__file__).resolve().parent.parent
-        paths = [root / "debug-6e6985.log", root / ".cursor" / "debug-6e6985.log"]
-        payload = {
-            "sessionId": "6e6985",
-            "runId": run_id,
-            "hypothesisId": hypothesis_id,
-            "location": location or "backend/agent_runner.py",
-            "message": message,
-            "data": data or {},
-            "timestamp": int(time.time() * 1000),
-        }
-        line = json.dumps(payload, ensure_ascii=False) + "\n"
-        for p in paths:
-            p.parent.mkdir(parents=True, exist_ok=True)
-            with p.open("a", encoding="utf-8") as f:
-                f.write(line)
-    except Exception:
-        pass
-    # #endregion
 
 
 def _parse_missing_tool_result(content: Any) -> dict[str, Any]:
@@ -348,22 +295,6 @@ def run_agent_sync(
     for e in store["trace"]:
         _emit(event_queue, e)
 
-    _tool_progress = {
-        "list_available_tools": "Fetching MCP tool list…",
-        "set_ai_summary": "Preparing AI summary…",
-        "ping_ip": "Checking server reachability…",
-        "get_server_logs": "Pobieram logi serwera…",
-        "update_ticket_status": "Updating run status…",
-        "request_missing_tool": "Queuing missing-tool request…",
-        "restart_service": "Czekam na zatwierdzenie restartu…",
-    }
-    _tool_display_names = {
-        "ping_ip": "Weryfikacja sieci (ping_ip)",
-        "get_server_logs": "Logi serwera (get_server_logs)",
-        "update_ticket_status": "Aktualizacja statusu",
-        "request_missing_tool": "Missing-tool request",
-        "restart_service": "Service restart (restart_service)",
-    }
     _diagnostics = store["diagnostics_entries"]
 
     prompt = _build_prompt(ticket_id, title, description, comments)
@@ -496,17 +427,6 @@ def run_agent_sync(
                                         entry = {"kind": "llm", "text": f'[LLM] update_ticket_status(ticket_id={tid}, status={st})'}
                                         store["trace"].append(entry)
                                         _emit(event_queue, entry)
-                                        _dbg(
-                                            "H_LANG_TOOL_UPDATE_STATUS",
-                                            "update_ticket_status args language",
-                                            {
-                                                "summary_has_pl": _looks_polish(str(summary)),
-                                                "steps_polish_count": sum(1 for s in steps_list if _looks_polish(str(s))),
-                                                "steps_count": len(steps_list),
-                                            },
-                                            run_id="lang_dbg",
-                                            location="backend/agents/runner.py:run_agent_sync:update_ticket_status",
-                                        )
                                         if tid is not None and st:
                                             _emit(event_queue, {"kind": "ticket_status", "ticket_id": tid, "status": st})
                                         # Only count real tool returns (not our synthetic "called" markers)
@@ -541,16 +461,6 @@ def run_agent_sync(
                                         }
                                         # Keep AI Summary separate from Diagnostics to avoid duplicating content.
                                         _diagnostics.append({"tool": "set_ai_summary", "result": "OK"})
-                                        _dbg(
-                                            "H_LANG_TOOL_AI_SUMMARY",
-                                            "set_ai_summary args language",
-                                            {
-                                                "issue_has_pl": _looks_polish(store["ai_summary"]["issue"]),
-                                                "work_log_has_pl": _looks_polish(store["ai_summary"]["work_log_summary"]),
-                                            },
-                                            run_id="lang_dbg",
-                                            location="backend/agents/runner.py:run_agent_sync:set_ai_summary",
-                                        )
                                         _emit(event_queue, {"kind": "ai_summary", "issue": store["ai_summary"]["issue"], "work_log_summary": store["ai_summary"]["work_log_summary"]})
                         elif isinstance(node, ModelRequestNode):
                             if getattr(node, "message", None) and getattr(node.message, "parts", None):
@@ -572,17 +482,6 @@ def run_agent_sync(
                                                 item = _record_missing_tool_result(store, matched, parsed)
                                                 if item:
                                                     _emit(event_queue, {"kind": "missing_tool_request", **item})
-                                                _dbg(
-                                                    "H_MISSING_TOOL_RETURN_DECISION",
-                                                    "request_missing_tool return processed",
-                                                    {
-                                                        "status": parsed.get("status"),
-                                                        "matched_found": matched is not None,
-                                                        "ret_preview": str(content or "")[:120],
-                                                    },
-                                                    run_id="mcp_decision_dbg",
-                                                    location="backend/agent_runner.py:run_agent_sync:request_missing_tool",
-                                                )
                                             short = _shorten_mcp_content(content)
                                             _diagnostics.append({"tool": name, "result": short})
                                             _emit(event_queue, {"kind": "diagnostic", "tool": name, "result": short})
@@ -854,17 +753,6 @@ async def run_agent_async(
                                         entry = {"kind": "llm", "text": f'[LLM] update_ticket_status(ticket_id={tid}, status={st})'}
                                         store["trace"].append(entry)
                                         _emit(event_queue, entry)
-                                        _dbg(
-                                            "H_LANG_TOOL_UPDATE_STATUS_ASYNC",
-                                            "update_ticket_status args language (async)",
-                                            {
-                                                "summary_has_pl": _looks_polish(str(summary)),
-                                                "steps_polish_count": sum(1 for s in steps_list if _looks_polish(str(s))),
-                                                "steps_count": len(steps_list),
-                                            },
-                                            run_id="lang_dbg",
-                                            location="backend/agents/runner.py:run_agent_async:update_ticket_status",
-                                        )
                                         if tid is not None and st:
                                             _emit(event_queue, {"kind": "ticket_status", "ticket_id": tid, "status": st})
                                         # Only count real tool returns (not our synthetic "called" markers)
@@ -892,16 +780,6 @@ async def run_agent_async(
                                         }
                                         # Keep AI Summary separate from Diagnostics to avoid duplicating content.
                                         _diagnostics.append({"tool": "set_ai_summary", "result": "OK"})
-                                        _dbg(
-                                            "H_LANG_TOOL_AI_SUMMARY_ASYNC",
-                                            "set_ai_summary args language (async)",
-                                            {
-                                                "issue_has_pl": _looks_polish(store["ai_summary"]["issue"]),
-                                                "work_log_has_pl": _looks_polish(store["ai_summary"]["work_log_summary"]),
-                                            },
-                                            run_id="lang_dbg",
-                                            location="backend/agents/runner.py:run_agent_async:set_ai_summary",
-                                        )
                                         _emit(event_queue, {"kind": "ai_summary", "issue": store["ai_summary"]["issue"], "work_log_summary": store["ai_summary"]["work_log_summary"]})
                                     else:
                                         if name not in ("set_ai_summary", "list_available_tools"):
@@ -928,17 +806,6 @@ async def run_agent_async(
                                                 item = _record_missing_tool_result(store, matched, parsed)
                                                 if item:
                                                     _emit(event_queue, {"kind": "missing_tool_request", **item})
-                                                _dbg(
-                                                    "H_MISSING_TOOL_RETURN_DECISION",
-                                                    "request_missing_tool return processed",
-                                                    {
-                                                        "status": parsed.get("status"),
-                                                        "matched_found": matched is not None,
-                                                        "ret_preview": str(content or "")[:120],
-                                                    },
-                                                    run_id="mcp_decision_dbg",
-                                                    location="backend/agent_runner.py:run_agent_async:model_request:request_missing_tool",
-                                                )
                                             short = _shorten_mcp_content(content)
                                             _diagnostics.append({"tool": name, "result": short})
                                             _emit(event_queue, {"kind": "diagnostic", "tool": name, "result": short})
@@ -969,13 +836,6 @@ async def run_agent_async(
                 _emit(event_queue, store["trace"][-1])
             if not (store.get("output") or "").strip() and last_model_text:
                 store["output"] = last_model_text[-1]
-            _dbg(
-                "H_LANG_FINAL_OUTPUT_ASYNC",
-                "final output language (async)",
-                {"output_has_pl": _looks_polish(str(store.get("output") or "")), "output_len": len(str(store.get("output") or ""))},
-                run_id="lang_dbg",
-                location="backend/agents/runner.py:run_agent_async:final_output",
-            )
         except Exception as e:
             store["error"] = str(e)
             err_text = f"[SYSTEM] Error: {e}\n{traceback.format_exc()}"
@@ -1059,25 +919,6 @@ async def run_single_node_async(
                             args = part.args_as_dict() if part.args else {}
                             name = part.tool_name
 
-                            # #region agent log
-                            if name in ("update_ticket_status", "request_missing_tool", "list_available_tools", "set_ai_summary"):
-                                store.setdefault("_tool_call_counts", {})
-                                store["_tool_call_counts"][name] = store["_tool_call_counts"].get(name, 0) + 1
-                                call_idx = store["_tool_call_counts"][name]
-                                # Avoid logging raw args content (may contain user data).
-                                _dbg(
-                                    "H_REPEAT_TOOLS",
-                                    "single node: tool called (counted)",
-                                    {
-                                        "tool": name,
-                                        "count": call_idx,
-                                        "arg_keys": list(args.keys())[:8] if isinstance(args, dict) else [],
-                                    },
-                                    run_id="tool_seq_dbg",
-                                    location="backend/agent_runner.py:run_single_node_async:tool_call",
-                                )
-                            # #endregion
-
                             if name != "set_ai_summary":
                                 _diagnostics.append({"tool": name, "result": "called"})
                                 emit_fn(event_queue, {"kind": "diagnostic", "tool": name, "result": "called"})
@@ -1112,30 +953,6 @@ async def run_single_node_async(
                                 )
                                 call_item = _append_missing_tool_from_call(store, tool_name, reason, tid_missing)
                                 emit_fn(event_queue, {"kind": "missing_tool_request", **call_item})
-                                _dbg(
-                                    "H_MISSING_PENDING_APPEND",
-                                    "pending missing-tool call appended",
-                                    {
-                                        "tool_name": tool_name,
-                                        "ticket_id": tid_missing,
-                                        "pending_len": len(store.get("pending_missing_tool_calls") or []),
-                                    },
-                                    run_id="mcp_visibility_dbg",
-                                    location="backend/agent_runner.py:run_single_node_async:pending_append",
-                                )
-                                # #region agent log
-                                _dbg(
-                                    "H_REPEAT_TOOLS2",
-                                    "single node: request_missing_tool payload snapshot",
-                                    {
-                                        "tool_name": tool_name,
-                                        "reason_len": len(reason),
-                                        "ticket_id": tid_missing,
-                                    },
-                                    run_id="tool_seq_dbg",
-                                    location="backend/agent_runner.py:run_single_node_async:request_missing_tool",
-                                )
-                                # #endregion
                                 # Emit missing_tool_request only after we see the tool return.
                             elif name == "set_ai_summary":
                                 store["ai_summary"] = {"issue": (args.get("issue") or "").strip(), "work_log_summary": (args.get("work_log_summary") or "").strip()}
@@ -1153,18 +970,6 @@ async def run_single_node_async(
                             elif isinstance(part, (ToolReturnPart, BuiltinToolReturnPart)):
                                 content = getattr(part, "content", None)
                                 name = getattr(part, "tool_name", "") or ""
-                                _dbg(
-                                    "H_MISSING_RETURN_PART",
-                                    "model request tool return part seen",
-                                    {
-                                        "part_type": type(part).__name__,
-                                        "tool_name": name,
-                                        "has_content": content is not None,
-                                        "content_preview": str(content or "")[:80],
-                                    },
-                                    run_id="mcp_visibility_dbg",
-                                    location="backend/agent_runner.py:run_single_node_async:model_request:return_part",
-                                )
                                 if name and name != "set_ai_summary":
                                     if name == "request_missing_tool":
                                         parsed = _parse_missing_tool_result(content)
@@ -1179,36 +984,6 @@ async def run_single_node_async(
                                         item = _record_missing_tool_result(store, matched, parsed)
                                         if item:
                                             emit_fn(event_queue, {"kind": "missing_tool_request", **item})
-                                        _dbg(
-                                            "H_MISSING_ITEM_RECORD",
-                                            "missing-tool item record decision",
-                                            {
-                                                "item_added": item is not None,
-                                                "store_missing_len": len(store.get("missing_tool_requests") or []),
-                                                "parsed_status": parsed.get("status"),
-                                            },
-                                            run_id="mcp_visibility_dbg",
-                                            location="backend/agent_runner.py:run_single_node_async:item_record",
-                                        )
-                                        _dbg(
-                                            "H_MISSING_TOOL_RETURN_DECISION",
-                                            "request_missing_tool return processed",
-                                            {
-                                                "status": parsed.get("status"),
-                                                "matched_found": matched is not None,
-                                                "ret_preview": str(content or "")[:120],
-                                            },
-                                            run_id="mcp_decision_dbg",
-                                            location="backend/agent_runner.py:run_single_node_async:model_request:request_missing_tool",
-                                        )
-                                    else:
-                                        _dbg(
-                                            "H_MISSING_RETURN_OTHER_TOOL",
-                                            "tool return skipped for missing-tool mapping (different tool_name)",
-                                            {"tool_name": name},
-                                            run_id="mcp_visibility_dbg",
-                                            location="backend/agent_runner.py:run_single_node_async:model_request:return_other_tool",
-                                        )
                                     short = _shorten_mcp_content(content)
                                     _diagnostics.append({"tool": name, "result": short})
                                     emit_fn(event_queue, {"kind": "diagnostic", "tool": name, "result": short})
@@ -1224,12 +999,6 @@ async def run_single_node_async(
             store["output"] = last_model_text[-1]
 
     try:
-        _dbg(
-            "H1",
-            "run_single_node_async start",
-            {"use_mcp": use_mcp, "max_retry": max_retry, "model_spec": model_spec},
-            location="backend/agent_runner.py:run_single_node_async:start",
-        )
         execution_id = str(store.get("execution_id") or "").strip()
         if execution_id and node_id:
             from ..observability.run_log import log_llm_call
@@ -1253,12 +1022,6 @@ async def run_single_node_async(
             system_prompt=node_system_prompt,
             model_spec=model_spec,
             max_tokens=max_tokens,
-        )
-        _dbg(
-            "H2",
-            "agent created; entering agent.iter",
-            {"use_mcp": use_mcp},
-            location="backend/agent_runner.py:run_single_node_async:before_iter",
         )
         store["last_stage"] = "run_single_node_async:agent_iter"
         t0 = time.monotonic()
@@ -1292,26 +1055,8 @@ async def run_single_node_async(
             )
         tb = traceback.format_exc()
         tb_mcp = _traceback_indicates_mcp_init_failure(tb)
-        _dbg(
-            "H3",
-            "run_single_node_async exception",
-            {
-                "exc_type": type(e).__name__,
-                "exc_str": str(e)[:500],
-                "use_mcp": use_mcp,
-                "tb_has_mcp": tb_mcp,
-            },
-            location="backend/agent_runner.py:run_single_node_async:except",
-        )
         mcp_recoverable = bool(use_mcp and tb_mcp)
         if mcp_recoverable:
-            _dbg(
-                "H4",
-                "mcp init failure — retry without MCP",
-                {"first_exc": type(e).__name__},
-                run_id="post-fix",
-                location="backend/agent_runner.py:run_single_node_async:mcp_fallback",
-            )
             emit_fn(
                 event_queue,
                 {
@@ -1329,22 +1074,8 @@ async def run_single_node_async(
                 )
                 await _consume_iter(agent_plain)
                 _synthesize_ai_summary_and_steps_from_output(store, event_queue, emit_fn)
-                _dbg(
-                    "H4b",
-                    "mcp fallback completed without exception",
-                    {},
-                    run_id="post-fix",
-                    location="backend/agent_runner.py:run_single_node_async:mcp_fallback_ok",
-                )
             except BaseException as e2:
                 tb2 = traceback.format_exc()
-                _dbg(
-                    "H5",
-                    "mcp fallback failed",
-                    {"exc_type": type(e2).__name__, "exc_str": str(e2)[:500]},
-                    run_id="post-fix",
-                    location="backend/agent_runner.py:run_single_node_async:mcp_fallback_err",
-                )
                 if isinstance(e2, Exception):
                     store["error"] = str(e2)
                     store.setdefault("trace", []).append({"kind": "sys", "text": f"[SYSTEM] Node error (no MCP): {tb2}"})
@@ -1375,22 +1106,8 @@ async def run_single_node_async(
                         max_tokens=max_tokens,
                     )
                     await _consume_iter(agent_overflow)
-                    _dbg(
-                        "H4c",
-                        "overflow fallback completed without exception",
-                        {"overflow_spec": overflow_spec},
-                        run_id="post-fix",
-                        location="backend/agent_runner.py:run_single_node_async:overflow_fallback_ok",
-                    )
                 except BaseException as e3:
                     tb3 = traceback.format_exc()
-                    _dbg(
-                        "H5b",
-                        "overflow fallback failed",
-                        {"exc_type": type(e3).__name__, "exc_str": str(e3)[:500]},
-                        run_id="post-fix",
-                        location="backend/agent_runner.py:run_single_node_async:overflow_fallback_err",
-                    )
                     if isinstance(e3, Exception):
                         store["error"] = str(e3)
                         store.setdefault("trace", []).append(

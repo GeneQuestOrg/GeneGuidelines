@@ -12,7 +12,6 @@ from ..auth import require_api_key_if_set
 from .. import database as db
 from ..config import DB_PATH
 from ..agents.dynamic_output_schema import validate_output_schema_json
-from ..agents.runner import _dbg
 from ..models import (
     FlowDefinitionResponse,
     FlowNodeResponse,
@@ -141,14 +140,12 @@ async def list_flows():
     """List flows. Returns raw dicts (no response_model)."""
     try:
         t0 = time.perf_counter()
-        _dbg("H3", "list_flows: start", {"db_path": str(DB_PATH)}, run_id="flows_pre", location="backend/routers/flows.py:list_flows")
         db._ensure_position_columns()
         db._ensure_flow_execution_columns()
         db._ensure_output_schema_column()
         db._ensure_agentic_step_close_column()
         db._ensure_python_source_column()
         keys = _get_flow_keys_safe()
-        _dbg("H3", "list_flows: keys loaded", {"flow_key_count": len(keys)}, run_id="flows_keys", location="backend/routers/flows.py:list_flows")
         out = []
         for flow_key in keys:
             nodes, edges = _get_nodes_and_edges_safe(flow_key)
@@ -195,12 +192,10 @@ async def list_flows():
                 edge_list.append(ed)
             out.append({"flow_key": flow_key, "nodes": node_list, "edges": edge_list})
         dt_ms = int((time.perf_counter() - t0) * 1000)
-        _dbg("H3", "list_flows: end", {"flow_count": len(out), "dt_ms": dt_ms}, run_id="flows_post", location="backend/routers/flows.py:list_flows")
         return out
     except HTTPException:
         raise
     except Exception as e:
-        _dbg("H1", "list_flows: exception", {"error": str(e)}, run_id="flows_err", location="backend/routers/flows.py:list_flows")
         log.exception("list_flows failed")
         raise HTTPException(status_code=500, detail="Internal server error.") from e
 

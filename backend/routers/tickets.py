@@ -9,7 +9,6 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from ..auth import require_api_key_if_set
 from .. import database as db
-from ..agents.runner import _dbg
 from ..models import (
     TicketCreate,
     TicketUpdate,
@@ -33,20 +32,16 @@ async def list_tickets():
     """List all tickets. On error return [] so the UI does not hang."""
     try:
         t0 = asyncio.get_running_loop().time()
-        _dbg("H1", "list_tickets: start", {"db_path": str(getattr(db, "DB_PATH", ""))}, run_id="tickets_pre", location="backend/routers/tickets.py:list_tickets")
         def _call():
             t1 = time.perf_counter()
             rows_local = db.get_all_tickets()
             t2 = time.perf_counter()
             # Note: executor function, so time is approximate; still useful for "blocked vs fast".
-            _dbg("H1", "list_tickets: db call finished", {"dt_ms": int((t2 - t1) * 1000)}, run_id="tickets_db", location="backend/routers/tickets.py:list_tickets")
             return rows_local
         rows = await _run(_call)
         dt_ms = int((asyncio.get_running_loop().time() - t0) * 1000)
-        _dbg("H1", "list_tickets: end", {"count": len(rows), "dt_ms": dt_ms}, run_id="tickets_post", location="backend/routers/tickets.py:list_tickets")
         return [TicketResponse(**r) for r in rows]
     except Exception as ex:
-        _dbg("H2", "list_tickets: exception", {"error": str(ex)}, run_id="tickets_err", location="backend/routers/tickets.py:list_tickets")
         return []
 
 
@@ -60,18 +55,10 @@ async def reset_all_ticket_statuses():
 @router.get("/{id}", response_model=TicketResponse)
 async def get_ticket(id: int):
     """Get one ticket by id."""
-    _dbg("H13", "get_ticket called", {"id": id}, run_id="post-sse", location="backend/routers/tickets.py:get_ticket")
     t = await _run(lambda: db.get_ticket_by_id(id))
     if not t:
         raise HTTPException(status_code=404, detail="Ticket not found")
     resp = TicketResponse(**t)
-    _dbg(
-        "H13b",
-        "get_ticket returning",
-        {"id": id, "status": resp.status, "has_resolution": bool(resp.resolution_summary)},
-        run_id="post-sse",
-        location="backend/routers/tickets.py:get_ticket:return",
-    )
     return resp
 
 

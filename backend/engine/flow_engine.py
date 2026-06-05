@@ -453,7 +453,7 @@ async def run_flow_step_by_step_async(
     only that node's text + placeholders (ticket_summary, tools_list, previous_output),
     max_retry from node, run agent once, merge result into store.
     """
-    from ..agents.runner import _emit, run_single_node_async, _dbg
+    from ..agents.runner import _emit, run_single_node_async
 
     if emit_fn is None:
         emit_fn = _emit
@@ -594,13 +594,9 @@ async def run_flow_step_by_step_async(
             continue
 
         if node_type == "merge":
-            # #region agent log
-            from ..agents.runner import _dbg
-
             strategy_raw = node.get("merge_strategy")
             fields_raw = node.get("merge_fields")
             key_field_raw = node.get("merge_key_field")
-            # #endregion agent log
 
             strategy = (strategy_raw or "append").strip().lower()
             fields = _parse_merge_fields(fields_raw)
@@ -610,15 +606,6 @@ async def run_flow_step_by_step_async(
             if not src_ids:
                 store["error"] = f"Merge node {node_id}: no predecessors."
                 emit_fn(event_queue, {"kind": "sys", "text": f"[SYSTEM] {store['error']}"})
-                # #region agent log
-                _dbg(
-                    "H_merge_exec",
-                    "merge has no predecessors (fan-in)",
-                    {"flow_key": flow_key, "node_id": node_id, "node_type": node_type, "src_ids": src_ids},
-                    run_id="merge_smoke",
-                    location="backend/flow_engine.py:run_flow_step_by_step_async:merge",
-                )
-                # #endregion agent log
                 break
 
             src_outputs: list[dict] = []
@@ -626,38 +613,9 @@ async def run_flow_step_by_step_async(
             if missing:
                 store["error"] = f"Merge node {node_id}: missing outputs from {missing}."
                 emit_fn(event_queue, {"kind": "sys", "text": f"[SYSTEM] {store['error']}"})
-                # #region agent log
-                _dbg(
-                    "H_merge_sched",
-                    "merge executed before predecessors populated store outputs",
-                    {"flow_key": flow_key, "node_id": node_id, "src_ids": src_ids, "missing": missing, "order_has": node_id in (order or [])},
-                    run_id="merge_smoke",
-                    location="backend/flow_engine.py:run_flow_step_by_step_async:merge",
-                )
-                # #endregion agent log
                 break
             for sid in src_ids:
                 src_outputs.append(store["node_outputs"][sid])
-
-            # #region agent log
-            merge_dbg_data = {
-                "flow_key": flow_key,
-                "node_id": node_id,
-                "strategy": strategy,
-                "fields_raw": fields_raw,
-                "fields_parsed": fields,
-                "key_field": key_field,
-                "src_ids": src_ids,
-                "src_output_keys": [list((out or {}).keys()) if isinstance(out, dict) else [] for out in src_outputs],
-            }
-            _dbg(
-                "H_merge_config",
-                "merge handler entering",
-                merge_dbg_data,
-                run_id="merge_smoke",
-                location="backend/flow_engine.py:run_flow_step_by_step_async:merge",
-            )
-            # #endregion agent log
 
             emit_fn(
                 event_queue,
@@ -677,32 +635,9 @@ async def run_flow_step_by_step_async(
             except Exception as e:
                 store["error"] = str(e)
                 emit_fn(event_queue, {"kind": "sys", "text": f"[SYSTEM] Merge failed in {node_id}: {e}"})
-                # #region agent log
-                _dbg(
-                    "H_merge_logic",
-                    "merge_values raised error",
-                    {"flow_key": flow_key, "node_id": node_id, "error": str(e), "strategy": strategy, "fields": fields, "key_field": key_field},
-                    run_id="merge_smoke",
-                    location="backend/flow_engine.py:run_flow_step_by_step_async:merge",
-                )
-                # #endregion agent log
                 break
 
             store["node_outputs"][node_id] = merged
-            # #region agent log
-            _dbg(
-                "H_merge_ok",
-                "merge handler merged output",
-                {
-                    "flow_key": flow_key,
-                    "node_id": node_id,
-                    "merged_keys": list(merged.keys()) if isinstance(merged, dict) else [],
-                    "merged_preview": {k: (merged[k][:5] if isinstance(merged.get(k), list) else str(merged.get(k))[:200]) for k in merged.keys()},
-                },
-                run_id="merge_smoke",
-                location="backend/flow_engine.py:run_flow_step_by_step_async:merge",
-            )
-            # #endregion agent log
             continue
 
         if node_type == "guidelines_rag":
@@ -1101,18 +1036,6 @@ async def run_flow_step_by_step_async(
 
         agent_model_spec = resolve_model_spec_for_node(node)
         node_max_tokens = resolve_max_tokens_for_node(node)
-        _dbg(
-            "H6",
-            "node: calling run_single_node_async",
-            {
-                "node_id": node_id,
-                "node_type": node_type,
-                "prompt_mode": prompt_mode,
-                "use_mcp": use_mcp,
-                "max_retry": max_retry,
-            },
-            location="backend/flow_engine.py:run_flow_step_by_step_async:before_run_single_node_async",
-        )
         await run_single_node_async(
             ticket_id=ticket_id,
             title=title,
@@ -1138,12 +1061,6 @@ async def run_flow_step_by_step_async(
             from ..agents.schemas import AgenticStepCloseOutput
             from ..agents.simple_runner import run_llm_simple_async
 
-            _dbg(
-                "H7",
-                "agentic_step_close: start",
-                {"node_id": node_id, "node_label": str(node.get("label") or node_id)},
-                location="backend/flow_engine.py:run_flow_step_by_step_async:agentic_step_close:start",
-            )
             user_close = _user_prompt_for_agentic_step_close(
                 ticket_id=ticket_id,
                 title=title,
@@ -1173,12 +1090,6 @@ async def run_flow_step_by_step_async(
                 emit_fn=emit_fn,
                 poison_store_on_failure=False,
                 sse_kind="llm_agentic_close",
-            )
-            _dbg(
-                "H8",
-                "agentic_step_close: finished",
-                {"node_id": node_id, "close_out_ok": bool(close_out)},
-                location="backend/flow_engine.py:run_flow_step_by_step_async:agentic_step_close:done",
             )
             if close_out:
                 node_out["step_close"] = close_out
@@ -1245,17 +1156,6 @@ async def run_flow_step_by_step_async(
     store["structured_output"] = _build_structured_output(store)
     emit_fn(event_queue, {"kind": "output", "output": store.get("output") or ""})
     emit_fn(event_queue, {"done": True})
-    _dbg(
-        "H9",
-        "flow step-by-step done emitted",
-        {
-            "flow_key": flow_key,
-            "ticket_id": ticket_id,
-            "output_len": len(store.get("output") or ""),
-            "has_ai_summary": bool(store.get("ai_summary")),
-        },
-        location="backend/flow_engine.py:run_flow_step_by_step_async:emit_done",
-    )
 
 
 async def run_flow_fork_parallel_async(
@@ -1271,75 +1171,29 @@ async def run_flow_fork_parallel_async(
     use_mcp: bool = True,
     emit_fn: Any = None,
 ) -> None:
-    from ..agents.runner import _emit, run_single_node_async, _dbg
+    from ..agents.runner import _emit, run_single_node_async
     from ..observability.run_log import log_run_event, record_run_stage, summarize_node_output
 
     if emit_fn is None:
         emit_fn = _emit
 
-    # #region fork-timeout instrumentation (DB stage vs LLM stage)
     record_run_stage(store, "flow_fork:init", event="flow_fork_init", flow_key=flow_key)
-    # #region UI signal (stronger than file logs)
     emit_fn(
         event_queue,
         {"kind": "sys", "text": f"[SYSTEM] flow_fork entered (stage={store['last_stage']})."},
     )
-    # #endregion
-    _dbg(
-        "H_FORK_DB",
-        "flow_fork: get_execution_order start",
-        {"flow_key": flow_key},
-        run_id="parallel_timeout_dbg",
-        location="backend/flow_engine.py:run_flow_fork_parallel_async",
-    )
-    # #endregion
 
     order = get_execution_order(flow_key)
-    _dbg(
-        "H_FORK_DB",
-        "flow_fork: get_execution_order end",
-        {"flow_key": flow_key, "order_len": len(order)},
-        run_id="parallel_timeout_dbg",
-        location="backend/flow_engine.py:run_flow_fork_parallel_async",
-    )
     if not order:
         emit_fn(event_queue, {"kind": "sys", "text": "[SYSTEM] No nodes in flow."})
         store["done"] = True
         return
 
     store["last_stage"] = "flow_fork:get_flow_definition_nodes"
-    _dbg(
-        "H_FORK_DB",
-        "flow_fork: get_flow_definition_nodes start",
-        {"flow_key": flow_key},
-        run_id="parallel_timeout_dbg",
-        location="backend/flow_engine.py:run_flow_fork_parallel_async",
-    )
     nodes_db = db.get_flow_definition_nodes(flow_key)
-    _dbg(
-        "H_FORK_DB",
-        "flow_fork: get_flow_definition_nodes end",
-        {"flow_key": flow_key, "nodes_len": len(nodes_db or [])},
-        run_id="parallel_timeout_dbg",
-        location="backend/flow_engine.py:run_flow_fork_parallel_async",
-    )
 
     store["last_stage"] = "flow_fork:get_flow_edges"
-    _dbg(
-        "H_FORK_DB",
-        "flow_fork: get_flow_edges start",
-        {"flow_key": flow_key},
-        run_id="parallel_timeout_dbg",
-        location="backend/flow_engine.py:run_flow_fork_parallel_async",
-    )
     edges_db = db.get_flow_edges(flow_key)
-    _dbg(
-        "H_FORK_DB",
-        "flow_fork: get_flow_edges end",
-        {"flow_key": flow_key, "edges_len": len(edges_db or [])},
-        run_id="parallel_timeout_dbg",
-        location="backend/flow_engine.py:run_flow_fork_parallel_async",
-    )
     flow = {"flow_key": flow_key, "nodes": nodes_db, "edges": edges_db}
     nodes_list = flow.get("nodes") or []
     edges_list = flow.get("edges") or []
@@ -1376,21 +1230,7 @@ async def run_flow_fork_parallel_async(
         predecessors[tgt] = sorted(predecessors[tgt], key=_node_sort_key)
 
     store["last_stage"] = "flow_fork:get_tool_catalog_for_scope"
-    _dbg(
-        "H_FORK_DB",
-        "flow_fork: get_tool_catalog_for_scope start",
-        {"scope": scope},
-        run_id="parallel_timeout_dbg",
-        location="backend/flow_engine.py:run_flow_fork_parallel_async",
-    )
     catalog = db.get_tool_catalog_for_scope(scope, enabled_only=True)
-    _dbg(
-        "H_FORK_DB",
-        "flow_fork: get_tool_catalog_for_scope end",
-        {"scope": scope, "tools_len": len(catalog or [])},
-        run_id="parallel_timeout_dbg",
-        location="backend/flow_engine.py:run_flow_fork_parallel_async",
-    )
     tools_list_str = format_tools_list_for_prompt(catalog)
     ticket_summary = f"Ticket #{ticket_id}. Title: {title}. Description: {description}."
     comments_text = ""
@@ -1456,24 +1296,6 @@ async def run_flow_fork_parallel_async(
         best_candidate_index = idx
         best_candidate = candidate or {}
         best_candidate_nid = nid
-
-        # #region agent log
-        ai = candidate.get("ai_summary") if isinstance(candidate.get("ai_summary"), dict) else {}
-        _dbg(
-            "H1H2",
-            "parallel: best_candidate updated (ai_summary may be empty)",
-            {
-                "nid": nid,
-                "has_output": bool(candidate.get("output")),
-                "has_trace": bool(candidate.get("trace")),
-                "has_status": bool(candidate.get("status")),
-                "ai_issue_len": len(str(ai.get("issue") or "")),
-                "ai_work_log_len": len(str(ai.get("work_log_summary") or "")),
-            },
-            run_id="parallel_ai_summary_dbg",
-            location="backend/flow_engine.py:run_flow_fork_parallel_async:_consider_candidate",
-        )
-        # #endregion
 
     async def _execute_node_wave(nid: str, *, wave_snapshot_outputs: dict[str, Any]) -> dict[str, Any]:
         local_store: dict[str, Any] = {
@@ -2026,24 +1848,6 @@ async def run_flow_fork_parallel_async(
                     node_id=nid,
                 )
 
-                # #region agent log
-                _dbg(
-                    "H_SET_AI_SUMMARY",
-                    "parallel: after run_single_node_async, inspect ai_summary",
-                    {
-                        "nid": nid,
-                        "ai_issue_len": len(str(local_store.get("ai_summary", {}).get("issue") or "")),
-                        "ai_work_log_len": len(str(local_store.get("ai_summary", {}).get("work_log_summary") or "")),
-                        "diagnostics_len": len(local_store.get("diagnostics_entries") or []),
-                        "has_set_ai_summary_diag": any(
-                            (d.get("tool") == "set_ai_summary") for d in (local_store.get("diagnostics_entries") or []) if isinstance(d, dict)
-                        ),
-                    },
-                    run_id="parallel_ai_summary_dbg2",
-                    location="backend/flow_engine.py:run_flow_fork_parallel_async:after_run_single_node_async",
-                )
-                # #endregion
-
                 node_out: dict[str, Any] = {
                     "output_text": (local_store.get("output") or "")[:AGENTIC_NODE_OUTPUT_MAX_CHARS],
                     "ai_summary": dict(local_store.get("ai_summary") or {}),
@@ -2187,13 +1991,6 @@ async def run_flow_fork_parallel_async(
             f"flow_fork:parallel_wave:{wave_label}",
             event="wave_start",
             wave=wave,
-        )
-        _dbg(
-            "H_FORK_WAVE_START",
-            "parallel wave start (stage=wave)",
-            {"wave": wave, "ready_len": len(ready), "skipped_len": len(skipped_nodes)},
-            run_id="parallel_timeout_dbg",
-            location="backend/flow_engine.py:run_flow_fork_parallel_async:wave_start",
         )
         emit_fn(event_queue, {"kind": "sys", "text": f"[SYSTEM] Parallel wave start: {wave}"})
 
@@ -2378,20 +2175,6 @@ async def run_flow_fork_parallel_async(
 
     store["done"] = True
     store["missing_tool_requests"] = shared_missing_tool_requests
-    _dbg(
-        "H_MISSING_TOOLS",
-        "parallel: aggregated missing_tool_requests into final store",
-        {
-            "missing_tool_requests_len": len(shared_missing_tool_requests),
-            "missing_tool_requests_sample": [
-                {"tool_name": str(x.get("tool_name") or "").strip(), "ticket_id": x.get("ticket_id")}
-                for x in shared_missing_tool_requests[:3]
-                if isinstance(x, dict)
-            ],
-        },
-        run_id="parallel_missing_tools_dbg",
-        location="backend/flow_engine.py:run_flow_fork_parallel_async:missing_tools_agg",
-    )
 
     if best_candidate:
         store["output"] = best_candidate.get("output")
@@ -2408,43 +2191,11 @@ async def run_flow_fork_parallel_async(
         if ai_summary_candidate:
             store["ai_summary"] = ai_summary_candidate
 
-    # #region agent log
-    _dbg(
-        "H1H2H4",
-        "parallel: final store ai_summary computed",
-        {
-            "best_candidate_nid": best_candidate_nid,
-            "ai_summary_source_nid": ai_summary_source_nid,
-            "ai_issue_len": len(str((store.get("ai_summary") or {}).get("issue") or "")) if isinstance(store.get("ai_summary"), dict) else 0,
-            "ai_work_log_len": len(
-                str((store.get("ai_summary") or {}).get("work_log_summary") or "")
-            )
-            if isinstance(store.get("ai_summary"), dict)
-            else 0,
-            "ai_keys": list((store.get("ai_summary") or {}).keys())[:5] if isinstance(store.get("ai_summary"), dict) else [],
-        },
-        run_id="parallel_ai_summary_dbg",
-        location="backend/flow_engine.py:run_flow_fork_parallel_async:final",
-    )
-    # #endregion
-
     finalize_flow_output(flow_key, store)
 
     store["structured_output"] = _build_structured_output(store)
     emit_fn(event_queue, {"kind": "output", "output": store.get("output") or ""})
     emit_fn(event_queue, {"done": True})
-
-    _dbg(
-        "H9_parallel",
-        "flow parallel done emitted",
-        {
-            "flow_key": flow_key,
-            "ticket_id": ticket_id,
-            "node_outputs_len": len(store.get("node_outputs") or {}),
-            "has_ai_summary": bool(store.get("ai_summary")),
-        },
-        location="backend/flow_engine.py:run_flow_fork_parallel_async:emit_done",
-    )
 
 
 def _build_structured_output(store: dict) -> dict:
