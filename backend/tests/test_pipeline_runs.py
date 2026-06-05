@@ -85,6 +85,9 @@ class PipelineRunsTests(unittest.TestCase):
             "backend.routers.pipeline.get_disease_by_slug",
             return_value=sample_disease,
         ), patch(
+            "backend.routers.pipeline.check_bootstrap_rate_limit",
+            return_value=None,
+        ), patch(
             "backend.routers.pipeline.db.create_ticket",
             return_value=42,
         ) as mock_ticket, patch(
@@ -114,6 +117,9 @@ class PipelineRunsTests(unittest.TestCase):
 
     def test_start_guideline_run_custom_disease(self) -> None:
         with patch(
+            "backend.routers.pipeline.check_bootstrap_rate_limit",
+            return_value=None,
+        ), patch(
             "backend.routers.pipeline.db.create_ticket",
             return_value=99,
         ) as mock_ticket, patch(
