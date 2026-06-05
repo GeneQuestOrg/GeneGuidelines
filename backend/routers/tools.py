@@ -4,10 +4,7 @@ DB calls run in run_in_executor so they do not block the event loop.
 Reserve for Builder: invokes the builder flow (run_developer_flow) and returns its steps (builder "thoughts").
 """
 import asyncio
-import json
-import time
 from uuid import uuid4
-from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
@@ -23,28 +20,6 @@ from ..models import (
 )
 
 router = APIRouter(prefix="/tools", tags=["tools"], dependencies=[Depends(require_api_key_if_set)])
-
-
-def _tools_router_dbg(hypothesis_id: str, message: str, data: dict | None = None, *, run_id: str = "tools_router", location: str = "") -> None:
-    """Minimal NDJSON logger for builder reserve endpoint."""
-    try:
-        root = Path(__file__).resolve().parent.parent
-        payload = {
-            "sessionId": "6e6985",
-            "runId": run_id,
-            "hypothesisId": hypothesis_id,
-            "location": location or "backend/routers/tools.py:reserve_for_builder",
-            "message": message,
-            "data": data or {},
-            "timestamp": int(time.time() * 1000),
-        }
-        line = json.dumps(payload, ensure_ascii=False) + "\n"
-        for p in [root / "debug-6e6985.log", root / ".cursor" / "debug-6e6985.log"]:
-            p.parent.mkdir(parents=True, exist_ok=True)
-            with p.open("a", encoding="utf-8") as f:
-                f.write(line)
-    except Exception:
-        pass
 
 
 def _run(f):
@@ -111,13 +86,6 @@ async def reserve_for_builder(request_id: int, body: dict | None = None):
     req = await _run(lambda: db.get_tool_request_by_id(request_id))
     if not req:
         raise HTTPException(status_code=404, detail="Tool request not found")
-    _tools_router_dbg(
-        "H_TOOLS_RESERVE_START",
-        "reserve_for_builder called",
-        {"request_id": request_id, "tool_name": req.get("name"), "req_status": req.get("status")},
-        run_id="builder_reserve_dbg",
-        location="backend/routers/tools.py:reserve_for_builder",
-    )
     result = await _run(
         lambda: run_developer_flow(request_id, builder_agent_id)
     )

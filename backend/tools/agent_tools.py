@@ -10,7 +10,6 @@ import json
 import os
 import re
 import subprocess
-import time
 import urllib.error
 import urllib.request
 from difflib import SequenceMatcher
@@ -33,32 +32,6 @@ SIMILARITY_THRESHOLD = 0.85
 _GENERATED_TOOLS_DIR = _PROJECT_ROOT / "backend" / "tools" / "generated"
 _TOOLS_REPO_ROOT = Path(os.environ.get("TOOLS_REPO_ROOT") or (_PROJECT_ROOT.parent / "geneguidelines-tools"))
 _TOOLS_REPO_TOOLS_DIR = _TOOLS_REPO_ROOT / "tools"
-
-
-def _tools_dbg(hypothesis_id: str, message: str, data: dict[str, Any] | None = None, *, run_id: str = "builder", location: str = "") -> None:
-    """
-    Builder/runtime diagnostics for tool PR creation.
-    Writes NDJSON into the same debug-6e6985.log used by agent/flow logs.
-    """
-    try:
-        root = Path(__file__).resolve().parent.parent.parent
-        paths = [root / "debug-6e6985.log", root / ".cursor" / "debug-6e6985.log"]
-        payload = {
-            "sessionId": "6e6985",
-            "runId": run_id,
-            "hypothesisId": hypothesis_id,
-            "location": location or "backend/agent_tools.py",
-            "message": message,
-            "data": data or {},
-            "timestamp": int(time.time() * 1000),
-        }
-        line = json.dumps(payload, ensure_ascii=False) + "\n"
-        for p in paths:
-            p.parent.mkdir(parents=True, exist_ok=True)
-            with p.open("a", encoding="utf-8") as f:
-                f.write(line)
-    except Exception:
-        pass
 
 
 def _tools_repo_is_available() -> bool:
@@ -561,24 +534,10 @@ def run_developer_flow(
     if not req:
         result["reason"] = "tool_request_not_found"
         emit("error", {"message": "Tool request not found"}, msg="Nie znaleziono requestu o podanym ID.")
-        _tools_dbg(
-            "H_BUILDER_REQ_NOT_FOUND",
-            "tool request not found",
-            {"tool_request_id": tool_request_id},
-            run_id="builder_dbg",
-            location="backend/agent_tools.py:run_developer_flow",
-        )
         return result
 
     tool_name = (req.get("name") or "").strip()
     note = (req.get("note") or "").strip()
-    _tools_dbg(
-        "H_BUILDER_START",
-        "run_developer_flow start",
-        {"tool_request_id": tool_request_id, "tool_name": tool_name, "req_status": req.get("status"), "note_len": len(note)},
-        run_id="builder_dbg",
-        location="backend/agent_tools.py:run_developer_flow",
-    )
 
     claim = db.claim_tool_request(tool_request_id, builder_agent_id)
     claim_ok = bool(claim.get("ok"))
@@ -587,14 +546,6 @@ def run_developer_flow(
         emit("reserve", {"claim_result": claim}, msg=f"Zarezerwowano request #{tool_request_id} ({tool_name}).")
     else:
         emit("reserve", {"claim_result": claim}, msg=f"Rezerwacja nieudana: {claim_reason or '?'}.")
-
-    _tools_dbg(
-        "H_BUILDER_CLAIM",
-        "claim_tool_request result",
-        {"claim_ok": claim_ok, "reason": claim_reason, "req_status_after?": None},
-        run_id="builder_dbg",
-        location="backend/agent_tools.py:run_developer_flow:claim",
-    )
 
     if not claim_ok:
         result["reason"] = claim_reason or "claim_failed"
@@ -609,24 +560,10 @@ def run_developer_flow(
         emit("similarity_check", sim, msg="Znaleziono podobny tool – oznaczono jako duplikat.")
         emit("register_tool_status", {"status": "duplicate", "similarity_key": dup_name}, msg=f"Status: duplicate ({dup_name}).")
         emit("notify_operational", {"tool_name": tool_name, "duplicate": True}, msg="Powiadomiono operacyjnego o duplikacie.")
-        _tools_dbg(
-            "H_BUILDER_DUPLICATE",
-            "similarity path: duplicate",
-            {"duplicate_of": dup_name, "matches_count": len(sim.get("matches") or [])},
-            run_id="builder_dbg",
-            location="backend/agent_tools.py:run_developer_flow:duplicate",
-        )
         result["ok"] = True
         result["duplicate_of"] = dup_name
         return result
     emit("similarity_check", sim, msg="No duplicates found — continuing with the implementation.")
-    _tools_dbg(
-        "H_BUILDER_NO_DUP",
-        "no similarity duplicates",
-        {"matches_count": len(sim.get("matches") or [])},
-        run_id="builder_dbg",
-        location="backend/agent_tools.py:run_developer_flow:no_dup",
-    )
 
     # Provide implementation context so the steps UI shows clear guidance.
     builder_prompt = (
@@ -649,17 +586,6 @@ def run_developer_flow(
         emit("branch", branch_res, msg=f"Branch (tools repo): {branch_name}." if branch_res.get("ok") else f"Branch error: {branch_res.get('err') or branch_res.get('reason')}.")
     else:
         emit("branch", {"ok": False, "reason": "tools_repo_not_available", "tools_repo": str(_TOOLS_REPO_ROOT)}, msg="Brak repo Tools – pomijam branch/push/PR.")
-    _tools_dbg(
-        "H_BUILDER_REPO_CHECK",
-        "tools repo availability + branch name",
-        {
-            "git_is_tools_repo": _git_is_tools_repo(),
-            "branch_name": branch_name,
-            "tools_repo_root_exists": str(_TOOLS_REPO_ROOT.exists()),
-        },
-        run_id="builder_dbg",
-        location="backend/agent_tools.py:run_developer_flow:repo",
-    )
 
     impl = _ensure_tool_in_operational_mcp(tool_name=tool_name, note=note)
     if not impl.get("ok"):
@@ -667,13 +593,6 @@ def run_developer_flow(
         emit("implement_tool", {"result": impl}, msg="Tool implementation failed.")
         emit("register_tool_status", {"status": "failed"}, msg="Status ustawiony na: failed.")
         result["reason"] = impl.get("reason", "implement_failed")
-        _tools_dbg(
-            "H_BUILDER_IMPLEMENT_FAILED",
-            "ensure tool in operational MCP failed",
-            {"reason": str(impl.get("reason") or ""), "already_exists": bool(impl.get("already_exists"))},
-            run_id="builder_dbg",
-            location="backend/agent_tools.py:run_developer_flow:implement",
-        )
         return result
     emit(
         "implement_tool",
@@ -700,13 +619,6 @@ def run_developer_flow(
             if commit_res.get("ok") and commit_res.get("reason") != "nothing_to_commit"
             else ("brak zmian do commita" if commit_res.get("reason") == "nothing_to_commit" else (commit_res.get("err") or "commit error")),
         )
-        _tools_dbg(
-            "H_BUILDER_GIT_COMMIT",
-            "git add/commit summary",
-            {"commit_ok": bool(commit_res.get("ok")), "commit_reason": str(commit_res.get("reason") or ""), "commit_code": commit_res.get("code")},
-            run_id="builder_dbg",
-            location="backend/agent_tools.py:run_developer_flow:commit",
-        )
         # Prefer token push to avoid interactive auth prompts.
         # If token-based push fails (e.g. token scope/auth mismatch), retry via standard origin push.
         push_res = _git_push_with_token_tools(branch_name) if _get_github_token() else _git(["push", "-u", "origin", branch_name], cwd=_TOOLS_REPO_ROOT)
@@ -717,27 +629,9 @@ def run_developer_flow(
                 fallback_push,
                 msg="git push fallback (tools repo)" if fallback_push.get("ok") else (fallback_push.get("err") or "push fallback error"),
             )
-            _tools_dbg(
-                "H_BUILDER_GIT_PUSH_FALLBACK",
-                "git push fallback result",
-                {
-                    "fallback_ok": bool(fallback_push.get("ok")),
-                    "fallback_reason": str(fallback_push.get("reason") or ""),
-                    "fallback_code": fallback_push.get("code"),
-                },
-                run_id="builder_dbg",
-                location="backend/agent_tools.py:run_developer_flow:push_fallback",
-            )
             if fallback_push.get("ok"):
                 push_res = fallback_push
         emit("git_push", push_res, msg="git push (tools repo)" if push_res.get("ok") else (push_res.get("err") or "push error"))
-        _tools_dbg(
-            "H_BUILDER_GIT_PUSH",
-            "git push result",
-            {"push_ok": bool(push_res.get("ok")), "push_reason": str(push_res.get("reason") or ""), "push_code": push_res.get("code")},
-            run_id="builder_dbg",
-            location="backend/agent_tools.py:run_developer_flow:push",
-        )
         if push_res.get("ok"):
             if _get_github_token():
                 pr_res = _github_create_tools_pr_via_api(
@@ -760,20 +654,6 @@ def run_developer_flow(
                         )
                     ),
                 )
-                _tools_dbg(
-                    "H_BUILDER_PR_API",
-                    "PR created via GitHub API",
-                    {
-                        "pr_api_ok": bool(pr_res.get("ok")),
-                        "status_code": pr_res.get("status"),
-                        "pr_url_present": bool(pr_url),
-                        # Safe: no tokens/secrets; GitHub validation detail is non-sensitive.
-                        "pr_detail_len": len(str(pr_res.get("detail") or "")),
-                        "pr_detail_sample": str(pr_res.get("detail") or "")[:180],
-                    },
-                    run_id="builder_dbg",
-                    location="backend/agent_tools.py:run_developer_flow:pr_api",
-                )
                 if not pr_url:
                     # If API failed (or returned no URL), keep UX unblocked with compare/new PR link.
                     fallback_pr_url = _github_compare_url_tools(head=branch_name, base="main")
@@ -784,13 +664,6 @@ def run_developer_flow(
                             {"ok": True, "reason": "compare_link_after_api_failure", "pr_url": pr_url, "head": branch_name, "base": "main"},
                             msg=f"PR fallback link (compare): {pr_url}",
                         )
-                        _tools_dbg(
-                            "H_BUILDER_PR_FALLBACK_AFTER_API",
-                            "PR fallback compare link after API failure",
-                            {"pr_api_ok": bool(pr_res.get('ok')), "pr_url_present_after_fallback": bool(pr_url)},
-                            run_id="builder_dbg",
-                            location="backend/agent_tools.py:run_developer_flow:pr_fallback_after_api",
-                        )
             else:
                 pr_url = _github_compare_url_tools(head=branch_name, base="main")
                 emit(
@@ -798,24 +671,10 @@ def run_developer_flow(
                     {"ok": True, "reason": "compare_link", "pr_url": pr_url, "head": branch_name, "base": "main"},
                     msg=f"PR link (compare): {pr_url}" if pr_url else "PR skipped (missing token) — could not resolve the GitHub Tools repo.",
                 )
-                _tools_dbg(
-                    "H_BUILDER_PR_FALLBACK_COMPARE",
-                    "PR fallback compare link (no token)",
-                    {"token_present": token_present, "pr_url_present": bool(pr_url)},
-                    run_id="builder_dbg",
-                    location="backend/agent_tools.py:run_developer_flow:pr_fallback",
-                )
         else:
             # Last-resort recovery: if branch already exists on origin, continue with PR creation flow.
             remote_branch = _git_remote_branch_exists_tools(branch_name)
             if remote_branch.get("ok"):
-                _tools_dbg(
-                    "H_BUILDER_GIT_PUSH_RECOVERY",
-                    "push recovery: branch already exists on origin",
-                    {"branch_name": branch_name, "recovered": True},
-                    run_id="builder_dbg",
-                    location="backend/agent_tools.py:run_developer_flow:push_recovery",
-                )
                 if _get_github_token():
                     pr_res = _github_create_tools_pr_via_api(
                         title=f"[Tool] {tool_name}",
@@ -838,21 +697,6 @@ def run_developer_flow(
                     )
             else:
                 emit("create_pr", {"ok": False, "reason": "push_failed"}, msg="PR skipped (push failed).")
-            _tools_dbg(
-                "H_BUILDER_PR_NOT_CREATED",
-                "push failed so no PR",
-                {"token_present": token_present, "branch_name": branch_name, "push_ok": bool(push_res.get("ok"))},
-                run_id="builder_dbg",
-                location="backend/agent_tools.py:run_developer_flow:pr_not_created",
-            )
-    else:
-        _tools_dbg(
-            "H_BUILDER_NO_TOOLS_REPO",
-            "skip git/push/pr because tools repo unavailable",
-            {"git_is_tools_repo": _git_is_tools_repo(), "branch_name": branch_name, "token_present": token_present},
-            run_id="builder_dbg",
-            location="backend/agent_tools.py:run_developer_flow:skip_tools_repo",
-        )
 
     final_status = "pr_created" if pr_url else "ready_for_pr"
     reg = db.register_tool_status(
@@ -863,13 +707,6 @@ def run_developer_flow(
         implemented_name=impl.get("func_name"),
     )
     emit("register_tool_status", {"status": final_status, "pr_url": pr_url, "db": reg}, msg=f"Zapisano status: {final_status}.")
-    _tools_dbg(
-        "H_BUILDER_FINAL_STATUS",
-        "register_tool_status result",
-        {"final_status": final_status, "pr_url_present": bool(pr_url), "implemented_name": impl.get("func_name")},
-        run_id="builder_dbg",
-        location="backend/agent_tools.py:run_developer_flow:final",
-    )
 
     emit(
         "notify_operational",
