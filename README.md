@@ -4,7 +4,7 @@
 > - **Current product** — active post-submission development: [public demo](https://geneguidelines.genequest.org) · [`production`](https://github.com/GeneQuestOrg/GeneGuidelines/tree/production)
 > - **Frozen Kaggle submission** — exact deadline snapshot from **18 May 2026**: [tag `kaggle-submission-2026-05-18`](https://github.com/GeneQuestOrg/GeneGuidelines/tree/kaggle-submission-2026-05-18) · [public demo](https://kaggle-geneguidelines.genequest.org) · [admin demo](https://kaggle-admin-geneguidelines.genequest.org)
 >
-> If you are judging deadline compliance, use the frozen snapshot. If you want to see where the project is going, use the current product.
+> If you are judging deadline compliance, use the frozen snapshot. If you want to see where the project is going, read [`VISION.md`](VISION.md) and try the current product.
 
 # GeneGuidelines
 
@@ -159,6 +159,7 @@ make ship       # the gate that must be green before a release tag
 
 | Document | What you get |
 |---|---|
+| [`VISION.md`](VISION.md) | Product vision: the mission, the four pillars, the epistemic-safety taxonomy, where this is heading |
 | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | System overview: flow engine, executors, MCP, SSE, audit corpus |
 | [`docs/ROADMAP.md`](docs/ROADMAP.md) | Engineering roadmap — what is clean, what is debt, three-phase plan |
 | [`docs/ENGINEERING_VISION.md`](docs/ENGINEERING_VISION.md) | Full technical vision (~3000 lines): patterns, GG → Research Canvas mapping, quality tooling, risks |
