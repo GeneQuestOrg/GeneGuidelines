@@ -26,6 +26,20 @@ jobs:
 
   backend:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: ggapp
+          POSTGRES_PASSWORD: testpass
+          POSTGRES_DB: geneguidelines_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -35,6 +49,7 @@ jobs:
       - run: pip install -r requirements-dev.txt
       - name: pytest
         env:
+          DB_URL: postgresql://ggapp:testpass@localhost:5432/geneguidelines_test
           # Tests import modules that initialise an OpenAI client at import
           # time; the dummy key satisfies the constructor without making any
           # network calls.
