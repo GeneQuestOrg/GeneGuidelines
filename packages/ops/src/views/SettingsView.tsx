@@ -26,7 +26,6 @@ function ModelProfileOverrideSection({
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
-  const availableProfiles = settings.modelProfiles.map((p) => p.id);
   const activeOverride = settings.modelProfileOverride;
   const envDefault = settings.envDefaultModelProfile;
 
