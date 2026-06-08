@@ -609,12 +609,12 @@ def list_all_doctors() -> list[dict[str, Any]]:
                 by_slug[key] = doc
 
         finder_index = _finder_docs_index()
+        catalog_slugs: set[str] = set(finder_index.keys())
+
         try:
             rows = list_diseases_catalog()
         except Exception:
             rows = []
-
-        catalog_slugs: set[str] = set()
         for row in rows:
             normalized = normalize_disease_slug(str(row.get("slug") or "").strip())
             if normalized:
