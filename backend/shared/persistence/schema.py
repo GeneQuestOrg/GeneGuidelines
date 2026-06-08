@@ -319,6 +319,7 @@ private_contexts = Table(
     Column("model_used", Text, nullable=False, server_default=""),
     Column("status", Text, nullable=False, server_default="pending"),
     Column("error", Text),
+    Column("uploaded_by_clerk_id", Text),
     CheckConstraint(
         "status IN ('pending','ready','failed')",
         name="private_context_status_enum",

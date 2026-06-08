@@ -5,11 +5,12 @@ const RUN_SNAPSHOT_PREFIX = "gg_run_snapshot_";
 
 export interface RunIndexEntry {
   execution_id: string;
-  pipeline: "guideline" | "doctor_finder" | "parent_pathway" | "legacy";
+  pipeline: string;
   label: string;
   flow_key?: string;
   ticket_id?: number;
   profile?: string;
+  disease_slug?: string;
   started_at: string;
   done?: boolean;
   error?: string | null;
@@ -87,6 +88,7 @@ function mergeRunRows(
       flow_key: existing?.flow_key,
       ticket_id: existing?.ticket_id,
       profile: existing?.profile,
+      disease_slug: row.disease_slug ?? existing?.disease_slug,
       started_at: row.started_at ?? existing?.started_at ?? "",
       done: row.done,
       error: row.error,

@@ -20,12 +20,20 @@ current_model_profile: ContextVar[str | None] = ContextVar("current_model_profil
 
 
 def resolve_active_profile() -> str:
-    """Return the model profile name active for this request, or the configured default."""
-    from ..config import DEFAULT_MODEL_PROFILE, MODEL_PROFILES
+    """Return the model profile for this request.
 
-    name = (current_model_profile.get() or "").strip().lower() or DEFAULT_MODEL_PROFILE
+    Priority:
+    1. Explicit per-request profile set via current_model_profile ContextVar.
+    2. Super-admin DB override (operator_kv table, 60 s TTL cache).
+    3. Env-backed DEFAULT_MODEL_PROFILE constant.
+    """
+    from ..config import MODEL_PROFILES
+    from ..operator_settings import get_effective_default_model_profile
+
+    server_default = get_effective_default_model_profile()
+    name = (current_model_profile.get() or "").strip().lower() or server_default
     if name not in MODEL_PROFILES:
-        name = DEFAULT_MODEL_PROFILE
+        name = server_default
     return name
 
 
@@ -94,6 +102,7 @@ _CONTEXT_OVERFLOW_MARKERS = (
     "context_length_exceeded",
     "context length is",
     "reduce the length of the messages",
+    "reduce the length of the input prompt",
     "string too long",  # some OpenAI-compatible providers phrase it this way
 )
 

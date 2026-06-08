@@ -158,6 +158,27 @@ def init_db():
         )
     """)
 
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS api_rate_limit_events (
+            id SERIAL PRIMARY KEY,
+            bucket_key TEXT NOT NULL,
+            event_ts DOUBLE PRECISION NOT NULL
+        )
+    """)
+    cur.execute("""
+        CREATE INDEX IF NOT EXISTS idx_api_rate_limit_bucket_ts
+        ON api_rate_limit_events (bucket_key, event_ts)
+    """)
+
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS operator_kv (
+            key TEXT PRIMARY KEY,
+            value TEXT NOT NULL,
+            updated_by_clerk_id TEXT,
+            updated_at TEXT NOT NULL
+        )
+    """)
+
     conn.commit()
     conn.close()
     _ensure_position_columns()
@@ -1935,17 +1956,19 @@ def get_tool_implementations():
 # --- Flow definitions ---
 
 def _ensure_position_columns():
-    """Add position_x, position_y to flow_definitions if missing (existing DBs)."""
     conn = get_connection()
     cur = conn.cursor()
-    for col in ("position_x", "position_y"):
-        try:
-            cur.execute(f"ALTER TABLE flow_definitions ADD COLUMN {col} REAL")
-            conn.commit()
-        except pg_errors.DuplicateColumn:
-            conn.rollback()
-        finally:
-            pass
+    try:
+        cur.execute("ALTER TABLE flow_definitions ADD COLUMN position_x REAL")
+        conn.commit()
+    except Exception:
+        conn.rollback()
+    try:
+        cur.execute("ALTER TABLE flow_definitions ADD COLUMN position_y REAL")
+        conn.commit()
+    except Exception:
+        conn.rollback()
+    cur.close()
     conn.close()
 
 
@@ -1953,21 +1976,17 @@ def _ensure_flow_execution_columns():
     """prompt_mode, model_name, output_schema_key — LLM Simple vs Agentic + model override (docs/03)."""
     conn = get_connection()
     cur = conn.cursor()
-    try:
-        cur.execute("ALTER TABLE flow_definitions ADD COLUMN prompt_mode TEXT NOT NULL DEFAULT 'agentic'")
-        conn.commit()
-    except pg_errors.DuplicateColumn:
-        conn.rollback()
-    try:
-        cur.execute("ALTER TABLE flow_definitions ADD COLUMN model_name TEXT")
-        conn.commit()
-    except pg_errors.DuplicateColumn:
-        conn.rollback()
-    try:
-        cur.execute("ALTER TABLE flow_definitions ADD COLUMN output_schema_key TEXT")
-        conn.commit()
-    except pg_errors.DuplicateColumn:
-        conn.rollback()
+    for col_sql in (
+        "ALTER TABLE flow_definitions ADD COLUMN prompt_mode TEXT NOT NULL DEFAULT 'agentic'",
+        "ALTER TABLE flow_definitions ADD COLUMN model_name TEXT",
+        "ALTER TABLE flow_definitions ADD COLUMN output_schema_key TEXT",
+    ):
+        try:
+            cur.execute(col_sql)
+            conn.commit()
+        except Exception:
+            conn.rollback()
+
     # One-time: operational op-1 = LLM Call (Simple) + ai_summary preset
     try:
         cur.execute(
@@ -1976,8 +1995,9 @@ def _ensure_flow_execution_columns():
                AND (output_schema_key IS NULL OR output_schema_key = '')"""
         )
         conn.commit()
-    except pg_errors.DuplicateColumn:
+    except Exception:
         conn.rollback()
+
     # Legacy seed: op-1 used to call set_ai_summary — swap to Simple (no tools).
     _op1_simple_prompt = (
         "Based on ticket title, description, and discussion (if present), generate a summary: "
@@ -1993,13 +2013,14 @@ def _ensure_flow_execution_columns():
             (_op1_simple_prompt,),
         )
         conn.commit()
-    except pg_errors.DuplicateColumn:
+    except Exception:
         conn.rollback()
+
+    cur.close()
     conn.close()
 
 
 def _ensure_output_schema_column():
-    """output_schema TEXT — JSON field definitions for LLM Simple."""
     conn = get_connection()
     cur = conn.cursor()
     try:
@@ -2007,25 +2028,29 @@ def _ensure_output_schema_column():
         conn.commit()
     except pg_errors.DuplicateColumn:
         conn.rollback()
-    conn.close()
+    except Exception:
+        conn.rollback()
+    finally:
+        cur.close()
+        conn.close()
 
 
 def _ensure_agentic_step_close_column():
-    """agentic_step_close INTEGER — second LLM after an agentic step: success/error/step_summary."""
     conn = get_connection()
     cur = conn.cursor()
     try:
-        cur.execute(
-            "ALTER TABLE flow_definitions ADD COLUMN agentic_step_close INTEGER NOT NULL DEFAULT 0"
-        )
+        cur.execute("ALTER TABLE flow_definitions ADD COLUMN agentic_step_close INTEGER NOT NULL DEFAULT 0")
         conn.commit()
     except pg_errors.DuplicateColumn:
         conn.rollback()
-    conn.close()
+    except Exception:
+        conn.rollback()
+    finally:
+        cur.close()
+        conn.close()
 
 
 def _ensure_python_source_column():
-    """python_source TEXT — Python source for the code node type (Code / Function node)."""
     conn = get_connection()
     cur = conn.cursor()
     try:
@@ -2033,11 +2058,14 @@ def _ensure_python_source_column():
         conn.commit()
     except pg_errors.DuplicateColumn:
         conn.rollback()
-    conn.close()
+    except Exception:
+        conn.rollback()
+    finally:
+        cur.close()
+        conn.close()
 
 
 def _ensure_step_name_column():
-    """step_name TEXT — dispatch key for doctor_finder_step executor nodes."""
     conn = get_connection()
     cur = conn.cursor()
     try:
@@ -2045,74 +2073,98 @@ def _ensure_step_name_column():
         conn.commit()
     except pg_errors.DuplicateColumn:
         conn.rollback()
-    conn.close()
+    except Exception:
+        conn.rollback()
+    finally:
+        cur.close()
+        conn.close()
 
 
 def _ensure_http_request_columns():
-    """http_url, http_method, http_headers, http_body — HTTP Request (REST) node."""
     conn = get_connection()
     cur = conn.cursor()
-    for col_sql in (
-        "ALTER TABLE flow_definitions ADD COLUMN http_url TEXT",
-        "ALTER TABLE flow_definitions ADD COLUMN http_method TEXT",
-        "ALTER TABLE flow_definitions ADD COLUMN http_headers TEXT",
-        "ALTER TABLE flow_definitions ADD COLUMN http_body TEXT",
-    ):
-        try:
-            cur.execute(col_sql)
-            conn.commit()
-        except pg_errors.DuplicateColumn:
-            conn.rollback()
+    try:
+        cur.execute("ALTER TABLE flow_definitions ADD COLUMN http_url TEXT")
+        conn.commit()
+    except Exception:
+        conn.rollback()
+    try:
+        cur.execute("ALTER TABLE flow_definitions ADD COLUMN http_method TEXT")
+        conn.commit()
+    except Exception:
+        conn.rollback()
+    try:
+        cur.execute("ALTER TABLE flow_definitions ADD COLUMN http_headers TEXT")
+        conn.commit()
+    except Exception:
+        conn.rollback()
+    try:
+        cur.execute("ALTER TABLE flow_definitions ADD COLUMN http_body TEXT")
+        conn.commit()
+    except Exception:
+        conn.rollback()
+    cur.close()
     conn.close()
 
 
 def _ensure_rag_assist_columns():
-    """rag_operation, rag_body_json — RAG (assistive retrieval) node."""
     conn = get_connection()
     cur = conn.cursor()
-    for col_sql in (
-        "ALTER TABLE flow_definitions ADD COLUMN rag_operation TEXT",
-        "ALTER TABLE flow_definitions ADD COLUMN rag_body_json TEXT",
-    ):
-        try:
-            cur.execute(col_sql)
-            conn.commit()
-        except pg_errors.DuplicateColumn:
-            conn.rollback()
+    try:
+        cur.execute("ALTER TABLE flow_definitions ADD COLUMN rag_operation TEXT")
+        conn.commit()
+    except Exception:
+        conn.rollback()
+    try:
+        cur.execute("ALTER TABLE flow_definitions ADD COLUMN rag_body_json TEXT")
+        conn.commit()
+    except Exception:
+        conn.rollback()
+    cur.close()
     conn.close()
 
 
 def _ensure_merge_columns():
-    """merge_strategy, merge_fields, merge_key_field — Merge node."""
     conn = get_connection()
     cur = conn.cursor()
-    for col_sql in (
-        "ALTER TABLE flow_definitions ADD COLUMN merge_strategy TEXT",
-        "ALTER TABLE flow_definitions ADD COLUMN merge_fields TEXT",
-        "ALTER TABLE flow_definitions ADD COLUMN merge_key_field TEXT",
-    ):
-        try:
-            cur.execute(col_sql)
-            conn.commit()
-        except pg_errors.DuplicateColumn:
-            conn.rollback()
+    try:
+        cur.execute("ALTER TABLE flow_definitions ADD COLUMN merge_strategy TEXT")
+        conn.commit()
+    except Exception:
+        conn.rollback()
+    try:
+        cur.execute("ALTER TABLE flow_definitions ADD COLUMN merge_fields TEXT")
+        conn.commit()
+    except Exception:
+        conn.rollback()
+    try:
+        cur.execute("ALTER TABLE flow_definitions ADD COLUMN merge_key_field TEXT")
+        conn.commit()
+    except Exception:
+        conn.rollback()
+    cur.close()
     conn.close()
 
 
 def _ensure_integration_columns():
-    """integration_* — integration node (chat/issue-tracker/identity/email)."""
     conn = get_connection()
     cur = conn.cursor()
-    for col_sql in (
-        "ALTER TABLE flow_definitions ADD COLUMN integration_operation TEXT",
-        "ALTER TABLE flow_definitions ADD COLUMN integration_params_json TEXT",
-        "ALTER TABLE flow_definitions ADD COLUMN integration_credentials_json TEXT",
-    ):
-        try:
-            cur.execute(col_sql)
-            conn.commit()
-        except pg_errors.DuplicateColumn:
-            conn.rollback()
+    try:
+        cur.execute("ALTER TABLE flow_definitions ADD COLUMN integration_operation TEXT")
+        conn.commit()
+    except Exception:
+        conn.rollback()
+    try:
+        cur.execute("ALTER TABLE flow_definitions ADD COLUMN integration_params_json TEXT")
+        conn.commit()
+    except Exception:
+        conn.rollback()
+    try:
+        cur.execute("ALTER TABLE flow_definitions ADD COLUMN integration_credentials_json TEXT")
+        conn.commit()
+    except Exception:
+        conn.rollback()
+    cur.close()
     conn.close()
 
 
@@ -2585,7 +2637,6 @@ def create_flow_edge(flow_key: str, source_node_id: str, target_node_id: str, la
 
 
 def _ensure_flow_edge_label_column():
-    """label TEXT on flow_edges for decision routing (true/false/unlabeled)."""
     conn = get_connection()
     cur = conn.cursor()
     try:
@@ -2593,7 +2644,11 @@ def _ensure_flow_edge_label_column():
         conn.commit()
     except pg_errors.DuplicateColumn:
         conn.rollback()
-    conn.close()
+    except Exception:
+        conn.rollback()
+    finally:
+        cur.close()
+        conn.close()
 
 
 def _ensure_evaluation_source_nodes_column() -> None:
@@ -2601,7 +2656,7 @@ def _ensure_evaluation_source_nodes_column() -> None:
     conn = get_connection()
     cur = conn.cursor()
     try:
-        cur.execute("ALTER TABLE flow_definitions ADD COLUMN evaluation_source_nodes_json TEXT")
+        cur.execute("ALTER TABLE flow_definitions ADD COLUMN IF NOT EXISTS evaluation_source_nodes_json TEXT")
         conn.commit()
     except pg_errors.DuplicateColumn:
         conn.rollback()
@@ -2652,7 +2707,6 @@ def _ensure_pubmed_eval_tail() -> None:
 
 
 def _ensure_guidelines_rag_column():
-    """guidelines_rag_anchor_pmids_json — per-node anchor PMID override for guidelines_rag."""
     conn = get_connection()
     cur = conn.cursor()
     try:
@@ -2660,7 +2714,11 @@ def _ensure_guidelines_rag_column():
         conn.commit()
     except pg_errors.DuplicateColumn:
         conn.rollback()
-    conn.close()
+    except Exception:
+        conn.rollback()
+    finally:
+        cur.close()
+        conn.close()
 
 
 def delete_flow_edge(flow_key: str, source_node_id: str, target_node_id: str) -> bool:

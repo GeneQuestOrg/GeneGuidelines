@@ -31,7 +31,7 @@ export function usePipelineModelSettings(): PipelineModelSettings {
           ? ["vllm"]
           : (s.modelProfiles.map((p) => p.id) as ModelProfile[]);
         setSettings({
-          defaultProfile: s.defaultModelProfile,
+          defaultProfile: s.defaultModelProfile as ModelProfile,
           profileOptions: options.length > 0 ? options : ALL_PROFILES,
           singleLlmMode: Boolean(s.singleLlmMode),
           singleLlmModel: s.singleLlmModel ?? null,

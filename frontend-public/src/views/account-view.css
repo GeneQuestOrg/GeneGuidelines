@@ -1,0 +1,415 @@
+.page--account {
+  max-width: 42rem;
+  margin: 0 auto;
+}
+
+.account__hero {
+  margin-bottom: 1.75rem;
+}
+
+.account__eyebrow {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-3);
+  margin: 0 0 0.5rem;
+}
+
+.account__signed-out {
+  padding: 1.75rem;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: linear-gradient(
+    145deg,
+    color-mix(in oklch, var(--accent) 8%, var(--bg-elev)) 0%,
+    var(--bg-elev) 55%
+  );
+}
+
+.account__signed-out-lead {
+  margin: 0 0 1.25rem;
+  color: var(--ink-2);
+  line-height: 1.55;
+  max-width: 48ch;
+}
+
+.account__benefits {
+  margin: 0 0 1.5rem;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.account__benefits li {
+  position: relative;
+  padding-left: 1.35rem;
+  color: var(--ink);
+  font-size: var(--fs-md);
+  line-height: 1.45;
+}
+
+.account__benefits li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.55em;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.account__profile {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem 1.25rem;
+  padding: 1.25rem 1.35rem;
+  margin-bottom: 1.25rem;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--bg-elev);
+}
+
+.account__avatar {
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--line);
+  flex-shrink: 0;
+}
+
+.account__avatar--initials {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--fs-lg);
+  font-weight: 600;
+  color: var(--accent);
+  background: color-mix(in oklch, var(--accent) 14%, var(--bg-soft));
+}
+
+.account__identity {
+  flex: 1 1 12rem;
+  min-width: 0;
+}
+
+.account__name {
+  margin: 0 0 0.2rem;
+  font-family: var(--font-serif);
+  font-size: var(--fs-xl);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.account__email {
+  margin: 0;
+  font-size: var(--fs-sm);
+  color: var(--ink-2);
+  word-break: break-all;
+}
+
+.account__manage {
+  flex-shrink: 0;
+}
+
+.account__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.85rem;
+  margin-bottom: 1.25rem;
+}
+
+@media (max-width: 520px) {
+  .account__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.account__card {
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--bg-elev);
+}
+
+.account__card-label {
+  margin: 0 0 0.35rem;
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ink-3);
+}
+
+.account__card-value {
+  margin: 0;
+  font-size: var(--fs-md);
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.account__badge {
+  display: inline-block;
+  margin-top: 0.15rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: var(--r-sm);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.account__badge--admin {
+  color: var(--bg-elev);
+  background: var(--accent);
+}
+
+.account__badge--user {
+  color: var(--ink-2);
+  background: var(--bg-soft);
+  border: 1px solid var(--line);
+}
+
+.account__quota-bar {
+  margin-top: 0.65rem;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--bg-soft);
+  overflow: hidden;
+}
+
+.account__quota-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--accent);
+  transition: width 0.35s ease;
+}
+
+.account__quota-fill--full {
+  width: 100%;
+}
+
+.account__quota-hint {
+  margin: 0.5rem 0 0;
+  font-size: var(--fs-sm);
+  color: var(--ink-2);
+  line-height: 1.45;
+}
+
+.account__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.75rem;
+}
+
+.account__section-title {
+  margin: 0 0 0.75rem;
+  font-family: var(--font-serif);
+  font-size: var(--fs-lg);
+  font-weight: 500;
+}
+
+.account__empty-runs {
+  margin: 0 0 1.5rem;
+  padding: 1rem 1.1rem;
+  border: 1px dashed var(--line);
+  border-radius: var(--r-md);
+  color: var(--ink-2);
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+}
+
+.account__alert {
+  margin: 0;
+  padding: 1rem 1.1rem;
+  border-radius: var(--r-md);
+  border: 1px solid color-mix(in oklch, var(--accent) 35%, var(--line));
+  background: color-mix(in oklch, var(--accent) 6%, var(--bg-elev));
+  color: var(--ink-2);
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+}
+
+.account__loading {
+  padding: 2.5rem 0;
+  text-align: center;
+  color: var(--ink-3);
+}
+
+/* Watched diseases section */
+.account__watches {
+  margin-bottom: 1.5rem;
+}
+
+.account__watches-lead {
+  margin: -0.35rem 0 1rem;
+  color: var(--ink-2);
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+  max-width: 52ch;
+}
+
+.account__watch-add {
+  margin-bottom: 1.25rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--bg-soft);
+}
+
+.account__watch-add-label {
+  display: block;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--ink-2);
+  margin-bottom: 0.5rem;
+}
+
+.account__watch-add-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: stretch;
+}
+
+.account__watch-select {
+  flex: 1 1 12rem;
+  min-width: 0;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--bg-elev);
+  color: var(--ink);
+  font-size: var(--fs-md);
+  font-family: inherit;
+}
+
+.account__watch-add .account__alert {
+  margin: 0.65rem 0 0;
+}
+
+.account__watch-add .account__quota-hint {
+  margin: 0.65rem 0 0;
+}
+
+.account__inline-link {
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  font-size: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.account__inline-link:hover {
+  color: color-mix(in oklch, var(--accent) 85%, var(--ink));
+}
+
+.account__watches-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.account__watch-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--bg-elev);
+}
+
+.account__watch-name {
+  flex: 1;
+  font-weight: 500;
+  font-size: var(--fs-md);
+}
+
+.account__watch-meta {
+  font-size: var(--fs-sm);
+  color: var(--ink-3);
+}
+
+.account__watch-pulse {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: account__pulse 1.5s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+@keyframes account__pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+/* Notifications section */
+.account__notif-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.account__notif-item {
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--bg-elev);
+}
+
+.account__notif-item--unread {
+  background: color-mix(in oklch, var(--accent) 5%, var(--bg-elev));
+  border-color: color-mix(in oklch, var(--accent) 25%, var(--line));
+}
+
+.account__notif-label {
+  font-weight: 500;
+  font-size: var(--fs-md);
+  margin: 0 0 0.2rem;
+}
+
+.account__notif-meta {
+  font-size: var(--fs-sm);
+  color: var(--ink-3);
+}
+
+.account__status-badge {
+  display: inline-block;
+  padding: 0.1rem 0.4rem;
+  border-radius: var(--r-sm);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.account__status-badge--completed {
+  background: color-mix(in oklch, oklch(72% 0.18 145) 15%, var(--bg-soft));
+  color: oklch(38% 0.18 145);
+}
+
+.account__status-badge--failed {
+  background: color-mix(in oklch, oklch(60% 0.22 29) 15%, var(--bg-soft));
+  color: oklch(38% 0.22 29);
+}
+
+.account__status-badge--running {
+  background: color-mix(in oklch, var(--accent) 12%, var(--bg-soft));
+  color: var(--accent);
+}

@@ -362,54 +362,29 @@ def _persist_trials(disease_slug: str, trials: list[_ExtractedTrial], min_releva
     return inserted
 
 
-def _log_run(execution_id: str, disease_slug: str, status: str, error: str | None = None) -> None:
+def _log_run(
+    execution_id: str,
+    disease_slug: str,
+    status: str,
+    error: str | None = None,
+    *,
+    owner_clerk_id: str | None = None,
+) -> None:
     try:
-        from ..database import get_connection
+        from ..guideline_run_store import upsert_pipeline_run_status
     except ImportError:
-        from database import get_connection  # type: ignore[no-redef]
+        from guideline_run_store import upsert_pipeline_run_status  # type: ignore[no-redef]
 
-    conn = get_connection()
-    cur = conn.cursor()
-    now = datetime.now(timezone.utc).isoformat()
-    try:
-        cur.execute(
-            "SELECT 1 FROM guideline_run_results WHERE execution_id = %s",
-            (execution_id,),
-        )
-        if cur.fetchone() is None:
-            cur.execute(
-                """
-                INSERT INTO guideline_run_results
-                  (execution_id, pipeline, flow_key, disease_slug, label,
-                   done, started_at, finished_at, error)
-                VALUES (%s, 'trials_finder', 'trials_finder',
-                        %s, %s, %s, %s, %s, %s)
-                """,
-                (
-                    execution_id,
-                    disease_slug,
-                    f"Trials — {disease_slug}",
-                    1 if status in ("ready", "failed") else 0,
-                    now,
-                    now if status in ("ready", "failed") else None,
-                    error,
-                ),
-            )
-        else:
-            cur.execute(
-                """UPDATE guideline_run_results
-                   SET done = %s, finished_at = %s, error = COALESCE(%s, error)
-                   WHERE execution_id = %s""",
-                (
-                    1 if status in ("ready", "failed") else 0,
-                    now if status in ("ready", "failed") else None,
-                    error,
-                    execution_id,
-                ),
-            )
-        conn.commit()
-    finally:
-        conn.close()
+    upsert_pipeline_run_status(
+        execution_id=execution_id,
+        pipeline="trials_finder",
+        flow_key="trials_finder",
+        disease_slug=disease_slug,
+        label=f"Trials — {disease_slug}",
+        done=status in ("ready", "failed"),
+        error=error,
+        owner_clerk_id=owner_clerk_id,
+    )
 
 
 async def find_trials_for_disease(
@@ -417,26 +392,27 @@ async def find_trials_for_disease(
     disease_name: str,
     *,
     execution_id: str | None = None,
+    owner_clerk_id: str | None = None,
 ) -> int:
     """Run the trials finder workflow. Returns the number of trials persisted."""
     exec_id = execution_id or f"trf-{uuid.uuid4().hex[:12]}"
-    _log_run(exec_id, disease_slug, "running")
+    _log_run(exec_id, disease_slug, "running", owner_clerk_id=owner_clerk_id)
 
     try:
         raw_studies = _fetch_clinicaltrials(disease_name)
     except Exception as exc:
         log.exception("ClinicalTrials.gov fetch failed for %s", disease_name)
-        _log_run(exec_id, disease_slug, "failed", error=f"ct.gov: {exc}")
+        _log_run(exec_id, disease_slug, "failed", error=f"ct.gov: {exc}", owner_clerk_id=owner_clerk_id)
         return 0
 
     if not raw_studies:
-        _log_run(exec_id, disease_slug, "ready")
+        _log_run(exec_id, disease_slug, "ready", owner_clerk_id=owner_clerk_id)
         return 0
 
     studies = [_flatten_study(s) for s in raw_studies]
     studies = [s for s in studies if s["nct"]]
     if not studies:
-        _log_run(exec_id, disease_slug, "ready")
+        _log_run(exec_id, disease_slug, "ready", owner_clerk_id=owner_clerk_id)
         return 0
 
     try:
@@ -445,7 +421,7 @@ async def find_trials_for_disease(
         log.exception("Gemma extraction failed for trials of %s", disease_name)
         safe_trials = _fallback_trials_from_studies(studies)
         inserted = _persist_trials(disease_slug, safe_trials)
-        _log_run(exec_id, disease_slug, "ready")
+        _log_run(exec_id, disease_slug, "ready", owner_clerk_id=owner_clerk_id)
         log.warning(
             "trials_finder: LLM unavailable, persisted %d trial(s) via CT.gov fallback",
             inserted,
@@ -459,7 +435,7 @@ async def find_trials_for_disease(
         used_fallback = True
     inserted = _persist_trials(disease_slug, safe_trials)
 
-    _log_run(exec_id, disease_slug, "ready")
+    _log_run(exec_id, disease_slug, "ready", owner_clerk_id=owner_clerk_id)
     log.info(
         "trials_finder: %d candidate(s), %d persisted (model=%s, fallback=%s)",
         len(safe_trials),

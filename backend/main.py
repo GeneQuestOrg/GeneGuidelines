@@ -21,6 +21,10 @@ async def lifespan(app: FastAPI):
     await loop.run_in_executor(None, init_db)
     await loop.run_in_executor(None, run_seed_if_empty)
 
+    from backend.clerk_auth import validate_clerk_security_config
+
+    validate_clerk_security_config()
+
     # Memory: best-effort schema init (do not fail startup)
     if MEMORY_POSTGRES_DSN:
         try:
@@ -116,13 +120,14 @@ app.include_router(flows.router, prefix="/api")
 
 from backend.content.api import router as content_disease_router  # noqa: E402
 from backend.disease_index.api import router as disease_index_router  # noqa: E402
-from backend.routers import content, doctor_finder, pipeline  # noqa: E402
+from backend.routers import account, content, doctor_finder, pipeline  # noqa: E402
 
 # The new content module owns GET /api/diseases and GET /api/diseases/{slug};
 # the legacy `content` router below still serves the other content endpoints
 # until they are migrated in Phase 2. Registration order matters — the new
 # router must come first so its routes win the match.
 app.include_router(content_disease_router, prefix="/api")
+app.include_router(account.router, prefix="/api")
 app.include_router(content.router, prefix="/api")
 app.include_router(disease_index_router, prefix="/api/disease-index", tags=["disease_index"])
 app.include_router(doctor_finder.router, prefix="/api/doctor-finder", tags=["doctor_finder"])

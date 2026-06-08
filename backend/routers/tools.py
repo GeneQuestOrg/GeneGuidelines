@@ -11,7 +11,7 @@ from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
-from ..auth import require_api_key_if_set
+from ..clerk_auth import require_admin
 from .. import database as db
 from ..tools.agent_tools import run_developer_flow
 from ..models import (
@@ -22,7 +22,7 @@ from ..models import (
     ToolImplementationResponse,
 )
 
-router = APIRouter(prefix="/tools", tags=["tools"], dependencies=[Depends(require_api_key_if_set)])
+router = APIRouter(prefix="/tools", tags=["tools"], dependencies=[Depends(require_admin)])
 
 
 def _tools_router_dbg(hypothesis_id: str, message: str, data: dict | None = None, *, run_id: str = "tools_router", location: str = "") -> None:
