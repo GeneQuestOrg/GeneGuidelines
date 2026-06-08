@@ -32,11 +32,11 @@ jobs:
         env:
           POSTGRES_USER: ggapp
           POSTGRES_PASSWORD: testpass
-          POSTGRES_DB: geneguidelines_test
+          POSTGRES_DB: geneguidelines
         ports:
           - 5432:5432
         options: >-
-          --health-cmd pg_isready
+          --health-cmd "pg_isready -U ggapp -d geneguidelines"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -49,12 +49,12 @@ jobs:
       - run: pip install -r requirements-dev.txt
       - name: pytest
         env:
-          DB_URL: postgresql://ggapp:testpass@localhost:5432/geneguidelines_test
           # Tests import modules that initialise an OpenAI client at import
           # time; the dummy key satisfies the constructor without making any
           # network calls.
           OPENAI_API_KEY: "sk-test-dummy"
           AGENT_NO_MCP: "1"
+          DB_URL: postgresql://ggapp:testpass@localhost:5432/geneguidelines
         run: |
           python3 -m pytest backend/tests backend/content/tests -q \
             --ignore=backend/tests/test_pubmed_flow_agentic.py \
