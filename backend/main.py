@@ -132,6 +132,7 @@ app.include_router(content.router, prefix="/api")
 app.include_router(disease_index_router, prefix="/api/disease-index", tags=["disease_index"])
 app.include_router(doctor_finder.router, prefix="/api/doctor-finder", tags=["doctor_finder"])
 app.include_router(pipeline.router, prefix="/api/pipeline", tags=["pipeline"])
+app.include_router(geo.router, prefix="/api")
 
 
 @app.get("/api-info")

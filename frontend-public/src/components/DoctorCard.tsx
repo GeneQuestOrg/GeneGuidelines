@@ -31,20 +31,28 @@ export function DoctorCard({ doctor, km, compact = false, onNav }: DoctorCardPro
         {doctor.institution} · {doctor.city}, {doctor.country}
       </div>
       {!compact ? (
-        <div className="doc__meta">
-          <span className={`tag tag--role tag--${doctor.pubmedRole}`}>{roleLabel}</span>
-          <span className="tag tag--score">
-            PubMed score <b>{doctor.score}</b>
-          </span>
-          {doctor.evidence.citesRecentGuidelines ? (
-            <span className="tag tag--ok">Cites current guidelines</span>
-          ) : (
-            <span className="tag tag--warn">No recent guideline citations</span>
-          )}
-          {isWorkflowDoctorSource(doctor.source) ? (
-            <span className="tag tag--source">Doctor Finder</span>
-          ) : null}
-        </div>
+        <>
+          <div className="doc__meta">
+            <span className={`tag tag--role tag--${doctor.pubmedRole}`}>{roleLabel}</span>
+            <span className="tag tag--score">
+              PubMed <b>{doctor.score}</b>
+              <span className="doc__score-bar">
+                <i style={{ width: `${doctor.score}%` }} />
+              </span>
+            </span>
+            {doctor.evidence.guidelineOrConsensusCoauthor ? (
+              <span className="tag tag--ok">Guideline author</span>
+            ) : doctor.evidence.citesRecentGuidelines ? (
+              <span className="tag tag--ok">Cites guidelines</span>
+            ) : null}
+            {doctor.evidence.activeLast2y ? (
+              <span className="tag tag--ok">Active</span>
+            ) : null}
+            {isWorkflowDoctorSource(doctor.source) ? (
+              <span className="tag tag--source">Doctor Finder</span>
+            ) : null}
+          </div>
+        </>
       ) : null}
     </a>
   );

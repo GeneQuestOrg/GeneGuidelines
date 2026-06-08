@@ -3,9 +3,9 @@ import type { PubmedRole } from "../types/doctor";
 export function pubmedRoleLabel(role: PubmedRole): string {
   switch (role) {
     case "research_leader":
-      return "Research leader";
+      return "Led research";
     case "research_participant":
-      return "Research participant";
+      return "Contributed";
     case "case_study_author":
       return "Case studies";
     default:
