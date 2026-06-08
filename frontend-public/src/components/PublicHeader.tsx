@@ -76,10 +76,41 @@ export function PublicHeader({
     onNav("/account");
   };
 
+  const mobileMenuActions = account != null ? (
+    <>
+      <button
+        type="button"
+        className="hdr-mobile-menu__btn"
+        onClick={() => onNav("/account")}
+      >
+        Account
+      </button>
+      <button
+        type="button"
+        className="hdr-mobile-menu__btn"
+        onClick={() => setAccount(null)}
+      >
+        Sign out
+      </button>
+    </>
+  ) : (
+    <button
+      type="button"
+      className="hdr-mobile-menu__btn hdr-mobile-menu__btn--primary"
+      onClick={() => setAuthOpen(true)}
+    >
+      Sign in
+    </button>
+  );
+
   return (
     <>
-      <AppHeader variant="public" navLinks={buildNavLinks(route)}>
-        <div className="hdr-actions" ref={menuRef}>
+      <AppHeader
+        variant="public"
+        navLinks={buildNavLinks(route)}
+        mobileMenuContent={mobileMenuActions}
+      >
+        <div className="hdr-actions hdr-actions--desktop" ref={menuRef}>
           <AdminAppLink />
           {account != null ? (
             <>
