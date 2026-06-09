@@ -43,6 +43,7 @@ Every recommendation carries an explicit epistemic level, so no one confuses con
 - [Architecture](#architecture)
 - [Quality](#quality)
 - [What's next](#whats-next)
+- [Get involved](#get-involved)
 - [Documentation](#documentation)
 
 ## Why we built this
@@ -163,6 +164,17 @@ The Kaggle submission ships the engine, the FD living guideline with PMID proven
 - **Subscriptions for families.** A parent attaches a private context and opts in to a notification when a new trial matches the extracted facts, when a proposal changes the recommendation for the documented mutation, or when a new specialist is added in their region. The schema is straightforward; the care goes into the policy work (cadence, opt-out, language, who owns the email channel).
 
 The order above is the order we ship them in; see [`docs/ROADMAP.md`](docs/ROADMAP.md) for the engineering plan.
+
+## Get involved
+
+GeneGuidelines is open source (CC-BY 4.0) and built by a non-profit — every kind of help moves it forward:
+
+- **Clinicians & specialists** — review a disease you know and rate the AI's proposed updates *useful / not useful*. A few minutes; your signal ranks suggestions for the next doctor who reads them. [Email us](mailto:kontakt@genequest.org) to get set up.
+- **Developers** — the engine, the flow kit, and both frontends are open. Issues and PRs welcome; start with [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) and [`CLAUDE.md`](CLAUDE.md).
+- **Researchers** — pilot the platform on a disease you work on, and help shape the engine for your own questions. [Reach out](mailto:kontakt@genequest.org).
+- **Foundations & sponsors** — help us widen disease coverage and the specialist directory. We're a registered non-profit (KRS 0001211461); [let's talk](mailto:kontakt@genequest.org).
+
+Disease not in the catalogue yet? Anyone can request one from the [live site](https://geneguidelines.genequest.org) — it fans out the AI workflows for that entity, with first results in about ten minutes.
 
 ## Documentation
 
