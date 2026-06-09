@@ -117,7 +117,7 @@ TypeScript strict mode everywhere with zero `@ts-ignore`; design tokens as CSS v
 
 ## 4. Patterns for new components
 
-Concrete templates to copy into new modules. The rule running through all of them: **Pydantic at the boundary, plain dataclasses in the domain, explicit SQL in repositories, thin routers.**
+Concrete templates to copy into new modules. The rule running through all of them: **Pydantic at the boundary, plain dataclasses in the domain, SQLAlchemy 2.0 Core queries behind repositories, thin routers.**
 
 ### 4.1 Domain vs DTO vs DB row
 
@@ -150,7 +150,9 @@ Boundary mappers (`*_from_request`, `*_to_response`, `*_from_row`) live at the e
 
 ### 4.2 Services with constructor DI; thin routers
 
-Business logic lives in stateless service objects with dependencies injected through the constructor; routers parse the request, call the service, format the response. Repositories are Protocols with a `Sqlite*` concrete impl and an `InMemory*` test impl. This keeps each layer independently testable and is the precondition for the engine split and the OSS extract. The `backend/content/` module (`api.py` → `service.py` → `repository.py`) is the in-repo reference for this shape — **new domains should follow it rather than adding flat files to the `backend/` root.**
+Business logic lives in stateless service objects with dependencies injected through the constructor; routers parse the request, call the service, format the response. Repositories are Protocols with a concrete impl and an `InMemory*` test impl. This keeps each layer independently testable and is the precondition for the engine split and the OSS extract. The `backend/content/` module (`api.py` → `service.py` → `repository.py`) is the in-repo reference for this shape — **new domains should follow it rather than adding flat files to the `backend/` root.**
+
+**Persistence standard:** repositories build on `backend/shared/persistence/` — **SQLAlchemy 2.0 Core** (the query builder / expression language, *not* the full ORM; the project deliberately avoids ORM session / identity-map / lazy-load magic, hence "Core, NOT ORM" in `requirements.txt`). Compose Core expressions behind repository methods; **do not hand-write raw SQL strings scattered across modules** — that re-implements param binding, row mapping, and SQLite↔Postgres dialect portability (`dialect.py`) that the Core layer already gives you. Reserve raw `text()` SQL for a genuine optimization that's hard to express in Core (a window function, a recursive CTE), and even then keep it behind one repository method, parameterized, tested, with a comment justifying it.
 
 ### 4.3 Value objects
 
