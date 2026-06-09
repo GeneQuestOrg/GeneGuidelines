@@ -86,8 +86,8 @@ export function AboutView({ onNav }: AboutViewProps) {
           GeneGuidelines exists to make that flow of knowledge usable at the point of care.
         </h1>
         <p className="about__hero-tldr">
-          A living clinical guideline per rare disease — every claim cited to a PMID, every change reviewed and
-          signed by a clinician. Open source. Free, no ads, no account required.
+          A living clinical guideline per rare disease — every claim cited to a PMID, every AI-proposed change
+          reviewed and rated by a clinician. Open source. Free, no ads, no account required.
         </p>
       </header>
 
@@ -259,7 +259,7 @@ export function AboutView({ onNav }: AboutViewProps) {
               </li>
               <li>
                 <b>Or point them at the guideline document.</b> Each disease has a <em>living guideline</em>{" "}
-                maintained by specialists, fully cited and audit-trailed. The same text an expert in Leiden or Rome
+                reviewed by specialists, fully cited and audit-trailed. The same text an expert in Leiden or Rome
                 would read.
               </li>
             </ol>
@@ -281,8 +281,9 @@ export function AboutView({ onNav }: AboutViewProps) {
               </li>
               <li>
                 <b>If you are a specialist in a given disease</b> — you can join as a reviewer. The AI Watcher
-                analyses new publications and proposes guideline updates on a rolling basis. A typical review takes
-                15–30 minutes; every decision is signed and auditable.
+                analyses new publications and proposes updates on a rolling basis; you rate each one{" "}
+                <em>useful / not useful</em> and can leave a note — a few minutes&apos; work. Your signal, weighted
+                by your verified experience, ranks the suggestion for the next clinician who reads it.
               </li>
             </ul>
           </section>
@@ -333,8 +334,8 @@ export function AboutView({ onNav }: AboutViewProps) {
             </p>
             <p>
               Two layers run side by side. <b>Official consensus</b> — where one exists (e.g. Boyce et al. 2019 for
-              FD/MAS) — is the ground truth. Above it, a <b>living layer</b> evolves with new publications,
-              proposing targeted updates that a specialist reviews before they go public.
+              FD/MAS) — is the ground truth. Alongside it, a <b>living layer</b> evolves with new publications,
+              proposing targeted updates that specialists rate, so the most useful ones rise to the top.
             </p>
             <ol className="about__pipeline">
               <li>
@@ -354,21 +355,24 @@ export function AboutView({ onNav }: AboutViewProps) {
               <li>
                 <span className="about__pipeline-num">03</span>
                 <div>
-                  <b>Pull request.</b> If a change is warranted, the AI proposes one — the way an open-source
-                  contributor proposes a code change. Diff against a specific paragraph, citations, rationale.
+                  <b>Proposal.</b> If a change is warranted, the AI proposes one — a diff against a specific
+                  paragraph, with citations, rationale, and an evidence-strength score.
                 </div>
               </li>
               <li>
                 <span className="about__pipeline-num">04</span>
                 <div>
-                  <b>Specialist review.</b> Approve, request changes, or reject. Every decision signed by name,
-                  dated, recorded in the audit trail.
+                  <b>Clinician signal.</b> Clinicians rate the proposal <em>useful / not useful</em> and can leave a
+                  note. It is a signal for the next clinician who reads it — &quot;two of three found this
+                  useful&quot; — weighted by the reviewer&apos;s verified experience.
                 </div>
               </li>
               <li>
                 <span className="about__pipeline-num">05</span>
                 <div>
-                  <b>Publication.</b> Git-style versioning. Any past state of any paragraph is recoverable.
+                  <b>Ranking &amp; surfacing.</b> Suggestions rise or fall by that weighted signal. A low-risk,
+                  well-supported one can surface to families as &quot;worth discussing with your doctor&quot;;
+                  higher-stakes items stay in the expert view.
                 </div>
               </li>
             </ol>
@@ -403,9 +407,9 @@ export function AboutView({ onNav }: AboutViewProps) {
               <div className="about__not">
                 <h3>Not a retrieval chatbot</h3>
                 <p>
-                  Every recommendation is anchored to a PMID. Every change is a reviewed, signed pull request. The
-                  synthesis model works against an indexed corpus assembled paragraph by paragraph — never against
-                  free-form prompts over a pile of papers.
+                  Every recommendation is anchored to a PMID. Every AI-proposed change is reviewed and rated by
+                  clinicians before it carries any weight. The synthesis model works against an indexed corpus
+                  assembled paragraph by paragraph — never against free-form prompts over a pile of papers.
                 </p>
               </div>
               <div className="about__not">

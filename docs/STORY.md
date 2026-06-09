@@ -21,7 +21,7 @@ The diagnostic gap in rare disease is not a competence problem. It is a structur
 GeneGuidelines is built around three convictions that follow directly from this story:
 
 1. **Every recommendation needs a citation.** Every paragraph in every disease guideline is anchored to a specific PubMed ID, so a clinician (or a parent) can read the source themselves.
-2. **The guideline must keep moving.** A static PDF goes stale in months. Our living guideline is updated by an AI Watcher and reviewed by named specialists — every change signed and dated.
+2. **The guideline must keep moving.** A static PDF goes stale in months. Our living guideline is updated by an AI Watcher and reviewed by named specialists, who rate each proposed change *useful / not useful* — a signal that ranks it for the next clinician who reads it.
 3. **The specialist directory matters as much as the document.** When you do need a doctor who has actually treated this disease, you should be able to find them in seconds, ranked by published evidence — not by which centre happened to be on your insurance list.
 
 ## Acknowledgements

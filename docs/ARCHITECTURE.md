@@ -5,7 +5,7 @@ A controlled AI workflow engine that produces and maintains **living clinical gu
 Two consumers:
 
 - **Public site** (`frontend-public/`) — patients, families, primary-care clinicians: pathway diagrams, AI guideline drafts with PMID citations, specialist directory.
-- **Admin site** (`frontend-admin/`) — operations: visual workflow editor, pipeline runs, tool governance, PR review of AI drafts.
+- **Admin site** (`frontend-admin/`) — operations: visual workflow editor, pipeline runs, tool governance, operator review of AI drafts.
 
 One backend (`backend/`, FastAPI + Pydantic AI + MCP + SQLite).
 
@@ -18,7 +18,7 @@ between blocks: engine controls deterministically (graph edges, decision nodes)
 inside agentic blocks: AI is free (tool calls, iteration, reasoning) → must return structured output
 ```
 
-This gives clinicians and reviewers an **audit trail per block** (input, output, timestamp, branch) and a **gate at every approval step**, while still allowing the AI to do the messy work of reading evidence.
+This gives an **audit trail per block** (input, output, timestamp, branch) and a **deterministic gate wherever a human decision is required**, while still allowing the AI to do the messy work of reading evidence.
 
 ## System diagram
 
@@ -104,7 +104,7 @@ Configuration lives in env vars (`DOCTOR_FINDER_*`); see [`CLAUDE.md`](../CLAUDE
 
 ## Parent-pathway pipeline
 
-Generates a clinical pathway diagram (rendered as a Boyce-style flowchart on the public site) plus a doctor-facing AI guideline draft with PMID citations. Goes through evidence tiering, evaluation checks, and a human PR review (admin) before publication.
+Generates a clinical pathway diagram (rendered as a Boyce-style flowchart on the public site) plus a doctor-facing AI guideline draft with PMID citations. Goes through evidence tiering, evaluation checks, and an operator review gate (admin) before anything is published. The clinician-facing product loop is lighter — a *useful / not useful* signal on each AI suggestion, feeding a weighted ranking rather than a publishing sign-off (see [`../VISION.md`](../VISION.md)).
 
 ## Diseases in scope
 
@@ -152,13 +152,13 @@ Existing OSS workflow platforms (n8n, Dify) have visual editors and execution en
 
 The engine and the visual editor are designed to be split into separate OSS libraries (`flow-engine` Python, `flow-kit` TypeScript) once the application has stabilised post-launch.
 
-## Audit corpus — every reviewer decision is also training data
+## Audit corpus — a byproduct of the review loop
 
-A consequence of how runs are recorded — typed nodes, structured outputs per step, PMID-anchored citations, human approve/reject/annotate decisions with named reviewers — is that every guideline pull request produces a clean trace of clinical reasoning: the evidence presented, the AI synthesis, the expert correction, the rationale. We call this the **audit corpus**.
+A consequence of how runs are recorded — typed nodes, structured outputs per step, PMID-anchored citations, and each clinician's *useful / not useful* signal (plus optional note) attributed to a named reviewer — is that every review produces a clean trace of clinical reasoning: the evidence presented, the AI synthesis, the expert's judgement, the rationale. We call this the **audit corpus**.
 
-Our long-term thesis is that this corpus is what is missing for AI to graduate from "summarises the literature" to "helps a clinician make the right call for *this* child with *this* mutation". We intend to release the audit corpus on terms that let frontier-model labs and open research consortia use it for training and alignment, with the contributing reviewers credited. The plumbing for this is built into the system from day one — provenance per claim, named reviewer per decision, no anonymous mass-aggregation — so the corpus can be made available without retroactive data hygiene work.
+Our long-term thesis is that this kind of corpus is what is missing for AI to graduate from "summarises the literature" to "helps a clinician make the right call for *this* child with *this* mutation". The plumbing is built in from day one — provenance per claim, named reviewer per signal, no anonymous mass-aggregation — so it could later be released for training and alignment, with contributors credited, without retroactive data-hygiene work.
 
-This is why the workflow + governance + provenance layer is the product, and not yet another retrieval chatbot: the reasoning we capture here is the asset.
+This is why provenance and structured review are first-class here, not bolted on, and why this is not just another retrieval chatbot. But the corpus stays a **byproduct of the mission** — helping families — never the goal; its fuller potential belongs to the foundation's separate **Research Canvas** effort, not to GeneGuidelines V1.
 
 ## Roadmap
 
@@ -168,5 +168,5 @@ This is why the workflow + governance + provenance layer is the product, and not
 | Pipelines | PubMed + ClinicalTrials + parent pathway end-to-end | Shipping |
 | Disease expansion | MAS + Noonan full content, fourth disease | In progress |
 | OSS split | `flow-engine` and `flow-kit` libraries with clean interfaces | Planned post-launch |
-| Audit corpus release | Public dataset of PR reviews + reasoning traces, reviewer-credited | Planned, schema-ready from day one |
-| Per-lab fine-tuning | LoRA adapters trained on accumulated audit corpus | Planned |
+| Audit corpus release | Public dataset of review signals + reasoning traces, reviewer-credited (shared with Research Canvas) | Planned, schema-ready from day one |
+| Per-lab fine-tuning | LoRA adapters trained on the accumulated corpus (primarily a Research Canvas direction) | Planned |
