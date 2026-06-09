@@ -54,8 +54,9 @@ care**, and **keep it alive as it changes.**
 3. **Cyclic refresh: extensions guidelines haven't captured yet.** The AI tracks
    new and overlooked older papers and surfaces them as a **"thing to
    consider"** — with rationale and citations, never as hard guidance. A
-   clinician approves, edits, or rejects; the decision is signed and auditable.
-   This serves three groups: parents and family doctors get a "worth discussing"
+   clinician rates each one *useful / not useful* (with an optional note) — a
+   lightweight signal that feeds a weighted ranking, not a sign-off on the
+   official guideline. This serves three groups: parents and family doctors get a "worth discussing"
    signal; specialists and consortia get a ready, in-depth analysis to pull from
    — so the tool **accelerates the next official guideline.**
 4. **Parent contribution — and the exchange it starts.** Parents describe their
@@ -92,7 +93,8 @@ verdict.
 
 The AI proposes; the clinician decides; every recommendation is traceable to a
 published source. That is the difference between a tool ("AI summarizes the
-literature") and an institution ("a named clinician owns each decision").
+literature") and an institution (every claim traceable to a source, every
+clinician signal attributable to a name).
 
 We are deliberately incremental. **V1 is a light signal:** a reviewing clinician
 marks a suggestion useful or not (with optional comment), which feeds a weighted

@@ -180,6 +180,7 @@ Disease not in the catalogue yet? Anyone can request one from the [live site](ht
 
 | Document | What you get |
 |---|---|
+| [`VISION.md`](VISION.md) | Where the product is heading and why (condensed public vision) |
 | [`docs/STORY.md`](docs/STORY.md) | The family story behind the project |
 | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | System overview: flow engine, executors, MCP, SSE, audit corpus |
 | [`docs/ROADMAP.md`](docs/ROADMAP.md) | Engineering roadmap — what is clean, what is debt, three-phase plan |
