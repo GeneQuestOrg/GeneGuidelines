@@ -162,6 +162,7 @@ export function ResearchRunView({
     }
     let cancelled = false;
     let inFlight = false;
+    let intervalId: ReturnType<typeof window.setInterval> | null = null;
 
     const poll = async () => {
       if (inFlight) return;
@@ -173,6 +174,10 @@ export function ResearchRunView({
           setPollError(null);
           if (!payload.done && payload.current_stage) {
             hydrateTraceFromRun(payload);
+          }
+          if (payload.done && intervalId != null) {
+            window.clearInterval(intervalId);
+            intervalId = null;
           }
         }
       } catch (e) {
@@ -196,10 +201,13 @@ export function ResearchRunView({
     };
 
     void poll();
-    const id = window.setInterval(() => void poll(), POLL_MS);
+    intervalId = window.setInterval(() => void poll(), POLL_MS);
     return () => {
       cancelled = true;
-      window.clearInterval(id);
+      if (intervalId != null) {
+        window.clearInterval(intervalId);
+        intervalId = null;
+      }
     };
   }, [executionId, hydrateTraceFromRun, liveByDisease]);
 
@@ -225,14 +233,12 @@ export function ResearchRunView({
       appendRawLines([event.data]);
     };
     es.onerror = () => {
-      if (!receivedTrace) {
-        appendRawLines([
-          JSON.stringify({
-            kind: "sys",
-            text: "Live stream interrupted — polling still runs.",
-          }),
-        ]);
-      }
+      appendRawLines([
+        JSON.stringify({
+          kind: "sys",
+          text: "Live stream interrupted — polling still runs.",
+        }),
+      ]);
       es.close();
     };
     return () => {

@@ -136,6 +136,7 @@ export function useResearchPartialResults(
       cancelled = true;
       pollCountsRef.current = null;
       window.clearInterval(id);
+      setCountsReady(false);
     };
   }, [slug, active, pollIntervalMs]);
 
