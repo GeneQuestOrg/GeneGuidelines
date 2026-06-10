@@ -162,7 +162,7 @@ export function ResearchRunView({
     }
     let cancelled = false;
     let inFlight = false;
-    let intervalId: ReturnType<typeof window.setInterval> | null = null;
+    let intervalId: number | null = null;
 
     const poll = async () => {
       if (inFlight) return;
@@ -224,12 +224,10 @@ export function ResearchRunView({
     );
     const url = base ? `${base}${path}` : path;
     const es = new EventSource(url);
-    let receivedTrace = false;
     es.onmessage = (event) => {
       if (isTraceTransportError(event.data)) {
         return;
       }
-      receivedTrace = true;
       appendRawLines([event.data]);
     };
     es.onerror = () => {
