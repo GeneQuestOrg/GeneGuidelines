@@ -19,6 +19,7 @@ from ..content_db import (
     normalize_pr_id,
     publish_parent_pathway,
     review_content_pr,
+    update_disease_catalog_from_bootstrap,
     update_disease_guideline_prompt_profile,
 )
 from ..content_models import ParentPathwayResponse
@@ -557,7 +558,26 @@ class BootstrapDiseaseBody(BaseModel):
     inheritance: str = Field(default="", max_length=80)
     summary: str = Field(default="", max_length=2000)
     prevalence_text: str = Field(default="Rare disease", max_length=200)
+    types: list[str] = Field(default_factory=list, max_length=12)
     profile: str = Field(default=DEFAULT_MODEL_PROFILE)
+
+    @field_validator("types")
+    @classmethod
+    def _strip_types(cls, values: list[str]) -> list[str]:
+        out: list[str] = []
+        seen: set[str] = set()
+        for raw in values:
+            label = str(raw).strip()
+            if not label:
+                continue
+            key = label.casefold()
+            if key in seen:
+                continue
+            seen.add(key)
+            out.append(label[:80])
+            if len(out) >= 12:
+                break
+        return out
 
 
 @router.post("/bootstrap-disease")
@@ -611,6 +631,21 @@ async def bootstrap_disease(body: BootstrapDiseaseBody, request: Request):
             conn.close()
 
         await loop.run_in_executor(None, _insert_disease)
+
+    await loop.run_in_executor(
+        None,
+        lambda: update_disease_catalog_from_bootstrap(
+            slug,
+            name=body.name,
+            name_short=(body.name_short or body.name[:24]),
+            omim=body.omim,
+            gene=body.gene,
+            inheritance=body.inheritance,
+            summary=body.summary,
+            prevalence_text=body.prevalence_text,
+            types=body.types,
+        ),
+    )
 
     from ..services.disease_bootstrap import bootstrap_disease_research
 

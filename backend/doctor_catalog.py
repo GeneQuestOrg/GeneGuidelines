@@ -1,6 +1,7 @@
 """Public doctor directory — curated seed merged with latest doctor_finder workflow results."""
 from __future__ import annotations
 
+import html
 import json
 import re
 import threading
@@ -70,6 +71,13 @@ def _name_tokens(s: str) -> set[str]:
     return set(_TOKEN_RE.findall((s or "").lower()))
 
 
+def _decode_stored_text(text: str) -> str:
+    """Fix legacy doctor_finder rows that stored PubMed numeric entities literally."""
+    if not text or "&" not in text:
+        return text
+    return html.unescape(text)
+
+
 def _entry_to_public_doctor(
     entry: dict[str, Any],
     *,
@@ -83,10 +91,13 @@ def _entry_to_public_doctor(
     evidence_summary = entry.get("evidence_summary") or {}
     if not isinstance(evidence_summary, dict):
         evidence_summary = {}
-    display_name = str(entry.get("display_name") or "Unknown")
+    display_name = _decode_stored_text(str(entry.get("display_name") or "Unknown"))
     author_key = entry.get("author_key")
     slug = slugify_doctor_name(display_name, str(author_key) if author_key else None)
-    affiliation = entry.get("affiliation")
+    affiliation_raw = entry.get("affiliation")
+    affiliation = (
+        _decode_stored_text(str(affiliation_raw)) if affiliation_raw is not None else None
+    )
     explicit_city = str(entry.get("city") or "").strip()
     country_raw = str(entry.get("country") or "").strip().upper()
     country_iso = country_raw[:2] if len(country_raw) >= 2 and country_raw[:2].isalpha() else ""
@@ -105,9 +116,9 @@ def _entry_to_public_doctor(
     publications = [
         {
             "pmid": str(p.get("pmid") or ""),
-            "title": str(p.get("title") or ""),
+            "title": _decode_stored_text(str(p.get("title") or "")),
             "year": p.get("year"),
-            "journal": str(p.get("article_type") or ""),
+            "journal": _decode_stored_text(str(p.get("article_type") or "")),
             "position": "author",
         }
         for p in key_papers
@@ -478,7 +489,9 @@ def _build_finder_docs_index() -> dict[str, list[dict[str, Any]] | None]:
     for execution_id, run in runs:
         if not run.get("done") or run.get("error"):
             continue
-        run_slug = _disease_slug_for_name(str(run.get("disease_name") or ""))
+        run_slug = str(run.get("catalog_slug") or "").strip().lower()
+        if not run_slug:
+            run_slug = _disease_slug_for_name(str(run.get("disease_name") or "")) or ""
         if not run_slug:
             continue
         report = run.get("doctor_report")
