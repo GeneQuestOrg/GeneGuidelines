@@ -36,6 +36,7 @@ from pydantic_ai.messages import (
     BuiltinToolReturnPart,
     TextPart,
 )
+from .token_usage import ledger_for_store, record_from_pydantic_usage
 
 # pydantic_ai defaults request_limit=50; MCP-heavy flows (e.g. patient chart) exceed it quickly.
 _AGENT_USAGE_LIMITS = UsageLimits(request_limit=AGENT_PYDANTIC_AI_REQUEST_LIMIT)
@@ -50,8 +51,6 @@ def _record_agentic_token_usage(
     duration_ms: int | None,
     ok: bool,
 ) -> None:
-    from .token_usage import ledger_for_store, record_from_pydantic_usage
-
     execution_id = str(store.get("execution_id") or "").strip()
     record_from_pydantic_usage(
         usage,
