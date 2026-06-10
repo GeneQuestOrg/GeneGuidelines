@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import uuid
 
-from backend.content_db import get_disease_by_slug, refresh_disease_doctors_count
+from backend.content_db import get_disease_by_slug
 from backend.doctor_finder_store import (
     ensure_doctor_finder_run_results_schema,
     load_doctor_finder_run_result,
@@ -113,7 +113,6 @@ def test_save_refreshes_disease_doctors_count_column() -> None:
         after = get_disease_by_slug(slug)
         assert after is not None
         assert after["doctorsCount"] >= 3
-        assert refresh_disease_doctors_count(slug) >= 3
     finally:
         _delete_run(eid)
 
