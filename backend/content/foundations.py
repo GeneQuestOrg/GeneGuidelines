@@ -11,7 +11,8 @@ import json
 from dataclasses import dataclass, field
 from typing import Iterable, Mapping, Protocol
 
-from sqlalchemy import select
+from sqlalchemy import func, select
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.engine import Engine
 
 from ..shared.persistence.base_repo import BaseSqlalchemyRepo
@@ -117,6 +118,52 @@ class SqlaFoundationRepo(BaseSqlalchemyRepo):
             foundation_from_row(dict(r), diseases=groups.get(int(r["id"]), ()))
             for r in rows
         ]
+
+    def upsert_and_link(
+        self,
+        disease_slug: str,
+        name: str,
+        scope: str,
+        url: str,
+        city: str | None,
+        country: str | None,
+        services_json: str,
+    ) -> int:
+        """Find or create a Foundation by name (case-insensitive), link to disease.
+
+        Returns the foundation id. The disease_foundations link uses
+        ON CONFLICT DO NOTHING, so repeated calls are idempotent.
+        """
+        with self._conn() as conn:
+            row = conn.execute(
+                select(foundations_table.c.id).where(
+                    func.lower(foundations_table.c.name) == func.lower(name)
+                )
+            ).first()
+
+            if row is not None:
+                foundation_id = int(row[0])
+            else:
+                foundation_id = conn.execute(
+                    pg_insert(foundations_table)
+                    .values(
+                        name=name,
+                        scope=scope,
+                        url=url,
+                        city=city,
+                        country=country,
+                        services_json=services_json,
+                    )
+                    .returning(foundations_table.c.id)
+                ).scalar_one()
+
+            conn.execute(
+                pg_insert(disease_foundations)
+                .values(disease_slug=disease_slug, foundation_id=foundation_id)
+                .on_conflict_do_nothing()
+            )
+
+        return foundation_id
 
 
 class InMemoryFoundationRepo:

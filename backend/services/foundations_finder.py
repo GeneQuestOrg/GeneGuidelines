@@ -162,45 +162,27 @@ def _fallback_foundations(
 def _persist_foundations(disease_slug: str, foundations: list[_Foundation]) -> int:
     """Insert distinct foundations by name (case-insensitive), link to disease."""
     import json as _json
-    try:
-        from ..database import get_connection
-    except ImportError:
-        from database import get_connection  # type: ignore[no-redef]
 
-    inserted = 0
-    conn = get_connection()
-    cur = conn.cursor()
     try:
-        for f in foundations:
-            if f.confidence < 0.6 or not f.name.strip():
-                continue
-            cur.execute("SELECT id FROM foundations WHERE LOWER(name) = LOWER(%s)", (f.name.strip(),))
-            row = cur.fetchone()
-            if row is not None:
-                found_id = row["id"]
-            else:
-                cur.execute(
-                    """INSERT INTO foundations (name, scope, url, city, country, services_json)
-                       VALUES (%s, %s, %s, %s, %s, %s) RETURNING id""",
-                    (
-                        f.name.strip(),
-                        f.scope.strip().lower() or "global",
-                        f.url.strip(),
-                        f.city,
-                        f.country,
-                        _json.dumps(f.services[:6]),
-                    ),
-                )
-                found_id = cur.fetchone()["id"]
-            cur.execute(
-                """INSERT INTO disease_foundations (disease_slug, foundation_id)
-                   VALUES (%s, %s) ON CONFLICT DO NOTHING""",
-                (disease_slug, found_id),
-            )
-            inserted += 1
-        conn.commit()
-    finally:
-        conn.close()
+        from ..content.foundations import SqlaFoundationRepo
+    except ImportError:
+        from content.foundations import SqlaFoundationRepo  # type: ignore[no-redef]
+
+    repo = SqlaFoundationRepo()
+    inserted = 0
+    for f in foundations:
+        if f.confidence < 0.6 or not f.name.strip():
+            continue
+        repo.upsert_and_link(
+            disease_slug=disease_slug,
+            name=f.name.strip(),
+            scope=f.scope.strip().lower() or "global",
+            url=f.url.strip(),
+            city=f.city,
+            country=f.country,
+            services_json=_json.dumps(f.services[:6]),
+        )
+        inserted += 1
     return inserted
 
 
