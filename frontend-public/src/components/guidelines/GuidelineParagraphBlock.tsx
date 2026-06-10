@@ -4,6 +4,7 @@ import {
   isParagraphVisibleInReader,
   type GuidelineReaderOptions,
 } from "../../utils/guidelineReader";
+import { sanitizeGuidelineHtml } from "../../utils/sanitizeHtml";
 
 export interface GuidelineParagraphBlockProps {
   para: GuidelineParagraph;
@@ -14,6 +15,10 @@ export interface GuidelineParagraphBlockProps {
   inPrTarget: boolean;
   onFocusPara: (paraId: string) => void;
   onCitationClick: (pmid: string) => void;
+}
+
+function looksLikeHtml(value: string): boolean {
+  return /<\/?[a-z][\s\S]*>/i.test(value);
 }
 
 function provenanceLabel(para: GuidelineParagraph): string {
@@ -76,8 +81,17 @@ export function GuidelineParagraphBlock({
         </span>
       )}
       <div className="gl__para-body">
+        {looksLikeHtml(para.text) ? (
+          <div
+            className="gl__para-html"
+            dangerouslySetInnerHTML={{
+              __html: sanitizeGuidelineHtml(para.text),
+            }}
+          />
+        ) : (
+          <p>{para.text}</p>
+        )}
         <p>
-          {para.text}{" "}
           {(para.citations ?? []).map((pmid) => {
             const num = citationDisplayIndex(orderedPmids, pmid);
             return (
