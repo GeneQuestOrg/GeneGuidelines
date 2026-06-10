@@ -637,7 +637,7 @@ async def bootstrap_disease(body: BootstrapDiseaseBody, request: Request):
         lambda: update_disease_catalog_from_bootstrap(
             slug,
             name=body.name,
-            name_short=(body.name_short or body.name[:24]),
+            name_short=body.name_short,
             omim=body.omim,
             gene=body.gene,
             inheritance=body.inheritance,
