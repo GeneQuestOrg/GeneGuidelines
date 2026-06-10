@@ -95,6 +95,18 @@ def save_doctor_finder_run_result(
     except ImportError:
         from doctor_catalog import clear_finder_docs_index
     clear_finder_docs_index()
+    if slug_norm and doctor_report and err_text is None:
+        try:
+            from .content_db import refresh_disease_doctors_count
+        except ImportError:
+            from content_db import refresh_disease_doctors_count
+        try:
+            refresh_disease_doctors_count(slug_norm)
+        except Exception:
+            log.exception(
+                "doctor_finder_store: failed to refresh doctors_count for %s",
+                slug_norm,
+            )
 
 
 def load_doctor_finder_run_result(execution_id: str) -> dict[str, Any] | None:
