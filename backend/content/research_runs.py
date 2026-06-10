@@ -25,9 +25,11 @@ import psycopg
 try:
     from ..database import get_connection
     from ..db import table_exists
+    from .research_run_progress import resolve_run_progress
 except ImportError:
     from database import get_connection  # type: ignore[no-redef]
     from db import table_exists  # type: ignore[no-redef]
+    from research_run_progress import resolve_run_progress  # type: ignore[no-redef]
 
 # Fast finders should finish within a few minutes; rows left ``done=0`` longer
 # are almost always orphaned tasks (crash, reload) rather than live work.
@@ -104,18 +106,35 @@ def _reap_stale_finder_runs(conn: psycopg.Connection, *, now: datetime | None = 
 
 
 def _rows_from_guideline_store(
-    conn: psycopg.Connection, limit: int
+    conn: psycopg.Connection,
+    limit: int,
+    *,
+    owner_clerk_id: str | None = None,
 ) -> list[ActiveResearchRun]:
-    rows = conn.execute(
-        """
-        SELECT execution_id, disease_slug, flow_key, label, started_at
-        FROM guideline_run_results
-        WHERE done = 0 AND finished_at IS NULL
-        ORDER BY COALESCE(started_at, '') DESC
-        LIMIT %s
-        """,
-        (limit,),
-    ).fetchall()
+    if owner_clerk_id:
+        rows = conn.execute(
+            """
+            SELECT execution_id, disease_slug, flow_key, pipeline, label, started_at
+            FROM guideline_run_results
+            WHERE done = 0 AND finished_at IS NULL AND owner_clerk_id = %s
+              AND COALESCE(current_stage, '') <> 'queued'
+            ORDER BY COALESCE(started_at, '') DESC
+            LIMIT %s
+            """,
+            (owner_clerk_id, limit),
+        ).fetchall()
+    else:
+        rows = conn.execute(
+            """
+            SELECT execution_id, disease_slug, flow_key, pipeline, label, started_at
+            FROM guideline_run_results
+            WHERE done = 0 AND finished_at IS NULL
+              AND COALESCE(current_stage, '') <> 'queued'
+            ORDER BY COALESCE(started_at, '') DESC
+            LIMIT %s
+            """,
+            (limit,),
+        ).fetchall()
     out: list[ActiveResearchRun] = []
     for r in rows:
         run_id = str(r["execution_id"])
@@ -208,6 +227,7 @@ def list_active_runs(
     limit: int = 3,
     *,
     conn: psycopg.Connection | None = None,
+    owner_clerk_id: str | None = None,
 ) -> list[ActiveResearchRun]:
     """Return the most recent in-flight runs, newest first, capped at ``limit``."""
     if limit <= 0:
@@ -217,8 +237,10 @@ def list_active_runs(
         conn = get_connection()
     try:
         _reap_stale_finder_runs(conn)
-        guideline = _rows_from_guideline_store(conn, limit)
-        finder = _rows_from_doctor_finder_store(conn, limit)
+        guideline = _rows_from_guideline_store(conn, limit, owner_clerk_id=owner_clerk_id)
+        finder: list[ActiveResearchRun] = []
+        if owner_clerk_id is None:
+            finder = _rows_from_doctor_finder_store(conn, limit)
         combined = _sorted_by_started_desc([*guideline, *finder])
         return combined[:limit]
     finally:
@@ -259,7 +281,7 @@ def list_my_run_history(
     clerk_id: str,
     limit: int = 20,
     *,
-    conn: sqlite3.Connection | None = None,
+    conn: psycopg.Connection | None = None,
 ) -> list[ResearchRunHistoryItem]:
     """Return the most recent completed/failed runs for the given user, newest first.
 
@@ -277,9 +299,9 @@ def list_my_run_history(
             SELECT execution_id, disease_slug, flow_key, label,
                    done, started_at, finished_at, error
             FROM guideline_run_results
-            WHERE owner_clerk_id = ? AND done = 1
+            WHERE owner_clerk_id = %s AND done = 1
             ORDER BY COALESCE(finished_at, started_at, '') DESC
-            LIMIT ?
+            LIMIT %s
             """,
             (clerk_id, limit),
         ).fetchall()

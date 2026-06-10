@@ -3,6 +3,7 @@ import { apiGet, apiPostJson } from "./client";
 /**
  * Optional override for guideline runs. When unset, POST omits `profile` and the
  * backend uses `MODEL_PROFILE` from server `.env` (typically `vllm`).
+ * Set `VITE_GUIDELINE_PROFILE=production` for OpenAI / TPM-safe deploys.
  */
 export const DEFAULT_GUIDELINE_PROFILE: string | undefined =
   typeof import.meta.env.VITE_GUIDELINE_PROFILE === "string" &&

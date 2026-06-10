@@ -272,42 +272,16 @@ def _log_run(
     except ImportError:
         from guideline_run_store import upsert_pipeline_run_status  # type: ignore[no-redef]
 
-    conn = get_connection()
-    cur = conn.cursor()
-    now = datetime.now(timezone.utc).isoformat()
-    try:
-        cur.execute("SELECT 1 FROM guideline_run_results WHERE execution_id = %s", (execution_id,))
-        if cur.fetchone() is None:
-            cur.execute(
-                """INSERT INTO guideline_run_results
-                   (execution_id, pipeline, flow_key, disease_slug, label,
-                    done, started_at, finished_at, error)
-                   VALUES (%s, 'therapies_finder', 'therapies_finder', %s, %s, %s, %s, %s, %s)""",
-                (
-                    execution_id,
-                    disease_slug,
-                    f"Therapies — {disease_slug}",
-                    1 if status in ("ready", "failed") else 0,
-                    now,
-                    now if status in ("ready", "failed") else None,
-                    error,
-                ),
-            )
-        else:
-            cur.execute(
-                """UPDATE guideline_run_results
-                   SET done = %s, finished_at = %s, error = COALESCE(%s, error)
-                   WHERE execution_id = %s""",
-                (
-                    1 if status in ("ready", "failed") else 0,
-                    now if status in ("ready", "failed") else None,
-                    error,
-                    execution_id,
-                ),
-            )
-        conn.commit()
-    finally:
-        conn.close()
+    upsert_pipeline_run_status(
+        execution_id=execution_id,
+        pipeline="therapies_finder",
+        flow_key="therapies_finder",
+        disease_slug=disease_slug,
+        label=f"Therapies — {disease_slug}",
+        done=status in ("ready", "failed"),
+        error=error,
+        owner_clerk_id=owner_clerk_id,
+    )
 
 
 async def find_therapies_for_disease(
@@ -338,7 +312,7 @@ async def find_therapies_for_disease(
         log.exception("Gemma extraction failed for therapies of %s", disease_name)
         fallback = _fallback_therapies_from_abstracts(abstracts)
         inserted = _persist_therapies(disease_slug, fallback)
-        _log_run(exec_id, disease_slug, "ready")
+        _log_run(exec_id, disease_slug, "ready", owner_clerk_id=owner_clerk_id)
         log.warning(
             "therapies_finder: LLM unavailable, persisted %d therapy placeholder(s) from PubMed",
             inserted,

@@ -8,6 +8,8 @@ from typing import Any
 
 import psycopg.errors as pg_errors
 
+_logger = logging.getLogger(__name__)
+
 try:
     from .database import get_connection
     from .engine.flow_output import finalize_flow_output
@@ -46,6 +48,7 @@ def ensure_guideline_run_results_schema() -> None:
     for ddl in (
         "ALTER TABLE guideline_run_results ADD COLUMN current_stage TEXT",
         "ALTER TABLE guideline_run_results ADD COLUMN stage_updated_at TEXT",
+        "ALTER TABLE guideline_run_results ADD COLUMN owner_clerk_id TEXT",
     ):
         try:
             cur.execute(ddl)
@@ -132,7 +135,7 @@ def get_run_owner_clerk_id(execution_id: str) -> str | None:
     conn = get_connection()
     cur = conn.cursor()
     cur.execute(
-        "SELECT owner_clerk_id FROM guideline_run_results WHERE execution_id = ?",
+        "SELECT owner_clerk_id FROM guideline_run_results WHERE execution_id = %s",
         (execution_id,),
     )
     row = cur.fetchone()
@@ -166,7 +169,7 @@ def upsert_pipeline_run_status(
     conn = get_connection()
     cur = conn.cursor()
     cur.execute(
-        "SELECT done, owner_clerk_id FROM guideline_run_results WHERE execution_id = ?",
+        "SELECT done, owner_clerk_id FROM guideline_run_results WHERE execution_id = %s",
         (execution_id,),
     )
     existing_row = cur.fetchone()
@@ -177,7 +180,7 @@ def upsert_pipeline_run_status(
             INSERT INTO guideline_run_results (
                 execution_id, pipeline, flow_key, disease_slug, label,
                 done, started_at, finished_at, error, owner_clerk_id
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """,
             (
                 execution_id,
@@ -196,10 +199,10 @@ def upsert_pipeline_run_status(
         cur.execute(
             """
             UPDATE guideline_run_results
-            SET pipeline = ?, flow_key = ?, disease_slug = ?, label = ?,
-                done = ?, finished_at = ?, error = COALESCE(?, error),
-                owner_clerk_id = COALESCE(?, owner_clerk_id)
-            WHERE execution_id = ?
+            SET pipeline = %s, flow_key = %s, disease_slug = %s, label = %s,
+                done = %s, finished_at = %s, error = COALESCE(%s, error),
+                owner_clerk_id = COALESCE(%s, owner_clerk_id)
+            WHERE execution_id = %s
             """,
             (
                 pipeline,
@@ -216,7 +219,6 @@ def upsert_pipeline_run_status(
     conn.commit()
     conn.close()
 
-    # Emit an in-app notification when a run transitions from in-flight to done.
     if exists and done and existing_row is not None:
         prev_done = existing_row.get("done", 0) if isinstance(existing_row, dict) else 0
         if not prev_done:
@@ -356,7 +358,7 @@ def load_guideline_run_result(execution_id: str) -> dict[str, Any] | None:
         """
         SELECT execution_id, pipeline, flow_key, disease_slug, ticket_id, label,
                output, error, quality_json, done, started_at, finished_at,
-               current_stage, stage_updated_at
+               current_stage, stage_updated_at, owner_clerk_id
         FROM guideline_run_results
         WHERE execution_id = %s
         """,
@@ -388,6 +390,11 @@ def load_guideline_run_result(execution_id: str) -> dict[str, Any] | None:
         "finished_at": row["finished_at"],
         "current_stage": row["current_stage"] if "current_stage" in row.keys() else None,
         "stage_updated_at": row["stage_updated_at"] if "stage_updated_at" in row.keys() else None,
+        "owner_clerk_id": (
+            str(row["owner_clerk_id"])
+            if "owner_clerk_id" in row.keys() and row["owner_clerk_id"]
+            else None
+        ),
         "ai_summary": {"issue": "", "work_log_summary": ""},
         "diagnostics_entries": [],
         "steps_completed_by_ai": [],
