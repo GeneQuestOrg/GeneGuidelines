@@ -4,11 +4,10 @@ import "leaflet/dist/leaflet.css";
 import "leaflet.markercluster";
 import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
-import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
-import markerIcon from "leaflet/dist/images/marker-icon.png";
-import markerShadow from "leaflet/dist/images/marker-shadow.png";
 import type { UserLocation } from "../router/types";
 import type { DoctorWithDistance } from "../utils/doctorSort";
+import { pubmedRoleLabel } from "../utils/doctorLabels";
+import { formatDistanceKm } from "../utils/geo";
 import "../styles/doctors.css";
 
 export interface DoctorsMapProps {
@@ -18,6 +17,55 @@ export interface DoctorsMapProps {
 }
 
 const MAP_CLUSTER_MAX_RADIUS_PX = 48;
+
+function esc(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+const ROLE_COLORS: Record<string, string> = {
+  research_leader: "#2563eb",
+  research_participant: "#6b7280",
+  case_study_author: "#9ca3af",
+  unknown: "#d1d5db",
+};
+
+const VALID_PUBMED_ROLES = new Set(Object.keys(ROLE_COLORS));
+
+function safeRole(role: string): string {
+  return VALID_PUBMED_ROLES.has(role) ? role : "unknown";
+}
+
+function roleMarkerIcon(role: string): L.DivIcon {
+  const color = ROLE_COLORS[role] ?? ROLE_COLORS.unknown;
+  return L.divIcon({
+    html: `<svg width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><circle cx="8" cy="8" r="6.5" fill="${color}" stroke="white" stroke-width="2"/></svg>`,
+    className: "map-role-icon",
+    iconSize: [16, 16],
+    iconAnchor: [8, 8],
+    popupAnchor: [0, -10],
+  });
+}
+
+function buildPopupHtml(d: DoctorWithDistance): string {
+  const role = pubmedRoleLabel(d.pubmedRole);
+  const validatedRole = safeRole(d.pubmedRole);
+  const dist = d.km != null ? `<span class="map-popup__dist">${formatDistanceKm(d.km)}</span>` : "";
+  return `
+    <div class="map-popup">
+      <div class="map-popup__name">${esc(d.name)}</div>
+      <div class="map-popup__spec">${esc(d.specialty)}</div>
+      <div class="map-popup__inst">${esc(d.city)}, ${esc(d.country)}</div>
+      <div class="map-popup__foot">
+        <span class="tag tag--role tag--${esc(validatedRole)}">${esc(role)}</span>
+        <span class="tag tag--score">PubMed <b>${esc(String(d.score))}</b></span>
+        ${dist}
+      </div>
+    </div>`;
+}
 
 export function DoctorsMap({ doctors, userLoc, onNav }: DoctorsMapProps) {
   const hostRef = useRef<HTMLDivElement | null>(null);
@@ -30,14 +78,6 @@ export function DoctorsMap({ doctors, userLoc, onNav }: DoctorsMapProps) {
     if (el == null) {
       return undefined;
     }
-
-    delete (L.Icon.Default.prototype as unknown as { _getIconUrl?: unknown })
-      ._getIconUrl;
-    L.Icon.Default.mergeOptions({
-      iconRetinaUrl: markerIcon2x,
-      iconUrl: markerIcon,
-      shadowUrl: markerShadow,
-    });
 
     const map = L.map(el).setView([54, 15], 3);
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -56,10 +96,16 @@ export function DoctorsMap({ doctors, userLoc, onNav }: DoctorsMapProps) {
 
     for (const d of pins) {
       const latlng: L.LatLngExpression = [d.lat, d.lng];
-      const m = L.marker(latlng);
-      m.bindTooltip(`${d.name} · ${d.city}`, { direction: "top" });
-      m.on("click", () => onNav(`/doctor/${d.slug}`));
-      cluster.addLayer(m);
+      const marker = L.marker(latlng, { icon: roleMarkerIcon(d.pubmedRole) });
+      marker.bindPopup(buildPopupHtml(d), { maxWidth: 240 });
+      marker.on("popupopen", () => {
+        const btn = marker.getPopup()?.getElement()?.querySelector<HTMLElement>(".map-popup");
+        btn?.addEventListener("click", () => {
+          onNav(`/doctor/${d.slug}`);
+          marker.closePopup();
+        }, { once: true });
+      });
+      cluster.addLayer(marker);
       bounds.extend(latlng);
       extended = true;
     }
@@ -67,13 +113,13 @@ export function DoctorsMap({ doctors, userLoc, onNav }: DoctorsMapProps) {
     if (userLoc != null && Number.isFinite(userLoc.lat)) {
       const latlng: L.LatLngExpression = [userLoc.lat, userLoc.lng];
       L.circleMarker(latlng, {
-        radius: 6,
+        radius: 7,
         color: "#dc2626",
         weight: 2,
         fillColor: "#fca5a5",
         fillOpacity: 0.9,
       })
-        .bindTooltip("Your approximate location", { direction: "top" })
+        .bindTooltip("Your location", { direction: "top" })
         .addTo(map);
       bounds.extend(latlng);
       extended = true;
@@ -97,15 +143,21 @@ export function DoctorsMap({ doctors, userLoc, onNav }: DoctorsMapProps) {
     <aside className="doctors-map" aria-label="Specialist map">
       <div className="map-stub">
         <div className="map-stub__head">
-          <span>Map</span>
+          <div className="map-legend">
+            <span className="map-legend__dot" style={{ background: ROLE_COLORS.research_leader }} />
+            Led research
+            <span className="map-legend__dot" style={{ background: ROLE_COLORS.research_participant }} />
+            Contributed
+            <span className="map-legend__dot" style={{ background: ROLE_COLORS.case_study_author }} />
+            Case studies
+          </div>
           <span className="map-stub__count">
             {pinCount} on map · {doctors.length} listed
           </span>
         </div>
         <div ref={hostRef} className="doctors-leaflet" />
         <p className="map-stub__note">
-          OpenStreetMap tiles · markers cluster when you zoom out. Click a pin to
-          open the profile.
+          OpenStreetMap tiles · markers cluster when zoomed out. Click a pin to open the profile.
         </p>
       </div>
     </aside>
