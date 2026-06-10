@@ -125,12 +125,12 @@ def _run_snapshot_for_trace(execution_id: str) -> dict | None:
     return dict(loaded) if loaded else None
 
 
-def _emit(event_queue: Queue, payload: dict) -> None:
+def _emit(event_queue: Queue, payload: dict, *, execution_id: str | None = None) -> None:
     if event_queue:
         event_queue.put(payload)
-    execution_id = _resolve_execution_id_for_queue(event_queue)
-    if execution_id:
-        _append_trace_buffer(execution_id, payload)
+    eid = execution_id or _resolve_execution_id_for_queue(event_queue)
+    if eid:
+        _append_trace_buffer(eid, payload)
 
 
 def _post_run_publish_guideline_document(execution_id: str, store: dict[str, Any]) -> None:
@@ -222,7 +222,8 @@ async def execute_agent_async(
 ) -> None:
     """Run the agent in background (async task); result in AGENT_RUNS, trace events on event_queue."""
     current_model_profile.set(profile)
-    _emit(event_queue, {"kind": "sys", "text": f"[SYSTEM] Async task: start (flow={flow_key}, profile={profile})…"})
+    log.info("Agent run started: execution_id=%s flow=%s profile=%s", execution_id, flow_key, profile)
+    _emit(event_queue, {"kind": "sys", "text": "[SYSTEM] Agent run started."}, execution_id=execution_id)
     loop = asyncio.get_event_loop()
     try:
         await _execute_agent_async_body(
@@ -266,7 +267,7 @@ async def _execute_agent_async_body(
     ticket = await loop.run_in_executor(None, lambda: db.get_ticket_by_id(ticket_id))
     if not ticket:
         AGENT_RUNS[execution_id] = {"execution_id": execution_id, "ticket_id": ticket_id, "error": "Ticket not found", "done": True}
-        _emit(event_queue, {"done": True, "error": "Ticket not found"})
+        _emit(event_queue, {"done": True, "error": "Ticket not found"}, execution_id=execution_id)
         return
 
     flow = await loop.run_in_executor(None, lambda: get_flow_definition(flow_key))
@@ -305,6 +306,7 @@ async def _execute_agent_async_body(
                         f"{preloaded_initial.get('disease_name') or 'this run'}."
                     ),
                 },
+                execution_id=execution_id,
             )
         elif disease_slug and flow_key in ("pubmed", "parent_pathway"):
             from ..content_db import get_disease_by_slug
@@ -338,13 +340,14 @@ async def _execute_agent_async_body(
                         f"{store['disease_initial'].get('disease_name') or disease_slug}."
                     ),
                 },
+                execution_id=execution_id,
             )
-        _emit(event_queue, {"kind": "sys", "text": f"[SYSTEM] Mode: Parallel (Fork) + Merge waves flow (flow_key={flow_key})."})
+        _emit(event_queue, {"kind": "sys", "text": "[SYSTEM] Mode: Parallel (Fork) + Merge waves flow."}, execution_id=execution_id)
         store["last_stage"] = "router:execute_agent_async:before_import_flow_engine"
-        _emit(event_queue, {"kind": "sys", "text": "[SYSTEM] Import flow_engine: BEFORE."})
+        _emit(event_queue, {"kind": "sys", "text": "[SYSTEM] Import flow_engine: BEFORE."}, execution_id=execution_id)
         from ..engine.flow_engine import run_flow_fork_parallel_async
-        _emit(event_queue, {"kind": "sys", "text": "[SYSTEM] Import flow_engine: AFTER."})
-        _emit(event_queue, {"kind": "sys", "text": "[SYSTEM] flow_engine imported; entering fork executor."})
+        _emit(event_queue, {"kind": "sys", "text": "[SYSTEM] Import flow_engine: AFTER."}, execution_id=execution_id)
+        _emit(event_queue, {"kind": "sys", "text": "[SYSTEM] flow_engine imported; entering fork executor."}, execution_id=execution_id)
         store["last_stage"] = "router:execute_agent_async:before_run_flow_fork_parallel_async"
         await run_flow_fork_parallel_async(
             flow_key,
@@ -361,7 +364,7 @@ async def _execute_agent_async_body(
         return
 
     system_prompt = agent_module.build_system_prompt(flow) if flow else None
-    _emit(event_queue, {"kind": "sys", "text": "[SYSTEM] Async task: launching run_agent_async..."})
+    _emit(event_queue, {"kind": "sys", "text": "[SYSTEM] Async task: launching run_agent_async..."}, execution_id=execution_id)
     await run_agent_async(
         ticket_id,
         ticket.get("title") or "",
@@ -526,16 +529,11 @@ async def start_agent_run(
             disease_slug=run_record.get("disease_slug"),
         )
     models = MODEL_PROFILES[profile_norm]
-    _emit(
-        event_queue,
-        {
-            "kind": "sys",
-            "text": (
-                f"[SYSTEM] Starting agent (flow={flow_key}, profile={profile_norm}, "
-                f"simple={models['simple']}, agentic={models['agentic']})..."
-            ),
-        },
+    log.info(
+        "Agent task starting: execution_id=%s flow=%s profile=%s simple=%s agentic=%s",
+        execution_id, flow_key, profile_norm, models["simple"], models["agentic"],
     )
+    _emit(event_queue, {"kind": "sys", "text": "[SYSTEM] Starting agent run..."}, execution_id=execution_id)
 
     def timeout_watchdog() -> None:
         time.sleep(AGENT_RUN_TIMEOUT_SEC)
