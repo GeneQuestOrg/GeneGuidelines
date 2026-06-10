@@ -111,3 +111,39 @@ def test_fetch_authors_empty_pmids():
     result = fetch_authors_with_affiliations_impl([])
     assert result["articles"] == []
     assert result["article_count"] == 0
+
+
+ENTITY_FIXTURE_XML = """<?xml version="1.0" ?>
+<PubmedArticleSet>
+<PubmedArticle>
+  <MedlineCitation>
+    <PMID Version="1">39999999</PMID>
+    <Article>
+      <ArticleTitle>Case report on &#xeb;rythrocyte disorders</ArticleTitle>
+      <AuthorList CompleteYN="Y">
+        <Author ValidYN="Y">
+          <LastName>Robbers-Visser</LastName>
+          <ForeName>Dani&#xeb;lle</ForeName>
+          <Initials>D</Initials>
+          <AffiliationInfo>
+            <Affiliation>Amsterdam UMC, Amsterdam, Netherlands</Affiliation>
+          </AffiliationInfo>
+        </Author>
+      </AuthorList>
+    </Article>
+    <DateCompleted><Year>2024</Year></DateCompleted>
+  </MedlineCitation>
+</PubmedArticle>
+</PubmedArticleSet>"""
+
+
+def test_fetch_authors_decodes_numeric_xml_entities(monkeypatch):
+    from backend.tools.pubmed_runtime import fetch_authors_with_affiliations_impl
+
+    with patch("backend.tools.pubmed_runtime._http_get_text", return_value=ENTITY_FIXTURE_XML):
+        result = fetch_authors_with_affiliations_impl(["39999999"])
+
+    author = result["articles"][0]["authors"][0]
+    assert author["fore_name"] == "Daniëlle"
+    assert author["last_name"] == "Robbers-Visser"
+    assert "ërythrocyte" in result["articles"][0]["title"]

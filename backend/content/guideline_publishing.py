@@ -49,6 +49,7 @@ _PMID_PATTERNS: tuple[re.Pattern[str], ...] = (
 )
 
 _MAX_CITATIONS_PER_PARAGRAPH = 30
+_MIN_STRUCTURED_SECTIONS_FOR_NO_FALLBACK = 3
 
 
 def _extract_pmids(html: str) -> list[str]:
@@ -86,6 +87,17 @@ def _build_sections(output_json: dict[str, Any]) -> list[dict[str, Any]]:
     return sections
 
 
+def _should_append_full_draft_fallback(
+    *,
+    sections: list[dict[str, Any]],
+    guideline_html: str,
+) -> bool:
+    """Keep sectioned reader UX, but retain full blob when mapped output is sparse."""
+    if not guideline_html:
+        return False
+    return len(sections) < _MIN_STRUCTURED_SECTIONS_FOR_NO_FALLBACK
+
+
 def _based_on_summary(output_json: dict[str, Any]) -> str:
     """One-line provenance: article count + evidence score, defensive on types."""
     try:
@@ -111,9 +123,10 @@ def build_ai_draft_document_payload(
 ) -> dict[str, Any]:
     """Map a PubMed agent run output to a GuidelineDocumentResponse-shaped dict.
 
-    Raises :class:`GuidelinePublishError` when the input has no renderable
-    sections (every topic ``*_html`` empty) — the upstream caller should log
-    a warning and skip the publish step rather than write a useless empty doc.
+    Raises :class:`GuidelinePublishError` only when the input has no
+    renderable content at all (every topic ``*_html`` empty and
+    ``guideline_html`` empty). For sparse structured output, the full
+    ``guideline_html`` is appended as a fallback section.
 
     The return value has already been validated against
     :class:`GuidelineDocumentResponse`; callers can persist it as-is.
@@ -131,6 +144,28 @@ def build_ai_draft_document_payload(
         name = str(output_json.get("disease_name") or "").strip() or slug
 
     sections = _build_sections(output_json)
+    guideline_html = str(output_json.get("guideline_html") or "").strip()
+    if _should_append_full_draft_fallback(
+        sections=sections,
+        guideline_html=guideline_html,
+    ):
+        sections.append(
+            {
+                "id": "full-draft",
+                "title": "Full Draft (raw pipeline output)",
+                "intro": (
+                    "Complete AI-generated draft included because structured "
+                    "sections are limited for this disease."
+                ),
+                "paragraphs": [
+                    {
+                        "id": "ai-full-draft-1",
+                        "text": guideline_html,
+                        "citations": _extract_pmids(guideline_html),
+                    }
+                ],
+            }
+        )
     if not sections:
         raise GuidelinePublishError(
             "no renderable sections in pubmed output (all *_html empty)"

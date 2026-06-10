@@ -287,14 +287,16 @@ def _log_run(execution_id: str, disease_slug: str, status: str, error: str | Non
                 ),
             )
         else:
+            finished = status in ("ready", "failed")
+            err_col = None if status == "ready" else error
             cur.execute(
                 """UPDATE guideline_run_results
-                   SET done = %s, finished_at = %s, error = COALESCE(%s, error)
+                   SET done = %s, finished_at = %s, error = %s
                    WHERE execution_id = %s""",
                 (
-                    1 if status in ("ready", "failed") else 0,
-                    now if status in ("ready", "failed") else None,
-                    error,
+                    1 if finished else 0,
+                    now if finished else None,
+                    err_col,
                     execution_id,
                 ),
             )
@@ -338,6 +340,10 @@ async def find_therapies_for_disease(
         return inserted
 
     inserted = _persist_therapies(disease_slug, result.therapies)
+    if inserted == 0 and abstracts:
+        fallback = _fallback_therapies_from_abstracts(abstracts)
+        inserted = _persist_therapies(disease_slug, fallback)
+        used_fallback = True
     _log_run(exec_id, disease_slug, "ready")
     log.info(
         "therapies_finder: %d candidate(s), %d inserted (model=%s, fallback=%s)",
