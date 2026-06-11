@@ -372,7 +372,15 @@ def pm2_view_for_llm_prompt(node_id: str, raw: Any) -> Any:
         payload["pass1_topic_bucket"] = bucket
 
     if node_id == "pm-4-references" and "source_links_html" in result_dict:
-        payload["source_links_html"] = result_dict["source_links_html"]
+        src = result_dict["source_links_html"]
+        # source_links_html can contain thousands of <li> entries (one per PubMed article).
+        # pm-4-references only receives top_k=80 articles in articles_text, so cap the
+        # links list to 100 entries to avoid blowing past the model context window.
+        _MAX_LINKS = 100
+        parts = src.split("</li>")
+        if len(parts) > _MAX_LINKS + 1:
+            src = "</li>".join(parts[:_MAX_LINKS]) + "</li></ul>"
+        payload["source_links_html"] = src
 
     return _wrap_result(payload, has_result)
 
