@@ -458,6 +458,10 @@ async def find_trials_for_disease(
         safe_trials = _fallback_trials_from_studies(studies)
         used_fallback = True
     inserted = _persist_trials(disease_slug, safe_trials)
+    if inserted == 0 and not used_fallback:
+        safe_trials = _fallback_trials_from_studies(studies)
+        inserted = _persist_trials(disease_slug, safe_trials)
+        used_fallback = True
 
     _log_run(exec_id, disease_slug, "ready")
     log.info(

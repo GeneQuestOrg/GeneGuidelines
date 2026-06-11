@@ -84,6 +84,50 @@ class TrialsFinderFallbackFlowTests(unittest.IsolatedAsyncioTestCase):
         mock_log.assert_called()
         self.assertEqual(mock_log.call_args[0][2], "ready")
 
+    async def test_find_trials_persists_ctgov_fallback_when_llm_relevance_filtered_out(self) -> None:
+        studies = [
+            {
+                "nct": "NCT11111111",
+                "title": "Marfan study",
+                "phase": "PHASE2",
+                "status": "RECRUITING",
+                "sponsor": "Acme",
+                "city": None,
+                "country": "US",
+                "age_range": None,
+                "principal_investigator": None,
+                "eligibility_text": "Adults.",
+                "enrollment_target": 50,
+            }
+        ]
+        low_rel = tf._ExtractedTrial(
+            nct="NCT11111111",
+            title="Marfan study",
+            phase="Phase 2",
+            status="recruiting",
+            sponsor="Acme",
+            eligibility_summary="Adults.",
+            relevance=0.2,
+        )
+        with patch.object(tf, "_fetch_clinicaltrials", return_value=[{"protocolSection": {}}]):
+            with patch.object(tf, "_flatten_study", return_value=studies[0]):
+                with patch.object(
+                    tf,
+                    "_extract_with_gemma",
+                    return_value=(tf._TrialList(trials=[low_rel]), "test-model", False),
+                ):
+                    with patch.object(tf, "_persist_trials", side_effect=[0, 1]) as mock_persist:
+                        with patch.object(tf, "_log_run"):
+                            inserted = await tf.find_trials_for_disease(
+                                "marfan-syndrome",
+                                "Marfan Syndrome",
+                                execution_id="trf-test-low-rel",
+                            )
+        self.assertEqual(inserted, 1)
+        self.assertEqual(mock_persist.call_count, 2)
+        fallback_batch = mock_persist.call_args_list[1][0][1]
+        self.assertGreaterEqual(fallback_batch[0].relevance, 0.5)
+
 
 if __name__ == "__main__":
     unittest.main()
