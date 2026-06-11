@@ -396,14 +396,16 @@ def _log_run(execution_id: str, disease_slug: str, status: str, error: str | Non
                 ),
             )
         else:
+            finished = status in ("ready", "failed")
+            err_col = None if status == "ready" else error
             cur.execute(
                 """UPDATE guideline_run_results
                    SET done = %s, finished_at = %s, error = COALESCE(%s, error)
                    WHERE execution_id = %s""",
                 (
-                    1 if status in ("ready", "failed") else 0,
-                    now if status in ("ready", "failed") else None,
-                    error,
+                    1 if finished else 0,
+                    now if finished else None,
+                    err_col,
                     execution_id,
                 ),
             )
