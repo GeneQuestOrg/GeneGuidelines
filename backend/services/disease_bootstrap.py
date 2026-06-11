@@ -86,7 +86,11 @@ async def bootstrap_disease_research(
         )
     )
 
-    doctor_finder_id = await _start_doctor_finder(disease_name, profile_norm)
+    doctor_finder_id = await _start_doctor_finder(
+        disease_slug,
+        disease_name,
+        profile_norm,
+    )
     guideline_id = await _start_guideline_run(disease_slug, disease_name, profile_norm)
 
     return {
@@ -99,16 +103,23 @@ async def bootstrap_disease_research(
     }
 
 
-async def _start_doctor_finder(disease_name: str, profile: str) -> str:
+async def _start_doctor_finder(
+    disease_slug: str,
+    disease_name: str,
+    profile: str,
+) -> str:
     """Fire doctor_finder using the existing in-process queue infrastructure."""
+    from ..content_db import normalize_disease_slug
     from ..flows.doctor_finder.schemas import DoctorFinderInput
     from ..routers import doctor_finder as df_router
 
+    catalog_slug = normalize_disease_slug(disease_slug) or ""
     execution_id = str(uuid.uuid4())
     event_queue: Queue = Queue()
     store: dict = {
         "execution_id": execution_id,
         "disease_name": disease_name,
+        "catalog_slug": catalog_slug,
         "done": False,
         "error": None,
         "node_outputs": {},

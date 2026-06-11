@@ -67,3 +67,9 @@ def test_list_all_doctors_includes_finder_only_disease(monkeypatch) -> None:
     by_slug = {d["slug"]: d for d in all_docs}
     assert "noonan-expert" in by_slug
     assert "noonan" in by_slug["noonan-expert"]["diseases"]
+
+
+def test_decode_stored_text_fixes_legacy_pubmed_entities() -> None:
+    from backend.doctor_catalog import _decode_stored_text
+
+    assert _decode_stored_text("Dani&#xeb;lle Robbers-Visser") == "Daniëlle Robbers-Visser"

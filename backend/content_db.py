@@ -852,6 +852,86 @@ def search_diseases(query: str) -> list[dict[str, Any]]:
     ]
 
 
+def refresh_disease_doctors_count(slug: str) -> int:
+    """Sync ``diseases.doctors_count`` from the live public doctor directory.
+
+    Called after doctor_finder persistence so home cards stay correct across
+    backend restarts (RAM-only finder runs otherwise show 0 after reload).
+    """
+    normalized = normalize_disease_slug(slug)
+    if normalized is None:
+        return 0
+    try:
+        from .doctor_catalog import effective_public_doctor_count_for_disease
+
+        count = effective_public_doctor_count_for_disease(normalized)
+    except Exception:
+        return 0
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute(
+        "UPDATE diseases SET doctors_count = %s WHERE slug = %s",
+        (max(0, int(count)), normalized),
+    )
+    conn.commit()
+    conn.close()
+    return max(0, int(count))
+
+
+def update_disease_catalog_from_bootstrap(
+    slug: str,
+    *,
+    name: str = "",
+    name_short: str = "",
+    omim: str = "",
+    gene: str = "",
+    inheritance: str = "",
+    summary: str = "",
+    prevalence_text: str = "",
+    types: list[str] | None = None,
+) -> None:
+    """Apply non-empty bootstrap metadata to an existing disease row.
+
+    Bootstrap only INSERTs on first create; repeat runs (or a row created with
+    minimal fields) must still receive summary / inheritance / gene from the
+    lookup form payload.
+    """
+    normalized = normalize_disease_slug(slug)
+    if normalized is None:
+        return
+    assignments: list[str] = []
+    params: list[Any] = []
+    for column, value in (
+        ("name", name),
+        ("name_short", name_short),
+        ("omim", omim),
+        ("gene", gene),
+        ("inheritance", inheritance),
+        ("summary", summary),
+        ("prevalence_text", prevalence_text),
+    ):
+        text = str(value or "").strip()
+        if text:
+            assignments.append(f"{column} = %s")
+            params.append(text)
+    if types:
+        cleaned = [str(t).strip() for t in types if str(t).strip()]
+        if cleaned:
+            assignments.append("types_json = %s")
+            params.append(json.dumps(cleaned, ensure_ascii=False))
+    if not assignments:
+        return
+    params.append(normalized)
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute(
+        f"UPDATE diseases SET {', '.join(assignments)} WHERE slug = %s",
+        params,
+    )
+    conn.commit()
+    conn.close()
+
+
 def get_disease_by_slug(
     slug: str,
     *,
