@@ -1,5 +1,6 @@
 import { Section } from "@gene-guidelines/ui";
 import type { ResearchRun } from "../types/researchRun";
+import { hrefForActiveResearchRun } from "../utils/activeResearchNav";
 import "./active-research.css";
 
 export interface ActiveResearchSectionProps {
@@ -23,13 +24,6 @@ function formatElapsed(seconds: number | null): string {
   return `${hours}h ${minutes % 60}m`;
 }
 
-function targetForRun(run: ResearchRun): string {
-  if (run.diseaseSlug != null && run.diseaseSlug !== "") {
-    return `/diseases/${run.diseaseSlug}`;
-  }
-  return "/diseases";
-}
-
 export function ActiveResearchSection({
   runs,
   onNav,
@@ -41,7 +35,8 @@ export function ActiveResearchSection({
     <Section title="Active research" count={runs.length}>
       <div className="active-research__grid">
         {runs.map((run) => {
-          const href = `#${targetForRun(run)}`;
+          const path = hrefForActiveResearchRun(run);
+          const href = `#${path}`;
           return (
             <a
               key={run.runId}
@@ -49,7 +44,7 @@ export function ActiveResearchSection({
               className="active-research__card"
               onClick={(e) => {
                 e.preventDefault();
-                onNav(targetForRun(run));
+                onNav(path);
               }}
             >
               <div className="active-research__top">

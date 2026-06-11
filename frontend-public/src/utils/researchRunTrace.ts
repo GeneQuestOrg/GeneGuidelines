@@ -22,7 +22,20 @@ const SKIP_PATTERNS: readonly RegExp[] = [
   /^\[done\]$/i,
   /connection interrupted/i,
   /live sse disabled/i,
+  /unknown execution_id/i,
+  /live stream interrupted/i,
 ];
+
+/** True when an SSE payload is a terminal error envelope, not a user-facing log line. */
+export function isTraceTransportError(raw: string): boolean {
+  try {
+    const ev = JSON.parse(raw) as Record<string, unknown>;
+    const err = typeof ev.error === "string" ? ev.error : "";
+    return err.toLowerCase().includes("unknown execution_id");
+  } catch {
+    return false;
+  }
+}
 
 export function parseTraceLine(raw: string): ParsedTraceLine {
   try {

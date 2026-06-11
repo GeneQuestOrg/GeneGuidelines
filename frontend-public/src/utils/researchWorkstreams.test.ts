@@ -39,6 +39,7 @@ function baseInputs(overrides: Partial<WorkstreamInputs> = {}): WorkstreamInputs
     lastInactiveAtMs: {},
     nowMs,
     guidelineTraceSeen: false,
+    countsReady: true,
     ...overrides,
   };
 }
@@ -174,6 +175,55 @@ describe("researchWorkstreams", () => {
     const trials = streams.find((s) => s.key === "trials");
     expect(trials?.status).toBe("done");
     expect(trials?.resultSummary).toMatch(/no trials matched/i);
+  });
+
+  it("keeps finders queued until disease counts have loaded once", () => {
+    const streams = deriveWorkstreams(
+      baseInputs({
+        elapsedSec: 30,
+        countsReady: false,
+        doctorsCount: 20,
+        activeRuns: [],
+      }),
+    );
+    expect(streams.find((s) => s.key === "doctors")?.status).toBe("queued");
+    const hydrated = deriveWorkstreams(
+      baseInputs({
+        elapsedSec: 30,
+        countsReady: true,
+        doctorsCount: 20,
+        activeRuns: [],
+      }),
+    );
+    expect(hydrated.find((s) => s.key === "doctors")?.status).toBe("done");
+  });
+
+  it("marks a never-seen zero-result finder done once the fan-out window elapses", () => {
+    // Fast finder that finished with zero results and was never caught in a
+    // 2 s active-runs poll: it must not stay stuck on "running" forever.
+    const stuckWindow = deriveWorkstreams(
+      baseInputs({
+        elapsedSec: 30,
+        countsReady: true,
+        guidelineTraceSeen: true,
+        foundationsCount: 0,
+        activeRuns: [],
+      }),
+    );
+    expect(
+      stuckWindow.find((s) => s.key === "foundations")?.status,
+    ).toBe("running");
+
+    const settled = deriveWorkstreams(
+      baseInputs({
+        elapsedSec: 900,
+        countsReady: true,
+        guidelineTraceSeen: true,
+        foundationsCount: 0,
+        activeRuns: [],
+      }),
+    );
+    expect(settled.find((s) => s.key === "foundations")?.status).toBe("done");
   });
 
   it("counts done / running / queued streams for the overall bar", () => {

@@ -12,6 +12,8 @@ export interface ResearchPartialResults {
   readonly hasGuidelineDocument: boolean;
   readonly activeRuns: readonly ResearchRun[];
   readonly loading: boolean;
+  /** True after the first successful per-disease counts fetch. */
+  readonly countsReady: boolean;
 }
 
 const DEFAULT_POLL_MS = 5000;
@@ -20,17 +22,6 @@ export interface ResearchPartialResultsOptions {
   /** Count + active-run poll interval while the research page is live. */
   readonly pollIntervalMs?: number;
 }
-
-const EMPTY: ResearchPartialResults = {
-  doctors: 0,
-  trials: 0,
-  therapies: 0,
-  foundations: 0,
-  hasOfficialGuideline: false,
-  hasGuidelineDocument: false,
-  activeRuns: [],
-  loading: false,
-};
 
 interface DiseaseCounts {
   readonly doctors: number;
@@ -112,6 +103,7 @@ export function useResearchPartialResults(
   // effect rules happy and makes the "disabled" path a pure derivation
   // of the return value rather than a setState-from-an-effect.
   const [counts, setCounts] = useState<DiseaseCounts>(EMPTY_COUNTS);
+  const [countsReady, setCountsReady] = useState(false);
   const [activeRuns, setActiveRuns] = useState<readonly ResearchRun[]>([]);
   const pollCountsRef = useRef<(() => Promise<void>) | null>(null);
 
@@ -120,7 +112,9 @@ export function useResearchPartialResults(
   const pollIntervalMs = options.pollIntervalMs ?? DEFAULT_POLL_MS;
 
   useEffect(() => {
-    if (!active) return;
+    if (!active) {
+      return;
+    }
     let cancelled = false;
 
     const poll = async () => {
@@ -128,6 +122,7 @@ export function useResearchPartialResults(
         const next = await fetchDiseaseCounts(slug);
         if (cancelled) return;
         setCounts(next);
+        setCountsReady(true);
       } catch {
         // Quiet — the next poll will retry. Holding the previous counts
         // is better than blanking the dashboard on a single 5xx blip.
@@ -141,6 +136,7 @@ export function useResearchPartialResults(
       cancelled = true;
       pollCountsRef.current = null;
       window.clearInterval(id);
+      setCountsReady(false);
     };
   }, [slug, active, pollIntervalMs]);
 
@@ -178,11 +174,17 @@ export function useResearchPartialResults(
   }, [slug, active, pollIntervalMs]);
 
   if (!active) {
-    return EMPTY;
+    return {
+      ...counts,
+      activeRuns,
+      loading: false,
+      countsReady,
+    };
   }
   return {
     ...counts,
     activeRuns,
     loading: false,
+    countsReady,
   };
 }
