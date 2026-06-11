@@ -122,11 +122,14 @@ def _persist_doctor_finder_run_to_sqlite(execution_id: str, store: dict[str, Any
     dr = store.get("doctor_report")
     if not isinstance(dr, dict):
         dr = _extract_doctor_report_from_node_outputs(store.get("node_outputs") or {})
+    catalog_slug = str(store.get("catalog_slug") or "").strip().lower()
+    if not catalog_slug:
+        catalog_slug = catalog_slug_for_finder_input(disease_nm) or ""
     try:
         save_doctor_finder_run_result(
             execution_id,
             disease_name=disease_nm,
-            catalog_slug=catalog_slug_for_finder_input(disease_nm),
+            catalog_slug=catalog_slug or None,
             doctor_report=dr if isinstance(dr, dict) else None,
             error=store.get("error"),
             started_at=str(store.get("started_at") or "").strip() or None,
