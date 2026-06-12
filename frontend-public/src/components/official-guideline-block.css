@@ -6,7 +6,7 @@
   margin: 32px 0 24px;
   background: var(--bg-elev);
   border: 1px solid var(--line);
-  border-left: 4px solid var(--accent-ink, #0f766e);
+  border-left: 4px solid var(--accent-ink);
   border-radius: var(--r-lg);
 }
 
@@ -31,7 +31,7 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--accent-ink, #0f766e);
+  background: var(--accent-ink);
 }
 
 .ogb__title {
@@ -73,7 +73,7 @@
 
 .ogb__cta {
   font-weight: 600;
-  color: var(--accent-ink, #0f766e);
+  color: var(--accent-ink);
   text-decoration: none;
   font-size: var(--fs-sm);
 }

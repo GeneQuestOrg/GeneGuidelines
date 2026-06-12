@@ -29,8 +29,8 @@
   margin: 0;
   padding: 10px 14px;
   font-size: var(--fs-sm);
-  background: color-mix(in oklch, var(--st-red, #b91c1c) 10%, var(--bg-elev));
-  border: 1px solid color-mix(in oklch, var(--st-red, #b91c1c) 30%, var(--line));
+  background: color-mix(in oklch, var(--st-red) 10%, var(--bg-elev));
+  border: 1px solid color-mix(in oklch, var(--st-red) 30%, var(--line));
   border-radius: var(--r-md);
   color: var(--ink);
 }

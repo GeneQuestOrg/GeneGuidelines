@@ -335,7 +335,7 @@
 
 .loc-picker__error {
   font-size: var(--fs-xs);
-  color: var(--st-red, #dc2626);
+  color: var(--st-red);
   margin: 4px 0 0;
 }
 
@@ -1135,7 +1135,7 @@
 
 .rec-form__error {
   font-size: var(--fs-xs);
-  color: var(--st-red, #dc2626);
+  color: var(--st-red);
   margin: 0;
 }
 

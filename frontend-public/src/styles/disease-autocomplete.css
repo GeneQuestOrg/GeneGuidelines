@@ -14,14 +14,14 @@
   align-items: center;
   gap: 8px;
   padding: 0 12px;
-  background: var(--bg-elev, #fff);
-  border: 1px solid var(--line, #e2e8f0);
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
   border-radius: var(--r-md, 8px);
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .ac--open .ac__inputwrap {
-  border-color: var(--accent-teal, #0f766e);
+  border-color: var(--accent-teal, var(--accent-ink));
   box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.15);
   border-bottom-left-radius: 0;
   border-bottom-right-radius: 0;
@@ -36,7 +36,7 @@
 }
 
 .ac__icon {
-  color: var(--ink-3, #64748b);
+  color: var(--ink-3);
   display: block;
   pointer-events: none;
 }
@@ -49,13 +49,13 @@
   padding: 12px 0;
   border: 0;
   background: transparent;
-  color: var(--ink-1, #0f172a);
+  color: var(--ink-1, var(--ink));
   outline: none;
   box-sizing: border-box;
 }
 
 .ac__input::placeholder {
-  color: var(--ink-4, #94a3b8);
+  color: var(--ink-4);
 }
 
 .ac__input:disabled {
@@ -72,7 +72,7 @@
   justify-content: center;
   border: none;
   background: transparent;
-  color: var(--ink-3, #64748b);
+  color: var(--ink-3);
   font-size: 18px;
   line-height: 1;
   cursor: pointer;
@@ -81,15 +81,15 @@
 }
 
 .ac__clear:hover {
-  background: var(--bg-2, #f1f5f9);
-  color: var(--ink-1, #0f172a);
+  background: var(--bg-2, var(--bg-soft));
+  color: var(--ink-1, var(--ink));
 }
 
 .ac__panel {
   position: fixed;
-  background: var(--bg-elev, #fff);
-  border: 1px solid var(--accent-teal, #0f766e);
-  border-top: 1px solid var(--line, #e2e8f0);
+  background: var(--bg-elev);
+  border: 1px solid var(--accent-teal, var(--accent-ink));
+  border-top: 1px solid var(--line);
   border-radius: 0 0 var(--r-md, 8px) var(--r-md, 8px);
   box-shadow: 0 16px 40px -8px rgba(15, 23, 42, 0.16);
   overflow-y: auto;
@@ -99,12 +99,12 @@
 .ac__loading,
 .ac__error {
   padding: 12px 14px;
-  color: var(--ink-3, #64748b);
+  color: var(--ink-3);
   font-size: 0.875rem;
 }
 
 .ac__error {
-  color: var(--accent-rose, #b91c1c);
+  color: var(--accent-rose, var(--st-red));
 }
 
 .ac__list {
@@ -123,8 +123,8 @@
 }
 
 .ac__item--hover {
-  background: var(--bg-2, #f1f5f9);
-  border-left-color: var(--accent-teal, #0f766e);
+  background: var(--bg-2, var(--bg-soft));
+  border-left-color: var(--accent-teal, var(--accent-ink));
 }
 
 .ac__item-main {
@@ -134,7 +134,7 @@
 
 .ac__item-name {
   font-weight: 600;
-  color: var(--ink-1, #0f172a);
+  color: var(--ink-1, var(--ink));
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -142,7 +142,7 @@
 
 .ac__item-alias {
   font-size: 0.78rem;
-  color: var(--ink-3, #64748b);
+  color: var(--ink-3);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -150,7 +150,7 @@
 }
 
 .ac__item-alias em {
-  color: var(--ink-2, #475569);
+  color: var(--ink-2);
   font-style: normal;
   text-transform: lowercase;
 }
@@ -166,28 +166,28 @@
   font-size: 0.7rem;
   padding: 3px 7px;
   border-radius: 4px;
-  background: var(--bg-2, #f1f5f9);
-  color: var(--ink-2, #475569);
+  background: var(--bg-2, var(--bg-soft));
+  color: var(--ink-2);
   font-family: var(--font-mono, ui-monospace, "SF Mono", monospace);
 }
 
 .ac__chip--dim {
   background: transparent;
-  color: var(--ink-3, #64748b);
+  color: var(--ink-3);
 }
 
 .ac__badge {
   font-size: 0.7rem;
   padding: 3px 8px;
   border-radius: 999px;
-  background: var(--bg-2, #f1f5f9);
-  color: var(--ink-2, #475569);
+  background: var(--bg-2, var(--bg-soft));
+  color: var(--ink-2);
   font-weight: 500;
 }
 
 .ac__badge--ok {
   background: rgba(15, 118, 110, 0.12);
-  color: var(--accent-teal, #0f766e);
+  color: var(--accent-teal, var(--accent-ink));
 }
 
 .ac__mark {
@@ -199,14 +199,14 @@
 
 .ac__empty {
   padding: 14px 16px;
-  color: var(--ink-2, #475569);
+  color: var(--ink-2);
   font-size: 0.875rem;
-  border-top: 1px dashed var(--line, #e2e8f0);
+  border-top: 1px dashed var(--line);
 }
 
 .ac__empty-head {
   font-weight: 600;
-  color: var(--ink-1, #0f172a);
+  color: var(--ink-1, var(--ink));
   margin-bottom: 6px;
 }
 
@@ -221,8 +221,8 @@
   gap: 8px;
   padding: 8px 14px;
   border-radius: var(--r-sm, 6px);
-  border: 1px solid var(--accent-teal, #0f766e);
-  background: var(--accent-teal, #0f766e);
+  border: 1px solid var(--accent-teal, var(--accent-ink));
+  background: var(--accent-teal, var(--accent-ink));
   color: #fff;
   font: inherit;
   font-weight: 500;
@@ -230,7 +230,7 @@
 }
 
 .ac__missing-btn:hover {
-  background: var(--accent-teal-2, #0d6964);
+  background: var(--accent-teal-2, var(--accent-ink));
 }
 
 .ac__missing {
@@ -242,9 +242,9 @@
   padding: 10px 14px;
   margin: 0;
   border: none;
-  border-top: 1px dashed var(--line, #e2e8f0);
-  background: var(--bg-2, #f8fafc);
-  color: var(--ink-2, #475569);
+  border-top: 1px dashed var(--line);
+  background: var(--bg-2, var(--bg-soft));
+  color: var(--ink-2);
   font: inherit;
   font-size: 0.85rem;
   text-align: left;
@@ -252,11 +252,11 @@
 }
 
 .ac__missing:hover {
-  background: var(--bg-3, #f1f5f9);
-  color: var(--ink-1, #0f172a);
+  background: var(--bg-3, var(--bg-soft));
+  color: var(--ink-1, var(--ink));
 }
 
 .ac__missing-arrow {
-  color: var(--accent-teal, #0f766e);
+  color: var(--accent-teal, var(--accent-ink));
   font-weight: 600;
 }
