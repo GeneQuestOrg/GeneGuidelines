@@ -4,6 +4,7 @@
  * Static / prod: set `VITE_API_URL` to the API origin only (no `/api` suffix); request paths already include `/api/...`.
  */
 import type { FlowDefinition, FlowNode, FlowEdge, FlowsMap } from "../types";
+import { getAccessToken, getCachedAccessToken } from "./accessToken";
 
 function resolveApiBase(): string {
   const raw = (import.meta.env.VITE_API_URL as string | undefined)?.trim();
@@ -31,15 +32,33 @@ function apiAuthHeaders(): Record<string, string> {
   return { Authorization: `Bearer ${k}` };
 }
 
-/** EventSource cannot set Authorization; append ``api_key`` query when VITE key is set. */
+/**
+ * Auth headers preferring an Auth0 bearer token (admin superadmin session),
+ * falling back to the legacy api-key header. Both credential modes supported.
+ */
+async function authHeaders(): Promise<Record<string, string>> {
+  const token = await getAccessToken();
+  if (token) {
+    return { Authorization: `Bearer ${token}` };
+  }
+  return apiAuthHeaders();
+}
+
+/**
+ * EventSource cannot set Authorization. Prefer the cached Auth0 token via
+ * ``access_token`` (mirrors the backend SSE contract), else fall back to the
+ * legacy ``api_key`` query. Synchronous on purpose: SSE URL builders are sync,
+ * so the token comes from the cache the auth gate keeps warm.
+ */
 function appendApiKeyQueryForSse(pathOrUrl: string): string {
+  const sep = pathOrUrl.includes("?") ? "&" : "?";
+  const token = getCachedAccessToken();
+  if (token) {
+    return `${pathOrUrl}${sep}access_token=${encodeURIComponent(token)}`;
+  }
   const k = getOptionalApiKey();
   if (!k) return pathOrUrl;
-  const withKey = (u: string) => {
-    const sep = u.includes("?") ? "&" : "?";
-    return `${u}${sep}api_key=${encodeURIComponent(k)}`;
-  };
-  return withKey(pathOrUrl);
+  return `${pathOrUrl}${sep}api_key=${encodeURIComponent(k)}`;
 }
 
 /** API flow node (backend response) */
@@ -132,7 +151,7 @@ async function request<T>(path: string, options?: RequestOptions): Promise<T> {
   delete (fetchOptions as RequestInit & { timeoutMs?: number }).timeoutMs;
   const hasBody = fetchOptions.body != null;
   const headers: Record<string, string> = {
-    ...apiAuthHeaders(),
+    ...(await authHeaders()),
     ...(fetchOptions.headers as Record<string, string>),
   };
   if (hasBody && !headers["Content-Type"]) {
@@ -217,6 +236,26 @@ async function request<T>(path: string, options?: RequestOptions): Promise<T> {
       `Response is not valid JSON. First characters: ${raw.slice(0, 120).trim()}`,
     );
   }
+}
+
+// --- Account (Auth0 superadmin gate) ---
+
+export type AccountRole = "parent" | "doctor" | "researcher" | "superadmin";
+
+/** Wire shape of `GET /api/account/me` (snake_case). */
+export interface MeResponse {
+  id: string;
+  email: string;
+  display_name: string | null;
+  role: AccountRole | null;
+  verified: boolean;
+  orcid: string | null;
+  institution: string | null;
+}
+
+/** The signed-in user's account. Used by the admin gate to check for `superadmin`. */
+export async function fetchMe(): Promise<MeResponse> {
+  return request<MeResponse>("/api/account/me");
 }
 
 // --- Flows ---
@@ -429,7 +468,7 @@ export async function reserveForBuilder(
   try {
     res = await fetch(url, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...(await authHeaders()) },
       body: JSON.stringify(body ?? {}),
       signal: controller.signal,
     });
@@ -786,7 +825,7 @@ export async function getApprovalPending(): Promise<{
 }> {
   const url = `${API_BASE}/api/agent/approval-pending`;
   try {
-    const res = await fetch(url, { method: "GET", headers: { ...apiAuthHeaders() } });
+    const res = await fetch(url, { method: "GET", headers: { ...(await authHeaders()) } });
     if (!res.ok) return { pending: null };
     const j = (await res.json()) as { pending?: ApprovalPending | null; execution_id?: string };
     return { pending: j.pending ?? null, execution_id: j.execution_id };

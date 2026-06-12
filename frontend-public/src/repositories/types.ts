@@ -1,3 +1,4 @@
+import type { MeAccount, SelectableRole } from "../types/account";
 import type { CatalogStats, ContentPrSummary, Disease, GuidelineMeta } from "../types";
 import type { GuidelinePrDetail } from "../types/contentPr";
 import type { DiseaseDoctorsPayload, PublicDoctor } from "../types/doctor";
@@ -61,4 +62,11 @@ export interface PrivateContextRepository {
 
 export interface OfficialGuidelineRepository {
   getForDisease(diseaseSlug: string): Promise<OfficialGuideline | null>;
+}
+
+export interface AccountRepository {
+  /** The authenticated user's account (`GET /api/account/me`). Requires a bearer token. */
+  me(): Promise<MeAccount>;
+  /** Apply the one-time role selection (`PATCH /api/account/me`). 409 if already set. */
+  selectRole(role: SelectableRole): Promise<MeAccount>;
 }

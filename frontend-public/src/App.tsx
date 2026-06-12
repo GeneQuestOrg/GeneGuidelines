@@ -10,11 +10,31 @@ import { AppFooter } from "./components/AppFooter";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { TweaksPanel } from "./components/TweaksPanel";
 import { routeContent } from "./views/routeContent";
+import { AccountProvider } from "./auth/AccountProvider";
+import { useAccountContext } from "./auth/accountContext";
+import { RolePickerModal } from "./auth/RolePickerModal";
 import "./app.css";
 
 const DevComponents = lazy(() => import("./pages/DevComponents"));
 
+/** Shows the one-time role picker after first login (Auth0 mode only). */
+function RolePickerGate() {
+  const { needsRoleSelection, selectRole } = useAccountContext();
+  if (!needsRoleSelection) {
+    return null;
+  }
+  return <RolePickerModal onSelect={selectRole} />;
+}
+
 export default function App() {
+  return (
+    <AccountProvider>
+      <AppShell />
+    </AccountProvider>
+  );
+}
+
+function AppShell() {
   const { route, navigate } = useHashRouter();
   const { tweaks, setTweak: setTweakBase } = useTweaks();
   const { view, setView } = useAudienceView(tweaks.defaultView);
@@ -63,6 +83,7 @@ export default function App() {
         <ErrorBoundary>{main}</ErrorBoundary>
       </main>
       <AppFooter onNav={navigate} />
+      <RolePickerGate />
       {import.meta.env.DEV ? <TweaksPanel tweaks={tweaks} onTweak={setTweak} /> : null}
       {import.meta.env.DEV && route.name !== "devComponents" ? (
         <a className="dev-link" href="#/dev/components">
