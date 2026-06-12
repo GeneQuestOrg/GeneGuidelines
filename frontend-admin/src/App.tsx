@@ -3,10 +3,19 @@ import { AdminSidebar } from "./components/AdminSidebar";
 import { PublicAppLink } from "./components/PublicAppLink";
 import { useHashRouter } from "./router/useHashRouter";
 import { adminSectionContent } from "./views/adminSectionContent";
+import { RequireSuperadmin } from "./auth/RequireSuperadmin";
 import "./components/admin-header.css";
 import "./admin-shell.css";
 
 export default function App() {
+  return (
+    <RequireSuperadmin>
+      <AdminApp />
+    </RequireSuperadmin>
+  );
+}
+
+function AdminApp() {
   const { route, navigate } = useHashRouter();
 
   return (

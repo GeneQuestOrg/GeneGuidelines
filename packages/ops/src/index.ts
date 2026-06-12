@@ -26,5 +26,10 @@ export {
 export { ToolsPanel } from "./views/ToolsPanel";
 export { GovernanceView } from "./components/GovernanceView";
 export { AgentView } from "./components/AgentView";
-export { API_BASE } from "./api/client";
+export { API_BASE, fetchMe, type MeResponse, type AccountRole } from "./api/client";
+export {
+  setAccessTokenGetter,
+  setCachedAccessToken,
+  type AccessTokenGetter,
+} from "./api/accessToken";
 export type * from "./types";

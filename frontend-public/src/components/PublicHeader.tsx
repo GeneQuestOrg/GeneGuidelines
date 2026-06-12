@@ -3,6 +3,8 @@ import { AppHeader, AuthModal, useAccount, type NavLink } from "@gene-guidelines
 import type { Account } from "@gene-guidelines/ui";
 import type { Route } from "../router/types";
 import { AdminAppLink } from "./AdminAppLink";
+import { useAccountContext } from "../auth/accountContext";
+import { AccountMenu } from "../auth/AccountMenu";
 import "./public-header.css";
 
 export interface PublicHeaderProps {
@@ -50,6 +52,7 @@ export function PublicHeader({
   authOpen: authOpenProp,
   onAuthOpenChange,
 }: PublicHeaderProps) {
+  const { signInAvailable } = useAccountContext();
   const [account, setAccount] = useAccount();
   const [authOpenLocal, setAuthOpenLocal] = useState(false);
   const authOpen = authOpenProp ?? authOpenLocal;
@@ -76,7 +79,11 @@ export function PublicHeader({
     onNav("/account");
   };
 
-  const mobileMenuActions = account != null ? (
+  // Auth0 mode (env-gated): the AccountMenu owns sign-in/out; the stub controls
+  // below only run when no Auth0 tenant is configured.
+  const mobileMenuActions = signInAvailable ? (
+    <AccountMenu />
+  ) : account != null ? (
     <>
       <button
         type="button"
@@ -112,7 +119,9 @@ export function PublicHeader({
       >
         <div className="hdr-actions hdr-actions--desktop" ref={menuRef}>
           <AdminAppLink />
-          {account != null ? (
+          {signInAvailable ? (
+            <AccountMenu />
+          ) : account != null ? (
             <>
               <button
                 type="button"
@@ -159,7 +168,7 @@ export function PublicHeader({
           )}
         </div>
       </AppHeader>
-      {authOpen ? (
+      {!signInAvailable && authOpen ? (
         <AuthModal
           initialMode={account != null ? "login" : "register"}
           onClose={() => setAuthOpen(false)}

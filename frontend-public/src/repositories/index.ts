@@ -1,4 +1,5 @@
 import { getDataSource } from "../config/dataSource";
+import { apiAccountRepository } from "./apiAccountRepository";
 import { apiDiseaseRepository } from "./apiDiseaseRepository";
 import { apiContentPrRepository } from "./apiContentPrRepository";
 import { apiDoctorRepository } from "./apiDoctorRepository";
@@ -9,6 +10,7 @@ import { apiOfficialGuidelineRepository } from "./apiOfficialGuidelineRepository
 import { apiPrivateContextRepository } from "./apiPrivateContextRepository";
 import { apiTherapyRepository } from "./apiTherapyRepository";
 import { apiTrialRepository } from "./apiTrialRepository";
+import { fixtureAccountRepository } from "./fixtureAccountRepository";
 import { fixtureContentPrRepository } from "./fixtureContentPrRepository";
 import { fixtureDoctorRepository } from "./fixtureDoctorRepository";
 import { fixtureDiseaseRepository } from "./fixtureDiseaseRepository";
@@ -20,6 +22,7 @@ import { fixtureResearchRunsRepository } from "./fixtureResearchRunsRepository";
 import { fixtureTherapyRepository } from "./fixtureTherapyRepository";
 import { fixtureTrialRepository } from "./fixtureTrialRepository";
 import type {
+  AccountRepository,
   ContentPrRepository,
   DoctorRepository,
   DiseaseRepository,
@@ -33,6 +36,7 @@ import type {
 } from "./types";
 
 export type {
+  AccountRepository,
   ContentPrRepository,
   DoctorRepository,
   DiseaseRepository,
@@ -48,6 +52,7 @@ export { ApiRepositoryNotReadyError } from "./errors";
 export { isValidDiseaseSlug, normalizeDiseaseSlug, DISEASE_SLUG_PATTERN } from "../router/slug";
 
 export interface Repositories {
+  account: AccountRepository;
   diseases: DiseaseRepository;
   guidelines: GuidelineRepository;
   contentPrs: ContentPrRepository;
@@ -64,6 +69,7 @@ export function getRepositories(): Repositories {
   const source = getDataSource();
   if (source === "api") {
     return {
+      account: apiAccountRepository,
       diseases: apiDiseaseRepository,
       guidelines: apiGuidelineRepository,
       contentPrs: apiContentPrRepository,
@@ -77,6 +83,7 @@ export function getRepositories(): Repositories {
     };
   }
   return {
+    account: fixtureAccountRepository,
     diseases: fixtureDiseaseRepository,
     guidelines: fixtureGuidelineRepository,
     contentPrs: fixtureContentPrRepository,

@@ -1,5 +1,7 @@
 /** Public JSON client: read APIs + optional mutating calls when ops key is set (dev/staging only). */
 
+import { getAccessToken } from "../auth/accessToken";
+
 export function getApiBaseUrl(): string {
   const raw = import.meta.env.VITE_API_URL;
   if (typeof raw === "string" && raw.trim().length > 0) {
@@ -37,6 +39,33 @@ export function appendApiKeyQueryForSse(pathOrUrl: string): string {
   }
   const sep = pathOrUrl.includes("?") ? "&" : "?";
   return `${pathOrUrl}${sep}api_key=${encodeURIComponent(secret)}`;
+}
+
+/**
+ * Request headers including the Auth0 bearer token when a session is active.
+ * Falls back to the legacy api-key header (dev/staging ops key) when no Auth0
+ * token is available; sends no auth header at all for anonymous sessions.
+ */
+export async function authHeaders(): Promise<Readonly<Record<string, string>>> {
+  const token = await getAccessToken();
+  if (token != null && token.length > 0) {
+    return { Authorization: `Bearer ${token}` };
+  }
+  return apiAuthHeaders();
+}
+
+/**
+ * EventSource cannot send Authorization; backend SSE endpoints accept the JWT
+ * via `?access_token=`. Prefer the Auth0 token; fall back to the legacy
+ * `?api_key=` param when no token is available.
+ */
+export async function appendTokenQueryForSse(pathOrUrl: string): Promise<string> {
+  const token = await getAccessToken();
+  if (token != null && token.length > 0) {
+    const sep = pathOrUrl.includes("?") ? "&" : "?";
+    return `${pathOrUrl}${sep}access_token=${encodeURIComponent(token)}`;
+  }
+  return appendApiKeyQueryForSse(pathOrUrl);
 }
 
 export class ApiRequestError extends Error {
@@ -101,10 +130,11 @@ export async function apiGet<T>(
   const timeoutMs = options?.timeoutMs ?? DEFAULT_GET_TIMEOUT_MS;
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  const headers = { Accept: "application/json", ...(await authHeaders()) };
   let res: Response;
   try {
     res = await fetch(url, {
-      headers: { Accept: "application/json", ...apiAuthHeaders() },
+      headers,
       signal: controller.signal,
     });
   } catch (e) {
@@ -142,7 +172,7 @@ export async function apiPostFormData<T>(
   const url = `${base}${path.startsWith("/") ? path : `/${path}`}`;
   const res = await fetch(url, {
     method: "POST",
-    headers: { Accept: "application/json", ...apiAuthHeaders() },
+    headers: { Accept: "application/json", ...(await authHeaders()) },
     body: formData,
   });
   if (!res.ok) {
@@ -161,6 +191,37 @@ export async function apiPostFormData<T>(
   return parseSuccessJson<T>(res);
 }
 
+export async function apiPatchJson<T>(
+  path: string,
+  body: unknown,
+): Promise<T> {
+  const base = getApiBaseUrl();
+  const url = `${base}${path.startsWith("/") ? path : `/${path}`}`;
+  const res = await fetch(url, {
+    method: "PATCH",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      ...(await authHeaders()),
+    },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    let detail = res.statusText;
+    try {
+      const raw: unknown = await res.json();
+      detail = errorDetailFromBody(raw) ?? detail;
+    } catch {
+      // ignore parse errors
+    }
+    throw new ApiRequestError(
+      res.status,
+      `Request failed (${res.status}): ${detail}`,
+    );
+  }
+  return parseSuccessJson<T>(res);
+}
+
 export async function apiPostJson<T>(
   path: string,
   body: unknown,
@@ -172,7 +233,7 @@ export async function apiPostJson<T>(
     headers: {
       Accept: "application/json",
       "Content-Type": "application/json",
-      ...apiAuthHeaders(),
+      ...(await authHeaders()),
     },
     body: JSON.stringify(body),
   });
