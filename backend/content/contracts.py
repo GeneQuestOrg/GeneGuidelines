@@ -44,6 +44,9 @@ class DiseaseResponse(BaseModel):
     trialsCount: int = Field(ge=0)
     coverage: Literal["full", "skeleton"]
     accent: Literal["teal", "amber", "indigo"]
+    # Public-catalog visibility (RES-1). The disease page shows a "pending
+    # curation" badge when false; index listings only ever return listed rows.
+    listed: bool = True
 
     @classmethod
     def from_domain(cls, disease: Disease) -> "DiseaseResponse":
@@ -67,7 +70,20 @@ class DiseaseResponse(BaseModel):
             trialsCount=disease.trials_count,
             coverage=disease.coverage,  # type: ignore[arg-type]
             accent=disease.accent,      # type: ignore[arg-type]
+            listed=disease.listed,
         )
+
+
+class DiseaseListedPatch(BaseModel):
+    """Body for ``PATCH /api/content/diseases/{slug}`` — approve into the catalog.
+
+    Resource-style mutation (RES-1): ``{"listed": true}`` makes a bootstrapped
+    disease appear in the public index. Behind ``require_superadmin``.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    listed: bool
 
 
 class TrialResponse(BaseModel):

@@ -75,7 +75,8 @@ def ensure_content_schema() -> None:
             trials_count INTEGER NOT NULL DEFAULT 0,
             coverage TEXT NOT NULL,
             accent TEXT NOT NULL,
-            guideline_prompt_profile_json TEXT NOT NULL DEFAULT '{}'
+            guideline_prompt_profile_json TEXT NOT NULL DEFAULT '{}',
+            listed INTEGER NOT NULL DEFAULT 1
         )
         """
     )
@@ -222,6 +223,7 @@ def ensure_content_schema() -> None:
     conn.commit()
     conn.close()
     ensure_guideline_prompt_column()
+    ensure_listed_column()
     ensure_care_pathway_draft_columns()
     ensure_official_guideline_pointers_schema()
     sync_guideline_document_bodies_from_file()
@@ -297,6 +299,66 @@ def ensure_guideline_prompt_column() -> None:
     conn.close()
     if column_added:
         sync_guideline_prompts_from_seed()
+
+
+def ensure_listed_column() -> None:
+    """Add diseases.listed for existing deployments (RES-1, unlisted-until-approve).
+
+    Existing rows default to 1 (visible — zero regression). New diseases from
+    the public bootstrap endpoint are inserted with 0 and stay out of the
+    catalog index until a superadmin approves them.
+    """
+    conn = get_connection()
+    cur = conn.cursor()
+    columns = table_columns(conn, "diseases")
+    if "listed" not in columns:
+        cur.execute(
+            "ALTER TABLE diseases ADD COLUMN listed INTEGER NOT NULL DEFAULT 1"
+        )
+        conn.commit()
+    conn.close()
+
+
+def set_disease_listed(slug: str, listed: bool) -> dict[str, Any] | None:
+    """Set diseases.listed (RES-1 approve). Returns the updated disease or None.
+
+    Resource-style mutation behind the content domain's PATCH endpoint. The
+    semantics of ``status`` (epistemic state) are intentionally left untouched.
+    """
+    normalized = normalize_disease_slug(slug)
+    if normalized is None:
+        return None
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT 1 FROM diseases WHERE slug = %s", (normalized,))
+    if cur.fetchone() is None:
+        conn.close()
+        return None
+    cur.execute(
+        "UPDATE diseases SET listed = %s WHERE slug = %s",
+        (1 if listed else 0, normalized),
+    )
+    conn.commit()
+    cur.execute("SELECT * FROM diseases WHERE slug = %s", (normalized,))
+    row = cur.fetchone()
+    conn.close()
+    if row is None:
+        return None
+    return _row_to_disease(row)
+
+
+def list_unlisted_diseases() -> list[dict[str, Any]]:
+    """Diseases pending catalog approval (listed=0), newest research first.
+
+    Backs the admin "Catalog" review queue. Returns the full disease dicts so
+    the admin table can show slug / name / status / created markers.
+    """
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM diseases WHERE listed = 0 ORDER BY lower(name)")
+    rows = cur.fetchall()
+    conn.close()
+    return [_row_to_disease(r) for r in rows]
 
 
 def sync_guideline_prompts_from_seed() -> None:
@@ -749,6 +811,7 @@ def _row_to_disease(row: dict[str, Any], *, include_prompt_profile: bool = False
         "trialsCount": row["trials_count"],
         "coverage": row["coverage"],
         "accent": row["accent"],
+        "listed": bool(row["listed"]) if "listed" in (row.keys() if hasattr(row, "keys") else ()) else True,
     }
     if include_prompt_profile:
         keys = set(row.keys()) if hasattr(row, "keys") else set()
@@ -804,6 +867,7 @@ def list_diseases_catalog() -> list[dict[str, Any]]:
         """
         SELECT slug, name, name_short, gene, summary, coverage, accent
         FROM diseases
+        WHERE listed = 1
         ORDER BY lower(name)
         """
     )
@@ -813,9 +877,15 @@ def list_diseases_catalog() -> list[dict[str, Any]]:
 
 
 def list_diseases() -> list[dict[str, Any]]:
+    """Catalog index — visible (listed=1) diseases only (RES-1).
+
+    The single-disease reader :func:`get_disease_by_slug` deliberately does
+    NOT filter, so a freshly bootstrapped (unlisted) disease still resolves
+    via direct link for the person who launched the run.
+    """
     conn = get_connection()
     cur = conn.cursor()
-    cur.execute("SELECT * FROM diseases ORDER BY lower(name)")
+    cur.execute("SELECT * FROM diseases WHERE listed = 1 ORDER BY lower(name)")
     rows = cur.fetchall()
     conn.close()
     return [_row_to_disease(r, include_prompt_profile=False) for r in rows]
@@ -962,7 +1032,8 @@ def compute_live_catalog_stats(*, doctor_count: int = 0) -> dict[str, int]:
     conn = get_connection()
     cur = conn.cursor()
     try:
-        cur.execute("SELECT COUNT(*) AS n FROM diseases")
+        # Catalog index counter: visible (listed=1) diseases only (RES-1).
+        cur.execute("SELECT COUNT(*) AS n FROM diseases WHERE listed = 1")
         disease_count = int(cur.fetchone()["n"])
 
         recruiting_trial_count = 0

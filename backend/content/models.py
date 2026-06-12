@@ -58,6 +58,13 @@ class Disease:
     open_prs: int = 0
     doctors_count: int = 0
     trials_count: int = 0
+    # Public-catalog visibility (RES-1). Defaults to True so existing data and
+    # tests that omit it keep behaving as "visible".
+    listed: bool = True
+
+    def with_listed(self, listed: bool) -> "Disease":
+        """Return a copy with ``listed`` replaced (RES-1 approve)."""
+        return replace(self, listed=listed)
 
     def with_doctors_count(self, count: int) -> "Disease":
         """Return a copy with ``doctors_count`` replaced by ``count``.
@@ -103,6 +110,7 @@ def disease_from_row(row: Mapping[str, object]) -> Disease:
         open_prs=int(row.get("open_prs") or 0),
         doctors_count=int(row.get("doctors_count") or 0),
         trials_count=int(row.get("trials_count") or 0),
+        listed=bool(row["listed"]) if "listed" in row else True,
     )
 
 

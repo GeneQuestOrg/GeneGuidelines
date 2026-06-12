@@ -77,6 +77,21 @@ class DiseaseService:
         item = self._with_live_doctor_count(item)
         return self._with_live_trial_count(item)
 
+    def list_unlisted(self) -> list[Disease]:
+        """Diseases pending catalog approval (RES-1) — admin review queue.
+
+        No live-count enrichment: the admin table only needs slug / name /
+        status / created markers, and these rows are not on the public index.
+        """
+        return self.repo.list_unlisted()
+
+    def set_listed(self, slug: str, listed: bool) -> Disease | None:
+        """Approve (or unlist) a disease for the public catalog (RES-1)."""
+        normalized = normalize_slug(slug)
+        if normalized is None:
+            return None
+        return self.repo.set_listed(normalized, listed)
+
     def _with_live_doctor_count(self, disease: Disease) -> Disease:
         try:
             live = self.doctor_count(disease.slug)
