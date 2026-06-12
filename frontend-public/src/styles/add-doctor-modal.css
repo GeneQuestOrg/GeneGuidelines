@@ -1,0 +1,167 @@
+/* Add-doctor modal — parent write-path (DOC-5). Mirrors the missing-disease
+   dialog idiom; tokens only, no hard-coded palette. */
+
+.add-doc-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 4vh 4vw;
+  z-index: 50;
+  overflow-y: auto;
+}
+
+.add-doc-modal__sheet {
+  position: relative;
+  background: var(--bg-elev);
+  border-radius: var(--r-lg, 12px);
+  box-shadow: 0 24px 64px rgba(15, 23, 42, 0.18);
+  max-width: 620px;
+  width: 100%;
+  padding: 28px 28px 24px;
+}
+
+.add-doc-modal__close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 50%;
+  background: var(--bg-2, var(--bg-soft));
+  color: var(--ink-2);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.add-doc-modal__close:hover {
+  background: var(--bg-3, var(--line));
+}
+
+.add-doc-modal__head {
+  margin-bottom: 18px;
+}
+
+.add-doc-modal__title {
+  margin: 0 0 8px;
+  font-size: 1.4rem;
+  color: var(--ink-1, var(--ink));
+}
+
+.add-doc-modal__sub {
+  margin: 0;
+  color: var(--ink-2);
+  line-height: 1.5;
+}
+
+.add-doc-modal__hint {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border-radius: var(--r-md, 8px);
+  background: var(--bg-2, var(--bg-soft));
+  color: var(--ink-2);
+  font-size: 0.9rem;
+}
+
+.add-doc-modal__done {
+  text-align: center;
+  padding: 16px 8px 8px;
+}
+
+.add-doc-modal__done .add-doc-form__actions {
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.add-doc-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.add-doc-form__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.add-doc-form__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.add-doc-form__label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+
+.add-doc-form__input,
+.add-doc-form__textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 9px 11px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md, 8px);
+  background: var(--bg-1, var(--bg));
+  color: var(--ink-1, var(--ink));
+  font: inherit;
+}
+
+.add-doc-form__textarea {
+  resize: vertical;
+}
+
+.add-doc-form__input:focus,
+.add-doc-form__textarea:focus {
+  outline: 2px solid var(--accent, var(--teal, #0d9488));
+  outline-offset: 1px;
+  border-color: transparent;
+}
+
+.add-doc-form__picked {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  align-self: flex-start;
+  padding: 6px 8px 6px 12px;
+  border-radius: 999px;
+  background: var(--bg-2, var(--bg-soft));
+  color: var(--ink-1, var(--ink));
+}
+
+.add-doc-form__picked-x {
+  border: none;
+  background: transparent;
+  color: var(--ink-2);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.add-doc-form__error {
+  margin: 0;
+  color: var(--danger, #dc2626);
+  font-size: 0.9rem;
+}
+
+.add-doc-form__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+@media (max-width: 540px) {
+  .add-doc-form__row {
+    grid-template-columns: 1fr;
+  }
+}

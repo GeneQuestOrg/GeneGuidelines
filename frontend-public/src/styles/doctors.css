@@ -1427,3 +1427,8 @@
     justify-content: flex-start;
   }
 }
+
+/* DOC-5 — "Recommend a doctor we're missing" entry on the directory header. */
+.doctors-add-cta {
+  margin-top: 14px;
+}

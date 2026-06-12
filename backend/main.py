@@ -129,6 +129,7 @@ app.include_router(flows.router, prefix="/api")
 from backend.account.api import router as account_router  # noqa: E402
 from backend.content.api import router as content_disease_router  # noqa: E402
 from backend.disease_index.api import router as disease_index_router  # noqa: E402
+from backend.doctor_contributions.api import router as doctor_contributions_router  # noqa: E402
 from backend.routers import content, doctor_finder, geo, pipeline  # noqa: E402
 
 # The new content module owns GET /api/diseases and GET /api/diseases/{slug};
@@ -138,6 +139,11 @@ from backend.routers import content, doctor_finder, geo, pipeline  # noqa: E402
 app.include_router(content_disease_router, prefix="/api")
 # Account domain (Auth0 JWT) — /api/account/me, /api/account/users.
 app.include_router(account_router, prefix="/api")
+# Parent contributions (DOC-5) — POST/PATCH on /api/doctors/... Registered
+# BEFORE the legacy `content` router so its literal paths
+# (/doctors/submissions, /doctors/contributions/pending) win over that
+# router's GET /doctors/{slug} catch-all.
+app.include_router(doctor_contributions_router, prefix="/api")
 app.include_router(content.router, prefix="/api")
 app.include_router(disease_index_router, prefix="/api/disease-index", tags=["disease_index"])
 app.include_router(doctor_finder.router, prefix="/api/doctor-finder", tags=["doctor_finder"])

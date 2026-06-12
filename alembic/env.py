@@ -26,6 +26,12 @@ from alembic import context
 from backend.shared.persistence.engine import get_engine
 from backend.shared.persistence.schema import metadata as content_metadata
 
+# Import the ORM-mapped domains so their tables register on the shared
+# ``metadata`` before autogenerate diffs against it. ``doctor_contributions``
+# (DOC-5) is the first ORM domain; importing it attaches ``doctor_submissions``
+# / ``parent_recs`` to ``content_metadata``.
+import backend.doctor_contributions.orm  # noqa: E402,F401
+
 
 config = context.config
 

@@ -33,16 +33,22 @@ _MIN_CATALOG_NAME_MATCH_SCORE = 45
 _FINDER_DOCS_INDEX: dict[str, list[dict[str, Any]] | None] | None = None
 _ALL_DOCTORS_CACHE: list[dict[str, Any]] | None = None
 _CONTENT_DOCTORS_CACHE: list[dict[str, Any]] | None = None
+# DOC-5 approved contributions, cached per process alongside the finder index.
+_APPROVED_SUBMISSIONS_CACHE: list[dict[str, Any]] | None = None
+_APPROVED_RECS_BY_SLUG_CACHE: dict[str, list[dict[str, Any]]] | None = None
 _CATALOG_CACHE_LOCK = threading.RLock()
 
 
 def clear_finder_docs_index() -> None:
     """Drop cached doctor_finder rows (call after a run finishes)."""
     global _FINDER_DOCS_INDEX, _ALL_DOCTORS_CACHE, _CONTENT_DOCTORS_CACHE
+    global _APPROVED_SUBMISSIONS_CACHE, _APPROVED_RECS_BY_SLUG_CACHE
     with _CATALOG_CACHE_LOCK:
         _FINDER_DOCS_INDEX = None
         _ALL_DOCTORS_CACHE = None
         _CONTENT_DOCTORS_CACHE = None
+        _APPROVED_SUBMISSIONS_CACHE = None
+        _APPROVED_RECS_BY_SLUG_CACHE = None
 
 
 def slugify_doctor_name(display_name: str, author_key: str | None = None) -> str:
@@ -440,6 +446,143 @@ def _load_content_doctors_file() -> list[dict[str, Any]]:
         return _CONTENT_DOCTORS_CACHE
 
 
+# ---------------------------------------------------------------------------
+# DOC-5 — approved parent contributions mixed into the public catalogue.
+#
+# Pending/rejected contributions are NEVER public. Approved doctor submissions
+# enter as standalone ``addedVia:"parent"`` rows that do NOT merge with finder
+# hits (separate line — manual merge is post-V1). Approved parent recommendations
+# attach to whichever doctor (catalogue, seed, or parent-added) carries the
+# recommended slug, and ``parentRecCount`` syncs through the existing
+# ``PublicDoctorResponse`` validator.
+# ---------------------------------------------------------------------------
+
+
+def _load_approved_contributions() -> tuple[
+    list[dict[str, Any]], dict[str, list[dict[str, Any]]]
+]:
+    """Read approved submissions + recs once per process (best-effort, never raises).
+
+    Returns ``(approved_submission_doctor_rows, approved_recs_by_doctor_slug)``.
+    A missing/unconfigured DB yields empty results so the public read path keeps
+    working with seed + finder data alone.
+    """
+    global _APPROVED_SUBMISSIONS_CACHE, _APPROVED_RECS_BY_SLUG_CACHE
+    with _CATALOG_CACHE_LOCK:
+        if (
+            _APPROVED_SUBMISSIONS_CACHE is not None
+            and _APPROVED_RECS_BY_SLUG_CACHE is not None
+        ):
+            return _APPROVED_SUBMISSIONS_CACHE, _APPROVED_RECS_BY_SLUG_CACHE
+
+        submissions: list[dict[str, Any]] = []
+        recs_by_slug: dict[str, list[dict[str, Any]]] = {}
+        try:
+            from .doctor_contributions.models import ReviewStatus
+            from .doctor_contributions.repository import SqlaDoctorContributionsRepo
+        except ImportError:  # pragma: no cover - flat-layout import shim
+            from doctor_contributions.models import ReviewStatus  # type: ignore[no-redef]
+            from doctor_contributions.repository import (  # type: ignore[no-redef]
+                SqlaDoctorContributionsRepo,
+            )
+
+        try:
+            repo = SqlaDoctorContributionsRepo()
+            for s in repo.list_submissions(review_status=ReviewStatus.APPROVED):
+                submissions.append(_submission_to_public_doctor(s))
+            for r in repo.list_parent_recs(review_status=ReviewStatus.APPROVED):
+                recs_by_slug.setdefault(r.doctor_slug, []).append(
+                    {
+                        "text": r.text,
+                        "by": (r.relation.value if r.relation else "parent"),
+                        "region": r.region or "",
+                        "date": (r.created_at or "")[:10],
+                    }
+                )
+        except Exception:  # noqa: BLE001 - no DB / unconfigured engine -> seed+finder only
+            submissions = []
+            recs_by_slug = {}
+
+        _APPROVED_SUBMISSIONS_CACHE = submissions
+        _APPROVED_RECS_BY_SLUG_CACHE = recs_by_slug
+        return submissions, recs_by_slug
+
+
+def _submission_to_public_doctor(submission: Any) -> dict[str, Any]:
+    """Map an approved :class:`DoctorSubmission` to a public-doctor row."""
+    city = str(getattr(submission, "city", "") or "").strip() or "—"
+    country = str(getattr(submission, "country", "") or "").strip().upper()[:2] or "—"
+    lat, lng = coords_for_city_country(city, country)
+    disease_slug = str(getattr(submission, "disease_slug", "") or "").strip().lower()
+    diseases = [disease_slug] if disease_slug else []
+    return {
+        "slug": str(submission.slug),
+        "name": str(submission.name),
+        "specialty": str(getattr(submission, "specialty", "") or "Clinician"),
+        "role": str(getattr(submission, "specialty", "") or ""),
+        "institution": str(getattr(submission, "institution", "") or "Affiliation not listed"),
+        "city": city,
+        "country": country,
+        "lat": lat,
+        "lng": lng,
+        "diseases": diseases,
+        "pubmedRole": "unknown",
+        "experienceByDisease": {d: "unknown" for d in diseases},
+        "addedVia": "parent",
+        "score": 0,
+        "evidence": {
+            "firstOrLastAuthorPapers": 0,
+            "reviewPapers": 0,
+            "citesRecentGuidelines": False,
+            "activeLast2y": False,
+            "guidelineOrConsensusCoauthor": False,
+        },
+        "publications": [],
+        "bio": str(getattr(submission, "note", "") or ""),
+        "publicSource": "Family submission",
+        "endorsements": [],
+        "contact": "form",
+        "source": "content_seed",
+        "executionId": None,
+        "parentRecs": [],
+        "reviewStatus": None,
+    }
+
+
+def _apply_approved_recs(row: dict[str, Any]) -> dict[str, Any]:
+    """Append approved parent recs (by slug) to a doctor row, deduped by content."""
+    _submissions, recs_by_slug = _load_approved_contributions()
+    slug = str(row.get("slug") or "").strip().lower()
+    extra = recs_by_slug.get(slug)
+    if not extra:
+        return row
+    merged = list(row.get("parentRecs") or [])
+    seen = {
+        (str(r.get("text") or ""), str(r.get("by") or ""), str(r.get("date") or ""))
+        for r in merged
+        if isinstance(r, dict)
+    }
+    for rec in extra:
+        key = (str(rec.get("text") or ""), str(rec.get("by") or ""), str(rec.get("date") or ""))
+        if key in seen:
+            continue
+        seen.add(key)
+        merged.append(rec)
+    out = dict(row)
+    out["parentRecs"] = merged
+    return out
+
+
+def _approved_submission_rows_for_disease(normalized: str) -> list[dict[str, Any]]:
+    """Approved parent-added doctors that list ``normalized`` (recs applied)."""
+    submissions, _recs = _load_approved_contributions()
+    rows: list[dict[str, Any]] = []
+    for sub in submissions:
+        if normalized in (sub.get("diseases") or []):
+            rows.append(_apply_approved_recs(sub))
+    return rows
+
+
 def _disease_slug_for_name(disease_name: str) -> str | None:
     """Map doctor_finder free-text disease input to a catalog slug (DB + keyword heuristics)."""
     lowered = disease_name.strip().lower()
@@ -597,13 +740,22 @@ def _merged_doctors_for_catalog_slug(
         if normalized in (doc.get("diseases") or [])
     ]
     live = finder_index.get(normalized)
+    # DOC-5: approved parent-added doctors are a separate line — they do NOT merge
+    # with finder hits — appended after the seed/finder result.
+    parent_added = _approved_submission_rows_for_disease(normalized)
 
     if live and seeded:
-        return "merged", _merge_seed_and_finder_docs(normalized, seeded, live)
+        merged = _merge_seed_and_finder_docs(normalized, seeded, live)
+        merged = [_apply_approved_recs(d) for d in merged]
+        return "merged", merged + parent_added
     if live:
-        return "doctor_finder", live
+        live_with_recs = [_apply_approved_recs(d) for d in live]
+        return "doctor_finder", live_with_recs + parent_added
     if seeded:
-        return "content_seed", seeded
+        seeded_with_recs = [_apply_approved_recs(d) for d in seeded]
+        return "content_seed", seeded_with_recs + parent_added
+    if parent_added:
+        return "content_seed", parent_added
     return "none", []
 
 
@@ -713,7 +865,18 @@ def list_all_doctors() -> list[dict[str, Any]]:
                 else:
                     by_slug[key] = _merge_global_doctor_entries(by_slug[key], doc)
 
-        _ALL_DOCTORS_CACHE = list(by_slug.values())
+        # DOC-5: ensure every approved parent-added doctor appears (even one with
+        # no disease slug, which no per-disease pass would have surfaced).
+        approved_subs, _recs = _load_approved_contributions()
+        for sub in approved_subs:
+            key = str(sub.get("slug") or "").strip().lower()
+            if not key or key in by_slug:
+                continue
+            by_slug[key] = sub
+
+        # DOC-5: apply approved parent recs to every row (seed-file rows that
+        # carry no disease never went through the per-disease merge above).
+        _ALL_DOCTORS_CACHE = [_apply_approved_recs(doc) for doc in by_slug.values()]
         return _ALL_DOCTORS_CACHE
 
 

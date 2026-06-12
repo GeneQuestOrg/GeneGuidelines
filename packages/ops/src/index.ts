@@ -33,10 +33,18 @@ export {
   patchUser,
   fetchUnlistedDiseases,
   approveDisease,
+  fetchPendingContributions,
+  patchSubmission,
+  patchParentRec,
+  buildCourtesyMailto,
   type MeResponse,
   type AccountRole,
   type AdminUser,
   type CatalogDisease,
+  type ContributionReviewStatus,
+  type DoctorSubmission,
+  type ParentRecSubmission,
+  type PendingContributions,
 } from "./api/client";
 export {
   setAccessTokenGetter,
