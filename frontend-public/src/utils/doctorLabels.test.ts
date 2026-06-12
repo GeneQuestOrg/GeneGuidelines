@@ -25,10 +25,11 @@ describe("tierForDisease", () => {
     expect(tierForDisease(dowgierd, "xyz")).toBe(dowgierd.pubmedRole);
   });
 
-  it("falls back to the global pubmedRole when there is no experience map", () => {
+  it("falls back to the global pubmedRole when the disease is absent from the experience map", () => {
     const allecou = bySlug("allecou");
-    expect(allecou.experienceByDisease).toBeUndefined();
-    expect(tierForDisease(allecou, "fd")).toBe(allecou.pubmedRole);
+    // allecou is FD-only, so "mas" is not in experienceByDisease → fall back to pubmedRole.
+    expect(allecou.experienceByDisease?.mas).toBeUndefined();
+    expect(tierForDisease(allecou, "mas")).toBe(allecou.pubmedRole);
   });
 });
 

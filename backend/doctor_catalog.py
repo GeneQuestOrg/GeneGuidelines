@@ -119,7 +119,7 @@ def _entry_to_public_doctor(
             "title": _decode_stored_text(str(p.get("title") or "")),
             "year": p.get("year"),
             "journal": _decode_stored_text(str(p.get("article_type") or "")),
-            "position": "author",
+            "position": str(p.get("author_position") or "author"),
         }
         for p in key_papers
         if isinstance(p, dict) and p.get("pmid")
@@ -348,6 +348,24 @@ def _finder_index_matching_seed(seed: dict[str, Any], finder_docs: list[dict[str
     return None
 
 
+def _ensure_experience_key(row: dict[str, Any], disease_slug: str) -> None:
+    """Make sure ``row["experienceByDisease"]`` has ``disease_slug`` (default: the row's pubmedRole).
+
+    Mutates the local ``row`` copy only. Called whenever a disease is appended to ``row["diseases"]``
+    so per-disease tiers stay complete (consumer still has tierForDisease fallback, but data should
+    not depend on it).
+    """
+    if not disease_slug:
+        return
+    experience = row.get("experienceByDisease")
+    if not isinstance(experience, dict):
+        experience = {}
+    else:
+        experience = dict(experience)
+    experience.setdefault(disease_slug, str(row.get("pubmedRole") or "unknown"))
+    row["experienceByDisease"] = experience
+
+
 def _merge_seed_and_finder_docs(
     disease_slug: str,
     seeded: list[dict[str, Any]],
@@ -366,6 +384,7 @@ def _merge_seed_and_finder_docs(
             row.setdefault("diseases", [])
             if disease_slug not in (row.get("diseases") or []):
                 row["diseases"] = [*list(row.get("diseases") or []), disease_slug]
+            _ensure_experience_key(row, disease_slug)
             out.append(row)
             continue
         used_finder.add(j)
@@ -376,6 +395,7 @@ def _merge_seed_and_finder_docs(
             continue
         row = dict(f)
         row["diseases"] = list(dict.fromkeys([*(row.get("diseases") or []), disease_slug]))
+        _ensure_experience_key(row, disease_slug)
         out.append(row)
 
     out.sort(key=lambda d: -int(d.get("score") or 0))

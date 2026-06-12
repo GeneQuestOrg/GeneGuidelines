@@ -109,7 +109,8 @@
       "publicSource": "implantclinicallecou.pl",
       "endorsements": [],
       "contact": "form",
-      "source": "content_seed"
+      "source": "content_seed",
+      "experienceByDisease": { "fd": "research_participant" }
     },
     {
       "slug": "appelman-dijkstra",
@@ -151,7 +152,8 @@
       "publicSource": "lumc.nl, FDMAS Alliance",
       "endorsements": ["FDMAS Alliance", "International FD/MAS Consortium"],
       "contact": "form",
-      "source": "content_seed"
+      "source": "content_seed",
+      "experienceByDisease": { "fd": "research_leader", "mas": "research_leader" }
     },
     {
       "slug": "riminucci",
@@ -186,7 +188,8 @@
       "publicSource": "uniroma1.it",
       "endorsements": ["International FD/MAS Consortium"],
       "contact": "form",
-      "source": "content_seed"
+      "source": "content_seed",
+      "experienceByDisease": { "fd": "research_leader", "mas": "research_leader" }
     },
     {
       "slug": "hsiao",
@@ -221,7 +224,8 @@
       "publicSource": "ucsf.edu",
       "endorsements": ["FDMAS Alliance"],
       "contact": "form",
-      "source": "content_seed"
+      "source": "content_seed",
+      "experienceByDisease": { "fd": "research_leader", "mas": "research_leader" }
     },
     {
       "slug": "podstawski",
@@ -248,7 +252,8 @@
       "publicSource": "Regional registry",
       "endorsements": [],
       "contact": "form",
-      "source": "content_seed"
+      "source": "content_seed",
+      "experienceByDisease": { "fd": "case_study_author" }
     }
   ]
 }
