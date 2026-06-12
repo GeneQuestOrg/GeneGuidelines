@@ -71,7 +71,7 @@ def _content_security_policy_for_path(path: str) -> str:
             "default-src 'self'; "
             "script-src 'self'; "
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
-            "img-src 'self' data: blob:; "
+            "img-src 'self' data: blob: https://*.tile.openstreetmap.org; "
             "font-src 'self' data: https://fonts.gstatic.com; "
             "connect-src 'self'; "
             "frame-ancestors 'none'; "
