@@ -1,0 +1,74 @@
+.users-view__filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 1rem;
+  font-size: var(--fs-sm);
+  color: var(--ink-2);
+  cursor: pointer;
+}
+
+.users-view__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-sm);
+}
+
+.users-view__table th,
+.users-view__table td {
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: middle;
+}
+
+.users-view__table th {
+  font-size: var(--fs-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-3);
+}
+
+.users-view__empty {
+  color: var(--ink-3);
+  text-align: center;
+  padding: 1.5rem;
+}
+
+.users-view__badge {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: var(--r-sm);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+}
+
+.users-view__badge--ok {
+  background: color-mix(in oklch, var(--st-green) 18%, var(--bg-elev));
+  color: oklch(0.45 0.13 150);
+}
+
+.users-view__badge--pending {
+  background: color-mix(in oklch, var(--st-amber) 18%, var(--bg-elev));
+  color: oklch(0.42 0.12 75);
+}
+
+.users-view__approve {
+  padding: 5px 12px;
+  border: 1px solid var(--accent);
+  border-radius: var(--r-sm);
+  background: var(--accent);
+  color: var(--bg-elev);
+  font: inherit;
+  font-size: var(--fs-xs);
+  cursor: pointer;
+}
+
+.users-view__approve:hover {
+  filter: brightness(1.05);
+}
+
+.users-view__approve:disabled {
+  opacity: 0.6;
+  cursor: default;
+}

@@ -37,6 +37,7 @@ function DisabledAccountProvider({ children }: { children: ReactNode }) {
       login: () => undefined,
       logout: () => undefined,
       selectRole: async () => undefined,
+      acceptInvite: async () => undefined,
     }),
     [],
   );
@@ -116,6 +117,11 @@ function Auth0AccountProvider({ children }: { children: ReactNode }) {
     setAccount(updated);
   }, []);
 
+  const acceptInvite = useCallback(async (token: string) => {
+    const updated = await repositories().account.acceptInvite(token);
+    setAccount(updated);
+  }, []);
+
   const value = useMemo<AccountContextValue>(
     () => ({
       signInAvailable: true,
@@ -127,8 +133,19 @@ function Auth0AccountProvider({ children }: { children: ReactNode }) {
       login,
       logout,
       selectRole,
+      acceptInvite,
     }),
-    [auth0Loading, meLoading, isAuthenticated, account, error, login, logout, selectRole],
+    [
+      auth0Loading,
+      meLoading,
+      isAuthenticated,
+      account,
+      error,
+      login,
+      logout,
+      selectRole,
+      acceptInvite,
+    ],
   );
 
   return <AccountContext.Provider value={value}>{children}</AccountContext.Provider>;

@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useAccountContext } from "./accountContext";
 import { isPendingVerification } from "./roleOptions";
+import { InviteDoctorAction } from "./InviteDoctorAction";
+import { DoctorVerificationPanel } from "./DoctorVerificationPanel";
 import "./account-menu.css";
 
 const ROLE_LABELS: Record<string, string> = {
@@ -55,6 +57,8 @@ export function AccountMenu() {
   const label = account?.email ?? "Account";
   const roleLabel = account?.role != null ? ROLE_LABELS[account.role] ?? account.role : null;
   const pending = account != null && isPendingVerification(account.role, account.verified);
+  // A parent (or superadmin) can invite a doctor.
+  const canInvite = account?.role === "parent" || account?.role === "superadmin";
 
   return (
     <div className="account-menu" ref={ref}>
@@ -75,10 +79,9 @@ export function AccountMenu() {
             {roleLabel != null ? (
               <span className="account-menu__identity-role">{roleLabel}</span>
             ) : null}
-            {pending ? (
-              <span className="account-menu__pending">Verification pending</span>
-            ) : null}
           </div>
+          {pending ? <DoctorVerificationPanel /> : null}
+          {canInvite ? <InviteDoctorAction /> : null}
           <button
             type="button"
             role="menuitem"

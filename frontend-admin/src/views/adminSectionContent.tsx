@@ -8,6 +8,7 @@ import {
 } from "@gene-guidelines/ops";
 import type { AdminRoute } from "../router/types";
 import { PlaceholderSection } from "./PlaceholderSection";
+import { UsersView } from "./UsersView";
 
 export function adminSectionContent(route: AdminRoute): ReactNode {
   switch (route.name) {
@@ -19,6 +20,8 @@ export function adminSectionContent(route: AdminRoute): ReactNode {
       return <ToolsPanel />;
     case "prs":
       return <GuidelinePrsPanel />;
+    case "users":
+      return <UsersView />;
     case "settings":
       return <SettingsPanel />;
     case "devComponents":

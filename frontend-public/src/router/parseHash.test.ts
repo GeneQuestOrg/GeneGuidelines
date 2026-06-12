@@ -46,6 +46,12 @@ describe("parseHash", () => {
     expect(parseHash("#/about")).toEqual({ name: "about" });
   });
 
+  it("parses doctor invite landing", () => {
+    expect(parseHash("#/join/abc123")).toEqual({ name: "join", token: "abc123" });
+    // A bare /join with no token is not a join route.
+    expect(parseHash("#/join")).toEqual({ name: "home" });
+  });
+
   it("parses trials registry page", () => {
     expect(parseHash("#/trials")).toEqual({ name: "trials" });
     expect(parseHash("#/trials?q=fibrous")).toEqual({ name: "trials", query: "fibrous" });

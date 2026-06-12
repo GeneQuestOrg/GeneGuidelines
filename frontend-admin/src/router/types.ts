@@ -3,6 +3,7 @@ export type AdminSection =
   | "workflows"
   | "tools"
   | "prs"
+  | "users"
   | "settings"
   | "devComponents";
 
@@ -11,5 +12,6 @@ export type AdminRoute =
   | { name: "workflows" }
   | { name: "tools" }
   | { name: "prs" }
+  | { name: "users" }
   | { name: "settings" }
   | { name: "devComponents" };

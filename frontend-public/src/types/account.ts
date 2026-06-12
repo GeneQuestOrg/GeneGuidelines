@@ -19,3 +19,21 @@ export interface MeAccount {
   readonly orcid: string | null;
   readonly institution: string | null;
 }
+
+/** Result of minting a doctor invite (`POST /api/account/invites`). */
+export interface InviteCreated {
+  readonly token: string;
+  /** Frontend landing path; rendered as `#${urlPath}` → `#/join/{token}`. */
+  readonly urlPath: string;
+  readonly expiresAt: string;
+}
+
+/** Public preview of an invite (`GET /api/account/invites/{token}`), no PII. */
+export interface InvitePreview {
+  readonly intendedRole: AccountRole;
+  /** Display name or masked email of who sent the invite. */
+  readonly inviterDisplay: string;
+  readonly doctorSlug: string | null;
+  readonly expired: boolean;
+  readonly used: boolean;
+}
