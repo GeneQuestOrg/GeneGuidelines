@@ -12,6 +12,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 from .. import database as db
+from ..account.deps import require_superadmin
 from ..auth import require_api_key_if_set
 from ..config import DEFAULT_MODEL_PROFILE, MODEL_PROFILES
 from ..content_db import (
@@ -37,7 +38,13 @@ from ..operator_settings import get_operator_settings
 from . import agent as agent_router
 from . import doctor_finder as doctor_finder_router
 
-router = APIRouter(dependencies=[Depends(require_api_key_if_set)])
+# No router-level guard: this router mixes the PUBLIC demo entrypoints the
+# patient site calls (guideline-run, bootstrap-disease, lookup-disease-metadata —
+# IP-rate-limited in-handler) with admin-only operator routes. Each route below
+# declares its own guard: require_api_key_if_set for the public demo endpoints
+# (unchanged behaviour), require_superadmin for operator routes. See the PR body
+# for the verified public-vs-admin split.
+router = APIRouter()
 
 
 class GuidelineRunBody(BaseModel):
@@ -183,14 +190,18 @@ def _pipeline_run_row(
     }
 
 
-@router.get("/settings", response_model=OperatorSettingsResponse)
+@router.get(
+    "/settings",
+    response_model=OperatorSettingsResponse,
+    dependencies=[Depends(require_superadmin)],
+)
 async def get_pipeline_settings():
     """Read-only operator settings: model profiles, integration status, runtime flags."""
     payload = await asyncio.get_event_loop().run_in_executor(None, get_operator_settings)
     return OperatorSettingsResponse.model_validate(payload)
 
 
-@router.get("/runs")
+@router.get("/runs", dependencies=[Depends(require_superadmin)])
 def list_pipeline_runs():
     """Unified run list: guideline (pubmed) agent runs + doctor_finder runs."""
     items: list[dict] = []
@@ -312,7 +323,7 @@ def list_pipeline_runs():
     return {"runs": items}
 
 
-@router.post("/guideline-run")
+@router.post("/guideline-run", dependencies=[Depends(require_api_key_if_set)])
 async def start_guideline_run(body: GuidelineRunBody):
     """Start PubMed guideline pipeline for a catalog disease or a custom disease name."""
     slug = (body.disease_slug or "").strip()
@@ -384,7 +395,7 @@ class OfficialGuidelinesRunBody(BaseModel):
     disease_slug: str = Field(..., min_length=1, max_length=64)
 
 
-@router.post("/official-guidelines-run")
+@router.post("/official-guidelines-run", dependencies=[Depends(require_superadmin)])
 async def start_official_guidelines_run(body: OfficialGuidelinesRunBody):
     """Run the Gemma 4-powered find-the-consensus workflow for a disease.
 
@@ -514,6 +525,7 @@ class LookupDiseaseMetadataResponse(BaseModel):
 @router.post(
     "/lookup-disease-metadata",
     response_model=LookupDiseaseMetadataResponse,
+    dependencies=[Depends(require_api_key_if_set)],
 )
 async def lookup_disease_metadata_endpoint(
     body: LookupDiseaseMetadataBody, request: Request
@@ -580,7 +592,7 @@ class BootstrapDiseaseBody(BaseModel):
         return out
 
 
-@router.post("/bootstrap-disease")
+@router.post("/bootstrap-disease", dependencies=[Depends(require_api_key_if_set)])
 async def bootstrap_disease(body: BootstrapDiseaseBody, request: Request):
     """One-action workflow: create a disease row, then fire all research workflows.
 
@@ -669,7 +681,7 @@ async def bootstrap_disease(body: BootstrapDiseaseBody, request: Request):
     }
 
 
-@router.post("/pathway-run")
+@router.post("/pathway-run", dependencies=[Depends(require_superadmin)])
 async def start_pathway_run(body: PathwayRunBody):
     """Start the patient-chart pipeline for a catalog disease."""
     slug = body.disease_slug.strip()
@@ -735,7 +747,11 @@ class PathwayPublishBody(BaseModel):
     disease_slug: str = Field(..., min_length=1, max_length=64)
 
 
-@router.post("/pathway-publish", response_model=ParentPathwayResponse)
+@router.post(
+    "/pathway-publish",
+    response_model=ParentPathwayResponse,
+    dependencies=[Depends(require_superadmin)],
+)
 async def publish_pathway_to_public(body: PathwayPublishBody):
     """Publish draft patient chart (requires API key when configured)."""
     slug = body.disease_slug.strip()
@@ -761,6 +777,7 @@ def _disease_with_prompt_response(disease: dict) -> DiseaseWithPromptProfileResp
 @router.get(
     "/diseases/{slug}/guideline-prompt-profile",
     response_model=DiseaseWithPromptProfileResponse,
+    dependencies=[Depends(require_superadmin)],
 )
 async def get_disease_guideline_prompt_profile(slug: str):
     """Read per-disease prompt profile (admin; requires API key when configured)."""
@@ -776,6 +793,7 @@ async def get_disease_guideline_prompt_profile(slug: str):
 @router.put(
     "/diseases/{slug}/guideline-prompt-profile",
     response_model=DiseaseWithPromptProfileResponse,
+    dependencies=[Depends(require_superadmin)],
 )
 async def put_disease_guideline_prompt_profile(slug: str, body: GuidelinePromptProfile):
     """Update per-disease guideline prompt profile (admin; requires API key when configured)."""
@@ -811,6 +829,7 @@ class GuidelinePrReviewBody(BaseModel):
 @router.post(
     "/guideline-prs/{pr_id}/review",
     response_model=GuidelinePrDetailResponse,
+    dependencies=[Depends(require_superadmin)],
 )
 async def post_guideline_pr_review(pr_id: str, body: GuidelinePrReviewBody):
     """Publish, reject, or request changes on a guideline PR (requires API key when configured)."""

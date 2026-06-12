@@ -57,9 +57,43 @@ def test_agent_trace_accepts_api_key_query(client, monkeypatch: pytest.MonkeyPat
         agent_mod.AGENT_RUNS.pop(eid, None)
 
 
-def test_reset_statuses_requires_bearer_when_key_set(client, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_reset_statuses_requires_bearer_when_key_set(monkeypatch: pytest.MonkeyPatch) -> None:
+    """AUTH-2: ``/admin/reset-statuses`` moved from require_api_key_if_set to
+    require_superadmin. The API-key fallback must still gate it identically.
+
+    require_superadmin pulls in the account service / user repo, whose production
+    impl eagerly builds the SQLAlchemy engine (DB_URL unset in tests). We override
+    those deps with in-memory fakes so the *guard* runs in isolation; the handler
+    itself still hits the unconfigured DB, so we assert the gate (401 vs let-through),
+    not the 200 body.
+    """
+    from backend.account.deps import (
+        provide_account_service,
+        provide_user_repo,
+        provide_verifier,
+    )
+    from backend.account.jwt import Auth0Verifier
+    from backend.account.repository import InMemoryUserRepo
+    from backend.account.service import AccountService
+    from backend.main import app
+
     monkeypatch.setenv("GENEGUIDELINES_API_KEY", "rk")
-    assert client.post("/api/tickets/admin/reset-statuses").status_code == 401
-    ok = client.post("/api/tickets/admin/reset-statuses", headers={"Authorization": "Bearer rk"})
-    assert ok.status_code == 200
-    assert ok.json().get("ok") is True
+    repo = InMemoryUserRepo()
+    service = AccountService(repo=repo, superadmin_emails=frozenset())
+    app.dependency_overrides[provide_verifier] = lambda: Auth0Verifier(domain="", audience="")
+    app.dependency_overrides[provide_user_repo] = lambda: repo
+    app.dependency_overrides[provide_account_service] = lambda: service
+    try:
+        local = TestClient(app, raise_server_exceptions=False)
+        # No credentials -> 401 from the guard (key is set).
+        assert local.post("/api/tickets/admin/reset-statuses").status_code == 401
+        # Valid API key -> guard lets it through (handler then 500s on the
+        # unconfigured DB, but it is NOT rejected by auth).
+        ok = local.post(
+            "/api/tickets/admin/reset-statuses", headers={"Authorization": "Bearer rk"}
+        )
+        assert ok.status_code not in (401, 403)
+    finally:
+        app.dependency_overrides.pop(provide_verifier, None)
+        app.dependency_overrides.pop(provide_user_repo, None)
+        app.dependency_overrides.pop(provide_account_service, None)

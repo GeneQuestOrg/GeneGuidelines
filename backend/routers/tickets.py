@@ -7,7 +7,7 @@ import time
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from ..auth import require_api_key_if_set
+from ..account.deps import require_superadmin
 from .. import database as db
 from ..agents.runner import _dbg
 from ..models import (
@@ -50,7 +50,7 @@ async def list_tickets():
         return []
 
 
-@router.post("/admin/reset-statuses", dependencies=[Depends(require_api_key_if_set)])
+@router.post("/admin/reset-statuses", dependencies=[Depends(require_superadmin)])
 async def reset_all_ticket_statuses():
     """Reset all tickets to not_started and clear summaries/diagnostic steps."""
     n = await _run(db.reset_all_tickets_to_not_started)
