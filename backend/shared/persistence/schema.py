@@ -418,6 +418,45 @@ Index(
 )
 
 
+# -- account domain -----------------------------------------------------------
+#
+# Authenticated users. Auth0 is *only* the identity provider (issues the JWT);
+# everything the app reasons about — role, verification status, ORCID,
+# institution — lives here, in our database, not in IdP metadata. See
+# ``docs/adr/003-auth0-eu-idp-and-account-model.md``.
+#
+# A row is created just-in-time on the first request carrying a valid JWT
+# (``auth0_sub`` is the stable Auth0 subject claim). ``role`` is ``NULL`` until
+# the user picks one (parent/doctor/researcher) — the frontend forces that
+# one-time choice. ``verified`` gates doctor identity (AUTH-4 / D5).
+#
+# Generic column types only (Text/Integer): the same migration applies on both
+# SQLite (Kaggle snapshot / offline alembic) and Postgres (production engine).
+users = Table(
+    "users",
+    metadata,
+    Column("id", Text, primary_key=True),  # uuid4 hex
+    Column("auth0_sub", Text, nullable=False, unique=True),
+    Column("email", Text, nullable=False),
+    Column("display_name", Text),
+    Column("role", Text),  # NULL until the user picks parent/doctor/researcher
+    Column("verified", Integer, nullable=False, server_default="0"),
+    Column("orcid", Text),
+    Column("institution", Text),
+    Column("created_at", Text, nullable=False),
+    Column("updated_at", Text, nullable=False),
+    Column("last_login_at", Text),
+    CheckConstraint(
+        "role IS NULL OR role IN "
+        "('parent','doctor','researcher','superadmin')",
+        name="user_role_enum",
+    ),
+)
+
+# Lookups by email back the admin Users view and superadmin bootstrap.
+Index("ix_users_email", users.c.email)
+
+
 __all__ = [
     "metadata",
     "diseases",
@@ -434,4 +473,5 @@ __all__ = [
     "official_guideline_pointers",
     "disease_index",
     "disease_index_aliases",
+    "users",
 ]

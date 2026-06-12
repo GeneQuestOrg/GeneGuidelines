@@ -18,6 +18,18 @@ DB_PATH = Path(os.environ.get("DB_PATH") or (BACKEND_DIR / "tickets.db"))
 DB_URL = (os.environ.get("DB_URL") or "").strip()
 SEED_DATA_PATH = BACKEND_DIR / "seed_data.json"
 
+# -- Auth0 (account domain, D1) ----------------------------------------------
+# Auth0 is the identity provider only; roles/verification live in our `users`
+# table (see docs/adr/003). When AUTH0_DOMAIN is unset the verifier is disabled
+# and JWT-protected endpoints return 503 — the app still boots for local dev
+# without a tenant.
+#   AUTH0_DOMAIN     e.g. "geneguidelines.eu.auth0.com" (no scheme, no slash)
+#   AUTH0_AUDIENCE   the API identifier, e.g. "https://api.geneguidelines.org"
+#   SUPERADMIN_EMAILS CSV of verified emails bootstrapped to the superadmin role
+AUTH0_DOMAIN = (os.environ.get("AUTH0_DOMAIN") or "").strip()
+AUTH0_AUDIENCE = (os.environ.get("AUTH0_AUDIENCE") or "").strip()
+SUPERADMIN_EMAILS = (os.environ.get("SUPERADMIN_EMAILS") or "").strip()
+
 
 def normalize_openai_compatible_base_url(url: str) -> str:
     """Ensure base URL ends with ``/v1`` for OpenAI SDK clients."""

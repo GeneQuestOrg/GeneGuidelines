@@ -7,6 +7,9 @@ httpx>=0.27.0
 sqlalchemy>=2.0
 alembic>=1.13
 
+# Auth — Auth0 JWT verification (RS256 + JWKS via PyJWKClient); see docs/adr/003
+PyJWT[crypto]>=2.8
+
 # Agent (Pydantic AI) + MCP
 pydantic-ai[openai,mcp]
 python-dotenv
