@@ -57,6 +57,40 @@ AGENT_RUNS: dict[str, dict] = {}
 TRACE_QUEUES: dict[str, Queue] = {}
 
 
+def register_queued_run(
+    execution_id: str,
+    *,
+    flow_key: str = "pubmed",
+    pipeline: str = "guideline",
+    label: str = "",
+    disease_slug: str | None = None,
+    queue_position: int | None = None,
+) -> None:
+    """Pre-register a run record in the ``queued`` state (RES-1 fair-share queue).
+
+    The research queue calls this the moment a bootstrap is admitted, so the
+    public run page can poll ``GET /api/agent/run/{id}`` and render
+    "Queued — position N" before a worker slot frees up. ``start_agent_run``
+    later overwrites this record (same execution_id) when the job actually
+    starts.
+    """
+    if not execution_id:
+        return
+    with _AGENT_STORAGE_LOCK:
+        AGENT_RUNS[execution_id] = {
+            "execution_id": execution_id,
+            "ticket_id": 0,
+            "flow_key": flow_key,
+            "pipeline": pipeline,
+            "label": (label or "").strip() or flow_key,
+            "status": "queued",
+            "queue_position": queue_position,
+            "done": False,
+            "started_at": datetime.now(UTC).isoformat(),
+            "disease_slug": (disease_slug or "").strip().lower() or None,
+        }
+
+
 def _prune_agent_storage() -> None:
     """Drop oldest finished runs when in-memory maps exceed cap (reduces unbounded memory growth)."""
     with _AGENT_STORAGE_LOCK:
@@ -468,8 +502,15 @@ async def start_agent_run(
     disease_initial: dict[str, str] | None = None,
     pathway_locale: str = "en",
     refresh_pubmed: bool = False,
+    execution_id: str | None = None,
 ) -> dict:
-    """Start agent run; shared by POST /run/{ticket_id} and pipeline guideline-run."""
+    """Start agent run; shared by POST /run/{ticket_id} and pipeline guideline-run.
+
+    ``execution_id`` may be pre-allocated by the caller (the research queue
+    pre-registers a ``queued`` run record under this id so the public run page
+    has a stable handle while the job waits for a worker slot). When omitted a
+    fresh uuid is minted as before.
+    """
     profile_norm = (profile or "").strip().lower() or DEFAULT_MODEL_PROFILE
     if profile_norm not in MODEL_PROFILES:
         raise HTTPException(
@@ -481,7 +522,7 @@ async def start_agent_run(
     if not ticket:
         raise HTTPException(status_code=404, detail="Ticket not found")
     _prune_agent_storage()
-    execution_id = str(uuid4())
+    execution_id = (execution_id or "").strip() or str(uuid4())
     event_queue: Queue = Queue()
     started_at = datetime.now(UTC).isoformat()
     run_record: dict = {
@@ -595,6 +636,8 @@ def get_agent_run(execution_id: str):
     """Return agent run result: ai_summary, diagnostics_entries, output, done, error."""
     with _AGENT_STORAGE_LOCK:
         run = AGENT_RUNS.get(execution_id)
+        if run is not None:
+            run = dict(run)
     if run is None:
         try:
             from ..guideline_run_store import load_guideline_run_result
@@ -604,6 +647,21 @@ def get_agent_run(execution_id: str):
         run = load_guideline_run_result(execution_id)
     if not run:
         raise HTTPException(status_code=404, detail="Unknown execution_id")
+    if str(run.get("status") or "") == "queued":
+        # Refresh the live position so the page counts down as the queue drains.
+        try:
+            from ..research_queue import get_scheduler
+        except ImportError:
+            from research_queue import get_scheduler  # type: ignore[no-redef]
+
+        position = get_scheduler().position_of(execution_id)
+        if position is None:
+            # No longer queued (a worker picked it up); reflect running so the
+            # page advances even if the worker has not yet upserted its record.
+            run["status"] = "running"
+            run["queue_position"] = None
+        else:
+            run["queue_position"] = position
     return build_agent_run_payload(run)
 
 

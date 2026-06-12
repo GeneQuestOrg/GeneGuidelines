@@ -33,6 +33,11 @@ class AgentRunPayload(TypedDict):
     missing_tool_requests: list[Any]
     current_stage: str | None
     started_at: str | None
+    # Fair-share queue (RES-1): "queued" while the run waits for a worker
+    # slot, with a 1-based position; the run page shows "Queued — position N"
+    # before the work starts. Absent/"running"/"done" otherwise.
+    status: str | None
+    queue_position: int | None
 
 
 def normalize_trace_event(event: dict[str, Any]) -> dict[str, Any]:
@@ -86,7 +91,17 @@ def build_agent_run_payload(run: dict[str, Any]) -> AgentRunPayload:
         missing_tool_requests=run.get("missing_tool_requests") or [],
         current_stage=str(run.get("current_stage") or run.get("last_stage") or "").strip() or None,
         started_at=str(run.get("started_at") or "").strip() or None,
+        status=str(run.get("status") or "").strip() or None,
+        queue_position=_coerce_queue_position(run.get("queue_position")),
     )
+
+
+def _coerce_queue_position(value: Any) -> int | None:
+    try:
+        position = int(value)
+    except (TypeError, ValueError):
+        return None
+    return position if position > 0 else None
 
 
 TopicBucket = Literal[

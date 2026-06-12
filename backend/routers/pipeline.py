@@ -2,17 +2,14 @@
 from __future__ import annotations
 
 import asyncio
+import uuid
 from typing import Literal, Self
 
-import os
-import threading
-import time
-
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, Header, HTTPException
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 from .. import database as db
-from ..account.deps import require_superadmin
+from ..account.deps import OptionalUser, require_superadmin
 from ..auth import require_api_key_if_set
 from ..config import DEFAULT_MODEL_PROFILE, MODEL_PROFILES
 from ..content_db import (
@@ -23,13 +20,13 @@ from ..content_db import (
     update_disease_catalog_from_bootstrap,
     update_disease_guideline_prompt_profile,
 )
-from ..content_models import ParentPathwayResponse
-from ..guideline_pr_publish import GuidelinePrPublishError
 from ..content_models import (
     DiseaseWithPromptProfileResponse,
     GuidelinePrDetailResponse,
     GuidelinePromptProfile,
+    ParentPathwayResponse,
 )
+from ..guideline_pr_publish import GuidelinePrPublishError
 from ..guideline_prompt_profile import (
     build_custom_disease_flow_initial_fields,
     normalize_guideline_prompt_profile,
@@ -418,7 +415,6 @@ async def start_official_guidelines_run(body: OfficialGuidelinesRunBody):
     from ..services.official_guidelines_finder import (
         find_official_guideline_for_disease,
     )
-    import uuid
 
     execution_id = f"ogf-{uuid.uuid4().hex[:12]}"
 
@@ -438,64 +434,6 @@ async def start_official_guidelines_run(body: OfficialGuidelinesRunBody):
         "disease_slug": slug,
         "status": "running",
     }
-
-
-# --- per-IP rate limit for the public bootstrap endpoint -----------------
-# Jurors hit a public demo URL; one /bootstrap-disease call fans out 6
-# AI workflows, so an unthrottled loop could rack up real spend fast. We
-# enforce a small per-IP sliding-window cap in memory. The OpenRouter
-# dashboard's per-month spending cap is the hard-stop backstop the
-# operator should also set.
-_BOOTSTRAP_RATE_LIMIT_WINDOW_SEC = int(
-    (os.environ.get("BOOTSTRAP_RATE_LIMIT_WINDOW_SEC") or "").strip() or 86_400
-)
-_BOOTSTRAP_RATE_LIMIT_MAX_PER_IP = int(
-    (os.environ.get("BOOTSTRAP_RATE_LIMIT_MAX_PER_IP") or "").strip() or 3
-)
-_BOOTSTRAP_RATE_LIMIT_MAX_PER_WINDOW = int(
-    (os.environ.get("BOOTSTRAP_RATE_LIMIT_MAX_PER_WINDOW") or "").strip() or 50
-)
-_BOOTSTRAP_RATE_HISTORY: dict[str, list[float]] = {}
-_BOOTSTRAP_RATE_LOCK = threading.Lock()
-
-
-def _check_bootstrap_rate_limit(ip: str) -> None:
-    """Raise 429 when the caller IP has exceeded its share of the window.
-
-    Maintains a sliding window per IP plus a global cap so one IP cannot
-    burn the whole budget and a botnet rotating IPs cannot either.
-    """
-    now = time.time()
-    cutoff = now - _BOOTSTRAP_RATE_LIMIT_WINDOW_SEC
-    with _BOOTSTRAP_RATE_LOCK:
-        # Drop entries outside the window and prune empty buckets.
-        for stored_ip, stamps in list(_BOOTSTRAP_RATE_HISTORY.items()):
-            stamps[:] = [t for t in stamps if t >= cutoff]
-            if not stamps:
-                _BOOTSTRAP_RATE_HISTORY.pop(stored_ip, None)
-        per_ip = _BOOTSTRAP_RATE_HISTORY.get(ip, [])
-        total = sum(len(v) for v in _BOOTSTRAP_RATE_HISTORY.values())
-        if len(per_ip) >= _BOOTSTRAP_RATE_LIMIT_MAX_PER_IP:
-            raise HTTPException(
-                status_code=429,
-                detail=(
-                    f"Demo rate limit: {_BOOTSTRAP_RATE_LIMIT_MAX_PER_IP} disease "
-                    f"bootstraps per address per "
-                    f"{_BOOTSTRAP_RATE_LIMIT_WINDOW_SEC // 3600}h. "
-                    "Contact hello@genequest.org for higher quota."
-                ),
-            )
-        if total >= _BOOTSTRAP_RATE_LIMIT_MAX_PER_WINDOW:
-            raise HTTPException(
-                status_code=429,
-                detail=(
-                    f"Demo rate limit: global cap of "
-                    f"{_BOOTSTRAP_RATE_LIMIT_MAX_PER_WINDOW} bootstraps per "
-                    f"{_BOOTSTRAP_RATE_LIMIT_WINDOW_SEC // 3600}h reached. "
-                    "Try again later."
-                ),
-            )
-        _BOOTSTRAP_RATE_HISTORY.setdefault(ip, []).append(now)
 
 
 class LookupDiseaseMetadataBody(BaseModel):
@@ -528,18 +466,14 @@ class LookupDiseaseMetadataResponse(BaseModel):
     dependencies=[Depends(require_api_key_if_set)],
 )
 async def lookup_disease_metadata_endpoint(
-    body: LookupDiseaseMetadataBody, request: Request
+    body: LookupDiseaseMetadataBody,
 ) -> LookupDiseaseMetadataResponse:
     """Look up canonical metadata for the typed disease name via Gemma 4.
 
     Cheap, non-persistent — the frontend uses this before calling
     ``/bootstrap-disease`` so the user does not have to know OMIM / gene
-    / inheritance by hand. Same per-IP rate limit as bootstrap so a public
-    URL cannot be used to spend Gemma budget freely.
+    / inheritance by hand.
     """
-
-    client_ip = (request.client.host if request.client else "") or "unknown"
-    _check_bootstrap_rate_limit(client_ip)
 
     from ..services.disease_metadata_lookup import lookup_disease_metadata
 
@@ -593,25 +527,35 @@ class BootstrapDiseaseBody(BaseModel):
 
 
 @router.post("/bootstrap-disease", dependencies=[Depends(require_api_key_if_set)])
-async def bootstrap_disease(body: BootstrapDiseaseBody, request: Request):
-    """One-action workflow: create a disease row, then fire all research workflows.
+async def bootstrap_disease(
+    body: BootstrapDiseaseBody,
+    user: OptionalUser = None,
+    x_anon_session: str | None = Header(default=None, alias="X-Anon-Session"),
+):
+    """One-action workflow: create a disease row, then admit a fan-out job.
 
-    Idempotent on the disease row (INSERT on slug); workflows always
-    fire, so calling twice is safe but will run the research workflows a second
-    time. Returns the dict of execution ids the frontend can poll
-    ``/api/research-runs`` against to render progress.
+    Idempotent on the disease row (INSERT on slug). New diseases are created
+    **unlisted** (``listed=0``) — they appear via direct link but not in the
+    public catalog index until a superadmin approves them (unlisted-until-
+    approve, RES-1).
 
-    Rate-limited per caller IP (default 3 per 24 h) to keep public demos from
-    burning model spend.
+    Admission goes through the in-process fair-share queue
+    (:mod:`backend.research_queue`): authenticated callers outrank anonymous
+    ones, and an anonymous session (``X-Anon-Session`` header) may hold at most
+    a few unfinished jobs. Over the cap → HTTP 409 with a friendly message
+    (NOT 429). Returns the pre-allocated guideline ``execution_id`` the
+    frontend polls, plus the current ``queue_position``.
     """
-    import json as _json
-
-    client_ip = (request.client.host if request.client else "") or "unknown"
-    _check_bootstrap_rate_limit(client_ip)
-
     slug = body.slug.strip()
     if not slug:
         raise HTTPException(status_code=400, detail="slug is required")
+
+    profile_norm = (body.profile or DEFAULT_MODEL_PROFILE).strip().lower() or DEFAULT_MODEL_PROFILE
+    if profile_norm not in MODEL_PROFILES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unknown profile '{body.profile}'. Allowed: {sorted(MODEL_PROFILES.keys())}",
+        )
 
     loop = asyncio.get_event_loop()
     existing = await loop.run_in_executor(None, lambda: get_disease_by_slug(slug))
@@ -624,9 +568,9 @@ async def bootstrap_disease(body: BootstrapDiseaseBody, request: Request):
                     slug, name, name_short, omim, gene, inheritance, summary,
                     types_json, related_json, prevalence_text, status, status_by,
                     status_date, ai_draft_date, open_prs, doctors_count, trials_count,
-                    coverage, accent, guideline_prompt_profile_json
+                    coverage, accent, guideline_prompt_profile_json, listed
                 ) VALUES (%s, %s, %s, %s, %s, %s, %s, '[]', '[]', %s, 'ai-draft', NULL,
-                          NULL, NULL, 0, 0, 0, 'skeleton', 'indigo', '{}')
+                          NULL, NULL, 0, 0, 0, 'skeleton', 'indigo', '{}', 0)
                 ON CONFLICT (slug) DO NOTHING""",
                 (
                     slug,
@@ -659,25 +603,49 @@ async def bootstrap_disease(body: BootstrapDiseaseBody, request: Request):
         ),
     )
 
+    from ..research_queue import ResearchQueueFull, get_scheduler
     from ..services.disease_bootstrap import bootstrap_disease_research
 
-    profile_norm = (body.profile or DEFAULT_MODEL_PROFILE).strip().lower() or DEFAULT_MODEL_PROFILE
-    if profile_norm not in MODEL_PROFILES:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Unknown profile '{body.profile}'. Allowed: {sorted(MODEL_PROFILES.keys())}",
+    disease_name = body.name.strip()
+    # Pre-allocate the guideline run id so the frontend has a stable handle to
+    # poll/navigate to while the job sits in the queue; register a queued
+    # record under it immediately.
+    guideline_execution_id = f"gl-{uuid.uuid4().hex[:12]}"
+    agent_router.register_queued_run(
+        guideline_execution_id,
+        flow_key="pubmed",
+        pipeline="guideline",
+        label=disease_name,
+        disease_slug=slug,
+    )
+
+    async def _run_bootstrap() -> None:
+        await bootstrap_disease_research(
+            disease_slug=slug,
+            disease_name=disease_name,
+            profile=profile_norm,
+            guideline_execution_id=guideline_execution_id,
         )
 
-    execution_ids = await bootstrap_disease_research(
-        disease_slug=slug,
-        disease_name=body.name.strip(),
-        profile=profile_norm,
-    )
+    try:
+        admission = await get_scheduler().admit(
+            run_id=guideline_execution_id,
+            run=_run_bootstrap,
+            authenticated=user is not None,
+            anon_session=(x_anon_session or "").strip() or None,
+        )
+    except ResearchQueueFull as exc:
+        # Friendly fair-share refusal — NOT a 429. The frontend shows this as a
+        # toast/inline message in StartResearchView.
+        raise HTTPException(status_code=409, detail=exc.message) from exc
+
     return {
         "disease_slug": slug,
         "created": existing is None,
-        "execution_ids": execution_ids,
-        "status": "running",
+        "listed": False,
+        "execution_id": guideline_execution_id,
+        "queue_position": admission.queue_position,
+        "status": "queued",
     }
 
 
