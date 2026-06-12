@@ -114,6 +114,34 @@
 .jb__close-label {
   display: inline-block;
 }
+.jb__controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.jb__dismiss {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 99px;
+  border: 1px solid var(--jb-line);
+  background: transparent;
+  color: oklch(0.45 0.02 70);
+  cursor: pointer;
+  transition: background 120ms, color 120ms, border-color 120ms;
+}
+.jb__dismiss:hover {
+  background: var(--jb-ink);
+  color: var(--jb-paper);
+  border-color: var(--jb-ink);
+}
+.jb__dismiss:focus-visible {
+  outline: 2px solid var(--jb-accent);
+  outline-offset: 2px;
+}
 @media (max-width: 800px) {
   .jb__inner {
     grid-template-columns: 1fr;
@@ -131,6 +159,108 @@
 @media (max-width: 520px) {
   .jb__close-label { display: none; }
   .jb__close { padding: 0; width: 28px; }
+}
+
+/* ── Ribbon: full-width single line (default state) ─────────────────── */
+.jb-ribbon {
+  --jb-accent: oklch(0.58 0.13 60);
+  --jb-paper: oklch(0.985 0.012 80);
+
+  display: flex;
+  align-items: stretch;
+  min-height: 40px;
+  /* Warm amber wash so the ribbon reads as an "official notice" against the
+     page, without the full panel's weight. */
+  background: linear-gradient(
+    90deg,
+    color-mix(in oklch, var(--jb-accent) 16%, var(--jb-paper)),
+    color-mix(in oklch, var(--jb-accent) 9%, var(--jb-paper))
+  );
+  border-bottom: 1px solid color-mix(in oklch, var(--jb-accent) 35%, transparent);
+  color: oklch(0.32 0.03 60);
+  font-size: var(--fs-sm);
+}
+.jb-ribbon__main {
+  flex: 1 1 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-width: 0;
+  padding: 0 14px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  text-align: center;
+  transition: background 120ms;
+}
+.jb-ribbon__main:hover {
+  background: color-mix(in oklch, var(--jb-accent) 12%, transparent);
+}
+.jb-ribbon__main:focus-visible {
+  outline: 2px solid var(--jb-accent);
+  outline-offset: -3px;
+}
+.jb-ribbon__icon {
+  font-size: 15px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.jb-ribbon__text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  letter-spacing: -0.003em;
+}
+.jb-ribbon__text b {
+  font-weight: 600;
+  color: oklch(0.36 0.1 55);
+}
+.jb-ribbon__sep {
+  margin: 0 6px;
+  color: color-mix(in oklch, var(--jb-accent) 55%, transparent);
+}
+.jb-ribbon__arrow {
+  flex-shrink: 0;
+  font-size: 14px;
+  color: oklch(0.42 0.11 55);
+  transition: transform 140ms;
+}
+.jb-ribbon__main:hover .jb-ribbon__arrow {
+  transform: translateX(3px);
+}
+.jb-ribbon__close {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  border: 0;
+  border-left: 1px solid color-mix(in oklch, var(--jb-accent) 25%, transparent);
+  background: transparent;
+  color: oklch(0.45 0.04 60);
+  cursor: pointer;
+  transition: background 120ms, color 120ms;
+}
+.jb-ribbon__close:hover {
+  background: color-mix(in oklch, var(--jb-accent) 22%, transparent);
+  color: oklch(0.3 0.06 55);
+}
+.jb-ribbon__close:focus-visible {
+  outline: 2px solid var(--jb-accent);
+  outline-offset: -3px;
+}
+@media (max-width: 520px) {
+  .jb-ribbon__main {
+    gap: 7px;
+    padding: 0 10px;
+  }
+  .jb-ribbon__sep {
+    display: none;
+  }
 }
 
 /* ── Collapsed badge ────────────────────────────────────────────────── */
