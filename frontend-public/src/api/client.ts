@@ -225,6 +225,7 @@ export async function apiPatchJson<T>(
 export async function apiPostJson<T>(
   path: string,
   body: unknown,
+  extraHeaders?: Readonly<Record<string, string>>,
 ): Promise<T> {
   const base = getApiBaseUrl();
   const url = `${base}${path.startsWith("/") ? path : `/${path}`}`;
@@ -234,6 +235,7 @@ export async function apiPostJson<T>(
       Accept: "application/json",
       "Content-Type": "application/json",
       ...(await authHeaders()),
+      ...(extraHeaders ?? {}),
     },
     body: JSON.stringify(body),
   });

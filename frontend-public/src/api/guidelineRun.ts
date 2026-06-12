@@ -65,6 +65,9 @@ export interface AgentRunPayloadV1 {
   missing_tool_requests: unknown[];
   started_at?: string | null;
   current_stage?: string | null;
+  /** Fair-share queue (RES-1): "queued" until a worker slot frees up. */
+  status?: string | null;
+  queue_position?: number | null;
 }
 
 /**

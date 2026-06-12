@@ -24,4 +24,7 @@ export interface Disease {
   trialsCount: number;
   coverage: DiseaseCoverage;
   accent: DiseaseAccent;
+  /** Public-catalog visibility (RES-1). Unlisted diseases resolve via direct
+   *  link but are hidden from the index until a curator approves them. */
+  listed: boolean;
 }

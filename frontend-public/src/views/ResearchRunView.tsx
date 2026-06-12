@@ -32,6 +32,7 @@ import {
   earliestResearchStartedAtIso,
   researchElapsedSecFromStartedAt,
 } from "../utils/researchElapsed";
+import { isQueued, queuedLabel } from "../utils/queuedRun";
 import {
   formatActivityTime,
   formatElapsed,
@@ -285,6 +286,10 @@ export function ResearchRunView({
   const runError = run?.error ?? null;
   const failed = done && runError != null && runError.length > 0;
   const succeeded = done && !failed;
+  // Fair-share queue (RES-1): the run waits for a worker slot before any
+  // workstream starts. Show "Queued — position N" until it flips to running.
+  const queued = isQueued(run);
+  const queuePosition = run?.queue_position ?? null;
 
   // Partial-results poll: doctors/trials/therapies/foundations counts +
   // official guideline presence + guideline document presence + active
@@ -516,6 +521,13 @@ export function ResearchRunView({
               <span className="rrun__chip-text">prevalence {prevalence}</span>
             ) : null}
           </div>
+        ) : null}
+
+        {queued ? (
+          <p className="rrun__queued" role="status">
+            <span className="rrun__queued-dot" aria-hidden="true" />
+            {queuedLabel(queuePosition)}
+          </p>
         ) : null}
 
         <p className="rrun__lede">
