@@ -7,6 +7,7 @@ import {
   WorkflowsWorkspace,
 } from "@gene-guidelines/ops";
 import type { AdminRoute } from "../router/types";
+import { CatalogView } from "./CatalogView";
 import { PlaceholderSection } from "./PlaceholderSection";
 import { UsersView } from "./UsersView";
 
@@ -20,6 +21,8 @@ export function adminSectionContent(route: AdminRoute): ReactNode {
       return <ToolsPanel />;
     case "prs":
       return <GuidelinePrsPanel />;
+    case "catalog":
+      return <CatalogView />;
     case "users":
       return <UsersView />;
     case "settings":
