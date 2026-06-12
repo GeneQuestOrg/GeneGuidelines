@@ -1,15 +1,21 @@
 /* GeneGuidelines — Banner for Kaggle Gemma 4 Good Hackathon jurors.
-   Two states:
-     • expanded  — full banner pinned above the product header (default).
-     • collapsed — small floating pill in the top-right corner. Click → expand.
-   State persists in localStorage and survives route changes; the collapsed
-   pill renders on every route so judges always have one-tap access back in. */
+   Three states (see ./judgesBannerState.ts for the machine):
+     • ribbon    — full-width single line above the product header (default).
+     • expanded  — full juror panel. Default for judges arriving via ?from=kaggle.
+     • pill       — small floating badge in the top-right corner.
+   Explicit user actions persist in localStorage and survive route changes;
+   the pill renders on every route so judges always have one-tap access back. */
 
-import { useCallback, useEffect, useState, type MouseEvent } from "react";
+import { useCallback, useState, type MouseEvent } from "react";
 import type { Route } from "../router/types";
+import {
+  JB_SESSION_FROM_KAGGLE_KEY,
+  JB_STATE_KEY,
+  resolveInitialState,
+  shouldRememberKaggleSession,
+  type BannerState,
+} from "./judgesBannerState";
 import "./judges-banner.css";
-
-const JB_STATE_KEY = "gg-judges-banner-state-v2";
 
 const JB_LINKS = {
   snapshot: "https://kaggle-geneguidelines.genequest.org",
@@ -20,11 +26,16 @@ const JB_LINKS = {
   repo: "https://github.com/GeneQuestOrg/GeneGuidelines/tree/kaggle-submission-2026-05-18",
 };
 
-type BannerState = "expanded" | "collapsed";
-
 export interface JudgesBannerProps {
   route: Route;
   onNav: (path: string) => void;
+  /** True when the current hash carries `?from=kaggle` (judges' submission link). */
+  fromKaggle?: boolean;
+}
+
+interface JudgesRibbonProps {
+  onExpand: () => void;
+  onDismiss: () => void;
 }
 
 interface JudgesBadgeProps {
@@ -34,35 +45,65 @@ interface JudgesBadgeProps {
 interface JudgesBannerExpandedProps {
   onNav: (path: string) => void;
   onCollapse: () => void;
+  onDismiss: () => void;
   route: Route;
 }
 
-function useBannerState(): [BannerState, (state: BannerState) => void] {
-  const [state, setState] = useState<BannerState>(() => {
-    try {
-      const v = localStorage.getItem(JB_STATE_KEY);
-      if (v === "expanded" || v === "collapsed") return v;
-    } catch {
-      /* ignore localStorage errors */
-    }
-    return "expanded";
-  });
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(JB_STATE_KEY, state);
-    } catch {
-      /* ignore localStorage errors */
-    }
-  }, [state]);
-
-  return [state, setState];
+function readStored(): string | null {
+  try {
+    return localStorage.getItem(JB_STATE_KEY);
+  } catch {
+    return null;
+  }
 }
 
-export function JudgesBanner({ onNav, route }: JudgesBannerProps) {
-  const [state, setState] = useBannerState();
+function readSessionFromKaggle(): boolean {
+  try {
+    return sessionStorage.getItem(JB_SESSION_FROM_KAGGLE_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
 
-  const collapse = useCallback(() => setState("collapsed"), [setState]);
+/** Resolves the initial state once, then tracks explicit user actions
+    (which persist) for the rest of the session. */
+function useBannerState(fromKaggle: boolean): [BannerState, (state: BannerState) => void] {
+  const [state, setState] = useState<BannerState>(() => {
+    const stored = readStored();
+    /* Remember a ?from=kaggle arrival so hash navigation keeps it expanded. */
+    if (shouldRememberKaggleSession(stored, fromKaggle)) {
+      try {
+        sessionStorage.setItem(JB_SESSION_FROM_KAGGLE_KEY, "1");
+      } catch {
+        /* ignore sessionStorage errors */
+      }
+    }
+    return resolveInitialState({
+      stored,
+      fromKaggle,
+      sessionFromKaggle: readSessionFromKaggle(),
+    });
+  });
+
+  const setStateAndPersist = useCallback((next: BannerState) => {
+    setState(next);
+    /* An explicit action is a deliberate choice — persist it so it outlasts
+       the link param on subsequent visits. */
+    try {
+      localStorage.setItem(JB_STATE_KEY, next);
+    } catch {
+      /* ignore localStorage errors */
+    }
+  }, []);
+
+  return [state, setStateAndPersist];
+}
+
+export function JudgesBanner({ onNav, route, fromKaggle = false }: JudgesBannerProps) {
+  const [state, setState] = useBannerState(fromKaggle);
+
+  const dismiss = useCallback(() => setState("pill"), [setState]);
+  const collapseToRibbon = useCallback(() => setState("ribbon"), [setState]);
   const expand = useCallback(() => {
     setState("expanded");
     /* If user isn't on home, banner is right at the top of the page,
@@ -70,13 +111,77 @@ export function JudgesBanner({ onNav, route }: JudgesBannerProps) {
     requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: "smooth" }));
   }, [setState]);
 
-  if (state === "collapsed") {
+  if (state === "pill") {
     return <JudgesBadge onExpand={expand} />;
   }
-  return <JudgesBannerExpanded onNav={onNav} onCollapse={collapse} route={route} />;
+  if (state === "ribbon") {
+    return <JudgesRibbon onExpand={expand} onDismiss={dismiss} />;
+  }
+  return (
+    <JudgesBannerExpanded
+      onNav={onNav}
+      onCollapse={collapseToRibbon}
+      onDismiss={dismiss}
+      route={route}
+    />
+  );
 }
 
-/* ── Collapsed: small floating pill ─────────────────────────────────── */
+/* ── Ribbon: full-width single line, default state ──────────────────── */
+function JudgesRibbon({ onExpand, onDismiss }: JudgesRibbonProps) {
+  const dismiss = useCallback(
+    (e: MouseEvent<HTMLButtonElement>) => {
+      e.stopPropagation();
+      onDismiss();
+    },
+    [onDismiss],
+  );
+
+  return (
+    <div className="jb-ribbon">
+      <button
+        type="button"
+        className="jb-ribbon__main"
+        onClick={onExpand}
+        aria-expanded={false}
+        aria-label="Open the Kaggle juror note: deadline-day snapshot and judge guide"
+      >
+        <span className="jb-ribbon__icon" aria-hidden>
+          🏆
+        </span>
+        <span className="jb-ribbon__text">
+          <b>Kaggle Gemma Hackathon entry</b>
+          <span className="jb-ribbon__sep" aria-hidden>
+            ·
+          </span>
+          see the deadline-day snapshot &amp; judge guide
+        </span>
+        <span className="jb-ribbon__arrow" aria-hidden>
+          →
+        </span>
+      </button>
+      <button
+        type="button"
+        className="jb-ribbon__close"
+        onClick={dismiss}
+        aria-label="Dismiss the Kaggle juror note"
+        title="Dismiss"
+      >
+        <svg viewBox="0 0 14 14" width="11" height="11" aria-hidden>
+          <path
+            d="M3.5 3.5 L10.5 10.5 M10.5 3.5 L3.5 10.5"
+            stroke="currentColor"
+            strokeWidth="1.6"
+            strokeLinecap="round"
+            fill="none"
+          />
+        </svg>
+      </button>
+    </div>
+  );
+}
+
+/* ── Pill: small floating badge ─────────────────────────────────────── */
 function JudgesBadge({ onExpand }: JudgesBadgeProps) {
   return (
     <button
@@ -108,7 +213,7 @@ function JudgesBadge({ onExpand }: JudgesBadgeProps) {
 }
 
 /* ── Expanded: full banner ──────────────────────────────────────────── */
-function JudgesBannerExpanded({ onNav, onCollapse, route }: JudgesBannerExpandedProps) {
+function JudgesBannerExpanded({ onNav, onCollapse, onDismiss, route }: JudgesBannerExpandedProps) {
   const onHome = route.name === "home";
 
   const scrollToActiveResearch = useCallback(
@@ -169,25 +274,45 @@ function JudgesBannerExpanded({ onNav, onCollapse, route }: JudgesBannerExpanded
           <div className="jb__track">
             Kaggle <b>Gemma 4 Good Hackathon</b> <span aria-hidden>·</span> Health &amp; Sciences Track
           </div>
-          <button
-            type="button"
-            className="jb__close"
-            onClick={onCollapse}
-            aria-label="Collapse juror note"
-            title="Collapse"
-          >
-            <svg viewBox="0 0 14 14" width="12" height="12" aria-hidden>
-              <path
-                d="M3 8 L7 4 L11 8"
-                stroke="currentColor"
-                strokeWidth="1.6"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                fill="none"
-              />
-            </svg>
-            <span className="jb__close-label">Collapse</span>
-          </button>
+          <div className="jb__controls">
+            <button
+              type="button"
+              className="jb__close"
+              onClick={onCollapse}
+              aria-expanded
+              aria-label="Collapse juror note to a one-line ribbon"
+              title="Collapse to ribbon"
+            >
+              <svg viewBox="0 0 14 14" width="12" height="12" aria-hidden>
+                <path
+                  d="M3 8 L7 4 L11 8"
+                  stroke="currentColor"
+                  strokeWidth="1.6"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  fill="none"
+                />
+              </svg>
+              <span className="jb__close-label">Collapse</span>
+            </button>
+            <button
+              type="button"
+              className="jb__dismiss"
+              onClick={onDismiss}
+              aria-label="Dismiss juror note to a floating badge"
+              title="Dismiss"
+            >
+              <svg viewBox="0 0 14 14" width="12" height="12" aria-hidden>
+                <path
+                  d="M3.5 3.5 L10.5 10.5 M10.5 3.5 L3.5 10.5"
+                  stroke="currentColor"
+                  strokeWidth="1.6"
+                  strokeLinecap="round"
+                  fill="none"
+                />
+              </svg>
+            </button>
+          </div>
         </header>
 
         <div className="jb__lede">
@@ -311,8 +436,9 @@ function JudgesBannerExpanded({ onNav, onCollapse, route }: JudgesBannerExpanded
             type="button"
             className="jb__close jb__close--bottom"
             onClick={onCollapse}
-            aria-label="Collapse juror note"
-            title="Collapse"
+            aria-expanded
+            aria-label="Collapse juror note to a one-line ribbon"
+            title="Collapse to ribbon"
           >
             <svg viewBox="0 0 14 14" width="12" height="12" aria-hidden>
               <path

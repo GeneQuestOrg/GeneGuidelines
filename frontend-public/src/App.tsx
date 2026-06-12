@@ -40,7 +40,16 @@ export default function App() {
 }
 
 function AppShell() {
-  const { route, navigate } = useHashRouter();
+  const { route, hash, navigate } = useHashRouter();
+  /* Judges arriving from the Kaggle submission link (?from=kaggle) get the
+     full juror panel; everyone else gets the collapsed ribbon. */
+  const fromKaggle = useMemo(() => {
+    const queryStart = hash.indexOf("?");
+    if (queryStart === -1) {
+      return false;
+    }
+    return new URLSearchParams(hash.slice(queryStart + 1)).get("from") === "kaggle";
+  }, [hash]);
   const { tweaks, setTweak: setTweakBase } = useTweaks();
   const { view, setView } = useAudienceView(tweaks.defaultView);
   const [authOpen, setAuthOpen] = useState(false);
@@ -77,7 +86,7 @@ function AppShell() {
 
   return (
     <div className="app-shell">
-      <JudgesBanner route={route} onNav={navigate} />
+      <JudgesBanner route={route} onNav={navigate} fromKaggle={fromKaggle} />
       <PublicHeader
         route={route}
         onNav={navigate}
