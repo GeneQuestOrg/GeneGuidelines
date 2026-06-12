@@ -6,7 +6,14 @@ import type {
 } from "../types/account";
 import type { CatalogStats, ContentPrSummary, Disease, GuidelineMeta } from "../types";
 import type { GuidelinePrDetail } from "../types/contentPr";
-import type { DiseaseDoctorsPayload, PublicDoctor } from "../types/doctor";
+import type {
+  DiseaseDoctorsPayload,
+  DoctorSubmissionInput,
+  DoctorSubmissionResult,
+  ParentRecInput,
+  ParentRecResult,
+  PublicDoctor,
+} from "../types/doctor";
 import type { Foundation } from "../types/foundation";
 import type { GuidelineDocument } from "../types/guidelineDocument";
 import type { OfficialGuideline } from "../types/officialGuideline";
@@ -41,6 +48,13 @@ export interface DoctorRepository {
   listAllDoctors(): Promise<readonly PublicDoctor[]>;
   getDoctorBySlug(slug: string): Promise<PublicDoctor | null>;
   getDoctorsForDisease(diseaseSlug: string): Promise<DiseaseDoctorsPayload>;
+  /** Propose a clinician we are missing (`POST /api/doctors/submissions`). Parent-only. */
+  submitDoctor(input: DoctorSubmissionInput): Promise<DoctorSubmissionResult>;
+  /** Recommend a doctor (`POST /api/doctors/{slug}/parent-recs`). Parent-only; min 20 chars. */
+  submitParentRec(
+    doctorSlug: string,
+    input: ParentRecInput,
+  ): Promise<ParentRecResult>;
 }
 
 export interface ResearchRunsRepository {

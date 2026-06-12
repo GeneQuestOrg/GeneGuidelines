@@ -1,7 +1,11 @@
 import { useMemo, useState } from "react";
+import { Button } from "@gene-guidelines/ui";
 import type { UserLocation } from "../router/types";
 import type { DiseaseSuggestion } from "../api/diseaseIndex";
 import type { PubmedRole } from "../types/doctor";
+import { useAccountContext } from "../auth/accountContext";
+import { addDoctorCtaMode } from "../utils/contributionGating";
+import { AddDoctorModal } from "../components/AddDoctorModal";
 import { DiseaseAutocomplete } from "../components/DiseaseAutocomplete";
 import { DoctorCard } from "../components/DoctorCard";
 import { DoctorsMap } from "../components/DoctorsMap";
@@ -46,6 +50,8 @@ const PAGE_SIZE = 12;
 export function DoctorsView({ userLoc, initialDisease, onNav }: DoctorsViewProps) {
   const { doctors, loading, error } = useDoctors();
   const { diseases, loading: diseasesLoading } = useDiseaseCatalog();
+  const account = useAccountContext();
+  const [addDoctorOpen, setAddDoctorOpen] = useState(false);
   const [roleFilter, setRoleFilter] = useState(ROLE_FILTER_ALL);
   const [sourceFilter, setSourceFilter] = useState<SourceFilter>("all");
   const [parentOnly, setParentOnly] = useState(false);
@@ -189,6 +195,10 @@ export function DoctorsView({ userLoc, initialDisease, onNav }: DoctorsViewProps
           rest — we show what&rsquo;s documented: publications, guideline authorship, recent
           activity, and what other families report.
         </p>
+        <AddDoctorCta
+          account={account}
+          onOpen={() => setAddDoctorOpen(true)}
+        />
       </header>
 
       <div className="dfilters">
@@ -324,6 +334,55 @@ export function DoctorsView({ userLoc, initialDisease, onNav }: DoctorsViewProps
           ) : null}
         </div>
       ) : null}
+
+      {addDoctorOpen ? (
+        <AddDoctorModal
+          onClose={() => setAddDoctorOpen(false)}
+          initialDiseaseSlug={activeDiseaseSlug}
+        />
+      ) : null}
     </section>
   );
+}
+
+type AccountCtx = ReturnType<typeof useAccountContext>;
+
+/**
+ * "Recommend a doctor we're missing" entry. The render decision is the pure
+ * {@link addDoctorCtaMode} gate (env-gated on VITE_AUTH0_DOMAIN):
+ * - "hidden": Auth0 unset (today's behaviour) or signed-in non-contributor.
+ * - "sign-in": Auth0 on, signed-out → sign-in CTA.
+ * - "open-modal": Auth0 on, signed-in parent/superadmin → opens the modal.
+ */
+function AddDoctorCta({
+  account,
+  onOpen,
+}: {
+  account: AccountCtx;
+  onOpen: () => void;
+}) {
+  const mode = addDoctorCtaMode({
+    signInAvailable: account.signInAvailable,
+    isAuthenticated: account.isAuthenticated,
+    role: account.account?.role,
+  });
+  if (mode === "open-modal") {
+    return (
+      <div className="doctors-add-cta">
+        <Button type="button" variant="ghost" onClick={onOpen}>
+          Recommend a doctor we&rsquo;re missing
+        </Button>
+      </div>
+    );
+  }
+  if (mode === "sign-in") {
+    return (
+      <div className="doctors-add-cta">
+        <button type="button" className="link-btn" onClick={account.login}>
+          Sign in to recommend a doctor we&rsquo;re missing
+        </button>
+      </div>
+    );
+  }
+  return null;
 }

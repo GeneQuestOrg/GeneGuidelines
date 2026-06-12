@@ -103,3 +103,41 @@ export interface DiseaseDoctorsPayload {
   readonly source: DoctorListSource;
   readonly doctors: readonly PublicDoctor[];
 }
+
+export type ContributionReviewStatus = "pending" | "approved" | "rejected";
+
+export type RecRelation = "parent" | "carer";
+
+/** Body of `POST /api/doctors/submissions` — a parent proposes a missing clinician. */
+export interface DoctorSubmissionInput {
+  readonly name: string;
+  readonly specialty?: string;
+  readonly institution?: string;
+  readonly city?: string;
+  readonly country?: string;
+  readonly diseaseSlug?: string;
+  readonly note?: string;
+}
+
+/** Body of `POST /api/doctors/{slug}/parent-recs` — a parent recommends a doctor. */
+export interface ParentRecInput {
+  readonly text: string;
+  readonly region?: string;
+  readonly relation?: RecRelation;
+}
+
+/** Response of `POST /api/doctors/submissions` — the submission awaiting moderation. */
+export interface DoctorSubmissionResult {
+  readonly id: string;
+  readonly slug: string;
+  readonly name: string;
+  readonly reviewStatus: ContributionReviewStatus;
+  readonly possibleDuplicate: boolean;
+}
+
+/** Response of `POST /api/doctors/{slug}/parent-recs` — the rec awaiting moderation. */
+export interface ParentRecResult {
+  readonly id: string;
+  readonly doctorSlug: string;
+  readonly reviewStatus: ContributionReviewStatus;
+}

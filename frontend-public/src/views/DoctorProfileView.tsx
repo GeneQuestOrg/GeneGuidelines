@@ -1,6 +1,10 @@
 import { useState } from "react";
 import { Badge, Button, Section } from "@gene-guidelines/ui";
 import type { UserLocation } from "../router/types";
+import { useAccountContext } from "../auth/accountContext";
+import { recFormMode } from "../utils/contributionGating";
+import { repositories } from "../repositories";
+import { ApiRequestError } from "../api/client";
 import { DistancePill } from "../components/DistancePill";
 import { SpecialistDisclaimer } from "../components/SpecialistDisclaimer";
 import { TrialsList } from "../components/TrialsList";
@@ -42,6 +46,7 @@ export function DoctorProfileView({ slug, userLoc, onNav }: DoctorProfileViewPro
   const { diseases } = useDiseaseCatalog();
   const { recs: localRecs, addRec } = useLocalParentRecs(slug);
   const relatedTrials = useRelatedTrials(doctor?.diseases ?? []);
+  const account = useAccountContext();
 
   if (loading) {
     return (
@@ -250,7 +255,7 @@ export function DoctorProfileView({ slug, userLoc, onNav }: DoctorProfileViewPro
             ))}
           </ul>
         )}
-        <AddRecForm onAdd={addRec} />
+        <AddRecForm doctorSlug={slug} account={account} onAdd={addRec} />
       </Section>
 
       <Section title="Related trials" divider>
@@ -337,31 +342,93 @@ export function DoctorProfileView({ slug, userLoc, onNav }: DoctorProfileViewPro
   );
 }
 
+type AccountCtx = ReturnType<typeof useAccountContext>;
+
 interface AddRecFormProps {
+  readonly doctorSlug: string;
+  readonly account: AccountCtx;
   readonly onAdd: (rec: LocalParentRec) => void;
 }
 
-function AddRecForm({ onAdd }: AddRecFormProps) {
+/**
+ * Recommendation form, env-gated on VITE_AUTH0_DOMAIN via the account context:
+ * - Auth0 unset (`signInAvailable` false): localStorage echo, exactly as today.
+ * - Auth0 on, signed-out: a sign-in CTA in place of the form.
+ * - Auth0 on, signed-in parent: a real POST; on success the author's entry is
+ *   echoed locally and labelled "Awaiting moderation".
+ */
+function AddRecForm({ doctorSlug, account, onAdd }: AddRecFormProps) {
   const [text, setText] = useState("");
   const [region, setRegion] = useState("");
   const [relation, setRelation] = useState<LocalRecRelation>("parent");
   const [touched, setTouched] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const trimmed = text.trim();
   const tooShort = trimmed.length < MIN_REC_CHARS;
 
-  function handleSubmit(event: React.FormEvent): void {
+  const mode = recFormMode({
+    signInAvailable: account.signInAvailable,
+    isAuthenticated: account.isAuthenticated,
+    role: account.account?.role,
+  });
+  // "post" hits the API; "local" keeps the historical localStorage echo.
+  const writePathLive = mode === "post";
+
+  // Signed-out / non-contributor (Auth0 on): a sign-in CTA in place of the form.
+  if (mode === "sign-in" || mode === "not-allowed") {
+    return (
+      <div className="rec-form rec-form--signin">
+        <div className="rec-form__title">Add your recommendation</div>
+        {mode === "not-allowed" ? (
+          <p className="rec-form__disclaimer">
+            Only parents and carers can leave a recommendation.
+          </p>
+        ) : (
+          <button type="button" className="link-btn" onClick={account.login}>
+            Sign in to recommend this doctor
+          </button>
+        )}
+      </div>
+    );
+  }
+
+  async function handleSubmit(event: React.FormEvent): Promise<void> {
     event.preventDefault();
     if (tooShort) {
       setTouched(true);
       return;
     }
-    onAdd({
+    const rec: LocalParentRec = {
       text: trimmed,
       region: region.trim(),
       relation,
       date: new Date().toISOString().slice(0, 10),
-    });
+    };
+    if (writePathLive) {
+      setSubmitting(true);
+      setSubmitError(null);
+      try {
+        await repositories().doctors.submitParentRec(doctorSlug, {
+          text: trimmed,
+          region: region.trim() || undefined,
+          relation,
+        });
+      } catch (e: unknown) {
+        const message =
+          e instanceof ApiRequestError || e instanceof Error
+            ? e.message
+            : "Could not submit — please try again.";
+        setSubmitError(message);
+        setSubmitting(false);
+        return;
+      }
+      setSubmitting(false);
+    }
+    // Echo locally so the author sees their entry immediately (labelled
+    // "Awaiting moderation" via the rec--local note in the list above).
+    onAdd(rec);
     setText("");
     setRegion("");
     setRelation("parent");
@@ -369,7 +436,7 @@ function AddRecForm({ onAdd }: AddRecFormProps) {
   }
 
   return (
-    <form className="rec-form" onSubmit={handleSubmit}>
+    <form className="rec-form" onSubmit={(e) => void handleSubmit(e)}>
       <div className="rec-form__title">Add your recommendation</div>
       <textarea
         className="rec-form__textarea"
@@ -382,6 +449,11 @@ function AddRecForm({ onAdd }: AddRecFormProps) {
       />
       {touched && tooShort ? (
         <p className="rec-form__error">Please write at least {MIN_REC_CHARS} characters.</p>
+      ) : null}
+      {submitError != null ? (
+        <p className="rec-form__error" role="alert">
+          {submitError}
+        </p>
       ) : null}
       <div className="rec-form__row">
         <input
@@ -400,12 +472,14 @@ function AddRecForm({ onAdd }: AddRecFormProps) {
           <option value="parent">Parent</option>
           <option value="carer">Carer</option>
         </select>
-        <Button type="submit" variant="ghost">
-          Save recommendation
+        <Button type="submit" variant="ghost" disabled={submitting}>
+          {submitting ? "Submitting…" : "Save recommendation"}
         </Button>
       </div>
       <p className="rec-form__disclaimer">
-        Saved on this device for now. Publication requires moderation once accounts launch.
+        {writePathLive
+          ? "Submitted for moderation — your entry appears publicly once a reviewer approves it."
+          : "Saved on this device for now. Publication requires moderation once accounts launch."}
       </p>
     </form>
   );
