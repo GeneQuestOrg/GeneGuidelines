@@ -10,6 +10,7 @@ import type { DoctorWithDistance } from "../utils/doctorSort";
 import { pubmedRoleLabel } from "../utils/doctorLabels";
 import { formatDistanceKm } from "../utils/geo";
 import { practicePins } from "../utils/practices";
+import { cssVar, ROLE_COLOR_TOKENS, USER_MARKER_TOKENS } from "../utils/cssTokens";
 import "../styles/doctors.css";
 
 export interface DoctorsMapProps {
@@ -28,21 +29,20 @@ function esc(s: string): string {
     .replace(/"/g, "&quot;");
 }
 
-const ROLE_COLORS: Record<string, string> = {
-  research_leader: "#2563eb",
-  research_participant: "#6b7280",
-  case_study_author: "#9ca3af",
-  unknown: "#d1d5db",
-};
-
-const VALID_PUBMED_ROLES = new Set(Object.keys(ROLE_COLORS));
+const VALID_PUBMED_ROLES = new Set(Object.keys(ROLE_COLOR_TOKENS));
 
 function safeRole(role: string): string {
   return VALID_PUBMED_ROLES.has(role) ? role : "unknown";
 }
 
+/** Resolve a role's marker color from the design token, with a literal fallback. */
+function roleColor(role: string): string {
+  const entry = ROLE_COLOR_TOKENS[safeRole(role)];
+  return cssVar(entry.token, entry.fallback);
+}
+
 function roleMarkerIcon(role: string): L.DivIcon {
-  const color = ROLE_COLORS[role] ?? ROLE_COLORS.unknown;
+  const color = roleColor(role);
   return L.divIcon({
     html: `<svg width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><circle cx="8" cy="8" r="6.5" fill="${color}" stroke="white" stroke-width="2"/></svg>`,
     className: "map-role-icon",
@@ -116,9 +116,9 @@ export function DoctorsMap({ doctors, userLoc, onNav }: DoctorsMapProps) {
       const latlng: L.LatLngExpression = [userLoc.lat, userLoc.lng];
       L.circleMarker(latlng, {
         radius: 7,
-        color: "#dc2626",
+        color: cssVar(USER_MARKER_TOKENS.stroke.token, USER_MARKER_TOKENS.stroke.fallback),
         weight: 2,
-        fillColor: "#fca5a5",
+        fillColor: cssVar(USER_MARKER_TOKENS.fill.token, USER_MARKER_TOKENS.fill.fallback),
         fillOpacity: 0.9,
       })
         .bindTooltip("Your location", { direction: "top" })
@@ -144,11 +144,11 @@ export function DoctorsMap({ doctors, userLoc, onNav }: DoctorsMapProps) {
       <div className="map-stub">
         <div className="map-stub__head">
           <div className="map-legend">
-            <span className="map-legend__dot" style={{ background: ROLE_COLORS.research_leader }} />
+            <span className="map-legend__dot map-legend__dot--research_leader" />
             Led research
-            <span className="map-legend__dot" style={{ background: ROLE_COLORS.research_participant }} />
+            <span className="map-legend__dot map-legend__dot--research_participant" />
             Contributed
-            <span className="map-legend__dot" style={{ background: ROLE_COLORS.case_study_author }} />
+            <span className="map-legend__dot map-legend__dot--case_study_author" />
             Case studies
           </div>
           <span className="map-stub__count">

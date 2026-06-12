@@ -22,7 +22,9 @@ export interface DoctorFilterCriteria {
 }
 
 /** True when the doctor carries a parent signal (a family recommendation or parent provenance). */
-function hasParentSignal(doctor: DoctorWithDistance): boolean {
+export function hasParentSignal(
+  doctor: { readonly parentRecs?: readonly unknown[]; readonly addedVia?: AddedVia },
+): boolean {
   return (doctor.parentRecs?.length ?? 0) > 0 || addedViaOf(doctor) === "parent";
 }
 
