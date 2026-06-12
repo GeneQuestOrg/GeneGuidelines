@@ -237,11 +237,13 @@ export function DiseaseTabs({
           <Section title={copy.doctorsTitle}>
             <p className="d-panel-stat">{copy.doctorsSub(disease.doctorsCount)}</p>
             <div className="page__actions">
-              <Button variant="primary" type="button" onClick={() => onNav("/doctors")}>
-                {isClinician ? "Open expert directory" : "Browse specialists"}
+              <Button variant="primary" type="button" onClick={() => onNav(`/doctors?disease=${slug}`)}>
+                {isClinician
+                  ? `Open expert directory for ${disease.nameShort}`
+                  : `See ${disease.nameShort} specialists`}
               </Button>
-              <Button type="button" onClick={() => onNav(`/doctors?disease=${slug}`)}>
-                Filter directory
+              <Button type="button" onClick={() => onNav("/doctors")}>
+                Browse full directory
               </Button>
             </div>
             {doctorsLoading ? (
