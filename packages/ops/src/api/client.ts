@@ -258,6 +258,37 @@ export async function fetchMe(): Promise<MeResponse> {
   return request<MeResponse>("/api/account/me");
 }
 
+/** A user as seen in the superadmin Users view (`GET /api/account/users`). */
+export interface AdminUser {
+  id: string;
+  auth0_sub: string;
+  email: string;
+  display_name: string | null;
+  role: AccountRole | null;
+  verified: boolean;
+  orcid: string | null;
+  institution: string | null;
+  created_at: string;
+  updated_at: string;
+  last_login_at: string | null;
+}
+
+/** Superadmin: list every user (sorted by email server-side). */
+export async function fetchUsers(): Promise<AdminUser[]> {
+  return request<AdminUser[]>("/api/account/users");
+}
+
+/** Superadmin: patch a user's role and/or verified flag (`PATCH /api/account/users/{id}`). */
+export async function patchUser(
+  userId: string,
+  patch: { role?: AccountRole; verified?: boolean }
+): Promise<AdminUser> {
+  return request<AdminUser>(`/api/account/users/${encodeURIComponent(userId)}`, {
+    method: "PATCH",
+    body: JSON.stringify(patch),
+  });
+}
+
 // --- Flows ---
 
 export async function fetchFlows(): Promise<ApiFlowDefinition[]> {

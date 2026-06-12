@@ -85,6 +85,10 @@ export function parseHash(hash: string): Route {
     return { name: "account" };
   }
 
+  if (parts[0] === "join" && parts[1]) {
+    return { name: "join", token: parts[1] };
+  }
+
   if (parts[0] === "research" && parts[1]) {
     const diseaseSlug = query.disease ? normalizeDiseaseSlug(query.disease) : null;
     const diseaseName =

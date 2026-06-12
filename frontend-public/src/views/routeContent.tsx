@@ -10,6 +10,7 @@ import { FlowchartView } from "./FlowchartView";
 import { DoctorsView } from "./DoctorsView";
 import { DoctorProfileView } from "./DoctorProfileView";
 import { AccountView } from "./AccountView";
+import { JoinView } from "./JoinView";
 import { ResearchRunView } from "./ResearchRunView";
 import { StartResearchView } from "./StartResearchView";
 import { TrialsView } from "./TrialsView";
@@ -48,6 +49,8 @@ export function routeContent({
       return <DiseaseIndexView initialQuery={route.query} onNav={onNav} />;
     case "account":
       return <AccountView onNav={onNav} onSignIn={onSignIn} />;
+    case "join":
+      return <JoinView token={route.token} onNav={onNav} />;
     case "about":
       return <AboutView view={view} onNav={onNav} />;
     case "doctors":

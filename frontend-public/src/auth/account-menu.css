@@ -107,3 +107,78 @@
 .account-menu__item:hover {
   background: var(--bg-soft);
 }
+
+.account-menu__item:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.account-menu__section {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 4px;
+}
+
+.account-menu__section-title {
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--ink-3);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 0 0 4px;
+}
+
+.account-menu__section .account-menu__pending {
+  margin: 0 0 4px;
+  font-weight: 600;
+}
+
+.account-menu__section-note {
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+  margin: 0 0 6px;
+}
+
+.account-menu__section .account-menu__item {
+  padding: 6px 8px;
+}
+
+.account-menu__invite {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.account-menu__invite-url {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--bg-soft);
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--fs-xs);
+}
+
+.account-menu__copy {
+  flex: none;
+  padding: 6px 10px;
+  border: 1px solid var(--accent);
+  border-radius: var(--r-sm);
+  background: var(--accent);
+  color: var(--bg-elev);
+  font: inherit;
+  font-size: var(--fs-xs);
+  cursor: pointer;
+}
+
+.account-menu__copy:hover {
+  background: var(--accent-ink);
+}
+
+.account-menu__error {
+  font-size: var(--fs-xs);
+  color: var(--st-red);
+  margin: 6px 0 0;
+}

@@ -19,6 +19,8 @@ export interface AccountContextValue {
   login: () => void;
   logout: () => void;
   selectRole: (role: SelectableRole) => Promise<void>;
+  /** Redeem a doctor invite for the signed-in user; refreshes the account. */
+  acceptInvite: (token: string) => Promise<void>;
 }
 
 export const AccountContext = createContext<AccountContextValue | null>(null);

@@ -19,6 +19,7 @@ export function parseHash(hash: string): AdminRoute {
     section === "workflows" ||
     section === "tools" ||
     section === "prs" ||
+    section === "users" ||
     section === "settings"
   ) {
     return { name: section };

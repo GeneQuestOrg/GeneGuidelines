@@ -13,14 +13,19 @@ import { routeContent } from "./views/routeContent";
 import { AccountProvider } from "./auth/AccountProvider";
 import { useAccountContext } from "./auth/accountContext";
 import { RolePickerModal } from "./auth/RolePickerModal";
+import { getPendingInviteToken } from "./auth/pendingInvite";
 import "./app.css";
 
 const DevComponents = lazy(() => import("./pages/DevComponents"));
 
-/** Shows the one-time role picker after first login (Auth0 mode only). */
+/**
+ * Shows the one-time role picker after first login (Auth0 mode only). Suppressed
+ * while an invite is pending — an invited doctor receives their role from the
+ * invite accept flow (JoinView), not by self-selecting it here.
+ */
 function RolePickerGate() {
   const { needsRoleSelection, selectRole } = useAccountContext();
-  if (!needsRoleSelection) {
+  if (!needsRoleSelection || getPendingInviteToken() != null) {
     return null;
   }
   return <RolePickerModal onSelect={selectRole} />;

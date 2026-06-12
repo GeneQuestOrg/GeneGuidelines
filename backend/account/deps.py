@@ -29,7 +29,8 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from ..auth import api_key_from_env, api_key_matches
 from .jwt import Auth0Verifier, Claims
 from .models import Role, User
-from .repository import SqlaUserRepo, UserRepo
+from .orcid import HttpxOrcidTokenClient, OrcidConfig, OrcidTokenClient
+from .repository import InviteRepo, SqlaInviteRepo, SqlaUserRepo, UserRepo
 from .service import AccountService, parse_superadmin_emails
 
 _bearer = HTTPBearer(auto_error=False)
@@ -49,8 +50,30 @@ def provide_user_repo() -> UserRepo:
     return SqlaUserRepo()
 
 
+def provide_invite_repo() -> InviteRepo:
+    """Return the production invite repository."""
+    return SqlaInviteRepo()
+
+
+def provide_orcid_config() -> OrcidConfig:
+    """Return the ORCID OAuth config from env (``enabled`` is False when unset)."""
+    return OrcidConfig.from_env()
+
+
+def provide_orcid_client(
+    config: OrcidConfig = Depends(provide_orcid_config),
+) -> OrcidTokenClient | None:
+    """Return the production ORCID token client, or ``None`` when ORCID is off."""
+    if not config.enabled:
+        return None
+    return HttpxOrcidTokenClient(config)
+
+
 def provide_account_service(
     repo: UserRepo = Depends(provide_user_repo),
+    invite_repo: InviteRepo = Depends(provide_invite_repo),
+    orcid_config: OrcidConfig = Depends(provide_orcid_config),
+    orcid_client: OrcidTokenClient | None = Depends(provide_orcid_client),
 ) -> AccountService:
     """Wire the production :class:`AccountService` for this request."""
     try:
@@ -60,6 +83,9 @@ def provide_account_service(
     return AccountService(
         repo=repo,
         superadmin_emails=parse_superadmin_emails(SUPERADMIN_EMAILS),
+        invite_repo=invite_repo,
+        orcid_config=orcid_config,
+        orcid_client=orcid_client,
     )
 
 
@@ -209,6 +235,9 @@ def require_verified_doctor(user: CurrentUser) -> User:
 __all__ = [
     "provide_verifier",
     "provide_user_repo",
+    "provide_invite_repo",
+    "provide_orcid_config",
+    "provide_orcid_client",
     "provide_account_service",
     "get_claims",
     "get_current_user",

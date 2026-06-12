@@ -12,6 +12,7 @@ export type Route =
   | { name: "startResearch"; diseaseSlug?: string }
   | { name: "about" }
   | { name: "account" }
+  | { name: "join"; token: string }
   | {
       name: "researchRun";
       id: string;

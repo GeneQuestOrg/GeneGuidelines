@@ -24,8 +24,9 @@ from sqlalchemy.engine import Engine
 
 from ..shared.persistence.base_repo import BaseSqlalchemyRepo
 from ..shared.persistence.dialect import nocase_order
+from ..shared.persistence.schema import invites as invites_table
 from ..shared.persistence.schema import users as users_table
-from .models import Auth0Sub, Role, User, UserId
+from .models import Auth0Sub, Invite, InviteToken, Role, User, UserId
 
 
 class UserRow(TypedDict):
@@ -74,6 +75,7 @@ class UserRepo(Protocol):
     def touch_login(self, user_id: str, when: str) -> None: ...
     def set_role(self, user_id: str, role: Role, when: str) -> User | None: ...
     def set_verified(self, user_id: str, verified: bool, when: str) -> User | None: ...
+    def set_orcid(self, user_id: str, orcid: str, when: str) -> User | None: ...
     def list_users(self) -> list[User]: ...
 
 
@@ -133,6 +135,16 @@ class SqlaUserRepo(BaseSqlalchemyRepo):
             update(users_table)
             .where(users_table.c.id == user_id)
             .values(verified=1 if verified else 0, updated_at=when)
+        )
+        with self._conn() as conn:
+            conn.execute(stmt)
+        return self.get_by_id(user_id)
+
+    def set_orcid(self, user_id: str, orcid: str, when: str) -> User | None:
+        stmt = (
+            update(users_table)
+            .where(users_table.c.id == user_id)
+            .values(orcid=orcid, updated_at=when)
         )
         with self._conn() as conn:
             conn.execute(stmt)
@@ -200,6 +212,16 @@ class InMemoryUserRepo:
         self._by_id[user_id] = updated
         return updated
 
+    def set_orcid(self, user_id: str, orcid: str, when: str) -> User | None:
+        from dataclasses import replace
+
+        existing = self._by_id.get(user_id)
+        if existing is None:
+            return None
+        updated = replace(existing, orcid=orcid, updated_at=when)
+        self._by_id[user_id] = updated
+        return updated
+
     def list_users(self) -> list[User]:
         return sorted(self._by_id.values(), key=lambda u: u.email.lower())
 
@@ -209,10 +231,134 @@ def _as_row(mapping: dict[str, object]) -> UserRow:
     return mapping  # type: ignore[return-value]
 
 
+# ---------------------------------------------------------------------------
+# Invites (AUTH-4)
+# ---------------------------------------------------------------------------
+
+
+class InviteRow(TypedDict):
+    """Shape of an ``invites`` row as returned by the database."""
+
+    token: str
+    created_by: str
+    intended_role: str
+    email: str | None
+    doctor_slug: str | None
+    created_at: str
+    expires_at: str
+    used_by: str | None
+    used_at: str | None
+
+
+def invite_from_row(row: InviteRow) -> Invite:
+    """Map an ``invites`` database row to an :class:`Invite` domain object."""
+    role = Role.from_str(row.get("intended_role")) or Role.DOCTOR
+    used_by = _nullable_str(row.get("used_by"))
+    return Invite(
+        token=InviteToken(str(row["token"])),
+        created_by=UserId(str(row["created_by"])),
+        intended_role=role,
+        email=_nullable_str(row.get("email")),
+        doctor_slug=_nullable_str(row.get("doctor_slug")),
+        created_at=str(row["created_at"]),
+        expires_at=str(row["expires_at"]),
+        used_by=UserId(used_by) if used_by is not None else None,
+        used_at=_nullable_str(row.get("used_at")),
+    )
+
+
+class InviteRepo(Protocol):
+    """Port — :class:`backend.account.service.AccountService` depends on this."""
+
+    def get(self, token: str) -> Invite | None: ...
+    def insert(self, invite: Invite) -> Invite: ...
+    def mark_used(self, token: str, used_by: str, when: str) -> Invite | None: ...
+
+
+class SqlaInviteRepo(BaseSqlalchemyRepo):
+    """Production impl — SQLAlchemy 2.0 Core (no ORM)."""
+
+    def __init__(self, engine: Engine | None = None) -> None:
+        super().__init__(engine)
+
+    def get(self, token: str) -> Invite | None:
+        stmt = select(invites_table).where(invites_table.c.token == token)
+        with self._conn() as conn:
+            row = conn.execute(stmt).mappings().first()
+        return invite_from_row(_as_invite_row(dict(row))) if row else None
+
+    def insert(self, invite: Invite) -> Invite:
+        stmt = insert(invites_table).values(
+            token=str(invite.token),
+            created_by=str(invite.created_by),
+            intended_role=invite.intended_role.value,
+            email=invite.email,
+            doctor_slug=invite.doctor_slug,
+            created_at=invite.created_at,
+            expires_at=invite.expires_at,
+            used_by=str(invite.used_by) if invite.used_by is not None else None,
+            used_at=invite.used_at,
+        )
+        with self._conn() as conn:
+            conn.execute(stmt)
+        return invite
+
+    def mark_used(self, token: str, used_by: str, when: str) -> Invite | None:
+        # Conditional update: only an unredeemed token transitions to used, so a
+        # concurrent double-accept cannot both succeed (the second matches zero
+        # rows and the service re-reads the now-used invite).
+        stmt = (
+            update(invites_table)
+            .where(invites_table.c.token == token)
+            .where(invites_table.c.used_by.is_(None))
+            .values(used_by=used_by, used_at=when)
+        )
+        with self._conn() as conn:
+            conn.execute(stmt)
+        return self.get(token)
+
+
+class InMemoryInviteRepo:
+    """Dict-backed impl — used by API tests and viable for DB-less dev."""
+
+    def __init__(self) -> None:
+        self._by_token: dict[str, Invite] = {}
+
+    def get(self, token: str) -> Invite | None:
+        return self._by_token.get(token)
+
+    def insert(self, invite: Invite) -> Invite:
+        if invite.token in self._by_token:
+            raise ValueError(f"invite {invite.token} already exists")
+        self._by_token[str(invite.token)] = invite
+        return invite
+
+    def mark_used(self, token: str, used_by: str, when: str) -> Invite | None:
+        from dataclasses import replace
+
+        existing = self._by_token.get(token)
+        if existing is None:
+            return None
+        if existing.used_by is None:
+            existing = replace(existing, used_by=UserId(used_by), used_at=when)
+            self._by_token[token] = existing
+        return existing
+
+
+def _as_invite_row(mapping: dict[str, object]) -> InviteRow:
+    """Narrow a SQLAlchemy mapping to :class:`InviteRow` for the mapper."""
+    return mapping  # type: ignore[return-value]
+
+
 __all__ = [
     "UserRow",
     "UserRepo",
     "SqlaUserRepo",
     "InMemoryUserRepo",
     "user_from_row",
+    "InviteRow",
+    "InviteRepo",
+    "SqlaInviteRepo",
+    "InMemoryInviteRepo",
+    "invite_from_row",
 ]
