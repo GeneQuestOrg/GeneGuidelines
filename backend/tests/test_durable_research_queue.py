@@ -25,6 +25,19 @@ from backend.research_queue import (
 from backend.research_queue.repository import SqlaResearchJobRepo
 
 
+async def _wait_until(predicate, timeout: float = 5.0) -> None:
+    """Wait for ``predicate()`` with real wall-clock time.
+
+    The worker idles in a timed ``Event.wait`` (poll interval ~0.2s), so
+    zero-time ``sleep(0)`` yield loops race against it on slow CI machines.
+    """
+    deadline = asyncio.get_event_loop().time() + timeout
+    while not predicate():
+        if asyncio.get_event_loop().time() > deadline:
+            return
+        await asyncio.sleep(0.01)
+
+
 def _iso(dt: datetime) -> str:
     return dt.isoformat()
 
@@ -137,10 +150,7 @@ async def test_queued_jobs_survive_restart() -> None:
 
     sched2.register_runnable("gl-survivor", _recovered)
     await sched2._ensure_started()
-    for _ in range(200):
-        await asyncio.sleep(0)
-        if ran2:
-            break
+    await _wait_until(lambda: survivor["status"] == "done")
     assert ran2 == ["p2"]
     assert survivor["status"] == "done"
     await sched2.shutdown()
