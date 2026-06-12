@@ -943,6 +943,197 @@
   margin: 8px 0 0;
 }
 
+.dprofile__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.dprofile__rodo {
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+  font-style: italic;
+  margin-top: 6px;
+  max-width: 60ch;
+}
+
+.dprofile__disease-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dprofile__disease-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.venues {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.venue {
+  padding: 14px 16px;
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+}
+
+.venue__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.venue__name {
+  font-weight: 600;
+}
+
+.venue__type {
+  font-size: var(--fs-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-3);
+  margin-top: 4px;
+}
+
+.venue__addr,
+.venue__city {
+  font-size: var(--fs-sm);
+  color: var(--ink-2);
+  margin-top: 2px;
+}
+
+.venue__link {
+  display: inline-block;
+  margin-top: 6px;
+  font-size: var(--fs-xs);
+  color: var(--accent-ink);
+  font-family: var(--font-mono);
+  word-break: break-all;
+}
+
+.recs {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.rec {
+  padding: 14px 16px;
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+}
+
+.rec--local {
+  border-style: dashed;
+  border-color: var(--ink-4);
+}
+
+.rec__text {
+  margin: 0;
+  color: var(--ink);
+  line-height: 1.5;
+}
+
+.rec__meta {
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+  font-family: var(--font-mono);
+  margin-top: 8px;
+}
+
+.rec__local-note {
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+  font-style: italic;
+  margin-top: 6px;
+}
+
+.rec-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px 18px;
+  background: var(--bg-soft);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+}
+
+.rec-form__title {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.rec-form__textarea {
+  font: inherit;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border: 1px solid var(--line-2);
+  background: var(--bg);
+  border-radius: var(--r-sm);
+  color: var(--ink);
+  resize: vertical;
+}
+
+.rec-form__row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.rec-form__input,
+.rec-form__select {
+  font: inherit;
+  padding: 9px 12px;
+  border: 1px solid var(--line-2);
+  background: var(--bg);
+  border-radius: var(--r-sm);
+  color: var(--ink);
+  font-size: var(--fs-sm);
+}
+
+.rec-form__input {
+  flex: 1;
+  min-width: 160px;
+}
+
+.rec-form__textarea:focus,
+.rec-form__input:focus,
+.rec-form__select:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: -1px;
+  border-color: var(--accent);
+}
+
+.rec-form__error {
+  font-size: var(--fs-xs);
+  color: var(--st-red, #dc2626);
+  margin: 0;
+}
+
+.rec-form__disclaimer {
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+  font-style: italic;
+  margin: 0;
+}
+
 @media (max-width: 900px) {
   .doctors-layout {
     grid-template-columns: 1fr;

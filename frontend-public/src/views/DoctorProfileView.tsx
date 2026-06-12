@@ -1,15 +1,35 @@
+import { useState } from "react";
 import { Badge, Button, Section } from "@gene-guidelines/ui";
 import type { UserLocation } from "../router/types";
 import { DistancePill } from "../components/DistancePill";
 import { SpecialistDisclaimer } from "../components/SpecialistDisclaimer";
+import { TrialsList } from "../components/TrialsList";
 import { useDiseaseCatalog } from "../hooks/useDiseaseCatalog";
 import { useDoctor } from "../hooks/useDoctor";
+import { useRelatedTrials } from "../hooks/useRelatedTrials";
+import { addedViaOf } from "../utils/doctorFilters";
+import { pubmedRoleLabel, tierForDisease } from "../utils/doctorLabels";
 import { haversineKm } from "../utils/geo";
-import { pubmedRoleLabel } from "../utils/doctorLabels";
+import {
+  type LocalParentRec,
+  type LocalRecRelation,
+  useLocalParentRecs,
+} from "../utils/localParentRecs";
+import { nearestPractice, practiceList } from "../utils/practices";
 import { pubmedArticleUrl } from "../utils/pubmedUrl";
 import { PlaceholderView } from "./PlaceholderView";
+import type { AddedVia } from "../types/doctor";
 import { isWorkflowDoctorSource } from "../types/doctor";
 import "../styles/doctors.css";
+
+const PROVENANCE_LABEL: Record<AddedVia, string | null> = {
+  pubmed: "PubMed",
+  parent: "Parent-added",
+  consortium: "Consortium",
+  nil: null,
+};
+
+const MIN_REC_CHARS = 20;
 
 export interface DoctorProfileViewProps {
   readonly slug: string;
@@ -20,6 +40,8 @@ export interface DoctorProfileViewProps {
 export function DoctorProfileView({ slug, userLoc, onNav }: DoctorProfileViewProps) {
   const { doctor, loading, error } = useDoctor(slug);
   const { diseases } = useDiseaseCatalog();
+  const { recs: localRecs, addRec } = useLocalParentRecs(slug);
+  const relatedTrials = useRelatedTrials(doctor?.diseases ?? []);
 
   if (loading) {
     return (
@@ -51,10 +73,16 @@ export function DoctorProfileView({ slug, userLoc, onNav }: DoctorProfileViewPro
     );
   }
 
-  const km =
-    userLoc != null ? haversineKm(userLoc, { lat: doctor.lat, lng: doctor.lng }) : null;
+  const nearest = nearestPractice(doctor, userLoc);
+  const km = userLoc != null ? haversineKm(userLoc, { lat: nearest.lat, lng: nearest.lng }) : null;
   const roleLabel = pubmedRoleLabel(doctor.pubmedRole);
   const evidence = doctor.evidence;
+  const provenanceLabel = PROVENANCE_LABEL[addedViaOf(doctor)];
+
+  const dataRecs = doctor.parentRecs ?? [];
+  const dataRecCount = evidence.parentRecCount ?? dataRecs.length;
+  const familyRecCount = dataRecs.length + localRecs.length;
+  const venues = practiceList(doctor, userLoc);
 
   return (
     <section className="page page--doctor">
@@ -67,6 +95,23 @@ export function DoctorProfileView({ slug, userLoc, onNav }: DoctorProfileViewPro
             <div className="dprofile__spec">{doctor.specialty}</div>
             <div className="dprofile__inst">
               {doctor.institution} · {doctor.city}, {doctor.country}
+            </div>
+            <div className="dprofile__chips">
+              {provenanceLabel ? (
+                <span className="tag tag--source">{provenanceLabel}</span>
+              ) : null}
+              {isWorkflowDoctorSource(doctor.source) ? (
+                <Badge variant="ok">Doctor Finder</Badge>
+              ) : null}
+              {doctor.reviewStatus === "pending" ? (
+                <span className="tag tag--warn">Pending review</span>
+              ) : null}
+              {familyRecCount > 0 ? (
+                <span className="tag tag--ok">
+                  Recommended by {familyRecCount}{" "}
+                  {familyRecCount === 1 ? "family" : "families"}
+                </span>
+              ) : null}
             </div>
           </div>
           {km != null ? <DistancePill km={km} /> : null}
@@ -117,26 +162,108 @@ export function DoctorProfileView({ slug, userLoc, onNav }: DoctorProfileViewPro
               <span>Guideline / consensus co-author</span>
               <b>{evidence.guidelineOrConsensusCoauthor ? "Yes" : "—"}</b>
             </div>
+            <div className={`ev${dataRecCount > 0 ? " ev--ok" : ""}`}>
+              <span>Recommended by families</span>
+              <b>{dataRecCount}</b>
+            </div>
           </div>
         </div>
       </div>
 
       <Section title="Diseases" sub="Areas of expertise supported by publications.">
-        <div className="chip-row">
+        <div className="dprofile__disease-rows">
           {doctor.diseases.map((diseaseSlug) => {
             const disease = diseases.find((d) => d.slug === diseaseSlug);
+            const tier = tierForDisease(doctor, diseaseSlug);
             return (
-              <button
-                key={diseaseSlug}
-                type="button"
-                className="chip chip--btn"
-                onClick={() => onNav(`/diseases/${diseaseSlug}`)}
-              >
-                {disease?.nameShort ?? diseaseSlug}
-              </button>
+              <div key={diseaseSlug} className="dprofile__disease-row">
+                <button
+                  type="button"
+                  className="chip chip--btn"
+                  onClick={() => onNav(`/diseases/${diseaseSlug}`)}
+                >
+                  {disease?.nameShort ?? diseaseSlug}
+                </button>
+                <span className={`tag tag--role tag--${tier}`}>{pubmedRoleLabel(tier)}</span>
+              </div>
             );
           })}
         </div>
+      </Section>
+
+      <Section title="Where they practise" count={venues.length} divider>
+        <ul className="venues">
+          {venues.map(({ practice, km: venueKm, nearest: isNearest }, index) => (
+            <li key={`${practice.name}-${index}`} className="venue">
+              <div className="venue__head">
+                <span className="venue__name">{practice.name}</span>
+                {isNearest ? <span className="tag tag--ok">Nearest</span> : null}
+                {venueKm != null ? <DistancePill km={venueKm} /> : null}
+              </div>
+              <div className="venue__type">{practice.type}</div>
+              {practice.address ? <div className="venue__addr">{practice.address}</div> : null}
+              <div className="venue__city">{practice.city}</div>
+              {practice.website ? (
+                <a
+                  className="venue__link"
+                  href={practice.website}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  {practice.website}
+                </a>
+              ) : null}
+            </li>
+          ))}
+        </ul>
+      </Section>
+
+      <Section
+        title="Parent recommendations"
+        count={dataRecs.length + localRecs.length}
+        sub="Family experiences PubMed mining cannot surface."
+        divider
+      >
+        {dataRecs.length + localRecs.length === 0 ? (
+          <p className="d-panel-empty">No family recommendations yet.</p>
+        ) : (
+          <ul className="recs">
+            {dataRecs.map((rec, index) => (
+              <li key={`data-${index}`} className="rec">
+                <p className="rec__text">{rec.text}</p>
+                <div className="rec__meta">
+                  {rec.by}
+                  {rec.region ? ` · ${rec.region}` : ""}
+                  {rec.date ? ` · ${rec.date}` : ""}
+                </div>
+              </li>
+            ))}
+            {localRecs.map((rec, index) => (
+              <li key={`local-${index}`} className="rec rec--local">
+                <p className="rec__text">{rec.text}</p>
+                <div className="rec__meta">
+                  {rec.relation === "carer" ? "carer" : "parent"}
+                  {rec.region ? ` · ${rec.region}` : ""}
+                  {rec.date ? ` · ${rec.date}` : ""}
+                </div>
+                <div className="rec__local-note">
+                  Saved on this device — will enter moderation once accounts launch.
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+        <AddRecForm onAdd={addRec} />
+      </Section>
+
+      <Section title="Related trials" divider>
+        {relatedTrials.loading ? (
+          <p className="d-panel-empty">Loading trials…</p>
+        ) : relatedTrials.error != null ? (
+          <p className="d-panel-empty">Could not load trials: {relatedTrials.error}</p>
+        ) : (
+          <TrialsList trials={relatedTrials.trials} />
+        )}
       </Section>
 
       <Section
@@ -201,11 +328,88 @@ export function DoctorProfileView({ slug, userLoc, onNav }: DoctorProfileViewPro
               ? ` · Doctor Finder run ${doctor.executionId}`
               : ""}
           </p>
+          {doctor.rodo?.note ? (
+            <p className="dprofile__rodo">{doctor.rodo.note}</p>
+          ) : null}
         </div>
         <Button type="button" variant="ghost" onClick={() => onNav("/about")}>
           About GeneQuest & contact
         </Button>
       </div>
     </section>
+  );
+}
+
+interface AddRecFormProps {
+  readonly onAdd: (rec: LocalParentRec) => void;
+}
+
+function AddRecForm({ onAdd }: AddRecFormProps) {
+  const [text, setText] = useState("");
+  const [region, setRegion] = useState("");
+  const [relation, setRelation] = useState<LocalRecRelation>("parent");
+  const [touched, setTouched] = useState(false);
+
+  const trimmed = text.trim();
+  const tooShort = trimmed.length < MIN_REC_CHARS;
+
+  function handleSubmit(event: React.FormEvent): void {
+    event.preventDefault();
+    if (tooShort) {
+      setTouched(true);
+      return;
+    }
+    onAdd({
+      text: trimmed,
+      region: region.trim(),
+      relation,
+      date: new Date().toISOString().slice(0, 10),
+    });
+    setText("");
+    setRegion("");
+    setRelation("parent");
+    setTouched(false);
+  }
+
+  return (
+    <form className="rec-form" onSubmit={handleSubmit}>
+      <div className="rec-form__title">Add your recommendation</div>
+      <textarea
+        className="rec-form__textarea"
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        onBlur={() => setTouched(true)}
+        placeholder={`What was your experience? (at least ${MIN_REC_CHARS} characters)`}
+        rows={3}
+        required
+      />
+      {touched && tooShort ? (
+        <p className="rec-form__error">Please write at least {MIN_REC_CHARS} characters.</p>
+      ) : null}
+      <div className="rec-form__row">
+        <input
+          className="rec-form__input"
+          type="text"
+          value={region}
+          onChange={(e) => setRegion(e.target.value)}
+          placeholder="Region (optional)"
+        />
+        <select
+          className="rec-form__select"
+          value={relation}
+          onChange={(e) => setRelation(e.target.value === "carer" ? "carer" : "parent")}
+          aria-label="Your relation"
+        >
+          <option value="parent">Parent</option>
+          <option value="carer">Carer</option>
+        </select>
+        <Button type="submit" variant="ghost">
+          Save recommendation
+        </Button>
+      </div>
+      <p className="rec-form__disclaimer">
+        Saved on this device for now. Publication requires moderation once accounts launch.
+      </p>
+    </form>
   );
 }
