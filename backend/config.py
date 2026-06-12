@@ -30,6 +30,19 @@ AUTH0_DOMAIN = (os.environ.get("AUTH0_DOMAIN") or "").strip()
 AUTH0_AUDIENCE = (os.environ.get("AUTH0_AUDIENCE") or "").strip()
 SUPERADMIN_EMAILS = (os.environ.get("SUPERADMIN_EMAILS") or "").strip()
 
+# -- ORCID (doctor verification, AUTH-4) -------------------------------------
+# App-level OAuth, NOT sign-in (see PLAN decision 7). A signed-in doctor proves
+# they control an ORCID iD; we store it on `users.orcid`. Env-gated: when any of
+# these is unset the ORCID endpoints return 503 and the frontend hides the step.
+# Register a public-API client at https://orcid.org/developer-tools to obtain
+# the id/secret; the redirect URI must match the one registered there exactly.
+#   ORCID_CLIENT_ID      public-API client id (e.g. "APP-XXXXXXXXXXXXXXXX")
+#   ORCID_CLIENT_SECRET  public-API client secret
+#   ORCID_REDIRECT_URI   e.g. "https://api.geneguidelines.org/api/account/orcid/callback"
+ORCID_CLIENT_ID = (os.environ.get("ORCID_CLIENT_ID") or "").strip()
+ORCID_CLIENT_SECRET = (os.environ.get("ORCID_CLIENT_SECRET") or "").strip()
+ORCID_REDIRECT_URI = (os.environ.get("ORCID_REDIRECT_URI") or "").strip()
+
 
 def normalize_openai_compatible_base_url(url: str) -> str:
     """Ensure base URL ends with ``/v1`` for OpenAI SDK clients."""

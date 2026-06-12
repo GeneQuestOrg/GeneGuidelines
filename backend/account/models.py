@@ -18,11 +18,15 @@ boundary rather than the persisted domain.
 from __future__ import annotations
 
 from dataclasses import dataclass, replace
+from datetime import datetime
 from enum import StrEnum
 from typing import NewType
 
 # Primary key of a ``users`` row — a uuid4 hex string (no dashes).
 UserId = NewType("UserId", str)
+
+# An invite token — a ``secrets.token_urlsafe(32)`` string (the ``invites`` PK).
+InviteToken = NewType("InviteToken", str)
 
 # Auth0 ``sub`` claim, e.g. ``"auth0|653f…"`` or ``"google-oauth2|…"``. The
 # stable identity link between an Auth0 account and our ``users`` row.
@@ -99,10 +103,52 @@ class User:
         return replace(self, verified=verified)
 
 
+@dataclass(frozen=True, slots=True)
+class Invite:
+    """A doctor-onboarding invite as persisted in the ``invites`` table.
+
+    Minted by a signed-in parent (or superadmin); redeemed once by the
+    accepting user to take ``intended_role`` (default ``doctor``, still
+    unverified). ``used_by`` / ``used_at`` mark redemption; ``expires_at`` caps
+    the lifetime. All timestamps are ISO-8601 strings (UTC) to match the rest
+    of the account domain.
+    """
+
+    token: InviteToken
+    created_by: UserId
+    intended_role: Role
+    email: str | None
+    doctor_slug: str | None
+    created_at: str
+    expires_at: str
+    used_by: UserId | None
+    used_at: str | None
+
+    @property
+    def used(self) -> bool:
+        return self.used_by is not None
+
+    def is_expired(self, now: datetime) -> bool:
+        """True when ``now`` is at or past ``expires_at``.
+
+        A malformed or naive stored timestamp is treated as expired (fail
+        closed) rather than crashing the public preview endpoint.
+        """
+        try:
+            expires = datetime.fromisoformat(self.expires_at)
+        except ValueError:
+            return True
+        if expires.tzinfo is None:
+            return True
+        return now >= expires
+
+
 __all__ = [
     "UserId",
     "Auth0Sub",
+    "InviteToken",
     "Role",
     "SELECTABLE_ROLES",
     "User",
+    "Invite",
 ]

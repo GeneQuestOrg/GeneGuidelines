@@ -457,6 +457,34 @@ users = Table(
 Index("ix_users_email", users.c.email)
 
 
+# Doctor onboarding invites (AUTH-4). A signed-in parent (or superadmin) mints a
+# token; it travels in a ``#/join/{token}`` URL. The accepting user redeems it
+# to take the ``doctor`` role (still unverified). One token = one redemption:
+# ``used_by`` / ``used_at`` mark it spent, ``expires_at`` caps its lifetime.
+# ``doctor_slug`` records which doctor profile the parent meant to invite (UI
+# context only — no FK, the catalogue is not in this metadata yet).
+invites = Table(
+    "invites",
+    metadata,
+    Column("token", Text, primary_key=True),  # secrets.token_urlsafe(32)
+    Column("created_by", Text, ForeignKey("users.id"), nullable=False),
+    Column("intended_role", Text, nullable=False, server_default="doctor"),
+    Column("email", Text),
+    Column("doctor_slug", Text),
+    Column("created_at", Text, nullable=False),
+    Column("expires_at", Text, nullable=False),
+    Column("used_by", Text, ForeignKey("users.id")),
+    Column("used_at", Text),
+    CheckConstraint(
+        "intended_role IN ('parent','doctor','researcher')",
+        name="invite_role_enum",
+    ),
+)
+
+# The parent's "invites I created" lookups and the admin overview hit this.
+Index("ix_invites_created_by", invites.c.created_by)
+
+
 __all__ = [
     "metadata",
     "diseases",
@@ -474,4 +502,5 @@ __all__ = [
     "disease_index",
     "disease_index_aliases",
     "users",
+    "invites",
 ]

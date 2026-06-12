@@ -6,10 +6,16 @@ repository.
 
 Routes (mounted under ``/api`` by ``backend.main``):
 
-- ``GET  /api/account/me``            — the signed-in user's own account
-- ``PATCH /api/account/me``           — one-time role selection
-- ``GET  /api/account/users``         — superadmin: list all users
-- ``PATCH /api/account/users/{id}``   — superadmin: set role / verified
+- ``GET   /api/account/me``                   — the signed-in user's own account
+- ``PATCH /api/account/me``                   — one-time role selection
+- ``GET   /api/account/users``                — superadmin: list all users
+- ``PATCH /api/account/users/{id}``           — superadmin: set role / verified
+- ``POST  /api/account/invites``              — parent/superadmin: mint an invite
+- ``GET   /api/account/invites/{token}``      — PUBLIC: invite preview (no PII)
+- ``POST  /api/account/invites/{token}/accept`` — redeem invite -> doctor role
+- ``GET   /api/account/orcid/status``         — whether ORCID verify is available
+- ``GET   /api/account/orcid/login``          — ORCID authorize URL (signed state)
+- ``GET   /api/account/orcid/callback``       — ORCID code exchange -> store iD
 """
 
 from __future__ import annotations
@@ -21,9 +27,15 @@ from fastapi import APIRouter, Depends, HTTPException
 from .contracts import (
     AdminUserPatch,
     AdminUserResponse,
+    CreateInviteRequest,
+    InviteCreatedResponse,
+    InvitePreviewResponse,
     MeResponse,
+    OrcidLoginResponse,
+    OrcidStatusResponse,
     SelectRoleRequest,
     admin_user_to_response,
+    invite_preview_to_response,
     me_to_response,
 )
 from .deps import (
@@ -90,6 +102,92 @@ def patch_user(
     if updated is None:  # pragma: no cover - guarded above
         raise HTTPException(status_code=404, detail="User not found.")
     return admin_user_to_response(updated)
+
+
+# -- Invites (AUTH-4) --------------------------------------------------------
+
+
+@router.post("/invites", response_model=InviteCreatedResponse, status_code=201)
+def create_invite(
+    body: CreateInviteRequest,
+    user: CurrentUser,
+    service: Annotated[AccountService, Depends(provide_account_service)],
+) -> InviteCreatedResponse:
+    """Mint a doctor invite (signed-in parent or superadmin only; 403 otherwise).
+
+    ``url_path`` is the frontend landing path; the client renders it as
+    ``#/join/{token}``.
+    """
+    invite = service.create_invite(
+        user, email=body.email, doctor_slug=body.doctor_slug
+    )
+    return InviteCreatedResponse(
+        token=str(invite.token),
+        url_path=f"/join/{invite.token}",
+        expires_at=invite.expires_at,
+    )
+
+
+@router.get("/invites/{token}", response_model=InvitePreviewResponse)
+def preview_invite(
+    token: str,
+    service: Annotated[AccountService, Depends(provide_account_service)],
+) -> InvitePreviewResponse:
+    """PUBLIC invite preview — no auth. Leaks no PII beyond a masked inviter."""
+    from .service import _now  # local import: internal helper, not public API
+
+    invite = service.get_invite(token)
+    return invite_preview_to_response(
+        invite,
+        inviter_display=service.invite_inviter_display(invite),
+        expired=invite.is_expired(_now()),
+    )
+
+
+@router.post("/invites/{token}/accept", response_model=MeResponse)
+def accept_invite(
+    token: str,
+    user: CurrentUser,
+    service: Annotated[AccountService, Depends(provide_account_service)],
+) -> MeResponse:
+    """Redeem an invite: grant the doctor role (unverified). 410 expired/used; 409 if already has a role."""
+    updated = service.accept_invite(token, user)
+    return me_to_response(updated)
+
+
+# -- ORCID verification (AUTH-4, env-gated) ----------------------------------
+
+
+@router.get("/orcid/status", response_model=OrcidStatusResponse)
+def orcid_status(
+    service: Annotated[AccountService, Depends(provide_account_service)],
+) -> OrcidStatusResponse:
+    """Whether ORCID verification is configured (the frontend hides the step if not)."""
+    return OrcidStatusResponse(enabled=service.orcid_enabled())
+
+
+@router.get("/orcid/login", response_model=OrcidLoginResponse)
+def orcid_login(
+    user: CurrentUser,
+    service: Annotated[AccountService, Depends(provide_account_service)],
+) -> OrcidLoginResponse:
+    """Return the ORCID authorize URL with a signed, user-bound state. 503 when off."""
+    return OrcidLoginResponse(authorize_url=service.orcid_authorize_url(user))
+
+
+@router.get("/orcid/callback", response_model=MeResponse)
+def orcid_callback(
+    code: str,
+    state: str,
+    service: Annotated[AccountService, Depends(provide_account_service)],
+) -> MeResponse:
+    """Exchange the ORCID code and store the verified iD on the state-bound user.
+
+    The user is identified by the signed ``state`` (no session needed on the
+    redirect back), so this route takes no ``CurrentUser`` dependency.
+    """
+    updated = service.orcid_callback(code=code, state=state)
+    return me_to_response(updated)
 
 
 __all__ = ["router"]

@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from pydantic import BaseModel, ConfigDict
 
-from .models import Role, User
+from .models import Invite, Role, User
 
 
 class MeResponse(BaseModel):
@@ -69,6 +69,75 @@ class AdminUserPatch(BaseModel):
     verified: bool | None = None
 
 
+class CreateInviteRequest(BaseModel):
+    """Body of ``POST /api/account/invites`` — a parent invites a doctor.
+
+    Both fields are optional context: ``email`` is who the invite is meant for
+    (never required — the link is shareable), ``doctor_slug`` records which
+    doctor profile prompted the invite.
+    """
+
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    email: str | None = None
+    doctor_slug: str | None = None
+
+
+class InviteCreatedResponse(BaseModel):
+    """Payload returned to the inviter — enough to build the shareable URL."""
+
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    token: str
+    url_path: str
+    expires_at: str
+
+
+class InvitePreviewResponse(BaseModel):
+    """Public preview of an invite (``GET /api/account/invites/{token}``).
+
+    No PII beyond a masked inviter label — the landing page only needs to say
+    *who* invited the visitor and *to what role*, plus whether the token is
+    still usable.
+    """
+
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    intended_role: Role
+    inviter_display: str
+    doctor_slug: str | None = None
+    expired: bool
+    used: bool
+
+
+class OrcidStatusResponse(BaseModel):
+    """Whether app-level ORCID verification is available (env-gated)."""
+
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    enabled: bool
+
+
+class OrcidLoginResponse(BaseModel):
+    """The ORCID authorize URL the browser redirects to."""
+
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    authorize_url: str
+
+
+def invite_preview_to_response(
+    invite: Invite, *, inviter_display: str, expired: bool
+) -> InvitePreviewResponse:
+    return InvitePreviewResponse(
+        intended_role=invite.intended_role,
+        inviter_display=inviter_display,
+        doctor_slug=invite.doctor_slug,
+        expired=expired,
+        used=invite.used,
+    )
+
+
 def me_to_response(user: User) -> MeResponse:
     return MeResponse(
         id=str(user.id),
@@ -102,6 +171,12 @@ __all__ = [
     "SelectRoleRequest",
     "AdminUserResponse",
     "AdminUserPatch",
+    "CreateInviteRequest",
+    "InviteCreatedResponse",
+    "InvitePreviewResponse",
+    "OrcidStatusResponse",
+    "OrcidLoginResponse",
     "me_to_response",
     "admin_user_to_response",
+    "invite_preview_to_response",
 ]
