@@ -14,28 +14,12 @@
       "pubmedRole": "research_leader",
       "score": 78,
       "evidence": {
-        "firstOrLastAuthorPapers": 11,
-        "reviewPapers": 2,
+        "firstOrLastAuthorPapers": 0,
+        "reviewPapers": 0,
         "citesRecentGuidelines": true,
         "activeLast2y": true,
         "guidelineOrConsensusCoauthor": false
       },
-      "publications": [
-        {
-          "pmid": "12065933",
-          "title": "Craniofacial fibrous dysplasia in pediatric patients — long-term outcomes",
-          "year": 2024,
-          "journal": "J Craniofac Surg",
-          "position": "last"
-        },
-        {
-          "pmid": "39766409",
-          "title": "Conservative management of polyostotic FD in children: 10-year follow-up",
-          "year": 2023,
-          "journal": "Head Face Med",
-          "position": "last"
-        }
-      ],
       "bio": "National consultant in oral and maxillofacial surgery with long experience in pediatric craniofacial fibrous dysplasia. Prefers conservative management until skeletal maturity.",
       "publicSource": "krzysztofdowgierd.pl, WSSD",
       "endorsements": ["FDMAS Alliance"],
