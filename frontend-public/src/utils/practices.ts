@@ -48,3 +48,27 @@ export function practiceList(
 export function nearestPractice(doctor: PublicDoctor, userLoc: UserLocation | null): Practice {
   return practiceList(doctor, userLoc)[0].practice;
 }
+
+/** One map-ready (doctor, practice) pair. */
+export interface PracticePin<D extends PublicDoctor = PublicDoctor> {
+  readonly doctor: D;
+  readonly practice: Practice;
+}
+
+/**
+ * Flatten doctors into one pin per (doctor, practice) pair via {@link practicesOf}. Pairs whose
+ * coordinates are not finite are skipped so the map never plots a marker at NaN/Infinity.
+ */
+export function practicePins<D extends PublicDoctor>(
+  doctors: readonly D[],
+): readonly PracticePin<D>[] {
+  const pins: PracticePin<D>[] = [];
+  for (const doctor of doctors) {
+    for (const practice of practicesOf(doctor)) {
+      if (Number.isFinite(practice.lat) && Number.isFinite(practice.lng)) {
+        pins.push({ doctor, practice });
+      }
+    }
+  }
+  return pins;
+}

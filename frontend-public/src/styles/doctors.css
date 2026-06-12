@@ -385,6 +385,83 @@
   font-weight: 600;
 }
 
+.active-disease-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px 4px 12px;
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+  border-radius: 99px;
+  font-size: var(--fs-sm);
+  font-weight: 500;
+}
+
+.active-disease-chip__clear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: 99px;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  color: inherit;
+  transition: background 120ms;
+}
+
+.active-disease-chip__clear:hover {
+  background: color-mix(in oklch, var(--accent) 20%, transparent);
+}
+
+.doctors-toggle {
+  background: var(--bg-elev);
+}
+
+.doctors-show-more {
+  align-self: flex-start;
+  margin-top: 4px;
+  padding: 8px 16px;
+  background: var(--bg-elev);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  font-size: var(--fs-sm);
+  color: var(--ink);
+  transition: background 120ms, border-color 120ms;
+}
+
+.doctors-show-more:hover {
+  background: var(--bg-soft);
+  border-color: var(--ink-3);
+}
+
+.doctors-provenance {
+  margin-top: 12px;
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+  line-height: 1.5;
+  max-width: 70ch;
+}
+
+.doctors-provenance a {
+  color: var(--accent-ink);
+}
+
+.link-btn {
+  padding: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font: inherit;
+  color: var(--accent-ink);
+  text-decoration: underline;
+}
+
 .page__head-row {
   display: flex;
   justify-content: space-between;
@@ -576,6 +653,12 @@
 .map-popup__spec {
   font-size: var(--fs-xs);
   color: var(--ink-2);
+}
+
+.map-popup__practice {
+  font-size: 11px;
+  color: var(--ink-2);
+  margin-top: 2px;
 }
 
 .map-popup__inst {
