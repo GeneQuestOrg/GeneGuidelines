@@ -124,6 +124,7 @@ def _entry_to_public_doctor(
         for p in key_papers
         if isinstance(p, dict) and p.get("pmid")
     ]
+    pubmed_role = _role_to_pubmed_role(str(entry.get("role") or ""))
     return {
         "slug": slug,
         "name": display_name,
@@ -135,7 +136,9 @@ def _entry_to_public_doctor(
         "lat": lat,
         "lng": lng,
         "diseases": diseases,
-        "pubmedRole": _role_to_pubmed_role(str(entry.get("role") or "")),
+        "pubmedRole": pubmed_role,
+        "experienceByDisease": {d: pubmed_role for d in diseases},
+        "addedVia": "pubmed",
         "score": int(round(float(entry.get("score") or 0))),
         "evidence": {
             "firstOrLastAuthorPapers": int(
@@ -269,6 +272,25 @@ def _merge_public_doctor_rows(
     specialty = str(finder.get("specialty") or seed.get("specialty") or "")
     role = str(finder.get("role") or seed.get("role") or "")
 
+    # draft9 directory fields: seed (curated) wins, finder fills gaps. parentRecs/rodo only
+    # come from the curated seed today; experienceByDisease merges per-disease (seed overrides).
+    experience_by_disease = {
+        **(finder.get("experienceByDisease") if isinstance(finder.get("experienceByDisease"), dict) else {}),
+        **(seed.get("experienceByDisease") if isinstance(seed.get("experienceByDisease"), dict) else {}),
+    }
+    practices = (
+        seed.get("practices")
+        if isinstance(seed.get("practices"), list) and seed.get("practices")
+        else finder.get("practices")
+    ) or []
+    parent_recs = [
+        *(seed.get("parentRecs") if isinstance(seed.get("parentRecs"), list) else []),
+        *(finder.get("parentRecs") if isinstance(finder.get("parentRecs"), list) else []),
+    ]
+    added_via = str(seed.get("addedVia") or finder.get("addedVia") or "pubmed")
+    rodo = seed.get("rodo") or finder.get("rodo")
+    review_status = seed.get("reviewStatus") or finder.get("reviewStatus")
+
     return {
         "slug": slug,
         "name": str(seed.get("name") or finder.get("name") or "Unknown"),
@@ -290,6 +312,12 @@ def _merge_public_doctor_rows(
         "contact": str(seed.get("contact") or finder.get("contact") or "form"),
         "source": "merged",
         "executionId": finder.get("executionId"),
+        "practices": practices,
+        "experienceByDisease": experience_by_disease,
+        "addedVia": added_via,
+        "rodo": rodo,
+        "parentRecs": parent_recs,
+        "reviewStatus": review_status,
     }
 
 
