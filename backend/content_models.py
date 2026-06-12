@@ -56,6 +56,9 @@ class DiseaseResponse(BaseModel):
     trialsCount: int = Field(ge=0)
     coverage: Literal["full", "skeleton"]
     accent: Literal["teal", "amber", "indigo"]
+    # Public-catalog visibility (RES-1). Defaults to True so admin/pipeline
+    # callers that build this from older rows stay valid.
+    listed: bool = True
 
 
 class DiseaseWithPromptProfileResponse(DiseaseResponse):

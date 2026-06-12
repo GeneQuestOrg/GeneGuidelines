@@ -33,6 +33,12 @@ export const ADMIN_NAV: readonly AdminNavItem[] = [
     description: "Review queue for living guideline updates",
   },
   {
+    section: "catalog",
+    path: "#/catalog",
+    label: "Catalog",
+    description: "Approve diseases launched from public research",
+  },
+  {
     section: "users",
     path: "#/users",
     label: "Users",

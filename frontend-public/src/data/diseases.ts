@@ -23,6 +23,7 @@ export const DISEASES: readonly Disease[] = [
     trialsCount: 4,
     coverage: "full",
     accent: "teal",
+    listed: true,
   },
   {
     slug: "mas",
@@ -45,6 +46,7 @@ export const DISEASES: readonly Disease[] = [
     trialsCount: 2,
     coverage: "skeleton",
     accent: "amber",
+    listed: true,
   },
   {
     slug: "noonan",
@@ -67,5 +69,6 @@ export const DISEASES: readonly Disease[] = [
     trialsCount: 1,
     coverage: "skeleton",
     accent: "indigo",
+    listed: true,
   },
 ] as const;

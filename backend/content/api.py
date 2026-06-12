@@ -10,9 +10,11 @@ import asyncio
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, Response, UploadFile
 
+from backend.account.deps import require_superadmin
 from backend.shared.cache import cache_response
 
 from .contracts import (
+    DiseaseListedPatch,
     DiseaseResponse,
     FoundationResponse,
     OfficialGuidelineResponse,
@@ -60,15 +62,62 @@ async def list_diseases(
     return [DiseaseResponse.from_domain(d) for d in diseases]
 
 
+@router.get(
+    "/diseases/pending-approval",
+    response_model=list[DiseaseResponse],
+    dependencies=[Depends(require_superadmin)],
+)
+def list_unlisted_diseases(
+    service: DiseaseService = Depends(provide_disease_service),
+) -> list[DiseaseResponse]:
+    """Diseases pending catalog approval (listed=0) — superadmin review queue (RES-1).
+
+    Declared before ``/diseases/{slug}`` so the static path wins the match.
+    """
+    return [DiseaseResponse.from_domain(d) for d in service.list_unlisted()]
+
+
 @router.get("/diseases/{slug}", response_model=DiseaseResponse)
 def get_disease(
     slug: str,
     service: DiseaseService = Depends(provide_disease_service),
 ) -> DiseaseResponse:
-    """Single disease by URL slug."""
+    """Single disease by URL slug.
+
+    Deliberately does NOT filter on ``listed`` (RES-1): a freshly bootstrapped
+    (unlisted) disease must resolve via direct link so the run initiator sees
+    their full result. The public frontend renders a "pending curation" badge
+    when ``listed`` is false.
+    """
     disease = service.get(slug)
     if disease is None:
         raise HTTPException(status_code=404, detail="Disease not found")
+    return DiseaseResponse.from_domain(disease)
+
+
+@router.patch(
+    "/diseases/{slug}",
+    response_model=DiseaseResponse,
+    dependencies=[Depends(require_superadmin)],
+)
+def patch_disease(
+    slug: str,
+    patch: DiseaseListedPatch,
+    service: DiseaseService = Depends(provide_disease_service),
+) -> DiseaseResponse:
+    """Approve a disease into (or out of) the public catalog (RES-1).
+
+    Resource-style mutation behind ``require_superadmin``; body ``{listed: …}``.
+    Does not touch ``status`` (epistemic state).
+    """
+    disease = service.set_listed(slug, patch.listed)
+    if disease is None:
+        raise HTTPException(status_code=404, detail="Disease not found")
+    # Visibility changed — drop the cached catalog index so the next public
+    # request reflects the approval immediately.
+    from backend.shared import cache
+
+    cache.invalidate_prefix("/api/diseases")
     return DiseaseResponse.from_domain(disease)
 
 

@@ -58,6 +58,12 @@ export function DiseaseView({ slug, view, userLoc, onViewChange, onNav }: Diseas
   return (
     <section className="page page--disease">
       <PersonaSwitcher view={view} onChange={onViewChange} />
+      {!disease.listed ? (
+        <p className="disease-pending-badge" role="status">
+          <span className="disease-pending-badge__dot" aria-hidden="true" />
+          Not yet in the public catalog — pending curation.
+        </p>
+      ) : null}
       <DiseaseHero
         disease={disease}
         guideline={guideline}

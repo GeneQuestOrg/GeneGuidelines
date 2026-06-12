@@ -31,9 +31,12 @@ export {
   fetchMe,
   fetchUsers,
   patchUser,
+  fetchUnlistedDiseases,
+  approveDisease,
   type MeResponse,
   type AccountRole,
   type AdminUser,
+  type CatalogDisease,
 } from "./api/client";
 export {
   setAccessTokenGetter,

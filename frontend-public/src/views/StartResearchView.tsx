@@ -101,20 +101,24 @@ export function StartResearchView({ onNav }: StartResearchViewProps) {
     setBusy(true);
     setError(null);
     try {
-      const { execution_ids } = await bootstrapDisease(body);
+      const { execution_id } = await bootstrapDisease(body);
       const q = `?name=${encodeURIComponent(diseaseName)}&disease=${encodeURIComponent(body.slug)}`;
       // Hand the user to the long-running guideline trace — the five
       // finders complete in <45 s and surface on /diseases/<slug>/...
-      // automatically once the disease row exists.
-      onNav(`/research/${encodeURIComponent(execution_ids.guideline)}${q}`);
+      // automatically once the disease row exists. The run may sit in the
+      // fair-share queue first; the run page renders "Queued — position N".
+      onNav(`/research/${encodeURIComponent(execution_id)}${q}`);
     } catch (e) {
       if (e instanceof ApiRequestError && e.status === 401) {
         setError(
           "The server rejected the request (401). Set VITE_GENEGUIDELINES_API_KEY when the backend has its API gate enabled, or run jobs from the operator console.",
         );
-      } else if (e instanceof ApiRequestError && e.status === 429) {
+      } else if (e instanceof ApiRequestError && e.status === 409) {
+        // Fair-share queue refusal — the anonymous session already has the
+        // maximum number of runs in flight. Surface the friendly server text.
         setError(
-          "The public demo limit was reached for now. Please try again in a few hours.",
+          e.message ||
+            "You already have several runs in the queue — wait for one to finish before starting another.",
         );
       } else if (e instanceof Error) {
         setError(e.message);

@@ -78,6 +78,11 @@ diseases = Table(
         nullable=False,
         server_default="{}",
     ),
+    # Public-catalog visibility (RES-1, unlisted-until-approve). Existing rows
+    # default to 1 (visible — zero regression); bootstrap inserts new diseases
+    # with 0 so they appear only via direct link until a superadmin approves.
+    # Distinct from ``status`` (epistemic state) — this is purely visibility.
+    Column("listed", Integer, nullable=False, server_default="1"),
 )
 
 

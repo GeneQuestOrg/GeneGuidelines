@@ -375,6 +375,39 @@
   line-height: 1.55;
 }
 
+/* RES-1: fair-share queue notice shown before a worker slot frees up. */
+.rrun__queued {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 18px;
+  padding: 8px 14px;
+  font-size: var(--fs-sm, 0.9rem);
+  color: var(--ink-2);
+  background: color-mix(in oklch, var(--st-amber) 12%, var(--bg-elev));
+  border: 1px solid color-mix(in oklch, var(--st-amber) 35%, var(--line));
+  border-radius: var(--r-lg);
+}
+
+.rrun__queued-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--st-amber);
+  flex: 0 0 auto;
+  animation: rrun-queued-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes rrun-queued-pulse {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
 .rrun__lede b {
   color: var(--ink);
   font-weight: 600;

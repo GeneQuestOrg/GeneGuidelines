@@ -37,12 +37,17 @@ async def bootstrap_disease_research(
     disease_slug: str,
     disease_name: str,
     profile: str | None = None,
+    guideline_execution_id: str | None = None,
 ) -> dict[str, str]:
     """Fan out research workflows for a (presumably newly created) disease.
 
     Returns ``{workflow_name: execution_id}`` immediately; all workflows
     run in background asyncio tasks. Caller is responsible for ensuring
     the disease row exists in the catalog before calling.
+
+    ``guideline_execution_id`` lets the research queue pre-allocate the
+    guideline run id (it pre-registers a ``queued`` record under it so the
+    public run page has a stable handle while the job waits for a worker slot).
     """
     from ..config import DEFAULT_MODEL_PROFILE
     from .official_guidelines_finder import find_official_guideline_for_disease
@@ -91,7 +96,9 @@ async def bootstrap_disease_research(
         disease_name,
         profile_norm,
     )
-    guideline_id = await _start_guideline_run(disease_slug, disease_name, profile_norm)
+    guideline_id = await _start_guideline_run(
+        disease_slug, disease_name, profile_norm, guideline_execution_id
+    )
 
     return {
         "official_guidelines": ogf_id,
@@ -142,7 +149,12 @@ async def _start_doctor_finder(
     return execution_id
 
 
-async def _start_guideline_run(disease_slug: str, disease_name: str, profile: str) -> str:
+async def _start_guideline_run(
+    disease_slug: str,
+    disease_name: str,
+    profile: str,
+    execution_id: str | None = None,
+) -> str:
     """Fire the PubMed guideline pipeline by reusing the agent_router's start helper."""
     from .. import database as db
     from ..content_db import get_disease_by_slug
@@ -173,6 +185,7 @@ async def _start_guideline_run(disease_slug: str, disease_name: str, profile: st
         label=disease_name,
         pipeline="guideline",
         disease_slug=disease_slug,
+        execution_id=execution_id,
     )
     eid = str(result.get("execution_id") or "")
     log.info("disease_bootstrap: fired guideline %s for %s", eid, disease_slug)

@@ -21,7 +21,7 @@ from __future__ import annotations
 import re
 from typing import Iterable, Protocol, Sequence
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.engine import Engine
 
 from ..shared.persistence.base_repo import BaseSqlalchemyRepo
@@ -50,6 +50,8 @@ class DiseaseRepo(Protocol):
 
     def list_all(self) -> list[Disease]: ...
     def get(self, slug: str) -> Disease | None: ...
+    def list_unlisted(self) -> list[Disease]: ...
+    def set_listed(self, slug: str, listed: bool) -> Disease | None: ...
 
 
 class SqlaDiseaseRepo(BaseSqlalchemyRepo):
@@ -65,7 +67,14 @@ class SqlaDiseaseRepo(BaseSqlalchemyRepo):
         super().__init__(engine)
 
     def list_all(self) -> list[Disease]:
-        stmt = select(diseases_table).order_by(nocase_order(diseases_table.c.name))
+        # Catalog index: visible diseases only (RES-1, unlisted-until-approve).
+        # ``get`` below deliberately does NOT filter — the disease page must
+        # resolve via direct link even while unlisted.
+        stmt = (
+            select(diseases_table)
+            .where(diseases_table.c.listed == 1)
+            .order_by(nocase_order(diseases_table.c.name))
+        )
         return self._fetch_all(stmt)
 
     def get(self, slug: str) -> Disease | None:
@@ -75,6 +84,34 @@ class SqlaDiseaseRepo(BaseSqlalchemyRepo):
         stmt = select(diseases_table).where(diseases_table.c.slug == normalized)
         with self._conn() as conn:
             row = conn.execute(stmt).mappings().first()
+        return disease_from_row(dict(row)) if row else None
+
+    def list_unlisted(self) -> list[Disease]:
+        """Diseases pending catalog approval (listed=0) — admin review queue."""
+        stmt = (
+            select(diseases_table)
+            .where(diseases_table.c.listed == 0)
+            .order_by(nocase_order(diseases_table.c.name))
+        )
+        return self._fetch_all(stmt)
+
+    def set_listed(self, slug: str, listed: bool) -> Disease | None:
+        """Flip diseases.listed (RES-1 approve). Returns the updated row or None."""
+        normalized = normalize_slug(slug)
+        if normalized is None:
+            return None
+        stmt = (
+            update(diseases_table)
+            .where(diseases_table.c.slug == normalized)
+            .values(listed=1 if listed else 0)
+        )
+        with self._conn() as conn:
+            result = conn.execute(stmt)
+            if result.rowcount == 0:
+                return None
+            row = conn.execute(
+                select(diseases_table).where(diseases_table.c.slug == normalized)
+            ).mappings().first()
         return disease_from_row(dict(row)) if row else None
 
     def _fetch_all(self, stmt) -> list[Disease]:  # type: ignore[no-untyped-def]
@@ -94,13 +131,34 @@ class InMemoryDiseaseRepo:
         self._by_slug: dict[str, Disease] = {d.slug: d for d in seed}
 
     def list_all(self) -> list[Disease]:
-        return sorted(self._by_slug.values(), key=lambda d: d.name.lower())
+        # Catalog index: visible diseases only (RES-1).
+        return sorted(
+            (d for d in self._by_slug.values() if d.listed),
+            key=lambda d: d.name.lower(),
+        )
 
     def get(self, slug: str) -> Disease | None:
         normalized = normalize_slug(slug)
         if normalized is None:
             return None
         return self._by_slug.get(normalized)
+
+    def list_unlisted(self) -> list[Disease]:
+        return sorted(
+            (d for d in self._by_slug.values() if not d.listed),
+            key=lambda d: d.name.lower(),
+        )
+
+    def set_listed(self, slug: str, listed: bool) -> Disease | None:
+        normalized = normalize_slug(slug)
+        if normalized is None:
+            return None
+        current = self._by_slug.get(normalized)
+        if current is None:
+            return None
+        updated = current.with_listed(listed)
+        self._by_slug[normalized] = updated
+        return updated
 
     # ------------------------------------------------------------------
     # Helpers used only by tests / dev fixtures (not part of the Protocol).

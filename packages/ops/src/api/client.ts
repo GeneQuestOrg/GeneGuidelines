@@ -289,6 +289,31 @@ export async function patchUser(
   });
 }
 
+// --- Catalog approval (RES-1, unlisted-until-approve) ---
+
+/** A disease card as seen in the admin Catalog review queue (camelCase contract). */
+export interface CatalogDisease {
+  slug: string;
+  name: string;
+  nameShort: string;
+  status: string;
+  aiDraftDate: string | null;
+  listed: boolean;
+}
+
+/** Superadmin: diseases pending catalog approval (`GET /api/diseases/pending-approval`). */
+export async function fetchUnlistedDiseases(): Promise<CatalogDisease[]> {
+  return request<CatalogDisease[]>("/api/diseases/pending-approval");
+}
+
+/** Superadmin: approve a disease into the public catalog (`PATCH /api/diseases/{slug}`). */
+export async function approveDisease(slug: string): Promise<CatalogDisease> {
+  return request<CatalogDisease>(`/api/diseases/${encodeURIComponent(slug)}`, {
+    method: "PATCH",
+    body: JSON.stringify({ listed: true }),
+  });
+}
+
 // --- Flows ---
 
 export async function fetchFlows(): Promise<ApiFlowDefinition[]> {
