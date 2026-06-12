@@ -8,15 +8,16 @@ the scheduler stays decoupled from ``backend.services.disease_bootstrap``.
 from __future__ import annotations
 
 from collections.abc import Awaitable, Callable
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import IntEnum
 
 
 class JobClass(IntEnum):
     """Priority class. Lower value = higher priority (served first).
 
-    Authenticated callers outrank anonymous ones; within a class the
-    monotonic enqueue sequence breaks ties so ordering is strict FIFO.
+    Authenticated callers outrank anonymous ones; within a class FIFO by
+    arrival (``created_at``) breaks ties. Stored as the ``priority`` integer on
+    each ``research_jobs`` row, which is exactly the claim ``ORDER BY`` key.
     """
 
     AUTHENTICATED = 0
@@ -25,25 +26,8 @@ class JobClass(IntEnum):
 
 # The unit of work the worker awaits. Returns nothing — the coroutine logs its
 # own progress to ``guideline_run_results`` like every other bootstrap today.
+# Not persisted: held in memory by the scheduler keyed by execution id.
 JobCoro = Callable[[], Awaitable[None]]
-
-
-@dataclass(frozen=True, slots=True)
-class QueuedJob:
-    """One admitted bootstrap job waiting for (or holding) a worker slot."""
-
-    run_id: str
-    job_class: JobClass
-    anon_session: str | None
-    seq: int
-    run: JobCoro = field(compare=False)
-
-    def __lt__(self, other: QueuedJob) -> bool:
-        # PriorityQueue ordering: class first, then FIFO by sequence. Defined
-        # explicitly because the ``run`` callable is not comparable.
-        if self.job_class != other.job_class:
-            return self.job_class < other.job_class
-        return self.seq < other.seq
 
 
 @dataclass(frozen=True, slots=True)
@@ -61,4 +45,4 @@ class AdmissionResult:
     message: str | None = None
 
 
-__all__ = ["JobClass", "JobCoro", "QueuedJob", "AdmissionResult"]
+__all__ = ["JobClass", "JobCoro", "AdmissionResult"]

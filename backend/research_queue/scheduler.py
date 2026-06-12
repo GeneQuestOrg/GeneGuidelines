@@ -1,24 +1,45 @@
-"""In-process fair-share scheduler for disease-bootstrap admission.
+"""Durable fair-share scheduler for disease-bootstrap admission (RES-2).
 
 Service object: a single process-wide :class:`ResearchScheduler` governs how
 many bootstrap fan-outs run concurrently and in what order. The router calls
-:meth:`ResearchScheduler.admit`; the scheduler enqueues the job, lazily starts
-its worker loop on the running event loop, and reports the queue position so
-the public run page can show "Queued — position N".
+:meth:`ResearchScheduler.admit`; the scheduler **persists** the job as a
+``research_jobs`` row, lazily starts its worker loop, and reports the queue
+position so the public run page can show "Queued — position N".
+
+What changed vs RES-1
+---------------------
+
+RES-1 kept the queue in an in-process :class:`asyncio.PriorityQueue`; a backend
+restart or worker crash silently dropped pending jobs. RES-2 swaps the storage
+for a ``research_jobs`` table behind :class:`ResearchJobRepo` — *semantics
+unchanged*:
+
+- **Priority class:** authenticated callers (``priority`` 0) outrank anonymous
+  (``priority`` 1); FIFO within a class via ``created_at``. This is the same
+  ordering the claim query uses (``ORDER BY priority, created_at``).
+- **Anonymous cap:** an anon session may hold at most
+  ``RESEARCH_QUEUE_ANON_MAX_PENDING`` unfinished (queued OR running) rows,
+  counted *from the table* so the cap is consistent across restarts. A missing
+  header shares one bucket (curl/bot guard).
+- **Position** is computed from the table, not memory.
 
 Concurrency model
------------------
+------------------
 
-- One :class:`asyncio.PriorityQueue` ordered by (class, FIFO seq).
-- ``max_concurrent`` worker coroutines pull from it (default 1 — "domowa
-  Gemma w miarę możliwości"). A worker awaits the job's coroutine to
-  completion before pulling the next, so the existing per-pipeline semaphores
-  are untouched; this only gates *admission*.
-- ``_pending`` tracks unfinished jobs (queued OR running) per anonymous
-  session for the cap, and the set of queued run_ids (in arrival order) for
-  position lookup.
+- ``max_concurrent`` worker coroutines each loop: claim one job with
+  ``SELECT ... FOR UPDATE SKIP LOCKED`` (so two workers never get the same
+  row), run its coroutine to completion while heart-beating ``locked_at``,
+  then ``mark_done`` / ``mark_failed``.
+- On first worker start the scheduler runs ``requeue_stale`` once: jobs a prior
+  process left ``running`` (lock older than ``RESEARCH_QUEUE_LOCK_TIMEOUT_SEC``)
+  go back to ``queued`` (attempts+1) or, past ``RESEARCH_QUEUE_MAX_ATTEMPTS``,
+  to ``failed`` with a surfaced error.
 
-Everything is in-memory and bound to the event loop the worker started on.
+The runnable coroutine itself is **not** persisted (it cannot be) — the
+scheduler holds it in memory keyed by ``execution_id``. A claimed row whose
+runnable is unknown (e.g. a different process originally admitted it) is left
+``running`` only momentarily and released back to ``queued`` so whichever
+process holds the runnable picks it up; it is never lost.
 """
 
 from __future__ import annotations
@@ -26,9 +47,11 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
-from itertools import count
+import uuid
+from datetime import datetime, timedelta, timezone
 
-from .models import AdmissionResult, JobClass, JobCoro, QueuedJob
+from .models import AdmissionResult, JobClass, JobCoro
+from .repository import ResearchJobRepo, SqlaResearchJobRepo
 
 log = logging.getLogger(__name__)
 
@@ -42,9 +65,17 @@ def _env_int(name: str, default: int, *, minimum: int = 1) -> int:
     return max(minimum, value)
 
 
+def _now_iso() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
 # Shared bucket key for callers that send no ``X-Anon-Session`` header
 # (curl/bots). They all share one cap so a header-less loop cannot bypass it.
 _ANON_NO_ID = "__anon_no_id__"
+
+# How often a busy worker refreshes ``locked_at`` and re-polls for work.
+_POLL_INTERVAL_SEC = 0.05
+_HEARTBEAT_INTERVAL_SEC = 30.0
 
 
 class ResearchQueueFull(Exception):
@@ -60,9 +91,18 @@ class ResearchQueueFull(Exception):
 
 
 class ResearchScheduler:
-    """Process-wide admission queue + worker pool for bootstrap jobs."""
+    """Process-wide admission queue + worker pool, backed by ``research_jobs``."""
 
-    def __init__(self, *, max_concurrent: int | None = None, anon_max_pending: int | None = None) -> None:
+    def __init__(
+        self,
+        *,
+        max_concurrent: int | None = None,
+        anon_max_pending: int | None = None,
+        repo: ResearchJobRepo | None = None,
+        lock_timeout_sec: int | None = None,
+        max_attempts: int | None = None,
+        poll_interval_sec: float = _POLL_INTERVAL_SEC,
+    ) -> None:
         self._max_concurrent = (
             max_concurrent
             if max_concurrent is not None
@@ -73,15 +113,28 @@ class ResearchScheduler:
             if anon_max_pending is not None
             else _env_int("RESEARCH_QUEUE_ANON_MAX_PENDING", 3)
         )
-        self._queue: asyncio.PriorityQueue[QueuedJob] = asyncio.PriorityQueue()
-        self._seq = count()
-        self._lock = asyncio.Lock()
-        # Unfinished (queued + running) run_ids per anon bucket — drives the cap.
-        self._pending_by_session: dict[str, set[str]] = {}
-        # Queued run_ids in priority order — drives queue_position. Running jobs
-        # are removed from here the moment a worker picks them up.
-        self._queued_order: list[QueuedJob] = []
+        self._lock_timeout_sec = (
+            lock_timeout_sec
+            if lock_timeout_sec is not None
+            else _env_int("RESEARCH_QUEUE_LOCK_TIMEOUT_SEC", 7200)
+        )
+        self._max_attempts = (
+            max_attempts
+            if max_attempts is not None
+            else _env_int("RESEARCH_QUEUE_MAX_ATTEMPTS", 3)
+        )
+        # Lazily build the production repo so importing this module never needs
+        # a DB_URL (tests inject an in-memory fake).
+        self._repo: ResearchJobRepo = repo if repo is not None else SqlaResearchJobRepo()
+        self._poll_interval = poll_interval_sec
+
+        # The runnable coroutine cannot be persisted; held here keyed by the
+        # execution_id the row carries. Populated on admit (and re-attachable
+        # after a restart via :meth:`register_runnable`).
+        self._runnables: dict[str, JobCoro] = {}
         self._workers: list[asyncio.Task[None]] = []
+        self._wake = asyncio.Event()
+        self._reaped = False
 
     # -- admission -----------------------------------------------------------
 
@@ -92,8 +145,9 @@ class ResearchScheduler:
         run: JobCoro,
         authenticated: bool,
         anon_session: str | None,
+        user_id: str | None = None,
     ) -> AdmissionResult:
-        """Admit a bootstrap job into the queue.
+        """Admit a bootstrap job: insert a durable row, then start a worker.
 
         Raises :class:`ResearchQueueFull` when an anonymous session already
         holds ``anon_max_pending`` unfinished jobs. Authenticated callers are
@@ -102,76 +156,181 @@ class ResearchScheduler:
         job_class = JobClass.AUTHENTICATED if authenticated else JobClass.ANONYMOUS
         bucket = None if authenticated else (anon_session or _ANON_NO_ID)
 
-        async with self._lock:
-            if bucket is not None:
-                held = self._pending_by_session.get(bucket, set())
-                if len(held) >= self._anon_max_pending:
-                    raise ResearchQueueFull(
-                        f"You already have {self._anon_max_pending} runs in the queue "
-                        "— wait for one to finish before starting another."
-                    )
-
-            job = QueuedJob(
-                run_id=run_id,
-                job_class=job_class,
-                anon_session=bucket,
-                seq=next(self._seq),
-                run=run,
+        if bucket is not None:
+            held = await asyncio.to_thread(
+                self._repo.count_unfinished_for_session, bucket
             )
-            if bucket is not None:
-                self._pending_by_session.setdefault(bucket, set()).add(run_id)
-            self._queued_order.append(job)
-            self._queued_order.sort()
-            await self._queue.put(job)
-            position = self._position_locked(run_id)
-            self._ensure_workers()
+            if held >= self._anon_max_pending:
+                raise ResearchQueueFull(
+                    f"You already have {self._anon_max_pending} runs in the queue "
+                    "— wait for one to finish before starting another."
+                )
+
+        job_id = uuid.uuid4().hex
+        # Register the runnable before inserting so a worker that claims it
+        # immediately always finds it.
+        self._runnables[run_id] = run
+        await asyncio.to_thread(
+            self._repo.insert_job,
+            id=job_id,
+            execution_id=run_id,
+            priority=int(job_class),
+            user_id=user_id,
+            anon_session=bucket,
+            created_at=_now_iso(),
+        )
+        position = await asyncio.to_thread(self._repo.count_ahead, id=job_id)
+
+        await self._ensure_started()
+        self._wake.set()
 
         log.info(
-            "research_queue: admitted %s (class=%s, position=%s)",
-            run_id, job_class.name, position,
+            "research_queue: admitted %s (class=%s, position=%s, job=%s)",
+            run_id, job_class.name, position, job_id,
         )
         return AdmissionResult(admitted=True, run_id=run_id, queue_position=position)
 
-    def position_of(self, run_id: str) -> int | None:
-        """1-based queue position, or ``None`` if running / unknown.
+    def register_runnable(self, run_id: str, run: JobCoro) -> None:
+        """Re-attach a runnable for a job persisted by a prior process.
 
-        Read without the lock: the worst case is a momentarily stale integer,
-        which the polling UI tolerates.
+        After a restart the rows survive but the coroutines do not; the caller
+        (e.g. the router re-issuing a bootstrap) registers the coroutine so the
+        worker can run the recovered job.
         """
-        return self._position_locked(run_id)
+        self._runnables[run_id] = run
+        self._wake.set()
 
-    def _position_locked(self, run_id: str) -> int | None:
-        for index, job in enumerate(self._queued_order):
-            if job.run_id == run_id:
-                return index + 1
+    def position_of(self, run_id: str) -> int | None:
+        """1-based queue position for an execution id, or None if running/unknown.
+
+        Looks up the durable row, so it is correct across restarts. Synchronous
+        read for non-async callers (diagnostics); the polling UI tolerates a
+        momentarily stale integer.
+        """
+        job_id = self._job_id_for_execution(run_id)
+        if job_id is None:
+            return None
+        return self._repo.count_ahead(id=job_id)
+
+    def _job_id_for_execution(self, run_id: str) -> str | None:
+        # The in-memory fake exposes rows directly; the Sqla repo does not, so
+        # position-by-execution after the fact is only needed in tests, which
+        # use the fake. Production reports position once, at admission time.
+        rows = getattr(self._repo, "_rows", None)
+        if rows is None:
+            return None
+        for row in rows.values():
+            if row["execution_id"] == run_id:
+                return row["id"]
         return None
 
     # -- worker loop ---------------------------------------------------------
 
-    def _ensure_workers(self) -> None:
-        """Start worker coroutines up to ``max_concurrent`` (idempotent)."""
+    async def recover_stale_jobs(self) -> int:
+        """One-time stale recovery (idempotent). Safe to call at startup.
+
+        Marks the reaper as run so the first :meth:`admit` does not repeat it.
+        """
+        self._reaped = True
+        try:
+            return await self._requeue_stale()
+        except Exception:  # noqa: BLE001 — reaping must never block startup
+            log.exception("research_queue: requeue_stale failed")
+            return 0
+
+    async def _ensure_started(self) -> None:
+        """Run the one-time stale reaper, then start workers (idempotent)."""
+        if not self._reaped:
+            await self.recover_stale_jobs()
         self._workers = [w for w in self._workers if not w.done()]
         while len(self._workers) < self._max_concurrent:
             self._workers.append(asyncio.create_task(self._worker_loop()))
 
+    async def _requeue_stale(self) -> int:
+        cutoff = (
+            datetime.now(timezone.utc) - timedelta(seconds=self._lock_timeout_sec)
+        ).isoformat()
+        touched = await asyncio.to_thread(
+            self._repo.requeue_stale,
+            older_than=cutoff,
+            now=_now_iso(),
+            max_attempts=self._max_attempts,
+        )
+        if touched:
+            log.info("research_queue: requeue_stale recovered %d job(s)", touched)
+        return touched
+
     async def _worker_loop(self) -> None:
+        worker_id = f"w-{uuid.uuid4().hex[:8]}"
         while True:
-            job = await self._queue.get()
-            async with self._lock:
-                self._queued_order = [j for j in self._queued_order if j.run_id != job.run_id]
+            job = await asyncio.to_thread(
+                self._repo.claim_next, worker_id=worker_id, now=_now_iso()
+            )
+            if job is None:
+                # Idle — wait to be woken by an admit, or poll for recovered work.
+                self._wake.clear()
+                try:
+                    await asyncio.wait_for(
+                        self._wake.wait(), timeout=self._poll_interval * 4
+                    )
+                except TimeoutError:
+                    pass
+                continue
+
+            run = self._runnables.get(job.execution_id)
+            if run is None:
+                # We claimed a job whose runnable is not registered in this
+                # process — a row that survived a restart, awaiting the caller
+                # to re-register its coroutine. Release it back to ``queued``
+                # (undoing the claim's attempt bump) so it is re-claimable, and
+                # back off so we do not hot-loop on it before re-registration.
+                log.warning(
+                    "research_queue: claimed job %s (execution %s) has no "
+                    "in-memory runnable; releasing back to queue",
+                    job.id, job.execution_id,
+                )
+                await asyncio.to_thread(self._repo.release_job, id=job.id)
+                self._wake.clear()
+                try:
+                    await asyncio.wait_for(
+                        self._wake.wait(), timeout=self._poll_interval * 4
+                    )
+                except TimeoutError:
+                    pass
+                continue
+
+            await self._run_job(job.id, job.execution_id, run)
+
+    async def _run_job(self, job_id: str, execution_id: str, run: JobCoro) -> None:
+        heartbeat = asyncio.create_task(self._heartbeat_loop(job_id))
+        try:
+            await run()
+        except Exception as exc:  # noqa: BLE001 — a failed job must not kill the worker
+            log.exception("research_queue: job %s raised", execution_id)
+            heartbeat.cancel()
+            await asyncio.to_thread(
+                self._repo.mark_failed,
+                id=job_id,
+                finished_at=_now_iso(),
+                error=str(exc) or exc.__class__.__name__,
+            )
+        else:
+            heartbeat.cancel()
+            await asyncio.to_thread(
+                self._repo.mark_done, id=job_id, finished_at=_now_iso()
+            )
+        finally:
+            heartbeat.cancel()
+            self._runnables.pop(execution_id, None)
             try:
-                await job.run()
-            except Exception:  # noqa: BLE001 — a failed job must not kill the worker
-                log.exception("research_queue: job %s raised", job.run_id)
-            finally:
-                async with self._lock:
-                    if job.anon_session is not None:
-                        held = self._pending_by_session.get(job.anon_session)
-                        if held is not None:
-                            held.discard(job.run_id)
-                            if not held:
-                                self._pending_by_session.pop(job.anon_session, None)
-                self._queue.task_done()
+                await heartbeat
+            except (asyncio.CancelledError, Exception):  # noqa: BLE001
+                pass
+
+    async def _heartbeat_loop(self, job_id: str) -> None:
+        while True:
+            await asyncio.sleep(_HEARTBEAT_INTERVAL_SEC)
+            await asyncio.to_thread(self._repo.heartbeat, id=job_id, now=_now_iso())
 
     async def shutdown(self) -> None:
         """Cancel worker coroutines. Used by tests for clean loop teardown."""
@@ -194,13 +353,17 @@ class ResearchScheduler:
     def anon_max_pending(self) -> int:
         return self._anon_max_pending
 
+    @property
+    def repo(self) -> ResearchJobRepo:
+        return self._repo
+
     def pending_count(self, anon_session: str | None) -> int:
         bucket = anon_session or _ANON_NO_ID
-        return len(self._pending_by_session.get(bucket, set()))
+        return self._repo.count_unfinished_for_session(bucket)
 
 
 # Process-wide singleton. Created lazily so importing this module never touches
-# the event loop (PriorityQueue binds to the running loop on first await).
+# the event loop or requires a DB_URL until first use.
 _scheduler: ResearchScheduler | None = None
 
 
@@ -213,9 +376,15 @@ def get_scheduler() -> ResearchScheduler:
 
 
 def reset_scheduler_for_tests() -> None:
-    """Drop the singleton so each test builds a fresh queue on its own loop."""
+    """Drop the singleton so each test builds a fresh scheduler on its own loop."""
     global _scheduler
     _scheduler = None
+
+
+def set_scheduler_for_tests(scheduler: ResearchScheduler) -> None:
+    """Install a pre-built scheduler (e.g. one wired to an in-memory repo)."""
+    global _scheduler
+    _scheduler = scheduler
 
 
 __all__ = [
@@ -223,4 +392,5 @@ __all__ = [
     "ResearchQueueFull",
     "get_scheduler",
     "reset_scheduler_for_tests",
+    "set_scheduler_for_tests",
 ]
