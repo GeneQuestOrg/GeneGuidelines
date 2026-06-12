@@ -72,3 +72,8 @@
   opacity: 0.6;
   cursor: default;
 }
+
+/* DOC-5 — inline badge next to a submission name (possible duplicate). */
+.users-view__badge--inline {
+  margin-left: 6px;
+}

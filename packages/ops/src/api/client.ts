@@ -314,6 +314,105 @@ export async function approveDisease(slug: string): Promise<CatalogDisease> {
   });
 }
 
+// --- Parent contributions (DOC-5) — moderation queue ---
+
+export type ContributionReviewStatus = "pending" | "approved" | "rejected";
+
+/** A parent-submitted doctor awaiting moderation (snake_case wire shape). */
+export interface DoctorSubmission {
+  id: string;
+  slug: string;
+  name: string;
+  specialty: string;
+  institution: string;
+  city: string;
+  country: string;
+  disease_slug: string;
+  note: string;
+  possible_duplicate: boolean;
+  review_status: ContributionReviewStatus;
+  rodo_status: string;
+  rodo_email_sent_at: string | null;
+  created_at: string;
+}
+
+/** A parent recommendation awaiting moderation. */
+export interface ParentRecSubmission {
+  id: string;
+  doctor_slug: string;
+  text: string;
+  region: string | null;
+  relation: "parent" | "carer";
+  review_status: ContributionReviewStatus;
+  created_at: string;
+}
+
+export interface PendingContributions {
+  submissions: DoctorSubmission[];
+  parent_recs: ParentRecSubmission[];
+}
+
+/** Superadmin: the combined moderation queue (`GET /api/doctors/contributions/pending`). */
+export async function fetchPendingContributions(): Promise<PendingContributions> {
+  return request<PendingContributions>("/api/doctors/contributions/pending");
+}
+
+/** Superadmin: approve/reject a submission and/or mark the courtesy email sent. */
+export async function patchSubmission(
+  id: string,
+  patch: { review_status?: ContributionReviewStatus; rodo_email_sent?: boolean },
+): Promise<DoctorSubmission> {
+  return request<DoctorSubmission>(
+    `/api/doctors/submissions/${encodeURIComponent(id)}`,
+    { method: "PATCH", body: JSON.stringify(patch) },
+  );
+}
+
+/** Superadmin: approve/reject a parent recommendation. */
+export async function patchParentRec(
+  id: string,
+  patch: { review_status: ContributionReviewStatus },
+): Promise<ParentRecSubmission> {
+  return request<ParentRecSubmission>(
+    `/api/doctors/parent-recs/${encodeURIComponent(id)}`,
+    { method: "PATCH", body: JSON.stringify(patch) },
+  );
+}
+
+/**
+ * Build the ADR-009 courtesy email (`mailto:`) for a freshly approved doctor
+ * profile. Realises the three goals from ADR 009: appreciation, the GDPR
+ * art. 6(1)(f) legitimate-interest basis, and a frictionless opt-out via
+ * kontakt@genequest.org. PL wording, matching the decision's template.
+ */
+export function buildCourtesyMailto(submission: DoctorSubmission): string {
+  const who = submission.name || "Pani/Panie Doktorze";
+  const subject = "GeneQuest — wizytówka w bazie polecanych specjalistów";
+  const lines = [
+    `Szanowny Panie Doktorze / Szanowna Pani Doktor (${who}),`,
+    "",
+    "w związku z Pana/Pani doświadczeniem w diagnostyce i leczeniu chorób rzadkich",
+    "pozwoliliśmy sobie umieścić wizytówkę w prowadzonej przez Fundację GeneQuest",
+    "bazie polecanych specjalistów (https://genequest.org/lekarze).",
+    "",
+    "Podstawą przetwarzania Pana/Pani danych zawodowych (pochodzących ze źródeł",
+    "publicznych) jest prawnie uzasadniony interes administratora — art. 6 ust. 1",
+    "lit. f RODO — polegający na ułatwieniu pacjentom dotarcia do ekspertów.",
+    "",
+    "Jeśli chce Pan/Pani zaktualizować dane lub usunąć profil, wystarczy odpowiedzieć",
+    "na tego maila lub napisać na kontakt@genequest.org — zrobimy to bez zwłoki.",
+    "W przeciwnym razie nie trzeba nic robić.",
+    "",
+    "Z wyrazami szacunku,",
+    "Zespół Fundacji GeneQuest",
+  ];
+  const params = new URLSearchParams({
+    subject,
+    body: lines.join("\n"),
+  });
+  return `mailto:?${params.toString()}`;
+}
+
 // --- Flows ---
 
 export async function fetchFlows(): Promise<ApiFlowDefinition[]> {
