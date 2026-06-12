@@ -92,6 +92,11 @@ def test_get_doctors_merges_seed_and_finder(monkeypatch) -> None:
     pmids = {p["pmid"] for p in merged["publications"]}
     assert "99999999" in pmids
     assert "krzysztofdowgierd.pl" in merged["publicSource"] or "WSSD" in merged["publicSource"]
+    # draft9 directory fields from the curated seed survive the merge (finder hit omits them).
+    assert len(merged["practices"]) == 2
+    assert len(merged["parentRecs"]) == 1
+    assert merged["rodo"]["status"] == "published_optout"
+    assert merged["experienceByDisease"]["mas"] == "research_participant"
 
 
 def test_get_doctors_name_match_without_slug_overlap(monkeypatch) -> None:
