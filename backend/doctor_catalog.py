@@ -283,10 +283,21 @@ def _merge_public_doctor_rows(
         if isinstance(seed.get("practices"), list) and seed.get("practices")
         else finder.get("practices")
     ) or []
-    parent_recs = [
+    # Dedup like publications/endorsements above: the global directory self-merges the same
+    # seed row once per disease, so a plain concat would multiply each recommendation.
+    parent_recs: list[dict[str, Any]] = []
+    seen_recs: set[tuple[str, str, str]] = set()
+    for rec in [
         *(seed.get("parentRecs") if isinstance(seed.get("parentRecs"), list) else []),
         *(finder.get("parentRecs") if isinstance(finder.get("parentRecs"), list) else []),
-    ]
+    ]:
+        if not isinstance(rec, dict):
+            continue
+        key = (str(rec.get("text") or ""), str(rec.get("by") or ""), str(rec.get("date") or ""))
+        if key in seen_recs:
+            continue
+        seen_recs.add(key)
+        parent_recs.append(rec)
     added_via = str(seed.get("addedVia") or finder.get("addedVia") or "pubmed")
     rodo = seed.get("rodo") or finder.get("rodo")
     review_status = seed.get("reviewStatus") or finder.get("reviewStatus")

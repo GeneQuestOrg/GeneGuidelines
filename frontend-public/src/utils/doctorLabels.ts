@@ -1,4 +1,4 @@
-import type { PubmedRole } from "../types/doctor";
+import type { DoctorTier, PublicDoctor, PubmedRole } from "../types/doctor";
 
 export const VALID_PUBMED_ROLES = new Set<string>([
   "research_leader",
@@ -6,6 +6,14 @@ export const VALID_PUBMED_ROLES = new Set<string>([
   "case_study_author",
   "unknown",
 ]);
+
+/**
+ * Per-disease experience tier with a global-role fallback: experienceByDisease keys can
+ * legitimately be a subset of diseases[] (curated rows without the map, merged rows).
+ */
+export function tierForDisease(doctor: PublicDoctor, diseaseSlug: string): DoctorTier {
+  return doctor.experienceByDisease?.[diseaseSlug] ?? doctor.pubmedRole;
+}
 
 export function pubmedRoleLabel(role: PubmedRole): string {
   switch (role) {

@@ -21,6 +21,7 @@ export const PUBLIC_DOCTORS: readonly PublicDoctor[] = [
       citesRecentGuidelines: true,
       activeLast2y: true,
       guidelineOrConsensusCoauthor: false,
+      parentRecCount: 1,
     },
     publications: [
       {
