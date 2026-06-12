@@ -1,6 +1,6 @@
 # GeneGuidelines — developer context
 
-Living clinical guidelines for rare genetic diseases, built by the GeneQuest Foundation. Stack: **FastAPI + Pydantic AI + MCP + SQLite** backend, **React + Vite + TypeScript + React Flow** dual-frontend (`frontend-public` for patients/clinicians, `frontend-admin` for operations).
+Living clinical guidelines for rare genetic diseases, built by the GeneQuest Foundation. Stack: **FastAPI + Pydantic AI + MCP + PostgreSQL** backend, **React + Vite + TypeScript + React Flow** dual-frontend (`frontend-public` for patients/clinicians, `frontend-admin` for operations).
 
 System overview: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md). Public quick-start: [`README.md`](README.md). Frontend apps: [`FRONTENDS.md`](FRONTENDS.md).
 
@@ -11,7 +11,7 @@ System overview: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md). Public quick-st
 | Frontend | React 18, Vite, TypeScript, React Flow, Leaflet |
 | Backend | FastAPI, Uvicorn, Python 3.12+ |
 | Agent | Pydantic AI (OpenAI / DeepSeek / OpenRouter, `MODEL_PROFILE`-switched), MCP |
-| Database | SQLite |
+| Database | PostgreSQL (psycopg, `DB_URL`) + alembic migrations |
 | Streaming | Server-Sent Events (run trace), REST API everywhere else |
 
 ## Layout
@@ -20,7 +20,7 @@ System overview: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md). Public quick-st
 backend/
   main.py            # FastAPI app, CORS, lifespan, routers
   config.py          # Model profiles, CORS, env config
-  database.py        # SQLite schema + migrations
+  database.py        # DB schema + seed (PostgreSQL via DB_URL)
   models.py          # Pydantic models
   agents/
     agent.py         # Agent factory; per-profile model wiring

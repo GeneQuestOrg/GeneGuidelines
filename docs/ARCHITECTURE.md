@@ -7,7 +7,7 @@ Two consumers:
 - **Public site** (`frontend-public/`) — patients, families, primary-care clinicians: pathway diagrams, AI guideline drafts with PMID citations, specialist directory.
 - **Admin site** (`frontend-admin/`) — operations: visual workflow editor, pipeline runs, tool governance, operator review of AI drafts.
 
-One backend (`backend/`, FastAPI + Pydantic AI + MCP + SQLite).
+One backend (`backend/`, FastAPI + Pydantic AI + MCP + PostgreSQL).
 
 ## Core idea: controlled autonomy
 
