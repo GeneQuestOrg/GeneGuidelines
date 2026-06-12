@@ -1,9 +1,14 @@
-"""RES-1 — fair-share admission queue (in-process scheduler).
+"""RES-1 semantics over the RES-2 durable store.
 
-Unit tests for :class:`backend.research_queue.ResearchScheduler` with no DB and
-no FastAPI app: the scheduler is a pure async service object, so we drive it
-directly. We control concurrency with ``max_concurrent`` and gate worker
-progress with events to make ordering deterministic.
+Unit tests for :class:`backend.research_queue.ResearchScheduler` with no
+Postgres and no FastAPI app: the scheduler is a pure async service object, so
+we drive it directly. RES-2 swapped the storage from an in-process
+``asyncio.PriorityQueue`` to the ``research_jobs`` table behind
+:class:`ResearchJobRepo`; here we inject an :class:`InMemoryResearchJobRepo`
+(the Protocol's dict-backed fake) so these RES-1 admission/ordering assertions
+still hold against the new seam — semantics unchanged. We control concurrency
+with ``max_concurrent`` and gate worker progress with events to make ordering
+deterministic.
 """
 
 from __future__ import annotations
@@ -13,6 +18,7 @@ import asyncio
 import pytest
 
 from backend.research_queue import (
+    InMemoryResearchJobRepo,
     ResearchQueueFull,
     ResearchScheduler,
 )
@@ -20,7 +26,9 @@ from backend.research_queue import (
 
 def _make_scheduler(*, max_concurrent: int = 1, anon_max_pending: int = 3) -> ResearchScheduler:
     return ResearchScheduler(
-        max_concurrent=max_concurrent, anon_max_pending=anon_max_pending
+        max_concurrent=max_concurrent,
+        anon_max_pending=anon_max_pending,
+        repo=InMemoryResearchJobRepo(),
     )
 
 

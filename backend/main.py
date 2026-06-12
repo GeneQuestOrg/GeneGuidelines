@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from backend.config import CORS_ORIGINS
 from backend.database import init_db, run_seed_if_empty
 from backend.routers import agent, tickets, tools, flows
-from backend.config import MEMORY_POSTGRES_DSN
+from backend.config import DB_URL, MEMORY_POSTGRES_DSN
 import logging
 
 logger = logging.getLogger(__name__)
@@ -29,6 +29,18 @@ async def lifespan(app: FastAPI):
             await PostgresMemoryStore().ensure_schema()
         except Exception as exc:
             logger.warning("Memory store init failed, running without persistent memory: %s", exc)
+
+    # Research queue (RES-2): recover jobs a previous process left mid-flight.
+    # A worker that died leaves its row `running`; requeue_stale returns it to
+    # `queued` (or fails it past max attempts) so the durable queue resumes.
+    # Best-effort — never block startup if the DB is unreachable.
+    if DB_URL:
+        try:
+            from backend.research_queue import get_scheduler
+
+            await get_scheduler().recover_stale_jobs()
+        except Exception as exc:
+            logger.warning("Research queue stale-recovery skipped: %s", exc)
     yield
     # shutdown – nothing to close (SQLite, no connection pool)
 

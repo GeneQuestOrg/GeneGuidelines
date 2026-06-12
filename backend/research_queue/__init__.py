@@ -18,17 +18,27 @@ Fairness:
   curl/bot loop cannot starve the queue. Authenticated users have no cap in
   V1.
 
-Pragmatism (deliberately deferred — see PLAN.md "Poza zakresem"): this is an
-**in-process** queue. A backend restart loses pending jobs; a durable
-``research_jobs`` table is on the roadmap. We do not build persistence here.
+Durability (RES-2): admitted jobs are persisted as ``research_jobs`` rows
+behind :class:`~backend.research_queue.repository.ResearchJobRepo`, so queued
+and running jobs survive a backend restart or a worker crash. The worker claims
+one row at a time with ``SELECT ... FOR UPDATE SKIP LOCKED`` and a stale-lock
+reaper recovers jobs an exited worker abandoned. Semantics (priority, FIFO,
+anon cap, position) are unchanged from the original in-process queue.
 """
 
-from .models import AdmissionResult, JobClass, QueuedJob
+from .models import AdmissionResult, JobClass
+from .repository import (
+    InMemoryResearchJobRepo,
+    ResearchJob,
+    ResearchJobRepo,
+    SqlaResearchJobRepo,
+)
 from .scheduler import (
     ResearchQueueFull,
     ResearchScheduler,
     get_scheduler,
     reset_scheduler_for_tests,
+    set_scheduler_for_tests,
 )
 
 __all__ = [
@@ -36,7 +46,11 @@ __all__ = [
     "ResearchQueueFull",
     "get_scheduler",
     "reset_scheduler_for_tests",
+    "set_scheduler_for_tests",
     "AdmissionResult",
     "JobClass",
-    "QueuedJob",
+    "ResearchJob",
+    "ResearchJobRepo",
+    "SqlaResearchJobRepo",
+    "InMemoryResearchJobRepo",
 ]

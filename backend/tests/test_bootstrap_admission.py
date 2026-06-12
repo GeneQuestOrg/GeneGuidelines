@@ -27,7 +27,13 @@ import pytest
 from backend.account.deps import provide_account_service, provide_user_repo
 from backend.account.repository import InMemoryUserRepo
 from backend.account.service import AccountService
-from backend.research_queue import get_scheduler, reset_scheduler_for_tests
+from backend.research_queue import (
+    InMemoryResearchJobRepo,
+    ResearchScheduler,
+    get_scheduler,
+    reset_scheduler_for_tests,
+    set_scheduler_for_tests,
+)
 
 
 @pytest.fixture
@@ -75,7 +81,17 @@ def app_and_gate(monkeypatch: pytest.MonkeyPatch):
 
     monkeypatch.setenv("RESEARCH_QUEUE_MAX_CONCURRENT", "1")
     monkeypatch.setenv("RESEARCH_QUEUE_ANON_MAX_PENDING", "3")
+    # RES-2: the production scheduler builds a Postgres-backed repo on first
+    # use; the sandbox has no Postgres, so install one wired to the in-memory
+    # fake. Semantics (priority, FIFO, anon cap, position) are identical.
     reset_scheduler_for_tests()
+    set_scheduler_for_tests(
+        ResearchScheduler(
+            max_concurrent=1,
+            anon_max_pending=3,
+            repo=InMemoryResearchJobRepo(),
+        )
+    )
 
     yield app, gate
 

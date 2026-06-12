@@ -490,6 +490,63 @@ invites = Table(
 Index("ix_invites_created_by", invites.c.created_by)
 
 
+# -- research_queue domain ----------------------------------------------------
+#
+# Durable fair-share admission queue for disease-bootstrap fan-outs (RES-2).
+# RES-1 kept this in an in-process ``asyncio.PriorityQueue`` that a backend
+# restart or worker crash silently dropped. This table is the durable backing
+# store: rows survive restarts, the worker claims one row at a time with
+# ``SELECT ... FOR UPDATE SKIP LOCKED`` (Solid Queue / Oban style — no Celery,
+# no broker), and a stale-lock reaper requeues jobs an exited worker abandoned.
+#
+# Semantics are unchanged from RES-1: ``priority`` is the integer JobClass
+# (0 = authenticated, 1 = anonymous; lower served first), and FIFO within a
+# class falls out of ordering by ``created_at`` next. The anon cap counts
+# unfinished rows (queued OR running) for an ``anon_session`` bucket.
+#
+# Generic column types only (Text/Integer): the same DDL is valid on both
+# SQLite (offline alembic / Kaggle snapshot) and Postgres (production engine).
+# ``created_at`` / ``locked_at`` are ISO-8601 strings like every other
+# timestamp column in this schema (Text), so ordering is lexicographic and
+# portable.
+research_jobs = Table(
+    "research_jobs",
+    metadata,
+    Column("id", Text, primary_key=True),  # uuid4 hex
+    Column("execution_id", Text, nullable=False),  # gl-… run id the FE polls
+    Column("payload_json", Text, nullable=False, server_default="{}"),
+    Column("priority", Integer, nullable=False),  # JobClass int (0 auth, 1 anon)
+    Column("status", Text, nullable=False, server_default="queued"),
+    Column("user_id", Text),  # NULL for anonymous callers
+    Column("anon_session", Text),  # NULL for authenticated callers
+    Column("attempts", Integer, nullable=False, server_default="0"),
+    Column("locked_at", Text),  # ISO-8601 when a worker claimed it
+    Column("locked_by", Text),  # worker id holding the claim
+    Column("created_at", Text, nullable=False),
+    Column("started_at", Text),
+    Column("finished_at", Text),
+    Column("error", Text),
+    CheckConstraint(
+        "status IN ('queued','running','done','failed')",
+        name="research_job_status_enum",
+    ),
+)
+
+# Claiming hot path: ``WHERE status='queued' ORDER BY priority, created_at``.
+Index(
+    "ix_research_jobs_claim",
+    research_jobs.c.status,
+    research_jobs.c.priority,
+    research_jobs.c.created_at,
+)
+# Anonymous-cap lookup: unfinished rows per session bucket.
+Index(
+    "ix_research_jobs_anon_session",
+    research_jobs.c.anon_session,
+    research_jobs.c.status,
+)
+
+
 __all__ = [
     "metadata",
     "diseases",
@@ -508,4 +565,5 @@ __all__ = [
     "disease_index_aliases",
     "users",
     "invites",
+    "research_jobs",
 ]
