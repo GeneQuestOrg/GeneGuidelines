@@ -5,9 +5,11 @@ import "leaflet.markercluster";
 import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 import type { UserLocation } from "../router/types";
+import type { Practice } from "../types/doctor";
 import type { DoctorWithDistance } from "../utils/doctorSort";
 import { pubmedRoleLabel } from "../utils/doctorLabels";
 import { formatDistanceKm } from "../utils/geo";
+import { practicePins } from "../utils/practices";
 import "../styles/doctors.css";
 
 export interface DoctorsMapProps {
@@ -50,15 +52,17 @@ function roleMarkerIcon(role: string): L.DivIcon {
   });
 }
 
-function buildPopupHtml(d: DoctorWithDistance): string {
+function buildPopupHtml(d: DoctorWithDistance, practice: Practice): string {
   const role = pubmedRoleLabel(d.pubmedRole);
   const validatedRole = safeRole(d.pubmedRole);
   const dist = d.km != null ? `<span class="map-popup__dist">${formatDistanceKm(d.km)}</span>` : "";
+  const practiceLine = `${esc(practice.name)} · ${esc(practice.type)}`;
   return `
     <div class="map-popup">
       <div class="map-popup__name">${esc(d.name)}</div>
       <div class="map-popup__spec">${esc(d.specialty)}</div>
-      <div class="map-popup__inst">${esc(d.city)}, ${esc(d.country)}</div>
+      <div class="map-popup__practice">${practiceLine}</div>
+      <div class="map-popup__inst">${esc(practice.city)}, ${esc(d.country)}</div>
       <div class="map-popup__foot">
         <span class="tag tag--role tag--${esc(validatedRole)}">${esc(role)}</span>
         <span class="tag tag--score">PubMed <b>${esc(String(d.score))}</b></span>
@@ -71,9 +75,7 @@ export function DoctorsMap({ doctors, userLoc, onNav }: DoctorsMapProps) {
   const hostRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    const pins = doctors.filter(
-      (d) => Number.isFinite(d.lat) && Number.isFinite(d.lng),
-    );
+    const pins = practicePins(doctors);
     const el = hostRef.current;
     if (el == null) {
       return undefined;
@@ -94,10 +96,10 @@ export function DoctorsMap({ doctors, userLoc, onNav }: DoctorsMapProps) {
     const bounds = L.latLngBounds([] as L.LatLngExpression[]);
     let extended = false;
 
-    for (const d of pins) {
-      const latlng: L.LatLngExpression = [d.lat, d.lng];
+    for (const { doctor: d, practice } of pins) {
+      const latlng: L.LatLngExpression = [practice.lat, practice.lng];
       const marker = L.marker(latlng, { icon: roleMarkerIcon(d.pubmedRole) });
-      marker.bindPopup(buildPopupHtml(d), { maxWidth: 240 });
+      marker.bindPopup(buildPopupHtml(d, practice), { maxWidth: 240 });
       marker.on("popupopen", () => {
         const btn = marker.getPopup()?.getElement()?.querySelector<HTMLElement>(".map-popup");
         btn?.addEventListener("click", () => {
@@ -135,9 +137,7 @@ export function DoctorsMap({ doctors, userLoc, onNav }: DoctorsMapProps) {
     };
   }, [doctors, onNav, userLoc]);
 
-  const pinCount = doctors.filter(
-    (d) => Number.isFinite(d.lat) && Number.isFinite(d.lng),
-  ).length;
+  const pinCount = practicePins(doctors).length;
 
   return (
     <aside className="doctors-map" aria-label="Specialist map">
