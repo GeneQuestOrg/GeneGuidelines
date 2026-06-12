@@ -24,6 +24,19 @@ from backend.research_queue import (
 )
 
 
+async def _wait_until(predicate, timeout: float = 5.0) -> None:
+    """Wait for ``predicate()`` with real wall-clock time.
+
+    The worker idles in a timed ``Event.wait`` (poll interval ~0.2s), so
+    zero-time ``sleep(0)`` yield loops race against it on slow CI machines.
+    """
+    deadline = asyncio.get_event_loop().time() + timeout
+    while not predicate():
+        if asyncio.get_event_loop().time() > deadline:
+            return
+        await asyncio.sleep(0.01)
+
+
 def _make_scheduler(*, max_concurrent: int = 1, anon_max_pending: int = 3) -> ResearchScheduler:
     return ResearchScheduler(
         max_concurrent=max_concurrent,
@@ -54,20 +67,14 @@ async def test_authenticated_jobs_run_before_anonymous() -> None:
     # First job occupies the single worker and blocks. Wait until it is
     # actually running before queueing the rest, so the worker is busy.
     await sched.admit(run_id="block", run=blocker, authenticated=False, anon_session="a")
-    for _ in range(50):
-        await asyncio.sleep(0)
-        if running.is_set():
-            break
+    await _wait_until(running.is_set)
     # Now queue an anon job, THEN an authenticated job. Auth must jump ahead.
     await sched.admit(run_id="anon", run=make_run("anon"), authenticated=False, anon_session="b")
     await sched.admit(run_id="auth", run=make_run("auth"), authenticated=True, anon_session=None)
 
     gate.set()
     # Let the worker drain the queue.
-    for _ in range(50):
-        await asyncio.sleep(0)
-        if order == ["blocker", "auth", "anon"]:
-            break
+    await _wait_until(lambda: order == ["blocker", "auth", "anon"])
     assert order == ["blocker", "auth", "anon"], order
     await sched.shutdown()
 
@@ -93,10 +100,7 @@ async def test_fifo_within_same_class() -> None:
     await sched.admit(run_id="j3", run=make_run("j3"), authenticated=True, anon_session=None)
 
     gate.set()
-    for _ in range(50):
-        await asyncio.sleep(0)
-        if order == ["j1", "j2", "j3"]:
-            break
+    await _wait_until(lambda: order == ["j1", "j2", "j3"])
     assert order == ["j1", "j2", "j3"], order
     await sched.shutdown()
 
@@ -197,15 +201,9 @@ async def test_queue_position_decreases_as_queue_drains() -> None:
     assert r2.queue_position is not None and r2.queue_position >= r1.queue_position
 
     # Let r0 start, then finish — r1 should advance to the front.
-    for _ in range(50):
-        await asyncio.sleep(0)
-        if "r0" in started:
-            break
+    await _wait_until(lambda: "r0" in started)
     release[0].set()
-    for _ in range(50):
-        await asyncio.sleep(0)
-        if "r1" in started:
-            break
+    await _wait_until(lambda: "r1" in started)
     # Once r1 is running it is no longer queued; r2 is now position 1.
     assert sched.position_of("r2") == 1
     assert sched.position_of("r1") is None
