@@ -1,6 +1,7 @@
 """Public doctor directory — curated seed merged with latest doctor_finder workflow results."""
 from __future__ import annotations
 
+import html
 import json
 import re
 import threading
@@ -70,6 +71,13 @@ def _name_tokens(s: str) -> set[str]:
     return set(_TOKEN_RE.findall((s or "").lower()))
 
 
+def _decode_stored_text(text: str) -> str:
+    """Fix legacy doctor_finder rows that stored PubMed numeric entities literally."""
+    if not text or "&" not in text:
+        return text
+    return html.unescape(text)
+
+
 def _entry_to_public_doctor(
     entry: dict[str, Any],
     *,
@@ -83,10 +91,13 @@ def _entry_to_public_doctor(
     evidence_summary = entry.get("evidence_summary") or {}
     if not isinstance(evidence_summary, dict):
         evidence_summary = {}
-    display_name = str(entry.get("display_name") or "Unknown")
+    display_name = _decode_stored_text(str(entry.get("display_name") or "Unknown"))
     author_key = entry.get("author_key")
     slug = slugify_doctor_name(display_name, str(author_key) if author_key else None)
-    affiliation = entry.get("affiliation")
+    affiliation_raw = entry.get("affiliation")
+    affiliation = (
+        _decode_stored_text(str(affiliation_raw)) if affiliation_raw is not None else None
+    )
     explicit_city = str(entry.get("city") or "").strip()
     country_raw = str(entry.get("country") or "").strip().upper()
     country_iso = country_raw[:2] if len(country_raw) >= 2 and country_raw[:2].isalpha() else ""
@@ -105,14 +116,15 @@ def _entry_to_public_doctor(
     publications = [
         {
             "pmid": str(p.get("pmid") or ""),
-            "title": str(p.get("title") or ""),
+            "title": _decode_stored_text(str(p.get("title") or "")),
             "year": p.get("year"),
-            "journal": str(p.get("article_type") or ""),
-            "position": "author",
+            "journal": _decode_stored_text(str(p.get("article_type") or "")),
+            "position": str(p.get("author_position") or "author"),
         }
         for p in key_papers
         if isinstance(p, dict) and p.get("pmid")
     ]
+    pubmed_role = _role_to_pubmed_role(str(entry.get("role") or ""))
     return {
         "slug": slug,
         "name": display_name,
@@ -124,7 +136,9 @@ def _entry_to_public_doctor(
         "lat": lat,
         "lng": lng,
         "diseases": diseases,
-        "pubmedRole": _role_to_pubmed_role(str(entry.get("role") or "")),
+        "pubmedRole": pubmed_role,
+        "experienceByDisease": {d: pubmed_role for d in diseases},
+        "addedVia": "pubmed",
         "score": int(round(float(entry.get("score") or 0))),
         "evidence": {
             "firstOrLastAuthorPapers": int(
@@ -258,6 +272,36 @@ def _merge_public_doctor_rows(
     specialty = str(finder.get("specialty") or seed.get("specialty") or "")
     role = str(finder.get("role") or seed.get("role") or "")
 
+    # draft9 directory fields: seed (curated) wins, finder fills gaps. parentRecs/rodo only
+    # come from the curated seed today; experienceByDisease merges per-disease (seed overrides).
+    experience_by_disease = {
+        **(finder.get("experienceByDisease") if isinstance(finder.get("experienceByDisease"), dict) else {}),
+        **(seed.get("experienceByDisease") if isinstance(seed.get("experienceByDisease"), dict) else {}),
+    }
+    practices = (
+        seed.get("practices")
+        if isinstance(seed.get("practices"), list) and seed.get("practices")
+        else finder.get("practices")
+    ) or []
+    # Dedup like publications/endorsements above: the global directory self-merges the same
+    # seed row once per disease, so a plain concat would multiply each recommendation.
+    parent_recs: list[dict[str, Any]] = []
+    seen_recs: set[tuple[str, str, str]] = set()
+    for rec in [
+        *(seed.get("parentRecs") if isinstance(seed.get("parentRecs"), list) else []),
+        *(finder.get("parentRecs") if isinstance(finder.get("parentRecs"), list) else []),
+    ]:
+        if not isinstance(rec, dict):
+            continue
+        key = (str(rec.get("text") or ""), str(rec.get("by") or ""), str(rec.get("date") or ""))
+        if key in seen_recs:
+            continue
+        seen_recs.add(key)
+        parent_recs.append(rec)
+    added_via = str(seed.get("addedVia") or finder.get("addedVia") or "pubmed")
+    rodo = seed.get("rodo") or finder.get("rodo")
+    review_status = seed.get("reviewStatus") or finder.get("reviewStatus")
+
     return {
         "slug": slug,
         "name": str(seed.get("name") or finder.get("name") or "Unknown"),
@@ -279,6 +323,12 @@ def _merge_public_doctor_rows(
         "contact": str(seed.get("contact") or finder.get("contact") or "form"),
         "source": "merged",
         "executionId": finder.get("executionId"),
+        "practices": practices,
+        "experienceByDisease": experience_by_disease,
+        "addedVia": added_via,
+        "rodo": rodo,
+        "parentRecs": parent_recs,
+        "reviewStatus": review_status,
     }
 
 
@@ -296,6 +346,24 @@ def _finder_index_matching_seed(seed: dict[str, Any], finder_docs: list[dict[str
         if snk and _canonical_name_key(str(f.get("name") or "")) == snk:
             return i
     return None
+
+
+def _ensure_experience_key(row: dict[str, Any], disease_slug: str) -> None:
+    """Make sure ``row["experienceByDisease"]`` has ``disease_slug`` (default: the row's pubmedRole).
+
+    Mutates the local ``row`` copy only. Called whenever a disease is appended to ``row["diseases"]``
+    so per-disease tiers stay complete (consumer still has tierForDisease fallback, but data should
+    not depend on it).
+    """
+    if not disease_slug:
+        return
+    experience = row.get("experienceByDisease")
+    if not isinstance(experience, dict):
+        experience = {}
+    else:
+        experience = dict(experience)
+    experience.setdefault(disease_slug, str(row.get("pubmedRole") or "unknown"))
+    row["experienceByDisease"] = experience
 
 
 def _merge_seed_and_finder_docs(
@@ -316,6 +384,7 @@ def _merge_seed_and_finder_docs(
             row.setdefault("diseases", [])
             if disease_slug not in (row.get("diseases") or []):
                 row["diseases"] = [*list(row.get("diseases") or []), disease_slug]
+            _ensure_experience_key(row, disease_slug)
             out.append(row)
             continue
         used_finder.add(j)
@@ -326,6 +395,7 @@ def _merge_seed_and_finder_docs(
             continue
         row = dict(f)
         row["diseases"] = list(dict.fromkeys([*(row.get("diseases") or []), disease_slug]))
+        _ensure_experience_key(row, disease_slug)
         out.append(row)
 
     out.sort(key=lambda d: -int(d.get("score") or 0))
@@ -478,7 +548,9 @@ def _build_finder_docs_index() -> dict[str, list[dict[str, Any]] | None]:
     for execution_id, run in runs:
         if not run.get("done") or run.get("error"):
             continue
-        run_slug = _disease_slug_for_name(str(run.get("disease_name") or ""))
+        run_slug = str(run.get("catalog_slug") or "").strip().lower()
+        if not run_slug:
+            run_slug = _disease_slug_for_name(str(run.get("disease_name") or "")) or ""
         if not run_slug:
             continue
         report = run.get("doctor_report")
@@ -609,12 +681,12 @@ def list_all_doctors() -> list[dict[str, Any]]:
                 by_slug[key] = doc
 
         finder_index = _finder_docs_index()
+        catalog_slugs: set[str] = set(finder_index.keys())
+
         try:
             rows = list_diseases_catalog()
         except Exception:
             rows = []
-
-        catalog_slugs: set[str] = set()
         for row in rows:
             normalized = normalize_disease_slug(str(row.get("slug") or "").strip())
             if normalized:

@@ -21,6 +21,7 @@ export const PUBLIC_DOCTORS: readonly PublicDoctor[] = [
       citesRecentGuidelines: true,
       activeLast2y: true,
       guidelineOrConsensusCoauthor: false,
+      parentRecCount: 1,
     },
     publications: [
       {
@@ -36,6 +37,40 @@ export const PUBLIC_DOCTORS: readonly PublicDoctor[] = [
     endorsements: ["FDMAS Alliance"],
     contact: "form",
     source: "content_seed",
+    addedVia: "pubmed",
+    experienceByDisease: { fd: "research_leader", mas: "research_participant" },
+    practices: [
+      {
+        type: "hospital",
+        name: "Wojewódzki Specjalistyczny Szpital Dziecięcy w Olsztynie",
+        address: "ul. Żołnierska 18a",
+        city: "Olsztyn",
+        lat: 53.778,
+        lng: 20.48,
+        website: "https://wssd.olsztyn.pl",
+      },
+      {
+        type: "clinic",
+        name: "Dowgierd Clinic",
+        city: "Olsztyn",
+        lat: 53.7705,
+        lng: 20.4901,
+        website: "https://krzysztofdowgierd.pl",
+      },
+    ],
+    parentRecs: [
+      {
+        text: "Prof. Dowgierd był jedynym, który prawidłowo ocenił zmiany u naszego syna i wstrzymał pochopną operację do czasu potwierdzenia genetycznego.",
+        by: "rodzic pacjenta",
+        region: "woj. wielkopolskie",
+        date: "2026-03-14",
+      },
+    ],
+    rodo: {
+      status: "published_optout",
+      emailSent: "2026-04-28",
+      note: "Dane z publicznych źródeł (PubMed, strona kliniki). Profil można wycofać: kontakt@genequest.org.",
+    },
   },
   {
     slug: "allecou",
@@ -63,6 +98,7 @@ export const PUBLIC_DOCTORS: readonly PublicDoctor[] = [
     endorsements: [],
     contact: "form",
     source: "content_seed",
+    experienceByDisease: { fd: "research_participant" },
   },
   {
     slug: "appelman-dijkstra",
@@ -98,6 +134,7 @@ export const PUBLIC_DOCTORS: readonly PublicDoctor[] = [
     endorsements: ["FDMAS Alliance", "International FD/MAS Consortium"],
     contact: "form",
     source: "content_seed",
+    experienceByDisease: { fd: "research_leader", mas: "research_leader" },
   },
   {
     slug: "riminucci",
@@ -125,6 +162,7 @@ export const PUBLIC_DOCTORS: readonly PublicDoctor[] = [
     endorsements: ["International FD/MAS Consortium"],
     contact: "form",
     source: "content_seed",
+    experienceByDisease: { fd: "research_leader", mas: "research_leader" },
   },
   {
     slug: "hsiao",
@@ -152,6 +190,7 @@ export const PUBLIC_DOCTORS: readonly PublicDoctor[] = [
     endorsements: ["FDMAS Alliance"],
     contact: "form",
     source: "content_seed",
+    experienceByDisease: { fd: "research_leader", mas: "research_leader" },
   },
   {
     slug: "podstawski",
@@ -179,5 +218,6 @@ export const PUBLIC_DOCTORS: readonly PublicDoctor[] = [
     endorsements: [],
     contact: "form",
     source: "content_seed",
+    experienceByDisease: { fd: "case_study_author" },
   },
 ] as const;

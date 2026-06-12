@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class GuidelinePromptProfile(BaseModel):
@@ -128,6 +128,14 @@ class GuidelineMetaResponse(BaseModel):
     lastReviewed: str | None = None
 
 
+DoctorTier = Literal[
+    "research_leader",
+    "research_participant",
+    "case_study_author",
+    "unknown",
+]
+
+
 class DoctorEvidenceResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -136,6 +144,8 @@ class DoctorEvidenceResponse(BaseModel):
     citesRecentGuidelines: bool = False
     activeLast2y: bool = False
     guidelineOrConsensusCoauthor: bool = False
+    # Sixth grid signal: how many families recommended this doctor (derived from parentRecs).
+    parentRecCount: int = Field(default=0, ge=0)
 
 
 class DoctorPublicationResponse(BaseModel):
@@ -146,6 +156,41 @@ class DoctorPublicationResponse(BaseModel):
     year: int | None = None
     journal: str = ""
     position: str = ""
+
+
+class PracticeResponse(BaseModel):
+    """One place a doctor practises (a doctor may have several)."""
+
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    type: str = "primary"
+    name: str
+    address: str | None = None
+    city: str
+    lat: float
+    lng: float
+    website: str | None = None
+
+
+class ParentRecResponse(BaseModel):
+    """A recommendation left by a parent/carer — a signal PubMed mining cannot surface."""
+
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    text: str
+    by: str = ""
+    region: str = ""
+    date: str = ""
+
+
+class RodoResponse(BaseModel):
+    """RODO/GDPR provenance for a directory entry (inform-don't-ask-consent, ADR 009)."""
+
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    status: Literal["published_optout", "informed", "pending"]
+    emailSent: str | None = None
+    note: str | None = None
 
 
 class PublicDoctorResponse(BaseModel):
@@ -178,6 +223,32 @@ class PublicDoctorResponse(BaseModel):
     contact: str = "form"
     source: str = "content_seed"
     executionId: str | None = None
+    # draft9 directory fields (populated for real in later items; safe empty defaults so the
+    # api path never 500s while data catches up).
+    practices: list[PracticeResponse] = Field(default_factory=list)
+    experienceByDisease: dict[str, DoctorTier] = Field(default_factory=dict)
+    addedVia: Literal["pubmed", "parent", "consortium", "nil"] = "pubmed"
+    rodo: RodoResponse | None = None
+    parentRecs: list[ParentRecResponse] = Field(default_factory=list)
+    reviewStatus: Literal["pending"] | None = None
+
+    @model_validator(mode="after")
+    def _derive_directory_defaults(self) -> "PublicDoctorResponse":
+        # Every doctor exposes at least one practice (the primary affiliation), so the UI
+        # can render "where they practise" uniformly without a per-source fallback.
+        if not self.practices:
+            self.practices = [
+                PracticeResponse(
+                    type="primary",
+                    name=self.institution,
+                    city=self.city,
+                    lat=self.lat,
+                    lng=self.lng,
+                )
+            ]
+        # Keep the sixth evidence signal in sync with the recommendations themselves.
+        self.evidence.parentRecCount = len(self.parentRecs)
+        return self
 
 
 class DiseaseDoctorsResponse(BaseModel):

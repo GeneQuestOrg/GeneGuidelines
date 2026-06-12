@@ -63,6 +63,8 @@ export interface AgentRunPayloadV1 {
   diagnostics_entries: unknown[];
   steps_completed_by_ai: unknown[];
   missing_tool_requests: unknown[];
+  started_at?: string | null;
+  current_stage?: string | null;
 }
 
 /**

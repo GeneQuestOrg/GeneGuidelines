@@ -75,6 +75,12 @@ describe("parseHash", () => {
       query: "fabry",
       diseaseSlug: "fd",
     });
+    expect(parseHash("#/research/live?disease=fd&name=FD")).toEqual({
+      name: "researchRun",
+      id: "live",
+      diseaseSlug: "fd",
+      diseaseName: "FD",
+    });
   });
 
   it("falls back to home for unknown paths", () => {

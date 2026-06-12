@@ -75,6 +75,8 @@ export interface WorkstreamInputs {
   readonly nowMs: number;
   /** True while we have any trace from the guideline run. */
   readonly guidelineTraceSeen: boolean;
+  /** True after the first successful per-disease counts fetch (avoids refresh flash). */
+  readonly countsReady: boolean;
 }
 
 export const WORKSTREAMS: readonly WorkstreamDef[] = [
@@ -136,6 +138,13 @@ const BOOTSTRAP_GRACE_SEC = 8;
  * otherwise the UI flashes ``done / 0`` one poll cycle before rows land.
  */
 const RESULTS_SETTLING_MS = 22_000;
+/**
+ * Only for finders never seen in ``activeRuns``: after this many seconds on the
+ * run page, treat as finished with zero results. Must exceed real LLM finder
+ * runtime (often 5–15+ min) — a low value falsely showed ``done / 0`` while
+ * trials/therapies were still extracting.
+ */
+const FINDER_MAX_RUNTIME_SEC = 900;
 
 function bootstrapSeen(inputs: WorkstreamInputs): boolean {
   return (
@@ -296,12 +305,13 @@ export function deriveWorkstreams(
       }
     } else {
       const active = flowActive(inputs.activeRuns, def.flowKeys);
-      const wasSeen = seen.has(def.key);
-      const settling = isSettlingAfterInactive(def.key, count, inputs);
 
-      if (active) {
+      if (!inputs.countsReady) {
+        // Avoid treating unloaded zeros as "still running" after a page refresh.
+        status = "queued";
+      } else if (active) {
         status = "running";
-      } else if (settling) {
+      } else if (isSettlingAfterInactive(def.key, count, inputs)) {
         status = "running";
       } else if (count != null && count > 0) {
         status = "done";
@@ -312,13 +322,22 @@ export function deriveWorkstreams(
         // Never stick at done/0 — counts often arrive one poll after activeRuns drops.
         status = "done";
       } else if (
-        wasSeen &&
-        !settling &&
+        seen.has(def.key) &&
+        !isSettlingAfterInactive(def.key, count, inputs) &&
         (count ?? 0) === 0
       ) {
         status = "done";
       } else if (inputs.elapsedSec < BOOTSTRAP_GRACE_SEC) {
         status = "queued";
+      } else if (
+        !seen.has(def.key) &&
+        !active &&
+        bootstrapSeen(inputs) &&
+        !isSettlingAfterInactive(def.key, count, inputs) &&
+        inputs.elapsedSec >= FINDER_MAX_RUNTIME_SEC
+      ) {
+        // Never appeared in active-runs poll but fan-out started long ago.
+        status = "done";
       } else if (bootstrapSeen(inputs)) {
         status = "running";
       } else {

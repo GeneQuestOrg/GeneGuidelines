@@ -11,7 +11,7 @@
   padding: 16px 18px;
   background: var(--bg-elev);
   border: 1px solid var(--line);
-  border-left: 3px solid var(--accent, #0f766e);
+  border-left: 3px solid var(--accent, var(--accent-ink));
   border-radius: var(--r-lg);
   text-decoration: none;
   color: inherit;
@@ -35,14 +35,14 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--accent, #0f766e);
-  box-shadow: 0 0 0 0 color-mix(in oklch, var(--accent, #0f766e) 60%, transparent);
+  background: var(--accent, var(--accent-ink));
+  box-shadow: 0 0 0 0 color-mix(in oklch, var(--accent, var(--accent-ink)) 60%, transparent);
   animation: active-research-pulse 1.6s ease-out infinite;
 }
 
 @keyframes active-research-pulse {
   0% {
-    box-shadow: 0 0 0 0 color-mix(in oklch, var(--accent, #0f766e) 60%, transparent);
+    box-shadow: 0 0 0 0 color-mix(in oklch, var(--accent, var(--accent-ink)) 60%, transparent);
   }
   70% {
     box-shadow: 0 0 0 10px transparent;
@@ -76,6 +76,6 @@
 .active-research__cta {
   margin: 0;
   font-size: var(--fs-sm);
-  color: var(--accent-ink, #0f766e);
+  color: var(--accent-ink);
   font-weight: 600;
 }

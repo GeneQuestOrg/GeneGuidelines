@@ -69,6 +69,15 @@ class Disease:
         """
         return replace(self, doctors_count=count)
 
+    def with_trials_count(self, count: int) -> "Disease":
+        """Return a copy with ``trials_count`` replaced by ``count``.
+
+        The public ``/api/diseases`` response carries a *live* trial count
+        derived from the ``disease_trials`` junction table rather than the
+        static value cached on the row.
+        """
+        return replace(self, trials_count=count)
+
 
 def disease_from_row(row: Mapping[str, object]) -> Disease:
     """Map a database row (Mapping) to a :class:`Disease` domain object."""

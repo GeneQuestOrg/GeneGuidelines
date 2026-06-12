@@ -236,3 +236,22 @@ def test_disease_name_passed_through_from_initial_context() -> None:
     }
     result = run(context)
     assert result["doctor_report"]["disease_name"] == "Ehlers-Danlos Syndrome"
+
+
+def test_key_papers_carry_author_position() -> None:
+    """The author's per-paper position must survive into KeyPaper (was dropped before DOC-4)."""
+    result = run(BASE_CONTEXT)
+    top = result["doctor_report"]["top_authors"]
+    positions = {kp["author_position"] for entry in top for kp in entry["key_papers"]}
+    assert positions == {"first"}
+
+
+def test_key_papers_default_author_position_when_missing() -> None:
+    """Papers without an author_position fall back to the KeyPaper default ("")."""
+    author = _make_author("nopos_a", "NoPos", "Anna", "IT", 88.0)
+    for paper in author["papers"]:
+        paper.pop("author_position", None)
+    ctx = {**BASE_CONTEXT, "aggregated_authors": [author]}
+    result = run(ctx)
+    key_papers = result["doctor_report"]["top_authors"][0]["key_papers"]
+    assert all(kp["author_position"] == "" for kp in key_papers)

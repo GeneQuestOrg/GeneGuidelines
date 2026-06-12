@@ -7,6 +7,7 @@ import pytest
 
 from backend.guideline_run_store import (
     load_guideline_run_result,
+    load_guideline_run_trace_buffer,
     save_guideline_run_result,
     update_guideline_run_stage,
     upsert_guideline_run_started,
@@ -94,3 +95,23 @@ def test_upsert_started_and_stage_updates(store_db) -> None:
     loaded = load_guideline_run_result(execution_id)
     assert loaded["done"] is True
     assert loaded["current_stage"] == "node:pm-fix:done"
+
+
+def test_trace_buffer_persists_and_replays(store_db) -> None:
+    execution_id = "test-exec-trace-001"
+    save_guideline_run_result(
+        execution_id,
+        {
+            "execution_id": execution_id,
+            "pipeline": "guideline",
+            "flow_key": "pubmed",
+            "done": True,
+            "trace_buffer": [
+                {"kind": "sys", "text": "Indexed PubMed"},
+                {"kind": "sys", "text": "Draft ready"},
+            ],
+        },
+    )
+    replay = load_guideline_run_trace_buffer(execution_id)
+    assert len(replay) == 2
+    assert replay[0]["text"] == "Indexed PubMed"

@@ -38,6 +38,7 @@ from ..auth import require_api_key_if_set
 router = APIRouter(dependencies=[Depends(require_api_key_if_set)])  # prefix set in main: /api/agent
 
 MAX_KEPT_AGENT_RUNS = 200
+TRACE_BUFFER_MAX = 200
 _AGENT_STORAGE_LOCK = threading.RLock()
 
 
@@ -72,9 +73,64 @@ def get_flow_definition(flow_key: str) -> dict | None:
     return {"flow_key": flow_key, "nodes": nodes, "edges": edges}
 
 
-def _emit(event_queue: Queue, payload: dict) -> None:
+def _resolve_execution_id_for_queue(event_queue: Queue | None) -> str | None:
+    if event_queue is None:
+        return None
+    with _AGENT_STORAGE_LOCK:
+        for eid, q in TRACE_QUEUES.items():
+            if q is event_queue:
+                return eid
+    return None
+
+
+def _append_trace_buffer(execution_id: str, payload: dict) -> None:
+    """Keep a bounded replay log so SSE can resume after refresh or queue prune."""
+    normalized = normalize_trace_event(dict(payload))
+    with _AGENT_STORAGE_LOCK:
+        run = AGENT_RUNS.get(execution_id)
+        if run is None:
+            return
+        buf: list[dict] = run.setdefault("trace_buffer", [])
+        buf.append(normalized)
+        if len(buf) > TRACE_BUFFER_MAX:
+            del buf[: len(buf) - TRACE_BUFFER_MAX]
+
+
+def _trace_buffer_for_execution(execution_id: str) -> list[dict]:
+    with _AGENT_STORAGE_LOCK:
+        run = AGENT_RUNS.get(execution_id)
+        if run is not None:
+            buf = run.get("trace_buffer")
+            if isinstance(buf, list) and buf:
+                return list(buf)
+    try:
+        from ..guideline_run_store import load_guideline_run_trace_buffer
+    except ImportError:
+        from guideline_run_store import load_guideline_run_trace_buffer
+
+    return load_guideline_run_trace_buffer(execution_id)
+
+
+def _run_snapshot_for_trace(execution_id: str) -> dict | None:
+    with _AGENT_STORAGE_LOCK:
+        run = AGENT_RUNS.get(execution_id)
+        if run is not None:
+            return dict(run)
+    try:
+        from ..guideline_run_store import load_guideline_run_result
+    except ImportError:
+        from guideline_run_store import load_guideline_run_result
+
+    loaded = load_guideline_run_result(execution_id)
+    return dict(loaded) if loaded else None
+
+
+def _emit(event_queue: Queue, payload: dict, *, execution_id: str | None = None) -> None:
     if event_queue:
         event_queue.put(payload)
+    eid = execution_id or _resolve_execution_id_for_queue(event_queue)
+    if eid:
+        _append_trace_buffer(eid, payload)
 
 
 def _post_run_publish_guideline_document(execution_id: str, store: dict[str, Any]) -> None:
@@ -166,7 +222,8 @@ async def execute_agent_async(
 ) -> None:
     """Run the agent in background (async task); result in AGENT_RUNS, trace events on event_queue."""
     current_model_profile.set(profile)
-    _emit(event_queue, {"kind": "sys", "text": f"[SYSTEM] Async task: start (flow={flow_key}, profile={profile})…"})
+    log.info("Agent run started: execution_id=%s flow=%s profile=%s", execution_id, flow_key, profile)
+    _emit(event_queue, {"kind": "sys", "text": "[SYSTEM] Agent run started."}, execution_id=execution_id)
     loop = asyncio.get_event_loop()
     try:
         await _execute_agent_async_body(
@@ -210,7 +267,7 @@ async def _execute_agent_async_body(
     ticket = await loop.run_in_executor(None, lambda: db.get_ticket_by_id(ticket_id))
     if not ticket:
         AGENT_RUNS[execution_id] = {"execution_id": execution_id, "ticket_id": ticket_id, "error": "Ticket not found", "done": True}
-        event_queue.put({"done": True, "error": "Ticket not found"})
+        _emit(event_queue, {"done": True, "error": "Ticket not found"}, execution_id=execution_id)
         return
 
     flow = await loop.run_in_executor(None, lambda: get_flow_definition(flow_key))
@@ -249,6 +306,7 @@ async def _execute_agent_async_body(
                         f"{preloaded_initial.get('disease_name') or 'this run'}."
                     ),
                 },
+                execution_id=execution_id,
             )
         elif disease_slug and flow_key in ("pubmed", "parent_pathway"):
             from ..content_db import get_disease_by_slug
@@ -282,13 +340,14 @@ async def _execute_agent_async_body(
                         f"{store['disease_initial'].get('disease_name') or disease_slug}."
                     ),
                 },
+                execution_id=execution_id,
             )
-        _emit(event_queue, {"kind": "sys", "text": f"[SYSTEM] Mode: Parallel (Fork) + Merge waves flow (flow_key={flow_key})."})
+        _emit(event_queue, {"kind": "sys", "text": "[SYSTEM] Mode: Parallel (Fork) + Merge waves flow."}, execution_id=execution_id)
         store["last_stage"] = "router:execute_agent_async:before_import_flow_engine"
-        _emit(event_queue, {"kind": "sys", "text": "[SYSTEM] Import flow_engine: BEFORE."})
+        _emit(event_queue, {"kind": "sys", "text": "[SYSTEM] Import flow_engine: BEFORE."}, execution_id=execution_id)
         from ..engine.flow_engine import run_flow_fork_parallel_async
-        _emit(event_queue, {"kind": "sys", "text": "[SYSTEM] Import flow_engine: AFTER."})
-        _emit(event_queue, {"kind": "sys", "text": "[SYSTEM] flow_engine imported; entering fork executor."})
+        _emit(event_queue, {"kind": "sys", "text": "[SYSTEM] Import flow_engine: AFTER."}, execution_id=execution_id)
+        _emit(event_queue, {"kind": "sys", "text": "[SYSTEM] flow_engine imported; entering fork executor."}, execution_id=execution_id)
         store["last_stage"] = "router:execute_agent_async:before_run_flow_fork_parallel_async"
         await run_flow_fork_parallel_async(
             flow_key,
@@ -305,7 +364,7 @@ async def _execute_agent_async_body(
         return
 
     system_prompt = agent_module.build_system_prompt(flow) if flow else None
-    _emit(event_queue, {"kind": "sys", "text": "[SYSTEM] Async task: launching run_agent_async..."})
+    _emit(event_queue, {"kind": "sys", "text": "[SYSTEM] Async task: launching run_agent_async..."}, execution_id=execution_id)
     await run_agent_async(
         ticket_id,
         ticket.get("title") or "",
@@ -470,15 +529,11 @@ async def start_agent_run(
             disease_slug=run_record.get("disease_slug"),
         )
     models = MODEL_PROFILES[profile_norm]
-    event_queue.put(
-        {
-            "kind": "sys",
-            "text": (
-                f"[SYSTEM] Starting agent (flow={flow_key}, profile={profile_norm}, "
-                f"simple={models['simple']}, agentic={models['agentic']})..."
-            ),
-        }
+    log.info(
+        "Agent task starting: execution_id=%s flow=%s profile=%s simple=%s agentic=%s",
+        execution_id, flow_key, profile_norm, models["simple"], models["agentic"],
     )
+    _emit(event_queue, {"kind": "sys", "text": "[SYSTEM] Starting agent run..."}, execution_id=execution_id)
 
     def timeout_watchdog() -> None:
         time.sleep(AGENT_RUN_TIMEOUT_SEC)
@@ -501,8 +556,8 @@ async def start_agent_run(
             q = TRACE_QUEUES.get(execution_id)
         if q:
             err = AGENT_RUNS.get(execution_id, {}).get("error", "Timeout")
-            q.put({"kind": "sys", "text": f"[SYSTEM] {err}"})
-            q.put({"done": True, "error": err})
+            _emit(q, {"kind": "sys", "text": f"[SYSTEM] {err}"})
+            _emit(q, {"done": True, "error": err})
 
     t = threading.Timer(AGENT_RUN_TIMEOUT_SEC, timeout_watchdog)
     t.daemon = True
@@ -568,7 +623,19 @@ def sse_trace_generator(execution_id: str):
     """Generator of SSE events from the trace queue. Keepalive sent as an SSE comment (no dots in the UI)."""
     queue = TRACE_QUEUES.get(execution_id)
     if not queue:
-        yield f"data: {json.dumps(normalize_trace_event({'error': 'Unknown execution_id'}))}\n\n"
+        buffer = _trace_buffer_for_execution(execution_id)
+        run = _run_snapshot_for_trace(execution_id)
+        if not buffer and run is None:
+            yield f"data: {json.dumps(normalize_trace_event({'error': 'Unknown execution_id'}))}\n\n"
+            return
+        for event in buffer:
+            yield f"data: {json.dumps(normalize_trace_event(dict(event)))}\n\n"
+        if run and run.get("done"):
+            terminal: dict = {"done": True}
+            err = run.get("error")
+            if err:
+                terminal["error"] = err
+            yield f"data: {json.dumps(normalize_trace_event(terminal))}\n\n"
         return
     while True:
         try:

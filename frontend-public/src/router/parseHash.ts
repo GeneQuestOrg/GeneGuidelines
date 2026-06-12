@@ -91,13 +91,16 @@ export function parseHash(hash: string): Route {
       typeof query.name === "string" && query.name.trim().length > 0
         ? query.name.trim()
         : null;
-    return {
-      name: "researchRun",
-      id: parts[1],
+    const base = {
+      name: "researchRun" as const,
       query: query.q,
       ...(diseaseSlug != null ? { diseaseSlug } : {}),
       ...(diseaseName != null ? { diseaseName } : {}),
     };
+    if (parts[1] === "live") {
+      return { ...base, id: "live" };
+    }
+    return { ...base, id: parts[1] };
   }
 
   return { name: "home" };

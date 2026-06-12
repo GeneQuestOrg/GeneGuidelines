@@ -1,8 +1,8 @@
 .gl__parent-guide {
   margin: 0 0 28px;
   padding: 20px 22px;
-  background: color-mix(in oklch, var(--accent, #0d9488) 5%, var(--bg-elev, #fff));
-  border: 1px solid var(--line, #e2e8f0);
+  background: color-mix(in oklch, var(--accent, var(--accent-ink)) 5%, var(--bg-elev));
+  border: 1px solid var(--line);
   border-radius: 8px;
 }
 
@@ -19,7 +19,7 @@
 
 .gl__parent-guide-sub {
   margin: 0 0 14px;
-  color: var(--ink-2, #475569);
+  color: var(--ink-2);
   max-width: 56ch;
   line-height: 1.5;
 }
@@ -35,8 +35,8 @@
 .gl__disclaimer {
   margin: 0 0 24px;
   padding: 16px 18px;
-  background: color-mix(in oklch, var(--ink) 4%, var(--bg-elev, #fff));
-  border: 1px solid var(--line, #e2e8f0);
+  background: color-mix(in oklch, var(--ink) 4%, var(--bg-elev));
+  border: 1px solid var(--line);
   border-radius: var(--r-md, 8px);
   max-width: 72ch;
 }
@@ -51,7 +51,7 @@
   margin: 0 0 8px;
   font-size: var(--fs-sm, 0.875rem);
   line-height: 1.5;
-  color: var(--ink-2, #475569);
+  color: var(--ink-2);
 }
 
 .gl__disclaimer p:last-child {
@@ -200,14 +200,14 @@
   font-size: var(--fs-md, 1.05rem);
   font-weight: 500;
   line-height: 1.35;
-  color: var(--ink-2, #475569);
+  color: var(--ink-2);
   font-family: var(--font-sans, system-ui, sans-serif);
   max-width: 48ch;
 }
 
 .gl__pathway-only-lead {
   margin: 12px 0 0;
-  color: var(--ink-2, #475569);
+  color: var(--ink-2);
   font-size: var(--fs-sm, 0.9375rem);
   line-height: 1.5;
   max-width: 65ch;

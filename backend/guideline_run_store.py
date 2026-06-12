@@ -45,6 +45,7 @@ def ensure_guideline_run_results_schema() -> None:
     for ddl in (
         "ALTER TABLE guideline_run_results ADD COLUMN current_stage TEXT",
         "ALTER TABLE guideline_run_results ADD COLUMN stage_updated_at TEXT",
+        "ALTER TABLE guideline_run_results ADD COLUMN trace_json TEXT",
     ):
         try:
             cur.execute(ddl)
@@ -52,6 +53,38 @@ def ensure_guideline_run_results_schema() -> None:
         except pg_errors.DuplicateColumn:
             conn.rollback()
     conn.close()
+
+
+def _trace_json_from_store(store: dict[str, Any]) -> str | None:
+    buf = store.get("trace_buffer")
+    if not isinstance(buf, list) or not buf:
+        return None
+    return json.dumps(buf[-200:], ensure_ascii=False)
+
+
+def load_guideline_run_trace_buffer(execution_id: str) -> list[dict]:
+    """Replay log for GET /api/agent/trace when the in-memory queue is gone."""
+    ensure_guideline_run_results_schema()
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute(
+        "SELECT trace_json FROM guideline_run_results WHERE execution_id = %s",
+        (execution_id,),
+    )
+    row = cur.fetchone()
+    conn.close()
+    if row is None:
+        return []
+    raw = row["trace_json"] if "trace_json" in row.keys() else None
+    if not raw:
+        return []
+    try:
+        parsed = json.loads(raw)
+    except json.JSONDecodeError:
+        return []
+    if not isinstance(parsed, list):
+        return []
+    return [dict(item) for item in parsed if isinstance(item, dict)]
 
 
 def upsert_guideline_run_started(
@@ -161,6 +194,7 @@ def save_guideline_run_result(execution_id: str, store: dict[str, Any]) -> None:
     ensure_guideline_run_results_schema()
     output = _coerce_output(store)
     quality_json = _quality_json_for_store(store)
+    trace_json = _trace_json_from_store(store)
     current_stage = str(store.get("current_stage") or store.get("last_stage") or "").strip() or None
     stage_updated_at = datetime.now(UTC).isoformat() if current_stage else None
     conn = get_connection()
@@ -170,8 +204,8 @@ def save_guideline_run_result(execution_id: str, store: dict[str, Any]) -> None:
         INSERT INTO guideline_run_results (
             execution_id, pipeline, flow_key, disease_slug, ticket_id, label,
             output, error, quality_json, done, started_at, finished_at,
-            current_stage, stage_updated_at
-        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            current_stage, stage_updated_at, trace_json
+        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         ON CONFLICT(execution_id) DO UPDATE SET
             pipeline = excluded.pipeline,
             flow_key = excluded.flow_key,
@@ -185,7 +219,8 @@ def save_guideline_run_result(execution_id: str, store: dict[str, Any]) -> None:
             started_at = excluded.started_at,
             finished_at = excluded.finished_at,
             current_stage = excluded.current_stage,
-            stage_updated_at = excluded.stage_updated_at
+            stage_updated_at = excluded.stage_updated_at,
+            trace_json = COALESCE(excluded.trace_json, guideline_run_results.trace_json)
         """,
         (
             execution_id,
@@ -202,6 +237,7 @@ def save_guideline_run_result(execution_id: str, store: dict[str, Any]) -> None:
             datetime.now(UTC).isoformat(),
             current_stage,
             stage_updated_at,
+            trace_json,
         ),
     )
     conn.commit()
