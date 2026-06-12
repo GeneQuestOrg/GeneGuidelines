@@ -17,13 +17,21 @@ def api_key_from_env() -> str:
     return (os.environ.get("GENEGUIDELINES_API_KEY") or "").strip()
 
 
-def _api_key_matches(provided: str, secret: str) -> bool:
-    """Timing-safe comparison (fixed-length digests) for unequal-length secrets."""
+def api_key_matches(provided: str, secret: str) -> bool:
+    """Timing-safe comparison (fixed-length digests) for unequal-length secrets.
+
+    Public so other auth layers (e.g. ``backend.account.deps.require_superadmin``)
+    can reuse the single timing-safe implementation instead of re-rolling it.
+    """
     if not secret:
         return False
     p = hashlib.sha256(provided.encode("utf-8")).digest()
     s = hashlib.sha256(secret.encode("utf-8")).digest()
     return hmac.compare_digest(p, s)
+
+
+# Backwards-compatible private alias (existing call sites use the underscored name).
+_api_key_matches = api_key_matches
 
 
 def require_api_key_if_set(

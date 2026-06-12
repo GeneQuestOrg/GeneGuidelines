@@ -114,6 +114,7 @@ app.include_router(tickets.router, prefix="/api")
 app.include_router(tools.router, prefix="/api")
 app.include_router(flows.router, prefix="/api")
 
+from backend.account.api import router as account_router  # noqa: E402
 from backend.content.api import router as content_disease_router  # noqa: E402
 from backend.disease_index.api import router as disease_index_router  # noqa: E402
 from backend.routers import content, doctor_finder, geo, pipeline  # noqa: E402
@@ -123,6 +124,8 @@ from backend.routers import content, doctor_finder, geo, pipeline  # noqa: E402
 # until they are migrated in Phase 2. Registration order matters — the new
 # router must come first so its routes win the match.
 app.include_router(content_disease_router, prefix="/api")
+# Account domain (Auth0 JWT) — /api/account/me, /api/account/users.
+app.include_router(account_router, prefix="/api")
 app.include_router(content.router, prefix="/api")
 app.include_router(disease_index_router, prefix="/api/disease-index", tags=["disease_index"])
 app.include_router(doctor_finder.router, prefix="/api/doctor-finder", tags=["doctor_finder"])
