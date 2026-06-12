@@ -98,6 +98,7 @@ export const PUBLIC_DOCTORS: readonly PublicDoctor[] = [
     endorsements: [],
     contact: "form",
     source: "content_seed",
+    experienceByDisease: { fd: "research_participant" },
   },
   {
     slug: "appelman-dijkstra",
@@ -133,6 +134,7 @@ export const PUBLIC_DOCTORS: readonly PublicDoctor[] = [
     endorsements: ["FDMAS Alliance", "International FD/MAS Consortium"],
     contact: "form",
     source: "content_seed",
+    experienceByDisease: { fd: "research_leader", mas: "research_leader" },
   },
   {
     slug: "riminucci",
@@ -160,6 +162,7 @@ export const PUBLIC_DOCTORS: readonly PublicDoctor[] = [
     endorsements: ["International FD/MAS Consortium"],
     contact: "form",
     source: "content_seed",
+    experienceByDisease: { fd: "research_leader", mas: "research_leader" },
   },
   {
     slug: "hsiao",
@@ -187,6 +190,7 @@ export const PUBLIC_DOCTORS: readonly PublicDoctor[] = [
     endorsements: ["FDMAS Alliance"],
     contact: "form",
     source: "content_seed",
+    experienceByDisease: { fd: "research_leader", mas: "research_leader" },
   },
   {
     slug: "podstawski",
@@ -214,5 +218,6 @@ export const PUBLIC_DOCTORS: readonly PublicDoctor[] = [
     endorsements: [],
     contact: "form",
     source: "content_seed",
+    experienceByDisease: { fd: "case_study_author" },
   },
 ] as const;

@@ -153,6 +153,7 @@ class KeyPaper(BaseModel, frozen=True):
     year: Optional[int] = None
     pubmed_url: str = ""
     article_type: str = ""
+    author_position: str = ""
 
 
 class EvidenceSummary(BaseModel, frozen=True):

@@ -151,6 +151,7 @@ def _build_key_papers(papers: list[dict[str, Any]], n: int) -> list[KeyPaper]:
             year=p.get("year"),
             pubmed_url=p.get("pubmed_url", ""),
             article_type=_article_type_from_pub_types(p.get("publication_types") or []),
+            author_position=p.get("author_position", ""),
         )
         for p in sorted_papers[:n]
     ]
