@@ -274,6 +274,29 @@ FINDER_LLM_TIMEOUT_SEC = float(
     (os.environ.get("FINDER_LLM_TIMEOUT_SEC") or "").strip() or 360.0
 )
 OPENAI_CLIENT_TIMEOUT_SEC = float((os.environ.get("OPENAI_CLIENT_TIMEOUT_SEC") or "").strip() or 2700.0)
+
+# --- Research admission queue (RES-1 fair-share + RES-2 durable store) ---
+# The scheduler (backend/research_queue) reads these from the environment
+# directly so it never needs to import config; they are surfaced here for
+# discoverability. RESEARCH_QUEUE_MAX_CONCURRENT / _ANON_MAX_PENDING are from
+# RES-1; _LOCK_TIMEOUT_SEC / _MAX_ATTEMPTS are new in RES-2 (durable queue).
+RESEARCH_QUEUE_MAX_CONCURRENT = max(
+    1, int((os.environ.get("RESEARCH_QUEUE_MAX_CONCURRENT") or "").strip() or 1)
+)
+RESEARCH_QUEUE_ANON_MAX_PENDING = max(
+    1, int((os.environ.get("RESEARCH_QUEUE_ANON_MAX_PENDING") or "").strip() or 3)
+)
+# A worker that claims a job but dies leaves the row `running`; after this many
+# seconds without a heartbeat the stale-reaper requeues it. Default 7200s (2h)
+# matches the guideline-run stale window in content/research_runs.py.
+RESEARCH_QUEUE_LOCK_TIMEOUT_SEC = max(
+    1, int((os.environ.get("RESEARCH_QUEUE_LOCK_TIMEOUT_SEC") or "").strip() or 7200)
+)
+# Max claim attempts before a repeatedly-stale job is marked `failed`.
+RESEARCH_QUEUE_MAX_ATTEMPTS = max(
+    1, int((os.environ.get("RESEARCH_QUEUE_MAX_ATTEMPTS") or "").strip() or 3)
+)
+
 QUALITY_FIRST_HARD_MODE = (os.environ.get("QUALITY_FIRST_HARD_MODE") or "1").strip().lower() in (
     "1",
     "true",
