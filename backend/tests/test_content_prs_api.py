@@ -4,9 +4,25 @@ from __future__ import annotations
 import pytest
 from fastapi.testclient import TestClient
 
+# AUTH-2: POST /api/pipeline/guideline-prs/{id}/review now requires superadmin.
+# We authorise these integration tests via the legacy API-key fallback. The
+# account deps are overridden with in-memory fakes so resolving require_superadmin
+# does not build the production SQLAlchemy user repo (the guard runs in isolation;
+# the handler still uses the real content DB seeded above).
+_API_KEY = "content-prs-test-key"
+_ADMIN_HEADERS = {"Authorization": f"Bearer {_API_KEY}"}
+
 
 @pytest.fixture
-def client():
+def client(monkeypatch: pytest.MonkeyPatch):
+    from backend.account.deps import (
+        provide_account_service,
+        provide_user_repo,
+        provide_verifier,
+    )
+    from backend.account.jwt import Auth0Verifier
+    from backend.account.repository import InMemoryUserRepo
+    from backend.account.service import AccountService
     from backend.content_db import ensure_content_schema, seed_content_if_empty, seed_content_prs_if_empty
     from backend.database import init_db
     from backend.main import app
@@ -16,8 +32,19 @@ def client():
     seed_content_if_empty()
     seed_content_prs_if_empty()
 
-    with TestClient(app) as test_client:
-        yield test_client
+    monkeypatch.setenv("GENEGUIDELINES_API_KEY", _API_KEY)
+    repo = InMemoryUserRepo()
+    service = AccountService(repo=repo, superadmin_emails=frozenset())
+    app.dependency_overrides[provide_verifier] = lambda: Auth0Verifier(domain="", audience="")
+    app.dependency_overrides[provide_user_repo] = lambda: repo
+    app.dependency_overrides[provide_account_service] = lambda: service
+    try:
+        with TestClient(app) as test_client:
+            yield test_client
+    finally:
+        app.dependency_overrides.pop(provide_verifier, None)
+        app.dependency_overrides.pop(provide_user_repo, None)
+        app.dependency_overrides.pop(provide_account_service, None)
 
 
 def test_list_guideline_prs(client: TestClient) -> None:
@@ -68,6 +95,7 @@ def test_review_publish_requires_reviewer(client: TestClient) -> None:
     resp = client.post(
         "/api/pipeline/guideline-prs/PR-138/review",
         json={"action": "publish"},
+        headers=_ADMIN_HEADERS,
     )
     assert resp.status_code == 422
 
@@ -81,6 +109,7 @@ def test_review_publish_guideline_pr(client: TestClient) -> None:
     resp = client.post(
         f"/api/pipeline/guideline-prs/{pr_id}/review",
         json={"action": "publish", "reviewer": "Dr. Test"},
+        headers=_ADMIN_HEADERS,
     )
     assert resp.status_code == 200, resp.text
     body = resp.json()
@@ -101,6 +130,7 @@ def test_review_reject_guideline_pr(client: TestClient) -> None:
     resp = client.post(
         f"/api/pipeline/guideline-prs/{pr_id}/review",
         json={"action": "reject"},
+        headers=_ADMIN_HEADERS,
     )
     assert resp.status_code == 200
     assert resp.json()["status"] == "rejected"

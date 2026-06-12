@@ -8,7 +8,7 @@ import time
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from ..auth import require_api_key_if_set
+from ..account.deps import require_superadmin
 from .. import database as db
 from ..config import DB_PATH
 from ..agents.dynamic_output_schema import validate_output_schema_json
@@ -25,7 +25,11 @@ from ..models import (
 
 log = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/flows", tags=["flows"], dependencies=[Depends(require_api_key_if_set)])
+# Whole router is superadmin-only: GETs expose flow prompts and integration
+# credentials, and every mutation reshapes the agent pipeline. require_superadmin
+# accepts the legacy API key too, so machine/admin scripts keep working
+# pre-Auth0 (PLAN.md decision 5).
+router = APIRouter(prefix="/flows", tags=["flows"], dependencies=[Depends(require_superadmin)])
 
 
 def _run(f):

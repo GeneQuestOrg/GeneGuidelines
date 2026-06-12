@@ -4,20 +4,45 @@ from __future__ import annotations
 import pytest
 from fastapi.testclient import TestClient
 
+# AUTH-2: GET /api/pipeline/settings now requires superadmin. Authorise via the
+# legacy API-key fallback and override account deps with in-memory fakes so the
+# guard resolves without constructing the production SQLAlchemy user repo.
+_API_KEY = "pipeline-settings-test-key"
+_ADMIN_HEADERS = {"Authorization": f"Bearer {_API_KEY}"}
+
 
 @pytest.fixture
-def client():
+def client(monkeypatch: pytest.MonkeyPatch):
+    from backend.account.deps import (
+        provide_account_service,
+        provide_user_repo,
+        provide_verifier,
+    )
+    from backend.account.jwt import Auth0Verifier
+    from backend.account.repository import InMemoryUserRepo
+    from backend.account.service import AccountService
     from backend.database import init_db
     from backend.main import app
 
     init_db()
 
-    with TestClient(app) as test_client:
-        yield test_client
+    monkeypatch.setenv("GENEGUIDELINES_API_KEY", _API_KEY)
+    repo = InMemoryUserRepo()
+    service = AccountService(repo=repo, superadmin_emails=frozenset())
+    app.dependency_overrides[provide_verifier] = lambda: Auth0Verifier(domain="", audience="")
+    app.dependency_overrides[provide_user_repo] = lambda: repo
+    app.dependency_overrides[provide_account_service] = lambda: service
+    try:
+        with TestClient(app) as test_client:
+            yield test_client
+    finally:
+        app.dependency_overrides.pop(provide_verifier, None)
+        app.dependency_overrides.pop(provide_user_repo, None)
+        app.dependency_overrides.pop(provide_account_service, None)
 
 
 def test_get_pipeline_settings(client: TestClient) -> None:
-    resp = client.get("/api/pipeline/settings")
+    resp = client.get("/api/pipeline/settings", headers=_ADMIN_HEADERS)
     assert resp.status_code == 200
     body = resp.json()
     assert body["defaultModelProfile"] in ("production", "test", "openrouter", "vllm")
@@ -44,6 +69,6 @@ def test_get_pipeline_settings(client: TestClient) -> None:
 
 
 def test_settings_never_exposes_secret_values(client: TestClient) -> None:
-    raw = client.get("/api/pipeline/settings").text.lower()
+    raw = client.get("/api/pipeline/settings", headers=_ADMIN_HEADERS).text.lower()
     assert "sk-" not in raw
     assert "api_key=" not in raw

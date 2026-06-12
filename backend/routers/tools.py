@@ -12,6 +12,7 @@ from pathlib import Path
 from fastapi import APIRouter, Depends, HTTPException, Query
 
 from ..auth import require_api_key_if_set
+from ..account.deps import require_superadmin
 from .. import database as db
 from ..tools.agent_tools import run_developer_flow
 from ..models import (
@@ -59,7 +60,11 @@ async def get_tool_catalog(enabled_only: bool = True):
     return [ToolCatalogItem(**r) for r in rows]
 
 
-@router.put("/catalog/{id}", response_model=ToolCatalogItem)
+@router.put(
+    "/catalog/{id}",
+    response_model=ToolCatalogItem,
+    dependencies=[Depends(require_superadmin)],
+)
 async def update_tool_catalog(id: int, body: ToolCatalogUpdate):
     """Update execution_mode (auto | approval) for a catalog entry."""
     row = await _run(lambda: db.get_tool_catalog_by_id(id))

@@ -103,8 +103,23 @@ def _minimal_tree(*, title: str = "Test pathway") -> dict:
     }
 
 
+# AUTH-2: POST /api/pipeline/pathway-publish now requires superadmin. Authorise
+# via the legacy API-key fallback and override account deps with in-memory fakes
+# so the guard resolves without constructing the production SQLAlchemy user repo.
+_API_KEY = "pathway-publish-test-key"
+_ADMIN_HEADERS = {"Authorization": f"Bearer {_API_KEY}"}
+
+
 @pytest.fixture
-def client():
+def client(monkeypatch: pytest.MonkeyPatch):
+    from backend.account.deps import (
+        provide_account_service,
+        provide_user_repo,
+        provide_verifier,
+    )
+    from backend.account.jwt import Auth0Verifier
+    from backend.account.repository import InMemoryUserRepo
+    from backend.account.service import AccountService
     from backend.content_db import ensure_content_schema, seed_content_if_empty
     from backend.database import init_db
     from backend.main import app
@@ -114,8 +129,19 @@ def client():
     ensure_care_pathway_draft_columns()
     seed_content_if_empty()
 
-    with TestClient(app) as test_client:
-        yield test_client
+    monkeypatch.setenv("GENEGUIDELINES_API_KEY", _API_KEY)
+    repo = InMemoryUserRepo()
+    service = AccountService(repo=repo, superadmin_emails=frozenset())
+    app.dependency_overrides[provide_verifier] = lambda: Auth0Verifier(domain="", audience="")
+    app.dependency_overrides[provide_user_repo] = lambda: repo
+    app.dependency_overrides[provide_account_service] = lambda: service
+    try:
+        with TestClient(app) as test_client:
+            yield test_client
+    finally:
+        app.dependency_overrides.pop(provide_verifier, None)
+        app.dependency_overrides.pop(provide_user_repo, None)
+        app.dependency_overrides.pop(provide_account_service, None)
 
 
 def test_save_draft_then_publish(pathway_publish_slug: str) -> None:
@@ -155,7 +181,11 @@ def test_pathway_publish_api(client: TestClient, pathway_publish_slug: str) -> N
     tree = _minimal_tree(title="API publish pathway test")
     save_parent_pathway(slug, tree, version="v-api-draft", based_on="test", locale="en")
 
-    resp = client.post("/api/pipeline/pathway-publish", json={"disease_slug": slug})
+    resp = client.post(
+        "/api/pipeline/pathway-publish",
+        json={"disease_slug": slug},
+        headers=_ADMIN_HEADERS,
+    )
     assert resp.status_code == 200
     body = resp.json()
     assert body["diseaseSlug"] == slug

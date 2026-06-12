@@ -33,9 +33,14 @@ from ..agents import agent as agent_module
 from .. import database as db
 from ..agents.runner import run_agent_async  # async runner (one event loop) to avoid MCP lock issues on Windows
 from ..contracts.agent_api_v1 import build_agent_run_payload, normalize_trace_event
-from ..auth import require_api_key_if_set
+from ..account.deps import require_superadmin
 
-router = APIRouter(dependencies=[Depends(require_api_key_if_set)])  # prefix set in main: /api/agent
+# No router-level guard: the public research-run pages poll GET /run/{id} and
+# stream GET /trace/{id}, so those two stay open. Admin-only routes
+# (approval, run-list, start-run) carry their own require_superadmin below.
+# require_superadmin also accepts the legacy API key / ?api_key= for SSE
+# (PLAN.md decision 5), so machine scripts keep working pre-Auth0.
+router = APIRouter()  # prefix set in main: /api/agent
 
 MAX_KEPT_AGENT_RUNS = 200
 TRACE_BUFFER_MAX = 200
@@ -381,7 +386,7 @@ async def _execute_agent_async_body(
         store["structured_output"] = _build_structured_output(store)
 
 
-@router.get("/approval-pending")
+@router.get("/approval-pending", dependencies=[Depends(require_superadmin)])
 def get_approval_pending():
     """Return the pending action awaiting approval (e.g. restart_service), if the agent is waiting on one."""
     state = getattr(agent_module, "approval_state", None)
@@ -399,7 +404,7 @@ def get_approval_pending():
     }
 
 
-@router.post("/approval")
+@router.post("/approval", dependencies=[Depends(require_superadmin)])
 def post_approval(body: ApprovalAction):
     """Approve or reject the pending action (e.g. server restart). Unblocks the agent."""
     state = getattr(agent_module, "approval_state", None)
@@ -576,7 +581,7 @@ async def start_agent_run(
     return {"execution_id": execution_id, "status": "started", "ticket_id": ticket_id}
 
 
-@router.get("/runs")
+@router.get("/runs", dependencies=[Depends(require_superadmin)])
 def list_agent_runs():
     """List in-memory agent runs (newest first). Use execution_id with GET /run/{id} for detail."""
     with _AGENT_STORAGE_LOCK:
@@ -602,7 +607,7 @@ def get_agent_run(execution_id: str):
     return build_agent_run_payload(run)
 
 
-@router.post("/run/{ticket_id}")
+@router.post("/run/{ticket_id}", dependencies=[Depends(require_superadmin)])
 async def run_agent(
     ticket_id: int,
     background_tasks: BackgroundTasks,
