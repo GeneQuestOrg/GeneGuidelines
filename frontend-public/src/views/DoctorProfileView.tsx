@@ -100,9 +100,6 @@ export function DoctorProfileView({ slug, userLoc, onNav }: DoctorProfileViewPro
               {provenanceLabel ? (
                 <span className="tag tag--source">{provenanceLabel}</span>
               ) : null}
-              {isWorkflowDoctorSource(doctor.source) ? (
-                <Badge variant="ok">Doctor Finder</Badge>
-              ) : null}
               {doctor.reviewStatus === "pending" ? (
                 <span className="tag tag--warn">Pending review</span>
               ) : null}

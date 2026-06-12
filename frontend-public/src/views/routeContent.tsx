@@ -60,7 +60,8 @@ export function routeContent({
       );
     case "doctor":
       return (
-        <DoctorProfileView slug={route.slug} userLoc={userLoc} onNav={onNav} />
+        // key forces a clean remount per profile — local-rec state reads storage on mount
+        <DoctorProfileView key={route.slug} slug={route.slug} userLoc={userLoc} onNav={onNav} />
       );
     case "startResearch":
       return (
