@@ -5,15 +5,15 @@ import type { PubmedRole } from "../types/doctor";
 import { DiseaseAutocomplete } from "../components/DiseaseAutocomplete";
 import { DoctorCard } from "../components/DoctorCard";
 import { DoctorsMap } from "../components/DoctorsMap";
-import { FilterChips } from "../components/FilterChips";
-import { LocationPicker } from "../components/LocationPicker";
+import { FilterMenu } from "../components/FilterMenu";
+import { LocationMenu, type DistanceMax } from "../components/LocationMenu";
 import { useDiseaseCatalog } from "../hooks/useDiseaseCatalog";
 import { useDoctors } from "../hooks/useDoctors";
 import {
   attachDoctorDistances,
   sortDoctorsByDistanceThenScore,
 } from "../utils/doctorSort";
-import { filterDoctors, type SourceFilter } from "../utils/doctorFilters";
+import { filterDoctors, hasParentSignal, type SourceFilter } from "../utils/doctorFilters";
 import { pubmedRoleLabel } from "../utils/doctorLabels";
 import "../styles/doctors.css";
 
@@ -37,15 +37,6 @@ const SOURCE_FILTERS: readonly { value: SourceFilter; label: string }[] = [
   { value: "pubmed", label: "PubMed" },
   { value: "parent", label: "Parent-added" },
   { value: "consortium", label: "Consortium" },
-];
-
-type DistanceMax = 25 | 100 | 500 | null;
-
-const DISTANCE_FILTERS: readonly { value: DistanceMax; label: string }[] = [
-  { value: null, label: "Worldwide" },
-  { value: 25, label: "25 km" },
-  { value: 100, label: "100 km" },
-  { value: 500, label: "500 km" },
 ];
 
 type ViewMode = "both" | "list" | "map";
@@ -146,6 +137,19 @@ export function DoctorsView({ userLoc, initialDisease, onNav }: DoctorsViewProps
     [items, visibleCount],
   );
 
+  // Count of doctors carrying a parent signal within the disease-scoped set,
+  // measured BEFORE the parentOnly filter so the toggle label is stable.
+  const recommendedCount = useMemo(() => {
+    if (unknownDisease != null) {
+      return 0;
+    }
+    return doctors.filter(
+      (d) =>
+        (!activeDiseaseSlug || d.diseases.includes(activeDiseaseSlug)) &&
+        hasParentSignal(d),
+    ).length;
+  }, [doctors, activeDiseaseSlug, unknownDisease]);
+
   const ready = !loading && error == null;
 
   return (
@@ -187,76 +191,72 @@ export function DoctorsView({ userLoc, initialDisease, onNav }: DoctorsViewProps
         </p>
       </header>
 
-      <div className="filters">
-        <div className="filters__field">
-          <label htmlFor="doctors-disease-search">Filter by disease (optional)</label>
-          <DiseaseAutocomplete
-            placeholder="Type a disease name, gene, OMIM or Orphanet ID…"
-            onPick={handlePickDisease}
-            onMissingClick={() => onNav("/start-research")}
-          />
-        </div>
+      <div className="dfilters">
         {activeDiseaseSlug != null ? (
-          <div className="filters__group">
-            <span className="filters__label">Disease</span>
-            <span className="active-disease-chip">
-              {activeDiseaseLabel}
-              <button
-                type="button"
-                className="active-disease-chip__clear"
-                onClick={handleClearDisease}
-                aria-label="Clear disease filter"
-              >
-                ×
-              </button>
-            </span>
+          <div className="dchip">
+            <span className="dchip__label">{activeDiseaseLabel}</span>
+            <button
+              type="button"
+              className="dchip__x"
+              onClick={handleClearDisease}
+              aria-label="Clear disease filter"
+            >
+              ×
+            </button>
           </div>
-        ) : null}
-        <div className="filters__group">
-          <span className="filters__label">PubMed role</span>
-          <FilterChips
-            items={ROLE_FILTERS}
-            active={roleFilter}
-            onPick={setRoleFilter}
-            ariaLabel="Filter by PubMed role"
+        ) : (
+          <div className="dfilters__search">
+            <DiseaseAutocomplete
+              placeholder="Filter by disease — name, gene, OMIM…"
+              onPick={handlePickDisease}
+              onMissingClick={() => onNav("/start-research")}
+            />
+          </div>
+        )}
+
+        <div className="dfilters__menus">
+          <LocationMenu
+            value={localUserLoc}
+            label={localLocLabel}
+            maxKm={maxKm}
+            onChange={handleLocationChange}
+            onPickRadius={setMaxKm}
           />
-        </div>
-        <div className="filters__group">
-          <span className="filters__label">Source</span>
-          <FilterChips
-            items={SOURCE_FILTERS.map((f) => ({ value: f.value, label: f.label }))}
-            active={sourceFilter}
+          <FilterMenu
+            label="Experience"
+            value={roleFilter}
+            options={ROLE_FILTERS}
+            onPick={setRoleFilter}
+          />
+          <FilterMenu
+            label="Source"
+            value={sourceFilter}
+            options={SOURCE_FILTERS}
             onPick={(v) => setSourceFilter(v as SourceFilter)}
-            ariaLabel="Filter by data source"
           />
           <button
             type="button"
-            className={`chip chip--btn doctors-toggle${parentOnly ? " is-active" : ""}`}
+            className={`toggle-chip${parentOnly ? " is-active" : ""}`}
             aria-pressed={parentOnly}
             onClick={() => setParentOnly((v) => !v)}
+            title="Show only doctors recommended by parents"
           >
-            Parent-recommended only
+            <svg
+              width="13"
+              height="13"
+              viewBox="0 0 24 24"
+              fill={parentOnly ? "currentColor" : "none"}
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21l7.8-7.5 1-1.1a5.5 5.5 0 0 0 0-7.8z" />
+            </svg>
+            Recommended by parents ({recommendedCount})
           </button>
         </div>
-        <div className="filters__group filters__group--location">
-          <span className="filters__label">Location</span>
-          <LocationPicker
-            value={localUserLoc}
-            label={localLocLabel}
-            onChange={handleLocationChange}
-          />
-        </div>
-        {effectiveUserLoc != null ? (
-          <div className="filters__group">
-            <span className="filters__label">Distance</span>
-            <FilterChips
-              items={DISTANCE_FILTERS.map((f) => ({ value: String(f.value), label: f.label }))}
-              active={String(maxKm)}
-              onPick={(v) => setMaxKm(v === "null" ? null : (Number(v) as DistanceMax))}
-              ariaLabel="Filter by distance"
-            />
-          </div>
-        ) : null}
       </div>
 
       {diseasesLoading ? (
