@@ -139,7 +139,7 @@ async def test_queued_jobs_survive_restart() -> None:
     await sched2._ensure_started()
     for _ in range(200):
         await asyncio.sleep(0)
-        if ran2:
+        if survivor["status"] == "done":
             break
     assert ran2 == ["p2"]
     assert survivor["status"] == "done"
