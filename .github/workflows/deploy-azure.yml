@@ -19,6 +19,11 @@ env:
   AZURE_CONTAINER_APP: gg-public
   AZURE_REGISTRY: ggdemo45223
   IMAGE_REPOSITORY: geneguidelines-backend
+  # Auth0 (SPA values are public — baked into the client bundle). Override via
+  # GitHub repository variables if you fork and host your own tenant.
+  VITE_AUTH0_DOMAIN: ${{ vars.VITE_AUTH0_DOMAIN || 'genequest.eu.auth0.com' }}
+  VITE_AUTH0_CLIENT_ID: ${{ vars.VITE_AUTH0_CLIENT_ID || 'eIjwuYWNv6ygMR0Ib1Z9T891qC2q9aXI' }}
+  VITE_AUTH0_AUDIENCE: ${{ vars.VITE_AUTH0_AUDIENCE || 'https://api.geneguidelines.genequest.org' }}
 
 jobs:
   verify:
@@ -80,10 +85,15 @@ jobs:
           node-version: "20"
           cache: npm
 
-      - name: Build public SPA (same-origin API on Azure)
+      - name: Build public SPA (same-origin API + Auth0 on Azure)
         run: |
           npm ci
-          VITE_API_BASE_URL="" npm run build:public
+          # Unset VITE_API_URL => same-origin /api (see frontend-public/src/api/client.ts).
+          VITE_API_URL="" \
+          VITE_AUTH0_DOMAIN="${VITE_AUTH0_DOMAIN}" \
+          VITE_AUTH0_CLIENT_ID="${VITE_AUTH0_CLIENT_ID}" \
+          VITE_AUTH0_AUDIENCE="${VITE_AUTH0_AUDIENCE}" \
+            npm run build:public
 
       - uses: azure/login@v2
         with:
@@ -109,15 +119,28 @@ jobs:
             --resource-group "${{ env.AZURE_RESOURCE_GROUP }}" \
             --image "${{ env.AZURE_REGISTRY }}.azurecr.io/${{ env.IMAGE_REPOSITORY }}:${{ steps.image.outputs.tag }}"
 
-      - name: Smoke test /health
+      - name: Smoke test /health and /api/account/me
         run: |
+          BASE="https://geneguidelines.genequest.org"
           for i in 1 2 3 4 5 6 7 8 9 10; do
-            if curl -fsS --max-time 15 "https://geneguidelines.genequest.org/health" | grep -q '"status":"ok"'; then
+            if curl -fsS --max-time 15 "${BASE}/health" | grep -q '"status":"ok"'; then
               echo "Health OK"
-              exit 0
+              break
             fi
             echo "Waiting for new revision… ($i/10)"
             sleep 15
+            if [ "$i" -eq 10 ]; then
+              echo "Health check failed after deploy"
+              exit 1
+            fi
           done
-          echo "Health check failed after deploy"
-          exit 1
+          # 404 = auth code not deployed; 503 = AUTH0_* missing on Container App; 401 = OK.
+          ME_CODE=$(curl -sS -o /dev/null -w "%{http_code}" --max-time 15 "${BASE}/api/account/me")
+          echo "/api/account/me → HTTP ${ME_CODE}"
+          if [ "${ME_CODE}" = "404" ]; then
+            echo "Account routes missing — is production branch behind main?"
+            exit 1
+          fi
+          if [ "${ME_CODE}" = "503" ]; then
+            echo "WARN: Auth0 env vars not set on Container App (see deploy/AZURE.md § Auth0)."
+          fi
