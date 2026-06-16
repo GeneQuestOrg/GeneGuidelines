@@ -18,6 +18,7 @@ import type { Foundation } from "../types/foundation";
 import type { GuidelineDocument } from "../types/guidelineDocument";
 import type { OfficialGuideline } from "../types/officialGuideline";
 import type { PrivateContext } from "../types/privateContext";
+import type { SourceDoc } from "../types/sourceDoc";
 import type { ResearchRun } from "../types/researchRun";
 import type { Therapy } from "../types/therapy";
 import type { Trial } from "../types/trial";
@@ -81,6 +82,8 @@ export interface PrivateContextRepository {
 
 export interface OfficialGuidelineRepository {
   getForDisease(diseaseSlug: string): Promise<OfficialGuideline | null>;
+  /** Curated multi-document source shelf for the disease (GL-1); empty when none. */
+  getShelf(diseaseSlug: string): Promise<readonly SourceDoc[]>;
 }
 
 export interface AccountRepository {

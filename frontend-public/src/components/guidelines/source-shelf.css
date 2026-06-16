@@ -1,0 +1,147 @@
+/* Source shelf — ported from draft10 styles.css (.srcshelf / .srcdoc / .gx-new).
+   Reuses the shared design tokens (packages/ui/src/styles/tokens.css). */
+
+.srcshelf {
+  margin: 22px 0 4px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+.srcshelf__tag {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-3);
+}
+.srcshelf__title {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  font-size: var(--fs-xl);
+  letter-spacing: -0.015em;
+  margin: 3px 0 0;
+}
+.srcshelf__lead {
+  font-family: var(--font-sans);
+  font-size: var(--fs-sm);
+  color: var(--ink-3);
+  line-height: 1.55;
+  max-width: 64ch;
+  margin: 8px 0 16px;
+}
+.srcshelf__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+
+.srcdoc {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: 14px 15px;
+}
+.srcdoc__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.srcdoc__role {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--accent-ink);
+}
+.srcdoc__title {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  font-size: var(--fs-md);
+  line-height: 1.35;
+  margin: 0;
+  color: var(--ink);
+  text-wrap: pretty;
+}
+.srcdoc__meta {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  color: var(--ink-3);
+  margin: 6px 0 8px;
+}
+.srcdoc__scope {
+  font-family: var(--font-sans);
+  font-size: var(--fs-sm);
+  color: var(--ink-2);
+  line-height: 1.5;
+  margin: 0 0 10px;
+}
+.srcdoc__covers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-bottom: 10px;
+}
+.srcdoc__chip {
+  font-family: var(--font-sans);
+  font-size: 10px;
+  color: var(--ink-3);
+  background: var(--bg-soft);
+  border: 1px solid var(--line);
+  padding: 2px 8px;
+  border-radius: 99px;
+}
+.srcdoc__updates {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--ink-3);
+  margin-bottom: 10px;
+}
+.srcdoc__updates svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.srcdoc__foot {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.srcdoc__link {
+  font-family: var(--font-sans);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  color: var(--accent-ink);
+  text-decoration: none;
+  padding: 4px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+}
+.srcdoc__link:hover {
+  border-color: var(--line-2);
+}
+.srcdoc__id {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--ink-3);
+  background: var(--bg-soft);
+  padding: 2px 7px;
+  border-radius: 3px;
+}
+
+.gx-new {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  background: var(--st-amber);
+  color: #fff;
+  padding: 1px 5px;
+  border-radius: 3px;
+  letter-spacing: 0.03em;
+}
