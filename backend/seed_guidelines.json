@@ -1,0 +1,287 @@
+{
+  "_note": "GL-4 seed — mirrors the frontend fixtures (guidelineSynthesisFixtures.ts, guidelineSuggestionsFixtures.ts, guidelineSynthSignalsFixtures.ts, SHELF) so VITE_DATA_SOURCE=api serves what fixture mode serves. Placeholder content until the research workflow generates real deltas (gg-fixture-content-placeholder). camelCase to match the frozen FE types. No reviewer names.",
+  "fd": {
+    "sourceDocuments": [
+      {
+        "id": "boyce2019",
+        "role": "Base consensus",
+        "pmid": "31196103",
+        "title": "Best practice management guidelines for fibrous dysplasia/McCune-Albright syndrome: a consensus statement from the FD/MAS international consortium",
+        "authors": "Javaid MK, Boyce A, Appelman-Dijkstra N, et al.",
+        "journal": "Orphanet Journal of Rare Diseases",
+        "year": 2019,
+        "scope": "Whole-disease FD/MAS management — the consortium's first systematized consensus.",
+        "covers": ["Diagnosis", "Genetics", "Therapy", "Surgery", "Monitoring"],
+        "freeFullText": true
+      },
+      {
+        "id": "gun2024",
+        "role": "Children — update",
+        "pmid": "38010041",
+        "title": "Fibrous dysplasia in children and its management",
+        "authors": "Gun ZH, Arif A, Boyce AM",
+        "journal": "Curr Opin Endocrinol Diabetes Obes",
+        "year": 2024,
+        "scope": "Most recent pediatric compendium: skeletal growth and newer therapies (denosumab).",
+        "covers": ["Therapy (children)", "Denosumab", "Monitoring"],
+        "updatesNote": "Updates the denosumab recommendation from the 2019 consensus.",
+        "isNew": true
+      },
+      {
+        "id": "szymczuk2023",
+        "role": "Craniofacial",
+        "pmid": "36849642",
+        "title": "Craniofacial Fibrous Dysplasia: Clinical and Therapeutic Implications",
+        "authors": "Szymczuk V, Taylor J, Boyce AM",
+        "journal": "Curr Osteoporos Rep",
+        "year": 2023,
+        "scope": "Strictly the craniofacial region — including optic-nerve compression management.",
+        "covers": ["Imaging", "Optic nerve", "Craniofacial surgery"]
+      },
+      {
+        "id": "genereviews",
+        "role": "Reference compendium",
+        "bookshelf": "NBK274564",
+        "title": "Fibrous Dysplasia / McCune-Albright Syndrome",
+        "authors": "Boyce AM, Collins MT, et al.",
+        "journal": "GeneReviews® · NCBI Bookshelf",
+        "year": "continuously updated",
+        "scope": "Continuously updated NIH reference chapter — de facto textbook guidance.",
+        "covers": ["Diagnosis", "Histopathology", "Genetics", "Full review"]
+      }
+    ],
+    "synthesis": {
+      "kind": "synthesis",
+      "title": "Fibrous Dysplasia — synthesis of the guidelines",
+      "version": "Synthesis · 4 sources",
+      "lastUpdated": "2026-05-10",
+      "epistemicLevel": "a",
+      "sourceIds": ["boyce2019", "gun2024", "szymczuk2023", "genereviews"],
+      "basedOn": "Combined from 4 source documents (Boyce 2019, Gun/Boyce 2024, Szymczuk/Boyce 2023, GeneReviews).",
+      "synthDisclaimer": "This summary was prepared by AI from 4 source documents — it is not an official guideline and may contain inaccuracies. Every claim links to the document and section it came from; read straight from the source if you prefer.",
+      "status": "consensus",
+      "hasFlowchart": true,
+      "whatToDoNow": [
+        { "lead": "Confirm the diagnosis properly.", "body": "A DNA test for the GNAS mutation is decisive — histopathology alone is not enough." },
+        { "lead": "Map the extent with imaging.", "body": "CT or MRI shows how far the lesion reaches. A bone scan is done once at diagnosis, not on a cycle." },
+        { "lead": "Reach a specialist who knows this disease.", "body": "Not every surgeon or endocrinologist has seen it — check the doctor list on the disease page." },
+        { "lead": "Plan for the long term.", "body": "Reviews every 6–12 months; treatment is driven by pain and progression, not by the diagnosis alone." }
+      ],
+      "redFlags": {
+        "title": "When to seek a second opinion",
+        "items": [
+          "A recommendation to excise a child's fibrous dysplasia without a compelling reason (vision loss, severe deformity).",
+          "A histopathological diagnosis made without a confirmatory DNA test.",
+          "No consultation with an international consortium (FD/MAS Alliance / Leiden)."
+        ]
+      },
+      "sections": [
+        {
+          "id": "diagnosis",
+          "title": "1. Diagnosis",
+          "intro": "Diagnosis rests on the combined picture of radiology, histopathology, and genetic confirmation of a GNAS mutation.",
+          "paragraphs": [
+            { "id": "dx-ct", "source": { "doc": "szymczuk2023", "loc": "§ Imaging" }, "text": "The first imaging study when craniofacial FD is suspected is a non-contrast CT of the facial skeleton in thin slices (≤1 mm). The typical picture is a “ground-glass” appearance with blurring of the boundary between cancellous and cortical bone.", "citations": ["36849642"] },
+            { "id": "dx-mri", "source": { "doc": "szymczuk2023", "loc": "§ MRI / optic nerve" }, "text": "Contrast MRI is indicated when compression of soft-tissue structures is suspected (optic nerve, brain, inner-ear structures). MRI does not replace CT — it complements the assessment.", "citations": ["36849642"] },
+            { "id": "dx-scintigraphy", "source": { "doc": "boyce2019", "loc": "§ Imaging" }, "text": "A bone scan is done only once at diagnosis, to assess extent (mono- vs polyostotic). Routine repetition is not recommended, given the cumulative radiation dose and low clinical value in follow-up.", "citations": ["31196103"], "highlight": true }
+          ]
+        },
+        {
+          "id": "histopathology",
+          "title": "2. Histopathology and genetics",
+          "intro": "Histopathology alone is insufficient. Confirmation of a GNAS mutation is required.",
+          "paragraphs": [
+            { "id": "hp-classic", "source": { "doc": "genereviews", "loc": "§ Histopathology" }, "text": "The classic histopathological picture: irregular “Chinese-letter” bony trabeculae in a stroma of proliferating fibroblasts. NOTE: the microscopic appearance of FD can be indistinguishable from juvenile trabecular ossifying fibroma (JTOF), particularly in children." },
+            { "id": "hp-gnas", "source": { "doc": "boyce2019", "loc": "§ Genetic confirmation" }, "text": "Molecular testing for a somatic GNAS mutation (most often R201H or R201C in exon 8) is pathognomonic for FD and mandatory on any biopsy suspicious for FD. Absence of the mutation does not exclude FD (mosaicism), but a positive result confirms the diagnosis with 100% specificity.", "citations": ["31196103"] },
+            { "id": "hp-mosaic", "source": { "doc": "genereviews", "loc": "§ Molecular testing" }, "text": "In patients with a negative GNAS result in peripheral blood, retesting from lesional tissue should be considered (somatic mosaicism). Droplet digital PCR is more sensitive than classic Sanger sequencing." }
+          ]
+        },
+        {
+          "id": "therapy",
+          "title": "3. Therapy",
+          "intro": "Treatment choice depends on pain, lesion progression, and the patient's age. In children, a conservative approach is preferred.",
+          "paragraphs": [
+            { "id": "tx-observe", "source": { "doc": "boyce2019", "loc": "§ Conservative management" }, "update": { "doc": "gun2024", "note": "Gun/Boyce 2024 refines observation in children up to skeletal maturity." }, "text": "Observation is the standard for asymptomatic patients until skeletal maturity (typically 16–18 years). It requires periodic clinical review every 6–12 months and imaging (CT/MRI) every 12–24 months.", "citations": ["31196103"] },
+            { "id": "tx-medical-lead", "source": { "doc": "boyce2019", "loc": "§ Medical therapy" }, "text": "Medical therapy is an option for bone pain that does not respond to NSAIDs, or for rapid progression — and it is led by a specialist experienced in FD (e.g. an endocrinologist), not started from a web summary. The specific drugs and dosing below are for the treating clinician.", "citations": ["31196103"] },
+            { "id": "tx-bisphos", "source": { "doc": "boyce2019", "loc": "§ Bisphosphonates" }, "text": "IV bisphosphonates (pamidronate 1 mg/kg/day × 3 days every 4 months, or zoledronate 0.025 mg/kg once every 6–12 months) are indicated for bone pain refractory to NSAIDs. They require calcium and vitamin-D supplementation and monitoring of renal function.", "citations": ["31196103"] },
+            { "id": "tx-denosumab", "source": { "doc": "gun2024", "loc": "§ Denosumab in children" }, "update": { "doc": "gun2024", "supersedes": "boyce2019", "note": "Gun/Boyce 2024 changes the schedule: induction → CTX-guided maintenance, instead of the fixed 4-weekly dosing of the 2019 consensus." }, "text": "Denosumab 60 mg s.c. every 4 weeks for 6 doses (induction phase), then every 12 weeks if CTX < 0.3 ng/mL is maintained. Monitor calcium and 25-OH-D weekly during induction, monthly during maintenance.", "citations": ["38010041"] },
+            { "id": "tx-denosumab-stop", "source": { "doc": "gun2024", "loc": "§ Discontinuation" }, "text": "After stopping denosumab there is a risk of rebound hypercalcemia. A tapering plan is required; consider switching to bisphosphonates for 6–12 months.", "citations": ["38010041"] },
+            { "id": "tx-burosumab", "source": { "doc": "boyce2019", "loc": "§ FGF23 / burosumab" }, "text": "Burosumab is only for patients with FGF23-driven hypophosphatemia (phosphate < 0.8 mmol/L + FGF23 > 100 RU/mL). Dosing is weight-based, with phosphate monitoring every 2 weeks during titration.", "citations": ["31196103"] }
+          ]
+        },
+        {
+          "id": "surgery",
+          "title": "4. Indications for surgery",
+          "intro": "In children, surgery for FD is contraindicated except for strictly defined compelling reasons.",
+          "paragraphs": [
+            { "id": "sx-no", "source": { "doc": "boyce2019", "loc": "§ Surgery in children" }, "text": "FD in children is NOT excised prophylactically. Resection in a child leads to permanent disfigurement and recurrence of the lesion in 30–60% of cases (literature from the 1990s).", "citations": ["31196103"] },
+            { "id": "sx-yes", "source": { "doc": "szymczuk2023", "loc": "§ Surgical indications" }, "text": "Absolute indications for surgical intervention (regardless of age): (a) vision loss or progressive visual-field defects, (b) facial-nerve compression with clinical symptoms, (c) deformity threatening airway patency.", "citations": ["36849642"] },
+            { "id": "sx-optic", "source": { "doc": "szymczuk2023", "loc": "§ Optic nerve" }, "text": "Pre-symptomatic decompression of the optic canal (on imaging alone) is NOT recommended — the risk of vision loss from surgery outweighs the risk from observation.", "citations": ["36849642"] }
+          ]
+        },
+        {
+          "id": "monitoring",
+          "title": "5. Monitoring and follow-up",
+          "intro": "The surveillance schedule depends on type (mono/polyostotic), age, and the presence of endocrinopathy (overlap with MAS).",
+          "paragraphs": [
+            { "id": "mon-followup", "source": { "doc": "boyce2019", "loc": "§ Follow-up" }, "text": "A review visit every 6 months in children, every 12 months in adults. Assess pain (VAS scale), function, growth parameters, and endocrine symptoms.", "citations": ["31196103"] },
+            { "id": "mon-markers", "source": { "doc": "boyce2019", "loc": "§ Bone turnover markers" }, "text": "Bone turnover markers: P1NP, CTX every 6 months (or more often on denosumab — see section 3). Calcium, phosphate, 25-OH-D, ALP every 12 months.", "citations": ["31196103"] },
+            { "id": "mon-mas", "source": { "doc": "boyce2019", "loc": "§ MAS screening" }, "text": "Endocrine MAS screening in every case of FD (TSH, fT4, IGF-1, GH, cortisol; Tanner-stage assessment of puberty in children).", "citations": ["31196103"] }
+          ]
+        }
+      ]
+    },
+    "suggestions": [
+      {
+        "id": "sg-oct",
+        "kind": "addition",
+        "targetSection": "surgery",
+        "sectionLabel": "4. Indications for surgery",
+        "title": "Add OCT + visual-field monitoring for asymptomatic optic-canal involvement",
+        "summary": "For patients with radiological optic-canal involvement but no symptoms: add OCT (optical coherence tomography) and a formal visual field every 6 months, alongside the existing MRI every 12 months.",
+        "rationale": "OCT is an optical scan (light, no ionising radiation) — at worst a low-risk redundant scan, at best early detection of compression before vision is lost. Low risk / high benefit — a candidate to surface to the parent as a question for their doctor.",
+        "evidence": "moderate",
+        "citations": ["36849642"],
+        "gate": "promoted",
+        "parentText": "Newer work suggests that if imaging shows optic-canal involvement — even without symptoms — a periodic OCT (a light-based scan, no radiation) plus a visual-field test can catch a problem early.",
+        "signal": { "useful": 3, "not": 1, "wrong": 0, "ratings": 4, "verified": 2 },
+        "comments": [
+          { "who": "Verified reviewer", "tier": "led the research", "text": "Sensible and low risk. I'd anchor the 6-month interval to the NIH cohort rather than the 2024 review — the natural-history data there is stronger." }
+        ]
+      },
+      {
+        "id": "sg-deno",
+        "kind": "modification",
+        "targetSection": "therapy",
+        "sectionLabel": "3. Therapy · denosumab dosing",
+        "title": "Change denosumab dosing: induction, then a CTX-guided maintenance taper",
+        "summary": "Replace fixed 4-weekly dosing with a 6-dose induction, then maintenance every 12 weeks gated on CTX < 0.3 ng/mL, with a defined monitoring schedule.",
+        "rationale": "Four 2024–2025 papers converge on a post-induction taper and warn of rebound hypercalcemia after abrupt discontinuation. This changes a dosing line — a real downside if misapplied — so it stays clinician-only.",
+        "evidence": "strong",
+        "citations": ["38010041", "31196103"],
+        "gate": "expert",
+        "signal": { "useful": 5, "not": 0, "wrong": 1, "ratings": 6, "verified": 3 },
+        "comments": [
+          { "who": "Verified reviewer", "tier": "led the research", "text": "Right direction and consistent with the 2024 consensus. Weekly calcium during induction is non-negotiable — keep it bold. One reviewer flagged the maintenance interval as too long for under-10s; worth a sub-note." },
+          { "who": "Verified reviewer", "tier": "co-authored research", "text": "Flagging the maintenance interval — in our under-10 cohort at q12w, CTX rebounded in 2/9. I'd qualify it by age." }
+        ],
+        "diff": {
+          "file": "guidelines/fd.md · §3 Therapy",
+          "hunk": "@@ -142,4 +142,8 @@ Denosumab",
+          "lines": [
+            { "t": "ctx", "o": "141", "n": "141", "tx": "Bisphosphonates remain first line for bone pain refractory to NSAIDs." },
+            { "t": "del", "o": "142", "tx": "Denosumab 60 mg s.c. every 4 weeks until skeletal maturity." },
+            { "t": "add", "n": "142", "tx": "Denosumab 60 mg s.c. every 4 weeks for 6 doses (induction phase)," },
+            { "t": "add", "n": "143", "tx": "then every 12 weeks if a CTX < 0.3 ng/mL response is maintained." },
+            { "t": "add", "n": "144", "tx": "Monitor calcium and 25-OH-D weekly during induction, monthly during maintenance." },
+            { "t": "add", "n": "145", "tx": "On discontinuation: plan a taper — risk of rebound hypercalcemia (consider bisphosphonate cover for 6–12 months)." },
+            { "t": "ctx", "o": "143", "n": "146", "tx": "Burosumab is reserved for FGF23-driven hypophosphatemia." }
+          ]
+        },
+        "regenSeed": {
+          "version": "draft v2",
+          "basedOn": "the reviewer note about age-dependent maintenance",
+          "note": "Adds an age qualifier to the maintenance interval and a sub-note for patients under 10. New, explicitly versioned — nothing was overwritten."
+        }
+      },
+      {
+        "id": "sg-gnas",
+        "kind": "addition",
+        "targetSection": "histopathology",
+        "sectionLabel": "2. Histopathology and genetics",
+        "title": "Note ddPCR over Sanger when peripheral-blood GNAS is negative",
+        "summary": "When peripheral-blood GNAS is negative but FD is clinically suspected, note droplet-digital PCR from lesional tissue as a higher-sensitivity confirmatory test.",
+        "rationale": "Reinforces the existing paragraph, does not change a decision. A diagnostic-sensitivity improvement with no patient risk — a candidate for the parent view as a question to ask.",
+        "evidence": "moderate",
+        "citations": ["31196103"],
+        "gate": "promoted",
+        "parentText": "If a blood test for the GNAS gene comes back negative but doctors still suspect FD, a more sensitive lab test (ddPCR from the affected tissue) can help confirm it — worth asking about.",
+        "signal": { "useful": 2, "not": 0, "wrong": 0, "ratings": 2, "verified": 1 },
+        "comments": []
+      }
+    ],
+    "signals": {
+      "diagnosis": { "up": 7, "flags": 0, "verified": 3 },
+      "histopathology": { "up": 5, "flags": 1, "verified": 2, "flagNotes": [{ "who": "Verified reviewer", "text": "Add that a negative blood GNAS does NOT rule out FD — a first-contact reader could misread it." }] },
+      "therapy": { "up": 6, "flags": 1, "verified": 3, "flagNotes": [{ "who": "Verified reviewer", "text": "The denosumab summary is faithful to Gun 2024, but state more clearly that a specialist leads it — not the family doctor." }] },
+      "surgery": { "up": 8, "flags": 0, "verified": 4 },
+      "monitoring": { "up": 4, "flags": 0, "verified": 2 }
+    }
+  },
+  "mas": {
+    "sourceDocuments": [
+      {
+        "id": "boyce2019",
+        "role": "Base consensus",
+        "pmid": "31196103",
+        "title": "Best practice management guidelines for fibrous dysplasia/McCune-Albright syndrome (MAS section)",
+        "authors": "Javaid MK, Boyce A, Appelman-Dijkstra N, et al.",
+        "journal": "Orphanet Journal of Rare Diseases",
+        "year": 2019,
+        "scope": "MAS section of the consortium consensus — the triad and endocrine screening.",
+        "covers": ["Diagnosis", "Endocrine screening"],
+        "freeFullText": true
+      },
+      {
+        "id": "genereviews",
+        "role": "Reference compendium",
+        "bookshelf": "NBK274564",
+        "title": "Fibrous Dysplasia / McCune-Albright Syndrome",
+        "authors": "Boyce AM, Collins MT, et al.",
+        "journal": "GeneReviews® · NCBI Bookshelf",
+        "year": "continuously updated",
+        "scope": "NIH reference chapter covering the FD/MAS spectrum.",
+        "covers": ["Full review"]
+      }
+    ],
+    "synthesis": {
+      "kind": "synthesis",
+      "title": "McCune-Albright Syndrome — synthesis of the guidelines",
+      "version": "Synthesis · 2 sources",
+      "lastUpdated": "2026-03-02",
+      "epistemicLevel": "a",
+      "sourceIds": ["boyce2019", "genereviews"],
+      "basedOn": "Combined from the FD/MAS consensus (MAS section) and the GeneReviews reference chapter.",
+      "synthDisclaimer": "This summary was prepared by AI from the source documents — it is not an official guideline and may contain inaccuracies. Show it to your doctor.",
+      "status": "verified",
+      "hasFlowchart": false,
+      "sections": [
+        {
+          "id": "overview",
+          "title": "1. Diagnosis and screening",
+          "intro": "The classic triad: FD + café-au-lait macules + endocrinopathy. Two of the three are sufficient.",
+          "paragraphs": [
+            { "id": "mas-dx", "source": { "doc": "boyce2019", "loc": "§ MAS" }, "text": "A diagnosis of MAS requires: (a) documented FD (CT + GNAS), (b) café-au-lait macules of the “coast of Maine” type with a border running along the body midline, (c) one of the endocrinopathies: GnRH-independent precocious puberty, hyperthyroidism, GH excess, hypercortisolism, or FGF23-mediated hypophosphatemia.", "citations": ["31196103"] }
+          ]
+        }
+      ]
+    },
+    "suggestions": [
+      {
+        "id": "sg-tanner",
+        "kind": "modification",
+        "targetSection": "overview",
+        "sectionLabel": "1. Diagnosis and screening",
+        "title": "Shorten the Tanner-staging interval in MAS girls aged 2–7",
+        "summary": "Shorten Tanner staging from 12 to 6 months in girls aged 2–7 — the peak-risk window for GnRH-independent precocious puberty.",
+        "rationale": "A screening-interval change with a monitoring downside (not therapy); stays clinician-only until it gathers more signal.",
+        "evidence": "moderate",
+        "citations": ["31196103"],
+        "gate": "expert",
+        "signal": { "useful": 1, "not": 0, "wrong": 0, "ratings": 1, "verified": 1 },
+        "comments": [],
+        "diff": {
+          "file": "guidelines/mas.md · §1 Screening",
+          "hunk": "@@ -22,1 +22,1 @@ Endocrine screening",
+          "lines": [
+            { "t": "del", "o": "22", "tx": "Annual Tanner staging in MAS girls aged 2–8." },
+            { "t": "add", "n": "22", "tx": "Tanner staging every 6 months in MAS girls aged 2–7 (peak-risk window for GnRH-independent precocious puberty)." }
+          ]
+        }
+      }
+    ],
+    "signals": {
+      "overview": { "up": 2, "flags": 0, "verified": 1 }
+    }
+  }
+}

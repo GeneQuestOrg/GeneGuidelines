@@ -21,6 +21,16 @@ async def lifespan(app: FastAPI):
     await loop.run_in_executor(None, init_db)
     await loop.run_in_executor(None, run_seed_if_empty)
 
+    # Guidelines layer (GL-4): seed FD/MAS the first time the synthesis table is
+    # empty. Best-effort — the tables come from the alembic migration, so a
+    # not-yet-migrated dev DB just skips it rather than failing startup.
+    try:
+        from backend.guidelines.seed import seed_guidelines_if_empty
+
+        await loop.run_in_executor(None, seed_guidelines_if_empty)
+    except Exception as exc:  # noqa: BLE001 — never block boot on seed
+        logger.warning("Guidelines seed skipped: %s", exc)
+
     # Memory: best-effort schema init (do not fail startup)
     if MEMORY_POSTGRES_DSN:
         try:
@@ -130,6 +140,7 @@ from backend.account.api import router as account_router  # noqa: E402
 from backend.content.api import router as content_disease_router  # noqa: E402
 from backend.disease_index.api import router as disease_index_router  # noqa: E402
 from backend.doctor_contributions.api import router as doctor_contributions_router  # noqa: E402
+from backend.guidelines.api import router as guidelines_router  # noqa: E402
 from backend.routers import content, doctor_finder, geo, pipeline  # noqa: E402
 
 # The new content module owns GET /api/diseases and GET /api/diseases/{slug};
@@ -144,6 +155,10 @@ app.include_router(account_router, prefix="/api")
 # (/doctors/submissions, /doctors/contributions/pending) win over that
 # router's GET /doctors/{slug} catch-all.
 app.include_router(doctor_contributions_router, prefix="/api")
+# Guidelines layer (GL-4) — GET /api/diseases/{slug}/{source-documents,
+# guideline-synthesis,guideline-suggestions,synthesis-signals}. Before the
+# legacy `content` router so its literal sub-paths win the match.
+app.include_router(guidelines_router, prefix="/api")
 app.include_router(content.router, prefix="/api")
 app.include_router(disease_index_router, prefix="/api/disease-index", tags=["disease_index"])
 app.include_router(doctor_finder.router, prefix="/api/doctor-finder", tags=["doctor_finder"])
