@@ -3,6 +3,7 @@ import type { Disease } from "../types/disease";
 import type { GuidelineSynthesis } from "../types/guidelineSynthesis";
 import type { GuidelineSuggestion } from "../types/guidelineSuggestion";
 import { weightedSuggestionScore } from "../types/guidelineSuggestion";
+import type { GuidelineBaseline } from "../types/guidelineBaseline";
 import type { SourceDoc } from "../types/sourceDoc";
 import type { ViewRole } from "../auth/resolveRole";
 import type { SynthSignalMap } from "../hooks/useSynthSignals";
@@ -11,6 +12,7 @@ import { SynthDisclaimer } from "../components/guidelines/SynthDisclaimer";
 import { ProvenanceRow } from "../components/guidelines/ProvenanceRow";
 import { SynthSignal } from "../components/guidelines/SynthSignal";
 import { SuggestionCard } from "../components/guidelines/SuggestionCard";
+import { GuidelineBaselineView } from "../components/guidelines/GuidelineBaselineView";
 import {
   citationIndex,
   orderedSynthesisPmids,
@@ -22,6 +24,8 @@ export interface GuidelineClinicianViewProps {
   synthesis: GuidelineSynthesis | null;
   suggestions: readonly GuidelineSuggestion[];
   signals: SynthSignalMap;
+  /** Level-(c) AI baseline draft, when no guideline exists (GL-5). */
+  baseline: GuidelineBaseline | null;
   hasOfficial: boolean;
   role: ViewRole;
   docs: readonly SourceDoc[];
@@ -62,6 +66,7 @@ export function GuidelineClinicianView({
   synthesis,
   suggestions,
   signals,
+  baseline,
   hasOfficial,
   role,
   docs,
@@ -91,45 +96,52 @@ export function GuidelineClinicianView({
     window.scrollTo({ top: y, behavior: "smooth" });
   };
 
-  // Level (c): no synthesis. The fully AI-built baseline view lands in a later
-  // slice (GL-5/6) — show a clinician-facing placeholder for now.
+  // Level (c): no synthesis. A clinician/researcher sees the AI-built baseline
+  // draft for review (GL-5); without one, a quiet placeholder.
   if (!hasOfficial) {
     return (
       <>
         {held ? <UnverifiedBanner /> : null}
-        <div className="gx-empty">
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.7"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-          >
-            <path d="M12 2 2 7l10 5 10-5-10-5z" />
-            <path d="m2 17 10 5 10-5M2 12l10 5 10-5" />
-          </svg>
-          <div>
-            <b>No agreed guideline for {disease.name} yet.</b>
-            <p>
-              The AI-built baseline view (assembled from scratch, for review) lands in a
-              later slice. For now,{" "}
-              <a
-                href={`#/diseases/${disease.slug}`}
-                onClick={(e) => {
-                  e.preventDefault();
-                  onNav(`/diseases/${disease.slug}`);
-                }}
-              >
-                return to the disease overview
-              </a>
-              .
-            </p>
+        {baseline != null ? (
+          <GuidelineBaselineView
+            baseline={baseline}
+            diseaseName={disease.name}
+            held={held}
+          />
+        ) : (
+          <div className="gx-empty">
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.7"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M12 2 2 7l10 5 10-5-10-5z" />
+              <path d="m2 17 10 5 10-5M2 12l10 5 10-5" />
+            </svg>
+            <div>
+              <b>No agreed guideline for {disease.name} yet.</b>
+              <p>
+                No AI baseline has been assembled for this disease yet. For now,{" "}
+                <a
+                  href={`#/diseases/${disease.slug}`}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    onNav(`/diseases/${disease.slug}`);
+                  }}
+                >
+                  return to the disease overview
+                </a>
+                .
+              </p>
+            </div>
           </div>
-        </div>
+        )}
         {docs.length > 0 ? <SourceShelf docs={docs} /> : null}
       </>
     );

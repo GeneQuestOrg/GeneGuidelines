@@ -2,6 +2,7 @@ import { Button } from "@gene-guidelines/ui";
 import type { Disease } from "../types/disease";
 import type { GuidelineSynthesis } from "../types/guidelineSynthesis";
 import type { GuidelineSuggestion } from "../types/guidelineSuggestion";
+import type { GuidelineBaseline } from "../types/guidelineBaseline";
 import type { SourceDoc } from "../types/sourceDoc";
 import type { ViewRole } from "../auth/resolveRole";
 import { SourceShelf } from "../components/guidelines/SourceShelf";
@@ -12,6 +13,8 @@ export interface GuidelineParentViewProps {
   synthesis: GuidelineSynthesis | null;
   /** Promoted (gate==="promoted") items surface as "to discuss" frames. */
   suggestions: readonly GuidelineSuggestion[];
+  /** Level-(c) baseline — drives the gate's read-state line; never shown raw. */
+  baseline: GuidelineBaseline | null;
   hasOfficial: boolean;
   role: ViewRole;
   docs: readonly SourceDoc[];
@@ -57,6 +60,7 @@ export function GuidelineParentView({
   disease,
   synthesis,
   suggestions,
+  baseline,
   hasOfficial,
   role,
   docs,
@@ -65,6 +69,8 @@ export function GuidelineParentView({
   onNav,
 }: GuidelineParentViewProps) {
   const showSignin = role === "anon" && signInAvailable;
+  const readState =
+    baseline?.readState ?? { read: false, note: "No clinician has read this draft yet." };
 
   // Level (c): no agreed guideline — the parent is the bridge to a clinician,
   // never the recipient of a raw AI baseline (wizja 02/04). Safety gate only.
@@ -97,9 +103,11 @@ export function GuidelineParentView({
             don&apos;t show it as advice. The safest path is to hand it to a doctor, who can
             review it in our system and tell you what applies to your child.
           </p>
-          <span className="gx-gate__read">
+          <span className={`gx-gate__read${readState.read ? " read" : ""}`}>
             <span className="d" aria-hidden="true" />
-            No clinician has read this draft yet.
+            {readState.read
+              ? "A clinician has reviewed this draft — still a suggestion, not an approved guideline."
+              : readState.note}
           </span>
           <div className="gx-gate__actions">
             <Button

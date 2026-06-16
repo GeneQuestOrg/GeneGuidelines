@@ -1,0 +1,117 @@
+/* Guidelines layer v2 — level-(c) baseline render (GL-5).
+   Ported from draft10 styles.css (.gx-baseflag / .gx-run*). Baseline items reuse
+   .gx-rationale / .gx-evid* / .gx-cits / .gx-signal from guideline-suggestions.css. */
+
+.gx-baseflag {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 14px 16px;
+  border-radius: var(--r-md);
+  margin: 0 0 16px;
+  background: color-mix(in oklch, var(--st-red) 6%, var(--bg-elev));
+  border: 1px solid color-mix(in oklch, var(--st-red) 22%, var(--line));
+}
+.gx-baseflag svg {
+  color: oklch(0.5 0.15 25);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.gx-baseflag b {
+  color: var(--ink);
+}
+.gx-baseflag p {
+  margin: 2px 0 0;
+  font-size: var(--fs-sm);
+  color: var(--ink-2);
+  line-height: 1.5;
+}
+
+/* build-provenance workflow steps (static — the live run is the engine/GL-6) */
+.gx-run {
+  border: 1px solid color-mix(in oklch, var(--accent) 26%, var(--line));
+  border-radius: var(--r-md);
+  background: color-mix(in oklch, var(--accent) 4%, var(--bg-elev));
+  padding: 16px 18px;
+  margin: 0 0 18px;
+}
+.gx-run__top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.gx-run__pulse {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 4px color-mix(in oklch, var(--accent) 20%, transparent);
+  flex-shrink: 0;
+}
+.gx-run__t {
+  font-weight: 600;
+  font-size: var(--fs-md);
+}
+.gx-run__t .by {
+  font-weight: 400;
+  color: var(--ink-3);
+  font-size: var(--fs-sm);
+}
+.gx-run__steps {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0 0;
+  font-size: var(--fs-sm);
+  color: var(--ink-3);
+}
+.gx-run__steps li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+}
+.gx-run__steps .mk {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1.5px solid var(--line-2);
+  flex-shrink: 0;
+}
+.gx-run__steps li.done {
+  color: var(--ink-2);
+}
+.gx-run__steps li.done .mk {
+  background: var(--st-green);
+  border-color: var(--st-green);
+}
+.gx-run__steps li.active .mk {
+  border-color: var(--accent);
+  background: color-mix(in oklch, var(--accent) 30%, var(--bg));
+}
+.gx-run__steps em {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-3);
+  font-style: normal;
+  margin-left: auto;
+}
+
+/* baseline item card */
+.gx-basesec {
+  margin-bottom: 8px;
+}
+.gx-baseitem {
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+.gx-baseitem__text {
+  padding: 13px 15px 11px;
+  font-family: var(--font-serif);
+  font-size: var(--fs-md);
+  color: var(--ink);
+  line-height: 1.55;
+}
