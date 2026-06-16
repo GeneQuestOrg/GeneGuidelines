@@ -1,0 +1,228 @@
+import { Button } from "@gene-guidelines/ui";
+import type { Disease } from "../types/disease";
+import type { GuidelineSynthesis } from "../types/guidelineSynthesis";
+import type { SourceDoc } from "../types/sourceDoc";
+import type { ViewRole } from "../auth/resolveRole";
+import { SourceShelf } from "../components/guidelines/SourceShelf";
+import { SynthDisclaimer } from "../components/guidelines/SynthDisclaimer";
+
+export interface GuidelineParentViewProps {
+  disease: Disease;
+  synthesis: GuidelineSynthesis | null;
+  hasOfficial: boolean;
+  role: ViewRole;
+  docs: readonly SourceDoc[];
+  signInAvailable: boolean;
+  onSignIn: () => void;
+  onNav: (path: string) => void;
+}
+
+/** Anonymous "are you a clinician?" sign-in nudge (ported from draft10 .gx-signin). */
+function AnonSignin({ onSignIn }: { onSignIn: () => void }) {
+  return (
+    <div className="gx-signin">
+      <svg
+        width="22"
+        height="22"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <path d="M7 3v6a5 5 0 0 0 10 0V3" />
+        <path d="M12 14v3a4 4 0 0 0 4 4 4 4 0 0 0 4-4v-1" />
+        <circle cx="20" cy="13" r="2" />
+      </svg>
+      <div className="gx-signin__b">
+        <b>Are you a clinician?</b>
+        <p>
+          Sign in to see AI suggestions hanging beside this guideline, rate their
+          usefulness, and follow the full literature trail (PMID, evidence strength).
+        </p>
+      </div>
+      <Button variant="primary" size="sm" type="button" onClick={onSignIn}>
+        Sign in
+      </Button>
+    </div>
+  );
+}
+
+export function GuidelineParentView({
+  disease,
+  synthesis,
+  hasOfficial,
+  role,
+  docs,
+  signInAvailable,
+  onSignIn,
+  onNav,
+}: GuidelineParentViewProps) {
+  const showSignin = role === "anon" && signInAvailable;
+
+  // Level (c): no agreed guideline — the parent is the bridge to a clinician,
+  // never the recipient of a raw AI baseline (wizja 02/04). Safety gate only.
+  if (!hasOfficial) {
+    return (
+      <>
+        {showSignin ? <AnonSignin onSignIn={onSignIn} /> : null}
+        <div className="gx-gate">
+          <div className="gx-gate__icon" aria-hidden="true">
+            <svg
+              width="32"
+              height="32"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <rect x="4" y="10" width="16" height="11" rx="2" />
+              <path d="M8 10V7a4 4 0 0 1 8 0v3" />
+            </svg>
+          </div>
+          <h2 className="gx-gate__t">
+            We&apos;ve prepared an early draft — show it to your doctor.
+          </h2>
+          <p className="gx-gate__p">
+            There is no agreed clinical guideline for {disease.name.toLowerCase()} yet. We
+            assembled an early draft from the literature, but it is not a guideline — so we
+            don&apos;t show it as advice. The safest path is to hand it to a doctor, who can
+            review it in our system and tell you what applies to your child.
+          </p>
+          <span className="gx-gate__read">
+            <span className="d" aria-hidden="true" />
+            No clinician has read this draft yet.
+          </span>
+          <div className="gx-gate__actions">
+            <Button
+              variant="primary"
+              type="button"
+              onClick={() => onNav(`/doctors?disease=${disease.slug}`)}
+            >
+              Find a specialist
+            </Button>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  const doc = synthesis!;
+  return (
+    <>
+      {showSignin ? <AnonSignin onSignIn={onSignIn} /> : null}
+
+      <SynthDisclaimer text={doc.synthDisclaimer} />
+
+      <div className="gx-send">
+        <span className="gx-send__icon" aria-hidden="true">
+          <svg
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.6"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M22 2 11 13" />
+            <path d="M22 2 15 22l-4-9-9-4 20-7z" />
+          </svg>
+        </span>
+        <div className="gx-send__b">
+          <p className="gx-send__t">Take this to your doctor.</p>
+          <p className="gx-send__s">
+            The condensed guideline plus the original sources — ready to print or send. If a
+            doctor signs in, they also see the AI suggestions and the full literature trail.
+          </p>
+        </div>
+        <div className="gx-send__actions">
+          <Button variant="primary" size="sm" type="button" disabled>
+            Send to doctor
+          </Button>
+          <Button size="sm" type="button" onClick={() => window.print()}>
+            Print
+          </Button>
+        </div>
+      </div>
+
+      {doc.whatToDoNow != null || doc.redFlags != null ? (
+        <div className="gx-parentguide">
+          {doc.whatToDoNow != null ? (
+            <>
+              <div className="gx-sec__h gx-sec__h--standalone">What to do now</div>
+              <ol className="gx-todo">
+                {doc.whatToDoNow.map((step, i) => (
+                  <li key={step.lead}>
+                    <span className="gx-todo__n">{String(i + 1).padStart(2, "0")}</span>
+                    <span>
+                      <b>{step.lead}</b> {step.body}
+                    </span>
+                  </li>
+                ))}
+              </ol>
+              {doc.hasFlowchart ? (
+                <p className="gx-parentguide__hint">
+                  Full decision pathway:{" "}
+                  <a
+                    href={`#/diseases/${disease.slug}/flowchart`}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      onNav(`/diseases/${disease.slug}/flowchart`);
+                    }}
+                  >
+                    open the interactive tree →
+                  </a>
+                </p>
+              ) : null}
+            </>
+          ) : null}
+          {doc.redFlags != null ? (
+            <div className="gx-redflags">
+              <h4>{doc.redFlags.title}</h4>
+              <ul>
+                {doc.redFlags.items.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+
+      <article className="gx-doc">
+        {doc.sections.map((sec) => (
+          <section key={sec.id} className="gx-sec">
+            <h2 className="gx-sec__h">
+              {sec.title}
+              <span className="epi epi--official">
+                <span className="epi__d" aria-hidden="true" />
+                From sources
+              </span>
+            </h2>
+            {sec.intro != null ? <p className="gx-sec__intro">{sec.intro}</p> : null}
+            {/* Condensed projection: the first two paragraphs of each section. */}
+            {sec.paragraphs.slice(0, 2).map((p) => (
+              <div key={p.id} className="gx-para">
+                <p>{p.text}</p>
+              </div>
+            ))}
+          </section>
+        ))}
+      </article>
+
+      <SourceShelf docs={docs} parent />
+
+      <p className="gx-parentfoot">
+        Condensed by us from the source documents above · last revised{" "}
+        {doc.lastUpdated.slice(0, 7)}. Author and reviewer names are in the original
+        documents.
+      </p>
+    </>
+  );
+}

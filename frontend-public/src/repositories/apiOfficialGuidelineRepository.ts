@@ -1,4 +1,5 @@
 import { apiGet, ApiRequestError } from "../api/client";
+import type { GuidelineSynthesis } from "../types/guidelineSynthesis";
 import type { OfficialGuideline } from "../types/officialGuideline";
 import type { SourceDoc } from "../types/sourceDoc";
 import { normalizeDiseaseSlug } from "./slug";
@@ -36,6 +37,25 @@ export const apiOfficialGuidelineRepository: OfficialGuidelineRepository = {
     } catch (err) {
       if (err instanceof ApiRequestError && err.status === 404) {
         return [];
+      }
+      throw err;
+    }
+  },
+
+  // Backend endpoint lands in GL-4 (backend/guidelines/). Until then a 404 just
+  // means "no synthesis yet" → fall back to null (parent sees the level-(c) gate).
+  async getSynthesis(diseaseSlug: string): Promise<GuidelineSynthesis | null> {
+    const normalized = normalizeDiseaseSlug(diseaseSlug);
+    if (normalized == null) {
+      return null;
+    }
+    try {
+      return await apiGet<GuidelineSynthesis>(
+        `/api/diseases/${encodeURIComponent(normalized)}/guideline-synthesis`,
+      );
+    } catch (err) {
+      if (err instanceof ApiRequestError && err.status === 404) {
+        return null;
       }
       throw err;
     }
