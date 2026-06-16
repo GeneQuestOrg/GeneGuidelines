@@ -5,9 +5,11 @@ import type { GuidelineSuggestion } from "../types/guidelineSuggestion";
 import { weightedSuggestionScore } from "../types/guidelineSuggestion";
 import type { SourceDoc } from "../types/sourceDoc";
 import type { ViewRole } from "../auth/resolveRole";
+import type { SynthSignalMap } from "../hooks/useSynthSignals";
 import { SourceShelf } from "../components/guidelines/SourceShelf";
 import { SynthDisclaimer } from "../components/guidelines/SynthDisclaimer";
 import { ProvenanceRow } from "../components/guidelines/ProvenanceRow";
+import { SynthSignal } from "../components/guidelines/SynthSignal";
 import { SuggestionCard } from "../components/guidelines/SuggestionCard";
 import {
   citationIndex,
@@ -19,6 +21,7 @@ export interface GuidelineClinicianViewProps {
   disease: Disease;
   synthesis: GuidelineSynthesis | null;
   suggestions: readonly GuidelineSuggestion[];
+  signals: SynthSignalMap;
   hasOfficial: boolean;
   role: ViewRole;
   docs: readonly SourceDoc[];
@@ -58,6 +61,7 @@ export function GuidelineClinicianView({
   disease,
   synthesis,
   suggestions,
+  signals,
   hasOfficial,
   role,
   docs,
@@ -205,9 +209,10 @@ export function GuidelineClinicianView({
                     </a>
                   ))}
                 </p>
-                <ProvenanceRow docs={docs} para={p} />
+                <ProvenanceRow slug={disease.slug} docs={docs} para={p} onNav={onNav} />
               </div>
             ))}
+            <SynthSignal signal={signals[sec.id]} held={held} />
           </section>
         ))}
 

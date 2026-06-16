@@ -64,6 +64,25 @@ export interface SynthesisRedFlags {
   readonly items: readonly string[];
 }
 
+/**
+ * Asymmetric signal on a synthesis section (wizja 03 / chat 019): thumbs-up OR
+ * "report a problem" with a note — no bare "not useful" (NFZ contract pressure
+ * could suppress a useful-but-inconvenient pointer). The signal is about the
+ * QUALITY of the summary (faithful? complete? safe?), not the guideline's validity.
+ */
+export interface SynthFlagNote {
+  /** Never a real name — "Verified reviewer". */
+  readonly who: string;
+  readonly text: string;
+}
+
+export interface SynthSectionSignal {
+  readonly up: number;
+  readonly flags: number;
+  readonly verified: number;
+  readonly flagNotes?: readonly SynthFlagNote[];
+}
+
 export interface GuidelineSynthesis {
   readonly slug: string;
   readonly kind: "synthesis";

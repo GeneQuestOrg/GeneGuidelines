@@ -83,6 +83,7 @@ export function routeContent({
         <GuidelinesView
           slug={route.slug}
           prId={route.prId}
+          srcParaId={route.srcParaId}
           role={role}
           onNav={onNav}
         />

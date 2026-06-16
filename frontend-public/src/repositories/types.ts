@@ -17,7 +17,7 @@ import type {
 import type { Foundation } from "../types/foundation";
 import type { GuidelineDocument } from "../types/guidelineDocument";
 import type { GuidelineSuggestion } from "../types/guidelineSuggestion";
-import type { GuidelineSynthesis } from "../types/guidelineSynthesis";
+import type { GuidelineSynthesis, SynthSectionSignal } from "../types/guidelineSynthesis";
 import type { OfficialGuideline } from "../types/officialGuideline";
 import type { PrivateContext } from "../types/privateContext";
 import type { SourceDoc } from "../types/sourceDoc";
@@ -90,6 +90,10 @@ export interface OfficialGuidelineRepository {
   getSynthesis(diseaseSlug: string): Promise<GuidelineSynthesis | null>;
   /** AI suggestions hanging beside the synthesis (GL-3); empty when none. */
   getSuggestions(diseaseSlug: string): Promise<readonly GuidelineSuggestion[]>;
+  /** Asymmetric per-section signal on the synthesis (GL-3b); section id → signal. */
+  getSynthSignals(
+    diseaseSlug: string,
+  ): Promise<Readonly<Record<string, SynthSectionSignal>>>;
 }
 
 export interface AccountRepository {
