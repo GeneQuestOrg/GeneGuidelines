@@ -22,6 +22,14 @@ COPY packages packages
 COPY frontend-public frontend-public
 COPY frontend-admin frontend-admin
 
+# Auth0 SPA config (baked at build time). Unset => sign-in UI hidden (anonymous mode).
+ARG VITE_AUTH0_DOMAIN=""
+ARG VITE_AUTH0_CLIENT_ID=""
+ARG VITE_AUTH0_AUDIENCE=""
+ENV VITE_AUTH0_DOMAIN=$VITE_AUTH0_DOMAIN
+ENV VITE_AUTH0_CLIENT_ID=$VITE_AUTH0_CLIENT_ID
+ENV VITE_AUTH0_AUDIENCE=$VITE_AUTH0_AUDIENCE
+
 # Production build — relative API paths (the nginx proxy rewrites /api → backend:8000).
 ENV VITE_API_URL=""
 RUN npm run build:frontends

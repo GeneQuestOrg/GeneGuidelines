@@ -4,6 +4,7 @@ __pycache__/
 node_modules/
 .env
 .env.local
+.env.bak*
 deploy/htpasswd
 deploy/backups/
 backups/
@@ -28,3 +29,4 @@ backend/.cursor/
 plans/*.md
 !plans/README.md
 !plans/checklist.md
+.gstack/
