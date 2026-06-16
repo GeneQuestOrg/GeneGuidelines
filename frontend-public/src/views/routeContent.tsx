@@ -79,9 +79,14 @@ export function routeContent({
     case "flowchart":
       return <FlowchartView slug={route.slug} onNav={onNav} />;
     case "guidelines":
-      // prId (old PR-diff route) degrades to the synthesis view in GL-2;
-      // FocusedReview lands in GL-3.
-      return <GuidelinesView slug={route.slug} role={role} onNav={onNav} />;
+      return (
+        <GuidelinesView
+          slug={route.slug}
+          prId={route.prId}
+          role={role}
+          onNav={onNav}
+        />
+      );
     case "researchRun":
       return (
         <ResearchRunView

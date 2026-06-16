@@ -1,4 +1,5 @@
 import { apiGet, ApiRequestError } from "../api/client";
+import type { GuidelineSuggestion } from "../types/guidelineSuggestion";
 import type { GuidelineSynthesis } from "../types/guidelineSynthesis";
 import type { OfficialGuideline } from "../types/officialGuideline";
 import type { SourceDoc } from "../types/sourceDoc";
@@ -56,6 +57,24 @@ export const apiOfficialGuidelineRepository: OfficialGuidelineRepository = {
     } catch (err) {
       if (err instanceof ApiRequestError && err.status === 404) {
         return null;
+      }
+      throw err;
+    }
+  },
+
+  // Backend endpoint lands in GL-4. 404 → no suggestions yet (empty rail).
+  async getSuggestions(diseaseSlug: string): Promise<readonly GuidelineSuggestion[]> {
+    const normalized = normalizeDiseaseSlug(diseaseSlug);
+    if (normalized == null) {
+      return [];
+    }
+    try {
+      return await apiGet<readonly GuidelineSuggestion[]>(
+        `/api/diseases/${encodeURIComponent(normalized)}/guideline-suggestions`,
+      );
+    } catch (err) {
+      if (err instanceof ApiRequestError && err.status === 404) {
+        return [];
       }
       throw err;
     }
