@@ -5,19 +5,24 @@ import { useAccountContext } from "../auth/accountContext";
 import { useDisease } from "../hooks/useDisease";
 import { useGuidelineSynthesis } from "../hooks/useGuidelineSynthesis";
 import { useGuidelineSuggestions } from "../hooks/useGuidelineSuggestions";
+import { useSynthSignals } from "../hooks/useSynthSignals";
 import { useSourceShelf } from "../hooks/useSourceShelf";
 import { RolePill } from "../components/guidelines/RolePill";
 import { GuidelineParentView } from "./GuidelineParentView";
 import { GuidelineClinicianView } from "./GuidelineClinicianView";
 import { FocusedReviewView } from "./FocusedReviewView";
+import { ProvenanceDetailView } from "./ProvenanceDetailView";
 import { PlaceholderView } from "./PlaceholderView";
 import "../styles/guideline-synthesis.css";
 import "../styles/guideline-suggestions.css";
+import "../styles/guideline-provenance.css";
 
 export interface GuidelinesViewProps {
   slug: string;
   /** Focused-review target (`/guidelines/pr/:id`) — clinician-only. */
   prId?: string;
+  /** Provenance-detail target (`/guidelines/source/:paraId`) — clinician-only. */
+  srcParaId?: string;
   role: ViewRole;
   onNav: (path: string) => void;
 }
@@ -28,14 +33,22 @@ export interface GuidelinesViewProps {
  * projection; clinician/researcher get the full text with provenance plus the
  * AI-suggestions rail. The role comes from auth (resolveRole), not a toggle.
  */
-export function GuidelinesView({ slug, prId, role, onNav }: GuidelinesViewProps) {
+export function GuidelinesView({
+  slug,
+  prId,
+  srcParaId,
+  role,
+  onNav,
+}: GuidelinesViewProps) {
   const { disease, loading: diseaseLoading, error: diseaseError } = useDisease(slug);
   const { synthesis, loading: synthLoading } = useGuidelineSynthesis(slug);
   const { suggestions, loading: suggLoading } = useGuidelineSuggestions(slug);
+  const { signals, loading: signalsLoading } = useSynthSignals(slug);
   const { docs, loading: shelfLoading } = useSourceShelf(slug);
   const { signInAvailable, login } = useAccountContext();
 
-  const loading = diseaseLoading || synthLoading || suggLoading || shelfLoading;
+  const loading =
+    diseaseLoading || synthLoading || suggLoading || signalsLoading || shelfLoading;
 
   if (loading) {
     return (
@@ -84,6 +97,21 @@ export function GuidelinesView({ slug, prId, role, onNav }: GuidelinesViewProps)
     }
   }
 
+  // Provenance detail ("where we know this from") — clinician-only.
+  if (srcParaId != null && isClinicianView(role) && synthesis != null) {
+    return (
+      <ProvenanceDetailView
+        slug={slug}
+        disease={disease}
+        synthesis={synthesis}
+        docs={docs}
+        paraId={srcParaId}
+        role={role}
+        onNav={onNav}
+      />
+    );
+  }
+
   const hasOfficial = synthesis != null && synthesis.status !== "pending";
   const parentSide = isParentSide(role);
 
@@ -121,6 +149,7 @@ export function GuidelinesView({ slug, prId, role, onNav }: GuidelinesViewProps)
           disease={disease}
           synthesis={synthesis}
           suggestions={suggestions}
+          signals={signals}
           hasOfficial={hasOfficial}
           role={role}
           docs={docs}
@@ -130,6 +159,7 @@ export function GuidelinesView({ slug, prId, role, onNav }: GuidelinesViewProps)
         <GuidelineParentView
           disease={disease}
           synthesis={synthesis}
+          suggestions={suggestions}
           hasOfficial={hasOfficial}
           role={role}
           docs={docs}

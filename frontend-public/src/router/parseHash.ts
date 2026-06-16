@@ -48,6 +48,9 @@ export function parseHash(hash: string): Route {
       if (parts[3] === "pr" && parts[4]) {
         return { name: "guidelines", slug, prId: parts[4] };
       }
+      if (parts[3] === "source" && parts[4]) {
+        return { name: "guidelines", slug, srcParaId: parts[4] };
+      }
       return { name: "guidelines", slug };
     }
     if (parts.length > 2) {

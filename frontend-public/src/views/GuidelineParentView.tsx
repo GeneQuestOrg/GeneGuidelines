@@ -1,6 +1,7 @@
 import { Button } from "@gene-guidelines/ui";
 import type { Disease } from "../types/disease";
 import type { GuidelineSynthesis } from "../types/guidelineSynthesis";
+import type { GuidelineSuggestion } from "../types/guidelineSuggestion";
 import type { SourceDoc } from "../types/sourceDoc";
 import type { ViewRole } from "../auth/resolveRole";
 import { SourceShelf } from "../components/guidelines/SourceShelf";
@@ -9,6 +10,8 @@ import { SynthDisclaimer } from "../components/guidelines/SynthDisclaimer";
 export interface GuidelineParentViewProps {
   disease: Disease;
   synthesis: GuidelineSynthesis | null;
+  /** Promoted (gate==="promoted") items surface as "to discuss" frames. */
+  suggestions: readonly GuidelineSuggestion[];
   hasOfficial: boolean;
   role: ViewRole;
   docs: readonly SourceDoc[];
@@ -53,6 +56,7 @@ function AnonSignin({ onSignIn }: { onSignIn: () => void }) {
 export function GuidelineParentView({
   disease,
   synthesis,
+  suggestions,
   hasOfficial,
   role,
   docs,
@@ -112,6 +116,9 @@ export function GuidelineParentView({
   }
 
   const doc = synthesis!;
+  // Only promoted items reach the parent — as "to discuss with your doctor"
+  // frames, never raw AI verdicts (wizja 02, per-item gate).
+  const promoted = suggestions.filter((s) => s.gate === "promoted");
   return (
     <>
       {showSignin ? <AnonSignin onSignIn={onSignIn} /> : null}
@@ -212,6 +219,19 @@ export function GuidelineParentView({
                 <p>{p.text}</p>
               </div>
             ))}
+            {promoted
+              .filter((s) => s.targetSection === sec.id)
+              .map((s) => (
+                <div key={s.id} className="gx-discuss">
+                  <span className="gx-discuss__l" aria-hidden="true">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                    </svg>
+                    To discuss with your doctor
+                  </span>
+                  <p>{s.parentText ?? s.summary}</p>
+                </div>
+              ))}
           </section>
         ))}
       </article>

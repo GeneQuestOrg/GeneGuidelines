@@ -1,6 +1,6 @@
 import { apiGet, ApiRequestError } from "../api/client";
 import type { GuidelineSuggestion } from "../types/guidelineSuggestion";
-import type { GuidelineSynthesis } from "../types/guidelineSynthesis";
+import type { GuidelineSynthesis, SynthSectionSignal } from "../types/guidelineSynthesis";
 import type { OfficialGuideline } from "../types/officialGuideline";
 import type { SourceDoc } from "../types/sourceDoc";
 import { normalizeDiseaseSlug } from "./slug";
@@ -75,6 +75,26 @@ export const apiOfficialGuidelineRepository: OfficialGuidelineRepository = {
     } catch (err) {
       if (err instanceof ApiRequestError && err.status === 404) {
         return [];
+      }
+      throw err;
+    }
+  },
+
+  // Backend endpoint lands in GL-4. 404 → no signal yet (empty map).
+  async getSynthSignals(
+    diseaseSlug: string,
+  ): Promise<Readonly<Record<string, SynthSectionSignal>>> {
+    const normalized = normalizeDiseaseSlug(diseaseSlug);
+    if (normalized == null) {
+      return {};
+    }
+    try {
+      return await apiGet<Readonly<Record<string, SynthSectionSignal>>>(
+        `/api/diseases/${encodeURIComponent(normalized)}/synthesis-signals`,
+      );
+    } catch (err) {
+      if (err instanceof ApiRequestError && err.status === 404) {
+        return {};
       }
       throw err;
     }

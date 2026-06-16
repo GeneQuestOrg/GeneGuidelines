@@ -1,9 +1,10 @@
 import type { GuidelineSuggestion } from "../types/guidelineSuggestion";
-import type { GuidelineSynthesis } from "../types/guidelineSynthesis";
+import type { GuidelineSynthesis, SynthSectionSignal } from "../types/guidelineSynthesis";
 import type { OfficialGuideline } from "../types/officialGuideline";
 import type { SourceDoc } from "../types/sourceDoc";
 import { SUGGESTIONS } from "./guidelineSuggestionsFixtures";
 import { SYNTHESES } from "./guidelineSynthesisFixtures";
+import { SYNTH_SIGNALS } from "./guidelineSynthSignalsFixtures";
 import type { OfficialGuidelineRepository } from "./types";
 
 const FIXTURE: Readonly<Record<string, OfficialGuideline>> = {
@@ -153,5 +154,10 @@ export const fixtureOfficialGuidelineRepository: OfficialGuidelineRepository = {
   },
   async getSuggestions(diseaseSlug: string): Promise<readonly GuidelineSuggestion[]> {
     return SUGGESTIONS[diseaseSlug] ?? [];
+  },
+  async getSynthSignals(
+    diseaseSlug: string,
+  ): Promise<Readonly<Record<string, SynthSectionSignal>>> {
+    return SYNTH_SIGNALS[diseaseSlug] ?? {};
   },
 };

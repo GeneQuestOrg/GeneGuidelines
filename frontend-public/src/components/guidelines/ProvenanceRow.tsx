@@ -1,5 +1,4 @@
 import type { SourceDoc } from "../../types/sourceDoc";
-import { sourceDocUrl } from "../../types/sourceDoc";
 import type { SynthesisParagraph } from "../../types/guidelineSynthesis";
 import { shortDocLabel } from "../../utils/guidelineSynthesis";
 
@@ -8,13 +7,14 @@ import { shortDocLabel } from "../../utils/guidelineSynthesis";
  * paragraph comes from, plus a marker where a newer document updates an older
  * one. Ported from draft10 `ProvenanceRow` (.gx-prov2 / .gx-srcmark).
  *
- * GL-2 placeholder: the source mark links out to the original document. GL-3
- * upgrades it to the in-app "where do we know this from" detail page
- * (`/guidelines/source/:paraId`, ProvenanceDetail + SOURCE_BASIS).
+ * The source mark opens the in-app "where do we know this from" detail page
+ * (`/guidelines/source/:paraId`, GL-3b ProvenanceDetail).
  */
 export interface ProvenanceRowProps {
+  slug: string;
   docs: readonly SourceDoc[];
   para: SynthesisParagraph;
+  onNav: (path: string) => void;
 }
 
 const UPDATE_ICON = (
@@ -33,51 +33,26 @@ const UPDATE_ICON = (
   </svg>
 );
 
-export function ProvenanceRow({ docs, para }: ProvenanceRowProps) {
+export function ProvenanceRow({ slug, docs, para, onNav }: ProvenanceRowProps) {
   if (para.source == null) {
     return null;
   }
-  const sourceDoc = docs.find((d) => d.id === para.source!.doc);
   const label = shortDocLabel(docs, para.source.doc);
-  const href = sourceDoc != null ? sourceDocUrl(sourceDoc) : null;
-  const title = `Basis: ${label} · ${para.source.loc} — open the source`;
-
-  const icon = (
-    <svg
-      width="11"
-      height="11"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-      <path d="M14 2v6h6" />
-    </svg>
-  );
 
   return (
     <div className="gx-prov2">
-      {href != null ? (
-        <a
-          className="gx-srcmark"
-          href={href}
-          target="_blank"
-          rel="noopener noreferrer"
-          title={title}
-        >
-          {icon}
-          {label}
-        </a>
-      ) : (
-        <span className="gx-srcmark" title={`Basis: ${label} · ${para.source.loc}`}>
-          {icon}
-          {label}
-        </span>
-      )}
+      <button
+        type="button"
+        className="gx-srcmark"
+        title={`Basis: ${label} · ${para.source.loc} — see where this comes from`}
+        onClick={() => onNav(`/diseases/${slug}/guidelines/source/${para.id}`)}
+      >
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+          <path d="M14 2v6h6" />
+        </svg>
+        {label}
+      </button>
       {para.update != null ? (
         <span className={`gx-prov2__upd${para.update.supersedes ? " is-super" : ""}`}>
           {UPDATE_ICON}

@@ -36,6 +36,11 @@ describe("parseHash", () => {
       slug: "fabry",
       prId: "42",
     });
+    expect(parseHash("#/diseases/fabry/guidelines/source/dx-ct")).toEqual({
+      name: "guidelines",
+      slug: "fabry",
+      srcParaId: "dx-ct",
+    });
   });
 
   it("parses doctors and account", () => {
