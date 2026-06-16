@@ -1,0 +1,602 @@
+/* Guidelines layer v2 — synthesis render (parent + clinician).
+   Ported from draft10 styles.css (.gx-* / .epi namespace). Reuses the shared
+   design tokens (packages/ui/src/styles/tokens.css). Source-shelf classes
+   (.srcshelf / .srcdoc / .gx-new) live in components/guidelines/source-shelf.css
+   from GL-1 and are NOT redefined here. */
+
+.page--gl2 {
+  padding-top: 16px;
+}
+
+/* ── top bar ── */
+.gx-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 8px 0 16px;
+  border-bottom: 1px solid var(--line);
+  flex-wrap: wrap;
+}
+.gx-bar__left {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+.gx-bar__title {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: clamp(19px, 3.6vw, var(--fs-2xl));
+  letter-spacing: -0.02em;
+  margin: 0;
+  line-height: 1.14;
+}
+.gx-bar__ver {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 2px 8px;
+  background: var(--bg-soft);
+  color: var(--ink-2);
+  border-radius: 99px;
+  margin-bottom: 6px;
+}
+.gx-bar__ver--c {
+  background: color-mix(in oklch, var(--st-red) 12%, var(--bg-elev));
+  color: oklch(0.46 0.15 25);
+}
+
+/* ── role pill (honest indicator — reflects login, not a free switch) ── */
+.gx-role {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 99px;
+}
+.gx-role--anon {
+  background: var(--bg-soft);
+  color: var(--ink-3);
+}
+.gx-role--parent {
+  background: color-mix(in oklch, var(--st-green) 14%, var(--bg-elev));
+  color: var(--st-green);
+}
+.gx-role--clin {
+  background: color-mix(in oklch, var(--st-blue) 14%, var(--bg-elev));
+  color: var(--st-blue);
+}
+.gx-role .d {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* ── sign-in CTA for anon (gate + acquisition channel in one) ── */
+.gx-signin {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  padding: 15px 18px;
+  margin: 16px 0;
+  border-radius: var(--r-md);
+  background: color-mix(in oklch, var(--st-blue) 6%, var(--bg-elev));
+  border: 1px solid color-mix(in oklch, var(--st-blue) 24%, var(--line));
+}
+.gx-signin svg {
+  color: var(--st-blue);
+  flex-shrink: 0;
+}
+.gx-signin__b {
+  flex: 1;
+  min-width: 0;
+}
+.gx-signin b {
+  color: var(--ink);
+}
+.gx-signin p {
+  margin: 2px 0 0;
+  font-size: var(--fs-sm);
+  color: var(--ink-2);
+  line-height: 1.5;
+}
+
+/* ── send-to-doctor — parent primary action ── */
+.gx-send {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  padding: 16px 18px;
+  border-radius: var(--r-lg);
+  background: linear-gradient(
+    135deg,
+    color-mix(in oklch, var(--accent) 9%, var(--bg-elev)),
+    var(--bg-elev) 64%
+  );
+  border: 1px solid color-mix(in oklch, var(--accent) 26%, var(--line-2));
+  margin: 16px 0;
+}
+.gx-send__icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: color-mix(in oklch, var(--accent) 16%, var(--bg-elev));
+  color: var(--accent-ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.gx-send__b {
+  flex: 1;
+  min-width: 0;
+}
+.gx-send__t {
+  font-weight: 600;
+  font-size: var(--fs-md);
+  margin: 0 0 2px;
+  letter-spacing: -0.01em;
+}
+.gx-send__s {
+  font-size: var(--fs-sm);
+  color: var(--ink-3);
+  margin: 0;
+  line-height: 1.45;
+}
+.gx-send__actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+@media (max-width: 640px) {
+  .gx-send {
+    flex-wrap: wrap;
+  }
+  .gx-send__actions {
+    width: 100%;
+  }
+}
+
+/* ── parent guide wrapper ("what to do now" + red flags) ── */
+.gx-parentguide {
+  max-width: 66ch;
+  margin-bottom: 20px;
+}
+.gx-parentguide__hint {
+  font-family: var(--font-sans);
+  font-size: var(--fs-sm);
+  color: var(--ink-3);
+  margin: 8px 0 0;
+}
+.gx-parentguide__hint a {
+  color: var(--accent-ink);
+  border-bottom: 1px solid color-mix(in oklch, var(--accent) 30%, transparent);
+}
+
+/* ── the document ── */
+.gx-doc {
+  font-family: var(--font-serif);
+  font-size: var(--fs-lg);
+  line-height: 1.62;
+  color: var(--ink);
+  max-width: 66ch;
+}
+.gx-doc--full {
+  max-width: 80ch;
+}
+.gx-sec {
+  padding: 6px 0 22px;
+  border-bottom: 1px solid var(--line);
+}
+.gx-sec:last-child {
+  border-bottom: 0;
+}
+.gx-sec__h {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  font-size: var(--fs-xl);
+  letter-spacing: -0.015em;
+  margin: 14px 0 4px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.gx-sec__h--standalone {
+  margin-top: 8px;
+}
+.gx-sec__intro {
+  font-family: var(--font-sans);
+  font-size: var(--fs-sm);
+  color: var(--ink-3);
+  font-style: italic;
+  margin: 0 0 14px;
+  max-width: 58ch;
+}
+.gx-doc p {
+  margin: 0 0 12px;
+}
+.gx-para {
+  position: relative;
+  padding: 8px 12px;
+  margin: 0 0 6px -12px;
+  border-radius: var(--r-sm);
+}
+.gx-para:hover {
+  background: var(--bg-elev);
+}
+.gx-cit {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--accent-ink);
+  vertical-align: super;
+  line-height: 0;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  padding: 0;
+  margin-left: 2px;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+}
+.gx-cit + .gx-cit {
+  margin-left: 3px;
+}
+.gx-cit:hover {
+  text-decoration: underline;
+}
+
+/* ── epistemic status chip — human language for parent ── */
+.epi {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 9px 3px 7px;
+  border-radius: 99px;
+  font-family: var(--font-sans);
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  border: 1px solid var(--line);
+  background: var(--bg-elev);
+  white-space: nowrap;
+}
+.epi__d {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.epi--official {
+  color: var(--st-green);
+  border-color: color-mix(in oklch, var(--st-green) 30%, var(--line));
+}
+.epi--official .epi__d {
+  background: var(--st-green);
+}
+
+/* ── parent "what to do" + red flags (condensed patient-chart projection) ── */
+.gx-todo {
+  list-style: none;
+  padding: 0;
+  margin: 6px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.gx-todo li {
+  display: flex;
+  gap: 12px;
+  padding: 12px 15px;
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  font-family: var(--font-sans);
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+  color: var(--ink-2);
+}
+.gx-todo__n {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--accent-ink);
+  flex-shrink: 0;
+  padding-top: 1px;
+}
+.gx-todo b {
+  color: var(--ink);
+}
+.gx-redflags {
+  font-family: var(--font-sans);
+  background: color-mix(in oklch, var(--st-red) 7%, var(--bg-elev));
+  border: 1px solid color-mix(in oklch, var(--st-red) 22%, var(--line));
+  border-radius: var(--r-md);
+  padding: 14px 16px;
+  margin-top: 12px;
+}
+.gx-redflags h4 {
+  margin: 0 0 8px;
+  font-size: var(--fs-sm);
+  color: oklch(0.45 0.15 25);
+}
+.gx-redflags ul {
+  margin: 0;
+  padding-left: 18px;
+  font-size: var(--fs-sm);
+  color: var(--ink-2);
+  line-height: 1.5;
+}
+.gx-redflags li {
+  margin-bottom: 5px;
+}
+.gx-redflags b {
+  color: var(--ink);
+}
+
+/* ── parent footer note ── */
+.gx-parentfoot {
+  font-family: var(--font-sans);
+  font-size: var(--fs-sm);
+  color: var(--ink-3);
+  max-width: 64ch;
+  border-top: 1px solid var(--line);
+  padding-top: 16px;
+  margin-top: 20px;
+}
+
+/* ── parent safety gate (level c) ── */
+.gx-gate {
+  text-align: center;
+  max-width: 580px;
+  margin: 12px auto;
+  padding: 40px 32px;
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+}
+.gx-gate__icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: color-mix(in oklch, var(--accent) 12%, var(--bg-elev));
+  color: var(--accent-ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 18px;
+}
+.gx-gate__t {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: var(--fs-2xl);
+  letter-spacing: -0.02em;
+  margin: 0 0 10px;
+}
+.gx-gate__p {
+  font-size: var(--fs-md);
+  color: var(--ink-2);
+  line-height: 1.55;
+  max-width: 46ch;
+  margin: 0 auto 20px;
+  text-wrap: pretty;
+}
+.gx-gate__read {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 14px;
+  border-radius: 99px;
+  background: var(--bg-soft);
+  font-size: var(--fs-sm);
+  color: var(--ink-2);
+  margin-bottom: 20px;
+}
+.gx-gate__read .d {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ink-4);
+}
+.gx-gate__actions {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* ── empty / placeholder state ── */
+.gx-empty {
+  display: flex;
+  gap: 13px;
+  align-items: flex-start;
+  padding: 16px 18px;
+  border: 1px dashed var(--line-2);
+  border-radius: var(--r-md);
+  background: var(--bg-elev);
+  color: var(--ink-3);
+  font-family: var(--font-sans);
+}
+.gx-empty svg {
+  color: var(--ink-4);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.gx-empty b {
+  color: var(--ink-2);
+}
+.gx-empty p {
+  margin: 2px 0 0;
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+}
+.gx-empty a {
+  color: var(--accent-ink);
+}
+
+/* ── unverified clinician banner ── */
+.gx-unver {
+  display: flex;
+  gap: 13px;
+  align-items: flex-start;
+  padding: 14px 16px;
+  border-radius: var(--r-md);
+  background: color-mix(in oklch, var(--st-amber) 9%, var(--bg-elev));
+  border: 1px solid color-mix(in oklch, var(--st-amber) 28%, var(--line));
+  margin: 0 0 16px;
+}
+.gx-unver svg {
+  color: oklch(0.5 0.12 75);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.gx-unver b {
+  color: var(--ink);
+}
+.gx-unver p {
+  margin: 2px 0 0;
+  font-size: var(--fs-sm);
+  color: var(--ink-2);
+  line-height: 1.5;
+}
+
+/* ── synthesis disclaimer ── */
+.gx-synthnote {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-family: var(--font-sans);
+  font-size: var(--fs-sm);
+  color: var(--ink-2);
+  line-height: 1.5;
+  padding: 12px 15px;
+  margin: 0 0 16px;
+  border-radius: var(--r-md);
+  background: color-mix(in oklch, var(--accent) 6%, var(--bg-elev));
+  border: 1px solid color-mix(in oklch, var(--accent) 24%, var(--line));
+}
+.gx-synthnote svg {
+  color: var(--accent-ink);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* ── per-claim provenance (clinician) ── */
+.gx-prov2 {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  align-items: center;
+  margin: 7px 0 0;
+  padding: 0 0 9px;
+  border-bottom: 1px dotted color-mix(in oklch, var(--ink-4) 30%, transparent);
+  font-family: var(--font-sans);
+  font-size: 11px;
+}
+.gx-srcmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--ink-4);
+  cursor: pointer;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  white-space: nowrap;
+  transition: color 120ms;
+  line-height: 1.4;
+  border-radius: 3px;
+  text-decoration: none;
+}
+.gx-srcmark:hover {
+  color: var(--accent-ink);
+}
+.gx-srcmark:focus {
+  outline: none;
+}
+.gx-srcmark:focus-visible {
+  outline: 2px solid color-mix(in oklch, var(--accent) 40%, transparent);
+  outline-offset: 3px;
+}
+.gx-srcmark svg {
+  flex-shrink: 0;
+  opacity: 0.75;
+}
+.gx-prov2__upd {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 1px 8px;
+  border-radius: 99px;
+  font-size: 10px;
+  font-weight: 600;
+  color: oklch(0.5 0.12 75);
+  background: color-mix(in oklch, var(--st-amber) 12%, var(--bg-elev));
+  border: 1px solid color-mix(in oklch, var(--st-amber) 28%, var(--line));
+}
+.gx-prov2__upd.is-super {
+  color: oklch(0.5 0.14 30);
+  background: color-mix(in oklch, var(--st-orange) 12%, var(--bg-elev));
+  border-color: color-mix(in oklch, var(--st-orange) 30%, var(--line));
+}
+.gx-prov2__upd svg {
+  flex-shrink: 0;
+}
+
+/* ── researcher mode tabs (synthesis ⇄ full AI version; AI is a GL-6 stub) ── */
+.gx-modetabs {
+  display: inline-flex;
+  gap: 0;
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-md);
+  overflow: hidden;
+  margin: 0 0 18px;
+}
+.gx-modetabs button {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  border: 0;
+  background: var(--bg-elev);
+  padding: 8px 16px;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  font-size: var(--fs-sm);
+  color: var(--ink-2);
+}
+.gx-modetabs button + button {
+  border-left: 1px solid var(--line-2);
+}
+.gx-modetabs button span {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ink-4);
+  font-weight: 500;
+}
+.gx-modetabs button:hover:not(.on):not(:disabled) {
+  background: var(--bg-soft);
+}
+.gx-modetabs button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+.gx-modetabs button.on {
+  background: var(--ink);
+  color: var(--bg-elev);
+}
+.gx-modetabs button.on span {
+  color: color-mix(in oklch, var(--bg-elev) 70%, var(--ink));
+}

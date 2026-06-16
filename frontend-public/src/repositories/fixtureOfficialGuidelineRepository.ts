@@ -1,5 +1,7 @@
+import type { GuidelineSynthesis } from "../types/guidelineSynthesis";
 import type { OfficialGuideline } from "../types/officialGuideline";
 import type { SourceDoc } from "../types/sourceDoc";
+import { SYNTHESES } from "./guidelineSynthesisFixtures";
 import type { OfficialGuidelineRepository } from "./types";
 
 const FIXTURE: Readonly<Record<string, OfficialGuideline>> = {
@@ -143,5 +145,8 @@ export const fixtureOfficialGuidelineRepository: OfficialGuidelineRepository = {
   },
   async getShelf(diseaseSlug: string): Promise<readonly SourceDoc[]> {
     return SHELF[diseaseSlug] ?? [];
+  },
+  async getSynthesis(diseaseSlug: string): Promise<GuidelineSynthesis | null> {
+    return SYNTHESES[diseaseSlug] ?? null;
   },
 };
