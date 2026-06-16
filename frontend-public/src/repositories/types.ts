@@ -15,6 +15,7 @@ import type {
   PublicDoctor,
 } from "../types/doctor";
 import type { Foundation } from "../types/foundation";
+import type { GuidelineBaseline } from "../types/guidelineBaseline";
 import type { GuidelineDocument } from "../types/guidelineDocument";
 import type { GuidelineSuggestion } from "../types/guidelineSuggestion";
 import type { GuidelineSynthesis, SynthSectionSignal } from "../types/guidelineSynthesis";
@@ -94,6 +95,8 @@ export interface OfficialGuidelineRepository {
   getSynthSignals(
     diseaseSlug: string,
   ): Promise<Readonly<Record<string, SynthSectionSignal>>>;
+  /** Level-(c) AI baseline draft (GL-5); null when a guideline exists or none built. */
+  getBaseline(diseaseSlug: string): Promise<GuidelineBaseline | null>;
 }
 
 export interface AccountRepository {

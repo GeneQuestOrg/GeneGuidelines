@@ -1,7 +1,9 @@
+import type { GuidelineBaseline } from "../types/guidelineBaseline";
 import type { GuidelineSuggestion } from "../types/guidelineSuggestion";
 import type { GuidelineSynthesis, SynthSectionSignal } from "../types/guidelineSynthesis";
 import type { OfficialGuideline } from "../types/officialGuideline";
 import type { SourceDoc } from "../types/sourceDoc";
+import { BASELINES } from "./guidelineBaselineFixtures";
 import { SUGGESTIONS } from "./guidelineSuggestionsFixtures";
 import { SYNTHESES } from "./guidelineSynthesisFixtures";
 import { SYNTH_SIGNALS } from "./guidelineSynthSignalsFixtures";
@@ -159,5 +161,8 @@ export const fixtureOfficialGuidelineRepository: OfficialGuidelineRepository = {
     diseaseSlug: string,
   ): Promise<Readonly<Record<string, SynthSectionSignal>>> {
     return SYNTH_SIGNALS[diseaseSlug] ?? {};
+  },
+  async getBaseline(diseaseSlug: string): Promise<GuidelineBaseline | null> {
+    return BASELINES[diseaseSlug] ?? null;
   },
 };

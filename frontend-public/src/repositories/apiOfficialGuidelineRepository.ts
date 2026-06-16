@@ -1,4 +1,5 @@
 import { apiGet, ApiRequestError } from "../api/client";
+import type { GuidelineBaseline } from "../types/guidelineBaseline";
 import type { GuidelineSuggestion } from "../types/guidelineSuggestion";
 import type { GuidelineSynthesis, SynthSectionSignal } from "../types/guidelineSynthesis";
 import type { OfficialGuideline } from "../types/officialGuideline";
@@ -95,6 +96,24 @@ export const apiOfficialGuidelineRepository: OfficialGuidelineRepository = {
     } catch (err) {
       if (err instanceof ApiRequestError && err.status === 404) {
         return {};
+      }
+      throw err;
+    }
+  },
+
+  // Backend endpoint lands with the from-scratch workflow. 404 → no baseline.
+  async getBaseline(diseaseSlug: string): Promise<GuidelineBaseline | null> {
+    const normalized = normalizeDiseaseSlug(diseaseSlug);
+    if (normalized == null) {
+      return null;
+    }
+    try {
+      return await apiGet<GuidelineBaseline>(
+        `/api/diseases/${encodeURIComponent(normalized)}/guideline-baseline`,
+      );
+    } catch (err) {
+      if (err instanceof ApiRequestError && err.status === 404) {
+        return null;
       }
       throw err;
     }

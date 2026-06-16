@@ -6,6 +6,7 @@ import { useDisease } from "../hooks/useDisease";
 import { useGuidelineSynthesis } from "../hooks/useGuidelineSynthesis";
 import { useGuidelineSuggestions } from "../hooks/useGuidelineSuggestions";
 import { useSynthSignals } from "../hooks/useSynthSignals";
+import { useGuidelineBaseline } from "../hooks/useGuidelineBaseline";
 import { useSourceShelf } from "../hooks/useSourceShelf";
 import { RolePill } from "../components/guidelines/RolePill";
 import { GuidelineParentView } from "./GuidelineParentView";
@@ -16,6 +17,7 @@ import { PlaceholderView } from "./PlaceholderView";
 import "../styles/guideline-synthesis.css";
 import "../styles/guideline-suggestions.css";
 import "../styles/guideline-provenance.css";
+import "../styles/guideline-baseline.css";
 
 export interface GuidelinesViewProps {
   slug: string;
@@ -44,11 +46,17 @@ export function GuidelinesView({
   const { synthesis, loading: synthLoading } = useGuidelineSynthesis(slug);
   const { suggestions, loading: suggLoading } = useGuidelineSuggestions(slug);
   const { signals, loading: signalsLoading } = useSynthSignals(slug);
+  const { baseline, loading: baselineLoading } = useGuidelineBaseline(slug);
   const { docs, loading: shelfLoading } = useSourceShelf(slug);
   const { signInAvailable, login } = useAccountContext();
 
   const loading =
-    diseaseLoading || synthLoading || suggLoading || signalsLoading || shelfLoading;
+    diseaseLoading ||
+    synthLoading ||
+    suggLoading ||
+    signalsLoading ||
+    baselineLoading ||
+    shelfLoading;
 
   if (loading) {
     return (
@@ -150,6 +158,7 @@ export function GuidelinesView({
           synthesis={synthesis}
           suggestions={suggestions}
           signals={signals}
+          baseline={baseline}
           hasOfficial={hasOfficial}
           role={role}
           docs={docs}
@@ -160,6 +169,7 @@ export function GuidelinesView({
           disease={disease}
           synthesis={synthesis}
           suggestions={suggestions}
+          baseline={baseline}
           hasOfficial={hasOfficial}
           role={role}
           docs={docs}
