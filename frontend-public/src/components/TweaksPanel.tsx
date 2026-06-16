@@ -96,15 +96,19 @@ export function TweaksPanel({ tweaks, onTweak }: TweaksPanelProps) {
         </button>
       </div>
       <div className="twk-panel__body">
-        <p className="twk-section">Default audience</p>
+        <p className="twk-section">Viewer role (preview)</p>
         <Segmented
-          label="View"
-          value={tweaks.defaultView}
+          label="Role"
+          value={tweaks.previewRole}
           options={[
-            { value: "parent", label: "Patient / family" },
-            { value: "doctor", label: "Clinician" },
+            { value: "auto", label: "Auto (auth)" },
+            { value: "anon", label: "Anon" },
+            { value: "parent", label: "Parent" },
+            { value: "doctor", label: "Doctor" },
+            { value: "doctor-unverified", label: "Doctor·unv." },
+            { value: "researcher", label: "Researcher" },
           ]}
-          onChange={(v) => onTweak("defaultView", v)}
+          onChange={(v) => onTweak("previewRole", v)}
         />
 
         <p className="twk-section">Location</p>

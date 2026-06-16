@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import type { AudienceView, Route, UserLocation } from "../router/types";
+import type { ViewRole } from "../auth/resolveRole";
 import { HomeView } from "./HomeView";
 import { DiseaseView } from "./DiseaseView";
 import { DiseaseIndexView } from "./DiseaseIndexView";
@@ -18,8 +19,8 @@ import { TrialsView } from "./TrialsView";
 export interface RouteContentProps {
   route: Route;
   view: AudienceView;
+  role: ViewRole;
   userLoc: UserLocation | null;
-  onViewChange: (v: AudienceView) => void;
   onNav: (path: string) => void;
   onSignIn: () => void;
 }
@@ -27,21 +28,20 @@ export interface RouteContentProps {
 export function routeContent({
   route,
   view,
+  role,
   userLoc,
-  onViewChange,
   onNav,
   onSignIn,
 }: RouteContentProps): ReactNode {
   switch (route.name) {
     case "home":
-      return <HomeView view={view} onViewChange={onViewChange} onNav={onNav} />;
+      return <HomeView view={view} onNav={onNav} />;
     case "disease":
       return (
         <DiseaseView
           slug={route.slug}
-          view={view}
+          role={role}
           userLoc={userLoc}
-          onViewChange={onViewChange}
           onNav={onNav}
         />
       );
