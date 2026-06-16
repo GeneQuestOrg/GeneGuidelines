@@ -5,8 +5,10 @@ import { audienceForRole, isClinicianView, type ViewRole } from "../auth/resolve
 import { DiseaseHero } from "../components/DiseaseHero";
 import { DiseaseTabs } from "../components/DiseaseTabs";
 import { OfficialGuidelineBlock } from "../components/OfficialGuidelineBlock";
+import { SourceShelf } from "../components/guidelines/SourceShelf";
 import { useDisease } from "../hooks/useDisease";
 import { useOfficialGuideline } from "../hooks/useOfficialGuideline";
+import { useSourceShelf } from "../hooks/useSourceShelf";
 import { useRelatedDiseases } from "../hooks/useRelatedDiseases";
 import { PlaceholderView } from "./PlaceholderView";
 import "../styles/disease-page.css";
@@ -22,6 +24,7 @@ export function DiseaseView({ slug, role, userLoc, onNav }: DiseaseViewProps) {
   const { disease, guideline, loading, error } = useDisease(slug);
   const { related, loading: relatedLoading } = useRelatedDiseases(disease?.related ?? []);
   const { pointer: officialPointer } = useOfficialGuideline(slug);
+  const { docs: sourceDocs } = useSourceShelf(slug);
   const { signInAvailable, login } = useAccountContext();
   const copy = getAudienceCopy(audienceForRole(role)).disease;
   const isClinician = isClinicianView(role);
@@ -88,7 +91,9 @@ export function DiseaseView({ slug, role, userLoc, onNav }: DiseaseViewProps) {
         isClinician={isClinician}
         onNav={onNav}
       />
-      {officialPointer != null ? (
+      {sourceDocs.length > 0 ? (
+        <SourceShelf docs={sourceDocs} parent={!isClinician} />
+      ) : officialPointer != null ? (
         <OfficialGuidelineBlock pointer={officialPointer} />
       ) : null}
       <DiseaseTabs

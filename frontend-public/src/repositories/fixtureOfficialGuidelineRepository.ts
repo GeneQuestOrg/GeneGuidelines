@@ -1,4 +1,5 @@
 import type { OfficialGuideline } from "../types/officialGuideline";
+import type { SourceDoc } from "../types/sourceDoc";
 import type { OfficialGuidelineRepository } from "./types";
 
 const FIXTURE: Readonly<Record<string, OfficialGuideline>> = {
@@ -49,8 +50,98 @@ const FIXTURE: Readonly<Record<string, OfficialGuideline>> = {
   },
 };
 
+// Curated source shelf — "there is rarely one document" (draft10 SOURCE_DOCS).
+// Content language follows the app (English); structure mirrors the prototype.
+const SHELF: Readonly<Record<string, readonly SourceDoc[]>> = {
+  fd: [
+    {
+      id: "boyce2019",
+      role: "Base consensus",
+      pmid: "31196103",
+      title:
+        "Best practice management guidelines for fibrous dysplasia/McCune-Albright syndrome: a consensus statement from the FD/MAS international consortium",
+      authors: "Javaid MK, Boyce A, Appelman-Dijkstra N, et al.",
+      journal: "Orphanet Journal of Rare Diseases",
+      year: 2019,
+      scope:
+        "Whole-disease FD/MAS management — the consortium's first systematized consensus.",
+      covers: ["Diagnosis", "Genetics", "Therapy", "Surgery", "Monitoring"],
+      freeFullText: true,
+    },
+    {
+      id: "gun2024",
+      role: "Children — update",
+      pmid: "38010041",
+      title: "Fibrous dysplasia in children and its management",
+      authors: "Gun ZH, Arif A, Boyce AM",
+      journal: "Curr Opin Endocrinol Diabetes Obes",
+      year: 2024,
+      scope:
+        "Most recent pediatric compendium: skeletal growth and newer therapies (denosumab).",
+      covers: ["Therapy (children)", "Denosumab", "Monitoring"],
+      updatesNote: "Updates the denosumab recommendation from the 2019 consensus.",
+      isNew: true,
+    },
+    {
+      id: "szymczuk2023",
+      role: "Craniofacial",
+      pmid: "36849642",
+      title: "Craniofacial Fibrous Dysplasia: Clinical and Therapeutic Implications",
+      authors: "Szymczuk V, Taylor J, Boyce AM",
+      journal: "Curr Osteoporos Rep",
+      year: 2023,
+      scope:
+        "Strictly the craniofacial region — including optic-nerve compression management.",
+      covers: ["Imaging", "Optic nerve", "Craniofacial surgery"],
+    },
+    {
+      id: "genereviews",
+      role: "Reference compendium",
+      bookshelf: "NBK274564",
+      title: "Fibrous Dysplasia / McCune-Albright Syndrome",
+      authors: "Boyce AM, Collins MT, et al.",
+      journal: "GeneReviews® · NCBI Bookshelf",
+      year: "continuously updated",
+      scope:
+        "Continuously updated NIH reference chapter — de facto textbook guidance.",
+      covers: ["Diagnosis", "Histopathology", "Genetics", "Full review"],
+    },
+  ],
+  mas: [
+    {
+      id: "boyce2019",
+      role: "Base consensus",
+      pmid: "31196103",
+      title:
+        "Best practice management guidelines for fibrous dysplasia/McCune-Albright syndrome (MAS section)",
+      authors: "Javaid MK, Boyce A, Appelman-Dijkstra N, et al.",
+      journal: "Orphanet Journal of Rare Diseases",
+      year: 2019,
+      scope:
+        "MAS section of the consortium consensus — the triad and endocrine screening.",
+      covers: ["Diagnosis", "Endocrine screening"],
+      freeFullText: true,
+    },
+    {
+      id: "genereviews",
+      role: "Reference compendium",
+      bookshelf: "NBK274564",
+      title: "Fibrous Dysplasia / McCune-Albright Syndrome",
+      authors: "Boyce AM, Collins MT, et al.",
+      journal: "GeneReviews® · NCBI Bookshelf",
+      year: "continuously updated",
+      scope: "NIH reference chapter covering the FD/MAS spectrum.",
+      covers: ["Full review"],
+    },
+  ],
+  // noonan: no source shelf yet → AI-built guideline only (GL-5/6).
+};
+
 export const fixtureOfficialGuidelineRepository: OfficialGuidelineRepository = {
   async getForDisease(diseaseSlug: string): Promise<OfficialGuideline | null> {
     return FIXTURE[diseaseSlug] ?? null;
+  },
+  async getShelf(diseaseSlug: string): Promise<readonly SourceDoc[]> {
+    return SHELF[diseaseSlug] ?? [];
   },
 };
