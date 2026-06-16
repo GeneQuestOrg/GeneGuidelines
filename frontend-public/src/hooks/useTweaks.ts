@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
-import type { AudienceView } from "../router/types";
+import { isPreviewRole, type PreviewRole } from "../auth/resolveRole";
 import { DEFAULT_CITY } from "../config/cities";
 
 export interface TweaksState {
-  defaultView: AudienceView;
+  previewRole: PreviewRole;
   userCity: string;
   radiusKm: number;
   accent: string;
@@ -13,7 +13,7 @@ export interface TweaksState {
 const STORAGE_KEY = "gg-tweaks";
 
 export const TWEAK_DEFAULTS: TweaksState = {
-  defaultView: "parent",
+  previewRole: "auto",
   userCity: DEFAULT_CITY,
   radiusKm: 600,
   accent: "oklch(0.48 0.07 195)",
@@ -38,7 +38,7 @@ function readTweaks(): TweaksState {
       ...TWEAK_DEFAULTS,
       ...parsed,
       density: parsed.density === "compact" ? "compact" : "comfortable",
-      defaultView: parsed.defaultView === "doctor" ? "doctor" : "parent",
+      previewRole: isPreviewRole(parsed.previewRole) ? parsed.previewRole : "auto",
     };
   } catch {
     return TWEAK_DEFAULTS;

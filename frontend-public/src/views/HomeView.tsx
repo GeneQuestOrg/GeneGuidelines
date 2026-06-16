@@ -12,7 +12,6 @@ import "../styles/disease-page.css";
 
 export interface HomeViewProps {
   view: AudienceView;
-  onViewChange: (view: AudienceView) => void;
   onNav: (path: string) => void;
 }
 

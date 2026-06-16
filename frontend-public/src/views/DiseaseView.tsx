@@ -1,6 +1,7 @@
-import type { AudienceView, UserLocation } from "../router/types";
+import type { UserLocation } from "../router/types";
 import { getAudienceCopy } from "../copy";
-import { PersonaSwitcher } from "../components/PersonaSwitcher";
+import { useAccountContext } from "../auth/accountContext";
+import { audienceForRole, isClinicianView, type ViewRole } from "../auth/resolveRole";
 import { DiseaseHero } from "../components/DiseaseHero";
 import { DiseaseTabs } from "../components/DiseaseTabs";
 import { OfficialGuidelineBlock } from "../components/OfficialGuidelineBlock";
@@ -12,18 +13,18 @@ import "../styles/disease-page.css";
 
 export interface DiseaseViewProps {
   slug: string;
-  view: AudienceView;
+  role: ViewRole;
   userLoc: UserLocation | null;
-  onViewChange: (view: AudienceView) => void;
   onNav: (path: string) => void;
 }
 
-export function DiseaseView({ slug, view, userLoc, onViewChange, onNav }: DiseaseViewProps) {
+export function DiseaseView({ slug, role, userLoc, onNav }: DiseaseViewProps) {
   const { disease, guideline, loading, error } = useDisease(slug);
   const { related, loading: relatedLoading } = useRelatedDiseases(disease?.related ?? []);
   const { pointer: officialPointer } = useOfficialGuideline(slug);
-  const copy = getAudienceCopy(view).disease;
-  const isClinician = view === "doctor";
+  const { signInAvailable, login } = useAccountContext();
+  const copy = getAudienceCopy(audienceForRole(role)).disease;
+  const isClinician = isClinicianView(role);
 
   if (loading) {
     return (
@@ -57,7 +58,23 @@ export function DiseaseView({ slug, view, userLoc, onViewChange, onNav }: Diseas
 
   return (
     <section className="page page--disease">
-      <PersonaSwitcher view={view} onChange={onViewChange} />
+      {role === "anon" && signInAvailable ? (
+        <aside className="viewer-cta" role="note">
+          <span className="viewer-cta__text">
+            Are you a clinician? Sign in to see AI suggestions and the literature trail.
+          </span>
+          <button type="button" className="viewer-cta__btn" onClick={login}>
+            Sign in
+          </button>
+        </aside>
+      ) : null}
+      {role === "doctor-unverified" ? (
+        <p className="viewer-pending" role="status">
+          <span className="viewer-pending__dot" aria-hidden="true" />
+          Clinician account pending verification — you can read AI suggestions; rating
+          unlocks once verified.
+        </p>
+      ) : null}
       {!disease.listed ? (
         <p className="disease-pending-badge" role="status">
           <span className="disease-pending-badge__dot" aria-hidden="true" />
