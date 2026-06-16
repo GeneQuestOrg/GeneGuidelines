@@ -15,20 +15,40 @@ def test_summarize_node_output_extracts_article_count() -> None:
     assert summary["total_analyzed"] == 1
 
 
-def test_log_run_event_emits_json(capsys) -> None:
-    import sys
+def test_log_run_event_emits_json() -> None:
+    # Capture through our OWN buffer handler instead of capsys + the module
+    # global stderr handler. The global StreamHandler binds sys.stderr at first
+    # configuration — which, in a test session, is some earlier test's capsys
+    # buffer that later gets closed, making this assertion flaky ("I/O operation
+    # on closed file" / extra traceback line on stderr). Isolating the handler
+    # and restoring global state in finally makes the test deterministic.
+    import io
 
-    from backend.observability.run_log import LOGGER, _ensure_run_logger_configured
+    from backend.observability import run_log
 
-    _ensure_run_logger_configured()
-    for handler in LOGGER.handlers:
-        if isinstance(handler, logging.StreamHandler):
-            handler.setStream(sys.stderr)
+    buffer = io.StringIO()
+    handler = logging.StreamHandler(buffer)
+    handler.setFormatter(logging.Formatter("%(message)s"))
 
-    log_run_event("node_start", execution_id="exec-1", node_id="pm-1")
-    captured = capsys.readouterr()
-    text = captured.err.strip()
-    assert text, "expected JSON log on stderr"
+    logger = run_log.LOGGER
+    saved_handlers = logger.handlers[:]
+    saved_level = logger.level
+    saved_propagate = logger.propagate
+    saved_configured = run_log._RUN_LOGGER_CONFIGURED
+    logger.handlers = [handler]
+    logger.setLevel(logging.INFO)
+    logger.propagate = False
+    run_log._RUN_LOGGER_CONFIGURED = True  # skip re-adding the stderr handler
+    try:
+        run_log.log_run_event("node_start", execution_id="exec-1", node_id="pm-1")
+    finally:
+        logger.handlers = saved_handlers
+        logger.setLevel(saved_level)
+        logger.propagate = saved_propagate
+        run_log._RUN_LOGGER_CONFIGURED = saved_configured
+
+    text = buffer.getvalue().strip()
+    assert text, "expected JSON log"
     payload = json.loads(text)
     assert payload["event"] == "node_start"
     assert payload["execution_id"] == "exec-1"
