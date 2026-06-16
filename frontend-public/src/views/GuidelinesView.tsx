@@ -4,49 +4,38 @@ import { isClinicianView, isParentSide } from "../auth/resolveRole";
 import { useAccountContext } from "../auth/accountContext";
 import { useDisease } from "../hooks/useDisease";
 import { useGuidelineSynthesis } from "../hooks/useGuidelineSynthesis";
+import { useGuidelineSuggestions } from "../hooks/useGuidelineSuggestions";
 import { useSourceShelf } from "../hooks/useSourceShelf";
+import { RolePill } from "../components/guidelines/RolePill";
 import { GuidelineParentView } from "./GuidelineParentView";
 import { GuidelineClinicianView } from "./GuidelineClinicianView";
+import { FocusedReviewView } from "./FocusedReviewView";
 import { PlaceholderView } from "./PlaceholderView";
 import "../styles/guideline-synthesis.css";
+import "../styles/guideline-suggestions.css";
 
 export interface GuidelinesViewProps {
   slug: string;
+  /** Focused-review target (`/guidelines/pr/:id`) — clinician-only. */
+  prId?: string;
   role: ViewRole;
   onNav: (path: string) => void;
-}
-
-const ROLE_PILL: Record<ViewRole, readonly [string, string]> = {
-  anon: ["gx-role--anon", "Reading as · guest"],
-  parent: ["gx-role--parent", "Reading as · parent"],
-  doctor: ["gx-role--clin", "Reading as · clinician"],
-  "doctor-unverified": ["gx-role--clin", "Clinician · unverified"],
-  researcher: ["gx-role--clin", "Reading as · researcher"],
-};
-
-function RolePill({ role }: { role: ViewRole }) {
-  const [cls, label] = ROLE_PILL[role];
-  return (
-    <span className={`gx-role ${cls}`}>
-      <span className="d" aria-hidden="true" />
-      {label}
-    </span>
-  );
 }
 
 /**
  * Guidelines layer v2 — ONE synthesis object, three renderings gated by the
  * viewer's role (chat 019). Parent/guest get the condensed, actionable
- * projection; clinician/researcher get the full text with provenance. The role
- * comes from auth (resolveRole), not a free toggle.
+ * projection; clinician/researcher get the full text with provenance plus the
+ * AI-suggestions rail. The role comes from auth (resolveRole), not a toggle.
  */
-export function GuidelinesView({ slug, role, onNav }: GuidelinesViewProps) {
+export function GuidelinesView({ slug, prId, role, onNav }: GuidelinesViewProps) {
   const { disease, loading: diseaseLoading, error: diseaseError } = useDisease(slug);
   const { synthesis, loading: synthLoading } = useGuidelineSynthesis(slug);
+  const { suggestions, loading: suggLoading } = useGuidelineSuggestions(slug);
   const { docs, loading: shelfLoading } = useSourceShelf(slug);
   const { signInAvailable, login } = useAccountContext();
 
-  const loading = diseaseLoading || synthLoading || shelfLoading;
+  const loading = diseaseLoading || synthLoading || suggLoading || shelfLoading;
 
   if (loading) {
     return (
@@ -76,6 +65,23 @@ export function GuidelinesView({ slug, role, onNav }: GuidelinesViewProps) {
         onNav={onNav}
       />
     );
+  }
+
+  // Focused review of one suggestion — clinician-only. Parents hitting the URL
+  // fall through to the normal (parent) projection.
+  if (prId != null && isClinicianView(role)) {
+    const suggestion = suggestions.find((s) => s.id === prId);
+    if (suggestion != null) {
+      return (
+        <FocusedReviewView
+          slug={slug}
+          disease={disease}
+          suggestion={suggestion}
+          role={role}
+          onNav={onNav}
+        />
+      );
+    }
   }
 
   const hasOfficial = synthesis != null && synthesis.status !== "pending";
@@ -114,6 +120,7 @@ export function GuidelinesView({ slug, role, onNav }: GuidelinesViewProps) {
         <GuidelineClinicianView
           disease={disease}
           synthesis={synthesis}
+          suggestions={suggestions}
           hasOfficial={hasOfficial}
           role={role}
           docs={docs}

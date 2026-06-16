@@ -1,11 +1,14 @@
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import type { Disease } from "../types/disease";
 import type { GuidelineSynthesis } from "../types/guidelineSynthesis";
+import type { GuidelineSuggestion } from "../types/guidelineSuggestion";
+import { weightedSuggestionScore } from "../types/guidelineSuggestion";
 import type { SourceDoc } from "../types/sourceDoc";
 import type { ViewRole } from "../auth/resolveRole";
 import { SourceShelf } from "../components/guidelines/SourceShelf";
 import { SynthDisclaimer } from "../components/guidelines/SynthDisclaimer";
 import { ProvenanceRow } from "../components/guidelines/ProvenanceRow";
+import { SuggestionCard } from "../components/guidelines/SuggestionCard";
 import {
   citationIndex,
   orderedSynthesisPmids,
@@ -15,6 +18,7 @@ import {
 export interface GuidelineClinicianViewProps {
   disease: Disease;
   synthesis: GuidelineSynthesis | null;
+  suggestions: readonly GuidelineSuggestion[];
   hasOfficial: boolean;
   role: ViewRole;
   docs: readonly SourceDoc[];
@@ -43,8 +47,7 @@ function UnverifiedBanner() {
         <b>You can read everything — your signal is held for now.</b>
         <p>
           Your account is awaiting verification (ORCID + institution). Once verified, your
-          ratings will count toward the weighted signal that other clinicians see. Rating
-          arrives in a later slice.
+          ratings will count toward the weighted signal that other clinicians see.
         </p>
       </div>
     </div>
@@ -54,6 +57,7 @@ function UnverifiedBanner() {
 export function GuidelineClinicianView({
   disease,
   synthesis,
+  suggestions,
   hasOfficial,
   role,
   docs,
@@ -63,8 +67,25 @@ export function GuidelineClinicianView({
     () => (synthesis != null ? orderedSynthesisPmids(synthesis) : []),
     [synthesis],
   );
+  const rankedSuggestions = useMemo(
+    () =>
+      [...suggestions].sort(
+        (a, b) => weightedSuggestionScore(b.signal) - weightedSuggestionScore(a.signal),
+      ),
+    [suggestions],
+  );
   const held = role === "doctor-unverified";
   const isResearcher = role === "researcher";
+  const suggZoneRef = useRef<HTMLElement | null>(null);
+
+  const scrollToSuggestions = () => {
+    const el = suggZoneRef.current;
+    if (el == null) {
+      return;
+    }
+    const y = el.getBoundingClientRect().top + window.scrollY - 80;
+    window.scrollTo({ top: y, behavior: "smooth" });
+  };
 
   // Level (c): no synthesis. The fully AI-built baseline view lands in a later
   // slice (GL-5/6) — show a clinician-facing placeholder for now.
@@ -111,6 +132,9 @@ export function GuidelineClinicianView({
   }
 
   const doc = synthesis!;
+  const suggestionWord =
+    rankedSuggestions.length === 1 ? "AI suggestion" : "AI suggestions";
+
   return (
     <>
       {held ? <UnverifiedBanner /> : null}
@@ -134,6 +158,30 @@ export function GuidelineClinicianView({
       ) : null}
 
       <SynthDisclaimer text={doc.synthDisclaimer} />
+
+      {rankedSuggestions.length > 0 ? (
+        <button type="button" className="gx-sugglink" onClick={scrollToSuggestions}>
+          <span className="gx-sugglink__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 2 2 7l10 5 10-5-10-5z" />
+              <path d="m2 17 10 5 10-5M2 12l10 5 10-5" />
+            </svg>
+          </span>
+          <span className="gx-sugglink__tx">
+            <b>
+              {rankedSuggestions.length} {suggestionWord} beyond all the documents
+            </b>{" "}
+            — listed separately, at the end. The synthesis below stays a faithful summary of
+            the sources.
+          </span>
+          <span className="gx-sugglink__go">
+            Go to suggestions
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M12 5v14M19 12l-7 7-7-7" />
+            </svg>
+          </span>
+        </button>
+      ) : null}
 
       <article className="gx-doc gx-doc--full">
         {doc.sections.map((sec) => (
@@ -165,6 +213,50 @@ export function GuidelineClinicianView({
 
         <SourceShelf docs={docs} />
       </article>
+
+      <section ref={suggZoneRef} className="gx-suggzone">
+        <div className="gx-suggzone__head">
+          <div>
+            <div className="gx-suggzone__tag">
+              AI suggestions · {rankedSuggestions.length} · to consider
+            </div>
+            <h2 className="gx-suggzone__title">AI suggestions — beyond the guideline</h2>
+          </div>
+        </div>
+        <p className="gx-suggzone__lead">
+          This is <b>not part of the synthesis</b>. It is the live layer over the official
+          sources: new pointers from fresher literature, or proposed changes to a specific
+          recommendation — <b>to consider</b>, not to manage a patient from. Your rating is a
+          signal for the next clinician; it does not publish or change the synthesis.
+        </p>
+        {rankedSuggestions.length === 0 ? (
+          <div className="gx-empty">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <circle cx="11" cy="11" r="7" />
+              <path d="m20 20-3.5-3.5" />
+            </svg>
+            <div>
+              <b>No AI suggestions right now.</b>
+              <p>
+                The literature monitor runs in the background; candidates from new evidence
+                appear here when they are worth a look.
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="gx-suggrid">
+            {rankedSuggestions.map((s) => (
+              <SuggestionCard
+                key={s.id}
+                slug={disease.slug}
+                suggestion={s}
+                held={held}
+                onNav={onNav}
+              />
+            ))}
+          </div>
+        )}
+      </section>
     </>
   );
 }

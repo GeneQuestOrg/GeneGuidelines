@@ -1,6 +1,8 @@
+import type { GuidelineSuggestion } from "../types/guidelineSuggestion";
 import type { GuidelineSynthesis } from "../types/guidelineSynthesis";
 import type { OfficialGuideline } from "../types/officialGuideline";
 import type { SourceDoc } from "../types/sourceDoc";
+import { SUGGESTIONS } from "./guidelineSuggestionsFixtures";
 import { SYNTHESES } from "./guidelineSynthesisFixtures";
 import type { OfficialGuidelineRepository } from "./types";
 
@@ -148,5 +150,8 @@ export const fixtureOfficialGuidelineRepository: OfficialGuidelineRepository = {
   },
   async getSynthesis(diseaseSlug: string): Promise<GuidelineSynthesis | null> {
     return SYNTHESES[diseaseSlug] ?? null;
+  },
+  async getSuggestions(diseaseSlug: string): Promise<readonly GuidelineSuggestion[]> {
+    return SUGGESTIONS[diseaseSlug] ?? [];
   },
 };

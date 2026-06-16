@@ -16,6 +16,7 @@ import type {
 } from "../types/doctor";
 import type { Foundation } from "../types/foundation";
 import type { GuidelineDocument } from "../types/guidelineDocument";
+import type { GuidelineSuggestion } from "../types/guidelineSuggestion";
 import type { GuidelineSynthesis } from "../types/guidelineSynthesis";
 import type { OfficialGuideline } from "../types/officialGuideline";
 import type { PrivateContext } from "../types/privateContext";
@@ -87,6 +88,8 @@ export interface OfficialGuidelineRepository {
   getShelf(diseaseSlug: string): Promise<readonly SourceDoc[]>;
   /** AI synthesis over the source shelf (GL-2); null when no guideline exists (level c). */
   getSynthesis(diseaseSlug: string): Promise<GuidelineSynthesis | null>;
+  /** AI suggestions hanging beside the synthesis (GL-3); empty when none. */
+  getSuggestions(diseaseSlug: string): Promise<readonly GuidelineSuggestion[]>;
 }
 
 export interface AccountRepository {
