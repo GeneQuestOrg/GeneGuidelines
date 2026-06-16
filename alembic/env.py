@@ -32,6 +32,9 @@ from backend.shared.persistence.schema import metadata as content_metadata
 # / ``parent_recs`` to ``content_metadata``.
 import backend.doctor_contributions.orm  # noqa: E402,F401
 
+# GL-4: the guidelines domain (source documents, synthesis, suggestions, signals).
+import backend.guidelines.orm  # noqa: E402,F401
+
 
 config = context.config
 
