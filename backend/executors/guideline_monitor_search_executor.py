@@ -24,8 +24,6 @@ log = logging.getLogger(__name__)
 _EUTILS = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils"
 _RECENT_YEARS = 3
 _MAX_CANDIDATES = 12
-_ABSTRACT_CHARS = 240
-_GUIDANCE_PARA_CHARS = 220
 
 
 class GuidelineMonitorSearchExecutor(NodeExecutor):
@@ -102,9 +100,9 @@ def _condense_synthesis(synthesis) -> tuple[str, list[dict]]:
         intro = str(sec.get("intro") or "").strip()
         if intro:
             lines.append(intro)
-        for para in (sec.get("paragraphs") or [])[:6]:
+        for para in sec.get("paragraphs") or []:
             if isinstance(para, dict):
-                txt = str(para.get("text") or "").strip()[:_GUIDANCE_PARA_CHARS]
+                txt = str(para.get("text") or "").strip()  # full paragraph — no truncation
                 if txt:
                     lines.append(f"- {txt}")
     return "\n".join(lines), sections
@@ -174,7 +172,7 @@ def _recent_candidates(disease_name: str, exclude_pmids: set[str]) -> list[dict]
                 "authors": a.get("authors") or "",
                 "journal": a.get("source") or "",
                 "year": (str(a.get("pubdate") or "").split() or [""])[0],
-                "abstract": (a.get("abstract") or "")[:_ABSTRACT_CHARS],
+                "abstract": a.get("abstract") or "",  # full abstract — never truncated
             }
         )
     return out
