@@ -12,6 +12,7 @@ from .. import database as db
 from ..account.deps import OptionalUser, require_superadmin
 from ..auth import require_api_key_if_set
 from ..config import DEFAULT_MODEL_PROFILE, MODEL_PROFILES
+from ..contracts.guidelines_v1 import SYNTHESIS_SECTIONS
 from ..content_db import (
     get_disease_by_slug,
     normalize_pr_id,
@@ -386,18 +387,6 @@ async def start_guideline_run(body: GuidelineRunBody):
     )
 
 
-# Section spec for the level-(a) synthesis flow. The ids MUST match the
-# `gs-sec-<id>` node ids in backend/flows/specs/guideline_synthesis.json; the
-# writer uses these for stable section id/title (independent of LLM drift).
-_SYNTHESIS_SECTIONS: list[dict[str, str]] = [
-    {"id": "diagnosis", "title": "1. Diagnosis"},
-    {"id": "histopathology", "title": "2. Histopathology and genetics"},
-    {"id": "therapy", "title": "3. Therapy"},
-    {"id": "surgery", "title": "4. Indications for surgery"},
-    {"id": "monitoring", "title": "5. Monitoring and follow-up"},
-]
-
-
 @router.post(
     "/diseases/{slug}/guideline-synthesis/run",
     dependencies=[Depends(require_api_key_if_set)],
@@ -438,7 +427,7 @@ async def start_guideline_synthesis_run(slug: str):
     disease_initial = {
         "disease_slug": slug_norm,
         "disease_name": str(disease["name"]).strip(),
-        "sections": list(_SYNTHESIS_SECTIONS),
+        "sections": [dict(s) for s in SYNTHESIS_SECTIONS],
     }
     return await agent_router.start_agent_run(
         ticket_id,

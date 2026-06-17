@@ -18,6 +18,7 @@ from __future__ import annotations
 import logging
 from datetime import datetime, timezone
 
+from ..contracts.guidelines_v1 import EPISTEMIC_LEVEL_SYNTHESIS
 from .base import NodeExecutor, NodeInput, NodeOutput
 
 log = logging.getLogger(__name__)
@@ -73,7 +74,7 @@ class GuidelineSynthesisWriterExecutor(NodeExecutor):
             "title": f"{disease_name} — synthesis of the guidelines",
             "version": f"Synthesis · {len(source_ids)} source{'s' if len(source_ids) != 1 else ''}",
             "lastUpdated": datetime.now(timezone.utc).date().isoformat(),
-            "epistemicLevel": "a",
+            "epistemicLevel": EPISTEMIC_LEVEL_SYNTHESIS,
             "sourceIds": source_ids,
             "basedOn": (
                 f"Combined by AI from {len(source_ids)} source document"
