@@ -122,18 +122,43 @@ def _http_get_json(url: str) -> dict:
         return json.load(r)
 
 
+def _esearch_ids(term: str, sort: str, retmax: int) -> list[str]:
+    qs = urllib.parse.urlencode(
+        {"db": "pubmed", "term": term, "retmode": "json", "retmax": retmax, "sort": sort}
+    )
+    return list(
+        _http_get_json(f"{_EUTILS}/esearch.fcgi?{qs}").get("esearchresult", {}).get("idlist", [])
+    )
+
+
 def _recent_candidates(disease_name: str, exclude_pmids: set[str]) -> list[dict]:
-    """Recent papers (last _RECENT_YEARS) for the disease, excluding the shelf."""
+    """Recent papers (last _RECENT_YEARS) for the disease, excluding the shelf.
+
+    Two channels, interleaved so both survive the cap: (1) recent clinical reviews,
+    (2) recent papers by relevance INCLUDING primary research — so breakthrough
+    primary work (e.g. a single-cell / mechanism paper) is in the net, not just
+    reviews. The triage step decides which actually matter.
+    """
     from ..tools.pubmed_runtime import fetch_article_details_impl
 
     year_to = _dt.date.today().year
     year_from = year_to - _RECENT_YEARS
-    term = f'"{disease_name}"[Title/Abstract] AND {year_from}:{year_to}[dp] AND Review[ptyp]'
-    qs = urllib.parse.urlencode(
-        {"db": "pubmed", "term": term, "retmode": "json", "retmax": 30, "sort": "date"}
-    )
-    ids = list(_http_get_json(f"{_EUTILS}/esearch.fcgi?{qs}").get("esearchresult", {}).get("idlist", []))
-    fresh = [p for p in ids if p not in exclude_pmids][:_MAX_CANDIDATES]
+    base = f'"{disease_name}"[Title/Abstract] AND {year_from}:{year_to}[dp]'
+    reviews = _esearch_ids(f"{base} AND Review[ptyp]", "date", 25)
+    primary = _esearch_ids(base, "relevance", 25)  # includes primary research
+
+    fresh: list[str] = []
+    seen: set[str] = set()
+    for rank in range(25):
+        for channel in (reviews, primary):
+            if rank < len(channel):
+                pid = channel[rank]
+                if pid not in seen and pid not in exclude_pmids:
+                    seen.add(pid)
+                    fresh.append(pid)
+        if len(fresh) >= _MAX_CANDIDATES:
+            break
+    fresh = fresh[:_MAX_CANDIDATES]
     if not fresh:
         return []
     arts = fetch_article_details_impl(fresh, include_abstracts=True)
