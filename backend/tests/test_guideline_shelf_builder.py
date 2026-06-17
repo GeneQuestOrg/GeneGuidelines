@@ -149,8 +149,12 @@ def test_shelf_write_no_docs_is_error(repo: SqlaGuidelinesRepo) -> None:
 
 
 def test_shelf_executors_registered() -> None:
+    from backend.executors import EXECUTOR_REGISTRY
+    from backend.executors.guideline_bibliography_write_executor import GuidelineBibliographyWriteExecutor
+
     assert EXECUTOR_REGISTRY["guideline_shelf_search"] is GuidelineShelfSearchExecutor
     assert EXECUTOR_REGISTRY["guideline_shelf_write"] is GuidelineShelfWriteExecutor
+    assert EXECUTOR_REGISTRY["guideline_bibliography_write"] is GuidelineBibliographyWriteExecutor
 
 
 def test_shelf_flow_spec_valid_and_connected() -> None:
@@ -162,12 +166,15 @@ def test_shelf_flow_spec_valid_and_connected() -> None:
     nodes = {n["node_id"]: n for n in spec["nodes"]}
     assert nodes["gsb-search"]["node_type"] == "guideline_shelf_search"
     assert nodes["gsb-write"]["node_type"] == "guideline_shelf_write"
+    assert nodes["gsb-bib"]["node_type"] == "guideline_bibliography_write"
     assert nodes["gsb-classify"]["prompt_mode"] == "simple"
     assert nodes["gsb-classify"]["output_schema_key"] == "guideline_shelf"
+    assert "considered" in nodes["gsb-classify"]["prompt"]
     pairs = {(e["source_node_id"], e["target_node_id"]) for e in spec["edges"]}
     assert pairs == {
         ("start", "gsb-search"),
         ("gsb-search", "gsb-classify"),
         ("gsb-classify", "gsb-write"),
-        ("gsb-write", "end"),
+        ("gsb-write", "gsb-bib"),
+        ("gsb-bib", "end"),
     }

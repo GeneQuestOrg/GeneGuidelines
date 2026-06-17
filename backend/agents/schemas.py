@@ -240,6 +240,35 @@ class GuidelineShelfDoc(BaseModel):
         return self
 
 
+class GuidelineConsideredPaper(BaseModel):
+    """A candidate the classify step CONSIDERED but did not put on the shelf — with the reason.
+
+    Optional: lets the shelf-builder emit its negative paths (why a paper is not a
+    source) for the analyzed bibliography. Only the ref + a one-line reason are
+    needed; full metadata is joined back from the search node, so this stays cheap.
+    """
+
+    model_config = ConfigDict(extra="ignore", str_strip_whitespace=True)
+
+    pmid: str = Field(default="", description="PMID if a journal article (digits only)")
+    bookshelf: str = Field(default="", description="NCBI Bookshelf id if a compendium chapter")
+    reason: str = Field(default="", description="One line: WHY it was not put on the shelf")
+    category: str = Field(default="", description="Short tag, e.g. duplicate / off-topic / primary-not-review / superseded / narrow")
+
+    @field_validator("pmid", "bookshelf", "reason", "category", mode="before")
+    @classmethod
+    def _none_to_empty(cls, v: object) -> object:
+        return "" if v is None else v
+
+    @field_validator("pmid")
+    @classmethod
+    def _pmid_digits(cls, v: str) -> str:
+        s = (v or "").strip()
+        if s and not s.isdigit():
+            raise ValueError(f"pmid {v!r} must be digits only")
+        return s
+
+
 class GuidelineShelfOutput(BaseModel):
     """Structured output of the shelf-classify node — the curated source shelf.
 
@@ -247,6 +276,10 @@ class GuidelineShelfOutput(BaseModel):
     selects the documents that belong on the shelf and labels each with a role /
     kind. The writer maps these onto ``guideline_source_documents``. Every doc must
     carry a real identifier (PMID or Bookshelf id) — no invented sources.
+
+    ``considered`` is OPTIONAL — the candidates consciously left OFF the shelf, each
+    with a one-line reason. It feeds the analyzed bibliography (negative paths) and
+    does not affect shelf selection (``docs``).
     """
 
     model_config = ConfigDict(extra="ignore", str_strip_whitespace=True)
@@ -255,6 +288,10 @@ class GuidelineShelfOutput(BaseModel):
         ...,
         min_length=1,
         description="The documents that belong on this disease's source shelf",
+    )
+    considered: list[GuidelineConsideredPaper] = Field(
+        default_factory=list,
+        description="Candidates left OFF the shelf, each with a one-line reason (optional)",
     )
 
 

@@ -47,6 +47,14 @@
       "max_retry": 1
     },
     {
+      "node_id": "gsd-bib",
+      "node_type": "guideline_bibliography_write",
+      "label": "Record analyzed bibliography",
+      "description": "Record the verdict ledger (every triaged paper: became-suggestion / rejected / low, with the triage reason + change-probability) into guideline_analyzed_papers for the researcher bibliography. Step auto-detected from context (monitor). Reuses gsd-search + gsd-triage + gsd-delta; no extra LLM call.",
+      "prompt_mode": "agentic",
+      "max_retry": 1
+    },
+    {
       "node_id": "end",
       "node_type": "end",
       "label": "End",
@@ -58,6 +66,7 @@
     {"source_node_id": "gsd-search", "target_node_id": "gsd-triage"},
     {"source_node_id": "gsd-triage", "target_node_id": "gsd-delta"},
     {"source_node_id": "gsd-delta", "target_node_id": "gsd-write"},
-    {"source_node_id": "gsd-write", "target_node_id": "end"}
+    {"source_node_id": "gsd-write", "target_node_id": "gsd-bib"},
+    {"source_node_id": "gsd-bib", "target_node_id": "end"}
   ]
 }

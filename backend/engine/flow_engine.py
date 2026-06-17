@@ -539,6 +539,7 @@ async def run_flow_step_by_step_async(
             "pmid_verify",
             "pmid_scrub",
             "evaluation_check",
+            "guideline_bibliography_write",
             "guideline_factcheck_load",
             "guideline_monitor_search",
             "guideline_shelf_load",
@@ -560,7 +561,7 @@ async def run_flow_step_by_step_async(
                 event_queue,
                 {
                     "kind": "sys",
-                    "text": f"[SYSTEM] Node {node_id} ({node_type}): skipping (supported: prompt/loop/decision/code/http_request/guidelines_rag/pmid_verify/pmid_scrub/evaluation_check/guideline_factcheck_load/guideline_monitor_search/guideline_shelf_load/guideline_shelf_search/guideline_shelf_write/guideline_suggestion_writer/guideline_synthesis_writer/pubmed_authors_fetch/doctor_finder_step/doctor_finder_ai_justification/parent_pathway_load/parent_pathway_evidence/parent_pathway_end/action/end/merge).",
+                    "text": f"[SYSTEM] Node {node_id} ({node_type}): skipping (supported: prompt/loop/decision/code/http_request/guidelines_rag/pmid_verify/pmid_scrub/evaluation_check/guideline_bibliography_write/guideline_factcheck_load/guideline_monitor_search/guideline_shelf_load/guideline_shelf_search/guideline_shelf_write/guideline_suggestion_writer/guideline_synthesis_writer/pubmed_authors_fetch/doctor_finder_step/doctor_finder_ai_justification/parent_pathway_load/parent_pathway_evidence/parent_pathway_end/action/end/merge).",
                 },
             )
             # Keep dependency graph stable (e.g. merge waiting for predecessors).
@@ -787,6 +788,7 @@ async def run_flow_step_by_step_async(
             continue
 
         if node_type in (
+            "guideline_bibliography_write",
             "guideline_factcheck_load",
             "guideline_monitor_search",
             "guideline_shelf_load",
@@ -1529,6 +1531,7 @@ async def run_flow_fork_parallel_async(
             "pmid_verify",
             "pmid_scrub",
             "evaluation_check",
+            "guideline_bibliography_write",
             "guideline_factcheck_load",
             "guideline_monitor_search",
             "guideline_shelf_load",
@@ -1741,6 +1744,7 @@ async def run_flow_fork_parallel_async(
             return {"node_id": nid, "node_out": result.data, "error": None, "candidate": {}}
 
         if node_type in (
+            "guideline_bibliography_write",
             "guideline_factcheck_load",
             "guideline_monitor_search",
             "guideline_shelf_load",
