@@ -23,8 +23,15 @@ from .base import NodeExecutor, NodeInput, NodeOutput
 log = logging.getLogger(__name__)
 
 _EUTILS = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils"
-_MAX_PUBMED = 25
+_RETMAX_PER_QUERY = 25
+# Budget discipline: cap the candidate set handed to the classify LLM. Queries are
+# interleaved round-robin so each query's top hits survive the cap (recall-safe —
+# validated by scripts/validate_shelf_fd.py). Abstracts are trimmed to keep the
+# prompt small. The vllm/Gemma effective prompt cap is ~60k tokens; this keeps the
+# classify prompt to a few thousand.
+_PUBMED_CANDIDATE_CAP = 30
 _MAX_BOOKS = 8
+_ABSTRACT_CHARS = 200
 
 
 class GuidelineShelfSearchExecutor(NodeExecutor):
@@ -141,20 +148,29 @@ def _collect_shelf_candidates(disease_name: str) -> list[dict]:
         f'"{disease_name}"[Title/Abstract] AND Review[ptyp] AND 2018:2026[dp]',
         f'"{disease_name}"[Title/Abstract] AND (management OR therapy OR treatment) AND Review[ptyp]',
     ]
-    pmids: list[str] = []
-    seen: set[str] = set()
+    per_query: list[list[str]] = []
     for term in queries:
         try:
-            for pid in _esearch_ids("pubmed", term, _MAX_PUBMED):
-                if pid not in seen:
-                    seen.add(pid)
-                    pmids.append(pid)
+            per_query.append(_esearch_ids("pubmed", term, _RETMAX_PER_QUERY))
         except Exception as exc:  # noqa: BLE001 — one failed query shouldn't sink the rest
             log.debug("guideline_shelf_search: esearch failed for %r: %s", term, exc)
+            per_query.append([])
+
+    # Round-robin interleave so each query's top hits survive the cap.
+    pmids: list[str] = []
+    seen: set[str] = set()
+    for rank in range(_RETMAX_PER_QUERY):
+        for ids in per_query:
+            if rank < len(ids) and ids[rank] not in seen:
+                seen.add(ids[rank])
+                pmids.append(ids[rank])
+        if len(pmids) >= _PUBMED_CANDIDATE_CAP:
+            break
+    pmids = pmids[:_PUBMED_CANDIDATE_CAP]
 
     candidates: list[dict] = []
     if pmids:
-        arts = fetch_article_details_impl(pmids[: _MAX_PUBMED * 2], include_abstracts=True)
+        arts = fetch_article_details_impl(pmids, include_abstracts=True)
         for a in arts.get("articles") or []:
             candidates.append(
                 {
@@ -163,7 +179,7 @@ def _collect_shelf_candidates(disease_name: str) -> list[dict]:
                     "authors": a.get("authors") or "",
                     "journal": a.get("source") or "",
                     "year": (str(a.get("pubdate") or "").split() or [""])[0],
-                    "abstract": a.get("abstract") or "",
+                    "abstract": (a.get("abstract") or "")[:_ABSTRACT_CHARS],
                 }
             )
     try:
