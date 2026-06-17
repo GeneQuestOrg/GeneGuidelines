@@ -439,6 +439,54 @@ async def start_guideline_synthesis_run(slug: str):
     )
 
 
+@router.post(
+    "/diseases/{slug}/guideline-shelf/run",
+    dependencies=[Depends(require_api_key_if_set)],
+)
+async def start_guideline_shelf_run(slug: str):
+    """Build the source shelf (step 1) for a catalog disease.
+
+    Broadly searches PubMed + NCBI Bookshelf, an LLM classifies which documents
+    belong on the shelf and the role of each, and the writer replaces
+    ``guideline_source_documents``. Returns immediately with an ``execution_id``;
+    the shelf is read back from ``GET /api/diseases/{slug}/source-documents`` and
+    consumed by the synthesis flow.
+    """
+    slug_norm = (slug or "").strip().lower()
+    if not slug_norm:
+        raise HTTPException(status_code=400, detail="disease slug is required")
+
+    loop = asyncio.get_event_loop()
+    disease = await loop.run_in_executor(
+        None, lambda: get_disease_by_slug(slug_norm, include_prompt_profile=False)
+    )
+    if disease is None:
+        raise HTTPException(status_code=404, detail=f"Disease '{slug_norm}' not found in catalog.")
+
+    label = f"Shelf · {str(disease['name']).strip()}"
+    ticket_id = await loop.run_in_executor(
+        None,
+        lambda: db.create_ticket(
+            title=label,
+            description=f"Source-shelf discovery for {disease['name']} (PubMed + Bookshelf).",
+            reporter_name="GeneGuidelines",
+            category="guideline_shelf",
+        ),
+    )
+    disease_initial = {
+        "disease_slug": slug_norm,
+        "disease_name": str(disease["name"]).strip(),
+    }
+    return await agent_router.start_agent_run(
+        ticket_id,
+        flow_key="guideline_shelf_build",
+        profile=DEFAULT_MODEL_PROFILE,
+        label=label,
+        pipeline="guideline",
+        disease_initial=disease_initial,
+    )
+
+
 class OfficialGuidelinesRunBody(BaseModel):
     """Start the find-the-consensus workflow for one disease."""
 

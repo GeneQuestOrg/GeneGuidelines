@@ -184,6 +184,40 @@ class SqlaGuidelinesRepo:
                 )
             )
 
+    def replace_source_documents(self, disease_slug: str, docs: list[dict]) -> None:
+        """Replace the whole source shelf for ``disease_slug`` (delete + bulk insert).
+
+        The shelf-builder workflow re-derives the full shelf each run, so old rows
+        for this disease are cleared first; ``sort_order`` follows list order. One
+        transaction.
+        """
+        with Session(self._engine) as session, session.begin():
+            session.execute(
+                delete(SourceDocumentRow).where(
+                    SourceDocumentRow.disease_slug == disease_slug
+                )
+            )
+            for sort_order, doc in enumerate(docs):
+                session.add(
+                    SourceDocumentRow(
+                        disease_slug=disease_slug,
+                        doc_id=doc["id"],
+                        role=doc["role"],
+                        title=doc["title"],
+                        authors=doc["authors"],
+                        journal=doc["journal"],
+                        year=str(doc["year"]),
+                        scope=doc["scope"],
+                        covers=list(doc.get("covers", [])),
+                        sort_order=sort_order,
+                        pmid=doc.get("pmid"),
+                        bookshelf=doc.get("bookshelf"),
+                        free_full_text=1 if doc.get("freeFullText") else 0,
+                        is_new=1 if doc.get("isNew") else 0,
+                        updates_note=doc.get("updatesNote"),
+                    )
+                )
+
     def upsert_synthesis(self, disease_slug: str, syn: dict) -> None:
         """Insert-or-replace the single synthesis row for ``disease_slug``.
 

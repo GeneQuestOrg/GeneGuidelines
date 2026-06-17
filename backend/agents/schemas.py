@@ -188,11 +188,82 @@ class GuidelineSectionOutput(BaseModel):
     )
 
 
+class GuidelineShelfDoc(BaseModel):
+    """One document selected for a disease's source shelf (shelf-builder output)."""
+
+    model_config = ConfigDict(extra="ignore", str_strip_whitespace=True)
+
+    pmid: str = Field(default="", description="PubMed ID when the document is a journal article (digits only)")
+    bookshelf: str = Field(default="", description="NCBI Bookshelf ID (e.g. NBK274564) when it is a compendium chapter")
+    title: str = Field(..., min_length=4, description="Document title")
+    authors: str = Field(default="", description="Author string, e.g. 'Boyce AM, Collins MT, et al.'")
+    journal: str = Field(default="", description="Journal or source name")
+    year: str = Field(default="", description="Publication year, or a label like 'continuously updated'")
+    kind: str = Field(..., description="Machine taxonomy: base_consensus / update / subtopic / reference_compendium / other")
+    role: str = Field(default="", description="Short human display label, e.g. 'Base consensus', 'Children — update'")
+    scope: str = Field(default="", description="One line on what this document covers")
+    covers: list[str] = Field(default_factory=list, description="Topic tags this document covers")
+    updates_note: str = Field(default="", description="When kind=update: what it changes vs the consensus")
+
+    @field_validator("pmid", "bookshelf", "authors", "journal", "year", "role", "scope", "updates_note", mode="before")
+    @classmethod
+    def _none_to_empty(cls, v: object) -> object:
+        return "" if v is None else v
+
+    @field_validator("covers", mode="before")
+    @classmethod
+    def _covers_none_to_empty(cls, v: object) -> object:
+        return [] if v is None else v
+
+    @field_validator("kind")
+    @classmethod
+    def _kind_in_taxonomy(cls, v: str) -> str:
+        from ..contracts.guidelines_v1 import SHELF_DOC_KINDS
+
+        k = (v or "").strip().lower()
+        if k not in SHELF_DOC_KINDS:
+            raise ValueError(f"kind {v!r} not in {SHELF_DOC_KINDS}")
+        return k
+
+    @field_validator("pmid")
+    @classmethod
+    def _pmid_digits(cls, v: str) -> str:
+        s = (v or "").strip()
+        if s and not s.isdigit():
+            raise ValueError(f"pmid {v!r} must be digits only")
+        return s
+
+    @model_validator(mode="after")
+    def _needs_an_identifier(self):
+        if not (self.pmid or "").strip() and not (self.bookshelf or "").strip():
+            raise ValueError("each shelf document needs a pmid or a bookshelf id")
+        return self
+
+
+class GuidelineShelfOutput(BaseModel):
+    """Structured output of the shelf-classify node — the curated source shelf.
+
+    The shelf-builder's search node hands a candidate list to the LLM, which
+    selects the documents that belong on the shelf and labels each with a role /
+    kind. The writer maps these onto ``guideline_source_documents``. Every doc must
+    carry a real identifier (PMID or Bookshelf id) — no invented sources.
+    """
+
+    model_config = ConfigDict(extra="ignore", str_strip_whitespace=True)
+
+    docs: list[GuidelineShelfDoc] = Field(
+        ...,
+        min_length=1,
+        description="The documents that belong on this disease's source shelf",
+    )
+
+
 # Registry: key from flow_definitions.output_schema_key → Pydantic model
 PRESET_OUTPUT_SCHEMAS: dict[str, Type[BaseModel]] = {
     "ai_summary": AiSummaryOutput,
     "parent_pathway_plan": ParentPathwayPlanOutput,
     "guideline_section": GuidelineSectionOutput,
+    "guideline_shelf": GuidelineShelfOutput,
 }
 
 

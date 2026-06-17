@@ -36,6 +36,17 @@ EPISTEMIC_LEVEL_SYNTHESIS = "a"
 MIN_PARAGRAPHS_PER_SECTION = 1
 MAX_PARAGRAPHS_PER_SECTION = 6
 
+# Source-shelf document kinds (the shelf-builder classifies each found document).
+# Free-text ``role`` is the display label; ``kind`` is the machine taxonomy used
+# for deterministic handling (e.g. isNew = kind == "update").
+SHELF_DOC_KINDS: tuple[str, ...] = (
+    "base_consensus",        # the recognised consensus / best-practice guideline
+    "update",                # a newer paper that updates the consensus
+    "subtopic",              # focused on one sub-area (e.g. craniofacial)
+    "reference_compendium",  # textbook / continuously-updated chapter (e.g. GeneReviews)
+    "other",
+)
+
 
 class SectionSpec(TypedDict):
     """One synthesis section: stable id + human title.
@@ -65,6 +76,7 @@ __all__ = [
     "EPISTEMIC_LEVEL_SYNTHESIS",
     "MIN_PARAGRAPHS_PER_SECTION",
     "MAX_PARAGRAPHS_PER_SECTION",
+    "SHELF_DOC_KINDS",
     "SectionSpec",
     "SYNTHESIS_SECTIONS",
 ]
