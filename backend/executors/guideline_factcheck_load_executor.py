@@ -16,9 +16,6 @@ from .base import NodeExecutor, NodeInput, NodeOutput
 
 log = logging.getLogger(__name__)
 
-_ABSTRACT_CHARS = 1200
-
-
 class GuidelineFactcheckLoadExecutor(NodeExecutor):
     """Load synthesis claims + cited-source abstracts for the fact-check pass."""
 
@@ -118,5 +115,5 @@ class GuidelineFactcheckLoadExecutor(NodeExecutor):
         for art in raw.get("articles") or []:
             pmid = str(art.get("pmid") or "").strip()
             if pmid:
-                out[pmid] = str(art.get("abstract") or "").strip()[:_ABSTRACT_CHARS]
+                out[pmid] = str(art.get("abstract") or "").strip()  # full abstract, no trim
         return out

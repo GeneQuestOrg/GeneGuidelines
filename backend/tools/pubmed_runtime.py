@@ -367,7 +367,13 @@ def search_articles_impl(
 
 
 def fetch_article_details_impl(pmids: list[str], *, include_abstracts: bool = True) -> dict[str, Any]:
-    """Deterministic implementation used by backend flows (non-MCP path)."""
+    """Deterministic implementation used by backend flows (non-MCP path).
+
+    Returns FULL abstracts — never truncated. A medical synthesis/fact-check tool
+    must reason over the whole abstract, not a snippet. Consumers that need to
+    bound prompt size do so by capping the NUMBER of papers (or summarising), not
+    by mutilating each abstract.
+    """
     pmid_list = [str(p).strip() for p in (pmids or []) if str(p).strip()]
     if not pmid_list:
         return {"articles": [], "article_count": 0, "evidence_cards": [], "total_requested": 0, "total_analyzed": 0}
@@ -446,8 +452,8 @@ def fetch_article_details_impl(pmids: list[str], *, include_abstracts: bool = Tr
                     if name:
                         author_names.append(name)
         title = str(article.get("title") or "").strip()
-        abstract = abstract_map.get(str(uid), "")
-        abstract_compact = abstract[:320] if abstract else ""
+        abstract = abstract_map.get(str(uid), "")  # full abstract — never truncated
+        abstract_compact = abstract
         doi = _extract_doi_from_article(article)
         pubdate = str(article.get("pubdate") or "").strip()
         source = str(article.get("source") or "").strip()
@@ -927,10 +933,10 @@ def register_pubmed_tools(mcp: Any) -> None:
                         if name:
                             author_names.append(name)
             title = str(article.get("title") or "").strip()
-            abstract = abstract_map.get(str(uid), "")
-            # Keep context manageable for long runs; full abstracts across 100+ papers
-            # can exceed model context in agentic loops.
-            abstract_compact = abstract[:320] if abstract else ""
+            abstract = abstract_map.get(str(uid), "")  # full abstract — never truncated
+            # Bound context by limiting the NUMBER of papers fetched, not by mutilating
+            # each abstract — a medical tool must reason over the whole abstract.
+            abstract_compact = abstract
             doi = _extract_doi_from_article(article)
             pubdate = str(article.get("pubdate") or "").strip()
             source = str(article.get("source") or "").strip()
