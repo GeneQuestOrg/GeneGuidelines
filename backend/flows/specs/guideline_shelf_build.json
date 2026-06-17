@@ -1,0 +1,52 @@
+{
+  "flow_key": "guideline_shelf_build",
+  "description": "Build the curated source shelf for a disease (step 1 of the research pipeline). Broadly searches PubMed + NCBI Bookshelf, an LLM classifies which documents belong on the shelf and the role of each (base consensus / update / subtopic / reference compendium), and the writer replaces guideline_source_documents. The synthesis flow (guideline_synthesis) consumes this shelf. Deterministic recall validation lives OUTSIDE the workflow (scripts/validate_shelf_fd.py).",
+  "nodes": [
+    {
+      "node_id": "start",
+      "node_type": "trigger",
+      "label": "Start",
+      "description": "Entry point. Receives disease_slug + disease_name from the run's initial context.",
+      "prompt_mode": "agentic",
+      "max_retry": 1
+    },
+    {
+      "node_id": "gsb-search",
+      "node_type": "guideline_shelf_search",
+      "label": "Search PubMed + Bookshelf",
+      "description": "Broad multi-query retrieval (consensus/guideline/management reviews + recent reviews + Bookshelf compendia) → candidate list with metadata + abstracts.",
+      "prompt_mode": "agentic",
+      "max_retry": 1
+    },
+    {
+      "node_id": "gsb-classify",
+      "node_type": "prompt",
+      "label": "Classify the shelf",
+      "description": "LLM selects which candidates belong on the shelf and labels each with kind + role. Set model_name to a stronger model here if recall/recognition needs it.",
+      "prompt_mode": "simple",
+      "output_schema_key": "guideline_shelf",
+      "max_retry": 2,
+      "prompt": "You are a clinical librarian building the SOURCE SHELF for {{ context.initial.disease_name }} — the small set of documents a specialist would actually rely on.\n\nCandidates retrieved from PubMed + NCBI Bookshelf (each has pmid OR bookshelf, title, authors, journal, year, abstract):\n{{ context.gsb-search.candidates }}\n\nSelect ONLY the documents that belong on the shelf and label each:\n- kind: one of base_consensus (the recognised consensus / best-practice guideline), update (a newer paper that changes a recommendation vs the consensus), subtopic (focused on one sub-area, e.g. a region or complication), reference_compendium (a continuously-updated chapter / textbook such as a GeneReviews entry), or other.\n- role: a short human label, e.g. \"Base consensus\", \"Children — update\", \"Craniofacial\", \"Reference compendium\".\n- scope: one line on what it covers; covers: a few topic tags.\n- updates_note: when kind=update, one line on what it changes vs the consensus.\n\nRules:\n- Copy pmid / bookshelf / title VERBATIM from a candidate — never invent an identifier.\n- Prefer ONE base_consensus. Keep newer updates and important subtopics. Include a reference_compendium when present (e.g. a Bookshelf chapter).\n- Drop duplicates, primary research that isn't review/consensus, and clearly off-topic hits.\n- A tight, high-signal shelf beats a long one."
+    },
+    {
+      "node_id": "gsb-write",
+      "node_type": "guideline_shelf_write",
+      "label": "Write the shelf",
+      "description": "Map classified docs onto guideline_source_documents and replace the disease's shelf (terminal node).",
+      "prompt_mode": "agentic",
+      "max_retry": 1
+    },
+    {
+      "node_id": "end",
+      "node_type": "end",
+      "label": "End",
+      "prompt_mode": "agentic"
+    }
+  ],
+  "edges": [
+    {"source_node_id": "start", "target_node_id": "gsb-search"},
+    {"source_node_id": "gsb-search", "target_node_id": "gsb-classify"},
+    {"source_node_id": "gsb-classify", "target_node_id": "gsb-write"},
+    {"source_node_id": "gsb-write", "target_node_id": "end"}
+  ]
+}
