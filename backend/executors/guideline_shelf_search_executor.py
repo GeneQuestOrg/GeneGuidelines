@@ -27,11 +27,10 @@ _RETMAX_PER_QUERY = 25
 # Budget discipline: cap the candidate set handed to the classify LLM. Queries are
 # interleaved round-robin so each query's top hits survive the cap (recall-safe —
 # validated by scripts/validate_shelf_fd.py). Abstracts are trimmed to keep the
-# prompt small. The vllm/Gemma effective prompt cap is ~60k tokens; this keeps the
-# classify prompt to a few thousand.
+# prompt small. The vllm/Gemma effective prompt cap is ~60k tokens; budget is
+# bounded by the CANDIDATE COUNT, not by truncating abstracts (medical tool).
 _PUBMED_CANDIDATE_CAP = 30
 _MAX_BOOKS = 8
-_ABSTRACT_CHARS = 200
 
 
 class GuidelineShelfSearchExecutor(NodeExecutor):
@@ -179,7 +178,7 @@ def _collect_shelf_candidates(disease_name: str) -> list[dict]:
                     "authors": a.get("authors") or "",
                     "journal": a.get("source") or "",
                     "year": (str(a.get("pubdate") or "").split() or [""])[0],
-                    "abstract": (a.get("abstract") or "")[:_ABSTRACT_CHARS],
+                    "abstract": a.get("abstract") or "",  # full abstract — never truncated
                 }
             )
     try:
