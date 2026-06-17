@@ -343,6 +343,38 @@ class GuidelineSuggestionsOutput(BaseModel):
     )
 
 
+class GuidelineFactCheck(BaseModel):
+    """Verdict on one synthesis paragraph vs the source it cites."""
+
+    model_config = ConfigDict(extra="ignore", str_strip_whitespace=True)
+
+    section_id: str = Field(..., description="id of the synthesis section")
+    paragraph_id: str = Field(default="", description="id of the paragraph being checked")
+    cited_doc: str = Field(default="", description="docId/PMID the paragraph cites")
+    verdict: str = Field(..., description="supported / unsupported / uncertain")
+    note: str = Field(default="", description="One line: why — esp. when unsupported/uncertain")
+
+    @field_validator("verdict")
+    @classmethod
+    def _verdict_valid(cls, v: str) -> str:
+        x = (v or "").strip().lower()
+        if x not in ("supported", "unsupported", "uncertain"):
+            raise ValueError("verdict must be supported / unsupported / uncertain")
+        return x
+
+
+class GuidelineFactCheckOutput(BaseModel):
+    """Fact-check report: per-paragraph verdicts vs cited sources (pre-expert QA pass)."""
+
+    model_config = ConfigDict(extra="ignore", str_strip_whitespace=True)
+
+    checks: list[GuidelineFactCheck] = Field(
+        default_factory=list,
+        description="One verdict per checked paragraph",
+    )
+    summary: str = Field(default="", description="One-paragraph overall read for the operator/expert")
+
+
 # Registry: key from flow_definitions.output_schema_key → Pydantic model
 PRESET_OUTPUT_SCHEMAS: dict[str, Type[BaseModel]] = {
     "ai_summary": AiSummaryOutput,
@@ -351,6 +383,7 @@ PRESET_OUTPUT_SCHEMAS: dict[str, Type[BaseModel]] = {
     "guideline_shelf": GuidelineShelfOutput,
     "guideline_triage": GuidelineTriageOutput,
     "guideline_suggestions": GuidelineSuggestionsOutput,
+    "guideline_factcheck": GuidelineFactCheckOutput,
 }
 
 

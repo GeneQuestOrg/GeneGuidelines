@@ -5,6 +5,7 @@ from .agentic_prompt_executor import AgenticPromptExecutor
 from .code_executor import CodeExecutor
 from .decision_executor import DecisionExecutor
 from .evaluation_check_executor import EvaluationCheckExecutor
+from .guideline_factcheck_load_executor import GuidelineFactcheckLoadExecutor
 from .guideline_monitor_search_executor import GuidelineMonitorSearchExecutor
 from .guideline_shelf_load_executor import GuidelineShelfLoadExecutor
 from .guideline_shelf_search_executor import GuidelineShelfSearchExecutor
@@ -34,6 +35,7 @@ EXECUTOR_REGISTRY = {
     "pmid_verify": PmidVerifierExecutor,
     "pmid_scrub": PmidScrubberExecutor,
     "evaluation_check": EvaluationCheckExecutor,
+    "guideline_factcheck_load": GuidelineFactcheckLoadExecutor,
     "guideline_monitor_search": GuidelineMonitorSearchExecutor,
     "guideline_shelf_load": GuidelineShelfLoadExecutor,
     "guideline_shelf_search": GuidelineShelfSearchExecutor,
