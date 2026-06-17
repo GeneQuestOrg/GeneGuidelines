@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from typing import Protocol
 
-from sqlalchemy import Engine, select
+from sqlalchemy import Engine, delete, select
 from sqlalchemy.orm import Session
 
 from ..shared.persistence.engine import get_engine
@@ -185,7 +185,20 @@ class SqlaGuidelinesRepo:
             )
 
     def upsert_synthesis(self, disease_slug: str, syn: dict) -> None:
+        """Insert-or-replace the single synthesis row for ``disease_slug``.
+
+        The synthesis table is keyed on ``disease_slug`` alone, so a re-run
+        (the generation engine writing fresh output) must overwrite — not
+        collide on the primary key. Delete-then-add in one transaction; the
+        ``delete()`` statement emits its SQL before the ``add`` flushes on
+        commit, so there is no insert-before-delete ordering hazard.
+        """
         with Session(self._engine) as session, session.begin():
+            session.execute(
+                delete(GuidelineSynthesisRow).where(
+                    GuidelineSynthesisRow.disease_slug == disease_slug
+                )
+            )
             session.add(
                 GuidelineSynthesisRow(
                     disease_slug=disease_slug,
@@ -228,6 +241,42 @@ class SqlaGuidelinesRepo:
                     regen_seed=sug.get("regenSeed"),
                 )
             )
+
+    def replace_suggestions(self, disease_slug: str, suggestions: list[dict]) -> None:
+        """Replace all suggestions for ``disease_slug`` (delete by slug + bulk insert).
+
+        The generation engine (level b) re-derives the full delta set each run,
+        so old rows for this disease are cleared first; ``sort_order`` follows
+        list order. One transaction.
+        """
+        with Session(self._engine) as session, session.begin():
+            session.execute(
+                delete(GuidelineSuggestionRow).where(
+                    GuidelineSuggestionRow.disease_slug == disease_slug
+                )
+            )
+            for sort_order, sug in enumerate(suggestions):
+                session.add(
+                    GuidelineSuggestionRow(
+                        disease_slug=disease_slug,
+                        id=sug["id"],
+                        kind=sug["kind"],
+                        target_section=sug["targetSection"],
+                        section_label=sug["sectionLabel"],
+                        title=sug["title"],
+                        summary=sug["summary"],
+                        rationale=sug["rationale"],
+                        evidence=sug["evidence"],
+                        gate=sug["gate"],
+                        citations=list(sug.get("citations", [])),
+                        signal=dict(sug.get("signal", {})),
+                        comments=list(sug.get("comments", [])),
+                        sort_order=sort_order,
+                        parent_text=sug.get("parentText"),
+                        diff=sug.get("diff"),
+                        regen_seed=sug.get("regenSeed"),
+                    )
+                )
 
     def upsert_synthesis_signal(
         self, disease_slug: str, section_id: str, sig: dict

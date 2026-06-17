@@ -117,10 +117,82 @@ class ParentPathwayPlanOutput(BaseModel):
         return out
 
 
+class GuidelineParagraphSource(BaseModel):
+    """Provenance for one synthesis paragraph — which shelf document it came from."""
+
+    model_config = ConfigDict(extra="ignore", str_strip_whitespace=True)
+
+    doc: str = Field(..., min_length=1, description="docId of the source-shelf document this paragraph is drawn from")
+    loc: str = Field(default="", description="Section/locator inside that document, e.g. '§ Imaging' (optional)")
+
+
+class GuidelineParagraphUpdate(BaseModel):
+    """Marks where a newer shelf document updates/supersedes an older one (wizja 04)."""
+
+    model_config = ConfigDict(extra="ignore", str_strip_whitespace=True)
+
+    doc: str = Field(..., min_length=1, description="docId of the newer document carrying the update")
+    supersedes: str = Field(default="", description="docId of the older document being superseded (optional)")
+    note: str = Field(default="", description="Plain note on what changed (optional)")
+
+
+class GuidelineParagraph(BaseModel):
+    """One provenance-bearing paragraph of a synthesis section."""
+
+    model_config = ConfigDict(extra="ignore", str_strip_whitespace=True)
+
+    id: str = Field(..., min_length=1, description="Stable slug for this paragraph, e.g. 'dx-ct'")
+    text: str = Field(..., min_length=1, description="The paragraph prose — faithful to the source, no invention beyond the shelf")
+    source: GuidelineParagraphSource = Field(..., description="Which shelf document (and section) this is drawn from")
+    citations: list[str] = Field(default_factory=list, description="PMIDs backing this paragraph — only PMIDs present on the shelf")
+    update: GuidelineParagraphUpdate | None = Field(default=None, description="Set when a newer document updates an older one here")
+    highlight: bool = Field(default=False, description="Visually emphasise this paragraph (e.g. a safety-critical point)")
+
+    @field_validator("citations", mode="before")
+    @classmethod
+    def _citations_none_to_empty(cls, v: object) -> object:
+        return [] if v is None else v
+
+    @field_validator("citations")
+    @classmethod
+    def _citations_are_pmids(cls, v: list[str]) -> list[str]:
+        out: list[str] = []
+        for raw in v:
+            s = str(raw).strip()
+            if not s:
+                continue
+            if not s.isdigit():
+                raise ValueError(f"citation {s!r} is not a PMID (digits only); cite only shelf PMIDs")
+            out.append(s)
+        return out
+
+
+class GuidelineSectionOutput(BaseModel):
+    """Structured output of one synthesis section node (level a) — paragraphs with provenance.
+
+    This is the net-new shape the synthesis engine emits *instead of* HTML: every
+    paragraph is traceable to a shelf document (``source.doc``) and may carry PMID
+    ``citations`` and an ``update`` marker. The terminal ``guideline_synthesis_writer``
+    node assembles these sections into the camelCase synthesis the GL-4 tables store.
+    """
+
+    model_config = ConfigDict(extra="ignore", str_strip_whitespace=True)
+
+    id: str = Field(default="", description="Section slug (the writer overrides this from the flow's section spec)")
+    title: str = Field(default="", description="Human section title (the writer overrides this from the section spec)")
+    intro: str = Field(default="", description="One-sentence lead framing the section")
+    paragraphs: list[GuidelineParagraph] = Field(
+        ...,
+        min_length=1,
+        description="2–6 provenance-bearing paragraphs synthesised strictly from the shelf",
+    )
+
+
 # Registry: key from flow_definitions.output_schema_key → Pydantic model
 PRESET_OUTPUT_SCHEMAS: dict[str, Type[BaseModel]] = {
     "ai_summary": AiSummaryOutput,
     "parent_pathway_plan": ParentPathwayPlanOutput,
+    "guideline_section": GuidelineSectionOutput,
 }
 
 

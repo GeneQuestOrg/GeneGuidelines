@@ -386,6 +386,70 @@ async def start_guideline_run(body: GuidelineRunBody):
     )
 
 
+# Section spec for the level-(a) synthesis flow. The ids MUST match the
+# `gs-sec-<id>` node ids in backend/flows/specs/guideline_synthesis.json; the
+# writer uses these for stable section id/title (independent of LLM drift).
+_SYNTHESIS_SECTIONS: list[dict[str, str]] = [
+    {"id": "diagnosis", "title": "1. Diagnosis"},
+    {"id": "histopathology", "title": "2. Histopathology and genetics"},
+    {"id": "therapy", "title": "3. Therapy"},
+    {"id": "surgery", "title": "4. Indications for surgery"},
+    {"id": "monitoring", "title": "5. Monitoring and follow-up"},
+]
+
+
+@router.post(
+    "/diseases/{slug}/guideline-synthesis/run",
+    dependencies=[Depends(require_api_key_if_set)],
+)
+async def start_guideline_synthesis_run(slug: str):
+    """Run the synthesis-over-the-shelf engine (level a) for a catalog disease.
+
+    Loads the disease's source shelf, synthesises one section per node strictly
+    from it, and the terminal writer upserts the synthesis into the GL-4
+    ``guideline_synthesis`` table. Returns immediately with an ``execution_id``;
+    progress streams over the run trace (SSE), output is read back from
+    ``GET /api/diseases/{slug}/guideline-synthesis``.
+    """
+    slug_norm = (slug or "").strip().lower()
+    if not slug_norm:
+        raise HTTPException(status_code=400, detail="disease slug is required")
+
+    loop = asyncio.get_event_loop()
+    disease = await loop.run_in_executor(
+        None, lambda: get_disease_by_slug(slug_norm, include_prompt_profile=False)
+    )
+    if disease is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Disease '{slug_norm}' not found in catalog.",
+        )
+
+    label = f"Synthesis · {str(disease['name']).strip()}"
+    ticket_id = await loop.run_in_executor(
+        None,
+        lambda: db.create_ticket(
+            title=label,
+            description=f"Guideline synthesis (level a) over the source shelf for {disease['name']}.",
+            reporter_name="GeneGuidelines",
+            category="guideline_synthesis",
+        ),
+    )
+    disease_initial = {
+        "disease_slug": slug_norm,
+        "disease_name": str(disease["name"]).strip(),
+        "sections": list(_SYNTHESIS_SECTIONS),
+    }
+    return await agent_router.start_agent_run(
+        ticket_id,
+        flow_key="guideline_synthesis",
+        profile=DEFAULT_MODEL_PROFILE,
+        label=label,
+        pipeline="guideline",
+        disease_initial=disease_initial,
+    )
+
+
 class OfficialGuidelinesRunBody(BaseModel):
     """Start the find-the-consensus workflow for one disease."""
 
