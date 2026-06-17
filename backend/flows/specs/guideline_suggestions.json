@@ -1,0 +1,63 @@
+{
+  "flow_key": "guideline_suggestions",
+  "description": "Level-b monitor (research pipeline step 3): find recent literature beyond the shelf, triage cheaply for whether each paper changes the guideline vs what the synthesis ALREADY says, then a (stronger) model proposes deltas — additions/modifications beyond current guidance. Empty is a valid answer. Budget-disciplined: bounded candidate set, cheap Gemma triage, strong model only on the short list. Deterministic checks live in tests/scripts, not here.",
+  "nodes": [
+    {
+      "node_id": "start",
+      "node_type": "trigger",
+      "label": "Start",
+      "description": "Entry. Receives disease_slug + disease_name; requires an existing synthesis (level a).",
+      "prompt_mode": "agentic",
+      "max_retry": 1
+    },
+    {
+      "node_id": "gsd-search",
+      "node_type": "guideline_monitor_search",
+      "label": "Load guidance + recent papers",
+      "description": "Load the current synthesis (what we already say) + shelf PMIDs, then fetch recent papers beyond the shelf (bounded).",
+      "prompt_mode": "agentic",
+      "max_retry": 1
+    },
+    {
+      "node_id": "gsd-triage",
+      "node_type": "prompt",
+      "label": "Triage (cheap): does it change anything?",
+      "description": "Cheap pass (Gemma): score each recent paper on the chance it adds/changes something NOT already in the current guidance.",
+      "prompt_mode": "simple",
+      "output_schema_key": "guideline_triage",
+      "max_retry": 2,
+      "prompt": "You are screening recent papers for whether they would change a clinical guideline for {{ context.initial.disease_name }}.\n\nWhat the guideline ALREADY says (current synthesis):\n{{ context.gsd-search.current_guidance }}\n\nRecent candidate papers (pmid, title, journal, year, abstract):\n{{ context.gsd-search.candidates }}\n\nFor EACH candidate, return: pmid, change_probability (0..1 — the chance it adds or CHANGES something that is NOT already in the synthesis above; a paper that merely restates current guidance scores LOW), and a one-line why. Be sceptical — most papers change nothing. Use only the pmids given; never invent."
+    },
+    {
+      "node_id": "gsd-delta",
+      "node_type": "prompt",
+      "label": "Propose deltas (stronger model)",
+      "description": "From the high-probability papers, propose additions/modifications beyond current guidance. Set model_name to a stronger model here for the final judgement; empty is valid.",
+      "prompt_mode": "simple",
+      "output_schema_key": "guideline_suggestions",
+      "max_retry": 2,
+      "prompt": "You are proposing evidence-based UPDATES to a clinical guideline for {{ context.initial.disease_name }}.\n\nWhat the guideline ALREADY says (do NOT restate what is already here — only go beyond it):\n{{ context.gsd-search.current_guidance }}\n\nGuideline sections you may target (use these ids for target_section):\n{{ context.gsd-search.sections }}\n\nCandidate papers (pmid, title, journal, year, abstract):\n{{ context.gsd-search.candidates }}\n\nTriage scores (change_probability per pmid):\n{{ context.gsd-triage.papers }}\n\nFor papers that GENUINELY add or change something not already in the guidance (high change_probability), propose a delta: kind (addition / modification), target_section (one of the ids above), title, summary, rationale (state explicitly what is new vs current guidance), evidence (strong/moderate/limited), citations (the paper's pmid(s)), source_pmid. If NOTHING genuinely changes the guideline, return an EMPTY suggestions list — that is the correct, common answer. Cite only the candidate pmids; never invent."
+    },
+    {
+      "node_id": "gsd-write",
+      "node_type": "guideline_suggestion_writer",
+      "label": "Write suggestions",
+      "description": "Map deltas onto guideline_suggestions and replace (terminal). gate=expert; promotion to parent is a separate D5 signal.",
+      "prompt_mode": "agentic",
+      "max_retry": 1
+    },
+    {
+      "node_id": "end",
+      "node_type": "end",
+      "label": "End",
+      "prompt_mode": "agentic"
+    }
+  ],
+  "edges": [
+    {"source_node_id": "start", "target_node_id": "gsd-search"},
+    {"source_node_id": "gsd-search", "target_node_id": "gsd-triage"},
+    {"source_node_id": "gsd-triage", "target_node_id": "gsd-delta"},
+    {"source_node_id": "gsd-delta", "target_node_id": "gsd-write"},
+    {"source_node_id": "gsd-write", "target_node_id": "end"}
+  ]
+}

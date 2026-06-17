@@ -188,11 +188,98 @@ class GuidelineSectionOutput(BaseModel):
     )
 
 
+class GuidelineTriagedPaper(BaseModel):
+    """One recent paper triaged against the current synthesis (cheap pass)."""
+
+    model_config = ConfigDict(extra="ignore", str_strip_whitespace=True)
+
+    pmid: str = Field(..., description="PMID of the candidate paper (digits only)")
+    change_probability: float = Field(
+        ..., ge=0.0, le=1.0,
+        description="0..1 — chance this paper adds or changes something NOT already in the current synthesis",
+    )
+    why: str = Field(default="", description="One line: what it might add/change vs current guidance")
+
+    @field_validator("pmid")
+    @classmethod
+    def _pmid_digits(cls, v: str) -> str:
+        s = (v or "").strip()
+        if not s.isdigit():
+            raise ValueError(f"pmid {v!r} must be digits only")
+        return s
+
+    @field_validator("change_probability", mode="before")
+    @classmethod
+    def _clamp(cls, v: object) -> object:
+        try:
+            return min(1.0, max(0.0, float(v)))
+        except (TypeError, ValueError):
+            return 0.0
+
+
+class GuidelineTriageOutput(BaseModel):
+    """Cheap triage pass: score recent papers by likelihood of changing the guideline."""
+
+    model_config = ConfigDict(extra="ignore", str_strip_whitespace=True)
+
+    papers: list[GuidelineTriagedPaper] = Field(
+        default_factory=list,
+        description="Scored candidate papers (may be empty)",
+    )
+
+
+class GuidelineSuggestionDelta(BaseModel):
+    """One AI suggestion (level b) — a delta beyond what the synthesis already says."""
+
+    model_config = ConfigDict(extra="ignore", str_strip_whitespace=True)
+
+    kind: str = Field(..., description="addition (new point) or modification (changes an existing recommendation)")
+    target_section: str = Field(..., min_length=1, description="id of the synthesis section this applies to")
+    section_label: str = Field(default="", description="human label of the target section")
+    title: str = Field(..., min_length=4, description="Short title of the suggestion")
+    summary: str = Field(..., min_length=10, description="What to add/change, concisely")
+    rationale: str = Field(..., min_length=10, description="Why — incl. that it is NOT already in the current guidance")
+    evidence: str = Field(default="moderate", description="strength: strong / moderate / limited")
+    citations: list[str] = Field(default_factory=list, description="PMIDs backing this delta (the new papers; digits only)")
+    source_pmid: str = Field(default="", description="Primary new paper this delta is based on (digits only)")
+
+    @field_validator("kind")
+    @classmethod
+    def _kind_valid(cls, v: str) -> str:
+        k = (v or "").strip().lower()
+        if k not in ("addition", "modification"):
+            raise ValueError("kind must be 'addition' or 'modification'")
+        return k
+
+    @field_validator("citations", mode="before")
+    @classmethod
+    def _cit_none(cls, v: object) -> object:
+        return [] if v is None else v
+
+    @field_validator("citations")
+    @classmethod
+    def _cit_digits(cls, v: list[str]) -> list[str]:
+        return [str(c).strip() for c in v if str(c).strip().isdigit()]
+
+
+class GuidelineSuggestionsOutput(BaseModel):
+    """Level-b deltas. Empty is a valid, common answer — most papers change nothing."""
+
+    model_config = ConfigDict(extra="ignore", str_strip_whitespace=True)
+
+    suggestions: list[GuidelineSuggestionDelta] = Field(
+        default_factory=list,
+        description="Deltas beyond the current synthesis (may be empty)",
+    )
+
+
 # Registry: key from flow_definitions.output_schema_key → Pydantic model
 PRESET_OUTPUT_SCHEMAS: dict[str, Type[BaseModel]] = {
     "ai_summary": AiSummaryOutput,
     "parent_pathway_plan": ParentPathwayPlanOutput,
     "guideline_section": GuidelineSectionOutput,
+    "guideline_triage": GuidelineTriageOutput,
+    "guideline_suggestions": GuidelineSuggestionsOutput,
 }
 
 
