@@ -36,6 +36,12 @@ describe("resolveRole", () => {
     expect(resolveRole(acct("superadmin"), "auto", true)).toBe("researcher");
   });
 
+  it("lets superadmin view-as override in production", () => {
+    expect(resolveRole(acct("superadmin"), "auto", true, "parent")).toBe("parent");
+    expect(resolveRole(acct("superadmin"), "auto", true, "doctor")).toBe("doctor");
+    expect(resolveRole(acct("superadmin"), "auto", true, "anon")).toBe("anon");
+  });
+
   it("honors a dev previewRole override (ignored in production builds)", () => {
     const expected = import.meta.env.DEV ? "doctor" : "anon";
     expect(resolveRole(null, "doctor", false)).toBe(expected);

@@ -18,6 +18,7 @@ import "../styles/guideline-synthesis.css";
 import "../styles/guideline-suggestions.css";
 import "../styles/guideline-provenance.css";
 import "../styles/guideline-baseline.css";
+import "../styles/guideline-bibliography.css";
 
 export interface GuidelinesViewProps {
   slug: string;

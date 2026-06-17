@@ -1,0 +1,392 @@
+/* AI-analyzed bibliography — bib- namespace (ported from draft12). */
+
+.page--bib {
+  padding-bottom: 60px;
+}
+
+.bib-frame {
+  margin: 18px 0 22px;
+  padding: 15px 18px;
+  border-radius: var(--r-md);
+  background: color-mix(in oklch, var(--st-blue) 6%, var(--bg-elev));
+  border: 1px solid color-mix(in oklch, var(--st-blue) 22%, var(--line));
+}
+
+.bib-frame b {
+  color: var(--ink);
+  font-size: var(--fs-md);
+}
+
+.bib-frame p {
+  margin: 5px 0 0;
+  font-size: var(--fs-sm);
+  color: var(--ink-2);
+  line-height: 1.55;
+  max-width: 78ch;
+}
+
+.bib-funnel {
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 0 0 22px;
+}
+
+.bib-funnel__step {
+  flex: 1 1 0;
+  min-width: 150px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 14px 16px;
+  border-radius: var(--r-md);
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+}
+
+.bib-funnel__step--out {
+  background: color-mix(in oklch, var(--st-green) 7%, var(--bg-elev));
+  border-color: color-mix(in oklch, var(--st-green) 26%, var(--line));
+}
+
+.bib-funnel__n {
+  font-family: var(--font-serif);
+  font-size: clamp(26px, 4vw, 34px);
+  line-height: 1;
+  color: var(--ink);
+}
+
+.bib-funnel__step--out .bib-funnel__n {
+  color: var(--st-green);
+}
+
+.bib-funnel__l {
+  font-weight: 600;
+  font-size: var(--fs-sm);
+  margin-top: 5px;
+}
+
+.bib-funnel__d {
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+}
+
+.bib-filters {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 0 0 24px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+
+.bib-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: var(--fs-sm);
+  color: var(--ink-2);
+  padding: 7px 13px;
+  border-radius: 99px;
+  border: 1px solid var(--line);
+  background: var(--bg-elev);
+  cursor: pointer;
+}
+
+.bib-chip.is-on {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--bg-elev);
+}
+
+.bib-chip.is-on b {
+  color: color-mix(in oklch, var(--bg-elev) 75%, transparent);
+}
+
+.bib-group {
+  margin: 0 0 30px;
+}
+
+.bib-group__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 13px;
+  flex-wrap: wrap;
+}
+
+.bib-group__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--line-2);
+}
+
+.bib-group__head--shelf .bib-group__dot {
+  background: var(--st-green);
+}
+
+.bib-group__head--suggestion .bib-group__dot {
+  background: var(--accent);
+}
+
+.bib-group__head--rejected .bib-group__dot {
+  background: var(--st-red);
+}
+
+.bib-group__head--low .bib-group__dot {
+  background: var(--st-amber);
+}
+
+.bib-group__title {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  font-size: var(--fs-lg);
+  margin: 0;
+}
+
+.bib-group__count {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-3);
+  padding: 2px 8px;
+  background: var(--bg-soft);
+  border-radius: 99px;
+}
+
+.bib-group__hint {
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+  font-style: italic;
+}
+
+.bib-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.bib-row {
+  display: flex;
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+
+.bib-row__rail {
+  width: 3px;
+  flex-shrink: 0;
+  background: var(--line-2);
+}
+
+.bib-row--shelf .bib-row__rail {
+  background: var(--st-green);
+}
+
+.bib-row--suggestion .bib-row__rail {
+  background: var(--accent);
+}
+
+.bib-row--rejected .bib-row__rail {
+  background: color-mix(in oklch, var(--st-red) 55%, var(--line-2));
+}
+
+.bib-row--low .bib-row__rail {
+  background: var(--st-amber);
+}
+
+.bib-row--rejected {
+  background: color-mix(in oklch, var(--bg-soft) 40%, var(--bg-elev));
+}
+
+.bib-row__main {
+  flex: 1;
+  min-width: 0;
+  padding: 14px 17px 13px;
+}
+
+.bib-row__top {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-wrap: wrap;
+  margin-bottom: 9px;
+}
+
+.bib-access {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  padding: 3px 8px;
+  border-radius: 99px;
+  border: 1px solid var(--line);
+}
+
+.bib-access--oa {
+  color: var(--st-green);
+  border-color: color-mix(in oklch, var(--st-green) 30%, var(--line));
+}
+
+.bib-row__cat {
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+}
+
+.bib-verdict {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-xs);
+  font-weight: 600;
+}
+
+.bib-verdict__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--line-2);
+}
+
+.bib-verdict--shelf .bib-verdict__dot {
+  background: var(--st-green);
+}
+
+.bib-verdict--suggestion .bib-verdict__dot {
+  background: var(--accent);
+}
+
+.bib-verdict--rejected .bib-verdict__dot {
+  background: var(--st-red);
+}
+
+.bib-row__title {
+  font-family: var(--font-serif);
+  font-size: var(--fs-md);
+  font-weight: 500;
+  margin: 0 0 6px;
+  line-height: 1.35;
+}
+
+.bib-row__cite {
+  font-size: var(--fs-sm);
+  color: var(--ink-2);
+  margin-bottom: 10px;
+}
+
+.bib-row__sep {
+  margin: 0 5px;
+  color: var(--ink-4);
+}
+
+.bib-reason {
+  padding: 10px 12px;
+  border-radius: var(--r-sm);
+  background: var(--bg-soft);
+  margin-bottom: 10px;
+}
+
+.bib-reason__lbl {
+  display: block;
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--ink-3);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 4px;
+}
+
+.bib-reason p {
+  margin: 0;
+  font-size: var(--fs-sm);
+  color: var(--ink);
+  line-height: 1.5;
+}
+
+.bib-row__foot {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  font-size: var(--fs-xs);
+}
+
+.bib-row__ref a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.bib-prob {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink-3);
+}
+
+.bib-prob__bar {
+  display: inline-block;
+  width: 56px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--line);
+  overflow: hidden;
+}
+
+.bib-prob__bar i {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+}
+
+.bib-row__link {
+  border: none;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+}
+
+.bib-foot {
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+  margin-top: 8px;
+}
+
+/* Entry link under AI suggestions (guidelines page) */
+.gx-bib-entry {
+  margin-top: 18px;
+  padding: 16px 18px;
+  border-radius: var(--r-md);
+  border: 1px dashed color-mix(in oklch, var(--accent) 35%, var(--line));
+  background: color-mix(in oklch, var(--accent) 5%, var(--bg-elev));
+}
+
+.gx-bib-entry p {
+  margin: 0 0 10px;
+  font-size: var(--fs-sm);
+  color: var(--ink-2);
+  line-height: 1.5;
+}
+
+.gx-bib-entry__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--accent);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.gx-bib-entry__btn:hover {
+  text-decoration: underline;
+}

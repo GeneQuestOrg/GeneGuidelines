@@ -53,6 +53,9 @@ export function parseHash(hash: string): Route {
       }
       return { name: "guidelines", slug };
     }
+    if (parts[2] === "bibliography") {
+      return { name: "bibliography", slug };
+    }
     if (parts.length > 2) {
       return { name: "home" };
     }

@@ -1,5 +1,6 @@
 import { apiGet, ApiRequestError } from "../api/client";
 import type { GuidelineBaseline } from "../types/guidelineBaseline";
+import type { AnalyzedPaper } from "../types/analyzedPaper";
 import type { GuidelineSuggestion } from "../types/guidelineSuggestion";
 import type { GuidelineSynthesis, SynthSectionSignal } from "../types/guidelineSynthesis";
 import type { OfficialGuideline } from "../types/officialGuideline";
@@ -114,6 +115,23 @@ export const apiOfficialGuidelineRepository: OfficialGuidelineRepository = {
     } catch (err) {
       if (err instanceof ApiRequestError && err.status === 404) {
         return null;
+      }
+      throw err;
+    }
+  },
+
+  async getBibliography(diseaseSlug: string): Promise<readonly AnalyzedPaper[]> {
+    const normalized = normalizeDiseaseSlug(diseaseSlug);
+    if (normalized == null) {
+      return [];
+    }
+    try {
+      return await apiGet<readonly AnalyzedPaper[]>(
+        `/api/diseases/${encodeURIComponent(normalized)}/bibliography`,
+      );
+    } catch (err) {
+      if (err instanceof ApiRequestError && err.status === 404) {
+        return [];
       }
       throw err;
     }

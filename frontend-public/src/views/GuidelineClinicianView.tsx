@@ -12,6 +12,7 @@ import { SynthDisclaimer } from "../components/guidelines/SynthDisclaimer";
 import { ProvenanceRow } from "../components/guidelines/ProvenanceRow";
 import { SynthSignal } from "../components/guidelines/SynthSignal";
 import { SuggestionCard } from "../components/guidelines/SuggestionCard";
+import { useBibliography } from "../hooks/useBibliography";
 import { GuidelineBaselineView } from "../components/guidelines/GuidelineBaselineView";
 import {
   citationIndex,
@@ -86,6 +87,7 @@ export function GuidelineClinicianView({
   const held = role === "doctor-unverified";
   const isResearcher = role === "researcher";
   const suggZoneRef = useRef<HTMLElement | null>(null);
+  const { papers: bibliographyPapers } = useBibliography(disease.slug);
 
   const scrollToSuggestions = () => {
     const el = suggZoneRef.current;
@@ -273,6 +275,32 @@ export function GuidelineClinicianView({
             ))}
           </div>
         )}
+        <div className="gx-bib-entry">
+          <p>
+            {rankedSuggestions.length > 0 ? (
+              <>
+                These <b>{rankedSuggestions.length}</b> suggestions are the tip of a much
+                larger analyzed corpus
+                {bibliographyPapers.length > 0 ? (
+                  <> — <b>{bibliographyPapers.length}</b> papers scored on the latest run</>
+                ) : null}
+                , including papers the engine rejected and why.
+              </>
+            ) : (
+              <>
+                See every paper the engine considered on the latest run — including
+                rejections with the AI&apos;s one-line reason.
+              </>
+            )}
+          </p>
+          <button
+            type="button"
+            className="gx-bib-entry__btn"
+            onClick={() => onNav(`/diseases/${disease.slug}/bibliography`)}
+          >
+            View analyzed bibliography →
+          </button>
+        </div>
       </section>
     </>
   );

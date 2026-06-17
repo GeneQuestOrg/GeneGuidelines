@@ -16,6 +16,7 @@ import type {
 } from "../types/doctor";
 import type { Foundation } from "../types/foundation";
 import type { GuidelineBaseline } from "../types/guidelineBaseline";
+import type { AnalyzedPaper } from "../types/analyzedPaper";
 import type { GuidelineDocument } from "../types/guidelineDocument";
 import type { GuidelineSuggestion } from "../types/guidelineSuggestion";
 import type { GuidelineSynthesis, SynthSectionSignal } from "../types/guidelineSynthesis";
@@ -97,6 +98,8 @@ export interface OfficialGuidelineRepository {
   ): Promise<Readonly<Record<string, SynthSectionSignal>>>;
   /** Level-(c) AI baseline draft (GL-5); null when a guideline exists or none built. */
   getBaseline(diseaseSlug: string): Promise<GuidelineBaseline | null>;
+  /** Analyzed corpus audit ledger (researcher); empty when no engine run yet. */
+  getBibliography(diseaseSlug: string): Promise<readonly AnalyzedPaper[]>;
 }
 
 export interface AccountRepository {

@@ -36,6 +36,21 @@
   border-color: var(--accent);
 }
 
+.account-menu__avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: color-mix(in oklch, var(--accent) 18%, var(--bg-soft));
+  color: var(--accent-ink);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  flex-shrink: 0;
+}
+
 .account-menu__email {
   max-width: 14rem;
   overflow: hidden;
@@ -106,6 +121,31 @@
 
 .account-menu__item:hover {
   background: var(--bg-soft);
+}
+
+.account-menu__item--submenu {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.account-menu__item--nested {
+  padding-left: 18px;
+  font-size: var(--fs-xs);
+}
+
+.account-menu__item.is-active {
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.account-menu__chevron {
+  color: var(--ink-3);
+  font-size: 10px;
+}
+
+.account-menu__submenu {
+  margin-bottom: 4px;
 }
 
 .account-menu__item:disabled {

@@ -9,6 +9,7 @@ import { ErrorBoundary } from "./components/ErrorBoundary";
 import { TweaksPanel } from "./components/TweaksPanel";
 import { routeContent } from "./views/routeContent";
 import { AccountProvider } from "./auth/AccountProvider";
+import { ViewAsProvider, useViewAsContext } from "./auth/viewAsContext";
 import { useAccountContext } from "./auth/accountContext";
 import { audienceForRole, resolveRole } from "./auth/resolveRole";
 import { RolePickerModal } from "./auth/RolePickerModal";
@@ -33,7 +34,9 @@ function RolePickerGate() {
 export default function App() {
   return (
     <AccountProvider>
-      <AppShell />
+      <ViewAsProvider>
+        <AppShell />
+      </ViewAsProvider>
     </AccountProvider>
   );
 }
@@ -51,12 +54,13 @@ function AppShell() {
   }, [hash]);
   const { tweaks, setTweak } = useTweaks();
   const { account, isAuthenticated } = useAccountContext();
+  const { viewAs } = useViewAsContext();
   const [authOpen, setAuthOpen] = useState(false);
   const userLoc = useMemo(
     () => userLocationFromCity(tweaks.userCity),
     [tweaks.userCity],
   );
-  const role = resolveRole(account, tweaks.previewRole, isAuthenticated);
+  const role = resolveRole(account, tweaks.previewRole, isAuthenticated, viewAs);
   const view = audienceForRole(role);
 
   const main =
