@@ -1,0 +1,100 @@
+{
+  "flow_key": "guideline_synthesis",
+  "description": "Synthesis over a curated source shelf (epistemic level a). Loads the disease's source documents + abstracts, synthesises one section per node strictly from the shelf (provenance per paragraph), and the terminal writer assembles + upserts the synthesis into the GL-4 guideline_synthesis table. The anti-hallucination critic backbone (pmid_verify / source_doc_verify / evaluation_check) is wired in GL-ENGINE-2.",
+  "nodes": [
+    {
+      "node_id": "start",
+      "node_type": "trigger",
+      "label": "Start",
+      "description": "Entry point. Receives disease_slug + section spec from the run's initial context.",
+      "prompt_mode": "agentic",
+      "max_retry": 1
+    },
+    {
+      "node_id": "gs-shelf",
+      "node_type": "guideline_shelf_load",
+      "label": "Load source shelf",
+      "description": "Read the curated source documents for the disease and fetch PubMed abstracts for PMID-bearing docs.",
+      "prompt_mode": "agentic",
+      "max_retry": 1
+    },
+    {
+      "node_id": "gs-sec-diagnosis",
+      "node_type": "prompt",
+      "label": "Synthesise: Diagnosis",
+      "description": "Diagnosis section — synthesised strictly from the shelf.",
+      "prompt_mode": "simple",
+      "output_schema_key": "guideline_section",
+      "max_retry": 2,
+      "prompt": "Synthesise the DIAGNOSIS section of a living clinical guideline for {{ context.initial.disease_name }}, using ONLY the source documents on the shelf below.\n\nSource shelf (each has docId, role, title, scope, covers, abstract):\n{{ context.gs-shelf.shelf_docs }}\n\nRules:\n- Write one short intro sentence, then 2-5 paragraphs.\n- Every paragraph MUST set source.doc to the docId of the shelf document it is drawn from. Do NOT invent facts beyond the shelf.\n- citations may list PMIDs ONLY if that PMID appears on the shelf; otherwise leave citations empty.\n- When a newer shelf document updates an older one on a point, set the paragraph's update field (doc = newer docId, note = what changed).\n- Stay at the level of patient guidance, not granular protocol/dosing.\n- Focus: how the diagnosis is established (imaging, histopathology, genetic confirmation), and what is and is not recommended at diagnosis."
+    },
+    {
+      "node_id": "gs-sec-histopathology",
+      "node_type": "prompt",
+      "label": "Synthesise: Histopathology & genetics",
+      "description": "Histopathology and genetics section — synthesised strictly from the shelf.",
+      "prompt_mode": "simple",
+      "output_schema_key": "guideline_section",
+      "max_retry": 2,
+      "prompt": "Synthesise the HISTOPATHOLOGY AND GENETICS section of a living clinical guideline for {{ context.initial.disease_name }}, using ONLY the source documents on the shelf below.\n\nSource shelf (each has docId, role, title, scope, covers, abstract):\n{{ context.gs-shelf.shelf_docs }}\n\nRules:\n- Write one short intro sentence, then 2-5 paragraphs.\n- Every paragraph MUST set source.doc to the docId of the shelf document it is drawn from. Do NOT invent facts beyond the shelf.\n- citations may list PMIDs ONLY if that PMID appears on the shelf; otherwise leave citations empty.\n- When a newer shelf document updates an older one on a point, set the paragraph's update field.\n- Stay at the level of patient guidance, not granular protocol.\n- Focus: the role of histopathology vs genetic confirmation, and the limits of each."
+    },
+    {
+      "node_id": "gs-sec-therapy",
+      "node_type": "prompt",
+      "label": "Synthesise: Therapy",
+      "description": "Therapy section — synthesised strictly from the shelf; dosing stays for the specialist.",
+      "prompt_mode": "simple",
+      "output_schema_key": "guideline_section",
+      "max_retry": 2,
+      "prompt": "Synthesise the THERAPY section of a living clinical guideline for {{ context.initial.disease_name }}, using ONLY the source documents on the shelf below.\n\nSource shelf (each has docId, role, title, scope, covers, abstract):\n{{ context.gs-shelf.shelf_docs }}\n\nRules:\n- Write one short intro sentence, then 2-5 paragraphs.\n- Every paragraph MUST set source.doc to the docId of the shelf document it is drawn from. Do NOT invent facts beyond the shelf.\n- citations may list PMIDs ONLY if that PMID appears on the shelf; otherwise leave citations empty.\n- When a newer shelf document changes a recommendation (e.g. a drug schedule), set the paragraph's update field (doc = newer docId, supersedes = older docId, note = what changed).\n- IMPORTANT: stay at the level of patient guidance. Say WHO leads treatment and WHEN to escalate; mark that medical therapy is led by a specialist, not started from a web summary. Leave granular dosing to the source document for the treating clinician.\n- Focus: when treatment is indicated, the options at a high level, and who leads it."
+    },
+    {
+      "node_id": "gs-sec-surgery",
+      "node_type": "prompt",
+      "label": "Synthesise: Indications for surgery",
+      "description": "Surgery indications section — synthesised strictly from the shelf.",
+      "prompt_mode": "simple",
+      "output_schema_key": "guideline_section",
+      "max_retry": 2,
+      "prompt": "Synthesise the INDICATIONS FOR SURGERY section of a living clinical guideline for {{ context.initial.disease_name }}, using ONLY the source documents on the shelf below.\n\nSource shelf (each has docId, role, title, scope, covers, abstract):\n{{ context.gs-shelf.shelf_docs }}\n\nRules:\n- Write one short intro sentence, then 2-5 paragraphs.\n- Every paragraph MUST set source.doc to the docId of the shelf document it is drawn from. Do NOT invent facts beyond the shelf.\n- citations may list PMIDs ONLY if that PMID appears on the shelf; otherwise leave citations empty.\n- Stay at the level of patient guidance, not granular operative technique.\n- Focus: when surgery is and is not indicated, and the compelling reasons that change that."
+    },
+    {
+      "node_id": "gs-sec-monitoring",
+      "node_type": "prompt",
+      "label": "Synthesise: Monitoring & follow-up",
+      "description": "Monitoring and follow-up section — synthesised strictly from the shelf.",
+      "prompt_mode": "simple",
+      "output_schema_key": "guideline_section",
+      "max_retry": 2,
+      "prompt": "Synthesise the MONITORING AND FOLLOW-UP section of a living clinical guideline for {{ context.initial.disease_name }}, using ONLY the source documents on the shelf below.\n\nSource shelf (each has docId, role, title, scope, covers, abstract):\n{{ context.gs-shelf.shelf_docs }}\n\nRules:\n- Write one short intro sentence, then 2-5 paragraphs.\n- Every paragraph MUST set source.doc to the docId of the shelf document it is drawn from. Do NOT invent facts beyond the shelf.\n- citations may list PMIDs ONLY if that PMID appears on the shelf; otherwise leave citations empty.\n- Stay at the level of patient guidance.\n- Focus: the surveillance schedule, what is tracked, and how often."
+    },
+    {
+      "node_id": "gs-write",
+      "node_type": "guideline_synthesis_writer",
+      "label": "Assemble + write synthesis",
+      "description": "Collect the section outputs and upsert the synthesis into the GL-4 guideline_synthesis table (terminal node).",
+      "prompt_mode": "agentic",
+      "max_retry": 1
+    },
+    {
+      "node_id": "end",
+      "node_type": "end",
+      "label": "End",
+      "prompt_mode": "agentic"
+    }
+  ],
+  "edges": [
+    {"source_node_id": "start", "target_node_id": "gs-shelf"},
+    {"source_node_id": "gs-shelf", "target_node_id": "gs-sec-diagnosis"},
+    {"source_node_id": "gs-shelf", "target_node_id": "gs-sec-histopathology"},
+    {"source_node_id": "gs-shelf", "target_node_id": "gs-sec-therapy"},
+    {"source_node_id": "gs-shelf", "target_node_id": "gs-sec-surgery"},
+    {"source_node_id": "gs-shelf", "target_node_id": "gs-sec-monitoring"},
+    {"source_node_id": "gs-sec-diagnosis", "target_node_id": "gs-write"},
+    {"source_node_id": "gs-sec-histopathology", "target_node_id": "gs-write"},
+    {"source_node_id": "gs-sec-therapy", "target_node_id": "gs-write"},
+    {"source_node_id": "gs-sec-surgery", "target_node_id": "gs-write"},
+    {"source_node_id": "gs-sec-monitoring", "target_node_id": "gs-write"},
+    {"source_node_id": "gs-write", "target_node_id": "end"}
+  ]
+}
