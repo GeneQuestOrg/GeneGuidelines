@@ -5,9 +5,11 @@ from .agentic_prompt_executor import AgenticPromptExecutor
 from .code_executor import CodeExecutor
 from .decision_executor import DecisionExecutor
 from .evaluation_check_executor import EvaluationCheckExecutor
+from .guideline_monitor_search_executor import GuidelineMonitorSearchExecutor
 from .guideline_shelf_load_executor import GuidelineShelfLoadExecutor
 from .guideline_shelf_search_executor import GuidelineShelfSearchExecutor
 from .guideline_shelf_write_executor import GuidelineShelfWriteExecutor
+from .guideline_suggestion_writer_executor import GuidelineSuggestionWriterExecutor
 from .guideline_synthesis_writer_executor import GuidelineSynthesisWriterExecutor
 from .guidelines_rag_executor import GuidelinesRagExecutor
 from .http_executor import HttpExecutor
@@ -32,9 +34,11 @@ EXECUTOR_REGISTRY = {
     "pmid_verify": PmidVerifierExecutor,
     "pmid_scrub": PmidScrubberExecutor,
     "evaluation_check": EvaluationCheckExecutor,
+    "guideline_monitor_search": GuidelineMonitorSearchExecutor,
     "guideline_shelf_load": GuidelineShelfLoadExecutor,
     "guideline_shelf_search": GuidelineShelfSearchExecutor,
     "guideline_shelf_write": GuidelineShelfWriteExecutor,
+    "guideline_suggestion_writer": GuidelineSuggestionWriterExecutor,
     "guideline_synthesis_writer": GuidelineSynthesisWriterExecutor,
     "merge": MergeExecutor,
     "approval": ApprovalExecutor,

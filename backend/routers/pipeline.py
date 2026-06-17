@@ -487,6 +487,53 @@ async def start_guideline_shelf_run(slug: str):
     )
 
 
+@router.post(
+    "/diseases/{slug}/guideline-suggestions/run",
+    dependencies=[Depends(require_api_key_if_set)],
+)
+async def start_guideline_suggestions_run(slug: str):
+    """Run the level-b monitor (step 3) for a catalog disease.
+
+    Requires an existing synthesis. Finds recent literature beyond the shelf,
+    triages it against current guidance, and proposes deltas (additions /
+    modifications) into ``guideline_suggestions`` (gate=expert). Read back from
+    ``GET /api/diseases/{slug}/guideline-suggestions``.
+    """
+    slug_norm = (slug or "").strip().lower()
+    if not slug_norm:
+        raise HTTPException(status_code=400, detail="disease slug is required")
+
+    loop = asyncio.get_event_loop()
+    disease = await loop.run_in_executor(
+        None, lambda: get_disease_by_slug(slug_norm, include_prompt_profile=False)
+    )
+    if disease is None:
+        raise HTTPException(status_code=404, detail=f"Disease '{slug_norm}' not found in catalog.")
+
+    label = f"Suggestions · {str(disease['name']).strip()}"
+    ticket_id = await loop.run_in_executor(
+        None,
+        lambda: db.create_ticket(
+            title=label,
+            description=f"Level-b monitor (recent literature → deltas) for {disease['name']}.",
+            reporter_name="GeneGuidelines",
+            category="guideline_suggestions",
+        ),
+    )
+    disease_initial = {
+        "disease_slug": slug_norm,
+        "disease_name": str(disease["name"]).strip(),
+    }
+    return await agent_router.start_agent_run(
+        ticket_id,
+        flow_key="guideline_suggestions",
+        profile=DEFAULT_MODEL_PROFILE,
+        label=label,
+        pipeline="guideline",
+        disease_initial=disease_initial,
+    )
+
+
 class OfficialGuidelinesRunBody(BaseModel):
     """Start the find-the-consensus workflow for one disease."""
 
