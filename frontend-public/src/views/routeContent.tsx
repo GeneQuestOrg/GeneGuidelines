@@ -7,6 +7,7 @@ import { DiseaseIndexView } from "./DiseaseIndexView";
 import { PlaceholderView } from "./PlaceholderView";
 import { AboutView } from "./AboutView";
 import { BibliographyView } from "./BibliographyView";
+import { GuidelinesView } from "./GuidelinesView";
 import { FlowchartView } from "./FlowchartView";
 import { DoctorsView } from "./DoctorsView";
 import { DoctorProfileView } from "./DoctorProfileView";
