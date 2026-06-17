@@ -6,6 +6,7 @@ from .code_executor import CodeExecutor
 from .decision_executor import DecisionExecutor
 from .evaluation_check_executor import EvaluationCheckExecutor
 from .guideline_shelf_load_executor import GuidelineShelfLoadExecutor
+from .guideline_source_verify_executor import GuidelineSourceVerifyExecutor
 from .guideline_synthesis_writer_executor import GuidelineSynthesisWriterExecutor
 from .guidelines_rag_executor import GuidelinesRagExecutor
 from .http_executor import HttpExecutor
@@ -31,6 +32,7 @@ EXECUTOR_REGISTRY = {
     "pmid_scrub": PmidScrubberExecutor,
     "evaluation_check": EvaluationCheckExecutor,
     "guideline_shelf_load": GuidelineShelfLoadExecutor,
+    "guideline_source_verify": GuidelineSourceVerifyExecutor,
     "guideline_synthesis_writer": GuidelineSynthesisWriterExecutor,
     "merge": MergeExecutor,
     "approval": ApprovalExecutor,

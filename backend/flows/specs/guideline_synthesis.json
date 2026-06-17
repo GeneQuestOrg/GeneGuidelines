@@ -69,10 +69,18 @@
       "prompt": "Synthesise the MONITORING AND FOLLOW-UP section of a living clinical guideline for {{ context.initial.disease_name }}, using ONLY the source documents on the shelf below.\n\nSource shelf (each has docId, role, title, scope, covers, abstract):\n{{ context.gs-shelf.shelf_docs }}\n\nRules:\n- Write one short intro sentence, then 2-5 paragraphs.\n- Every paragraph MUST set source.doc to the docId of the shelf document it is drawn from. Do NOT invent facts beyond the shelf.\n- citations may list PMIDs ONLY if that PMID appears on the shelf; otherwise leave citations empty.\n- Stay at the level of patient guidance.\n- Focus: the surveillance schedule, what is tracked, and how often."
     },
     {
+      "node_id": "gs-srcverify",
+      "node_type": "guideline_source_verify",
+      "label": "Verify provenance against the shelf",
+      "description": "Deterministic anti-hallucination guard: flag any paragraph whose source.doc is not a shelf document or whose citation is not a shelf PMID. Flags for visibility; the writer enforces the same constraint at persistence.",
+      "prompt_mode": "agentic",
+      "max_retry": 1
+    },
+    {
       "node_id": "gs-write",
       "node_type": "guideline_synthesis_writer",
       "label": "Assemble + write synthesis",
-      "description": "Collect the section outputs and upsert the synthesis into the GL-4 guideline_synthesis table (terminal node).",
+      "description": "Collect the section outputs, drop off-shelf paragraphs/citations, and upsert the synthesis into the GL-4 guideline_synthesis table (terminal node).",
       "prompt_mode": "agentic",
       "max_retry": 1
     },
@@ -90,11 +98,12 @@
     {"source_node_id": "gs-shelf", "target_node_id": "gs-sec-therapy"},
     {"source_node_id": "gs-shelf", "target_node_id": "gs-sec-surgery"},
     {"source_node_id": "gs-shelf", "target_node_id": "gs-sec-monitoring"},
-    {"source_node_id": "gs-sec-diagnosis", "target_node_id": "gs-write"},
-    {"source_node_id": "gs-sec-histopathology", "target_node_id": "gs-write"},
-    {"source_node_id": "gs-sec-therapy", "target_node_id": "gs-write"},
-    {"source_node_id": "gs-sec-surgery", "target_node_id": "gs-write"},
-    {"source_node_id": "gs-sec-monitoring", "target_node_id": "gs-write"},
+    {"source_node_id": "gs-sec-diagnosis", "target_node_id": "gs-srcverify"},
+    {"source_node_id": "gs-sec-histopathology", "target_node_id": "gs-srcverify"},
+    {"source_node_id": "gs-sec-therapy", "target_node_id": "gs-srcverify"},
+    {"source_node_id": "gs-sec-surgery", "target_node_id": "gs-srcverify"},
+    {"source_node_id": "gs-sec-monitoring", "target_node_id": "gs-srcverify"},
+    {"source_node_id": "gs-srcverify", "target_node_id": "gs-write"},
     {"source_node_id": "gs-write", "target_node_id": "end"}
   ]
 }

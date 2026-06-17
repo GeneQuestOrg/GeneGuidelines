@@ -62,8 +62,12 @@ class GuidelineSynthesisWriterExecutor(NodeExecutor):
         shelf = context.get("gs-shelf") if isinstance(context.get("gs-shelf"), dict) else {}
         shelf_docs = shelf.get("shelf_docs") or []
         source_ids = [str(d.get("docId")) for d in shelf_docs if isinstance(d, dict) and d.get("docId")]
+        shelf_doc_ids = set(source_ids)
+        shelf_pmids = {str(p).strip() for p in (shelf.get("shelf_pmids") or []) if str(p).strip()}
 
-        sections = self._collect_sections(context, section_specs)
+        sections, enforcement = self._collect_sections(
+            context, section_specs, shelf_doc_ids, shelf_pmids
+        )
         if not sections:
             return NodeOutput(
                 data={"ok": False, "error": "no section nodes produced paragraphs; nothing to write."}
@@ -98,19 +102,38 @@ class GuidelineSynthesisWriterExecutor(NodeExecutor):
             return NodeOutput(data={"ok": False, "error": f"synthesis upsert failed: {exc}"})
 
         return NodeOutput(
-            data={"ok": True, "slug": slug, "sectionCount": len(sections), "sourceCount": len(source_ids)}
+            data={
+                "ok": True,
+                "slug": slug,
+                "sectionCount": len(sections),
+                "sourceCount": len(source_ids),
+                "droppedParagraphs": enforcement["dropped_paragraphs"],
+                "droppedCitations": enforcement["dropped_citations"],
+            }
         )
 
-    def _collect_sections(self, context: dict, section_specs: list[dict]) -> list[dict]:
-        """Assemble sections in spec order from ``gs-sec-<id>`` node outputs."""
+    def _collect_sections(
+        self,
+        context: dict,
+        section_specs: list[dict],
+        shelf_doc_ids: set[str],
+        shelf_pmids: set[str],
+    ) -> tuple[list[dict], dict]:
+        """Assemble sections in spec order from ``gs-sec-<id>`` node outputs.
+
+        Enforces shelf-grounding (anti-hallucination): a paragraph whose
+        ``source.doc`` is not on the shelf is dropped; citations not on the shelf
+        are scrubbed. Returns the sections + a count of what enforcement removed.
+        """
         sections: list[dict] = []
+        stats = {"dropped_paragraphs": 0, "dropped_citations": 0}
         for spec in section_specs:
             sid = spec["id"]
             out = context.get(f"gs-sec-{sid}")
             if not isinstance(out, dict):
                 log.info("guideline_synthesis_writer: section %s missing from context — skipping", sid)
                 continue
-            paragraphs = _clean_paragraphs(out.get("paragraphs"))
+            paragraphs = _clean_paragraphs(out.get("paragraphs"), shelf_doc_ids, shelf_pmids, stats)
             if not paragraphs:
                 log.info("guideline_synthesis_writer: section %s has no valid paragraphs — skipping", sid)
                 continue
@@ -122,7 +145,13 @@ class GuidelineSynthesisWriterExecutor(NodeExecutor):
                     "paragraphs": paragraphs,
                 }
             )
-        return sections
+        if stats["dropped_paragraphs"] or stats["dropped_citations"]:
+            log.info(
+                "guideline_synthesis_writer: enforcement dropped %d off-shelf paragraph(s), %d off-shelf citation(s)",
+                stats["dropped_paragraphs"],
+                stats["dropped_citations"],
+            )
+        return sections, stats
 
 
 def _normalize_section_specs(raw) -> list[dict]:
@@ -138,8 +167,17 @@ def _normalize_section_specs(raw) -> list[dict]:
     return specs
 
 
-def _clean_paragraphs(raw) -> list[dict]:
-    """Keep only structurally valid paragraphs (must carry a source.doc)."""
+def _clean_paragraphs(
+    raw, shelf_doc_ids: set[str], shelf_pmids: set[str], stats: dict
+) -> list[dict]:
+    """Keep only shelf-grounded paragraphs; scrub off-shelf citations.
+
+    A paragraph must carry a ``source.doc``; when a shelf is present that doc must
+    be on it (else the paragraph is dropped as unverifiable). Citations are kept
+    only when they are PMIDs present on the shelf. ``stats`` accumulates how many
+    paragraphs / citations enforcement removed.
+    """
+    have_shelf = bool(shelf_doc_ids)
     out: list[dict] = []
     if not isinstance(raw, list):
         return out
@@ -150,12 +188,27 @@ def _clean_paragraphs(raw) -> list[dict]:
         doc = str(source.get("doc") or "").strip()
         text = str(p.get("text") or "").strip()
         if not doc or not text:
+            stats["dropped_paragraphs"] += 1
             continue
+        if have_shelf and doc not in shelf_doc_ids:
+            # source.doc cites a document not on the shelf — unverifiable, drop it.
+            stats["dropped_paragraphs"] += 1
+            continue
+        citations: list[str] = []
+        for c in p.get("citations") or []:
+            cit = str(c).strip()
+            if not cit.isdigit():
+                stats["dropped_citations"] += 1
+                continue
+            if have_shelf and cit not in shelf_pmids:
+                stats["dropped_citations"] += 1
+                continue
+            citations.append(cit)
         para = {
             "id": str(p.get("id") or "").strip() or f"p{len(out) + 1}",
             "text": text,
             "source": {"doc": doc, "loc": str(source.get("loc") or "").strip()},
-            "citations": [str(c).strip() for c in (p.get("citations") or []) if str(c).strip().isdigit()],
+            "citations": citations,
         }
         upd = p.get("update")
         if isinstance(upd, dict) and str(upd.get("doc") or "").strip():

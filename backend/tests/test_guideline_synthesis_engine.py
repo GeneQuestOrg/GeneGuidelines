@@ -23,6 +23,7 @@ from backend.agents.schemas import PRESET_OUTPUT_SCHEMAS, GuidelineSectionOutput
 from backend.executors import EXECUTOR_REGISTRY
 from backend.executors.base import NodeInput
 from backend.executors.guideline_shelf_load_executor import GuidelineShelfLoadExecutor
+from backend.executors.guideline_source_verify_executor import GuidelineSourceVerifyExecutor
 from backend.executors.guideline_synthesis_writer_executor import (
     GuidelineSynthesisWriterExecutor,
 )
@@ -282,6 +283,7 @@ def test_synthesis_writer_drops_paragraph_without_source(repo: SqlaGuidelinesRep
 
 def test_executors_registered() -> None:
     assert EXECUTOR_REGISTRY["guideline_shelf_load"] is GuidelineShelfLoadExecutor
+    assert EXECUTOR_REGISTRY["guideline_source_verify"] is GuidelineSourceVerifyExecutor
     assert EXECUTOR_REGISTRY["guideline_synthesis_writer"] is GuidelineSynthesisWriterExecutor
 
 
@@ -293,21 +295,87 @@ def test_flow_spec_is_valid_and_connected() -> None:
     assert spec["flow_key"] == "guideline_synthesis"
 
     nodes = {n["node_id"]: n for n in spec["nodes"]}
-    # Section nodes use the simple-mode preset; writer + shelf are custom executors.
+    # Section nodes use the simple-mode preset; shelf/verify/writer are custom executors.
     assert nodes["gs-shelf"]["node_type"] == "guideline_shelf_load"
+    assert nodes["gs-srcverify"]["node_type"] == "guideline_source_verify"
     assert nodes["gs-write"]["node_type"] == "guideline_synthesis_writer"
-    for sid in ("diagnosis", "histopathology", "therapy", "surgery", "monitoring"):
+    sec_ids = ("diagnosis", "histopathology", "therapy", "surgery", "monitoring")
+    for sid in sec_ids:
         node = nodes[f"gs-sec-{sid}"]
         assert node["node_type"] == "prompt"
         assert node["prompt_mode"] == "simple"
         assert node["output_schema_key"] == "guideline_section"
 
     # Every edge endpoint is a real node; shelf fans out to all sections, which
-    # fan in to the writer.
+    # fan in to the verifier, which feeds the writer.
     for e in spec["edges"]:
         assert e["source_node_id"] in nodes
         assert e["target_node_id"] in nodes
     sec_targets = {e["target_node_id"] for e in spec["edges"] if e["source_node_id"] == "gs-shelf"}
-    assert sec_targets == {f"gs-sec-{s}" for s in ("diagnosis", "histopathology", "therapy", "surgery", "monitoring")}
-    writers = {e["source_node_id"] for e in spec["edges"] if e["target_node_id"] == "gs-write"}
-    assert writers == {f"gs-sec-{s}" for s in ("diagnosis", "histopathology", "therapy", "surgery", "monitoring")}
+    assert sec_targets == {f"gs-sec-{s}" for s in sec_ids}
+    verifier_feeders = {e["source_node_id"] for e in spec["edges"] if e["target_node_id"] == "gs-srcverify"}
+    assert verifier_feeders == {f"gs-sec-{s}" for s in sec_ids}
+    writer_feeders = {e["source_node_id"] for e in spec["edges"] if e["target_node_id"] == "gs-write"}
+    assert writer_feeders == {"gs-srcverify"}
+
+
+# ── GL-ENGINE-2: source_doc_verify (flags) + writer enforcement ────────────
+
+
+def test_source_verify_flags_off_shelf_doc_and_citation() -> None:
+    context = {
+        "gs-shelf": {"shelf_docs": [{"docId": "boyce2019"}], "shelf_pmids": ["31196103"]},
+        "gs-sec-diagnosis": {
+            "id": "diagnosis",
+            "paragraphs": [
+                {"id": "ok", "text": "t", "source": {"doc": "boyce2019"}, "citations": ["31196103"]},
+                {"id": "bad-doc", "text": "t", "source": {"doc": "ghost2099"}, "citations": []},
+                {"id": "bad-cit", "text": "t", "source": {"doc": "boyce2019"}, "citations": ["99999999"]},
+            ],
+        },
+    }
+    ex = GuidelineSourceVerifyExecutor()
+    out = asyncio.run(ex.execute(NodeInput(node_config={}, context=context, initial_data={})))
+    assert out.data["ok"] is True
+    assert out.data["issues_found"] is True
+    codes = sorted(i["code"] for i in out.data["issues"])
+    assert codes == ["citation_not_on_shelf", "source_doc_not_on_shelf"]
+    assert out.data["sections_checked"] == 1
+
+
+def test_source_verify_clean_synthesis_has_no_flags() -> None:
+    context = {
+        "gs-shelf": {"shelf_docs": [{"docId": "boyce2019"}], "shelf_pmids": ["31196103"]},
+        "gs-sec-diagnosis": _section_output("diagnosis", "boyce2019", "31196103"),
+    }
+    ex = GuidelineSourceVerifyExecutor()
+    out = asyncio.run(ex.execute(NodeInput(node_config={}, context=context, initial_data={})))
+    assert out.data["issues_found"] is False
+    assert out.data["total_flags"] == 0
+
+
+def test_writer_enforces_shelf_membership(repo: SqlaGuidelinesRepo) -> None:
+    section = {
+        "id": "diagnosis",
+        "intro": "x",
+        "paragraphs": [
+            {"id": "keep", "text": "kept", "source": {"doc": "boyce2019"}, "citations": ["31196103", "99999999"]},
+            {"id": "ghost", "text": "off-shelf", "source": {"doc": "ghost2099"}, "citations": []},
+        ],
+    }
+    context = {
+        "gs-shelf": {"shelf_docs": [{"docId": "boyce2019"}], "shelf_pmids": ["31196103"]},
+        "gs-sec-diagnosis": section,
+    }
+    initial = {"disease_slug": "fd", "disease_name": "FD", "sections": [{"id": "diagnosis", "title": "Dx"}]}
+    ex = GuidelineSynthesisWriterExecutor(repo=repo)
+    out = asyncio.run(ex.execute(NodeInput(node_config={}, context=context, initial_data=initial)))
+    # one off-shelf paragraph dropped, one off-shelf citation scrubbed.
+    assert out.data["droppedParagraphs"] == 1
+    assert out.data["droppedCitations"] == 1
+
+    syn = repo.get_synthesis("fd")
+    assert syn is not None
+    paras = syn.sections[0]["paragraphs"]
+    assert [p["id"] for p in paras] == ["keep"]  # ghost2099 paragraph gone
+    assert paras[0]["citations"] == ["31196103"]  # off-shelf PMID scrubbed
