@@ -187,3 +187,184 @@ def test_pmid_citations_are_capped_and_deduped():
     assert len(citations) == 30
     assert citations == sorted(citations, key=int)
     assert len(set(citations)) == len(citations)
+
+
+def test_appends_full_draft_fallback_when_structured_output_is_sparse():
+    output = {
+        "disease_name": "Sparse Disease",
+        "guideline_html": (
+            "<h3>Complete draft</h3><p>Longer blob from the pipeline "
+            "(PMID: 12345678).</p>"
+        ),
+        "diagnostic_algorithm_html": "<p>Only one mapped section.</p>",
+        "treatment_steps_html": "",
+        "monitoring_protocol_html": "",
+        "red_flags_html": "",
+        "follow_up_schedule_html": "",
+        "evidence_gaps_html": "",
+        "article_count": 12,
+        "evidence_score": 55,
+    }
+    payload = build_ai_draft_document_payload(
+        disease_slug="sparse-disease",
+        disease_name="Sparse Disease",
+        output_json=output,
+        execution_id="abc",
+    )
+    section_ids = [s["id"] for s in payload["sections"]]
+    assert section_ids == ["diagnostics", "full-draft"]
+    full = payload["sections"][-1]
+    assert full["title"] == "Full Draft (raw pipeline output)"
+    assert full["paragraphs"][0]["id"] == "ai-full-draft-1"
+    assert full["paragraphs"][0]["citations"] == ["12345678"]
+
+
+def test_does_not_append_full_draft_when_structured_sections_are_rich():
+    rich_text = "<p>" + ("A" * 450) + "</p>"
+    output = {
+        "disease_name": "Rich Disease",
+        "guideline_html": "<p>Complete guideline blob.</p>",
+        "diagnostic_algorithm_html": rich_text,
+        "treatment_steps_html": rich_text,
+        "monitoring_protocol_html": rich_text,
+        "red_flags_html": "",
+        "follow_up_schedule_html": "",
+        "evidence_gaps_html": "",
+        "article_count": 80,
+        "evidence_score": 70,
+    }
+    payload = build_ai_draft_document_payload(
+        disease_slug="rich-disease",
+        disease_name="Rich Disease",
+        output_json=output,
+        execution_id="abc",
+    )
+    section_ids = [s["id"] for s in payload["sections"]]
+    assert section_ids == ["diagnostics", "treatment", "monitoring"]
+
+
+def test_appends_full_draft_fallback_when_exactly_two_structured_sections():
+    output = {
+        "disease_name": "Two Section Disease",
+        "guideline_html": "<p>Complete blob.</p>",
+        "diagnostic_algorithm_html": "<p>Diagnostic section.</p>",
+        "treatment_steps_html": "<p>Treatment section.</p>",
+        "monitoring_protocol_html": "",
+        "red_flags_html": "",
+        "follow_up_schedule_html": "",
+        "evidence_gaps_html": "",
+        "article_count": 10,
+        "evidence_score": 40,
+    }
+    payload = build_ai_draft_document_payload(
+        disease_slug="two-section-disease",
+        disease_name="Two Section Disease",
+        output_json=output,
+        execution_id="abc",
+    )
+    section_ids = [s["id"] for s in payload["sections"]]
+    assert section_ids == ["diagnostics", "treatment", "full-draft"]
+
+
+def test_bracket_refs_produce_no_citations():
+    """Bracket notation [14, 80] is an ordinal reference number, not a PMID.
+
+    The extractor correctly returns nothing for bracket-only HTML. Callers that
+    need PMIDs from bracket-style sections must either:
+      - embed explicit `PMID: xxxxx` markers in the section HTML, or
+      - rely on the references/evidence-gaps section where explicit PMIDs appear.
+    This test pins that behaviour so it is not accidentally 'fixed' in a way
+    that maps arbitrary numbers to invalid PMIDs.
+    """
+    bracket_html = (
+        "<p>Spinal muscular atrophy (SMA) is caused by SMN1 deletions [14, 80].</p>"
+        "<p>Nusinersen demonstrated survival benefit in infantile-onset SMA [42, 55].</p>"
+        "<p>Newborn screening improves outcomes [1].</p>"
+    )
+    output = {
+        "disease_name": "Spinal Muscular Atrophy",
+        "guideline_html": bracket_html,
+        "diagnostic_algorithm_html": bracket_html,
+        "treatment_steps_html": "",
+        "monitoring_protocol_html": "",
+        "red_flags_html": "",
+        "follow_up_schedule_html": "",
+        "evidence_gaps_html": "",
+        "article_count": 4,
+        "evidence_score": 72,
+    }
+    payload = build_ai_draft_document_payload(
+        disease_slug="sma",
+        disease_name="Spinal Muscular Atrophy",
+        output_json=output,
+        execution_id="test-bracket",
+    )
+    # Bracket refs [N] are not PMIDs; no citations should be extracted.
+    citations = payload["sections"][0]["paragraphs"][0]["citations"]
+    assert citations == [], (
+        "Bracket refs like [14, 80] are reference numbers, not PMIDs. "
+        "Extracting them would produce invalid PMID values."
+    )
+
+
+def test_pmids_extracted_from_references_section():
+    """When bracket-style sections have no PMIDs, the references/evidence-gaps
+    section typically does.  Verify PMIDs extracted there appear in citations."""
+    refs_html = (
+        "<ol>"
+        "<li>Finkel RS et al. Nusinersen vs Sham. N Engl J Med. "
+        "PMID: 29091570</li>"
+        "<li>Mercuri E et al. Nusinersen in type 2/3 SMA. N Engl J Med. "
+        "<a href='https://pubmed.ncbi.nlm.nih.gov/29091571/'>PMID: 29091571</a></li>"
+        "</ol>"
+    )
+    output = {
+        "disease_name": "SMA",
+        "guideline_html": "<p>See references section.</p>",
+        "diagnostic_algorithm_html": "<p>Genetic testing [1].</p>",
+        "treatment_steps_html": "<p>Nusinersen [2].</p>",
+        "monitoring_protocol_html": "<p>Quarterly review [3].</p>",
+        "red_flags_html": "",
+        "follow_up_schedule_html": "",
+        "evidence_gaps_html": refs_html,
+        "article_count": 80,
+        "evidence_score": 78,
+    }
+    payload = build_ai_draft_document_payload(
+        disease_slug="sma",
+        disease_name="SMA",
+        output_json=output,
+        execution_id="test-refs",
+    )
+    by_id = {s["id"]: s for s in payload["sections"]}
+    # Individual sections with bracket-only refs → no citations.
+    assert by_id["diagnostics"]["paragraphs"][0]["citations"] == []
+    assert by_id["treatment"]["paragraphs"][0]["citations"] == []
+    # References section has explicit PMIDs → extracted correctly.
+    ref_citations = by_id["evidence-gaps"]["paragraphs"][0]["citations"]
+    assert "29091570" in ref_citations
+    assert "29091571" in ref_citations
+
+
+def test_full_draft_only_when_all_mapped_sections_are_empty():
+    output = {
+        "disease_name": "Only HTML Disease",
+        "guideline_html": "<p>Complete blob. PMID: 11111111.</p>",
+        "diagnostic_algorithm_html": "",
+        "treatment_steps_html": "",
+        "monitoring_protocol_html": "",
+        "red_flags_html": "",
+        "follow_up_schedule_html": "",
+        "evidence_gaps_html": "",
+        "article_count": 5,
+        "evidence_score": 30,
+    }
+    payload = build_ai_draft_document_payload(
+        disease_slug="only-html-disease",
+        disease_name="Only HTML Disease",
+        output_json=output,
+        execution_id="abc",
+    )
+    section_ids = [s["id"] for s in payload["sections"]]
+    assert section_ids == ["full-draft"]
+    assert payload["sections"][0]["paragraphs"][0]["citations"] == ["11111111"]
