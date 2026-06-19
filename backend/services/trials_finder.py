@@ -36,7 +36,7 @@ from ._model_resolver import (
 log = logging.getLogger(__name__)
 
 _CT_GOV_API = "https://clinicaltrials.gov/api/v2/studies"
-_MAX_STUDIES = 8
+_MAX_STUDIES = 20
 # Smaller LLM batches finish faster on remote Gemma; one slow batch must not lose all trials.
 _EXTRACT_BATCH_SIZE = 2
 _EXTRACT_MAX_RETRIES = 1

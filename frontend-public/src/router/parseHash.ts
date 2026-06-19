@@ -50,6 +50,12 @@ export function parseHash(hash: string): Route {
       }
       return { name: "guidelines", slug };
     }
+    if (parts[2] === "therapies") {
+      return { name: "diseaseTherapies", slug };
+    }
+    if (parts[2] === "trials") {
+      return { name: "diseaseTrials", slug };
+    }
     if (parts.length > 2) {
       return { name: "home" };
     }

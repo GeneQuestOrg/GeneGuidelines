@@ -35,8 +35,8 @@ from ._model_resolver import (
 log = logging.getLogger(__name__)
 
 _PUBMED = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils"
-_MAX_REVIEWS = 6
-_EXTRACT_BATCH_SIZE = 2
+_MAX_REVIEWS = 15
+_EXTRACT_BATCH_SIZE = 3
 _EXTRACT_MAX_RETRIES = 1
 
 
@@ -77,7 +77,7 @@ Rules:
   under the broader name unless the specifics differ.
 - Sort order: 10 for first-line consensus drugs, 20 for second-line, 30 for adjunct,
   100 (default) for everything else. Lower numbers surface first in the UI.
-- Return 0–8 therapies. Quality over quantity.
+- Return 0–12 therapies per batch. Quality over quantity; omit speculative entries.
 """
 
 
@@ -143,7 +143,7 @@ async def _extract_batch_with_gemma(
     user_prompt = (
         f"Disease: {disease_name}\n\n"
         f"PubMed reviews (excerpts):\n\n{bundle}\n\n"
-        "Extract therapy lines per the rules. Up to 8."
+        "Extract therapy lines per the rules. Up to 12."
     )
     last_exc: Exception | None = None
     for attempt in range(_EXTRACT_MAX_RETRIES + 1):

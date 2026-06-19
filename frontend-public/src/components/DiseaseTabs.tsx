@@ -10,6 +10,7 @@ import { FoundationsList } from "./FoundationsList";
 import { PrivateContextPanel } from "./PrivateContextPanel";
 import { TherapiesList } from "./TherapiesList";
 import { TrialsList } from "./TrialsList";
+import { PreviewSection } from "./PreviewSection";
 import { useContentPrs } from "../hooks/useContentPrs";
 import { useDiseaseDoctors } from "../hooks/useDiseaseDoctors";
 import { useDiseaseFoundations } from "../hooks/useDiseaseFoundations";
@@ -74,6 +75,8 @@ export function DiseaseTabs({
     loading: foundationsLoading,
     error: foundationsError,
   } = useDiseaseFoundations(slug);
+
+  const PREVIEW_MAX = 4;
 
   const previewDoctors = useMemo(() => {
     if (doctorsPayload == null) {
@@ -155,7 +158,16 @@ export function DiseaseTabs({
               </Section>
             ) : null}
 
-            <Section title={copy.trialsTitle} sub={copy.trialsSub(trials.length)} divider>
+            <PreviewSection
+              title={copy.trialsTitle}
+              sub={copy.trialsSub(trials.length)}
+              divider
+              totalCount={trials.length}
+              previewMax={PREVIEW_MAX}
+              seeAllPath={`/diseases/${slug}/trials`}
+              seeAllLabel={`View all ${trials.length} trials →`}
+              onNav={onNav}
+            >
               {trialsError != null ? (
                 <p className="d-panel-empty" role="alert">{trialsError}</p>
               ) : trialsLoading ? (
@@ -163,11 +175,19 @@ export function DiseaseTabs({
               ) : trials.length === 0 ? (
                 <p className="d-panel-empty">No active trials matching this disease right now.</p>
               ) : (
-                <TrialsList trials={trials} />
+                <TrialsList trials={trials.slice(0, PREVIEW_MAX)} />
               )}
-            </Section>
+            </PreviewSection>
 
-            <Section title="Therapies" divider>
+            <PreviewSection
+              title="Therapies"
+              divider
+              totalCount={therapies.length}
+              previewMax={PREVIEW_MAX}
+              seeAllPath={`/diseases/${slug}/therapies`}
+              seeAllLabel={`View all ${therapies.length} therapies →`}
+              onNav={onNav}
+            >
               <p className="d-panel-note">
                 These options manage symptoms and slow progression — none of them fully reverses
                 established disease changes.
@@ -177,9 +197,9 @@ export function DiseaseTabs({
               ) : therapiesLoading ? (
                 <p className="d-panel-empty">Loading therapies…</p>
               ) : (
-                <TherapiesList therapies={therapies} />
+                <TherapiesList therapies={therapies.slice(0, PREVIEW_MAX)} />
               )}
-            </Section>
+            </PreviewSection>
 
             <Section title="Supporting foundations" divider>
               {foundationsError != null ? (

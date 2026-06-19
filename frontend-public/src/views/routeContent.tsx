@@ -14,6 +14,7 @@ import { JoinView } from "./JoinView";
 import { ResearchRunView } from "./ResearchRunView";
 import { StartResearchView } from "./StartResearchView";
 import { TrialsView } from "./TrialsView";
+import { DiseaseItemsListView } from "./DiseaseItemsListView";
 
 export interface RouteContentProps {
   route: Route;
@@ -76,6 +77,10 @@ export function routeContent({
       );
     case "trials":
       return <TrialsView initialQuery={route.query} onNav={onNav} />;
+    case "diseaseTherapies":
+      return <DiseaseItemsListView slug={route.slug} type="therapies" onNav={onNav} />;
+    case "diseaseTrials":
+      return <DiseaseItemsListView slug={route.slug} type="trials" onNav={onNav} />;
     case "flowchart":
       return <FlowchartView slug={route.slug} onNav={onNav} />;
     case "guidelines":

@@ -140,7 +140,7 @@ async def _start_doctor_finder(
         disease_name=disease_name,
         max_results=120,
         clinical_focus=True,
-        top_n_authors=20,
+        top_n_authors=100,
     )
     asyncio.create_task(
         df_router._execute_doctor_finder(execution_id, input_data, event_queue)
