@@ -36,7 +36,7 @@ log = logging.getLogger(__name__)
 
 _PUBMED = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils"
 _MAX_REVIEWS = 15
-_EXTRACT_BATCH_SIZE = 2
+_EXTRACT_BATCH_SIZE = 5
 _EXTRACT_MAX_RETRIES = 1
 
 
@@ -78,6 +78,8 @@ Rules:
   under the broader name unless the specifics differ.
 - Sort order: 10 for first-line consensus drugs, 20 for second-line, 30 for adjunct,
   100 (default) for everything else. Lower numbers surface first in the UI.
+- ``pmids``: list every PMID that supports this therapy line. Copy them from the
+  [PMID XXXXXX] markers in the input — do not invent PMIDs.
 - Return 0–8 therapies. Quality over quantity.
 """
 
@@ -249,7 +251,8 @@ def _persist_therapies(disease_slug: str, therapies: list[_Therapy]) -> int:
             )
             if cur.fetchone() is not None:
                 continue
-            pmids_json = json.dumps(t.pmids)
+            clean_pmids = [p.strip() for p in t.pmids if re.fullmatch(r"\d{4,10}", p.strip())]
+            pmids_json = json.dumps(clean_pmids)
             cur.execute(
                 """INSERT INTO therapies (disease_slug, name, status, note, sort_order, pmids_json)
                    VALUES (%s, %s, %s, %s, %s, %s)""",
