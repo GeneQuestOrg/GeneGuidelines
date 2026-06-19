@@ -230,6 +230,11 @@ async def _extract_with_gemma(
     return _TherapyList(therapies=merged), model_spec, used_fallback
 
 
+def _words(name: str) -> set[str]:
+    """Significant lowercase words (>4 chars) from a therapy name."""
+    return {w.lower() for w in re.split(r"\W+", name) if len(w) > 4}
+
+
 def _persist_therapies(disease_slug: str, therapies: list[_Therapy]) -> int:
     valid = {"consensus", "verified", "pending", "preclinical"}
     try:
@@ -237,29 +242,58 @@ def _persist_therapies(disease_slug: str, therapies: list[_Therapy]) -> int:
     except ImportError:
         from database import get_connection  # type: ignore[no-redef]
 
-    inserted = 0
     conn = get_connection()
     cur = conn.cursor()
     try:
+        # If the disease already has therapies (e.g. from seed data), only
+        # update PMIDs on matching rows — don't insert LLM-generated duplicates.
+        cur.execute(
+            "SELECT id, name, pmids_json FROM therapies WHERE disease_slug = %s",
+            (disease_slug,),
+        )
+        existing = cur.fetchall()
+        if existing:
+            updated = 0
+            for t in therapies:
+                clean_pmids = [p.strip() for p in t.pmids if re.fullmatch(r"\d{4,10}", p.strip())]
+                if not clean_pmids:
+                    continue
+                t_words = _words(t.name)
+                for row in existing:
+                    row_id, row_name, row_pmids_json = row["id"], row["name"], row["pmids_json"]
+                    if t_words & _words(row_name):
+                        existing_pmids = json.loads(row_pmids_json or "[]")
+                        merged = list(dict.fromkeys(existing_pmids + clean_pmids))
+                        cur.execute(
+                            "UPDATE therapies SET pmids_json = %s WHERE id = %s",
+                            (json.dumps(merged), row_id),
+                        )
+                        updated += 1
+                        break
+            conn.commit()
+            return updated
+
+        # No existing therapies — insert LLM results as new rows.
+        inserted = 0
         for t in therapies:
             status = t.status.strip().lower()
             if status not in valid or not t.name.strip():
                 continue
             cur.execute(
-                """SELECT id FROM therapies WHERE disease_slug = %s AND LOWER(name) = LOWER(%s)""",
+                "SELECT id FROM therapies WHERE disease_slug = %s AND LOWER(name) = LOWER(%s)",
                 (disease_slug, t.name.strip()),
             )
             if cur.fetchone() is not None:
                 continue
             clean_pmids = [p.strip() for p in t.pmids if re.fullmatch(r"\d{4,10}", p.strip())]
-            pmids_json = json.dumps(clean_pmids)
             cur.execute(
                 """INSERT INTO therapies (disease_slug, name, status, note, sort_order, pmids_json)
                    VALUES (%s, %s, %s, %s, %s, %s)""",
-                (disease_slug, t.name.strip(), status, t.note.strip(), t.sort_order, pmids_json),
+                (disease_slug, t.name.strip(), status, t.note.strip(), t.sort_order, json.dumps(clean_pmids)),
             )
             inserted += 1
         conn.commit()
+        return inserted
     finally:
         conn.close()
     return inserted
