@@ -31,6 +31,8 @@ try:
         _upgrade_parent_pathway_flow_add_plan_node,
         _sync_parent_pathway_synth_prompt_from_disk,
         _sync_parent_pathway_plan_prompt_from_disk,
+        _ensure_guideline_bibliography_tail_nodes,
+        _sync_guideline_shelf_classify_prompt_from_spec,
     )
 except ImportError:
     from database_flow_ensures import (
@@ -42,6 +44,8 @@ except ImportError:
         _upgrade_parent_pathway_flow_add_plan_node,
         _sync_parent_pathway_synth_prompt_from_disk,
         _sync_parent_pathway_plan_prompt_from_disk,
+        _ensure_guideline_bibliography_tail_nodes,
+        _sync_guideline_shelf_classify_prompt_from_spec,
     )
 
 
@@ -187,6 +191,8 @@ def init_db():
     _upgrade_parent_pathway_flow_add_plan_node()
     _sync_parent_pathway_synth_prompt_from_disk()
     _sync_parent_pathway_plan_prompt_from_disk()
+    _ensure_guideline_bibliography_tail_nodes()
+    _sync_guideline_shelf_classify_prompt_from_spec()
     try:
         from .content_db import (
             ensure_content_schema,

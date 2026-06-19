@@ -141,6 +141,7 @@ from backend.content.api import router as content_disease_router  # noqa: E402
 from backend.disease_index.api import router as disease_index_router  # noqa: E402
 from backend.doctor_contributions.api import router as doctor_contributions_router  # noqa: E402
 from backend.guidelines.api import router as guidelines_router  # noqa: E402
+from backend.guidelines.bibliography.api import router as bibliography_router  # noqa: E402
 from backend.routers import content, doctor_finder, geo, pipeline  # noqa: E402
 
 # The new content module owns GET /api/diseases and GET /api/diseases/{slug};
@@ -159,6 +160,10 @@ app.include_router(doctor_contributions_router, prefix="/api")
 # guideline-synthesis,guideline-suggestions,synthesis-signals}. Before the
 # legacy `content` router so its literal sub-paths win the match.
 app.include_router(guidelines_router, prefix="/api")
+# Analyzed bibliography (researcher-facing audit of the engine's run) —
+# GET /api/diseases/{slug}/bibliography. Before the legacy `content` router so
+# its literal sub-path wins the match.
+app.include_router(bibliography_router, prefix="/api")
 app.include_router(content.router, prefix="/api")
 app.include_router(disease_index_router, prefix="/api/disease-index", tags=["disease_index"])
 app.include_router(doctor_finder.router, prefix="/api/doctor-finder", tags=["doctor_finder"])

@@ -170,6 +170,7 @@ def test_monitor_flow_spec_valid_and_connected() -> None:
     nodes = {n["node_id"]: n for n in spec["nodes"]}
     assert nodes["gsd-search"]["node_type"] == "guideline_monitor_search"
     assert nodes["gsd-write"]["node_type"] == "guideline_suggestion_writer"
+    assert nodes["gsd-bib"]["node_type"] == "guideline_bibliography_write"
     assert nodes["gsd-triage"]["output_schema_key"] == "guideline_triage"
     assert nodes["gsd-delta"]["output_schema_key"] == "guideline_suggestions"
     pairs = {(e["source_node_id"], e["target_node_id"]) for e in spec["edges"]}
@@ -178,5 +179,6 @@ def test_monitor_flow_spec_valid_and_connected() -> None:
         ("gsd-search", "gsd-triage"),
         ("gsd-triage", "gsd-delta"),
         ("gsd-delta", "gsd-write"),
-        ("gsd-write", "end"),
+        ("gsd-write", "gsd-bib"),
+        ("gsd-bib", "end"),
     }

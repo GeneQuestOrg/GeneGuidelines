@@ -6,6 +6,7 @@ import { DiseaseView } from "./DiseaseView";
 import { DiseaseIndexView } from "./DiseaseIndexView";
 import { PlaceholderView } from "./PlaceholderView";
 import { AboutView } from "./AboutView";
+import { BibliographyView } from "./BibliographyView";
 import { GuidelinesView } from "./GuidelinesView";
 import { FlowchartView } from "./FlowchartView";
 import { DoctorsView } from "./DoctorsView";
@@ -78,6 +79,10 @@ export function routeContent({
       return <TrialsView initialQuery={route.query} onNav={onNav} />;
     case "flowchart":
       return <FlowchartView slug={route.slug} onNav={onNav} />;
+    case "bibliography":
+      return (
+        <BibliographyView slug={route.slug} role={role} onNav={onNav} />
+      );
     case "guidelines":
       return (
         <GuidelinesView

@@ -1,5 +1,6 @@
 import type { AudienceView } from "../router/types";
 import type { MeAccount } from "../types/account";
+import type { ViewAsRole } from "./viewAs";
 
 /**
  * The viewer's effective role, resolved from the signed-in account — not a
@@ -39,7 +40,11 @@ export function resolveRole(
   account: MeAccount | null,
   previewRole: PreviewRole,
   isAuthenticated: boolean,
+  viewAsRole: ViewAsRole = "auto",
 ): ViewRole {
+  if (account?.role === "superadmin" && viewAsRole !== "auto") {
+    return viewAsRole;
+  }
   if (import.meta.env.DEV && previewRole !== "auto") {
     return previewRole;
   }

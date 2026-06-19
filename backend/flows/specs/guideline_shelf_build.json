@@ -26,13 +26,21 @@
       "prompt_mode": "simple",
       "output_schema_key": "guideline_shelf",
       "max_retry": 2,
-      "prompt": "You are a clinical librarian building the SOURCE SHELF for {{ context.initial.disease_name }} — the small set of documents a specialist would actually rely on.\n\nCandidates retrieved from PubMed + NCBI Bookshelf (each has pmid OR bookshelf, title, authors, journal, year, abstract):\n{{ context.gsb-search.candidates }}\n\nSelect ONLY the documents that belong on the shelf and label each:\n- kind: one of base_consensus (the recognised consensus / best-practice guideline), update (a newer paper that changes a recommendation vs the consensus), subtopic (focused on one sub-area, e.g. a region or complication), reference_compendium (a continuously-updated chapter / textbook such as a GeneReviews entry), or other.\n- role: a short human label, e.g. \"Base consensus\", \"Children — update\", \"Craniofacial\", \"Reference compendium\".\n- scope: one line on what it covers; covers: a few topic tags.\n- updates_note: when kind=update, one line on what it changes vs the consensus.\n\nRules:\n- Copy pmid / bookshelf / title VERBATIM from a candidate — never invent an identifier.\n- Prefer ONE base_consensus. Keep newer updates and important subtopics. Include a reference_compendium when present (e.g. a Bookshelf chapter).\n- Drop duplicates, primary research that isn't review/consensus, and clearly off-topic hits.\n- A tight, high-signal shelf beats a long one."
+      "prompt": "You are a clinical librarian building the SOURCE SHELF for {{ context.initial.disease_name }} — the small set of documents a specialist would actually rely on.\n\nCandidates retrieved from PubMed + NCBI Bookshelf (each has pmid OR bookshelf, title, authors, journal, year, abstract):\n{{ context.gsb-search.candidates }}\n\nSelect ONLY the documents that belong on the shelf and label each:\n- kind: one of base_consensus (the recognised consensus / best-practice guideline), update (a newer paper that changes a recommendation vs the consensus), subtopic (focused on one sub-area, e.g. a region or complication), reference_compendium (a continuously-updated chapter / textbook such as a GeneReviews entry), or other.\n- role: a short human label, e.g. \"Base consensus\", \"Children — update\", \"Craniofacial\", \"Reference compendium\".\n- scope: one line on what it covers; covers: a few topic tags.\n- updates_note: when kind=update, one line on what it changes vs the consensus.\n\nRules:\n- Copy pmid / bookshelf / title VERBATIM from a candidate — never invent an identifier.\n- Prefer ONE base_consensus. Keep newer updates and important subtopics. Include a reference_compendium when present (e.g. a Bookshelf chapter).\n- Drop duplicates, primary research that isn't review/consensus, and clearly off-topic hits.\n- A tight, high-signal shelf beats a long one.\n\nALSO return `considered`: every candidate you did NOT put on the shelf, each with its pmid OR bookshelf (verbatim), a one-line `reason` it was left off (e.g. \"narrative review, no new data\", \"primary research, not a guideline\", \"off-topic — different entity\", \"superseded by the consensus\", \"duplicate\"), and a short `category` tag (duplicate / off-topic / primary-not-review / superseded / narrow / other). These negative paths feed a researcher audit view — be honest and specific. Do not invent identifiers; use only candidates given."
     },
     {
       "node_id": "gsb-write",
       "node_type": "guideline_shelf_write",
       "label": "Write the shelf",
       "description": "Map classified docs onto guideline_source_documents and replace the disease's shelf (terminal node).",
+      "prompt_mode": "agentic",
+      "max_retry": 1
+    },
+    {
+      "node_id": "gsb-bib",
+      "node_type": "guideline_bibliography_write",
+      "label": "Record analyzed bibliography",
+      "description": "Record the verdict ledger (on-shelf docs + considered-but-rejected candidates with reasons) into guideline_analyzed_papers for the researcher bibliography. Step auto-detected from context (shelf). Reuses gsb-search + gsb-classify; no extra LLM call.",
       "prompt_mode": "agentic",
       "max_retry": 1
     },
@@ -47,6 +55,7 @@
     {"source_node_id": "start", "target_node_id": "gsb-search"},
     {"source_node_id": "gsb-search", "target_node_id": "gsb-classify"},
     {"source_node_id": "gsb-classify", "target_node_id": "gsb-write"},
-    {"source_node_id": "gsb-write", "target_node_id": "end"}
+    {"source_node_id": "gsb-write", "target_node_id": "gsb-bib"},
+    {"source_node_id": "gsb-bib", "target_node_id": "end"}
   ]
 }

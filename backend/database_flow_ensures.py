@@ -471,3 +471,158 @@ def _sync_parent_pathway_plan_prompt_from_disk() -> None:
     )
     conn.commit()
     conn.close()
+
+
+_GUIDELINE_SPEC_DIR = Path(__file__).resolve().parent / "flows" / "specs"
+
+# (flow_key, bib_node_id, writer_node_id, end_node_id)
+_GUIDELINE_BIB_TAIL_UPGRADES = (
+    ("guideline_shelf_build", "gsb-bib", "gsb-write", "end"),
+    ("guideline_suggestions", "gsd-bib", "gsd-write", "end"),
+)
+
+
+def _flow_definition_insert_from_spec_node(fd: dict, now: str) -> tuple:
+    """Row tuple for flow_definitions INSERT from a JSON workflow spec node."""
+    merge_strategy = str(fd.get("merge_strategy") or "append").strip() or "append"
+    merge_fields = fd.get("merge_fields") if fd.get("merge_fields") is not None else "[]"
+    merge_key_field = str(fd.get("merge_key_field") or "id").strip() or "id"
+    return (
+        fd["flow_key"],
+        fd["node_id"],
+        fd["node_type"],
+        fd.get("label", fd["node_id"]),
+        fd.get("description"),
+        fd.get("prompt"),
+        fd.get("loop_policy", "none"),
+        fd.get("execution_policy", "auto"),
+        int(fd.get("max_retry", 3)),
+        int(fd.get("version", 1)),
+        now,
+        fd.get("prompt_mode", "agentic"),
+        fd.get("model_name"),
+        fd.get("output_schema_key"),
+        fd.get("output_schema"),
+        1 if fd.get("agentic_step_close") else 0,
+        fd.get("python_source"),
+        fd.get("http_url"),
+        fd.get("http_method"),
+        fd.get("http_headers"),
+        fd.get("http_body"),
+        fd.get("rag_operation", "similar"),
+        fd.get("rag_body_json"),
+        fd.get("step_name"),
+        merge_strategy,
+        merge_fields,
+        merge_key_field,
+        fd.get("integration_operation") or "",
+        fd.get("integration_params_json") or "{}",
+        fd.get("integration_credentials_json") or "",
+    )
+
+
+def _load_guideline_spec(flow_key: str) -> dict | None:
+    path = _GUIDELINE_SPEC_DIR / f"{flow_key}.json"
+    if not path.exists():
+        return None
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+    return data if data.get("flow_key") == flow_key else None
+
+
+def _ensure_guideline_bibliography_tail_nodes() -> None:
+    """Add bibliography-writer tail nodes when guideline flows predate gsb-bib / gsd-bib.
+
+    JSON spec loader skips flows that already have *any* node, so older databases keep
+    ``*-write → end`` until this one-time repair runs on ``init_db``.
+    """
+    conn = get_connection()
+    cur = conn.cursor()
+    now = datetime.now().isoformat()
+    changed = False
+    for flow_key, bib_id, writer_id, end_id in _GUIDELINE_BIB_TAIL_UPGRADES:
+        cur.execute(
+            "SELECT 1 FROM flow_definitions WHERE flow_key = %s AND node_id = %s LIMIT 1",
+            (flow_key, bib_id),
+        )
+        if cur.fetchone():
+            continue
+        cur.execute(
+            "SELECT 1 FROM flow_definitions WHERE flow_key = %s LIMIT 1",
+            (flow_key,),
+        )
+        if not cur.fetchone():
+            continue
+        spec = _load_guideline_spec(flow_key)
+        if not spec:
+            continue
+        bib_node = next(
+            (n for n in spec.get("nodes") or [] if isinstance(n, dict) and n.get("node_id") == bib_id),
+            None,
+        )
+        if not isinstance(bib_node, dict) or not bib_node.get("node_type"):
+            continue
+        fd = {**bib_node, "flow_key": flow_key}
+        cur.execute(
+            """INSERT INTO flow_definitions (
+                flow_key, node_id, node_type, label, description, prompt, loop_policy, execution_policy,
+                max_retry, version, updated_at, prompt_mode, model_name, output_schema_key, output_schema, agentic_step_close, python_source,
+                http_url, http_method, http_headers, http_body, rag_operation, rag_body_json, step_name,
+                merge_strategy, merge_fields, merge_key_field,
+                integration_operation, integration_params_json, integration_credentials_json
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+            _flow_definition_insert_from_spec_node(fd, now),
+        )
+        cur.execute(
+            "DELETE FROM flow_edges WHERE flow_key = %s AND source_node_id = %s AND target_node_id = %s",
+            (flow_key, writer_id, end_id),
+        )
+        for src, tgt in ((writer_id, bib_id), (bib_id, end_id)):
+            try:
+                cur.execute(
+                    "INSERT INTO flow_edges (flow_key, source_node_id, target_node_id) VALUES (%s, %s, %s) ON CONFLICT DO NOTHING",
+                    (flow_key, src, tgt),
+                )
+            except pg_errors.UniqueViolation:
+                pass
+        changed = True
+    if changed:
+        conn.commit()
+    conn.close()
+
+
+def _sync_guideline_shelf_classify_prompt_from_spec() -> None:
+    """Refresh gsb-classify prompt so shelf runs emit ``considered`` negative paths."""
+    spec = _load_guideline_spec("guideline_shelf_build")
+    if not spec:
+        return
+    classify = next(
+        (n for n in spec.get("nodes") or [] if isinstance(n, dict) and n.get("node_id") == "gsb-classify"),
+        None,
+    )
+    if not isinstance(classify, dict):
+        return
+    prompt = str(classify.get("prompt") or "")
+    if not prompt or "considered" not in prompt:
+        return
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute(
+        "SELECT prompt FROM flow_definitions WHERE flow_key = %s AND node_id = %s",
+        ("guideline_shelf_build", "gsb-classify"),
+    )
+    row = cur.fetchone()
+    if row is None:
+        conn.close()
+        return
+    if str(row.get("prompt") or "") == prompt:
+        conn.close()
+        return
+    cur.execute(
+        "UPDATE flow_definitions SET prompt = %s, updated_at = %s WHERE flow_key = %s AND node_id = %s",
+        (prompt, datetime.now().isoformat(), "guideline_shelf_build", "gsb-classify"),
+    )
+    conn.commit()
+    conn.close()

@@ -1,8 +1,10 @@
 import type { GuidelineBaseline } from "../types/guidelineBaseline";
+import type { AnalyzedPaper } from "../types/analyzedPaper";
 import type { GuidelineSuggestion } from "../types/guidelineSuggestion";
 import type { GuidelineSynthesis, SynthSectionSignal } from "../types/guidelineSynthesis";
 import type { OfficialGuideline } from "../types/officialGuideline";
 import type { SourceDoc } from "../types/sourceDoc";
+import { BIBLIOGRAPHY } from "./guidelineBibliographyFixtures";
 import { BASELINES } from "./guidelineBaselineFixtures";
 import { SUGGESTIONS } from "./guidelineSuggestionsFixtures";
 import { SYNTHESES } from "./guidelineSynthesisFixtures";
@@ -164,5 +166,8 @@ export const fixtureOfficialGuidelineRepository: OfficialGuidelineRepository = {
   },
   async getBaseline(diseaseSlug: string): Promise<GuidelineBaseline | null> {
     return BASELINES[diseaseSlug] ?? null;
+  },
+  async getBibliography(diseaseSlug: string): Promise<readonly AnalyzedPaper[]> {
+    return BIBLIOGRAPHY[diseaseSlug] ?? [];
   },
 };

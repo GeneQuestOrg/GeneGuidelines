@@ -41,6 +41,10 @@ describe("parseHash", () => {
       slug: "fabry",
       srcParaId: "dx-ct",
     });
+    expect(parseHash("#/diseases/fabry/bibliography")).toEqual({
+      name: "bibliography",
+      slug: "fabry",
+    });
   });
 
   it("parses doctors and account", () => {
