@@ -8,7 +8,8 @@ pattern as :mod:`backend.content.repository` and
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+import json
+from dataclasses import dataclass, field
 from typing import Iterable, Literal, Mapping, Protocol
 
 from sqlalchemy import select
@@ -30,9 +31,15 @@ class Therapy:
     status: TherapyStatus
     note: str
     sort_order: int
+    pmids: tuple[str, ...] = field(default=())
 
 
 def therapy_from_row(row: Mapping[str, object]) -> Therapy:
+    raw_pmids = row.get("pmids_json") or "[]"
+    try:
+        pmids = tuple(str(p) for p in json.loads(raw_pmids))
+    except (ValueError, TypeError):
+        pmids = ()
     return Therapy(
         id=int(row["id"]),  # type: ignore[arg-type]
         disease_slug=str(row["disease_slug"]),
@@ -40,6 +47,7 @@ def therapy_from_row(row: Mapping[str, object]) -> Therapy:
         status=str(row["status"]),  # type: ignore[arg-type]
         note=str(row.get("note") or ""),
         sort_order=int(row.get("sort_order") or 0),  # type: ignore[arg-type]
+        pmids=pmids,
     )
 
 

@@ -140,10 +140,16 @@ class TherapyResponse(BaseModel):
     name: str
     status: Literal["consensus", "verified", "pending", "preclinical"]
     note: str
+    pmids: list[str] = Field(default_factory=list)
 
     @classmethod
     def from_domain(cls, therapy: Therapy) -> "TherapyResponse":
-        return cls(name=therapy.name, status=therapy.status, note=therapy.note)
+        return cls(
+            name=therapy.name,
+            status=therapy.status,
+            note=therapy.note,
+            pmids=list(therapy.pmids),
+        )
 
 
 class FoundationResponse(BaseModel):

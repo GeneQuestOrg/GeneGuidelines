@@ -35,7 +35,7 @@ from ._model_resolver import (
 log = logging.getLogger(__name__)
 
 _PUBMED = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils"
-_MAX_REVIEWS = 6
+_MAX_REVIEWS = 15
 _EXTRACT_BATCH_SIZE = 2
 _EXTRACT_MAX_RETRIES = 1
 
@@ -55,6 +55,7 @@ class _Therapy(BaseModel):
     )
     note: str = Field(..., description="One concise clinical sentence: indication, line, key caveat. No PII, no dates.")
     sort_order: int = Field(100, description="Lower = more important. 10/20/30 for consensus, 100 default.")
+    pmids: list[str] = Field(default_factory=list, description="PubMed IDs of the reviews that support this therapy line.")
 
 
 class _TherapyList(BaseModel):
@@ -202,6 +203,7 @@ def _fallback_therapies_from_abstracts(
                 status="pending",
                 note=note,
                 sort_order=100,
+                pmids=[pmid] if pmid else [],
             )
         )
     return therapies
@@ -247,10 +249,11 @@ def _persist_therapies(disease_slug: str, therapies: list[_Therapy]) -> int:
             )
             if cur.fetchone() is not None:
                 continue
+            pmids_json = json.dumps(t.pmids)
             cur.execute(
-                """INSERT INTO therapies (disease_slug, name, status, note, sort_order)
-                   VALUES (%s, %s, %s, %s, %s)""",
-                (disease_slug, t.name.strip(), status, t.note.strip(), t.sort_order),
+                """INSERT INTO therapies (disease_slug, name, status, note, sort_order, pmids_json)
+                   VALUES (%s, %s, %s, %s, %s, %s)""",
+                (disease_slug, t.name.strip(), status, t.note.strip(), t.sort_order, pmids_json),
             )
             inserted += 1
         conn.commit()
