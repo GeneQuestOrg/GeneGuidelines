@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { Therapy, TherapyStatus } from "../types/therapy";
+import { pubmedArticleUrl } from "../utils/pubmedUrl";
 import "./therapies-list.css";
 
 export interface TherapiesListProps {
@@ -12,10 +13,6 @@ const STATUS_LABEL: Record<TherapyStatus, string> = {
   pending: "Pending",
   preclinical: "Preclinical",
 };
-
-function pubmedUrl(pmid: string): string {
-  return `https://pubmed.ncbi.nlm.nih.gov/${pmid}/`;
-}
 
 interface TherapyRowProps {
   therapy: Therapy;
@@ -46,7 +43,7 @@ function TherapyRow({ therapy: t }: TherapyRowProps) {
               {t.pmids.map((pmid) => (
                 <li key={pmid}>
                   <a
-                    href={pubmedUrl(pmid)}
+                    href={pubmedArticleUrl(pmid)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="therapy-row__pmid-link"
