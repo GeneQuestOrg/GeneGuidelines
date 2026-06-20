@@ -9,7 +9,7 @@ export const GUIDELINE_DOCUMENTS: Readonly<Record<string, GuidelineDocument>> = 
     basedOn:
       "Boyce et al. 2019 (PMID 31196103) plus 23 approved update PRs through April 2026",
     status: "consensus",
-    statusBy: "Dr. N. Appelman-Dijkstra · Dr. M. Riminucci",
+    statusBy: "specialist network",
     sections: [
       {
         id: "diagnosis",
@@ -21,13 +21,13 @@ export const GUIDELINE_DOCUMENTS: Readonly<Record<string, GuidelineDocument>> = 
             id: "dx-imaging-1",
             text: "First-line imaging for suspected craniofacial FD is non-contrast facial CT with thin slices (≤1 mm). The classic pattern is ground-glass bone with loss of corticomedullary distinction.",
             citations: ["31196103", "25719192"],
-            lastChange: { type: "verified", by: "Dr. Riminucci", date: "2025-08-12" },
+            lastChange: { type: "verified", by: "specialist network", date: "2025-08-12" },
           },
           {
             id: "dx-imaging-2",
             text: "MRI with contrast is indicated when soft-tissue compression is suspected (optic nerve, brain, inner ear). MRI complements CT; it does not replace it for bone detail.",
             citations: ["31196103", "30176400"],
-            lastChange: { type: "verified", by: "Dr. Riminucci", date: "2024-11-03" },
+            lastChange: { type: "verified", by: "specialist network", date: "2024-11-03" },
           },
           {
             id: "dx-imaging-3",
@@ -35,7 +35,7 @@ export const GUIDELINE_DOCUMENTS: Readonly<Record<string, GuidelineDocument>> = 
             citations: ["2188311", "31196103"],
             lastChange: {
               type: "verified",
-              by: "Dr. Riminucci",
+              by: "specialist network",
               date: "2026-05-02",
               prId: "PR-140",
             },
@@ -52,7 +52,7 @@ export const GUIDELINE_DOCUMENTS: Readonly<Record<string, GuidelineDocument>> = 
             id: "hp-1",
             text: "Classic histology shows irregular trabeculae of woven bone in a fibrous stroma. The pattern may overlap with juvenile trabecular ossifying fibroma, especially in children.",
             citations: ["25719192"],
-            lastChange: { type: "verified", by: "Dr. Riminucci", date: "2025-08-12" },
+            lastChange: { type: "verified", by: "specialist network", date: "2025-08-12" },
           },
           {
             id: "hp-2",
@@ -60,7 +60,7 @@ export const GUIDELINE_DOCUMENTS: Readonly<Record<string, GuidelineDocument>> = 
             citations: ["25719192", "25719192"],
             lastChange: {
               type: "consensus",
-              by: "Dr. Appelman-Dijkstra + Dr. Riminucci",
+              by: "specialist network",
               date: "2025-08-12",
             },
           },
@@ -76,13 +76,13 @@ export const GUIDELINE_DOCUMENTS: Readonly<Record<string, GuidelineDocument>> = 
             id: "tx-observe",
             text: "Observation is standard for asymptomatic patients until skeletal maturity (typically 16–18 years), with clinical review every 6–12 months and imaging every 12–24 months when indicated.",
             citations: ["31196103", "39766409", "12065933"],
-            lastChange: { type: "verified", by: "Dr. Appelman-Dijkstra", date: "2025-12-04" },
+            lastChange: { type: "verified", by: "specialist network", date: "2025-12-04" },
           },
           {
             id: "tx-bisphos",
             text: "IV bisphosphonates (pamidronate or zoledronate per weight-based protocols) are considered for pain refractory to NSAIDs, with calcium and vitamin D supplementation and renal monitoring.",
             citations: ["31196103"],
-            lastChange: { type: "verified", by: "Dr. Appelman-Dijkstra", date: "2025-12-04" },
+            lastChange: { type: "verified", by: "specialist network", date: "2025-12-04" },
           },
           {
             id: "tx-denosumab-1",
@@ -102,13 +102,13 @@ export const GUIDELINE_DOCUMENTS: Readonly<Record<string, GuidelineDocument>> = 
             id: "tx-denosumab-3",
             text: "After denosumab discontinuation, rebound hypercalcemia is a risk — plan a taper and consider transition to bisphosphonates for 6–12 months.",
             citations: ["34964677", "34964677"],
-            lastChange: { type: "verified", by: "Dr. Hsiao", date: "2026-02-18" },
+            lastChange: { type: "verified", by: "specialist network", date: "2026-02-18" },
           },
           {
             id: "tx-burosumab",
             text: "Burosumab is reserved for FGF23-mediated hypophosphatemia (phosphate <0.8 mmol/L with elevated FGF23). Titrate per weight with phosphate monitoring every two weeks during dose adjustment.",
             citations: ["37184453"],
-            lastChange: { type: "verified", by: "Dr. Appelman-Dijkstra", date: "2024-09-22" },
+            lastChange: { type: "verified", by: "specialist network", date: "2024-09-22" },
           },
         ],
       },
@@ -124,7 +124,7 @@ export const GUIDELINE_DOCUMENTS: Readonly<Record<string, GuidelineDocument>> = 
             citations: ["31196103", "39766409"],
             lastChange: {
               type: "consensus",
-              by: "Dr. Dowgierd + Dr. Appelman-Dijkstra",
+              by: "specialist network",
               date: "2025-12-04",
             },
           },
@@ -132,13 +132,13 @@ export const GUIDELINE_DOCUMENTS: Readonly<Record<string, GuidelineDocument>> = 
             id: "sx-yes",
             text: "Absolute indications include threatened or established vision loss, symptomatic cranial nerve compression, or airway compromise from deformity.",
             citations: ["30176400", "31196103"],
-            lastChange: { type: "verified", by: "Dr. Dowgierd", date: "2025-08-12" },
+            lastChange: { type: "verified", by: "specialist network", date: "2025-08-12" },
           },
           {
             id: "sx-optic",
             text: "Pre-symptomatic optic canal decompression based on imaging alone is not recommended — operative risk may exceed risk from observation in asymptomatic patients.",
             citations: ["37184453", "30176400", "30176400"],
-            lastChange: { type: "verified", by: "Dr. Hsiao", date: "2026-03-11" },
+            lastChange: { type: "verified", by: "specialist network", date: "2026-03-11" },
           },
         ],
       },
@@ -152,13 +152,13 @@ export const GUIDELINE_DOCUMENTS: Readonly<Record<string, GuidelineDocument>> = 
             id: "mon-1",
             text: "Clinical review every 6 months in children and annually in stable adults, including pain scores, function, growth parameters, and endocrine symptoms when MAS overlap is possible.",
             citations: ["31196103"],
-            lastChange: { type: "verified", by: "Dr. Appelman-Dijkstra", date: "2025-05-20" },
+            lastChange: { type: "verified", by: "specialist network", date: "2025-05-20" },
           },
           {
             id: "mon-2",
             text: "Bone turnover markers (P1NP, CTX) every 6 months, or more often on denosumab. Calcium, phosphate, 25-OH vitamin D, and ALP at least annually.",
             citations: ["31196103", "36755645"],
-            lastChange: { type: "verified", by: "Dr. Appelman-Dijkstra", date: "2025-05-20" },
+            lastChange: { type: "verified", by: "specialist network", date: "2025-05-20" },
           },
           {
             id: "mon-3",
@@ -177,7 +177,7 @@ export const GUIDELINE_DOCUMENTS: Readonly<Record<string, GuidelineDocument>> = 
     lastUpdated: "2026-03-02",
     basedOn: "Boyce et al. 2019 (MAS chapter) plus three update PRs",
     status: "verified",
-    statusBy: "Dr. N. Appelman-Dijkstra",
+    statusBy: "specialist network",
     sections: [
       {
         id: "overview",
@@ -188,7 +188,7 @@ export const GUIDELINE_DOCUMENTS: Readonly<Record<string, GuidelineDocument>> = 
             id: "mas-dx-1",
             text: "Document fibrous dysplasia (CT plus GNAS), coast-of-Maine café-au-lait pigmentation, and at least one endocrinopathy such as precocious puberty, hyperthyroidism, GH excess, or FGF23-mediated hypophosphatemia.",
             citations: ["31196103"],
-            lastChange: { type: "verified", by: "Dr. Appelman-Dijkstra", date: "2026-03-02" },
+            lastChange: { type: "verified", by: "specialist network", date: "2026-03-02" },
           },
         ],
       },

@@ -86,5 +86,28 @@ export const parentCopy: AudienceCopy = {
         : `${count} proposed updates await specialist review.`,
     officialGuidelineTitle: "Official guideline (ground truth)",
     officialGuidelineSub: "Consensus document approved by the specialist network.",
+    orientation: {
+      startHereLabel: "Start here — what families wish they'd known",
+      orientationTitle: "What we wish we'd known in the first week",
+      orientationBody:
+        "Right after a diagnosis, the hardest part often isn't the lack of answers — it's not knowing what to even ask. That the diagnosis is worth double-checking yourself. That a doctor who knows this exact condition exists. That there are guidelines, foundations, and trials. What follows is a map of the things nobody tells you — read top to bottom.",
+      whatToDoNowTitle: "What to do now",
+      whatToDoNowBody:
+        "In plain language: confirm the diagnosis genetically, map where the disease is active, find a specialist who knows this condition, and plan calm long-term follow-up. The steps below walk through it in the order you'll need them.",
+      questionsForDoctorTitle: "Questions for the doctor",
+      questionsForDoctorSub:
+        "Copy these into your notes and bring them to the appointment — plain questions that move the visit forward.",
+      questionsForDoctor: [
+        "Did we do the GNAS / DNA test, or is this based on histology alone?",
+        "Is surgery urgent, or can we observe and monitor for now?",
+        "Should imaging be one-time to map extent, or repeated on a schedule?",
+        "Has this center treated this exact condition before — or should we get a second opinion from a specialist network?",
+        "Which symptoms or changes should make us call you sooner?",
+      ],
+      familyDoctorTitle: "Materials for the family doctor",
+      familyDoctorSub:
+        "Ready to print or email. A family doctor often doesn't have time to find these papers themselves — take the source documents to your next visit.",
+      takeToDoctorCta: "Take this to your doctor — print / send",
+    },
   },
 };

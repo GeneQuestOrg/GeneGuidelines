@@ -6,7 +6,7 @@
     "lastUpdated": "2026-05-10",
     "basedOn": "Boyce et al. 2019 (PMID 31196103) plus 23 approved update PRs through April 2026",
     "status": "consensus",
-    "statusBy": "Dr. N. Appelman-Dijkstra · Dr. M. Riminucci",
+    "statusBy": "specialist network",
     "sections": [
       {
         "id": "diagnosis",
@@ -22,7 +22,7 @@
             ],
             "lastChange": {
               "type": "verified",
-              "by": "Dr. Riminucci",
+              "by": "specialist network",
               "date": "2025-08-12"
             }
           },
@@ -35,7 +35,7 @@
             ],
             "lastChange": {
               "type": "verified",
-              "by": "Dr. Riminucci",
+              "by": "specialist network",
               "date": "2024-11-03"
             }
           },
@@ -48,7 +48,7 @@
             ],
             "lastChange": {
               "type": "verified",
-              "by": "Dr. Riminucci",
+              "by": "specialist network",
               "date": "2026-05-02",
               "prId": "PR-140"
             },
@@ -69,7 +69,7 @@
             ],
             "lastChange": {
               "type": "verified",
-              "by": "Dr. Riminucci",
+              "by": "specialist network",
               "date": "2025-08-12"
             }
           },
@@ -81,7 +81,7 @@
             ],
             "lastChange": {
               "type": "consensus",
-              "by": "Dr. Appelman-Dijkstra + Dr. Riminucci",
+              "by": "specialist network",
               "date": "2025-08-12"
             }
           }
@@ -102,7 +102,7 @@
             ],
             "lastChange": {
               "type": "verified",
-              "by": "Dr. Appelman-Dijkstra",
+              "by": "specialist network",
               "date": "2025-12-04"
             }
           },
@@ -114,7 +114,7 @@
             ],
             "lastChange": {
               "type": "verified",
-              "by": "Dr. Appelman-Dijkstra",
+              "by": "specialist network",
               "date": "2025-12-04"
             }
           },
@@ -159,7 +159,7 @@
             ],
             "lastChange": {
               "type": "verified",
-              "by": "Dr. Hsiao",
+              "by": "specialist network",
               "date": "2026-02-18"
             }
           },
@@ -171,7 +171,7 @@
             ],
             "lastChange": {
               "type": "verified",
-              "by": "Dr. Appelman-Dijkstra",
+              "by": "specialist network",
               "date": "2024-09-22"
             }
           }
@@ -191,7 +191,7 @@
             ],
             "lastChange": {
               "type": "consensus",
-              "by": "Dr. Dowgierd + Dr. Appelman-Dijkstra",
+              "by": "specialist network",
               "date": "2025-12-04"
             }
           },
@@ -204,7 +204,7 @@
             ],
             "lastChange": {
               "type": "verified",
-              "by": "Dr. Dowgierd",
+              "by": "specialist network",
               "date": "2025-08-12"
             }
           },
@@ -217,7 +217,7 @@
             ],
             "lastChange": {
               "type": "verified",
-              "by": "Dr. Hsiao",
+              "by": "specialist network",
               "date": "2026-03-11"
             }
           }
@@ -236,7 +236,7 @@
             ],
             "lastChange": {
               "type": "verified",
-              "by": "Dr. Appelman-Dijkstra",
+              "by": "specialist network",
               "date": "2025-05-20"
             }
           },
@@ -249,7 +249,7 @@
             ],
             "lastChange": {
               "type": "verified",
-              "by": "Dr. Appelman-Dijkstra",
+              "by": "specialist network",
               "date": "2025-05-20"
             }
           },
@@ -276,7 +276,7 @@
     "lastUpdated": "2026-05-01",
     "basedOn": "Consensus endocrine and skeletal care pathways for MAS",
     "status": "consensus",
-    "statusBy": "Dr. N. Appelman-Dijkstra",
+    "statusBy": "specialist network",
     "sections": [
       {
         "id": "endocrine",
@@ -343,7 +343,7 @@
             ],
             "lastChange": {
               "type": "verified",
-              "by": "Dr. Roberts",
+              "by": "specialist network",
               "date": "2025-11-20"
             }
           }

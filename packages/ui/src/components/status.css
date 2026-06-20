@@ -24,4 +24,4 @@
   50% { opacity: 0.5; transform: scale(1.4); }
 }
 .status__label { font-weight: 500; }
-.status__by, .status__date { color: var(--ink-3); font-weight: 400; }
+.status__date { color: var(--ink-3); font-weight: 400; }

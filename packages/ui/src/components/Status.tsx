@@ -28,12 +28,12 @@ const STATUS_META: Record<StatusValue, StatusMeta> = {
 
 export interface StatusProps {
   status: StatusValue;
-  by?: string;
+  /** Optional revision date shown after the label (draft12: label + optional date — no names channel). */
   date?: string;
   compact?: boolean;
 }
 
-export function Status({ status, by, date, compact = false }: StatusProps) {
+export function Status({ status, date, compact = false }: StatusProps) {
   const m = STATUS_META[status] ?? STATUS_META.pending;
   return (
     <span
@@ -42,7 +42,6 @@ export function Status({ status, by, date, compact = false }: StatusProps) {
     >
       <span className="status__dot" style={{ background: m.dot }} aria-hidden />
       <span className="status__label">{m.label}</span>
-      {by != null && !compact ? <span className="status__by">{" · " + by}</span> : null}
       {date != null && !compact ? <span className="status__date">{" · " + date}</span> : null}
     </span>
   );

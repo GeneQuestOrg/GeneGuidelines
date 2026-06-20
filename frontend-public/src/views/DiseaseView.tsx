@@ -2,10 +2,12 @@ import type { UserLocation } from "../router/types";
 import { getAudienceCopy } from "../copy";
 import { useAccountContext } from "../auth/accountContext";
 import { audienceForRole, isClinicianView, type ViewRole } from "../auth/resolveRole";
+import { Section } from "@gene-guidelines/ui";
 import { DiseaseHero } from "../components/DiseaseHero";
 import { DiseaseTabs } from "../components/DiseaseTabs";
 import { OfficialGuidelineBlock } from "../components/OfficialGuidelineBlock";
-import { SourceShelf } from "../components/guidelines/SourceShelf";
+import { SynthesisTeaser } from "../components/guidelines/SynthesisTeaser";
+import { CompactSourceShelf } from "../components/guidelines/CompactSourceShelf";
 import { useDisease } from "../hooks/useDisease";
 import { useOfficialGuideline } from "../hooks/useOfficialGuideline";
 import { useSourceShelf } from "../hooks/useSourceShelf";
@@ -21,7 +23,7 @@ export interface DiseaseViewProps {
 }
 
 export function DiseaseView({ slug, role, userLoc, onNav }: DiseaseViewProps) {
-  const { disease, guideline, loading, error } = useDisease(slug);
+  const { disease, loading, error } = useDisease(slug);
   const { related, loading: relatedLoading } = useRelatedDiseases(disease?.related ?? []);
   const { pointer: officialPointer } = useOfficialGuideline(slug);
   const { docs: sourceDocs } = useSourceShelf(slug);
@@ -86,13 +88,51 @@ export function DiseaseView({ slug, role, userLoc, onNav }: DiseaseViewProps) {
       ) : null}
       <DiseaseHero
         disease={disease}
-        guideline={guideline}
         copy={copy}
         isClinician={isClinician}
         onNav={onNav}
       />
+      {!isClinician && copy.orientation != null ? (
+        <div className="d-starthere">
+          <a
+            className="d-starthere__link"
+            href="#orientation"
+            onClick={(e) => {
+              e.preventDefault();
+              const target = document.getElementById("orientation");
+              if (target != null) {
+                target.scrollIntoView({ behavior: "smooth", block: "start" });
+                target.focus({ preventScroll: true });
+              }
+            }}
+          >
+            <span aria-hidden>→</span> {copy.orientation.startHereLabel}
+          </a>
+          <button
+            type="button"
+            className="d-starthere__print"
+            onClick={() => window.print()}
+          >
+            {copy.orientation.takeToDoctorCta}
+          </button>
+        </div>
+      ) : null}
       {sourceDocs.length > 0 ? (
-        <SourceShelf docs={sourceDocs} parent={!isClinician} />
+        <Section
+          title="Guidelines"
+          sub="There is no single document. Below is one synthesis combining every source — and under it, a shelf of the sources themselves."
+        >
+          <SynthesisTeaser
+            diseaseName={disease.name}
+            sourceCount={sourceDocs.length}
+            hasOfficial={disease.status !== "pending"}
+            onOpen={() => onNav(`/diseases/${slug}/guidelines`)}
+          />
+          <CompactSourceShelf
+            docs={sourceDocs}
+            onSeeAll={() => onNav(`/diseases/${slug}/guidelines`)}
+          />
+        </Section>
       ) : officialPointer != null ? (
         <OfficialGuidelineBlock pointer={officialPointer} />
       ) : null}

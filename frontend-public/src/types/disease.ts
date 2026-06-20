@@ -16,7 +16,6 @@ export interface Disease {
   related: readonly string[];
   prevalenceText: string;
   status: StatusValue;
-  statusBy: string | null;
   statusDate: string | null;
   aiDraftDate: string | null;
   openPRs: number;

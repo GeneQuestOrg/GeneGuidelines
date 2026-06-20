@@ -1,0 +1,99 @@
+/* Compact source shelf — ported from draft12 styles.css (~4986 .srctiles /
+ * .srctile). Small tiles: role + clamped title + first-author · year + id.
+ * Deliberately omits journal + scope (matches draft12, and avoids the
+ * malformed "· gene · 2015/02/26 00:00" journal/scope on the overview). */
+
+.srctiles {
+  margin-top: 16px;
+}
+.srctiles__lbl {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ink-3);
+  margin-bottom: 10px;
+}
+.srctiles__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px;
+}
+.srctile {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  text-decoration: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.srctile:hover {
+  border-color: var(--line-2);
+  box-shadow: 0 1px 4px color-mix(in oklch, var(--ink) 6%, transparent);
+}
+.srctile__top {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.srctile__role {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--accent-ink);
+}
+.srctile__title {
+  font-family: var(--font-serif);
+  font-size: var(--fs-sm);
+  line-height: 1.35;
+  color: var(--ink);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.srctile__foot {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.srctile__meta {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  color: var(--ink-3);
+}
+.srctile__id {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--accent-ink);
+}
+.srctiles .gx-new {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  background: var(--st-amber);
+  color: #fff;
+  padding: 1px 5px;
+  border-radius: 3px;
+  letter-spacing: 0.03em;
+}
+.srctiles__seeall {
+  margin-top: 12px;
+  appearance: none;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  color: var(--accent-ink);
+}
+.srctiles__seeall:hover {
+  text-decoration: underline;
+}
