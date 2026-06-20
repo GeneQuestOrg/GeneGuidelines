@@ -92,6 +92,31 @@ export function DiseaseView({ slug, role, userLoc, onNav }: DiseaseViewProps) {
         isClinician={isClinician}
         onNav={onNav}
       />
+      {!isClinician && copy.orientation != null ? (
+        <div className="d-starthere">
+          <a
+            className="d-starthere__link"
+            href="#orientation"
+            onClick={(e) => {
+              e.preventDefault();
+              const target = document.getElementById("orientation");
+              if (target != null) {
+                target.scrollIntoView({ behavior: "smooth", block: "start" });
+                target.focus({ preventScroll: true });
+              }
+            }}
+          >
+            <span aria-hidden>→</span> {copy.orientation.startHereLabel}
+          </a>
+          <button
+            type="button"
+            className="d-starthere__print"
+            onClick={() => window.print()}
+          >
+            {copy.orientation.takeToDoctorCta}
+          </button>
+        </div>
+      ) : null}
       {sourceDocs.length > 0 ? (
         <Section
           title="Guidelines"

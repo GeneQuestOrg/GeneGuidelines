@@ -8,13 +8,16 @@ import { DoctorCard } from "./DoctorCard";
 import { DiseaseOpenPrList } from "./DiseaseOpenPrList";
 import { FoundationsList } from "./FoundationsList";
 import { PrivateContextPanel } from "./PrivateContextPanel";
+import { QuestionsForDoctor } from "./QuestionsForDoctor";
 import { TherapiesList } from "./TherapiesList";
 import { TrialsList } from "./TrialsList";
+import { CompactSourceShelf } from "./guidelines/CompactSourceShelf";
 import { useContentPrs } from "../hooks/useContentPrs";
 import { useDiseaseDoctors } from "../hooks/useDiseaseDoctors";
 import { useDiseaseFoundations } from "../hooks/useDiseaseFoundations";
 import { useDiseaseTherapies } from "../hooks/useDiseaseTherapies";
 import { useDiseaseTrials } from "../hooks/useDiseaseTrials";
+import { useSourceShelf } from "../hooks/useSourceShelf";
 import { isWorkflowDoctorSource } from "../types/doctor";
 import {
   attachDoctorDistances,
@@ -74,6 +77,10 @@ export function DiseaseTabs({
     loading: foundationsLoading,
     error: foundationsError,
   } = useDiseaseFoundations(slug);
+  const { docs: sourceDocs } = useSourceShelf(slug);
+
+  // Parent-only orientation spine (Phase 3). Clinician copy omits `orientation`.
+  const orientation = isClinician ? undefined : copy.orientation;
 
   const previewDoctors = useMemo(() => {
     if (doctorsPayload == null) {
@@ -103,7 +110,19 @@ export function DiseaseTabs({
       <div role="tabpanel" className="d-tab-panel">
         {tab === "overview" ? (
           <>
-            <Section title={copy.pathwayTitle} sub={copy.pathwaySub}>
+            {orientation != null ? (
+              <Section title={orientation.orientationTitle}>
+                <div id="orientation" className="d-orient" tabIndex={-1}>
+                  <p className="d-orient__body">{orientation.orientationBody}</p>
+                </div>
+              </Section>
+            ) : null}
+
+            <Section
+              title={orientation?.whatToDoNowTitle ?? copy.pathwayTitle}
+              sub={orientation?.whatToDoNowBody ?? copy.pathwaySub}
+              divider={orientation != null}
+            >
               <div className="path">
                 <ol className="path__steps">
                   {copy.pathwaySteps.map((step, i) => (
@@ -125,6 +144,16 @@ export function DiseaseTabs({
                 </aside>
               </div>
             </Section>
+
+            {orientation != null ? (
+              <Section
+                title={orientation.questionsForDoctorTitle}
+                sub={orientation.questionsForDoctorSub}
+                divider
+              >
+                <QuestionsForDoctor questions={orientation.questionsForDoctor} />
+              </Section>
+            ) : null}
 
             {previewDoctors.length > 0 ? (
               <Section
@@ -190,6 +219,28 @@ export function DiseaseTabs({
                 <FoundationsList foundations={foundations} />
               )}
             </Section>
+
+            {orientation != null && sourceDocs.length > 0 ? (
+              <Section
+                title={orientation.familyDoctorTitle}
+                sub={orientation.familyDoctorSub}
+                action={
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => window.print()}
+                  >
+                    {orientation.takeToDoctorCta}
+                  </Button>
+                }
+                divider
+              >
+                <CompactSourceShelf
+                  docs={sourceDocs}
+                  onSeeAll={() => onNav(`/diseases/${slug}/guidelines`)}
+                />
+              </Section>
+            ) : null}
 
             {openPrs.length > 0 ? (
               <Section
