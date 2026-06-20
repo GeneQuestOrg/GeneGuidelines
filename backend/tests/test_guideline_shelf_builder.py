@@ -137,6 +137,29 @@ def test_shelf_write_maps_and_replaces(repo: SqlaGuidelinesRepo) -> None:
     assert docs["NBK274564"].role == "Reference compendium"  # default role from kind
 
 
+def test_shelf_write_normalizes_junk_journal_and_year(repo: SqlaGuidelinesRepo) -> None:
+    # The model occasionally emits junk (journal="gene", a timestamp year). The
+    # writer must not persist that — blank the journal, salvage the year.
+    classified = {
+        "docs": [
+            {
+                "bookshelf": "NBK274564", "title": "GeneReviews",
+                "kind": "reference_compendium", "journal": "gene", "year": "2015/02/26 00:00",
+            },
+            {"pmid": "31196103", "title": "Consensus", "kind": "base_consensus", "journal": "Orphanet J Rare Dis", "year": "2019"},
+        ]
+    }
+    initial = {"disease_slug": "fd", "disease_name": "Fibrous Dysplasia"}
+    ex = GuidelineShelfWriteExecutor(repo=repo)
+    out = asyncio.run(ex.execute(NodeInput(node_config={}, context={"gsb-classify": classified}, initial_data=initial)))
+    assert out.data["ok"] is True
+    docs = {d.doc_id: d for d in repo.list_source_documents("fd")}
+    assert docs["NBK274564"].journal == ""  # junk one-word lowercase token dropped
+    assert docs["NBK274564"].year == "2015"  # year salvaged out of the timestamp
+    assert docs["31196103"].journal == "Orphanet J Rare Dis"  # real journal untouched
+    assert docs["31196103"].year == "2019"
+
+
 def test_shelf_write_no_docs_is_error(repo: SqlaGuidelinesRepo) -> None:
     ex = GuidelineShelfWriteExecutor(repo=repo)
     out = asyncio.run(
