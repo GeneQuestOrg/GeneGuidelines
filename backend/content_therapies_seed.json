@@ -36,17 +36,22 @@
       {
         "name": "Endocrine treatment (per endocrinopathy)",
         "status": "consensus",
-        "note": "Letrozole for precocious puberty in girls; somatostatin analogues for GH excess."
+        "note": "Letrozole for precocious puberty in girls; somatostatin analogues for GH excess; thyroid-sparing strategies for hyperthyroidism."
       },
       {
-        "name": "Bisphosphonates (same indications as FD)",
+        "name": "Observation (calcium/phosphate/endocrine monitoring)",
         "status": "consensus",
-        "note": "Identical indications to FD."
+        "note": "Annual endocrine and metabolic panel; DXA every 1–2 years; ophthalmology and audiology if craniofacial FD present."
+      },
+      {
+        "name": "Bisphosphonates (pamidronate, zoledronate)",
+        "status": "consensus",
+        "note": "First-line for FD-related bone pain and progressive lesions in MAS; IV pamidronate or zoledronate every 3–6 months. Evidence from FD/MAS cohort studies."
       },
       {
         "name": "Denosumab",
         "status": "verified",
-        "note": "Same protocol as FD."
+        "note": "RANKL blockade for rapidly progressive FD lesions in MAS; monitor calcium and 25-OH-D closely. Risk of rebound hypercalcaemia on discontinuation."
       }
     ],
     "noonan": [
