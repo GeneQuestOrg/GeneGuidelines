@@ -1,11 +1,10 @@
-import { Badge, Button, Status } from "@gene-guidelines/ui";
-import type { Disease, GuidelineMeta } from "../types";
+import { Button, Status } from "@gene-guidelines/ui";
+import type { Disease } from "../types";
 import type { DiseaseCopy } from "../copy";
 import "../styles/disease-page.css";
 
 export interface DiseaseHeroProps {
   disease: Disease;
-  guideline: GuidelineMeta | null;
   copy: DiseaseCopy;
   isClinician: boolean;
   onNav: (path: string) => void;
@@ -13,7 +12,6 @@ export interface DiseaseHeroProps {
 
 export function DiseaseHero({
   disease,
-  guideline,
   copy,
   isClinician,
   onNav,
@@ -28,7 +26,6 @@ export function DiseaseHero({
           <h1 className="d-hero__name">{disease.name}</h1>
         </div>
         <Status status={disease.status} />
-        {guideline != null ? <Badge>Guideline {guideline.version}</Badge> : null}
       </div>
       <p className="d-hero__summary">{disease.summary}</p>
       <dl className="d-hero__facts">
@@ -56,17 +53,10 @@ export function DiseaseHero({
           <dt>Types</dt>
           <dd>{disease.types.join(" · ")}</dd>
         </div>
-        <div>
-          <dt>Coverage</dt>
-          <dd>{disease.coverage}</dd>
-        </div>
-        {disease.aiDraftDate != null ? (
+        {(disease.statusDate ?? disease.aiDraftDate) != null ? (
           <div>
-            <dt>Last AI draft</dt>
-            <dd>
-              {disease.aiDraftDate}
-              {disease.openPRs > 0 ? ` · ${disease.openPRs} open PRs` : ""}
-            </dd>
+            <dt>Last revised</dt>
+            <dd>{disease.statusDate ?? disease.aiDraftDate}</dd>
           </div>
         ) : null}
       </dl>

@@ -1,0 +1,95 @@
+/* Synthesis teaser — ported from draft12 styles.css (~4960 .synthcard).
+ * Rendered as a <button> in the app (hash-route nav via onClick), so it resets
+ * the native button chrome. */
+
+.synthcard {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  text-align: left;
+  padding: 18px 20px;
+  border-radius: var(--r-lg);
+  background: linear-gradient(
+    135deg,
+    color-mix(in oklch, var(--accent) 11%, var(--bg-elev)),
+    color-mix(in oklch, var(--accent) 4%, var(--bg-elev))
+  );
+  border: 1px solid color-mix(in oklch, var(--accent) 30%, var(--line));
+  cursor: pointer;
+  transition: border-color 140ms, box-shadow 140ms, transform 140ms;
+}
+.synthcard:hover {
+  border-color: color-mix(in oklch, var(--accent) 50%, var(--line));
+  box-shadow: 0 4px 18px color-mix(in oklch, var(--accent) 14%, transparent);
+}
+.synthcard__icon {
+  width: 52px;
+  height: 52px;
+  border-radius: var(--r-md);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent);
+  color: #fff;
+}
+.synthcard__body {
+  min-width: 0;
+  flex: 1;
+  display: block;
+}
+.synthcard__tag {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--accent-ink);
+}
+.synthcard__title {
+  display: block;
+  font-family: var(--font-serif);
+  font-weight: 500;
+  font-size: var(--fs-xl);
+  letter-spacing: -0.015em;
+  color: var(--ink);
+  margin: 4px 0 5px;
+  line-height: 1.2;
+}
+.synthcard__sub {
+  display: block;
+  font-family: var(--font-sans);
+  font-size: var(--fs-sm);
+  color: var(--ink-2);
+  line-height: 1.5;
+  margin: 0;
+  max-width: 70ch;
+}
+.synthcard__cta {
+  flex-shrink: 0;
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 16px;
+  border-radius: 99px;
+  background: var(--ink);
+  color: var(--bg-elev);
+  font-family: var(--font-sans);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.synthcard:hover .synthcard__cta {
+  background: var(--accent-ink);
+}
+@media (max-width: 720px) {
+  .synthcard {
+    flex-wrap: wrap;
+  }
+  .synthcard__cta {
+    width: 100%;
+    justify-content: center;
+  }
+}
