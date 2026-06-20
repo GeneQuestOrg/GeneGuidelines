@@ -24,7 +24,6 @@
       ],
       "prevalenceText": "~1:5,000 – 1:10,000",
       "status": "consensus",
-      "statusBy": "Dr. N. Appelman-Dijkstra · Dr. M. Riminucci",
       "statusDate": "2026-04-18",
       "aiDraftDate": "2026-05-10",
       "openPRs": 3,
@@ -67,7 +66,6 @@
       ],
       "prevalenceText": "~1:100,000 – 1:1,000,000",
       "status": "verified",
-      "statusBy": "Dr. N. Appelman-Dijkstra",
       "statusDate": "2026-03-02",
       "aiDraftDate": "2026-05-08",
       "openPRs": 1,
@@ -167,7 +165,7 @@
       "opened": "2026-05-08",
       "status": "under-review",
       "author": "AI Watcher",
-      "reviewer": "Dr. Appelman-Dijkstra",
+      "reviewer": "specialist network",
       "summary": "Based on four recent articles (2024–2025): extend maintenance intervals from every 4 weeks to every 12 weeks after induction when CTX response is sustained.",
       "citationsCount": 4,
       "diff": [
@@ -267,7 +265,7 @@
       "opened": "2026-05-01",
       "status": "under-review",
       "author": "AI Watcher",
-      "reviewer": "Dr. Hsiao",
+      "reviewer": "specialist network",
       "summary": "Shorten Tanner staging interval to every 6 months in MAS girls aged 2–7 years.",
       "citationsCount": 2,
       "diff": [
