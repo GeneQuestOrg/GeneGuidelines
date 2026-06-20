@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { DISEASES } from "./diseases";
 import { GUIDELINE_DOCUMENTS } from "./guidelineDocuments";
+import { CONTENT_PR_DETAILS } from "./contentPrDetails";
 import { fixtureDiseaseRepository } from "../repositories/fixtureDiseaseRepository";
 
 /**
@@ -40,5 +41,9 @@ describe("consent scrub — no researcher names on public disease surfaces", () 
 
   it("guideline documents (reader provenance) carry no reviewer names", () => {
     assertNoNames("GUIDELINE_DOCUMENTS", JSON.stringify(GUIDELINE_DOCUMENTS));
+  });
+
+  it("content-PR details carry no reviewer names", () => {
+    assertNoNames("CONTENT_PR_DETAILS", JSON.stringify(CONTENT_PR_DETAILS));
   });
 });

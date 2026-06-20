@@ -9,7 +9,7 @@ export const CONTENT_PR_DETAILS: Readonly<Record<string, GuidelinePrDetail>> = {
     opened: "2026-05-08",
     status: "under-review",
     author: "AI Watcher",
-    reviewer: "Dr. Appelman-Dijkstra",
+    reviewer: "specialist network",
     summary:
       "Based on four recent articles (2024–2025): extend maintenance intervals from every 4 weeks to every 12 weeks after induction when CTX response is sustained.",
     citationsCount: 4,
