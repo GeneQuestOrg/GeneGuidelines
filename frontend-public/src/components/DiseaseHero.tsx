@@ -27,11 +27,7 @@ export function DiseaseHero({
         <div className="d-hero__title-block">
           <h1 className="d-hero__name">{disease.name}</h1>
         </div>
-        <Status
-          status={disease.status}
-          by={disease.statusBy ?? undefined}
-          date={disease.statusDate ?? undefined}
-        />
+        <Status status={disease.status} />
         {guideline != null ? <Badge>Guideline {guideline.version}</Badge> : null}
       </div>
       <p className="d-hero__summary">{disease.summary}</p>
