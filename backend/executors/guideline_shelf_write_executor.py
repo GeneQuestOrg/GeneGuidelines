@@ -11,6 +11,7 @@ present, else the Bookshelf id.
 from __future__ import annotations
 
 import logging
+import re
 
 from .base import NodeExecutor, NodeInput, NodeOutput
 
@@ -24,6 +25,44 @@ _ROLE_BY_KIND = {
     "reference_compendium": "Reference compendium",
     "other": "Reference",
 }
+
+# A 4-digit year, optionally with a trailing range/suffix the FE can render.
+_YEAR_RE = re.compile(r"^(19|20)\d{2}([-–/]\d{2,4})?$")
+# Curated non-year labels the FE renders verbatim (GeneReviews etc.).
+_YEAR_LABELS = {"continuously updated", "n/a"}
+
+
+def _clean_year(raw: str) -> str:
+    """Keep a 4-digit year or a known label; blank junk like ``2015/02/26 00:00``.
+
+    PubMed/Bookshelf metadata occasionally arrives as a full timestamp. The FE
+    expects either a plain year or a short label, so drop anything else rather
+    than persisting a timestamp that renders as noise.
+    """
+    raw = (raw or "").strip()
+    if not raw:
+        return ""
+    if raw.lower() in _YEAR_LABELS:
+        return raw
+    if _YEAR_RE.match(raw):
+        return raw
+    # Salvage a leading 4-digit year out of a longer string (e.g. a timestamp).
+    m = re.match(r"^(19|20)\d{2}", raw)
+    return m.group(0) if m else ""
+
+
+def _clean_journal(raw: str) -> str:
+    """Drop an obviously-junk one-word journal token (e.g. ``gene``).
+
+    A single short lowercase token is almost always a truncated/garbled source
+    label, not a real journal name; blank it rather than persisting junk.
+    """
+    raw = (raw or "").strip()
+    if not raw:
+        return ""
+    if " " not in raw and raw.islower() and len(raw) <= 6:
+        return ""
+    return raw
 
 
 class GuidelineShelfWriteExecutor(NodeExecutor):
@@ -74,8 +113,8 @@ class GuidelineShelfWriteExecutor(NodeExecutor):
                     "role": str(d.get("role") or "").strip() or _ROLE_BY_KIND.get(kind, "Reference"),
                     "title": str(d.get("title") or "").strip(),
                     "authors": str(d.get("authors") or "").strip(),
-                    "journal": str(d.get("journal") or "").strip(),
-                    "year": str(d.get("year") or "").strip() or "n/a",
+                    "journal": _clean_journal(str(d.get("journal") or "")),
+                    "year": _clean_year(str(d.get("year") or "")) or "n/a",
                     "scope": str(d.get("scope") or "").strip(),
                     "covers": list(d.get("covers") or []),
                     "pmid": pmid or None,

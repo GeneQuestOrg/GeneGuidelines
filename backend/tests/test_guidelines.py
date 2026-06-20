@@ -38,22 +38,39 @@ def seeded_repo() -> SqlaGuidelinesRepo:
 
 
 def test_fd_shelf_synthesis_suggestions_signals(seeded_repo: SqlaGuidelinesRepo) -> None:
+    # Shelf is the 7-doc engine-generated shelf (docId = PMID, or Bookshelf id).
     docs = seeded_repo.list_source_documents("fd")
-    assert [d.doc_id for d in docs] == ["boyce2019", "gun2024", "szymczuk2023", "genereviews"]
-    assert docs[1].is_new is True  # gun2024
-    assert docs[3].bookshelf == "NBK274564"  # genereviews
+    assert [d.doc_id for d in docs] == [
+        "31196103", "38010041", "36849642", "22640797", "25043984", "31673695", "NBK274564",
+    ]
+    gun = next(d for d in docs if d.doc_id == "38010041")
+    assert gun.is_new is True  # children update
+    genereviews = next(d for d in docs if d.doc_id == "NBK274564")
+    assert genereviews.bookshelf == "NBK274564"
+    # GeneReviews shelf doc was repaired (no journal="gene" / timestamp year junk).
+    assert genereviews.journal == "GeneReviews® · NCBI Bookshelf"
+    assert genereviews.year == "continuously updated"
 
     synthesis = seeded_repo.get_synthesis("fd")
     assert synthesis is not None
     assert synthesis.epistemic_level == "a"
+    # MERGE: engine body + hand-curated parent scaffolding preserved.
+    assert synthesis.status == "consensus"
+    assert synthesis.has_flowchart is True
     assert len(synthesis.sections) == 5
     assert synthesis.what_to_do_now is not None and len(synthesis.what_to_do_now) == 4
+    assert synthesis.red_flags is not None
+    # Consent: AI attribution carries no personal-name ("Dr.") attribution.
+    assert "Dr." not in synthesis.based_on
 
     suggestions = seeded_repo.list_suggestions("fd")
-    assert {s.id for s in suggestions} == {"sg-oct", "sg-deno", "sg-gnas"}
-    deno = next(s for s in suggestions if s.id == "sg-deno")
-    assert deno.kind == "modification"
-    assert deno.diff is not None and any(ln["t"] == "del" for ln in deno.diff["lines"])
+    assert {s.id for s in suggestions} == {"sg-41858142", "sg-41858142-2", "sg-41790192"}
+    # Backfill: every suggestion has a parent-readable line and a non-empty signal.
+    for s in suggestions:
+        assert s.parent_text
+        assert s.signal and s.signal.get("ratings", 0) >= 1
+    # Real 2026-evidence citations survive the merge.
+    assert "41858142" in next(s for s in suggestions if s.id == "sg-41858142").citations
 
     signals = seeded_repo.get_synthesis_signals("fd")
     assert set(signals) == {"diagnosis", "histopathology", "therapy", "surgery", "monitoring"}
@@ -81,7 +98,8 @@ def test_seed_is_idempotent(seeded_repo: SqlaGuidelinesRepo) -> None:
 
 
 def test_source_doc_response_is_camelcase(seeded_repo: SqlaGuidelinesRepo) -> None:
-    doc = next(d for d in seeded_repo.list_source_documents("fd") if d.doc_id == "gun2024")
+    # 38010041 = the "children — update" doc (isNew, updatesNote, numeric year).
+    doc = next(d for d in seeded_repo.list_source_documents("fd") if d.doc_id == "38010041")
     payload = SourceDocResponse.from_domain(doc).model_dump()
     assert payload["isNew"] is True
     assert payload["updatesNote"]
@@ -120,7 +138,7 @@ def test_api_endpoints(seeded_repo: SqlaGuidelinesRepo) -> None:
 
     shelf = client.get("/api/diseases/fd/source-documents")
     assert shelf.status_code == 200
-    assert shelf.json()[0]["id"] == "boyce2019"
+    assert shelf.json()[0]["id"] == "31196103"  # base consensus, docId = PMID
     assert "freeFullText" in shelf.json()[0]
 
     syn = client.get("/api/diseases/fd/guideline-synthesis")

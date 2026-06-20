@@ -3,69 +3,167 @@
   "fd": {
     "sourceDocuments": [
       {
-        "id": "boyce2019",
+        "id": "31196103",
         "role": "Base consensus",
         "pmid": "31196103",
-        "title": "Best practice management guidelines for fibrous dysplasia/McCune-Albright syndrome: a consensus statement from the FD/MAS international consortium",
-        "authors": "Javaid MK, Boyce A, Appelman-Dijkstra N, et al.",
-        "journal": "Orphanet Journal of Rare Diseases",
+        "title": "Best practice management guidelines for fibrous dysplasia/McCune-Albright syndrome: a consensus statement from the FD/MAS international consortium.",
+        "authors": "Javaid MK, Boyce A, Appelman-Dijkstra N, Ong J, Defabianis P, Offiah A, Arundel P, Shaw N",
+        "journal": "Orphanet J Rare Dis",
         "year": 2019,
-        "scope": "Whole-disease FD/MAS management — the consortium's first systematized consensus.",
-        "covers": ["Diagnosis", "Genetics", "Therapy", "Surgery", "Monitoring"],
+        "scope": "International best-practice statements for definition, diagnosis, staging, treatment, monitoring, and multidisciplinary care of FD/MAS.",
+        "covers": [
+          "diagnosis",
+          "staging",
+          "treatment",
+          "monitoring",
+          "FD/MAS",
+          "multidisciplinary care"
+        ],
         "freeFullText": true
       },
       {
-        "id": "gun2024",
+        "id": "38010041",
         "role": "Children — update",
         "pmid": "38010041",
-        "title": "Fibrous dysplasia in children and its management",
+        "title": "Fibrous dysplasia in children and its management.",
         "authors": "Gun ZH, Arif A, Boyce AM",
         "journal": "Curr Opin Endocrinol Diabetes Obes",
         "year": 2024,
-        "scope": "Most recent pediatric compendium: skeletal growth and newer therapies (denosumab).",
-        "covers": ["Therapy (children)", "Denosumab", "Monitoring"],
-        "updatesNote": "Updates the denosumab recommendation from the 2019 consensus.",
+        "scope": "Current review of diagnosis and management challenges in children, including growth-related progression, surgery, physiatric care, endocrinopathies, bisphosphonates, and denosumab.",
+        "covers": [
+          "children",
+          "skeletal growth",
+          "endocrinopathies",
+          "bisphosphonates",
+          "denosumab",
+          "surgery"
+        ],
+        "updatesNote": "Updates pediatric management since the 2019 consensus by emphasizing that bisphosphonates may help pain but do not alter lesion progression and by highlighting emerging denosumab evidence needing further study.",
         "isNew": true
       },
       {
-        "id": "szymczuk2023",
+        "id": "36849642",
         "role": "Craniofacial",
         "pmid": "36849642",
-        "title": "Craniofacial Fibrous Dysplasia: Clinical and Therapeutic Implications",
+        "title": "Craniofacial Fibrous Dysplasia: Clinical and Therapeutic Implications.",
         "authors": "Szymczuk V, Taylor J, Boyce AM",
         "journal": "Curr Osteoporos Rep",
         "year": 2023,
-        "scope": "Strictly the craniofacial region — including optic-nerve compression management.",
-        "covers": ["Imaging", "Optic nerve", "Craniofacial surgery"]
+        "scope": "Focused current review of diagnosis, complications, and clinical management for craniofacial FD/MAS.",
+        "covers": [
+          "craniofacial",
+          "diagnosis",
+          "complications",
+          "management",
+          "therapy"
+        ]
       },
       {
-        "id": "genereviews",
+        "id": "22640797",
+        "role": "Craniofacial guideline",
+        "pmid": "22640797",
+        "title": "Clinical guidelines for the management of craniofacial fibrous dysplasia.",
+        "authors": "Lee JS, FitzGibbon EJ, Chen YR, Kim HJ, Lustig LR, Akintoye SO, Collins MT, Kaban LB",
+        "journal": "Orphanet J Rare Dis",
+        "year": 2012,
+        "scope": "Clinically focused craniofacial FD guideline covering natural progression, diagnostic evaluation, multidisciplinary management, and research needs.",
+        "covers": [
+          "craniofacial",
+          "diagnostic evaluation",
+          "natural history",
+          "multidisciplinary management"
+        ]
+      },
+      {
+        "id": "25043984",
+        "role": "Imaging recommendations",
+        "pmid": "25043984",
+        "title": "Fibrous dysplasia and McCune-Albright syndrome: imaging for positive and differential diagnoses, prognosis, and follow-up guidelines.",
+        "authors": "Bousson V, Rey-Jouvin C, Laredo JD, Le Merrer M, Martin-Duverneuil N, Feydy A, Aubert S, Chapurlat R",
+        "journal": "Eur J Radiol",
+        "year": 2014,
+        "scope": "Multidisciplinary recommendations for bone imaging in FD/MAS diagnosis, differential diagnosis, prognosis, and follow-up.",
+        "covers": [
+          "imaging",
+          "radiology",
+          "diagnosis",
+          "differential diagnosis",
+          "prognosis",
+          "follow-up"
+        ]
+      },
+      {
+        "id": "31673695",
+        "role": "Comprehensive review",
+        "pmid": "31673695",
+        "title": "Fibrous Dysplasia/McCune-Albright Syndrome: A Rare, Mosaic Disease of Gα s Activation.",
+        "authors": "Boyce AM, Collins MT",
+        "journal": "Endocr Rev",
+        "year": 2020,
+        "scope": "Authoritative review of FD/MAS pathogenesis, age-related clinical features, evaluation, management, and unmet needs.",
+        "covers": [
+          "pathophysiology",
+          "GNAS",
+          "clinical spectrum",
+          "evaluation",
+          "management",
+          "research gaps"
+        ]
+      },
+      {
+        "id": "NBK274564",
         "role": "Reference compendium",
         "bookshelf": "NBK274564",
-        "title": "Fibrous Dysplasia / McCune-Albright Syndrome",
+        "title": "Fibrous Dysplasia / McCune-Albright Syndrome",
         "authors": "Boyce AM, Collins MT, et al.",
         "journal": "GeneReviews® · NCBI Bookshelf",
         "year": "continuously updated",
-        "scope": "Continuously updated NIH reference chapter — de facto textbook guidance.",
-        "covers": ["Diagnosis", "Histopathology", "Genetics", "Full review"]
+        "scope": "GeneReviews-style compendium for FD/MAS clinical characteristics, diagnosis, differential diagnosis, and management.",
+        "covers": [
+          "clinical characteristics",
+          "diagnosis",
+          "management",
+          "differential diagnosis",
+          "genetics"
+        ]
       }
     ],
     "synthesis": {
       "kind": "synthesis",
       "title": "Fibrous Dysplasia — synthesis of the guidelines",
-      "version": "Synthesis · 4 sources",
-      "lastUpdated": "2026-05-10",
+      "version": "Synthesis · 7 sources",
+      "lastUpdated": "2026-06-17",
       "epistemicLevel": "a",
-      "sourceIds": ["boyce2019", "gun2024", "szymczuk2023", "genereviews"],
-      "basedOn": "Combined from 4 source documents (Boyce 2019, Gun/Boyce 2024, Szymczuk/Boyce 2023, GeneReviews).",
-      "synthDisclaimer": "This summary was prepared by AI from 4 source documents — it is not an official guideline and may contain inaccuracies. Every claim links to the document and section it came from; read straight from the source if you prefer.",
+      "sourceIds": [
+        "31196103",
+        "38010041",
+        "36849642",
+        "22640797",
+        "25043984",
+        "31673695",
+        "NBK274564"
+      ],
+      "basedOn": "Combined by AI from 7 source documents on the shelf.",
+      "synthDisclaimer": "This summary was prepared by AI from the source documents on the shelf — it is not an official guideline and may contain inaccuracies. Every claim links to the document it came from; read straight from the source if you prefer.",
       "status": "consensus",
       "hasFlowchart": true,
       "whatToDoNow": [
-        { "lead": "Confirm the diagnosis properly.", "body": "A DNA test for the GNAS mutation is decisive — histopathology alone is not enough." },
-        { "lead": "Map the extent with imaging.", "body": "CT or MRI shows how far the lesion reaches. A bone scan is done once at diagnosis, not on a cycle." },
-        { "lead": "Reach a specialist who knows this disease.", "body": "Not every surgeon or endocrinologist has seen it — check the doctor list on the disease page." },
-        { "lead": "Plan for the long term.", "body": "Reviews every 6–12 months; treatment is driven by pain and progression, not by the diagnosis alone." }
+        {
+          "lead": "Confirm the diagnosis properly.",
+          "body": "A DNA test for the GNAS mutation is decisive — histopathology alone is not enough."
+        },
+        {
+          "lead": "Map the extent with imaging.",
+          "body": "CT or MRI shows how far the lesion reaches. A bone scan is done once at diagnosis, not on a cycle."
+        },
+        {
+          "lead": "Reach a specialist who knows this disease.",
+          "body": "Not every surgeon or endocrinologist has seen it — check the doctor list on the disease page."
+        },
+        {
+          "lead": "Plan for the long term.",
+          "body": "Reviews every 6–12 months; treatment is driven by pain and progression, not by the diagnosis alone."
+        }
       ],
       "redFlags": {
         "title": "When to seek a second opinion",
@@ -79,133 +177,455 @@
         {
           "id": "diagnosis",
           "title": "1. Diagnosis",
-          "intro": "Diagnosis rests on the combined picture of radiology, histopathology, and genetic confirmation of a GNAS mutation.",
+          "intro": "Diagnosis of fibrous dysplasia/McCune-Albright syndrome is established by integrating clinical pattern, characteristic imaging, and selective histopathologic or molecular confirmation.",
           "paragraphs": [
-            { "id": "dx-ct", "source": { "doc": "szymczuk2023", "loc": "§ Imaging" }, "text": "The first imaging study when craniofacial FD is suspected is a non-contrast CT of the facial skeleton in thin slices (≤1 mm). The typical picture is a “ground-glass” appearance with blurring of the boundary between cancellous and cortical bone.", "citations": ["36849642"] },
-            { "id": "dx-mri", "source": { "doc": "szymczuk2023", "loc": "§ MRI / optic nerve" }, "text": "Contrast MRI is indicated when compression of soft-tissue structures is suspected (optic nerve, brain, inner-ear structures). MRI does not replace CT — it complements the assessment.", "citations": ["36849642"] },
-            { "id": "dx-scintigraphy", "source": { "doc": "boyce2019", "loc": "§ Imaging" }, "text": "A bone scan is done only once at diagnosis, to assess extent (mono- vs polyostotic). Routine repetition is not recommended, given the cumulative radiation dose and low clinical value in follow-up.", "citations": ["31196103"], "highlight": true }
+            {
+              "id": "dx-clinical-framework",
+              "text": "FD/MAS should be considered a mosaic GNAS-related disorder with a wide clinical spectrum, ranging from isolated skeletal disease to involvement of multiple bones with skin and/or endocrine features. At diagnosis, the practical aim is to define whether disease is monostotic or polyostotic and whether extraskeletal manifestations of McCune-Albright syndrome are present, because variable presentation across specialties can lead to misdiagnosis and unnecessary variation in investigations.",
+              "source": {
+                "doc": "31196103",
+                "loc": "Consensus scope: definition, diagnosis, staging"
+              },
+              "citations": [
+                "31196103"
+              ]
+            },
+            {
+              "id": "dx-imaging-primary",
+              "text": "Imaging has a central role in positive diagnosis, differential diagnosis, prognosis, and follow-up of FD/MAS. A standardized radiologic approach is recommended, with radiologists actively contributing to recognition of typical bone lesions and communication with the wider clinical team; this helps avoid inconsistent work-up in a rare condition with multiple possible presentations.",
+              "source": {
+                "doc": "25043984",
+                "loc": "Imaging recommendations: diagnosis and differential diagnosis"
+              },
+              "citations": [
+                "25043984"
+              ]
+            },
+            {
+              "id": "dx-craniofacial",
+              "text": "For suspected craniofacial FD, diagnosis should account for the distinctive functional and anatomic complexity of the craniofacial skeleton. Current craniofacial review guidance emphasizes assessing potential complications and clinical implications alongside diagnosis, rather than treating craniofacial lesions as isolated radiographic findings.",
+              "source": {
+                "doc": "36849642",
+                "loc": "Craniofacial diagnosis and clinical implications"
+              },
+              "citations": [
+                "36849642"
+              ],
+              "update": {
+                "doc": "36849642",
+                "supersedes": "22640797",
+                "note": "Provides a current review of diagnosis, complications, and management implications for craniofacial FD/MAS, updating earlier craniofacial guideline framing."
+              }
+            },
+            {
+              "id": "dx-children",
+              "text": "In children, diagnosis should be interpreted in the context of skeletal growth and age-related lesion progression: fibro-osseous lesions expand during childhood and generally reach final disease burden in early adulthood. This pediatric context is important at diagnosis so that lesion activity and associated hyperfunctioning endocrinopathies are assessed without assuming adult disease behavior.",
+              "source": {
+                "doc": "38010041",
+                "loc": "Children: diagnosis and age-related progression"
+              },
+              "citations": [
+                "38010041"
+              ],
+              "update": {
+                "doc": "38010041",
+                "supersedes": "",
+                "note": "Adds child-specific diagnostic context related to growth, age-related lesion progression, and pediatric endocrine assessment."
+              }
+            },
+            {
+              "id": "dx-confirmation-not-routine",
+              "text": "Histopathology or genetic confirmation may support the diagnosis when clinical and imaging findings are uncertain, but diagnosis is generally framed around the mosaic nature of disease and the distribution of affected tissues. Because phenotype is determined by the location and extent of affected tissues, evaluation at diagnosis should focus on defining clinically relevant skeletal and extraskeletal involvement rather than pursuing unnecessary testing when the presentation is characteristic.",
+              "source": {
+                "doc": "31673695",
+                "loc": "Evaluation and clinical spectrum"
+              },
+              "citations": [
+                "31673695"
+              ]
+            }
           ]
         },
         {
           "id": "histopathology",
           "title": "2. Histopathology and genetics",
-          "intro": "Histopathology alone is insufficient. Confirmation of a GNAS mutation is required.",
+          "intro": "Histopathology and genetics can support the diagnosis of fibrous dysplasia/McCune-Albright syndrome, but both have important limits in routine patient care.",
           "paragraphs": [
-            { "id": "hp-classic", "source": { "doc": "genereviews", "loc": "§ Histopathology" }, "text": "The classic histopathological picture: irregular “Chinese-letter” bony trabeculae in a stroma of proliferating fibroblasts. NOTE: the microscopic appearance of FD can be indistinguishable from juvenile trabecular ossifying fibroma (JTOF), particularly in children." },
-            { "id": "hp-gnas", "source": { "doc": "boyce2019", "loc": "§ Genetic confirmation" }, "text": "Molecular testing for a somatic GNAS mutation (most often R201H or R201C in exon 8) is pathognomonic for FD and mandatory on any biopsy suspicious for FD. Absence of the mutation does not exclude FD (mosaicism), but a positive result confirms the diagnosis with 100% specificity.", "citations": ["31196103"] },
-            { "id": "hp-mosaic", "source": { "doc": "genereviews", "loc": "§ Molecular testing" }, "text": "In patients with a negative GNAS result in peripheral blood, retesting from lesional tissue should be considered (somatic mosaicism). Droplet digital PCR is more sensitive than classic Sanger sequencing." }
+            {
+              "id": "genetic-basis-mosaic",
+              "text": "FD/MAS is defined biologically as a disorder caused by somatic gain-of-function mutations of the GNAS gene, producing overactivity in affected tissues and a broad phenotype that varies by severity and age of onset. Because the disease is mosaic, clinical expression depends on which tissues are involved; genetic confirmation may therefore support the diagnosis but should be interpreted in the context of the patient’s clinical and radiologic findings.",
+              "source": {
+                "doc": "31196103",
+                "loc": "Abstract"
+              },
+              "citations": [
+                "31196103"
+              ]
+            },
+            {
+              "id": "histopathology-role",
+              "text": "Histopathology explains the lesion process: activating post-zygotic GNAS mutations inhibit normal differentiation and proliferation of bone-forming stromal cells, leading to replacement of normal bone and marrow by fibrous tissue and woven bone. Tissue examination may be useful when diagnosis is uncertain or when alternative pathology must be excluded, but histology is one component of a multidisciplinary diagnostic evaluation rather than a stand-alone pathway for every patient.",
+              "source": {
+                "doc": "22640797",
+                "loc": "Abstract"
+              },
+              "citations": [
+                "22640797"
+              ]
+            },
+            {
+              "id": "clinical-spectrum-limits-testing",
+              "text": "A more recent pathophysiologic review frames FD/MAS as a rare mosaic disease of Gαs activation, in which inappropriate cyclic AMP signaling in bone impairs skeletal stem-cell differentiation and produces discrete skeletal lesions prone to fracture, deformity, and pain. This mosaic biology helps explain why genetic testing can be limited by tissue sampling: a negative result from an unaffected or low-burden sample does not necessarily exclude FD/MAS when the clinical picture is otherwise typical.",
+              "source": {
+                "doc": "31673695",
+                "loc": "Abstract"
+              },
+              "citations": [
+                "31673695"
+              ],
+              "update": {
+                "doc": "31673695",
+                "supersedes": "22640797",
+                "note": "Updates the older craniofacial guideline’s post-zygotic GNAS framework with a broader mosaic Gαs/cAMP pathophysiology model."
+              }
+            },
+            {
+              "id": "children-developmental-context",
+              "text": "In children, FD is described as a mosaic disorder arising from somatic Gαs variants, with impaired osteogenic cell differentiation; fibro-osseous lesions expand during childhood and typically reach final disease burden in early adulthood. This age-related evolution means that histopathologic or genetic information should be integrated with growth-related clinical and imaging changes, rather than used in isolation to predict future burden or guide all management decisions.",
+              "source": {
+                "doc": "38010041",
+                "loc": "Abstract"
+              },
+              "citations": [
+                "38010041"
+              ],
+              "update": {
+                "doc": "38010041",
+                "supersedes": "31196103",
+                "note": "Adds child-specific emphasis on somatic Gαs variants, skeletal growth, and age-related lesion progression."
+              }
+            }
           ]
         },
         {
           "id": "therapy",
           "title": "3. Therapy",
-          "intro": "Treatment choice depends on pain, lesion progression, and the patient's age. In children, a conservative approach is preferred.",
+          "intro": "Treatment for fibrous dysplasia/McCune-Albright syndrome is individualized by disease site, symptoms, age, and associated endocrinopathies, and should be coordinated by clinicians experienced in FD/MAS.",
           "paragraphs": [
-            { "id": "tx-observe", "source": { "doc": "boyce2019", "loc": "§ Conservative management" }, "update": { "doc": "gun2024", "note": "Gun/Boyce 2024 refines observation in children up to skeletal maturity." }, "text": "Observation is the standard for asymptomatic patients until skeletal maturity (typically 16–18 years). It requires periodic clinical review every 6–12 months and imaging (CT/MRI) every 12–24 months.", "citations": ["31196103"] },
-            { "id": "tx-medical-lead", "source": { "doc": "boyce2019", "loc": "§ Medical therapy" }, "text": "Medical therapy is an option for bone pain that does not respond to NSAIDs, or for rapid progression — and it is led by a specialist experienced in FD (e.g. an endocrinologist), not started from a web summary. The specific drugs and dosing below are for the treating clinician.", "citations": ["31196103"] },
-            { "id": "tx-bisphos", "source": { "doc": "boyce2019", "loc": "§ Bisphosphonates" }, "text": "IV bisphosphonates (pamidronate 1 mg/kg/day × 3 days every 4 months, or zoledronate 0.025 mg/kg once every 6–12 months) are indicated for bone pain refractory to NSAIDs. They require calcium and vitamin-D supplementation and monitoring of renal function.", "citations": ["31196103"] },
-            { "id": "tx-denosumab", "source": { "doc": "gun2024", "loc": "§ Denosumab in children" }, "update": { "doc": "gun2024", "supersedes": "boyce2019", "note": "Gun/Boyce 2024 changes the schedule: induction → CTX-guided maintenance, instead of the fixed 4-weekly dosing of the 2019 consensus." }, "text": "Denosumab 60 mg s.c. every 4 weeks for 6 doses (induction phase), then every 12 weeks if CTX < 0.3 ng/mL is maintained. Monitor calcium and 25-OH-D weekly during induction, monthly during maintenance.", "citations": ["38010041"] },
-            { "id": "tx-denosumab-stop", "source": { "doc": "gun2024", "loc": "§ Discontinuation" }, "text": "After stopping denosumab there is a risk of rebound hypercalcemia. A tapering plan is required; consider switching to bisphosphonates for 6–12 months.", "citations": ["38010041"] },
-            { "id": "tx-burosumab", "source": { "doc": "boyce2019", "loc": "§ FGF23 / burosumab" }, "text": "Burosumab is only for patients with FGF23-driven hypophosphatemia (phosphate < 0.8 mmol/L + FGF23 > 100 RU/mL). Dosing is weight-based, with phosphate monitoring every 2 weeks during titration.", "citations": ["31196103"] }
+            {
+              "id": "therapy-multidisciplinary",
+              "text": "Therapy is indicated when FD/MAS causes pain, fracture risk, deformity, functional impairment, craniofacial complications, or clinically important extraskeletal disease. Care should be organized through a multidisciplinary team, with escalation to specialist FD/MAS services for complex, progressive, craniofacial, endocrine, or surgically challenging disease. Management aims to reduce symptoms and complications, support function, and monitor for change rather than to eradicate lesions.",
+              "source": {
+                "doc": "31196103",
+                "loc": "treatment and multidisciplinary care"
+              },
+              "citations": [
+                "31196103"
+              ]
+            },
+            {
+              "id": "therapy-children",
+              "text": "In children, treatment decisions should account for skeletal growth and the tendency for fibro-osseous lesions to expand during childhood and reach final disease burden in early adulthood. The main treatment pillars are surgical correction of skeletal deformities when needed, physiatric and rehabilitation care to preserve function, and specialist medical management of associated hyperfunctioning endocrinopathies. Children with progressive deformity, fractures, pain, or endocrine features should be managed by pediatric teams with relevant orthopedic, endocrine, rehabilitation, and craniofacial expertise.",
+              "source": {
+                "doc": "38010041",
+                "loc": "children: management"
+              },
+              "citations": [
+                "38010041"
+              ],
+              "update": {
+                "doc": "38010041",
+                "supersedes": "31196103",
+                "note": "Adds child-specific emphasis on growth-related progression, physiatric care, and pediatric multidisciplinary decision-making."
+              }
+            },
+            {
+              "id": "therapy-medical-bone-pain",
+              "text": "Medical therapy for skeletal disease should be led by a specialist and not initiated from a web summary. Bisphosphonates may be considered for FD-related bone pain, but current pediatric review evidence states that they do not alter lesion quality or progression. Denosumab is an emerging option that may improve lesion activity and mineralization, but further studies are needed before its routine role—particularly in children—can be defined; use therefore requires expert supervision and careful risk–benefit discussion.",
+              "source": {
+                "doc": "38010041",
+                "loc": "bisphosphonates and denosumab"
+              },
+              "citations": [
+                "38010041"
+              ],
+              "update": {
+                "doc": "38010041",
+                "supersedes": "31196103",
+                "note": "Clarifies that bisphosphonates are for pain rather than lesion modification, and frames denosumab as investigational/emerging rather than routine therapy."
+              },
+              "highlight": true
+            },
+            {
+              "id": "therapy-craniofacial",
+              "text": "Craniofacial FD requires site-specific management because of the functional and anatomical complexity of the skull and face. Observation may be appropriate for stable disease, while escalation to craniofacial, otolaryngology, ophthalmology, neurosurgical, dental, or maxillofacial specialists is warranted for symptoms, cosmetic or structural progression, sensory compromise, or other complications. Treatment planning should balance functional protection, deformity management, and the natural history of craniofacial lesions.",
+              "source": {
+                "doc": "36849642",
+                "loc": "craniofacial management"
+              },
+              "citations": [
+                "36849642"
+              ]
+            },
+            {
+              "id": "therapy-imaging-follow-up",
+              "text": "Imaging supports therapy by defining disease extent, prognosis, complications, and follow-up needs, and by improving communication between radiologists and treating specialists. Imaging-guided reassessment is particularly important when symptoms change, complications are suspected, surgery is being considered, or ongoing surveillance is needed for potentially disabling disease.",
+              "source": {
+                "doc": "25043984",
+                "loc": "imaging for prognosis and follow-up"
+              },
+              "citations": [
+                "25043984"
+              ]
+            }
           ]
         },
         {
           "id": "surgery",
           "title": "4. Indications for surgery",
-          "intro": "In children, surgery for FD is contraindicated except for strictly defined compelling reasons.",
+          "intro": "Surgery in fibrous dysplasia/McCune-Albright syndrome is reserved for defined clinical problems rather than for radiographic disease alone.",
           "paragraphs": [
-            { "id": "sx-no", "source": { "doc": "boyce2019", "loc": "§ Surgery in children" }, "text": "FD in children is NOT excised prophylactically. Resection in a child leads to permanent disfigurement and recurrence of the lesion in 30–60% of cases (literature from the 1990s).", "citations": ["31196103"] },
-            { "id": "sx-yes", "source": { "doc": "szymczuk2023", "loc": "§ Surgical indications" }, "text": "Absolute indications for surgical intervention (regardless of age): (a) vision loss or progressive visual-field defects, (b) facial-nerve compression with clinical symptoms, (c) deformity threatening airway patency.", "citations": ["36849642"] },
-            { "id": "sx-optic", "source": { "doc": "szymczuk2023", "loc": "§ Optic nerve" }, "text": "Pre-symptomatic decompression of the optic canal (on imaging alone) is NOT recommended — the risk of vision loss from surgery outweighs the risk from observation.", "citations": ["36849642"] }
+            {
+              "id": "surgery-core-indications",
+              "text": "The base consensus frames management as individualized and multidisciplinary because FD/MAS has a wide clinical spectrum and limited high-strength evidence. Within this approach, surgery is considered when lesions produce clinically important consequences such as pain not otherwise controlled, fracture or impending structural compromise, progressive deformity, or functional impairment; the aim is to address the patient’s symptoms, stability, function, and safety rather than to remove all affected bone.",
+              "source": {
+                "doc": "31196103",
+                "loc": "treatment / multidisciplinary care"
+              },
+              "citations": [
+                "31196103"
+              ]
+            },
+            {
+              "id": "surgery-not-for-asymptomatic-lesions",
+              "text": "Surgery is not indicated solely because FD is visible on imaging or because a lesion is present. The consensus emphasizes diagnosis, staging, treatment, monitoring, and multidisciplinary care to avoid inappropriate variability in investigations and treatments; stable or asymptomatic disease is generally managed with observation, surveillance, pain management, rehabilitation, and treatment of associated endocrine drivers rather than prophylactic operations without a compelling clinical indication.",
+              "source": {
+                "doc": "31196103",
+                "loc": "treatment / monitoring"
+              },
+              "citations": [
+                "31196103"
+              ],
+              "highlight": true
+            },
+            {
+              "id": "children-growth-related-indications",
+              "text": "In children, the threshold for surgery is shaped by skeletal growth and age-related lesion progression. Current pediatric guidance describes the mainstay of treatment as surgical correction of skeletal deformities, physiatric care, and medical management of associated hyperfunctioning endocrinopathies; therefore surgery is most compelling when deformity is clinically significant or progressive, threatens ambulation or function, or is associated with fracture risk, while medical and rehabilitative care remain central and bisphosphonates for pain do not alter lesion progression.",
+              "source": {
+                "doc": "38010041",
+                "loc": "children / surgery"
+              },
+              "citations": [
+                "38010041"
+              ]
+            },
+            {
+              "id": "craniofacial-functional-indications",
+              "text": "For craniofacial FD, indications for surgery are driven by functional and anatomical consequences in the face and skull. Because the craniofacial skeleton has unique functional complexity, operative intervention is considered when disease causes or threatens clinically important complications such as sensory, orbital, airway, dental/occlusal, or other functional compromise, or when deformity produces substantial clinical burden; otherwise management relies on careful diagnosis, monitoring, and multidisciplinary review.",
+              "source": {
+                "doc": "36849642",
+                "loc": "craniofacial management"
+              },
+              "citations": [
+                "36849642"
+              ]
+            },
+            {
+              "id": "craniofacial-guideline-multidisciplinary-decision",
+              "text": "The craniofacial guideline highlights that FD is non-malignant, variable in behavior, and difficult to manage because progression differs between patients. Decisions about surgery should therefore be made in a multidisciplinary setting after diagnostic evaluation and assessment of natural progression, with the rationale clearly tied to symptoms, functional risk, deformity, or complications rather than to the diagnosis alone.",
+              "source": {
+                "doc": "22640797",
+                "loc": "multidisciplinary management"
+              },
+              "citations": [
+                "22640797"
+              ]
+            }
           ]
         },
         {
           "id": "monitoring",
           "title": "5. Monitoring and follow-up",
-          "intro": "The surveillance schedule depends on type (mono/polyostotic), age, and the presence of endocrinopathy (overlap with MAS).",
+          "intro": "Follow-up in fibrous dysplasia/McCune-Albright syndrome should be individualized to disease extent, age, symptoms, and involved sites, with attention to skeletal and extraskeletal complications.",
           "paragraphs": [
-            { "id": "mon-followup", "source": { "doc": "boyce2019", "loc": "§ Follow-up" }, "text": "A review visit every 6 months in children, every 12 months in adults. Assess pain (VAS scale), function, growth parameters, and endocrine symptoms.", "citations": ["31196103"] },
-            { "id": "mon-markers", "source": { "doc": "boyce2019", "loc": "§ Bone turnover markers" }, "text": "Bone turnover markers: P1NP, CTX every 6 months (or more often on denosumab — see section 3). Calcium, phosphate, 25-OH-D, ALP every 12 months.", "citations": ["31196103"] },
-            { "id": "mon-mas", "source": { "doc": "boyce2019", "loc": "§ MAS screening" }, "text": "Endocrine MAS screening in every case of FD (TSH, fT4, IGF-1, GH, cortisol; Tanner-stage assessment of puberty in children).", "citations": ["31196103"] }
+            {
+              "id": "follow-up-principles",
+              "text": "The international consensus guideline frames monitoring as part of ongoing multidisciplinary care, because FD/MAS varies widely in severity, age of onset, and the organs involved. Patient follow-up should therefore track symptoms, functional impact, skeletal complications, endocrine features when present, and changes that might alter treatment or referral needs.",
+              "source": {
+                "doc": "31196103",
+                "loc": "monitoring and multidisciplinary care"
+              },
+              "citations": [
+                "31196103"
+              ]
+            },
+            {
+              "id": "imaging-follow-up",
+              "text": "Imaging is used not only for diagnosis but also for prognosis and follow-up. The imaging schedule should be standardized enough to allow comparison over time, but tailored to clinical presentation, lesion location, and the need to evaluate pain, deformity, fracture risk, or other complications.",
+              "source": {
+                "doc": "25043984",
+                "loc": "follow-up imaging recommendations"
+              },
+              "citations": [
+                "25043984"
+              ]
+            },
+            {
+              "id": "children-growth-surveillance",
+              "text": "Children require closer longitudinal surveillance because FD lesions expand during childhood and disease burden generally becomes established by early adulthood. Follow-up should monitor growth-related progression, skeletal deformity, pain, function, fractures, and associated hyperfunctioning endocrinopathies, with review frequency guided by age, skeletal growth, symptoms, and lesion activity.",
+              "source": {
+                "doc": "38010041",
+                "loc": "children and skeletal growth"
+              },
+              "citations": [
+                "38010041"
+              ],
+              "update": {
+                "doc": "38010041",
+                "supersedes": "31196103",
+                "note": "Adds emphasis on childhood growth-related progression and pediatric management challenges."
+              }
+            },
+            {
+              "id": "craniofacial-follow-up",
+              "text": "For craniofacial FD, follow-up should reflect the variable natural history and the functional complexity of the skull and face. Surveillance should track clinical progression and complications relevant to craniofacial involvement, and should be coordinated through multidisciplinary care when symptoms, anatomy, or function require specialist input.",
+              "source": {
+                "doc": "22640797",
+                "loc": "craniofacial multidisciplinary management"
+              },
+              "citations": [
+                "22640797"
+              ]
+            },
+            {
+              "id": "ongoing-assessment-unmet-needs",
+              "text": "Ongoing assessment should recognize the age-related clinical and radiographic changes of FD/MAS and the broad clinical spectrum caused by mosaic tissue involvement. Follow-up is therefore not a single fixed schedule for all patients; it should be adjusted over time according to clinical course, skeletal lesion behavior, pain, deformity, fracture history, and extraskeletal manifestations.",
+              "source": {
+                "doc": "31673695",
+                "loc": "evaluation and management"
+              },
+              "citations": [
+                "31673695"
+              ]
+            }
           ]
         }
       ]
     },
     "suggestions": [
       {
-        "id": "sg-oct",
-        "kind": "addition",
-        "targetSection": "surgery",
-        "sectionLabel": "4. Indications for surgery",
-        "title": "Add OCT + visual-field monitoring for asymptomatic optic-canal involvement",
-        "summary": "For patients with radiological optic-canal involvement but no symptoms: add OCT (optical coherence tomography) and a formal visual field every 6 months, alongside the existing MRI every 12 months.",
-        "rationale": "OCT is an optical scan (light, no ionising radiation) — at worst a low-risk redundant scan, at best early detection of compression before vision is lost. Low risk / high benefit — a candidate to surface to the parent as a question for their doctor.",
-        "evidence": "moderate",
-        "citations": ["36849642"],
-        "gate": "promoted",
-        "parentText": "Newer work suggests that if imaging shows optic-canal involvement — even without symptoms — a periodic OCT (a light-based scan, no radiation) plus a visual-field test can catch a problem early.",
-        "signal": { "useful": 3, "not": 1, "wrong": 0, "ratings": 4, "verified": 2 },
-        "comments": [
-          { "who": "Verified reviewer", "tier": "led the research", "text": "Sensible and low risk. I'd anchor the 6-month interval to the NIH cohort rather than the 2024 review — the natural-history data there is stronger." }
-        ]
-      },
-      {
-        "id": "sg-deno",
+        "id": "sg-41858142",
         "kind": "modification",
         "targetSection": "therapy",
-        "sectionLabel": "3. Therapy · denosumab dosing",
-        "title": "Change denosumab dosing: induction, then a CTX-guided maintenance taper",
-        "summary": "Replace fixed 4-weekly dosing with a 6-dose induction, then maintenance every 12 weeks gated on CTX < 0.3 ng/mL, with a defined monitoring schedule.",
-        "rationale": "Four 2024–2025 papers converge on a post-induction taper and warn of rebound hypercalcemia after abrupt discontinuation. This changes a dosing line — a real downside if misapplied — so it stays clinician-only.",
-        "evidence": "strong",
-        "citations": ["38010041", "31196103"],
-        "gate": "expert",
-        "signal": { "useful": 5, "not": 0, "wrong": 1, "ratings": 6, "verified": 3 },
-        "comments": [
-          { "who": "Verified reviewer", "tier": "led the research", "text": "Right direction and consistent with the 2024 consensus. Weekly calcium during induction is non-negotiable — keep it bold. One reviewer flagged the maintenance interval as too long for under-10s; worth a sub-note." },
-          { "who": "Verified reviewer", "tier": "co-authored research", "text": "Flagging the maintenance interval — in our under-10 cohort at q12w, CTX rebounded in 2/9. I'd qualify it by age." }
+        "sectionLabel": "3. Therapy",
+        "title": "Specify denosumab pain-efficacy and stopping-risk counseling",
+        "summary": "When denosumab is considered for FD/MAS, discuss it as a non-routine specialist option with emerging evidence for clinically meaningful pain improvement, but require explicit counseling and planning for adverse events and discontinuation.",
+        "rationale": "Current guidance only states that denosumab is an emerging option that may improve lesion activity and mineralization and needs expert supervision. New systematic review data specifically quantify pain outcomes in FD/MAS: among 86 treated patients, mean pain score fell by 3.51/10, 81.8% were pain responders, and 51.7% reduced or stopped analgesics. The same review and broader rare-bone-disease evidence also identify clinically important treatment and post-treatment risks, especially hypocalcemia, hypophosphatemia, and rebound hypercalcemia after discontinuation, so the update should add explicit pain-efficacy counseling and a discontinuation safety plan rather than implying routine use.",
+        "evidence": "moderate",
+        "citations": [
+          "41858142",
+          "41955566",
+          "41790192"
         ],
-        "diff": {
-          "file": "guidelines/fd.md · §3 Therapy",
-          "hunk": "@@ -142,4 +142,8 @@ Denosumab",
-          "lines": [
-            { "t": "ctx", "o": "141", "n": "141", "tx": "Bisphosphonates remain first line for bone pain refractory to NSAIDs." },
-            { "t": "del", "o": "142", "tx": "Denosumab 60 mg s.c. every 4 weeks until skeletal maturity." },
-            { "t": "add", "n": "142", "tx": "Denosumab 60 mg s.c. every 4 weeks for 6 doses (induction phase)," },
-            { "t": "add", "n": "143", "tx": "then every 12 weeks if a CTX < 0.3 ng/mL response is maintained." },
-            { "t": "add", "n": "144", "tx": "Monitor calcium and 25-OH-D weekly during induction, monthly during maintenance." },
-            { "t": "add", "n": "145", "tx": "On discontinuation: plan a taper — risk of rebound hypercalcemia (consider bisphosphonate cover for 6–12 months)." },
-            { "t": "ctx", "o": "143", "n": "146", "tx": "Burosumab is reserved for FGF23-driven hypophosphatemia." }
-          ]
+        "gate": "expert",
+        "parentText": "Newer 2025 reviews suggest the bone-strengthening drug denosumab can meaningfully reduce FD pain for many people, but it is a specialist-only option that needs careful counseling and a clear plan for stopping it safely — worth asking your specialist about.",
+        "signal": {
+          "useful": 2,
+          "not": 0,
+          "wrong": 0,
+          "ratings": 2,
+          "verified": 1
         },
-        "regenSeed": {
-          "version": "draft v2",
-          "basedOn": "the reviewer note about age-dependent maintenance",
-          "note": "Adds an age qualifier to the maintenance interval and a sub-note for patients under 10. New, explicitly versioned — nothing was overwritten."
-        }
+        "comments": []
       },
       {
-        "id": "sg-gnas",
+        "id": "sg-41858142-2",
         "kind": "addition",
-        "targetSection": "histopathology",
-        "sectionLabel": "2. Histopathology and genetics",
-        "title": "Note ddPCR over Sanger when peripheral-blood GNAS is negative",
-        "summary": "When peripheral-blood GNAS is negative but FD is clinically suspected, note droplet-digital PCR from lesional tissue as a higher-sensitivity confirmatory test.",
-        "rationale": "Reinforces the existing paragraph, does not change a decision. A diagnostic-sensitivity improvement with no patient risk — a candidate for the parent view as a question to ask.",
+        "targetSection": "monitoring",
+        "sectionLabel": "5. Monitoring and follow-up",
+        "title": "Add denosumab-specific biochemical follow-up",
+        "summary": "For patients receiving or stopping denosumab, follow-up should include planned calcium and phosphate monitoring during treatment and after discontinuation, with specialist oversight for rebound hypercalcemia risk.",
+        "rationale": "The existing monitoring section individualizes surveillance by disease extent, age, symptoms, imaging, and endocrine features, but it does not address treatment-specific biochemical monitoring. Recent denosumab reviews report on-treatment hypocalcemia and hypophosphatemia and post-discontinuation rebound hypercalcemia, including severe cases in FD/MAS, making this a new monitoring requirement for the subgroup exposed to denosumab.",
         "evidence": "moderate",
-        "citations": ["31196103"],
-        "gate": "promoted",
-        "parentText": "If a blood test for the GNAS gene comes back negative but doctors still suspect FD, a more sensitive lab test (ddPCR from the affected tissue) can help confirm it — worth asking about.",
-        "signal": { "useful": 2, "not": 0, "wrong": 0, "ratings": 2, "verified": 1 },
+        "citations": [
+          "41858142",
+          "41955566"
+        ],
+        "gate": "expert",
+        "parentText": "If denosumab is used, recent evidence says blood calcium and phosphate should be checked on a planned schedule during treatment and especially after stopping, because levels can rebound — a question to raise with the treating specialist.",
+        "signal": {
+          "useful": 1,
+          "not": 0,
+          "wrong": 0,
+          "ratings": 1,
+          "verified": 1
+        },
+        "comments": []
+      },
+      {
+        "id": "sg-41790192",
+        "kind": "addition",
+        "targetSection": "therapy",
+        "sectionLabel": "3. Therapy",
+        "title": "Record objective response measures when using denosumab",
+        "summary": "If denosumab is used, document baseline and follow-up pain scores, analgesic use, bone turnover markers, and imaging-based lesion activity where available to support individualized continuation or discontinuation decisions.",
+        "rationale": "Current therapy guidance says imaging supports reassessment and that denosumab is emerging, but it does not specify outcome measures for denosumab-treated patients. Recent systematic reviews report changes in pain scores, analgesic requirements, circulating bone markers, and Na[18F]F PET-CT lesion activity, indicating that structured objective response tracking is useful when this non-routine therapy is attempted.",
+        "evidence": "limited",
+        "citations": [
+          "41858142",
+          "41790192",
+          "36510335"
+        ],
+        "gate": "expert",
+        "parentText": "When denosumab is tried, it helps to track concrete measures over time — pain scores, painkiller use, bone blood markers, and scans — so the specialist can judge whether to continue or stop. Worth asking how response will be measured.",
+        "signal": {
+          "useful": 1,
+          "not": 0,
+          "wrong": 0,
+          "ratings": 1,
+          "verified": 0
+        },
         "comments": []
       }
     ],
     "signals": {
-      "diagnosis": { "up": 7, "flags": 0, "verified": 3 },
-      "histopathology": { "up": 5, "flags": 1, "verified": 2, "flagNotes": [{ "who": "Verified reviewer", "text": "Add that a negative blood GNAS does NOT rule out FD — a first-contact reader could misread it." }] },
-      "therapy": { "up": 6, "flags": 1, "verified": 3, "flagNotes": [{ "who": "Verified reviewer", "text": "The denosumab summary is faithful to Gun 2024, but state more clearly that a specialist leads it — not the family doctor." }] },
-      "surgery": { "up": 8, "flags": 0, "verified": 4 },
-      "monitoring": { "up": 4, "flags": 0, "verified": 2 }
+      "diagnosis": {
+        "up": 7,
+        "flags": 0,
+        "verified": 3
+      },
+      "histopathology": {
+        "up": 5,
+        "flags": 1,
+        "verified": 2,
+        "flagNotes": [
+          {
+            "who": "Verified reviewer",
+            "text": "Add that a negative blood GNAS does NOT rule out FD — a first-contact reader could misread it."
+          }
+        ]
+      },
+      "therapy": {
+        "up": 6,
+        "flags": 1,
+        "verified": 3,
+        "flagNotes": [
+          {
+            "who": "Verified reviewer",
+            "text": "The denosumab summary is faithful to Gun 2024, but state more clearly that a specialist leads it — not the family doctor."
+          }
+        ]
+      },
+      "surgery": {
+        "up": 8,
+        "flags": 0,
+        "verified": 4
+      },
+      "monitoring": {
+        "up": 4,
+        "flags": 0,
+        "verified": 2
+      }
     }
   },
   "mas": {
@@ -219,7 +639,10 @@
         "journal": "Orphanet Journal of Rare Diseases",
         "year": 2019,
         "scope": "MAS section of the consortium consensus — the triad and endocrine screening.",
-        "covers": ["Diagnosis", "Endocrine screening"],
+        "covers": [
+          "Diagnosis",
+          "Endocrine screening"
+        ],
         "freeFullText": true
       },
       {
@@ -231,7 +654,9 @@
         "journal": "GeneReviews® · NCBI Bookshelf",
         "year": "continuously updated",
         "scope": "NIH reference chapter covering the FD/MAS spectrum.",
-        "covers": ["Full review"]
+        "covers": [
+          "Full review"
+        ]
       }
     ],
     "synthesis": {
@@ -240,7 +665,10 @@
       "version": "Synthesis · 2 sources",
       "lastUpdated": "2026-03-02",
       "epistemicLevel": "a",
-      "sourceIds": ["boyce2019", "genereviews"],
+      "sourceIds": [
+        "boyce2019",
+        "genereviews"
+      ],
       "basedOn": "Combined from the FD/MAS consensus (MAS section) and the GeneReviews reference chapter.",
       "synthDisclaimer": "This summary was prepared by AI from the source documents — it is not an official guideline and may contain inaccuracies. Show it to your doctor.",
       "status": "verified",
@@ -251,7 +679,17 @@
           "title": "1. Diagnosis and screening",
           "intro": "The classic triad: FD + café-au-lait macules + endocrinopathy. Two of the three are sufficient.",
           "paragraphs": [
-            { "id": "mas-dx", "source": { "doc": "boyce2019", "loc": "§ MAS" }, "text": "A diagnosis of MAS requires: (a) documented FD (CT + GNAS), (b) café-au-lait macules of the “coast of Maine” type with a border running along the body midline, (c) one of the endocrinopathies: GnRH-independent precocious puberty, hyperthyroidism, GH excess, hypercortisolism, or FGF23-mediated hypophosphatemia.", "citations": ["31196103"] }
+            {
+              "id": "mas-dx",
+              "source": {
+                "doc": "boyce2019",
+                "loc": "§ MAS"
+              },
+              "text": "A diagnosis of MAS requires: (a) documented FD (CT + GNAS), (b) café-au-lait macules of the “coast of Maine” type with a border running along the body midline, (c) one of the endocrinopathies: GnRH-independent precocious puberty, hyperthyroidism, GH excess, hypercortisolism, or FGF23-mediated hypophosphatemia.",
+              "citations": [
+                "31196103"
+              ]
+            }
           ]
         }
       ]
@@ -266,22 +704,42 @@
         "summary": "Shorten Tanner staging from 12 to 6 months in girls aged 2–7 — the peak-risk window for GnRH-independent precocious puberty.",
         "rationale": "A screening-interval change with a monitoring downside (not therapy); stays clinician-only until it gathers more signal.",
         "evidence": "moderate",
-        "citations": ["31196103"],
+        "citations": [
+          "31196103"
+        ],
         "gate": "expert",
-        "signal": { "useful": 1, "not": 0, "wrong": 0, "ratings": 1, "verified": 1 },
+        "signal": {
+          "useful": 1,
+          "not": 0,
+          "wrong": 0,
+          "ratings": 1,
+          "verified": 1
+        },
         "comments": [],
         "diff": {
           "file": "guidelines/mas.md · §1 Screening",
           "hunk": "@@ -22,1 +22,1 @@ Endocrine screening",
           "lines": [
-            { "t": "del", "o": "22", "tx": "Annual Tanner staging in MAS girls aged 2–8." },
-            { "t": "add", "n": "22", "tx": "Tanner staging every 6 months in MAS girls aged 2–7 (peak-risk window for GnRH-independent precocious puberty)." }
+            {
+              "t": "del",
+              "o": "22",
+              "tx": "Annual Tanner staging in MAS girls aged 2–8."
+            },
+            {
+              "t": "add",
+              "n": "22",
+              "tx": "Tanner staging every 6 months in MAS girls aged 2–7 (peak-risk window for GnRH-independent precocious puberty)."
+            }
           ]
         }
       }
     ],
     "signals": {
-      "overview": { "up": 2, "flags": 0, "verified": 1 }
+      "overview": {
+        "up": 2,
+        "flags": 0,
+        "verified": 1
+      }
     }
   }
 }
