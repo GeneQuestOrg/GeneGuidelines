@@ -21,6 +21,8 @@ interface TherapyRowProps {
 function TherapyRow({ therapy: t }: TherapyRowProps) {
   const [expanded, setExpanded] = useState(false);
   const hasSources = t.pmids.length > 0;
+  // Key is safe: therapy names are unique per disease_slug by DB constraint.
+  const listId = `pmid-list-${t.name.replace(/\s+/g, "-").toLowerCase()}`;
 
   return (
     <li className={`therapy-row therapy-row--${t.status}`}>
@@ -32,14 +34,16 @@ function TherapyRow({ therapy: t }: TherapyRowProps) {
       {hasSources && (
         <div className="therapy-row__sources">
           <button
+            type="button"
             className="therapy-row__sources-toggle"
             onClick={() => setExpanded((v) => !v)}
             aria-expanded={expanded}
+            aria-controls={listId}
           >
             {expanded ? "Hide sources" : `${t.pmids.length} PubMed source${t.pmids.length > 1 ? "s" : ""}`}
           </button>
           {expanded && (
-            <ul className="therapy-row__pmid-list">
+            <ul id={listId} className="therapy-row__pmid-list">
               {t.pmids.map((pmid) => (
                 <li key={pmid}>
                   <a
