@@ -134,13 +134,27 @@ jobs:
               exit 1
             fi
           done
+          # Single-revision rollover is not atomic: for a short window after /health
+          # flips, requests can still land on the OUTGOING revision. The account routes
+          # are always present in any image we build, so a persistent 404 means the new
+          # image genuinely lacks them; a transient 404 just means cut-over isn't done.
+          # Poll until the route responds (401/503/200), and only fail if it stays 404.
           # 404 = auth code not deployed; 503 = AUTH0_* missing on Container App; 401 = OK.
-          ME_CODE=$(curl -sS -o /dev/null -w "%{http_code}" --max-time 15 "${BASE}/api/account/me")
-          echo "/api/account/me → HTTP ${ME_CODE}"
+          ME_CODE=""
+          for i in 1 2 3 4 5 6 7 8 9 10; do
+            ME_CODE=$(curl -sS -o /dev/null -w "%{http_code}" --max-time 15 "${BASE}/api/account/me")
+            echo "/api/account/me → HTTP ${ME_CODE} ($i/10)"
+            if [ "${ME_CODE}" != "404" ]; then
+              break
+            fi
+            echo "Account route still 404 — waiting for new revision to take traffic…"
+            sleep 15
+          done
           if [ "${ME_CODE}" = "404" ]; then
-            echo "Account routes missing — is production branch behind main?"
+            echo "Account routes missing after rollout — new image lacks auth code (is production branch behind main?)."
             exit 1
           fi
           if [ "${ME_CODE}" = "503" ]; then
             echo "WARN: Auth0 env vars not set on Container App (see deploy/AZURE.md § Auth0)."
           fi
+          echo "Smoke OK — account routes live (HTTP ${ME_CODE})."
