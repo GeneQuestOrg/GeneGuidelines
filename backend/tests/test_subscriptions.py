@@ -9,6 +9,7 @@ from fastapi.testclient import TestClient
 
 from backend.content.service import DiseaseService
 from backend.main import app
+from backend.subscriptions.deps import provide_subscription_service
 from backend.subscriptions.models import AlertPrefs
 from backend.subscriptions.repository import InMemorySubscriptionRepo
 from backend.subscriptions.service import SubscriptionService
@@ -31,6 +32,18 @@ def subscription_service(disease_service: DiseaseService) -> SubscriptionService
     )
 
 
+@pytest.fixture
+def api_client(disease_service: DiseaseService) -> TestClient:
+    """API client with in-memory subscription repo (CI Postgres lacks new tables)."""
+    service = SubscriptionService(
+        repo=InMemorySubscriptionRepo(),
+        disease_service=disease_service,
+    )
+    app.dependency_overrides[provide_subscription_service] = lambda: service
+    yield TestClient(app)
+    app.dependency_overrides.pop(provide_subscription_service, None)
+
+
 def test_subscribe_and_confirm(subscription_service: SubscriptionService) -> None:
     result = subscription_service.subscribe(
         disease_slug="fd",
@@ -51,12 +64,12 @@ def test_subscribe_and_confirm(subscription_service: SubscriptionService) -> Non
     assert status == "confirmed"
 
 
-def test_subscribe_api(client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_subscribe_api(api_client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
         "backend.subscriptions.service.send_confirmation_email",
         lambda **kwargs: False,
     )
-    response = client.post(
+    response = api_client.post(
         "/api/diseases/fd/subscriptions",
         json={
             "email": "parent@example.com",
@@ -75,21 +88,16 @@ def test_subscribe_api(client: TestClient, monkeypatch: pytest.MonkeyPatch) -> N
     assert body.get("dev_confirm_url")
 
 
-def test_confirm_json(client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_confirm_json(api_client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
         "backend.subscriptions.service.send_confirmation_email",
         lambda **kwargs: False,
     )
-    created = client.post(
+    created = api_client.post(
         "/api/diseases/fd/subscriptions",
         json={"email": "other@example.com", "prefs": {}, "radius_km": 100},
     ).json()
     token = created["dev_confirm_url"].split("token=")[-1]
-    confirmed = client.get(f"/api/subscriptions/confirm.json?token={token}")
+    confirmed = api_client.get(f"/api/subscriptions/confirm.json?token={token}")
     assert confirmed.status_code == 200
     assert confirmed.json()["status"] == "confirmed"
-
-
-@pytest.fixture
-def client() -> TestClient:
-    return TestClient(app)
