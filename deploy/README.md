@@ -1,6 +1,6 @@
 # Deploy (Kaggle / demo)
 
-**Azure (live):** **[AZURE.md](./AZURE.md)** — `https://geneguidelines.genequest.org`, gałąź **`production`**, auto-deploy przez `.github/workflows/deploy-azure.yml`.
+**Azure (live):** **[AZURE.md](./AZURE.md)** — `https://geneguidelines.genequest.org`, gałąź **`production`**, auto-deploy przez `.github/workflows/deploy-azure.yml`. Sekcja **Ops discovery** w AZURE.md: jak znaleźć subskrypcję fundacji, Postgres, secrety, backup i test migracji przed deployem.
 
 Minimal stack: **Docker Compose + HTTP Basic Auth** on the whole site (public, admin, API). Postgres in the `postgres-data` volume.
 

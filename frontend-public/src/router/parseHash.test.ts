@@ -15,6 +15,11 @@ describe("parseHash", () => {
     expect(parseHash("#/diseases")).toEqual({ name: "diseaseIndex", query: undefined });
     expect(parseHash("#/diseases?q=fabry")).toEqual({ name: "diseaseIndex", query: "fabry" });
     expect(parseHash("#/diseases/fd")).toEqual({ name: "disease", slug: "fd" });
+    expect(parseHash("#/diseases/fd?alert=confirmed")).toEqual({
+      name: "disease",
+      slug: "fd",
+      alert: "confirmed",
+    });
   });
 
   it("rejects invalid disease slugs", () => {
@@ -25,6 +30,10 @@ describe("parseHash", () => {
   it("parses nested disease routes", () => {
     expect(parseHash("#/diseases/fabry/flowchart")).toEqual({
       name: "flowchart",
+      slug: "fabry",
+    });
+    expect(parseHash("#/diseases/fabry/my-case")).toEqual({
+      name: "myCase",
       slug: "fabry",
     });
     expect(parseHash("#/diseases/fabry/guidelines")).toEqual({

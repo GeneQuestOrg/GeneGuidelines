@@ -1,0 +1,151 @@
+.dsub-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 4vh 4vw;
+  z-index: 50;
+  overflow-y: auto;
+}
+
+.dsub-modal__sheet {
+  position: relative;
+  background: var(--bg-elev);
+  border-radius: var(--r-lg, 12px);
+  box-shadow: 0 24px 64px rgba(15, 23, 42, 0.18);
+  max-width: 520px;
+  width: 100%;
+  padding: 28px 28px 24px;
+}
+
+.dsub-modal__close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 50%;
+  background: var(--bg-soft);
+  color: var(--ink-2);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.dsub-modal__head {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 18px;
+  padding-right: 28px;
+}
+
+.dsub-modal__icon {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.dsub-modal__title {
+  margin: 0 0 6px;
+  font-size: 1.25rem;
+}
+
+.dsub-modal__sub {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.dsub-modal__form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.dsub-modal__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dsub-modal__label {
+  font-size: var(--fs-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-3);
+}
+
+.dsub-modal__field input[type="email"],
+.dsub-modal__field input[type="range"] {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.dsub-modal__field input[type="email"] {
+  padding: 11px 14px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--line);
+  font: inherit;
+  background: var(--bg-elev);
+}
+
+.dsub-modal__hint {
+  color: var(--ink-3);
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+.dsub-modal__prefs {
+  margin: 0;
+  padding: 0;
+  border: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dsub-modal__prefs legend {
+  font-size: var(--fs-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-3);
+  margin-bottom: 4px;
+}
+
+.dsub-modal__pref {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  cursor: pointer;
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.dsub-modal__pref b {
+  display: block;
+  color: var(--ink);
+}
+
+.dsub-modal__pref span {
+  color: var(--ink-3);
+  font-size: 0.82rem;
+}
+
+.dsub-modal__error {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: var(--r-sm);
+  background: rgba(220, 38, 38, 0.08);
+  color: var(--st-red);
+  font-size: 0.85rem;
+}
+
+.dsub-modal__actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}

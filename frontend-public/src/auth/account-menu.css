@@ -123,6 +123,10 @@
   background: var(--bg-soft);
 }
 
+a.account-menu__item {
+  text-decoration: none;
+}
+
 .account-menu__item--submenu {
   display: flex;
   justify-content: space-between;

@@ -20,12 +20,173 @@ These names are required for deploy scripts and GitHub Actions. They are not sec
 
 | Resource | Name |
 |---|---|
+| **Subscription** | `Azure subscription 1` (foundation tenant — see § Ops discovery) |
 | Resource group | `geneguidelines-demo` |
 | Container App | `gg-public` |
 | Azure Container Registry | `ggdemo45223` |
+| Postgres Flexible Server | `gg-pg-prod-07674` |
+| Postgres database | `geneguidelines` (app user `ggapp`) |
 | Image | `ggdemo45223.azurecr.io/geneguidelines-backend:<tag>` |
 
 > Resource group and registry names retain a `-demo` suffix from early hosting; the instance serves the public GeneGuidelines product, not a throwaway prototype.
+
+## Ops discovery — finding what we have on Azure
+
+This section records **how maintainers locate** foundation resources when returning after a break, onboarding a collaborator, or preparing a deploy. Names are not secrets; connection strings and API keys live only in Azure.
+
+### 1. Log in to the right tenant
+
+GeneGuidelines production lives in the **GeneQuest Foundation** Azure AD tenant, not a personal Microsoft account.
+
+```bash
+az login                    # pick genequest.onmicrosoft.com if prompted
+az account show -o table    # expect TenantDisplayName ≈ FUNDACJA "GENEQUEST …"
+```
+
+If `az containerapp show … geneguidelines-demo` returns **ResourceGroupNotFound**, you are on the wrong subscription. List and switch:
+
+```bash
+az account list -o table
+az account set --subscription "<Azure subscription 1 id>"
+```
+
+As of 2026-06-20 the foundation subscription id is `e80c0793-8fcd-419f-8941-5dbe93598b39`. Other subscriptions on the same machine (e.g. personal **Microsoft Azure Sponsorship**) do **not** host `geneguidelines-demo`.
+
+### 2. Inventory resource groups and Postgres
+
+```bash
+az group list --query "[?contains(name,'gene') || contains(name,'gg')].{name:name,location:location}" -o table
+
+az postgres flexible-server list \
+  --query "[].{name:name,rg:resourceGroup,fqdn:fullyQualifiedDomainName,state:state}" -o table
+```
+
+Expected GeneGuidelines stack:
+
+| Resource group | What lives there |
+|---|---|
+| `geneguidelines-demo` | `gg-public` Container App, ACR `ggdemo45223`, Postgres `gg-pg-prod-07674` |
+| `rg-genequest-analytics` | Umami analytics Postgres `gq-umami-pg-8822` (separate product — not GeneGuidelines DB) |
+
+Postgres host (public, firewall-restricted): `gg-pg-prod-07674.postgres.database.azure.com`, region **polandcentral**, version **16**, SKU **B1ms**.
+
+### 3. Where names are documented in this monorepo
+
+| Source | What it tells you |
+|---|---|
+| **This file** (`deploy/AZURE.md`) | Canonical live URLs, Container App / ACR names, Auth0, CI/CD |
+| [`docs/produkty/geneguidelines/archiwum/realizacja-pre-v1-2026-06/architektura/plan-postgres-migration.md`](../../docs/produkty/geneguidelines/archiwum/realizacja-pre-v1-2026-06/architektura/plan-postgres-migration.md) | Postgres provisioning history (2026-05-24), migration from SQLite, credential backup note |
+| [`docs/produkty/geneguidelines/archiwum/realizacja-pre-v1-2026-06/roadmap.md`](../../docs/produkty/geneguidelines/archiwum/realizacja-pre-v1-2026-06/roadmap.md) | Sprint 0.5 Postgres DONE checklist |
+| [`GeneGuidelinesObserver/deploy/AZURE.md`](../../GeneGuidelinesObserver/deploy/AZURE.md) | Observer app on same Postgres server (different database) |
+| [`docs/produkty/geneguidelines/eksperymenty/experiments-k1-add-disease-local.md`](../../docs/produkty/geneguidelines/eksperymenty/experiments-k1-add-disease-local.md) | **Safety rule:** never point local `.env` at `gg-pg-prod-07674` for experiments |
+
+Repo search tip: `rg 'gg-pg-prod|geneguidelines-demo|gg-public' docs/ GeneGuidelines/deploy/`.
+
+### 4. Read live Container App state (no secrets)
+
+```bash
+# Running image + revision (compare to origin/production SHA)
+az containerapp show \
+  --name gg-public \
+  --resource-group geneguidelines-demo \
+  --query "properties.{revision:latestRevisionName,image:template.containers[0].image}" \
+  -o json
+
+# Env var names and plain-text values (Auth0 domain, etc.)
+az containerapp show \
+  --name gg-public \
+  --resource-group geneguidelines-demo \
+  --query "properties.template.containers[0].env[?name=='DB_URL' || contains(name,'AUTH0') || name=='SUPERADMIN_EMAILS']" \
+  -o json
+
+# Secret names only
+az containerapp secret list \
+  --name gg-public \
+  --resource-group geneguidelines-demo \
+  -o table
+```
+
+Expected secrets on `gg-public`: `db-url`, `llm-api-key`, `openrouter-key` (and optionally `openai-key`).
+
+### 5. Get the production `DB_URL` (for backup / migration only)
+
+**Do not** commit the output. Prefer Azure CLI over copying from sibling repos' `.env` files.
+
+```bash
+export PROD_DB_URL=$(az containerapp secret show \
+  --name gg-public \
+  --resource-group geneguidelines-demo \
+  --secret-name db-url \
+  --query "value" -o tsv)
+
+# Sanity check (no password printed)
+echo "$PROD_DB_URL" | sed 's/:[^:@]*@/:***@/'
+```
+
+### 6. Postgres firewall — connect from your machine
+
+The server allows Azure services (`0.0.0.0` rule) and named dev IPs. Your laptop IP is **not** open by default.
+
+```bash
+MYIP=$(curl -sS ifconfig.me)
+az postgres flexible-server firewall-rule list \
+  --resource-group geneguidelines-demo \
+  --name gg-pg-prod-07674 -o table
+
+az postgres flexible-server firewall-rule create \
+  --resource-group geneguidelines-demo \
+  --name gg-pg-prod-07674 \
+  --rule-name "dev-$(whoami)-$(date +%Y%m%d)" \
+  --start-ip-address "$MYIP" \
+  --end-ip-address "$MYIP"
+```
+
+Remove temporary rules when done. Credential backup from the 2026-05 migration session was noted at `/tmp/gg-pg-prod/credentials.env` (mode 600) — long-term storage should be Bitwarden / Azure Key Vault, not git.
+
+### 7. Inspect production database shape
+
+```bash
+psql "$PROD_DB_URL" -c "\dt"
+psql "$PROD_DB_URL" -c "SELECT to_regclass('public.alembic_version');"
+psql "$PROD_DB_URL" -c "SELECT slug FROM diseases ORDER BY slug;"
+```
+
+**Known state (verified 2026-06-20):** schema created by `init_db()` at Postgres cutover — **28 tables**, **no `alembic_version` row** until first Alembic run. Runtime data: 3 diseases (`fd`, `mas`, `noonan`), 5 `content_prs`. Code on `origin/main` expects **7 additional migrations** (auth, research queue, guidelines layer, bibliography).
+
+### 8. Code vs production branch gap
+
+Deploy branch is **`production`**, development is **`main`**. Compare before pushing:
+
+```bash
+git fetch origin
+git log origin/production..origin/main --oneline | wc -l   # commits not yet live
+git log origin/production -1 --oneline
+git log origin/main -1 --oneline
+```
+
+As of 2026-06-20: production image tag `3907376` (~12 Jun); `main` was **65 commits ahead**. Push `git push origin main:production` triggers `.github/workflows/deploy-azure.yml` — but **run DB migrations first** (§ Database migrations below).
+
+### 9. Backup and test migration locally (recommended before prod)
+
+```bash
+mkdir -p /tmp/gg-migration-test
+pg_dump "$PROD_DB_URL" --no-owner --no-acl -F c \
+  -f /tmp/gg-migration-test/prod-$(date +%Y%m%d).dump
+
+# Restore into local Docker Postgres (see docker-compose.yml credentials)
+createdb geneguidelines_prod_mirror   # or via docker exec on geneguidelines-postgres-1
+pg_restore --no-owner --no-acl \
+  -d "postgresql://ggapp:testpass@localhost:5432/geneguidelines_prod_mirror" \
+  /tmp/gg-migration-test/prod-YYYYMMDD.dump
+
+cd GeneGuidelines
+export DB_URL="postgresql://ggapp:testpass@localhost:5432/geneguidelines_prod_mirror"
+alembic stamp dd31c5539990    # baseline tables already exist — do NOT run baseline upgrade()
+alembic upgrade head
+psql "$DB_URL" -c "SELECT version_num FROM alembic_version;"
+```
+
+Tested successfully 2026-06-20: all 7 pending migrations applied; seed data unchanged; `diseases.listed` defaulted to `1`.
 
 To inspect the currently running revision and image:
 
@@ -84,6 +245,37 @@ The backend runs in **vLLM-compatible** mode (`MODEL_PROFILE=vllm` + `LLM_BASE_U
 | `OPENAI_API_KEY` | placeholder (API compatibility; unused in vLLM mode) |
 | `OPENROUTER_API_KEY` | `secretref:openrouter-key` |
 
+### Email alerts (disease subscriptions, double opt-in)
+
+Backend sends confirmation links via **Resend**. Set once on `gg-public` (runtime — not in the GitHub workflow):
+
+| Container App env var | Hosted value |
+|---|---|
+| `EMAIL_FROM` | `GeneGuidelines <info@genequest.org>` (must be a verified sender in Resend) |
+| `PUBLIC_APP_URL` | `https://geneguidelines.genequest.org` (redirect after confirm) |
+| `API_PUBLIC_URL` | `https://geneguidelines.genequest.org` (confirm/unsubscribe links — same host as SPA; there is no separate `api.` subdomain) |
+| `RESEND_API_KEY` | `secretref:resend-api-key` |
+
+| Secret name | Purpose |
+|---|---|
+| `resend-api-key` | Resend API key |
+
+```bash
+az containerapp secret set --name gg-public --resource-group geneguidelines-demo \
+  --secrets resend-api-key="<RESEND_API_KEY>"
+
+az containerapp update \
+  --name gg-public \
+  --resource-group geneguidelines-demo \
+  --set-env-vars \
+    EMAIL_FROM='GeneGuidelines <info@genequest.org>' \
+    PUBLIC_APP_URL=https://geneguidelines.genequest.org \
+    API_PUBLIC_URL=https://geneguidelines.genequest.org \
+    RESEND_API_KEY=secretref:resend-api-key
+```
+
+After deploy, run `alembic upgrade head` if the subscription migration (`b8e3f1a2c4d5`) is not yet on prod Postgres.
+
 ### Container App secrets (names only — values live in Azure)
 
 | Secret name | Purpose |
@@ -91,6 +283,7 @@ The backend runs in **vLLM-compatible** mode (`MODEL_PROFILE=vllm` + `LLM_BASE_U
 | `llm-api-key` | SiliconFlow API key |
 | `openai-key` | OpenAI (optional fallback) |
 | `openrouter-key` | OpenRouter (used when `LLM_BASE_URL` + `LLM_API_KEY` are not set) |
+| `resend-api-key` | Resend (subscription confirmation emails) |
 
 When both `LLM_BASE_URL` and `LLM_API_KEY` are set, `backend/config.py` enables `SINGLE_LLM_MODE=True` and routes all profiles to that endpoint.
 
@@ -141,12 +334,31 @@ GitHub Actions (`.github/workflows/deploy-azure.yml`) passes these when running 
 
 ### Database migrations
 
-Auth adds `users` and `invites` via Alembic. Run once against production Postgres after merging auth to `production`:
+Migrations are **not** applied by the Container App or GitHub Actions deploy. Run them manually from a machine that can reach Azure Postgres (firewall rule + `az login` — see § Ops discovery).
+
+**Critical:** production Postgres was bootstrapped with `init_db()` (May 2026 cutover). The Alembic **baseline** revision (`dd31c5539990`) creates tables that **already exist**. Running `alembic upgrade head` alone will fail on `relation "diseases" already exists`.
+
+Correct procedure:
 
 ```bash
-# From a machine that can reach the Azure Postgres host:
-DB_URL='postgresql://…' alembic upgrade head
+# 1. Backup
+pg_dump "$PROD_DB_URL" --no-owner --no-acl -F c -f /tmp/gg-pre-migrate-$(date +%Y%m%d).dump
+
+# 2. From GeneGuidelines repo root, on main (or the revision you are deploying):
+export DB_URL=$(az containerapp secret show \
+  --name gg-public --resource-group geneguidelines-demo \
+  --secret-name db-url --query "value" -o tsv)
+
+alembic stamp dd31c5539990   # mark baseline as applied without re-running DDL
+alembic upgrade head         # feb15ef6e670 … a2d6f4b1c9e7 (users, invites, listed, research_jobs, …)
+
+psql "$DB_URL" -c "SELECT version_num FROM alembic_version;"
+# expect: a2d6f4b1c9e7
 ```
+
+Migration chain (2026-06): `dd31c5539990` baseline → `feb15ef6e670` users → `a1c4d9f2b3e8` invites → `c7e2a9f4d6b1` `diseases.listed` → `b4f8a1c2d9e3` research_jobs → `e5a3c1f7d2b9` doctor_contributions → `f1a7c3e9b8d2` guidelines layer → `a2d6f4b1c9e7` analyzed bibliography.
+
+**Order for a full release:** backup → `stamp` + `upgrade head` → `git push origin main:production` → smoke test (`/health`, `/api/account/me` → 401, new guideline views, one Auth0 login).
 
 ### ORCID (later)
 

@@ -7,7 +7,6 @@ import { DiseaseCard } from "./DiseaseCard";
 import { DoctorCard } from "./DoctorCard";
 import { DiseaseOpenPrList } from "./DiseaseOpenPrList";
 import { FoundationsList } from "./FoundationsList";
-import { PrivateContextPanel } from "./PrivateContextPanel";
 import { QuestionsForDoctor } from "./QuestionsForDoctor";
 import { TherapiesList } from "./TherapiesList";
 import { TrialsList } from "./TrialsList";
@@ -79,7 +78,7 @@ export function DiseaseTabs({
   } = useDiseaseFoundations(slug);
   const { docs: sourceDocs } = useSourceShelf(slug);
 
-  // Parent-only orientation spine (Phase 3). Clinician copy omits `orientation`.
+  // Parent-only copy blocks. Clinician copy omits `orientation`.
   const orientation = isClinician ? undefined : copy.orientation;
 
   const previewDoctors = useMemo(() => {
@@ -110,18 +109,9 @@ export function DiseaseTabs({
       <div role="tabpanel" className="d-tab-panel">
         {tab === "overview" ? (
           <>
-            {orientation != null ? (
-              <Section title={orientation.orientationTitle}>
-                <div id="orientation" className="d-orient" tabIndex={-1}>
-                  <p className="d-orient__body">{orientation.orientationBody}</p>
-                </div>
-              </Section>
-            ) : null}
-
             <Section
               title={orientation?.whatToDoNowTitle ?? copy.pathwayTitle}
               sub={orientation?.whatToDoNowBody ?? copy.pathwaySub}
-              divider={orientation != null}
             >
               <div className="path">
                 <ol className="path__steps">
@@ -258,14 +248,6 @@ export function DiseaseTabs({
               </Section>
             ) : null}
 
-            <Section
-              title="Private case context"
-              sub="Powered by Gemma 4 · runs locally · data never leaves this server"
-              divider
-            >
-              <PrivateContextPanel diseaseSlug={slug} />
-            </Section>
-
             {disease.related.length > 0 ? (
               <Section title={copy.relatedTitle} divider>
                 {relatedLoading ? (
@@ -351,10 +333,7 @@ export function DiseaseTabs({
             <p className="d-panel-stat">{copy.openPrsSub(disease.openPRs)}</p>
             <div className="page__actions">
               <Button variant="primary" type="button" onClick={() => onNav(`/diseases/${slug}/guidelines`)}>
-                {copy.guidelinesCta}
-              </Button>
-              <Button type="button" onClick={() => onNav(`/diseases/${slug}/flowchart`)}>
-                View pathway
+                {copy.synthesisCta}
               </Button>
             </div>
             {openPrs.length > 0 ? (

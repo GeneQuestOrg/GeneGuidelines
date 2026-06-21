@@ -5,6 +5,11 @@ import { InviteDoctorAction } from "./InviteDoctorAction";
 import { DoctorVerificationPanel } from "./DoctorVerificationPanel";
 import { useViewAsContext } from "./viewAsContext";
 import { VIEW_AS_OPTIONS, type ViewAsRole } from "./viewAs";
+import {
+  getAdminAppUrl,
+  getLegacyOpsUrl,
+  isLegacyOpsLinkVisible,
+} from "../config/adminUrl";
 import "./account-menu.css";
 
 const ROLE_LABELS: Record<string, string> = {
@@ -74,6 +79,9 @@ export function AccountMenu() {
   const canInvite = account?.role === "parent" || account?.role === "superadmin";
   const isSuperadmin = account?.role === "superadmin";
   const avatarInitials = initialsFromEmail(label);
+  const adminUrl = isSuperadmin ? getAdminAppUrl() : null;
+  const legacyUrl =
+    isSuperadmin && isLegacyOpsLinkVisible() ? getLegacyOpsUrl() : null;
 
   return (
     <div className="account-menu" ref={ref}>
@@ -105,6 +113,31 @@ export function AccountMenu() {
           </div>
           {pending ? <DoctorVerificationPanel /> : null}
           {canInvite ? <InviteDoctorAction /> : null}
+          {adminUrl != null ? (
+            <a
+              href={adminUrl}
+              className="account-menu__item"
+              role="menuitem"
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => setOpen(false)}
+            >
+              Admin app
+            </a>
+          ) : null}
+          {legacyUrl != null ? (
+            <a
+              href={legacyUrl}
+              className="account-menu__item"
+              role="menuitem"
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Full workflow editor until migration to the new admin app completes"
+              onClick={() => setOpen(false)}
+            >
+              Legacy ops
+            </a>
+          ) : null}
           {isSuperadmin ? (
             <div className="account-menu__section">
               <button

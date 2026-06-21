@@ -25,16 +25,10 @@ export interface RedFlag {
 }
 
 /**
- * Parent-only IA copy (Phase 3 — draft11 orientation spine + wizja 02).
- * Optional on DiseaseCopy so the clinician audience need not define it; the
- * parent overview renders these sections only when present.
+ * Parent-only IA copy (draft12 parent hub sections).
+ * Optional on DiseaseCopy so the clinician audience need not define it.
  */
 export interface ParentOrientationCopy {
-  /** Top-of-hub "Start here — what families wish they'd known" link/banner. */
-  startHereLabel: string;
-  /** Anchored orientation-framing block the start-here link jumps to. */
-  orientationTitle: string;
-  orientationBody: string;
   /** Plain-language "what to do now" framing above the pathway. */
   whatToDoNowTitle: string;
   whatToDoNowBody: string;
@@ -78,7 +72,14 @@ export interface DiseaseCopy {
   guidelinesTitle: string;
   guidelinesSub: string;
   guidelinesCta: string;
-  researchRunCta: string;
+  /** Parent hero — private case upload (draft12). */
+  myCaseCta: string;
+  /** Parent/clinician hero — disease alert subscription (draft12). */
+  notifyCta: string;
+  notifyPendingCta: string;
+  notifySubscribedCta: string;
+  /** Parent/clinician hero — synthesis reader entry (draft12). */
+  synthesisCta: string;
   openPrsTitle: string;
   openPrsSub: (count: number) => string;
   officialGuidelineTitle: string;

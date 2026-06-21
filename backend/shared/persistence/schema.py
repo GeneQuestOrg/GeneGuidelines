@@ -324,6 +324,7 @@ private_contexts = Table(
     Column("model_used", Text, nullable=False, server_default=""),
     Column("status", Text, nullable=False, server_default="pending"),
     Column("error", Text),
+    Column("user_id", Text),  # NULL for legacy anonymous uploads (pre gate)
     CheckConstraint(
         "status IN ('pending','ready','failed')",
         name="private_context_status_enum",
@@ -547,6 +548,37 @@ Index(
 )
 
 
+disease_alert_subscriptions = Table(
+    "disease_alert_subscriptions",
+    metadata,
+    Column("id", Text, primary_key=True),
+    Column("disease_slug", Text, nullable=False),
+    Column("email", Text, nullable=False),
+    Column("confirm_token", Text, nullable=False),
+    Column("status", Text, nullable=False),
+    Column("prefs_json", Text, nullable=False, server_default="{}"),
+    Column("radius_km", Integer, nullable=True),
+    Column("created_at", Text, nullable=False),
+    Column("confirmed_at", Text, nullable=True),
+    Column("unsubscribed_at", Text, nullable=True),
+    CheckConstraint(
+        "status IN ('pending','confirmed','unsubscribed')",
+        name="disease_alert_sub_status_enum",
+    ),
+    UniqueConstraint("confirm_token", name="uq_disease_alert_sub_confirm_token"),
+    UniqueConstraint("disease_slug", "email", name="uq_disease_alert_sub_slug_email"),
+)
+
+Index(
+    "ix_disease_alert_subscriptions_disease_slug",
+    disease_alert_subscriptions.c.disease_slug,
+)
+Index(
+    "ix_disease_alert_subscriptions_email",
+    disease_alert_subscriptions.c.email,
+)
+
+
 __all__ = [
     "metadata",
     "diseases",
@@ -566,4 +598,5 @@ __all__ = [
     "users",
     "invites",
     "research_jobs",
+    "disease_alert_subscriptions",
 ]

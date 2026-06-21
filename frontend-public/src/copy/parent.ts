@@ -78,7 +78,11 @@ export const parentCopy: AudienceCopy = {
     guidelinesSub:
       "Patient-friendly summary of the current consensus document — full citations in the reader.",
     guidelinesCta: "Read the guideline",
-    researchRunCta: "Suggest evidence scan (AI job)",
+    myCaseCta: "🔒 My case",
+    notifyCta: "🔔 Notify me",
+    notifyPendingCta: "🔔 Pending confirmation",
+    notifySubscribedCta: "🔔 Subscribed",
+    synthesisCta: "📄 Synthesis + sources",
     openPrsTitle: "Updates in review",
     openPrsSub: (count) =>
       count === 0
@@ -87,10 +91,6 @@ export const parentCopy: AudienceCopy = {
     officialGuidelineTitle: "Official guideline (ground truth)",
     officialGuidelineSub: "Consensus document approved by the specialist network.",
     orientation: {
-      startHereLabel: "Start here — what families wish they'd known",
-      orientationTitle: "What we wish we'd known in the first week",
-      orientationBody:
-        "Right after a diagnosis, the hardest part often isn't the lack of answers — it's not knowing what to even ask. That the diagnosis is worth double-checking yourself. That a doctor who knows this exact condition exists. That there are guidelines, foundations, and trials. What follows is a map of the things nobody tells you — read top to bottom.",
       whatToDoNowTitle: "What to do now",
       whatToDoNowBody:
         "In plain language: confirm the diagnosis genetically, map where the disease is active, find a specialist who knows this condition, and plan calm long-term follow-up. The steps below walk through it in the order you'll need them.",

@@ -10,7 +10,7 @@ import asyncio
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, Response, UploadFile
 
-from backend.account.deps import require_superadmin
+from backend.account.deps import PrivateContextUser, require_superadmin
 from backend.shared.cache import cache_response
 
 from .contracts import (
@@ -179,15 +179,14 @@ def list_foundations(
 )
 async def upload_private_context(
     slug: str,
+    user: PrivateContextUser,
     file: UploadFile = File(..., description="Discharge summary, lab result, or report (.txt, .md, .pdf)."),
     service: PrivateContextService = Depends(provide_private_context_service),
 ) -> PrivateContextResponse:
-    """Upload a private discharge / report. Gemma 4 strips PII before anything persists.
+    """Upload a private discharge / report. Parent account required when Auth0 is on.
 
-    The endpoint reads the upload into memory, hands the bytes to the service,
-    and returns once Gemma 4 has produced a validated :class:`RedactedFacts`
-    payload. The original text is **never** written to disk; only the
-    de-identified JSON is persisted.
+    Gemma 4 strips PII before anything persists. The original text is **never**
+    written to disk; only the de-identified JSON is persisted.
     """
     raw_bytes = await file.read()
     if len(raw_bytes) > _MAX_UPLOAD_BYTES:
@@ -202,6 +201,7 @@ async def upload_private_context(
         slug=slug,
         filename=file.filename or "upload",
         raw_bytes=raw_bytes,
+        user_id=None if user is None else user.id,
     )
     if context is None:
         raise HTTPException(status_code=404, detail="Disease not found")
@@ -214,10 +214,14 @@ async def upload_private_context(
 )
 def list_private_contexts(
     slug: str,
+    user: PrivateContextUser,
     service: PrivateContextService = Depends(provide_private_context_service),
 ) -> list[PrivateContextResponse]:
-    """List the private contexts uploaded for ``slug``, newest first."""
-    contexts = service.list_for_disease(slug)
+    """List private contexts for ``slug`` belonging to the signed-in parent."""
+    contexts = service.list_for_disease(
+        slug,
+        user_id=None if user is None else user.id,
+    )
     if contexts is None:
         raise HTTPException(status_code=404, detail="Disease not found")
     return [PrivateContextResponse.from_domain(c) for c in contexts]

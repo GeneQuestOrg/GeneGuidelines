@@ -44,6 +44,9 @@ export function parseHash(hash: string): Route {
     if (parts[2] === "flowchart") {
       return { name: "flowchart", slug };
     }
+    if (parts[2] === "my-case") {
+      return { name: "myCase", slug };
+    }
     if (parts[2] === "guidelines") {
       if (parts[3] === "pr" && parts[4]) {
         return { name: "guidelines", slug, prId: parts[4] };
@@ -59,7 +62,8 @@ export function parseHash(hash: string): Route {
     if (parts.length > 2) {
       return { name: "home" };
     }
-    return { name: "disease", slug };
+    const alert = query.alert;
+    return { name: "disease", slug, ...(alert != null ? { alert } : {}) };
   }
 
   if (parts[0] === "doctors") {

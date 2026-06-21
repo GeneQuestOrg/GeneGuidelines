@@ -10,7 +10,7 @@ export const doctorCopy: AudienceCopy = {
     searchPlaceholder: "Search diseases, genes, OMIM, or phenotype…",
     aboutLinkLabel: "Why we built this",
     browseCta: "Browse diseases",
-    researchCta: "New research run",
+    researchCta: "Start research",
     newDiseaseTitle: "Add a new disease",
     newDiseaseSub:
       "Launch the PubMed pipeline to draft sections, surface experts, and open PRs for consortium review.",
@@ -35,7 +35,7 @@ export const doctorCopy: AudienceCopy = {
       guidelines: "Guideline",
     },
     pathwayTitle: "Diagnostic algorithm (summary)",
-    pathwaySub: "High-level steps — open the flowchart for the full decision tree.",
+    pathwaySub: "High-level next steps in plain language.",
     pathwaySteps: [
       {
         title: "Genetic confirmation.",
@@ -68,7 +68,11 @@ export const doctorCopy: AudienceCopy = {
     guidelinesTitle: "Living guideline document",
     guidelinesSub: "Section-level provenance, citations, and in-context PR diffs.",
     guidelinesCta: "Open full document",
-    researchRunCta: "Run PubMed pipeline",
+    myCaseCta: "🔒 My case",
+    notifyCta: "🔔 Notify me",
+    notifyPendingCta: "🔔 Pending confirmation",
+    notifySubscribedCta: "🔔 Subscribed",
+    synthesisCta: "📄 Synthesis + sources",
     openPrsTitle: "Open pull requests",
     openPrsSub: (count) =>
       count === 0 ? "No drafts pending review." : `${count} drafts awaiting reviewer sign-off.`,

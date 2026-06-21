@@ -2,7 +2,6 @@ import { useRef, useState, useEffect } from "react";
 import { AppHeader, AuthModal, useAccount, type NavLink } from "@gene-guidelines/ui";
 import type { Account } from "@gene-guidelines/ui";
 import type { Route } from "../router/types";
-import { AdminAppLink } from "./AdminAppLink";
 import { useAccountContext } from "../auth/accountContext";
 import { AccountMenu } from "../auth/AccountMenu";
 import "./public-header.css";
@@ -37,7 +36,7 @@ function buildNavLinks(route: Route): NavLink[] {
   // disease detail views, not as a top-level destination.
   const base = [
     { href: "#/doctors", label: "Doctors" },
-    { href: "#/start-research", label: "New research" },
+    { href: "#/start-research", label: "Start Research" },
     { href: "#/about", label: "About" },
   ];
   return base.map((link) => ({
@@ -118,7 +117,6 @@ export function PublicHeader({
         mobileMenuContent={mobileMenuActions}
       >
         <div className="hdr-actions hdr-actions--desktop" ref={menuRef}>
-          <AdminAppLink />
           {signInAvailable ? (
             <AccountMenu />
           ) : account != null ? (

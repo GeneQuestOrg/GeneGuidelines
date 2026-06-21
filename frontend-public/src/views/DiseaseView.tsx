@@ -1,9 +1,13 @@
+import { useEffect, useState } from "react";
 import type { UserLocation } from "../router/types";
 import { getAudienceCopy } from "../copy";
 import { useAccountContext } from "../auth/accountContext";
 import { audienceForRole, isClinicianView, type ViewRole } from "../auth/resolveRole";
-import { Section } from "@gene-guidelines/ui";
+import { Section, Button } from "@gene-guidelines/ui";
 import { DiseaseHero } from "../components/DiseaseHero";
+import { DiseaseSubscribeModal } from "../components/DiseaseSubscribeModal";
+import { loadSubscriptionUiStatus } from "../utils/loadSubscriptionUiStatus";
+import { MyCaseCta } from "../components/MyCaseCta";
 import { DiseaseTabs } from "../components/DiseaseTabs";
 import { OfficialGuidelineBlock } from "../components/OfficialGuidelineBlock";
 import { SynthesisTeaser } from "../components/guidelines/SynthesisTeaser";
@@ -12,17 +16,30 @@ import { useDisease } from "../hooks/useDisease";
 import { useOfficialGuideline } from "../hooks/useOfficialGuideline";
 import { useSourceShelf } from "../hooks/useSourceShelf";
 import { useRelatedDiseases } from "../hooks/useRelatedDiseases";
+import type { SubscriptionUiStatus } from "../utils/diseaseSubscriptionStorage";
 import { PlaceholderView } from "./PlaceholderView";
 import "../styles/disease-page.css";
+import "../styles/my-case.css";
 
 export interface DiseaseViewProps {
   slug: string;
   role: ViewRole;
   userLoc: UserLocation | null;
   onNav: (path: string) => void;
+  alert?: string;
 }
 
-export function DiseaseView({ slug, role, userLoc, onNav }: DiseaseViewProps) {
+function parseAlertFromHash(): string | undefined {
+  if (typeof window === "undefined") return undefined;
+  const query = window.location.hash.split("?")[1];
+  if (!query) return undefined;
+  return new URLSearchParams(query).get("alert") ?? undefined;
+}
+
+export function DiseaseView({ slug, role, userLoc, onNav, alert }: DiseaseViewProps) {
+  const [showSubscribe, setShowSubscribe] = useState(false);
+  const [subscriptionStatus, setSubscriptionStatus] = useState<SubscriptionUiStatus>("none");
+  const [bannerAlert] = useState<string | undefined>(alert ?? parseAlertFromHash());
   const { disease, loading, error } = useDisease(slug);
   const { related, loading: relatedLoading } = useRelatedDiseases(disease?.related ?? []);
   const { pointer: officialPointer } = useOfficialGuideline(slug);
@@ -30,6 +47,26 @@ export function DiseaseView({ slug, role, userLoc, onNav }: DiseaseViewProps) {
   const { signInAvailable, login } = useAccountContext();
   const copy = getAudienceCopy(audienceForRole(role)).disease;
   const isClinician = isClinicianView(role);
+
+  useEffect(() => {
+    let cancelled = false;
+    void loadSubscriptionUiStatus(slug).then((status) => {
+      if (!cancelled) setSubscriptionStatus(status);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [slug, showSubscribe]);
+
+  useEffect(() => {
+    if (bannerAlert === "confirmed") {
+      void loadSubscriptionUiStatus(slug).then(setSubscriptionStatus);
+    }
+  }, [bannerAlert, slug]);
+
+  const refreshSubscriptionStatus = () => {
+    void loadSubscriptionUiStatus(slug).then(setSubscriptionStatus);
+  };
 
   if (loading) {
     return (
@@ -68,9 +105,9 @@ export function DiseaseView({ slug, role, userLoc, onNav }: DiseaseViewProps) {
           <span className="viewer-cta__text">
             Are you a clinician? Sign in to see AI suggestions and the literature trail.
           </span>
-          <button type="button" className="viewer-cta__btn" onClick={login}>
+          <Button variant="primary" size="sm" type="button" onClick={login}>
             Sign in
-          </button>
+          </Button>
         </aside>
       ) : null}
       {role === "doctor-unverified" ? (
@@ -86,37 +123,36 @@ export function DiseaseView({ slug, role, userLoc, onNav }: DiseaseViewProps) {
           Not yet in the public catalog — pending curation.
         </p>
       ) : null}
+      {bannerAlert === "confirmed" ? (
+        <p className="d-alert-banner d-alert-banner--ok" role="status">
+          Email alerts confirmed for {disease.nameShort}. We will only email when something
+          substantive changes.
+        </p>
+      ) : null}
+      {bannerAlert === "unsubscribed" ? (
+        <p className="d-alert-banner d-alert-banner--muted" role="status">
+          You are unsubscribed from {disease.nameShort} alerts.
+        </p>
+      ) : null}
       <DiseaseHero
         disease={disease}
         copy={copy}
         isClinician={isClinician}
+        subscriptionStatus={subscriptionStatus}
         onNav={onNav}
+        onSubscribe={() => setShowSubscribe(true)}
       />
-      {!isClinician && copy.orientation != null ? (
-        <div className="d-starthere">
-          <a
-            className="d-starthere__link"
-            href="#orientation"
-            onClick={(e) => {
-              e.preventDefault();
-              const target = document.getElementById("orientation");
-              if (target != null) {
-                target.scrollIntoView({ behavior: "smooth", block: "start" });
-                target.focus({ preventScroll: true });
-              }
-            }}
-          >
-            <span aria-hidden>→</span> {copy.orientation.startHereLabel}
-          </a>
-          <button
-            type="button"
-            className="d-starthere__print"
-            onClick={() => window.print()}
-          >
-            {copy.orientation.takeToDoctorCta}
-          </button>
-        </div>
+      {showSubscribe ? (
+        <DiseaseSubscribeModal
+          disease={disease}
+          onClose={() => {
+            setShowSubscribe(false);
+            refreshSubscriptionStatus();
+          }}
+          onSaved={() => refreshSubscriptionStatus()}
+        />
       ) : null}
+      {!isClinician ? <MyCaseCta disease={disease} onNav={onNav} /> : null}
       {sourceDocs.length > 0 ? (
         <Section
           title="Guidelines"

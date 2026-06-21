@@ -4,7 +4,8 @@ export type Route =
   | { name: "home" }
   | { name: "devComponents" }
   | { name: "diseaseIndex"; query?: string }
-  | { name: "disease"; slug: string }
+  | { name: "disease"; slug: string; alert?: string }
+  | { name: "myCase"; slug: string }
   | { name: "flowchart"; slug: string }
   | { name: "guidelines"; slug: string; prId?: string; srcParaId?: string }
   | { name: "bibliography"; slug: string }

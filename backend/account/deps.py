@@ -220,6 +220,41 @@ def require_superadmin(
     )
 
 
+def require_parent_account(
+    creds: Annotated[HTTPAuthorizationCredentials | None, Security(_bearer)] = None,
+    access_token: Annotated[str | None, Query()] = None,
+    verifier: Auth0Verifier = Depends(provide_verifier),
+    service: AccountService = Depends(provide_account_service),
+) -> User | None:
+    """Parent-only My case access when Auth0 is on; ``None`` when auth is off (dev).
+
+    Used for private-context upload and list endpoints. Superadmin passes.
+    """
+    if not verifier.enabled:
+        return None
+    token = _extract_bearer(creds, access_token)
+    if not token:
+        raise HTTPException(
+            status_code=401,
+            detail="Sign in with a parent or caregiver account to use My case.",
+        )
+    user = service.provision(verifier.verify(token))
+    if user.is_superadmin or user.role is Role.PARENT:
+        return user
+    if user.role is None:
+        raise HTTPException(
+            status_code=403,
+            detail="Choose the patient/caregiver role to use My case.",
+        )
+    raise HTTPException(
+        status_code=403,
+        detail="My case is for patient and caregiver accounts only.",
+    )
+
+
+PrivateContextUser = Annotated[User | None, Depends(require_parent_account)]
+
+
 def require_verified_doctor(user: CurrentUser) -> User:
     """Require a verified doctor (or superadmin). Used from D5 onward."""
     if user.is_superadmin:
@@ -246,5 +281,7 @@ __all__ = [
     "OptionalUser",
     "require_role",
     "require_superadmin",
+    "require_parent_account",
+    "PrivateContextUser",
     "require_verified_doctor",
 ]

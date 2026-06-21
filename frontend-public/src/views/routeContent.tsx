@@ -15,6 +15,7 @@ import { AccountView } from "./AccountView";
 import { JoinView } from "./JoinView";
 import { ResearchRunView } from "./ResearchRunView";
 import { StartResearchView } from "./StartResearchView";
+import { MyCaseView } from "./MyCaseView";
 import { TrialsView } from "./TrialsView";
 
 export interface RouteContentProps {
@@ -44,8 +45,11 @@ export function routeContent({
           role={role}
           userLoc={userLoc}
           onNav={onNav}
+          alert={route.alert}
         />
       );
+    case "myCase":
+      return <MyCaseView slug={route.slug} onNav={onNav} />;
     case "diseaseIndex":
       return <DiseaseIndexView initialQuery={route.query} onNav={onNav} />;
     case "account":

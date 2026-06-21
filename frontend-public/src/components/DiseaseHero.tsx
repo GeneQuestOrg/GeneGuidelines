@@ -1,22 +1,33 @@
 import { Button, Status } from "@gene-guidelines/ui";
 import type { Disease } from "../types";
 import type { DiseaseCopy } from "../copy";
+import type { SubscriptionUiStatus } from "../utils/diseaseSubscriptionStorage";
 import "../styles/disease-page.css";
 
 export interface DiseaseHeroProps {
   disease: Disease;
   copy: DiseaseCopy;
   isClinician: boolean;
+  subscriptionStatus: SubscriptionUiStatus;
   onNav: (path: string) => void;
+  onSubscribe: () => void;
 }
 
 export function DiseaseHero({
   disease,
   copy,
   isClinician,
+  subscriptionStatus,
   onNav,
+  onSubscribe,
 }: DiseaseHeroProps) {
   const slug = disease.slug;
+  const notifyLabel =
+    subscriptionStatus === "confirmed"
+      ? copy.notifySubscribedCta
+      : subscriptionStatus === "pending"
+        ? copy.notifyPendingCta
+        : copy.notifyCta;
 
   return (
     <div className={`d-hero d-hero--${disease.accent}`}>
@@ -69,17 +80,32 @@ export function DiseaseHero({
         </div>
       ) : null}
       <div className="d-hero__actions">
-        <Button variant="primary" type="button" onClick={() => onNav(`/diseases/${slug}/guidelines`)}>
-          {isClinician ? "Open guidelines" : copy.guidelinesCta}
+        {isClinician ? (
+          <Button
+            variant="primary"
+            type="button"
+            onClick={() => onNav(`/diseases/${slug}/guidelines`)}
+          >
+            {copy.guidelinesCta}
+          </Button>
+        ) : (
+          <Button
+            variant="primary"
+            type="button"
+            onClick={() => onNav(`/diseases/${slug}/my-case`)}
+          >
+            {copy.myCaseCta}
+          </Button>
+        )}
+        <Button
+          type="button"
+          variant={subscriptionStatus === "confirmed" ? "ghost" : "default"}
+          onClick={onSubscribe}
+        >
+          {notifyLabel}
         </Button>
-        <Button type="button" onClick={() => onNav(`/diseases/${slug}/flowchart`)}>
-          View pathway
-        </Button>
-        <Button variant="ghost" type="button" onClick={() => onNav(`/start-research?disease=${encodeURIComponent(slug)}`)}>
-          {copy.researchRunCta}
-        </Button>
-        <Button variant="ghost" type="button" onClick={() => onNav(`/doctors?disease=${encodeURIComponent(slug)}`)}>
-          {isClinician ? "Expert directory" : "Find specialists"} ({disease.doctorsCount})
+        <Button type="button" onClick={() => onNav(`/diseases/${slug}/guidelines`)}>
+          {copy.synthesisCta}
         </Button>
       </div>
     </div>

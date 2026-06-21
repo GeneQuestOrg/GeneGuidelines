@@ -434,3 +434,15 @@ GUIDELINES_RAG_ANCHOR_PMIDS: list[str] = (
     if _GUIDELINES_RAG_PMIDS_RAW
     else []
 )
+
+# -- Email alerts (disease subscriptions, double opt-in) -------------------------
+# Resend API (https://resend.com). When unset, subscriptions are stored but no
+# email is sent; the API may include a dev-only confirmation URL in responses.
+#   RESEND_API_KEY=re_...
+#   EMAIL_FROM=GeneGuidelines <alerts@genequest.org>
+#   PUBLIC_APP_URL=https://geneguidelines.genequest.org
+#   API_PUBLIC_URL=https://api.geneguidelines.genequest.org
+RESEND_API_KEY = (os.environ.get("RESEND_API_KEY") or "").strip()
+EMAIL_FROM = (os.environ.get("EMAIL_FROM") or "GeneGuidelines <alerts@genequest.org>").strip()
+PUBLIC_APP_URL = (os.environ.get("PUBLIC_APP_URL") or "http://localhost:5173").strip().rstrip("/")
+API_PUBLIC_URL = (os.environ.get("API_PUBLIC_URL") or "http://localhost:8000").strip().rstrip("/")

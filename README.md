@@ -122,7 +122,7 @@ Two surfaces over one backend:
 - **`frontend-public`** (`:5173`) — patients, families, clinicians: living guidelines, diagnostic pathways, specialist directory.
 - **`frontend-admin`** (`:5174`) — operators: visual workflow editor, live run traces, MCP tool governance, review queue.
 
-Backed by one **FastAPI + Pydantic AI + MCP + SQLAlchemy 2.0 Core + SQLite** service. React 18 + Vite + TypeScript + React Flow on the frontend. Server-Sent Events for live run traces. Three Gemma-compatible model profiles (`openai` / `deepseek` / `openrouter`) switchable via `MODEL_PROFILE`.
+Backed by one **FastAPI + Pydantic AI + MCP + SQLAlchemy 2.0 Core + PostgreSQL** service (`DB_URL`, psycopg). React 18 + Vite + TypeScript + React Flow on the frontend. Server-Sent Events for live run traces. Default **`MODEL_PROFILE=vllm`** (SiliconFlow Gemma 4); cloud profiles (`openai` / `deepseek` / `openrouter`) also supported.
 
 ```
 ┌────────────────────┐        SSE / REST         ┌──────────────────────┐
@@ -145,7 +145,7 @@ Flows are **data**, not Python files: a graph of typed nodes the engine walks st
 
 ## Quality
 
-- **328** backend + content-service tests pass
+- **671** backend + content-service tests pass
 - **TypeScript strict** + ESLint clean across all four workspaces (`@gene-guidelines/ui`, `@gene-guidelines/ops`, `frontend-public`, `frontend-admin`)
 - **Vitest + RTL** on the public site; **Playwright** smoke test for the critical user flow
 - **Ruff + mypy + pre-commit** configured (gentle gate today, full enforcement after the Phase 2 refactor)

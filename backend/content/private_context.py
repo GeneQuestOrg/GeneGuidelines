@@ -154,6 +154,7 @@ class PrivateContext:
     model_used: str
     status: str  # 'pending' | 'ready' | 'failed'
     error: str | None
+    user_id: str | None = None
 
 
 def private_context_from_row(row: Mapping[str, object]) -> PrivateContext:
@@ -176,6 +177,7 @@ def private_context_from_row(row: Mapping[str, object]) -> PrivateContext:
         model_used=str(row.get("model_used") or ""),
         status=str(row.get("status") or "pending"),
         error=None if err is None else str(err),
+        user_id=None if row.get("user_id") is None else str(row["user_id"]),
     )
 
 
@@ -388,9 +390,12 @@ class PrivateContextRepo(Protocol):
         model_used: str,
         status: str,
         error: str | None,
+        user_id: str | None = None,
     ) -> PrivateContext: ...
 
-    def list_for_disease(self, disease_slug: str) -> list[PrivateContext]: ...
+    def list_for_disease(
+        self, disease_slug: str, *, user_id: str | None = None
+    ) -> list[PrivateContext]: ...
 
 
 class SqlaPrivateContextRepo(BaseSqlalchemyRepo):
@@ -408,6 +413,7 @@ class SqlaPrivateContextRepo(BaseSqlalchemyRepo):
         model_used: str,
         status: str,
         error: str | None,
+        user_id: str | None = None,
     ) -> PrivateContext:
         now = datetime.now(timezone.utc).isoformat()
         clinical_facts = (
@@ -428,6 +434,7 @@ class SqlaPrivateContextRepo(BaseSqlalchemyRepo):
             model_used=model_used,
             status=status,
             error=error,
+            user_id=user_id,
         )
         with self._engine.begin() as conn:
             result = conn.execute(stmt)
@@ -440,12 +447,15 @@ class SqlaPrivateContextRepo(BaseSqlalchemyRepo):
         assert row is not None
         return private_context_from_row(dict(row))
 
-    def list_for_disease(self, disease_slug: str) -> list[PrivateContext]:
-        stmt = (
-            select(private_contexts_table)
-            .where(private_contexts_table.c.disease_slug == disease_slug)
-            .order_by(private_contexts_table.c.uploaded_at.desc())
+    def list_for_disease(
+        self, disease_slug: str, *, user_id: str | None = None
+    ) -> list[PrivateContext]:
+        stmt = select(private_contexts_table).where(
+            private_contexts_table.c.disease_slug == disease_slug
         )
+        if user_id is not None:
+            stmt = stmt.where(private_contexts_table.c.user_id == user_id)
+        stmt = stmt.order_by(private_contexts_table.c.uploaded_at.desc())
         with self._conn() as conn:
             rows = conn.execute(stmt).mappings().all()
         return [private_context_from_row(dict(r)) for r in rows]
@@ -467,6 +477,7 @@ class InMemoryPrivateContextRepo:
         model_used: str,
         status: str,
         error: str | None,
+        user_id: str | None = None,
     ) -> PrivateContext:
         clinical_facts = (
             len(redacted.clinical_findings)
@@ -487,17 +498,19 @@ class InMemoryPrivateContextRepo:
             model_used=model_used,
             status=status,
             error=error,
+            user_id=user_id,
         )
         self._next_id += 1
         self._items.append(context)
         return context
 
-    def list_for_disease(self, disease_slug: str) -> list[PrivateContext]:
-        return sorted(
-            (p for p in self._items if p.disease_slug == disease_slug),
-            key=lambda p: p.uploaded_at,
-            reverse=True,
-        )
+    def list_for_disease(
+        self, disease_slug: str, *, user_id: str | None = None
+    ) -> list[PrivateContext]:
+        items = [p for p in self._items if p.disease_slug == disease_slug]
+        if user_id is not None:
+            items = [p for p in items if p.user_id == user_id]
+        return sorted(items, key=lambda p: p.uploaded_at, reverse=True)
 
 
 # ---------------------------------------------------------------------------
@@ -516,6 +529,7 @@ class PrivateContextService:
         slug: str,
         filename: str,
         raw_bytes: bytes,
+        user_id: str | None = None,
     ) -> PrivateContext | None:
         """Parse → call Gemma → persist redacted facts.
 
@@ -543,6 +557,7 @@ class PrivateContextService:
                 model_used="",
                 status="failed",
                 error=str(exc),
+                user_id=user_id,
             )
 
         original_chars = len(raw_text)
@@ -564,6 +579,7 @@ class PrivateContextService:
                 model_used="",
                 status="failed",
                 error=f"{type(exc).__name__}: {exc}",
+                user_id=user_id,
             )
 
         # Drop the local references explicitly. Belt-and-braces — the GC would
@@ -580,13 +596,16 @@ class PrivateContextService:
             model_used=model_used,
             status="ready",
             error=None,
+            user_id=user_id,
         )
 
-    def list_for_disease(self, slug: str) -> list[PrivateContext] | None:
+    def list_for_disease(
+        self, slug: str, *, user_id: str | None = None
+    ) -> list[PrivateContext] | None:
         normalized = normalize_slug(slug)
         if normalized is None or self.disease_repo.get(normalized) is None:
             return None
-        return self.repo.list_for_disease(normalized)
+        return self.repo.list_for_disease(normalized, user_id=user_id)
 
 
 __all__ = [
