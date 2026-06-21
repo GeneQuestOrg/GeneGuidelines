@@ -47,7 +47,12 @@ export function GuidelinesView({
   const { synthesis, loading: synthLoading } = useGuidelineSynthesis(slug);
   const { suggestions, loading: suggLoading } = useGuidelineSuggestions(slug);
   const { signals, loading: signalsLoading } = useSynthSignals(slug);
-  const { baseline, loading: baselineLoading } = useGuidelineBaseline(slug);
+  // A baseline (level (c)) only exists when there is no official guideline.
+  // Skip the fetch once synthesis has loaded with an official guideline — an
+  // ungated call 404s on every disease (no backend route) and spams the console.
+  const hasOfficialSynthesis = synthesis != null && synthesis.status !== "pending";
+  const baselineEnabled = !synthLoading && !hasOfficialSynthesis;
+  const { baseline, loading: baselineLoading } = useGuidelineBaseline(slug, baselineEnabled);
   const { docs, loading: shelfLoading } = useSourceShelf(slug);
   const { signInAvailable, login } = useAccountContext();
 
@@ -121,7 +126,7 @@ export function GuidelinesView({
     );
   }
 
-  const hasOfficial = synthesis != null && synthesis.status !== "pending";
+  const hasOfficial = hasOfficialSynthesis;
   const parentSide = isParentSide(role);
 
   const versionLabel = hasOfficial ? synthesis!.version : "no agreed guideline · level (c)";
