@@ -76,7 +76,7 @@ export function DiseaseTabs({
     error: foundationsError,
   } = useDiseaseFoundations(slug);
 
-  const PREVIEW_MAX = 4;
+  const PREVIEW_MAX = 6;
 
   const previewDoctors = useMemo(() => {
     if (doctorsPayload == null) {

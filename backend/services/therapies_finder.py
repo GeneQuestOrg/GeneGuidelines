@@ -35,7 +35,7 @@ from ._model_resolver import (
 log = logging.getLogger(__name__)
 
 _PUBMED = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils"
-_MAX_REVIEWS = 15
+_MAX_REVIEWS = 25
 _EXTRACT_BATCH_SIZE = 3
 _EXTRACT_MAX_RETRIES = 1
 
