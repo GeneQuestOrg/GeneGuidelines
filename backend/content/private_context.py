@@ -186,10 +186,12 @@ def private_context_from_row(row: Mapping[str, object]) -> PrivateContext:
 # ---------------------------------------------------------------------------
 
 
-MAX_INPUT_CHARS = 16_000
-"""Cap the text we send to the model. Real discharges fit easily; this is a
-defence-in-depth measure against pathological inputs (megabyte PDFs that
-would blow the context window or run up the bill)."""
+MAX_INPUT_CHARS = 120_000
+"""Cap the extracted text we send to the model (~30k tokens — comfortably under
+the prompt-token budget). 16k was a few pages only, so a multi-page test-result
+PDF lost most of its content; 120k covers ~40 pages. Still bounded as a
+defence against pathological megabyte inputs blowing the context / the bill —
+documents beyond this should be uploaded in parts (the panel keeps a list)."""
 
 
 class UnsupportedUploadError(Exception):

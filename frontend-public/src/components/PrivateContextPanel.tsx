@@ -247,8 +247,13 @@ export function PrivateContextPanel({ diseaseSlug }: PrivateContextPanelProps) {
 
   const handlePick = () => fileRef.current?.click();
 
-  const handleFile = async (file: File) => {
-    await upload(file);
+  // Upload several files one after another (the hook is single-flight on
+  // `uploading`), so a parent can add a list of documents instead of one
+  // oversized PDF — each lands in the list below as it finishes.
+  const handleFiles = async (files: File[]) => {
+    for (const file of files) {
+      await upload(file);
+    }
   };
 
   // The "previous uploads" list excludes the most-recent one (it is already
@@ -272,12 +277,13 @@ export function PrivateContextPanel({ diseaseSlug }: PrivateContextPanelProps) {
           ref={fileRef}
           type="file"
           accept=".txt,.md,.pdf"
+          multiple
           style={{ display: "none" }}
           onChange={(e) => {
-            const file = e.target.files?.[0];
+            const files = Array.from(e.target.files ?? []);
             e.target.value = ""; // allow re-uploading the same file
-            if (file) {
-              void handleFile(file);
+            if (files.length > 0) {
+              void handleFiles(files);
             }
           }}
         />
@@ -289,7 +295,7 @@ export function PrivateContextPanel({ diseaseSlug }: PrivateContextPanelProps) {
         >
           {uploading ? "Gemma 4 redacting…" : "Add private context"}
         </Button>
-        <span className="pc-supported">Supported: .txt · .md · .pdf · ≤ 4 MB</span>
+        <span className="pc-supported">Supported: .txt · .md · .pdf · ≤ 30 MB · add several to build a list</span>
       </div>
 
       {error != null ? (

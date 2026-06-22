@@ -39,7 +39,9 @@ from .therapies import TherapyService
 from .trials_service import TrialService
 
 
-_MAX_UPLOAD_BYTES = 4 * 1024 * 1024  # 4 MB; discharges are typically <1 MB
+_MAX_UPLOAD_BYTES = 30 * 1024 * 1024  # 30 MB; real test-result PDFs (multi-page
+# scans/exports) routinely run 10-25 MB. Text still capped downstream
+# (MAX_INPUT_CHARS) so a large PDF can't blow the model context.
 
 router = APIRouter(tags=["content"])
 
@@ -190,9 +192,14 @@ async def upload_private_context(
     """
     raw_bytes = await file.read()
     if len(raw_bytes) > _MAX_UPLOAD_BYTES:
+        limit_mb = _MAX_UPLOAD_BYTES // (1024 * 1024)
+        got_mb = round(len(raw_bytes) / (1024 * 1024), 1)
         raise HTTPException(
             status_code=413,
-            detail=f"File too large ({len(raw_bytes)} bytes > {_MAX_UPLOAD_BYTES}).",
+            detail=(
+                f"File too large ({got_mb} MB) — the limit is {limit_mb} MB. "
+                "Split the document or upload its parts one at a time."
+            ),
         )
     if len(raw_bytes) == 0:
         raise HTTPException(status_code=400, detail="Empty upload.")
