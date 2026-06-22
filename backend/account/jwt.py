@@ -30,6 +30,14 @@ from jwt import PyJWKClient
 # the Auth0 tenant and our host does not reject otherwise-valid tokens.
 _LEEWAY_SECONDS = 30
 
+# Auth0 access tokens do NOT carry ``email`` / ``email_verified`` by default, and
+# Auth0 silently drops non-namespaced custom claims from tokens. A Login Action
+# adds them under this namespace (see deploy/AZURE.md § Auth0). We read the
+# namespaced claim first, falling back to the bare claim (test tokens / ID-token
+# style). Without this the superadmin-by-email bootstrap can never match and every
+# provisioned account stores a blank email.
+_CLAIM_NAMESPACE = "https://genequest.org"
+
 
 @dataclass(frozen=True, slots=True)
 class Claims:
@@ -140,9 +148,14 @@ class Auth0Verifier:
         sub = str(payload.get("sub") or "").strip()
         if not sub:
             raise HTTPException(status_code=401, detail="Token missing subject (sub).")
-        email_raw = payload.get("email")
+        email_raw = payload.get(f"{_CLAIM_NAMESPACE}/email") or payload.get("email")
         email = str(email_raw).strip() if isinstance(email_raw, str) else ""
-        email_verified = bool(payload.get("email_verified", False))
+        email_verified = bool(
+            payload.get(
+                f"{_CLAIM_NAMESPACE}/email_verified",
+                payload.get("email_verified", False),
+            )
+        )
         return Claims(sub=sub, email=email, email_verified=email_verified)
 
 

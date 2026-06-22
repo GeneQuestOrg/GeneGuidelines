@@ -330,7 +330,18 @@ GitHub Actions (`.github/workflows/deploy-azure.yml`) passes these when running 
 1. SPA **Allowed Callback / Logout / Web Origins** include `https://geneguidelines.genequest.org` (plus localhost ports for dev).
 2. **API Access**: GeneGuidelines SPA authorized for **GeneGuidelines API** (user-delegated).
 3. **Connections**: Username-Password and/or Google enabled for the SPA.
-4. Optional: set tenant **Environment Tag** to **Production** in Auth0 (rate limits; does not affect tokens).
+4. **Email claim on the access token** (required for `SUPERADMIN_EMAILS` + non-blank account emails). Auth0 access tokens omit `email` and silently drop non-namespaced custom claims, so add a **Login Action** (Actions → Triggers → post-login):
+
+   ```js
+   exports.onExecutePostLogin = async (event, api) => {
+     const ns = "https://genequest.org";
+     api.accessToken.setCustomClaim(`${ns}/email`, event.user.email);
+     api.accessToken.setCustomClaim(`${ns}/email_verified`, event.user.email_verified);
+   };
+   ```
+
+   The backend reads `https://genequest.org/email` (falling back to bare `email`) in `backend/account/jwt.py`. Without this Action, superadmin-by-email never matches and users provision with a blank email.
+5. Optional: set tenant **Environment Tag** to **Production** in Auth0 (rate limits; does not affect tokens).
 
 ### Database migrations
 
