@@ -24,6 +24,11 @@ export interface BibliographyViewProps {
 }
 
 function BibAccessFlag({ access }: { access: AnalyzedPaper["access"] }) {
+  // OA/paywall detection is deferred (v1): show a chip only when access is known,
+  // rather than tagging nearly every row with a meaningless "Unknown".
+  if (access === "unknown") {
+    return null;
+  }
   const meta = BIB_ACCESS_META[access] ?? BIB_ACCESS_META.unknown;
   return <span className={`bib-access bib-access--${access}`}>{meta.short}</span>;
 }
