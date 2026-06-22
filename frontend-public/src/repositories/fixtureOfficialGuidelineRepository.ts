@@ -159,6 +159,15 @@ export const fixtureOfficialGuidelineRepository: OfficialGuidelineRepository = {
   async getSuggestions(diseaseSlug: string): Promise<readonly GuidelineSuggestion[]> {
     return SUGGESTIONS[diseaseSlug] ?? [];
   },
+  // Fixtures are static: echo back the current aggregate + the optimistic verdict
+  // so the offline/test repo satisfies the interface without persistence.
+  async rateSuggestion(diseaseSlug, suggestionId, verdict) {
+    const found = (SUGGESTIONS[diseaseSlug] ?? []).find((s) => s.id === suggestionId);
+    return {
+      signal: found?.signal ?? { useful: 0, not: 0, wrong: 0, ratings: 0, verified: 0 },
+      myVote: verdict,
+    };
+  },
   async getSynthSignals(
     diseaseSlug: string,
   ): Promise<Readonly<Record<string, SynthSectionSignal>>> {

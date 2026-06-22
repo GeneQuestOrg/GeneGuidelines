@@ -135,10 +135,49 @@ class GuidelineSynthesisSignalRow(Base):
     flag_notes: Mapped[list | None] = mapped_column(JSON, nullable=True, default=None)
 
 
+class GuidelineSuggestionVoteRow(Base):
+    """One clinician's rating of one AI suggestion (SIG-1 write loop).
+
+    "Signal, not publication" (wizja 04): a verified doctor / researcher leaves a
+    3-state rating; nothing is ever merged into the official text. One row per
+    (disease, suggestion, user) — re-rating upserts, clicking the same verdict
+    again clears it. The aggregate counts on :class:`GuidelineSuggestionRow.signal`
+    are recomputed from these rows on every write, so the rail's tally is always
+    the truth of real votes (no fabricated numbers — chat 019 honesty rule).
+    """
+
+    __tablename__ = "guideline_suggestion_votes"
+
+    disease_slug: Mapped[str] = mapped_column(Text, primary_key=True)
+    suggestion_id: Mapped[str] = mapped_column(Text, primary_key=True)
+    user_id: Mapped[str] = mapped_column(Text, primary_key=True)
+    verdict: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[str] = mapped_column(Text, nullable=False)
+    updated_at: Mapped[str] = mapped_column(Text, nullable=False)
+    # Snapshot of "this vote came from a verified specialist" at vote time — the
+    # weighted-ranking input. Researcher/superadmin votes count as ratings but
+    # not as verified-specialist signal. Defaulted, so it stays last (dataclass
+    # rule: fields with defaults cannot precede fields without).
+    verified_vote: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+
+    __table_args__ = (
+        CheckConstraint(
+            "verdict IN ('useful','not','wrong')",
+            name="guideline_suggestion_vote_verdict_enum",
+        ),
+        Index(
+            "ix_guideline_suggestion_votes_suggestion",
+            "disease_slug",
+            "suggestion_id",
+        ),
+    )
+
+
 __all__ = [
     "Base",
     "SourceDocumentRow",
     "GuidelineSynthesisRow",
     "GuidelineSuggestionRow",
     "GuidelineSynthesisSignalRow",
+    "GuidelineSuggestionVoteRow",
 ]

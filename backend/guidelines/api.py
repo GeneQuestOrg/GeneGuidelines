@@ -17,18 +17,23 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
 
+from ..account.deps import OptionalUser
+from ..account.models import User
 from .contracts import (
     SourceDocResponse,
     SuggestionResponse,
+    SuggestionVoteRequest,
+    SuggestionVoteResult,
     SynthesisResponse,
     SynthSignalResponse,
 )
-from .deps import provide_guidelines_service
+from .deps import is_verified_doctor, provide_guidelines_service, require_rating_author
 from .service import GuidelinesService
 
 router = APIRouter(tags=["guidelines"])
 
 ServiceDep = Annotated[GuidelinesService, Depends(provide_guidelines_service)]
+RatingAuthor = Annotated[User, Depends(require_rating_author)]
 
 
 @router.get(
@@ -56,9 +61,50 @@ def get_synthesis(slug: str, service: ServiceDep) -> SynthesisResponse:
     "/diseases/{slug}/guideline-suggestions",
     response_model=list[SuggestionResponse],
 )
-def list_suggestions(slug: str, service: ServiceDep) -> list[SuggestionResponse]:
-    """AI suggestions hanging beside the synthesis (empty when none)."""
-    return [SuggestionResponse.from_domain(s) for s in service.list_suggestions(slug)]
+def list_suggestions(
+    slug: str, service: ServiceDep, user: OptionalUser = None
+) -> list[SuggestionResponse]:
+    """AI suggestions hanging beside the synthesis (empty when none).
+
+    When a clinician is signed in, each suggestion carries that clinician's own
+    ``myVote`` so the rail restores the selected verdict.
+    """
+    my_votes = (
+        service.user_suggestion_votes(slug, str(user.id)) if user is not None else {}
+    )
+    return [
+        SuggestionResponse.from_domain(s, my_vote=my_votes.get(s.id))
+        for s in service.list_suggestions(slug)
+    ]
+
+
+@router.post(
+    "/diseases/{slug}/guideline-suggestions/{suggestion_id}/signal",
+    response_model=SuggestionVoteResult,
+)
+def rate_suggestion(
+    slug: str,
+    suggestion_id: str,
+    body: SuggestionVoteRequest,
+    service: ServiceDep,
+    user: RatingAuthor,
+) -> SuggestionVoteResult:
+    """Cast (or clear, with ``verdict: null``) the caller's rating on a suggestion.
+
+    Verified-doctor / researcher / superadmin only (``require_rating_author``).
+    Returns the recomputed aggregate signal — "signal, not publication": nothing
+    is merged into the official text.
+    """
+    result = service.cast_suggestion_vote(
+        slug,
+        suggestion_id,
+        user_id=str(user.id),
+        is_verified_doctor=is_verified_doctor(user),
+        verdict=body.verdict,
+    )
+    if result is None:
+        raise HTTPException(status_code=404, detail="No such suggestion")
+    return SuggestionVoteResult(signal=result.signal, myVote=result.my_vote)
 
 
 @router.get(

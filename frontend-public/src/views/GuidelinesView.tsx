@@ -43,9 +43,15 @@ export function GuidelinesView({
   role,
   onNav,
 }: GuidelinesViewProps) {
+  const { signInAvailable, login, account } = useAccountContext();
   const { disease, loading: diseaseLoading, error: diseaseError } = useDisease(slug);
   const { synthesis, loading: synthLoading } = useGuidelineSynthesis(slug);
-  const { suggestions, loading: suggLoading } = useGuidelineSuggestions(slug);
+  // Pass the account id so the rail refetches once auth resolves and each
+  // suggestion's `myVote` (the clinician's own rating) is populated.
+  const { suggestions, loading: suggLoading } = useGuidelineSuggestions(
+    slug,
+    account?.id ?? null,
+  );
   const { signals, loading: signalsLoading } = useSynthSignals(slug);
   // A baseline (level (c)) only exists when there is no official guideline.
   // Skip the fetch once synthesis has loaded with an official guideline — an
@@ -54,7 +60,6 @@ export function GuidelinesView({
   const baselineEnabled = !synthLoading && !hasOfficialSynthesis;
   const { baseline, loading: baselineLoading } = useGuidelineBaseline(slug, baselineEnabled);
   const { docs, loading: shelfLoading } = useSourceShelf(slug);
-  const { signInAvailable, login } = useAccountContext();
 
   const loading =
     diseaseLoading ||

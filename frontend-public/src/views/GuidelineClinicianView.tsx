@@ -266,7 +266,9 @@ export function GuidelineClinicianView({
           <div className="gx-suggrid">
             {rankedSuggestions.map((s) => (
               <SuggestionCard
-                key={s.id}
+                // Re-key on myVote/ratings so a refetch (e.g. once auth resolves)
+                // remounts the card with the clinician's restored rating.
+                key={`${s.id}:${s.myVote ?? ""}:${s.signal.ratings}`}
                 slug={disease.slug}
                 suggestion={s}
                 held={held}

@@ -8,7 +8,16 @@ export interface GuidelineSuggestionsState {
   error: string | null;
 }
 
-export function useGuidelineSuggestions(diseaseSlug: string): GuidelineSuggestionsState {
+/**
+ * @param authKey  Changes when the signed-in account resolves (e.g. its id).
+ *   Passed as an effect dep so the rail refetches once auth is ready — the first
+ *   fetch on a fresh load runs before the token getter registers, so without this
+ *   each suggestion's `myVote` would stay null until the next navigation.
+ */
+export function useGuidelineSuggestions(
+  diseaseSlug: string,
+  authKey?: string | null,
+): GuidelineSuggestionsState {
   const [suggestions, setSuggestions] = useState<readonly GuidelineSuggestion[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -38,7 +47,7 @@ export function useGuidelineSuggestions(diseaseSlug: string): GuidelineSuggestio
     return () => {
       cancelled = true;
     };
-  }, [diseaseSlug]);
+  }, [diseaseSlug, authKey]);
 
   return { suggestions, loading, error };
 }

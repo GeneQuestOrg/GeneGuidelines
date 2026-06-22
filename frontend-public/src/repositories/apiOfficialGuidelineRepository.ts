@@ -1,7 +1,10 @@
-import { apiGet, ApiRequestError } from "../api/client";
+import { apiGet, apiPostJson, ApiRequestError } from "../api/client";
 import type { GuidelineBaseline } from "../types/guidelineBaseline";
 import type { AnalyzedPaper } from "../types/analyzedPaper";
-import type { GuidelineSuggestion } from "../types/guidelineSuggestion";
+import type {
+  GuidelineSuggestion,
+  SuggestionVoteOutcome,
+} from "../types/guidelineSuggestion";
 import type { GuidelineSynthesis, SynthSectionSignal } from "../types/guidelineSynthesis";
 import type { OfficialGuideline } from "../types/officialGuideline";
 import type { SourceDoc } from "../types/sourceDoc";
@@ -80,6 +83,22 @@ export const apiOfficialGuidelineRepository: OfficialGuidelineRepository = {
       }
       throw err;
     }
+  },
+
+  // SIG-1 write loop: POST the rating, get back the recomputed aggregate.
+  async rateSuggestion(
+    diseaseSlug: string,
+    suggestionId: string,
+    verdict: "useful" | "not" | "wrong" | null,
+  ): Promise<SuggestionVoteOutcome> {
+    const normalized = normalizeDiseaseSlug(diseaseSlug);
+    if (normalized == null) {
+      throw new ApiRequestError(400, "Unknown disease slug.");
+    }
+    return await apiPostJson<SuggestionVoteOutcome>(
+      `/api/diseases/${encodeURIComponent(normalized)}/guideline-suggestions/${encodeURIComponent(suggestionId)}/signal`,
+      { verdict },
+    );
   },
 
   // Backend endpoint lands in GL-4. 404 → no signal yet (empty map).

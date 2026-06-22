@@ -9,7 +9,7 @@ blobs are passed through as ``list``/``dict`` (already frontend-shaped in storag
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict
 
@@ -122,9 +122,14 @@ class SuggestionResponse(BaseModel):
     comments: list[dict[str, Any]]
     diff: dict[str, Any] | None = None
     regenSeed: dict[str, Any] | None = None
+    # The signed-in clinician's own rating on this suggestion (null when none /
+    # anonymous). Lets the rail restore the selected verdict across reloads.
+    myVote: str | None = None
 
     @classmethod
-    def from_domain(cls, s: GuidelineSuggestion) -> "SuggestionResponse":
+    def from_domain(
+        cls, s: GuidelineSuggestion, my_vote: str | None = None
+    ) -> "SuggestionResponse":
         return cls(
             id=s.id,
             kind=s.kind,
@@ -141,7 +146,25 @@ class SuggestionResponse(BaseModel):
             comments=s.comments,
             diff=s.diff,
             regenSeed=s.regen_seed,
+            myVote=my_vote,
         )
+
+
+class SuggestionVoteRequest(BaseModel):
+    """Body for casting/clearing a rating. ``verdict: null`` clears the vote."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    verdict: Literal["useful", "not", "wrong"] | None = None
+
+
+class SuggestionVoteResult(BaseModel):
+    """The recomputed aggregate signal plus the caller's own (new) verdict."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    signal: dict[str, int]
+    myVote: str | None = None
 
 
 class SynthSignalResponse(BaseModel):
@@ -164,4 +187,6 @@ __all__ = [
     "SynthesisResponse",
     "SuggestionResponse",
     "SynthSignalResponse",
+    "SuggestionVoteRequest",
+    "SuggestionVoteResult",
 ]

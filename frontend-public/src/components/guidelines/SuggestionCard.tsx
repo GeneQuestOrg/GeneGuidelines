@@ -1,5 +1,6 @@
 import { useState } from "react";
-import type { GuidelineSuggestion } from "../../types/guidelineSuggestion";
+import { repositories } from "../../repositories";
+import type { GuidelineSuggestion, SuggestionSignal } from "../../types/guidelineSuggestion";
 import { RatingButtons, type Rating } from "./RatingButtons";
 import { EVID_LABEL } from "./EvidenceMeter";
 
@@ -19,8 +20,35 @@ export interface SuggestionCardProps {
 const ratingWord = (n: number) => (n === 1 ? "rating" : "ratings");
 
 export function SuggestionCard({ slug, suggestion, held = false, onNav }: SuggestionCardProps) {
-  const [vote, setVote] = useState<Rating | null>(null);
-  const sig = suggestion.signal;
+  // Init from the suggestion. When a refetch changes myVote/signal (e.g. once
+  // auth resolves), the parent re-keys this card so it remounts with fresh props
+  // (React's reset-on-key idiom) — no setState-in-effect needed.
+  const [vote, setVote] = useState<Rating | null>(suggestion.myVote ?? null);
+  const [sig, setSig] = useState<SuggestionSignal>(suggestion.signal);
+
+  // Persist the rating (SIG-1). Unverified clinicians ("held") keep their choice
+  // local — never sent — matching the UI's "held · unverified" state. Verified
+  // doctors / researchers POST it; the server returns the recomputed aggregate.
+  const onRate = (next: Rating | null) => {
+    if (held) {
+      setVote(next);
+      return;
+    }
+    const prevVote = vote;
+    const prevSig = sig;
+    setVote(next); // optimistic
+    void repositories()
+      .officialGuidelines.rateSuggestion(slug, suggestion.id, next)
+      .then((outcome) => {
+        setSig(outcome.signal);
+        setVote(outcome.myVote);
+      })
+      .catch(() => {
+        setVote(prevVote); // revert on failure (e.g. 403 / network)
+        setSig(prevSig);
+      });
+  };
+
   const open = () => onNav(`/diseases/${slug}/guidelines/pr/${suggestion.id}`);
   const enterLabel =
     suggestion.kind === "addition" ? "Content · placement" : "Diff · evidence · discussion";
@@ -81,7 +109,7 @@ export function SuggestionCard({ slug, suggestion, held = false, onNav }: Sugges
             <span className="gx-tri__noratings">No ratings — rate it first</span>
           )}
         </div>
-        <RatingButtons value={vote} onChange={setVote} held={held} />
+        <RatingButtons value={vote} onChange={onRate} held={held} />
       </div>
 
       <div className="gx-tri__open">

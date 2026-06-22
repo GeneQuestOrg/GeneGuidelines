@@ -77,6 +77,18 @@ export interface GuidelineSuggestion {
   /** Unified diff vs the full source document (modifications only). */
   readonly diff?: SuggestionDiff;
   readonly regenSeed?: RegenSeed;
+  /**
+   * The signed-in clinician's own rating on this suggestion (SIG-1 write loop);
+   * null/absent for anonymous viewers or a clinician who has not rated it. Lets
+   * the rail restore the selected verdict across reloads.
+   */
+  readonly myVote?: "useful" | "not" | "wrong" | null;
+}
+
+/** Result of casting/clearing a rating: the recomputed aggregate + own verdict. */
+export interface SuggestionVoteOutcome {
+  readonly signal: SuggestionSignal;
+  readonly myVote: "useful" | "not" | "wrong" | null;
 }
 
 /**

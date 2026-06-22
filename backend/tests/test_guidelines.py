@@ -156,3 +156,95 @@ def test_api_endpoints(seeded_repo: SqlaGuidelinesRepo) -> None:
     assert client.get("/api/diseases/noonan/source-documents").json() == []
     assert client.get("/api/diseases/noonan/synthesis-signals").json() == {}
     assert client.get("/api/diseases/noonan/guideline-synthesis").status_code == 404
+
+
+# ── suggestion rating write loop (SIG-1) ──────────────────────────────────
+
+
+def test_suggestion_vote_aggregates(seeded_repo: SqlaGuidelinesRepo) -> None:
+    svc = GuidelinesService(repo=seeded_repo)
+    sid = seeded_repo.list_suggestions("fd")[0].id
+
+    # Verified doctor → counts as a verified-specialist rating.
+    r = svc.cast_suggestion_vote(
+        "fd", sid, user_id="doc-1", is_verified_doctor=True, verdict="useful"
+    )
+    assert r is not None
+    assert r.my_vote == "useful"
+    assert r.signal == {"useful": 1, "not": 0, "wrong": 0, "ratings": 1, "verified": 1}
+
+    # Researcher → a rating, but not a verified-specialist one.
+    r = svc.cast_suggestion_vote(
+        "fd", sid, user_id="res-1", is_verified_doctor=False, verdict="useful"
+    )
+    assert r is not None
+    assert r.signal == {"useful": 2, "not": 0, "wrong": 0, "ratings": 2, "verified": 1}
+
+    # Re-vote by the same user upserts (no double count); verdict changes.
+    # doc-1 is still the only verified-specialist vote (res-1 is a researcher).
+    r = svc.cast_suggestion_vote(
+        "fd", sid, user_id="doc-1", is_verified_doctor=True, verdict="wrong"
+    )
+    assert r is not None
+    assert r.signal == {"useful": 1, "not": 0, "wrong": 1, "ratings": 2, "verified": 1}
+
+    # Aggregate is mirrored onto the suggestion row (the read path).
+    stored = next(s for s in seeded_repo.list_suggestions("fd") if s.id == sid)
+    assert stored.signal["wrong"] == 1 and stored.signal["ratings"] == 2
+
+    # Each user's own vote round-trips.
+    assert svc.user_suggestion_votes("fd", "res-1") == {sid: "useful"}
+
+    # Clear (toggle off) removes only that user's vote.
+    r = svc.cast_suggestion_vote(
+        "fd", sid, user_id="doc-1", is_verified_doctor=True, verdict=None
+    )
+    assert r is not None and r.my_vote is None
+    assert r.signal == {"useful": 1, "not": 0, "wrong": 0, "ratings": 1, "verified": 0}
+
+    # Unknown suggestion → None (the API maps that to 404).
+    assert (
+        svc.cast_suggestion_vote(
+            "fd", "no-such", user_id="x", is_verified_doctor=True, verdict="useful"
+        )
+        is None
+    )
+
+
+def test_rate_suggestion_endpoint_and_gate(seeded_repo: SqlaGuidelinesRepo) -> None:
+    from types import SimpleNamespace
+
+    from backend.account.models import Role
+    from backend.guidelines.deps import require_rating_author
+
+    mem = InMemoryGuidelinesRepo()
+    mem.suggestions["fd"] = seeded_repo.list_suggestions("fd")
+    sid = mem.suggestions["fd"][0].id
+
+    app = FastAPI()
+    app.include_router(guidelines_router, prefix="/api")
+    app.dependency_overrides[provide_guidelines_service] = lambda: GuidelinesService(
+        repo=mem
+    )
+    app.dependency_overrides[require_rating_author] = lambda: SimpleNamespace(
+        id="doc-1", role=Role.DOCTOR, verified=True
+    )
+    client = TestClient(app)
+
+    res = client.post(
+        f"/api/diseases/fd/guideline-suggestions/{sid}/signal",
+        json={"verdict": "useful"},
+    )
+    assert res.status_code == 200
+    body = res.json()
+    assert body["myVote"] == "useful"
+    assert body["signal"]["useful"] == 1 and body["signal"]["verified"] == 1
+
+    # Unknown suggestion → 404.
+    assert (
+        client.post(
+            "/api/diseases/fd/guideline-suggestions/no-such/signal",
+            json={"verdict": "useful"},
+        ).status_code
+        == 404
+    )
