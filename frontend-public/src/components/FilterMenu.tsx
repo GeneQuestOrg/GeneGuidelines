@@ -8,10 +8,12 @@ export interface FilterMenuOption {
 export interface FilterMenuProps {
   /** Static prefix shown before the current value (e.g. "Experience"). */
   readonly label: string;
-  /** Currently selected option value; "all" renders the inactive style. */
+  /** Currently selected option value; the neutral value renders the inactive style. */
   readonly value: string;
   readonly options: readonly FilterMenuOption[];
   readonly onPick: (value: string) => void;
+  /** Value treated as "no filter applied" for the active style. Defaults to "all". */
+  readonly neutralValue?: string;
 }
 
 const ALL_VALUE = "all";
@@ -19,9 +21,17 @@ const ALL_VALUE = "all";
 /**
  * Compact "Google-Flights-style" dropdown filter: a pill button showing
  * ``label · value`` that opens a popover listbox. Closes on outside mousedown
- * and Escape; the button reads active whenever ``value`` is not "all".
+ * and Escape; the button reads active whenever ``value`` is not the neutral value
+ * (default "all"). A control with no neutral state (e.g. Sort) passes its default
+ * as ``neutralValue`` so the pill does not look perpetually active.
  */
-export function FilterMenu({ label, value, options, onPick }: FilterMenuProps) {
+export function FilterMenu({
+  label,
+  value,
+  options,
+  onPick,
+  neutralValue = ALL_VALUE,
+}: FilterMenuProps) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement | null>(null);
 
@@ -44,7 +54,7 @@ export function FilterMenu({ label, value, options, onPick }: FilterMenuProps) {
   }, [open]);
 
   const current = options.find((o) => o.value === value);
-  const active = value !== ALL_VALUE;
+  const active = value !== neutralValue;
 
   return (
     <div className="fmenu" ref={ref}>

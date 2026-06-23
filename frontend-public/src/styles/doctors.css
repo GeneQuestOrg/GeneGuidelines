@@ -422,22 +422,64 @@
   background: var(--bg-elev);
 }
 
-.doctors-show-more {
-  align-self: flex-start;
-  margin-top: 4px;
-  padding: 8px 16px;
+.doctors-count {
+  margin: 0 0 4px;
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+}
+
+.pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.pagination__btn {
+  min-width: 34px;
+  height: 34px;
+  padding: 0 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   background: var(--bg-elev);
   border: 1px solid var(--line-2);
   border-radius: var(--r-sm);
   cursor: pointer;
   font-size: var(--fs-sm);
   color: var(--ink);
-  transition: background 120ms, border-color 120ms;
+  transition: background 120ms, border-color 120ms, color 120ms;
 }
 
-.doctors-show-more:hover {
+.pagination__btn:hover:not(:disabled):not(.is-active) {
   background: var(--bg-soft);
   border-color: var(--ink-3);
+}
+
+.pagination__btn.is-active {
+  background: var(--accent-ink);
+  border-color: var(--accent-ink);
+  color: var(--bg-elev);
+  font-weight: 600;
+  cursor: default;
+}
+
+.pagination__btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pagination__btn--nav {
+  font-size: var(--fs-md);
+  line-height: 1;
+}
+
+.pagination__gap {
+  min-width: 20px;
+  text-align: center;
+  color: var(--ink-3);
+  user-select: none;
 }
 
 .doctors-provenance {

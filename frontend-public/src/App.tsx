@@ -75,6 +75,7 @@ function AppShell() {
         view,
         role,
         userLoc,
+        hash,
         onNav: navigate,
         onSignIn: () => setAuthOpen(true),
       })

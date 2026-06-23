@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Button } from "@gene-guidelines/ui";
 import type { UserLocation } from "../router/types";
 import type { DiseaseSuggestion } from "../api/diseaseIndex";
@@ -11,19 +11,26 @@ import { DoctorCard } from "../components/DoctorCard";
 import { DoctorsMap } from "../components/DoctorsMap";
 import { FilterMenu } from "../components/FilterMenu";
 import { LocationMenu, type DistanceMax } from "../components/LocationMenu";
+import { Pagination } from "../components/Pagination";
 import { useDiseaseCatalog } from "../hooks/useDiseaseCatalog";
 import { useDoctors } from "../hooks/useDoctors";
-import {
-  attachDoctorDistances,
-  sortDoctorsByDistanceThenScore,
-} from "../utils/doctorSort";
+import { attachDoctorDistances } from "../utils/doctorSort";
 import { filterDoctors, hasParentSignal, type SourceFilter } from "../utils/doctorFilters";
+import {
+  PAGE_SIZE,
+  parseDoctorsQuery,
+  queryRecordFromHash,
+  serializeDoctorsQuery,
+  sortDoctors,
+  type DoctorsQuery,
+} from "../utils/doctorsQuery";
 import { pubmedRoleLabel } from "../utils/doctorLabels";
 import "../styles/doctors.css";
 
 export interface DoctorsViewProps {
   readonly userLoc: UserLocation | null;
-  readonly initialDisease?: string;
+  /** Current window hash — the single source of truth for every facet, sort, and page. */
+  readonly hash: string;
   readonly onNav: (path: string) => void;
 }
 
@@ -43,32 +50,44 @@ const SOURCE_FILTERS: readonly { value: SourceFilter; label: string }[] = [
   { value: "consortium", label: "Consortium" },
 ];
 
+const SORT_OPTIONS: readonly { value: string; label: string }[] = [
+  { value: "best", label: "Best match" },
+  { value: "distance", label: "Nearest" },
+  { value: "score", label: "PubMed score" },
+  { value: "name", label: "Name (A–Z)" },
+];
+
 type ViewMode = "both" | "list" | "map";
 
-const PAGE_SIZE = 12;
-
-export function DoctorsView({ userLoc, initialDisease, onNav }: DoctorsViewProps) {
+export function DoctorsView({ userLoc, hash, onNav }: DoctorsViewProps) {
   const { doctors, loading, error } = useDoctors();
   const { diseases, loading: diseasesLoading } = useDiseaseCatalog();
   const account = useAccountContext();
   const [addDoctorOpen, setAddDoctorOpen] = useState(false);
-  const [roleFilter, setRoleFilter] = useState(ROLE_FILTER_ALL);
-  const [sourceFilter, setSourceFilter] = useState<SourceFilter>("all");
-  const [parentOnly, setParentOnly] = useState(false);
-  const [maxKm, setMaxKm] = useState<DistanceMax>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("both");
-  const [localUserLoc, setLocalUserLoc] = useState<UserLocation | null>(null);
-  const [localLocLabel, setLocalLocLabel] = useState<string | null>(null);
-  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
-  // Picking a non-catalog disease shows an empty state with a research CTA. The filter itself
-  // is navigation-driven (?disease=…); this flag is local because such a slug has no list rows.
+  // Picking a non-catalog disease shows an empty state with a research CTA. Such a name has no
+  // slug and no list rows, so it is transient local state rather than part of the URL query.
   const [unknownDisease, setUnknownDisease] = useState<string | null>(null);
 
-  const effectiveUserLoc = localUserLoc ?? userLoc;
+  // The full faceted state lives in the URL: one parsed query object is the single source of
+  // truth, so deep-links, shares, and the browser back button all restore the exact view.
+  const query = useMemo(
+    () => parseDoctorsQuery(queryRecordFromHash(hash)),
+    [hash],
+  );
 
-  // The active disease filter is driven by the route (initialDisease prop), not local state, so
-  // deep-links and back-navigation stay the source of truth.
-  const activeDiseaseSlug = initialDisease ?? null;
+  const patchQuery = useCallback(
+    (partial: Partial<DoctorsQuery>) => {
+      const merged: DoctorsQuery = { ...query, ...partial };
+      // Any facet/sort change returns to page 1; only an explicit page change keeps the page.
+      const next = "page" in partial ? merged : { ...merged, page: 1 };
+      onNav(serializeDoctorsQuery(next));
+    },
+    [query, onNav],
+  );
+
+  const effectiveUserLoc = query.loc ?? userLoc;
+  const activeDiseaseSlug = query.disease;
 
   const activeDiseaseLabel = useMemo(() => {
     if (!activeDiseaseSlug) {
@@ -77,27 +96,10 @@ export function DoctorsView({ userLoc, initialDisease, onNav }: DoctorsViewProps
     return diseases.find((d) => d.slug === activeDiseaseSlug)?.name ?? activeDiseaseSlug;
   }, [diseases, activeDiseaseSlug]);
 
-  // Reset pagination whenever any filter changes. Done during render (React's documented pattern
-  // for adjusting state in response to prop/state changes) so the eslint set-state-in-effect rule
-  // stays satisfied and the slice never lags a frame behind the filters.
-  const filterSignature = [
-    activeDiseaseSlug ?? "",
-    roleFilter,
-    sourceFilter,
-    String(parentOnly),
-    String(maxKm),
-    effectiveUserLoc ? `${effectiveUserLoc.lat},${effectiveUserLoc.lng}` : "",
-  ].join("|");
-  const [prevSignature, setPrevSignature] = useState(filterSignature);
-  if (filterSignature !== prevSignature) {
-    setPrevSignature(filterSignature);
-    setVisibleCount(PAGE_SIZE);
-  }
-
   const handlePickDisease = (suggestion: DiseaseSuggestion) => {
     if (suggestion.hasLocalRecord && suggestion.localSlug) {
       setUnknownDisease(null);
-      onNav(`/doctors?disease=${encodeURIComponent(suggestion.localSlug)}`);
+      patchQuery({ disease: suggestion.localSlug });
     } else {
       setUnknownDisease(suggestion.canonicalName);
     }
@@ -105,42 +107,48 @@ export function DoctorsView({ userLoc, initialDisease, onNav }: DoctorsViewProps
 
   const handleClearDisease = () => {
     setUnknownDisease(null);
-    onNav("/doctors");
+    patchQuery({ disease: null });
   };
 
   const handleLocationChange = (loc: UserLocation | null, label: string | null) => {
-    setLocalUserLoc(loc);
-    setLocalLocLabel(label);
-    if (loc === null) setMaxKm(null);
+    patchQuery({
+      loc,
+      locLabel: label,
+      maxKm: loc == null ? null : query.maxKm,
+    });
   };
 
-  // Full filtered set — the map receives all of it; the list slices to visibleCount.
+  // Full filtered + sorted set — the map receives all of it; the list slices to one page.
   const items = useMemo(() => {
     if (unknownDisease != null) {
       return [];
     }
     const rows = filterDoctors(attachDoctorDistances(doctors, effectiveUserLoc), {
       diseaseSlug: activeDiseaseSlug,
-      role: roleFilter === ROLE_FILTER_ALL ? null : (roleFilter as PubmedRole),
-      source: sourceFilter,
-      parentOnly,
-      maxKm,
+      role: query.role,
+      source: query.source,
+      parentOnly: query.parentOnly,
+      maxKm: query.maxKm,
     });
-    return sortDoctorsByDistanceThenScore(rows);
+    return sortDoctors(rows, query.sort);
   }, [
     doctors,
     effectiveUserLoc,
     activeDiseaseSlug,
-    roleFilter,
-    sourceFilter,
-    parentOnly,
-    maxKm,
+    query.role,
+    query.source,
+    query.parentOnly,
+    query.maxKm,
+    query.sort,
     unknownDisease,
   ]);
 
+  const pageCount = Math.max(1, Math.ceil(items.length / PAGE_SIZE));
+  const safePage = Math.min(Math.max(1, query.page), pageCount);
+  const pageStart = (safePage - 1) * PAGE_SIZE;
   const visibleItems = useMemo(
-    () => items.slice(0, visibleCount),
-    [items, visibleCount],
+    () => items.slice(pageStart, pageStart + PAGE_SIZE),
+    [items, pageStart],
   );
 
   // Count of doctors carrying a parent signal within the disease-scoped set,
@@ -226,36 +234,38 @@ export function DoctorsView({ userLoc, initialDisease, onNav }: DoctorsViewProps
 
         <div className="dfilters__menus">
           <LocationMenu
-            value={localUserLoc}
-            label={localLocLabel}
-            maxKm={maxKm}
+            value={query.loc}
+            label={query.locLabel}
+            maxKm={query.maxKm as DistanceMax}
             onChange={handleLocationChange}
-            onPickRadius={setMaxKm}
+            onPickRadius={(km) => patchQuery({ maxKm: km })}
           />
           <FilterMenu
             label="Experience"
-            value={roleFilter}
+            value={query.role ?? ROLE_FILTER_ALL}
             options={ROLE_FILTERS}
-            onPick={setRoleFilter}
+            onPick={(v) =>
+              patchQuery({ role: v === ROLE_FILTER_ALL ? null : (v as PubmedRole) })
+            }
           />
           <FilterMenu
             label="Source"
-            value={sourceFilter}
+            value={query.source}
             options={SOURCE_FILTERS}
-            onPick={(v) => setSourceFilter(v as SourceFilter)}
+            onPick={(v) => patchQuery({ source: v as SourceFilter })}
           />
           <button
             type="button"
-            className={`toggle-chip${parentOnly ? " is-active" : ""}`}
-            aria-pressed={parentOnly}
-            onClick={() => setParentOnly((v) => !v)}
+            className={`toggle-chip${query.parentOnly ? " is-active" : ""}`}
+            aria-pressed={query.parentOnly}
+            onClick={() => patchQuery({ parentOnly: !query.parentOnly })}
             title="Show only doctors recommended by parents"
           >
             <svg
               width="13"
               height="13"
               viewBox="0 0 24 24"
-              fill={parentOnly ? "currentColor" : "none"}
+              fill={query.parentOnly ? "currentColor" : "none"}
               stroke="currentColor"
               strokeWidth="2"
               strokeLinecap="round"
@@ -266,6 +276,13 @@ export function DoctorsView({ userLoc, initialDisease, onNav }: DoctorsViewProps
             </svg>
             Recommended by parents ({recommendedCount})
           </button>
+          <FilterMenu
+            label="Sort"
+            value={query.sort}
+            neutralValue="best"
+            options={SORT_OPTIONS}
+            onPick={(v) => patchQuery({ sort: v as DoctorsQuery["sort"] })}
+          />
         </div>
       </div>
 
@@ -283,6 +300,17 @@ export function DoctorsView({ userLoc, initialDisease, onNav }: DoctorsViewProps
         <div className={`doctors-layout doctors-layout--${viewMode}`}>
           {viewMode !== "map" ? (
             <div className="doctors-list">
+              {items.length > 0 ? (
+                <p className="doctors-count">
+                  {items.length} specialist{items.length === 1 ? "" : "s"}
+                  {pageCount > 1 ? (
+                    <>
+                      {" · showing "}
+                      {pageStart + 1}–{pageStart + visibleItems.length}
+                    </>
+                  ) : null}
+                </p>
+              ) : null}
               {visibleItems.map((doctor) => (
                 <DoctorCard
                   key={doctor.slug}
@@ -311,15 +339,11 @@ export function DoctorsView({ userLoc, initialDisease, onNav }: DoctorsViewProps
                   </p>
                 )
               ) : null}
-              {items.length > visibleItems.length ? (
-                <button
-                  type="button"
-                  className="doctors-show-more"
-                  onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}
-                >
-                  Show more ({items.length - visibleItems.length} more)
-                </button>
-              ) : null}
+              <Pagination
+                page={safePage}
+                pageCount={pageCount}
+                onPage={(p) => patchQuery({ page: p })}
+              />
               {items.length > 0 ? (
                 <p className="doctors-provenance">
                   Profiles are built from public sources (PubMed, clinic websites) and family
