@@ -6,7 +6,13 @@ from backend.executors.base import FlowRuntimeBundle, NodeInput
 from backend.executors.pubmed_authors_fetch_executor import PubmedAuthorsFetchExecutor
 
 
-def test_pubmed_fetch_respects_max_results_and_clinical_focus(monkeypatch) -> None:
+def test_pubmed_fetch_paginates_full_set_with_max_results_as_page_size(monkeypatch) -> None:
+    """``max_results`` is the per-esearch PAGE size (retmax); the TOTAL budget is
+    ``DOCTOR_FINDER_MAX_PMIDS`` (config), which the runtime paginates up to. A doctor
+    run must capture the whole relevant author set, not a single ``max_results`` slice —
+    so 100 available PMIDs (below the budget) are all scanned even with page_size=50."""
+    from backend.config import DOCTOR_FINDER_MAX_PMIDS
+
     captured: dict[str, object] = {}
 
     def _fake_search(query: str, *, retmax: int | None = None, max_analyze: int | None = None, **_kwargs):
@@ -55,13 +61,15 @@ def test_pubmed_fetch_respects_max_results_and_clinical_focus(monkeypatch) -> No
             )
         )
         assert out.data["ok"] is True
-        assert out.data["total_papers_scanned"] == 50
+        # Full available set scanned (100), not capped to the page size (50).
+        assert out.data["total_papers_scanned"] == 100
 
     asyncio.run(_run())
 
+    # max_results -> per-page retmax; total budget -> DOCTOR_FINDER_MAX_PMIDS.
     assert captured["retmax"] == 50
-    assert captured["max_analyze"] == 50
-    assert len(captured["pmids"]) == 50
+    assert captured["max_analyze"] == DOCTOR_FINDER_MAX_PMIDS
+    assert len(captured["pmids"]) == 100
     q = str(captured["query"])
     assert "humans[MeSH Terms]" in q
     assert "[Title/Abstract]" in q

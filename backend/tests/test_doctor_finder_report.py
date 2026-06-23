@@ -212,7 +212,19 @@ def test_markdown_contains_disease_name_and_table_header() -> None:
     assert "| Rank |" in md
 
 
-def test_top_n_authors_limits_entries() -> None:
+def _table_data_rows(markdown: str) -> list[str]:
+    """Markdown table data rows (rank cell is an int) — excludes header/separator/bullets."""
+    return [
+        ln
+        for ln in markdown.splitlines()
+        if ln.startswith("| ") and ln.split("|")[1].strip().isdigit()
+    ]
+
+
+def test_top_n_caps_table_but_keeps_full_ranked_pool() -> None:
+    """``top_n_authors`` caps the headline markdown TABLE for readability, but the full
+    ranked pool is retained in ``top_authors`` — a global top-N cut is geo-biased (a
+    US-dominated literature would crowd out the only specialists from e.g. Poland)."""
     context = {
         **BASE_CONTEXT,
         "initial": {
@@ -221,7 +233,22 @@ def test_top_n_authors_limits_entries() -> None:
         },
     }
     result = run(context)
-    assert len(result["doctor_report"]["top_authors"]) == 3
+    # Full pool retained (all 5 cleared the role floor).
+    assert len(result["doctor_report"]["top_authors"]) == 5
+    # ...but the markdown table shows only the top 3 rows.
+    assert len(_table_data_rows(result["doctor_report"]["markdown"])) == 3
+
+
+def test_peripheral_authors_excluded_from_kept_pool() -> None:
+    """Authors classified ``peripheral`` are dropped from the kept pool when meaningful
+    authors exist (role floor), so the ranking is not padded with non-specialists."""
+    core = _make_author("core_a", "Core", "Anna", "IT", 90.0)
+    fringe = _make_author("edge_b", "Edge", "Bob", "US", 80.0)
+    fringe["role"] = {"role": "peripheral", "justification": "single middle-author paper"}
+    ctx = {**BASE_CONTEXT, "aggregated_authors": [core, fringe]}
+    result = run(ctx)
+    keys = {a["author_key"] for a in result["doctor_report"]["top_authors"]}
+    assert keys == {"core_a"}
 
 
 def test_disease_name_passed_through_from_initial_context() -> None:

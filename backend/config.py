@@ -371,8 +371,17 @@ DOCTOR_FINDER_RELEVANCE_LEAD_CHARS = max(200, min(12_000, DOCTOR_FINDER_RELEVANC
 # against a pathologically broad query; if total_found exceeds it we LOG it (never
 # silent truncation). The expensive geo-resolve step stays separately capped.
 _DF_MAX_PMIDS = (os.environ.get("DOCTOR_FINDER_MAX_PMIDS") or "").strip()
-DOCTOR_FINDER_MAX_PMIDS = int(_DF_MAX_PMIDS) if _DF_MAX_PMIDS else 3000
+DOCTOR_FINDER_MAX_PMIDS = int(_DF_MAX_PMIDS) if _DF_MAX_PMIDS else 5000
 DOCTOR_FINDER_MAX_PMIDS = max(200, min(20_000, DOCTOR_FINDER_MAX_PMIDS))
+
+# How many ranked authors the report KEEPS (structured output, for the frontend to
+# geo-filter). NOT a global top-N cut — a worldwide top-100 can be all-US and hide
+# the local doctors a parent needs, so we keep the full pool of meaningful
+# contributors (role != peripheral) up to this safety cap; top_n_authors only sizes
+# the human markdown summary.
+_DF_REPORT_MAX = (os.environ.get("DOCTOR_FINDER_REPORT_MAX_AUTHORS") or "").strip()
+DOCTOR_FINDER_REPORT_MAX_AUTHORS = int(_DF_REPORT_MAX) if _DF_REPORT_MAX else 1000
+DOCTOR_FINDER_REPORT_MAX_AUTHORS = max(20, min(20_000, DOCTOR_FINDER_REPORT_MAX_AUTHORS))
 
 # Brave Search + LLM affiliation geolocation (Doctor Finder df-20). Optional — unset key skips the step.
 BRAVE_API_KEY = (os.environ.get("BRAVE_API_KEY") or "").strip() or None

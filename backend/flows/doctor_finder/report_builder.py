@@ -4,6 +4,7 @@ import logging
 from collections import Counter
 from typing import Any, Optional
 
+from backend.config import DOCTOR_FINDER_REPORT_MAX_AUTHORS
 from backend.flows.doctor_finder.affiliation_parser import COUNTRY_TO_CONTINENT
 from backend.flows.doctor_finder.schemas import (
     AuthorFlags,
@@ -22,6 +23,12 @@ KEY_PAPERS_PER_AUTHOR = 5
 # Below this share of authors with resolvable continent, a continent filter is skipped (unfiltered
 # ranking + markdown note) so sparse PubMed affiliations do not blank the table for every choice.
 MIN_RESOLVED_CONTINENT_FRACTION = 0.06
+
+
+def _role_name(author: dict[str, Any]) -> str:
+    """Classifier role label for an author dict (``role`` is a {role, justification} dict or None)."""
+    role_dict = author.get("role")
+    return role_dict.get("role", "") if isinstance(role_dict, dict) else ""
 
 
 def _most_frequent_nonempty(values: list[str]) -> Optional[str]:
@@ -219,6 +226,7 @@ def _build_markdown(
     total_papers_scanned: int,
     total_authors_found: int,
     top_authors: list[DoctorEntry],
+    table_n: int = DEFAULT_TOP_N,
 ) -> str:
     """Render the doctor report as a Markdown string.
 
@@ -240,7 +248,7 @@ def _build_markdown(
         "| Rank | Name | Country | Role | Score | Papers |",
         "|------|------|---------|------|-------|--------|",
     ]
-    for entry in top_authors:
+    for entry in top_authors[:table_n]:
         country = entry.country or "—"
         role = entry.role or "—"
         lines.append(
@@ -325,9 +333,15 @@ def run(context: dict[str, Any]) -> dict[str, Any]:
                 len(sorted_authors),
                 before_ct,
             )
-    top = sorted_authors[:top_n]
+    # Keep the whole ranked pool (capped for safety), not a global top-N. A global cut
+    # is geo-biased: for a US-dominated literature, top-100 can be 95 US / 0 Poland. We
+    # keep every author who cleared the role floor so the UI can rank + filter by country
+    # without us silently dropping the only specialists from a given region. The markdown
+    # *table* still shows just the headline ``top_n`` rows (table_n) for readability.
+    meaningful = [a for a in sorted_authors if _role_name(a) and _role_name(a) != "peripheral"]
+    kept = (meaningful or sorted_authors)[:DOCTOR_FINDER_REPORT_MAX_AUTHORS]
 
-    entries = [_build_entry(rank=i + 1, author=a) for i, a in enumerate(top)]
+    entries = [_build_entry(rank=i + 1, author=a) for i, a in enumerate(kept)]
 
     markdown = _build_markdown(
         disease_name=disease_name,
@@ -335,6 +349,7 @@ def run(context: dict[str, Any]) -> dict[str, Any]:
         total_papers_scanned=total_papers_scanned,
         total_authors_found=total_authors_found,
         top_authors=entries,
+        table_n=top_n,
     )
     if continent_raw:
         if continent_filter_skipped_low_signal:
