@@ -356,7 +356,13 @@ DOCTOR_FINDER_MEDIUM_ALIAS_SUBSTRING_CHARS = int(_DOCTOR_FINDER_MED_SUB) if _DOC
 DOCTOR_FINDER_MEDIUM_ALIAS_SUBSTRING_CHARS = max(6, min(40, DOCTOR_FINDER_MEDIUM_ALIAS_SUBSTRING_CHARS))
 # df-1 post-fetch: match disease/aliases only in title + first N abstract chars (drops passing mentions deep in reviews).
 _DF_REL_LEAD = (os.environ.get("DOCTOR_FINDER_RELEVANCE_LEAD_CHARS") or "").strip()
-DOCTOR_FINDER_RELEVANCE_LEAD_CHARS = int(_DF_REL_LEAD) if _DF_REL_LEAD else 700
+# Relevance scope for the post-fetch filter: title + first N abstract chars.
+# 700 (the original) dropped papers that name the disease centrally but a little
+# later in the abstract → false negatives (missed doctors). 2000 ≈ most of a
+# typical abstract, recovering those, while still NOT matching the full abstract
+# (which re-admits one-off tangential mentions, e.g. another disease's review that
+# cites this one once). Widen further via env if the run's drop-rate looks high.
+DOCTOR_FINDER_RELEVANCE_LEAD_CHARS = int(_DF_REL_LEAD) if _DF_REL_LEAD else 2000
 DOCTOR_FINDER_RELEVANCE_LEAD_CHARS = max(200, min(12_000, DOCTOR_FINDER_RELEVANCE_LEAD_CHARS))
 
 # df-1 PubMed author search: total PMID budget the search PAGINATES up to (esearch
