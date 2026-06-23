@@ -795,6 +795,90 @@ class GuidelinePrReviewBody(BaseModel):
 
 
 @router.post(
+    "/diseases/{slug}/rerun-finders",
+    dependencies=[Depends(require_superadmin)],
+)
+async def rerun_finders(slug: str):
+    """Re-run therapies and trials finders for an existing disease.
+
+    Fires ``find_trials_for_disease`` and ``find_therapies_for_disease`` as
+    background tasks and returns their execution IDs immediately. Does NOT
+    re-run the full guideline pipeline or doctor finder.
+    """
+    loop = asyncio.get_event_loop()
+    disease = await loop.run_in_executor(None, lambda: get_disease_by_slug(slug))
+    if disease is None:
+        raise HTTPException(status_code=404, detail="Disease not found")
+
+    from ..services.trials_finder import find_trials_for_disease
+    from ..services.therapies_finder import find_therapies_for_disease
+
+    disease_name = disease["name"]
+    trf_id = f"trf-{uuid.uuid4().hex[:12]}"
+    trp_id = f"trp-{uuid.uuid4().hex[:12]}"
+
+    asyncio.create_task(
+        find_trials_for_disease(
+            disease_slug=slug,
+            disease_name=disease_name,
+            execution_id=trf_id,
+        )
+    )
+    asyncio.create_task(
+        find_therapies_for_disease(
+            disease_slug=slug,
+            disease_name=disease_name,
+            execution_id=trp_id,
+        )
+    )
+
+    return {"disease_slug": slug, "trials": trf_id, "therapies": trp_id}
+
+
+@router.post(
+    "/rerun-finders-all",
+    dependencies=[Depends(require_superadmin)],
+)
+async def rerun_finders_all():
+    """Re-run therapies and trials finders for every listed disease.
+
+    Fires background tasks for all listed diseases and returns a mapping of
+    ``{slug: {trials, therapies}}``. Use this after changing ``_MAX_REVIEWS``
+    or ``_MAX_STUDIES`` to refresh all disease data in one request.
+    """
+    from ..content_db import list_diseases
+    from ..services.trials_finder import find_trials_for_disease
+    from ..services.therapies_finder import find_therapies_for_disease
+
+    loop = asyncio.get_event_loop()
+    diseases = await loop.run_in_executor(None, list_diseases)
+
+    runs: dict[str, dict[str, str]] = {}
+    for disease in diseases:
+        slug = disease["slug"]
+        disease_name = disease["name"]
+        trf_id = f"trf-{uuid.uuid4().hex[:12]}"
+        trp_id = f"trp-{uuid.uuid4().hex[:12]}"
+        asyncio.create_task(
+            find_trials_for_disease(
+                disease_slug=slug,
+                disease_name=disease_name,
+                execution_id=trf_id,
+            )
+        )
+        asyncio.create_task(
+            find_therapies_for_disease(
+                disease_slug=slug,
+                disease_name=disease_name,
+                execution_id=trp_id,
+            )
+        )
+        runs[slug] = {"trials": trf_id, "therapies": trp_id}
+
+    return {"started": len(runs), "runs": runs}
+
+
+@router.post(
     "/guideline-prs/{pr_id}/review",
     response_model=GuidelinePrDetailResponse,
     dependencies=[Depends(require_superadmin)],

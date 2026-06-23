@@ -6,6 +6,7 @@ import {
   fetchUnlistedDiseases,
   patchParentRec,
   patchSubmission,
+  rerunFindersAll,
   type CatalogDisease,
   type DoctorSubmission,
   type ParentRecSubmission,
@@ -35,6 +36,8 @@ type ContribState =
 export function CatalogView() {
   const [state, setState] = useState<LoadState>({ status: "loading" });
   const [busySlug, setBusySlug] = useState<string | null>(null);
+  const [rerunState, setRerunState] = useState<"idle" | "running" | "done">("idle");
+  const [rerunCount, setRerunCount] = useState(0);
   const [contrib, setContrib] = useState<ContribState>({ status: "loading" });
   const [busyId, setBusyId] = useState<string | null>(null);
 
@@ -82,6 +85,17 @@ export function CatalogView() {
       cancelled = true;
     };
   }, []);
+
+  const rerunAll = async () => {
+    setRerunState("running");
+    try {
+      const result = await rerunFindersAll();
+      setRerunCount(result.started);
+      setRerunState("done");
+    } catch {
+      setRerunState("idle");
+    }
+  };
 
   const approve = async (disease: CatalogDisease) => {
     setBusySlug(disease.slug);
@@ -383,6 +397,28 @@ export function CatalogView() {
           </tbody>
         </table>
       ) : null}
+
+      {/* -- Rerun finders -- */}
+      <h2 className="admin-section__title">Rerun finders</h2>
+      <p className="admin-section__lead">
+        Re-run therapies and trials finders for all listed diseases. Use this
+        after changing search limits to refresh data without re-running the full
+        guideline pipeline.
+      </p>
+      <div>
+        <button
+          type="button"
+          className="users-view__approve"
+          onClick={() => void rerunAll()}
+          disabled={rerunState === "running"}
+        >
+          {rerunState === "running"
+            ? "Starting…"
+            : rerunState === "done"
+              ? `Rerun started for ${rerunCount} diseases ✓`
+              : "Rerun therapies + trials for all diseases"}
+        </button>
+      </div>
     </section>
   );
 }
