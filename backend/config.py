@@ -359,6 +359,15 @@ _DF_REL_LEAD = (os.environ.get("DOCTOR_FINDER_RELEVANCE_LEAD_CHARS") or "").stri
 DOCTOR_FINDER_RELEVANCE_LEAD_CHARS = int(_DF_REL_LEAD) if _DF_REL_LEAD else 700
 DOCTOR_FINDER_RELEVANCE_LEAD_CHARS = max(200, min(12_000, DOCTOR_FINDER_RELEVANCE_LEAD_CHARS))
 
+# df-1 PubMed author search: total PMID budget the search PAGINATES up to (esearch
+# loops retstart in 200-id pages). The complete relevant author list for a rare
+# disease — not an arbitrary 200/500 slice. Bounded only as a safety ceiling
+# against a pathologically broad query; if total_found exceeds it we LOG it (never
+# silent truncation). The expensive geo-resolve step stays separately capped.
+_DF_MAX_PMIDS = (os.environ.get("DOCTOR_FINDER_MAX_PMIDS") or "").strip()
+DOCTOR_FINDER_MAX_PMIDS = int(_DF_MAX_PMIDS) if _DF_MAX_PMIDS else 3000
+DOCTOR_FINDER_MAX_PMIDS = max(200, min(20_000, DOCTOR_FINDER_MAX_PMIDS))
+
 # Brave Search + LLM affiliation geolocation (Doctor Finder df-20). Optional — unset key skips the step.
 BRAVE_API_KEY = (os.environ.get("BRAVE_API_KEY") or "").strip() or None
 _DFG_GEO_MAX = (os.environ.get("DOCTOR_FINDER_GEO_MAX_AFFILIATIONS") or "").strip()

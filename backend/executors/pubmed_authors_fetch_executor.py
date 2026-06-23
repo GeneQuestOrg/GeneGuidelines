@@ -23,7 +23,18 @@ class PubmedAuthorsFetchExecutor(NodeExecutor):
         initial = input.initial_data or {}
         disease_name = str(initial.get("disease_name") or "").strip()
         aliases: list[str] = [str(a) for a in (initial.get("disease_aliases") or []) if str(a).strip()]
-        max_results = int(initial.get("max_results") or 200)
+        try:
+            from ..config import DOCTOR_FINDER_MAX_PMIDS
+        except ImportError:  # pragma: no cover - flat-layout import shim
+            from config import DOCTOR_FINDER_MAX_PMIDS  # type: ignore[no-redef]
+        # `max_results` is the per-esearch-PAGE size; `max_pmids` is the TOTAL budget
+        # the search paginates up to (the complete relevant set, not a 200 slice).
+        page_size = int(initial.get("max_results") or 200)
+        max_pmids = int(initial.get("max_pmids") or DOCTOR_FINDER_MAX_PMIDS)
+        # Optional multi-query expansion (runtime ORs + dedups across variants).
+        query_variants = [
+            str(v) for v in (initial.get("query_variants") or []) if str(v).strip()
+        ] or None
         clinical_focus = bool(initial.get("clinical_focus", True))
 
         if not disease_name:
@@ -41,16 +52,40 @@ class PubmedAuthorsFetchExecutor(NodeExecutor):
         eq = bundle.event_queue if bundle else None
 
         emit(eq, {"kind": _DOCTOR_FINDER_PROGRESS_KIND, "stage": "search", "query": query})
-        log.info("doctor_finder: searching PubMed query=%r max_results=%d", query, max_results)
+        log.info(
+            "doctor_finder: searching PubMed query=%r max_pmids=%d page_size=%d variants=%d",
+            query, max_pmids, page_size, len(query_variants or []),
+        )
 
         try:
-            search_result = search_articles_impl(query, retmax=max_results, max_analyze=max_results)
+            search_result = search_articles_impl(
+                query,
+                query_variants=query_variants,
+                retmax=page_size,
+                max_analyze=max_pmids,
+            )
         except Exception as exc:
             log.warning("doctor_finder: PubMed search failed: %s", exc)
             return NodeOutput(data={"ok": False, "error": f"PubMed search failed: {exc}", "articles": [], "pmids": []})
 
-        pmids: list[str] = (search_result.get("pmids", []) or [])[:max_results]
-        total_found = search_result.get("pmid_count", len(pmids))
+        # Paginated, deduped relevant set (already bounded to max_pmids by the runtime).
+        pmids: list[str] = list(search_result.get("pmids", []) or [])
+        true_total = max(
+            (int(r.get("total_found") or 0) for r in (search_result.get("raw_runs") or [])),
+            default=len(pmids),
+        )
+        total_found = true_total or len(pmids)
+        if true_total > len(pmids):
+            log.warning(
+                "doctor_finder: retrieved %d/%d PMIDs — hit ceiling (DOCTOR_FINDER_MAX_PMIDS=%d); "
+                "raise it to capture more authors",
+                len(pmids), true_total, max_pmids,
+            )
+        else:
+            log.info(
+                "doctor_finder: retrieved complete set of %d PMIDs (true_total=%d)",
+                len(pmids), true_total,
+            )
 
         emit(eq, {"kind": _DOCTOR_FINDER_PROGRESS_KIND, "stage": "fetch", "count": len(pmids)})
         log.info("doctor_finder: fetching author XML for %d PMIDs", len(pmids))
