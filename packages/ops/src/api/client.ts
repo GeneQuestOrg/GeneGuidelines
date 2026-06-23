@@ -1003,6 +1003,27 @@ export async function postApproval(
   });
 }
 
+/** Superadmin: re-run therapies + trials finders for an existing disease. */
+export async function rerunFinders(
+  slug: string,
+): Promise<{ disease_slug: string; trials: string; therapies: string }> {
+  return request<{ disease_slug: string; trials: string; therapies: string }>(
+    `/api/pipeline/diseases/${encodeURIComponent(slug)}/rerun-finders`,
+    { method: "POST" },
+  );
+}
+
+/** Superadmin: re-run therapies + trials finders for every listed disease. */
+export async function rerunFindersAll(): Promise<{
+  started: number;
+  runs: Record<string, { trials: string; therapies: string }>;
+}> {
+  return request<{
+    started: number;
+    runs: Record<string, { trials: string; therapies: string }>;
+  }>("/api/pipeline/rerun-finders-all", { method: "POST" });
+}
+
 /** Convert API flow definition to app FlowDefinition (labels from fallback if provided). */
 export function apiFlowToFlowDefinition(
   api: ApiFlowDefinition,

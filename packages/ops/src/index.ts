@@ -37,6 +37,8 @@ export {
   patchSubmission,
   patchParentRec,
   buildCourtesyMailto,
+  rerunFinders,
+  rerunFindersAll,
   type MeResponse,
   type AccountRole,
   type AdminUser,
