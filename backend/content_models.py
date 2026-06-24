@@ -147,6 +147,10 @@ class DoctorEvidenceResponse(BaseModel):
     citesRecentGuidelines: bool = False
     activeLast2y: bool = False
     guidelineOrConsensusCoauthor: bool = False
+    # True only when ClinicalTrials.gov links this person to a trial for the disease.
+    # Gates the doctor page's "Related trials" section so it never implies a trial
+    # connection a doctor does not have.
+    runsClinicalTrial: bool = False
     # Sixth grid signal: how many families recommended this doctor (derived from parentRecs).
     parentRecCount: int = Field(default=0, ge=0)
 
@@ -159,6 +163,9 @@ class DoctorPublicationResponse(BaseModel):
     year: int | None = None
     journal: str = ""
     position: str = ""
+    # True when the disease is a MAJOR MeSH topic of this paper — i.e. the paper is
+    # genuinely ABOUT the disease, not just mentioning it. Drives a "MeSH-major" badge.
+    meshMajor: bool = False
 
 
 class PracticeResponse(BaseModel):

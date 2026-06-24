@@ -258,15 +258,21 @@ export function DoctorProfileView({ slug, userLoc, onNav }: DoctorProfileViewPro
         <AddRecForm doctorSlug={slug} account={account} onAdd={addRec} />
       </Section>
 
-      <Section title="Related trials" divider>
-        {relatedTrials.loading ? (
-          <p className="d-panel-empty">Loading trials…</p>
-        ) : relatedTrials.error != null ? (
-          <p className="d-panel-empty">Could not load trials: {relatedTrials.error}</p>
-        ) : (
-          <TrialsList trials={relatedTrials.trials} />
-        )}
-      </Section>
+      {evidence.runsClinicalTrial ? (
+        <Section
+          title="Related trials"
+          sub="Shown because this specialist is linked to a trial for this condition on ClinicalTrials.gov."
+          divider
+        >
+          {relatedTrials.loading ? (
+            <p className="d-panel-empty">Loading trials…</p>
+          ) : relatedTrials.error != null ? (
+            <p className="d-panel-empty">Could not load trials: {relatedTrials.error}</p>
+          ) : (
+            <TrialsList trials={relatedTrials.trials} />
+          )}
+        </Section>
+      ) : null}
 
       <Section
         title="Selected publications"
@@ -283,7 +289,15 @@ export function DoctorProfileView({ slug, userLoc, onNav }: DoctorProfileViewPro
               <li key={pub.pmid} className="pub">
                 <div className="pub__pos">{pub.position}</div>
                 <div className="pub__body">
-                  <div className="pub__title">{pub.title}</div>
+                  <div className="pub__title">
+                  {pub.title}
+                  {pub.meshMajor ? (
+                    <span title="The disease is a major MeSH topic of this paper — it is about the disease, not just mentioning it.">
+                      {" "}
+                      <Badge variant="ok">★ MeSH-major</Badge>
+                    </span>
+                  ) : null}
+                </div>
                   <div className="pub__meta">
                     <em>{pub.journal}</em>
                     {pub.year != null ? ` · ${pub.year}` : ""}

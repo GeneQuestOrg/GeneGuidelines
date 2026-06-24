@@ -28,6 +28,8 @@ export interface DoctorEvidence {
   readonly citesRecentGuidelines: boolean;
   readonly activeLast2y: boolean;
   readonly guidelineOrConsensusCoauthor: boolean;
+  /** True only when ClinicalTrials.gov links this doctor to a trial for the disease. */
+  readonly runsClinicalTrial?: boolean;
   /** Sixth grid signal — how many families recommended this doctor. */
   readonly parentRecCount?: number;
 }
@@ -64,6 +66,8 @@ export interface DoctorPublication {
   readonly year: number | null;
   readonly journal: string;
   readonly position: string;
+  /** Disease is a MAJOR MeSH topic of this paper — it is about the disease. */
+  readonly meshMajor?: boolean;
 }
 
 export interface PublicDoctor {

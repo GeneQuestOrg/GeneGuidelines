@@ -126,6 +126,7 @@ def _entry_to_public_doctor(
             "year": p.get("year"),
             "journal": _decode_stored_text(str(p.get("article_type") or "")),
             "position": str(p.get("author_position") or "author"),
+            "meshMajor": bool(p.get("mesh_major", False)),
         }
         for p in key_papers
         if isinstance(p, dict) and p.get("pmid")
@@ -155,6 +156,7 @@ def _entry_to_public_doctor(
             "citesRecentGuidelines": bool(flags.get("cites_current_guidelines")),
             "activeLast2y": bool(flags.get("active_last_2y")),
             "guidelineOrConsensusCoauthor": bool(flags.get("guideline_author")),
+            "runsClinicalTrial": bool(flags.get("runs_clinical_trial")),
         },
         "publications": publications,
         "bio": entry.get("ai_justification") or "",
@@ -203,6 +205,7 @@ def _merge_evidence_dicts(seed_ev: dict[str, Any], finder_ev: dict[str, Any]) ->
         "activeLast2y": bool(a.get("activeLast2y")) or bool(b.get("activeLast2y")),
         "guidelineOrConsensusCoauthor": bool(a.get("guidelineOrConsensusCoauthor"))
         or bool(b.get("guidelineOrConsensusCoauthor")),
+        "runsClinicalTrial": bool(a.get("runsClinicalTrial")) or bool(b.get("runsClinicalTrial")),
     }
 
 

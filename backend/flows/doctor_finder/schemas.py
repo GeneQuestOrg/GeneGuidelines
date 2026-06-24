@@ -166,6 +166,8 @@ class KeyPaper(BaseModel, frozen=True):
     pubmed_url: str = ""
     article_type: str = ""
     author_position: str = ""
+    # Disease is a MAJOR MeSH topic of this paper (paper_scoring) — surfaced as a badge.
+    mesh_major: bool = False
 
 
 class EvidenceSummary(BaseModel, frozen=True):
