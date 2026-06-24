@@ -174,7 +174,7 @@ export function DiseaseTabs({
                   <Button
                     type="button"
                     variant="ghost"
-                    onClick={() => setTab("doctors")}
+                    onClick={() => onNav(`/doctors?disease=${slug}`)}
                   >
                     See all specialists →
                   </Button>
