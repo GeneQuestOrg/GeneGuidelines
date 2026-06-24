@@ -118,6 +118,19 @@ class PubmedAuthorsFetchExecutor(NodeExecutor):
                 before_rel,
             )
 
+        # Grade each kept article's disease-evidence strength (MeSH major topic, title,
+        # type) so the author scorer can weight by per-paper relevance, not raw counts.
+        from ..flows.doctor_finder.paper_scoring import annotate_articles_with_evidence
+
+        mesh_major = annotate_articles_with_evidence(
+            articles, disease_name=disease_name, aliases=aliases
+        )
+        log.info(
+            "doctor_finder: scored %d kept articles (%d are a MeSH-major topic for the disease)",
+            len(articles),
+            mesh_major,
+        )
+
         emit(eq, {"kind": _DOCTOR_FINDER_PROGRESS_KIND, "stage": "fetch_done", "article_count": len(articles)})
 
         return NodeOutput(data={

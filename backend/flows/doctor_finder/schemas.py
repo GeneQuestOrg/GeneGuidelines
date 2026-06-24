@@ -102,6 +102,12 @@ class AuthorPaper(BaseModel, frozen=True):
     initials: str = ""
     pubmed_author_id: Optional[str] = None
     pubmed_url: str = ""
+    # Per-paper disease-evidence strength in [0,1] (see flows/doctor_finder/paper_scoring.py):
+    # how much THIS paper is about the disease (MeSH major topic > title > lead) times its
+    # evidence-type weight. Defaults to 1.0 so any path that does not score papers keeps the
+    # legacy "every kept paper counts fully" behaviour. ``mesh_major`` is the headline signal.
+    relevance: float = 1.0
+    mesh_major: bool = False
 
 
 class AuthorFlags(BaseModel, frozen=True):

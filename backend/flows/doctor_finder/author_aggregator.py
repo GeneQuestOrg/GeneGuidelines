@@ -54,6 +54,8 @@ def _build_author_paper(article: dict, author: dict) -> AuthorPaper:
         initials=author.get("initials", ""),
         pubmed_author_id=author.get("pubmed_author_id"),
         pubmed_url=article.get("pubmed_url", ""),
+        relevance=float(article.get("relevance", 1.0)),
+        mesh_major=bool(article.get("mesh_major", False)),
     )
 
 

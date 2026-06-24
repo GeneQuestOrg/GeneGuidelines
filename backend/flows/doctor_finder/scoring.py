@@ -73,8 +73,13 @@ def compute_raw(author: dict[str, Any], now: date) -> float:
     flags: dict[str, Any] = author.get("flags") or {}
 
     base = ROLE_BASE_SCORES.get(role_name, 5.0)
+    # Weight each paper's authorship contribution by its per-paper disease relevance
+    # (paper_scoring): a first-author paper genuinely ABOUT the disease (relevance≈1)
+    # counts far more than an incidental middle-author mention (relevance≈0.1). Papers
+    # without a score default to relevance 1.0, preserving legacy behaviour.
     position_score = POSITION_WEIGHT * sum(
         POSITION_MULTIPLIERS.get(p.get("author_position", "middle"), 0.4)
+        * float(p.get("relevance", 1.0))
         for p in papers
     )
     recency_score = sum(

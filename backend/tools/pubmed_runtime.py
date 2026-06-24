@@ -623,6 +623,28 @@ def fetch_authors_with_affiliations_impl(pmids: list[str]) -> dict:
     }
 
 
+def _parse_mesh_headings(block: str) -> list[dict]:
+    """Parse <MeshHeadingList> → ``[{"descriptor": str, "major": bool}]``.
+
+    ``major`` is True when the descriptor OR any of its qualifiers carries
+    ``MajorTopicYN="Y"`` — PubMed's own signal that the paper is genuinely *about*
+    that topic, not merely mentioning it. This is the highest-signal, zero-cost way
+    to tell "a paper ABOUT fibrous dysplasia" from "a paper that name-drops it".
+    """
+    headings: list[dict] = []
+    for mh in re.findall(r"<MeshHeading>(.*?)</MeshHeading>", block, re.DOTALL):
+        desc_match = re.search(r"<DescriptorName[^>]*>(.*?)</DescriptorName>", mh, re.DOTALL)
+        if not desc_match:
+            continue
+        descriptor = _decode_xml_entities(re.sub(r"<[^>]+>", "", desc_match.group(1))).strip()
+        if not descriptor:
+            continue
+        # MajorTopicYN="Y" may sit on the DescriptorName or any QualifierName.
+        major = 'MajorTopicYN="Y"' in mh
+        headings.append({"descriptor": descriptor, "major": major})
+    return headings
+
+
 def _parse_pubmed_article_block(block: str) -> dict | None:
     """Parse a single <PubmedArticle> XML block into a structured dict."""
     pmid_match = re.search(r"<PMID[^>]*>(\d+)</PMID>", block)
@@ -665,6 +687,7 @@ def _parse_pubmed_article_block(block: str) -> dict | None:
         "abstract": abstract,
         "year": year,
         "publication_types": publication_types,
+        "mesh_terms": _parse_mesh_headings(block),
         "pubmed_url": f"https://pubmed.ncbi.nlm.nih.gov/{pmid}/",
         "authors": authors,
     }
