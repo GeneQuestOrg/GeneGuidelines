@@ -206,7 +206,7 @@ export function DiseaseTabs({
               ) : foundationsLoading ? (
                 <p className="d-panel-empty">Loading foundations…</p>
               ) : (
-                <FoundationsList foundations={foundations} />
+                <FoundationsList foundations={foundations} diseaseName={disease.name} />
               )}
             </Section>
 

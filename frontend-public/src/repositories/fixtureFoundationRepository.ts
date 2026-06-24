@@ -18,7 +18,7 @@ const FIXTURE: readonly Foundation[] = [
     city: "Zielona Góra",
     country: "PL",
     services: ["Family support (PL)", "Polish doctor catalog"],
-    diseases: ["fd", "mas", "noonan"],
+    diseases: ["fd", "mas"],
   },
   {
     name: "Noonan Syndrome Foundation",

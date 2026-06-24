@@ -21,7 +21,7 @@
     {
       "name": "GeneQuest Foundation",
       "scope": "Poland",
-      "diseases": ["fd", "mas", "noonan"],
+      "diseases": ["fd", "mas"],
       "url": "genequest.org",
       "services": ["Family support (PL)", "Polish doctor catalog", "1.5% CIT donations", "Zoom workshops"],
       "city": "Zielona Góra",

@@ -63,3 +63,43 @@
   color: var(--ink-2);
   line-height: 1.45;
 }
+
+/* "Catalog may be stale → search live" escape hatch (Google + Facebook groups). */
+.foundations-more {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px dashed var(--line-2);
+}
+
+.foundations-more__note {
+  margin: 0 0 8px;
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+  line-height: 1.45;
+  max-width: 60ch;
+}
+
+.foundations-more__btns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.foundations-more__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-sm);
+  background: var(--bg-elev);
+  color: var(--ink-2);
+  font-size: var(--fs-sm);
+  text-decoration: none;
+  transition: background 120ms, border-color 120ms;
+}
+
+.foundations-more__btn:hover {
+  background: var(--bg-soft);
+  border-color: var(--ink-4);
+}
