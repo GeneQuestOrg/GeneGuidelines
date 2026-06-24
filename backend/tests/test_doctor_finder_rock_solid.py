@@ -12,6 +12,10 @@ from __future__ import annotations
 
 from datetime import date
 
+from backend.flows.doctor_finder.author_aggregator import (
+    _identity_confidence,
+    _merge_same_person,
+)
 from backend.flows.doctor_finder.pubmed_relevance import (
     article_text_relevant_to_disease,
 )
@@ -178,3 +182,85 @@ def test_ranking_orders_by_relevant_volume():
     scored = scoring.run({"aggregated_authors": authors}, now=now)["aggregated_authors"]
     ranked = sorted(scored, key=lambda a: a["score"], reverse=True)
     assert ranked[0]["name"] == "three"
+
+
+# -- author disambiguation ---------------------------------------------------
+
+
+def _bucket(last, fore, country, inst, papers=1, orcid=None, pmid=None):
+    return {
+        "last_name": last,
+        "fore_name": fore,
+        "country_primary": country,
+        "institution_primary": inst,
+        "paper_count": papers,
+        "orcid": orcid,
+        "pubmed_author_id": pmid,
+        "papers": [],
+    }
+
+
+def test_merge_keeps_distinct_forename_and_institution_separate():
+    # The collision shape: "Wang X" is really two people at two institutions.
+    a = _bucket("wang", "Xiaodong", "us", "NIH Bethesda", papers=5)
+    b = _bucket("wang", "Xin", "us", "Leiden University", papers=4)
+    assert len(_merge_same_person([a, b])) == 2
+
+
+def test_merge_keeps_distinct_countries_separate():
+    a = _bucket("wang", "Jian", "us", "Harvard", papers=3)
+    b = _bucket("wang", "Jian", "cn", "Peking University", papers=3)
+    assert len(_merge_same_person([a, b])) == 2
+
+
+def test_merge_folds_unknown_into_known_same_person():
+    # Same forename, one bucket simply missing country/institution -> one person.
+    a = _bucket("boyce", "Alison", "us", "NIH", papers=8)
+    b = _bucket("boyce", "Alison", None, None, papers=2)
+    assert len(_merge_same_person([a, b])) == 1
+
+
+def _author_with_papers(orcid=None, pmid=None, fore="", insts=(), countries=()):
+    n = max(len(insts), len(countries))
+    papers = []
+    for i in range(n):
+        pa = {}
+        if i < len(insts):
+            pa["institution"] = insts[i]
+        if i < len(countries):
+            pa["country_code"] = countries[i]
+        papers.append({"parsed_affiliation": pa})
+    return {"orcid": orcid, "pubmed_author_id": pmid, "fore_name": fore, "papers": papers}
+
+
+def test_identity_high_with_orcid():
+    assert _identity_confidence(_author_with_papers(orcid="0000-0001-5652-4397")) == "high"
+
+
+def test_identity_medium_with_pubmed_id_single_country():
+    a = _author_with_papers(pmid="55992015900", fore="Alison", insts=("NIH",), countries=("US",))
+    assert _identity_confidence(a) == "medium"
+
+
+def test_identity_medium_full_forename_consistent():
+    a = _author_with_papers(fore="Alison", insts=("NIH", "NIH"), countries=("US", "US"))
+    assert _identity_confidence(a) == "medium"
+
+
+def test_identity_low_initials_only_multi_institution():
+    a = _author_with_papers(fore="X", insts=("NIH", "Leiden", "Peking"), countries=("US", "NL", "CN"))
+    assert _identity_confidence(a) == "low"
+
+
+def test_identity_initials_only_with_pubmed_id_is_still_low():
+    # "X D Wang" + a PubMed author-id + single country must NOT reach medium.
+    a = _author_with_papers(pmid="123", fore="X D", insts=("Peking University",), countries=("CN",))
+    assert _identity_confidence(a) == "low"
+
+
+def test_low_confidence_score_is_dampened():
+    now = date(2026, 1, 1)
+    base = _author("active_contributor", ["first", "first"], 2026)
+    hi = {**base, "identity_confidence": "high"}
+    lo = {**base, "identity_confidence": "low"}
+    assert scoring.compute_raw(lo, now) < scoring.compute_raw(hi, now)

@@ -215,6 +215,13 @@ async def run_async(context: dict, *, now: Optional[date] = None) -> dict:
         cc = author.get("case_report_count", 0)
 
         role_name = _assign_role(gc, rc, oc, pc, cc, active)
+        # Identity gate: a low-confidence cluster (initials-only name, or a "common
+        # surname" collision spanning institutions) cannot reach senior_investigator
+        # on counts that may belong to several distinct people. Cap it at
+        # active_contributor; scoring additionally dampens it so it ranks below
+        # ORCID/PubMed-id-verified peers rather than topping the list.
+        if author.get("identity_confidence") == "low" and role_name == "senior_investigator":
+            role_name = "active_contributor"
         justification = _build_justification(author, role_name, flags)
         role = AuthorRole(role=role_name, justification=justification)
 

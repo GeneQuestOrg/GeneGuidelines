@@ -82,17 +82,18 @@ async def main() -> None:
         r = (a.get("role") or {}).get("role", "?")
         roles[r] = roles.get(r, 0) + 1
     print(f"Authors aggregated: {len(authors)} | role mix: {roles}\n")
-    print(f"{'#':>2}  {'score':>5}  {'role':<18} {'F/L/M':>8} {'g/r/o/c':>9}  cc  loc  name / top paper")
-    print("-" * 110)
+    print(f"{'#':>2}  {'score':>5}  conf  {'role':<18} {'F/L/M':>8} {'g/r/o/c':>9}  loc  name / top paper")
+    print("-" * 112)
     for i, a in enumerate(authors[:top_n], 1):
         papers = a.get("papers", [])
         f, l, m = _positions(papers)
         role = (a.get("role") or {}).get("role", "?")
         name = f"{a.get('fore_name', '')} {a.get('last_name', '')}".strip() or "?"
         gr = f"{a.get('guideline_count',0)}/{a.get('review_count',0)}/{a.get('original_count',0)}/{a.get('case_report_count',0)}"
+        conf = {"high": "HI", "medium": "med", "low": "LOW"}.get(a.get("identity_confidence", ""), "?")
         top = sorted(papers, key=lambda p: (p.get("author_position") != "first", -(p.get("year") or 0)))
-        top_title = (top[0].get("title", "")[:54] + "…") if top else ""
-        print(f"{i:>2}  {a.get('score',0):>5.1f}  {role:<18} {f}/{l}/{m:>2}   {gr:>9}  {a.get('case_report_count',0):>2}  {_country(a):<3}  {name} — {top_title}")
+        top_title = (top[0].get("title", "")[:52] + "…") if top else ""
+        print(f"{i:>2}  {a.get('score',0):>5.1f}  {conf:<4} {role:<18} {f}/{l}/{m:>2}   {gr:>9}  {_country(a):<3}  {name} — {top_title}")
 
 
 if __name__ == "__main__":

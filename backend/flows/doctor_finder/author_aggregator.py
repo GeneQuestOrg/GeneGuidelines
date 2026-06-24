@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import re
 from collections import Counter
 from typing import Optional
 
@@ -213,11 +214,96 @@ def _merge_group_dicts(group: list[dict]) -> dict:
     }
 
 
+def _norm_token(value: Optional[str]) -> str:
+    """Lowercase, alnum-only, truncated — for comparing forenames / institutions."""
+    return re.sub(r"[^a-z0-9]", "", (value or "").lower())[:24]
+
+
+def _full_forename_token(fore: Optional[str]) -> str:
+    """Longest given-name token of >= 2 letters — a real forename, NOT an initial.
+
+    "Xiaodong" -> "xiaodong"; "X D" / "X.D." / "J W" -> "" (initials only, untrusted)."""
+    tokens = [re.sub(r"[^a-z]", "", t.lower()) for t in re.split(r"[\s.\-]+", fore or "")]
+    full = [t for t in tokens if len(t) >= 2]
+    return max(full, key=len) if full else ""
+
+
+def _forename_key(author: dict) -> str:
+    """Full-forename discriminator: the real given name when present, else '' (an
+    initials-only forename is NOT a reliable discriminator — fold, don't split on it)."""
+    return _full_forename_token(author.get("fore_name"))
+
+
+def _inst_key(author: dict) -> str:
+    """Primary-institution discriminator, '' when unknown."""
+    return _norm_token(author.get("institution_primary"))
+
+
+def _split_keep_known(buckets: list[dict], key_fn) -> list[list[dict]]:
+    """Partition buckets by a discriminator: distinct KNOWN values stay separate
+    (likely different people); an UNKNOWN ('') value folds into the largest known
+    group by paper volume so a genuine person fragmented across papers still merges.
+    All-unknown returns a single group (nothing to discriminate on)."""
+    from collections import defaultdict
+
+    known: dict[str, list[dict]] = defaultdict(list)
+    unknown: list[dict] = []
+    for b in buckets:
+        v = key_fn(b)
+        (known[v] if v else unknown).append(b)
+    if not known:
+        return [unknown] if unknown else []
+    largest = max(known, key=lambda k: sum(x.get("paper_count", 0) for x in known[k]))
+    known[largest].extend(unknown)
+    return list(known.values())
+
+
+def _identity_confidence(author: dict) -> str:
+    """Classify how trustworthy this author's identity is (see schema field).
+
+    high   — has an ORCID (globally unique).
+    medium — has a PubMed author-id (PubMed's own disambiguation) in one country, OR
+             a name-only cluster with a full forename consistent in institution+country.
+    low    — initials-only forename, or a cluster spanning multiple institutions /
+             countries with no strong id (collision-shaped: probably >1 real person).
+    """
+    if (author.get("orcid") or "").strip():
+        return "high"
+    institutions: set[str] = set()
+    countries: set[str] = set()
+    for p in author.get("papers") or []:
+        pa = p.get("parsed_affiliation") if isinstance(p, dict) else None
+        if not isinstance(pa, dict):
+            continue
+        inst = _norm_token(pa.get("institution"))
+        if inst:
+            institutions.add(inst)
+        cc = pa.get("country_code")
+        if cc:
+            countries.add(str(cc).lower())
+    # An initials-only forename ("X D Wang") with no ORCID is the canonical collision
+    # — never trust it past "low", regardless of a PubMed author-id (those are weak
+    # for abbreviated names). Medium requires a real given name.
+    if not _full_forename_token(author.get("fore_name")):
+        return "low"
+    if (author.get("pubmed_author_id") or "").strip() and len(countries) <= 1:
+        return "medium"
+    if len(institutions) <= 1 and len(countries) <= 1:
+        return "medium"
+    return "low"
+
+
 def _merge_same_person(authors: list[dict]) -> list[dict]:
-    """Merge buckets that fragmented across orcid/pmid/name-country keys for the SAME
-    person. Group by (last_name, first-initial); within a group, fold no-country
-    buckets into the largest known-country bucket and merge same-country buckets,
-    but keep DISTINCT known countries separate (likely different people)."""
+    """Merge buckets that fragmented across orcid/pmid/name keys for the SAME person,
+    WITHOUT over-merging distinct people who share a surname + first initial.
+
+    Group by (last_name, first-initial); within a group keep apart any buckets that
+    disagree on a KNOWN country, full forename, or institution (e.g. 'Wang Xiaodong
+    @ NIH' vs 'Wang Xin @ Leiden' — different people who collided on "Wang X"). An
+    unknown value on any axis folds into the largest matching sibling, so a genuine
+    person fragmented across papers (e.g. one paper missing an affiliation) still
+    merges. Distinct known countries were already kept separate; forename and
+    institution add two more discriminators to cut the "common surname" collisions."""
     from collections import defaultdict
 
     groups: dict[tuple[str, str], list[dict]] = defaultdict(list)
@@ -236,18 +322,12 @@ def _merge_same_person(authors: list[dict]) -> list[dict]:
         if len(bucket) == 1:
             out.append(bucket[0])
             continue
-        by_country: dict[str, list[dict]] = defaultdict(list)
-        nones: list[dict] = []
-        for a in bucket:
-            c = a.get("country_primary")
-            (by_country[c] if c else nones).append(a)
-        if by_country:
-            largest = max(by_country, key=lambda c: sum(x.get("paper_count", 0) for x in by_country[c]))
-            by_country[largest].extend(nones)
-            for grp in by_country.values():
-                out.append(_merge_group_dicts(grp) if len(grp) > 1 else grp[0])
-        else:
-            out.append(_merge_group_dicts(nones) if len(nones) > 1 else nones[0])
+        for country_grp in _split_keep_known(bucket, lambda a: a.get("country_primary") or ""):
+            for fore_grp in _split_keep_known(country_grp, _forename_key):
+                for inst_grp in _split_keep_known(fore_grp, _inst_key):
+                    out.append(
+                        _merge_group_dicts(inst_grp) if len(inst_grp) > 1 else inst_grp[0]
+                    )
     return out
 
 
@@ -259,6 +339,8 @@ def run(context: dict) -> dict:
         _build_aggregated_author(key, entries) for key, entries in groups.items()
     ]
     merged = _merge_same_person([a.model_dump() for a in aggregated_authors])
+    for a in merged:
+        a["identity_confidence"] = _identity_confidence(a)
     log.debug(
         "author_aggregator: %d authors (%d after same-person merge) from %d articles",
         len(aggregated_authors),

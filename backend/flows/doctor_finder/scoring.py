@@ -50,6 +50,11 @@ FLAG_BONUSES: dict[str, float] = {
 
 MAX_FLAG_BONUS = 15.0
 
+# Low-confidence identities (see author_aggregator._identity_confidence) are dampened
+# so an unverified, possibly-collided cluster ranks below ORCID / PubMed-id-verified
+# peers with comparable counts instead of topping the list on inflated volume.
+LOW_CONFIDENCE_DAMPING = 0.6
+
 
 def compute_raw(author: dict[str, Any], now: date) -> float:
     """Compute raw score for a single author.
@@ -82,7 +87,10 @@ def compute_raw(author: dict[str, Any], now: date) -> float:
         MAX_FLAG_BONUS,
     )
 
-    return base + position_score + recency_score + flag_bonus
+    raw = base + position_score + recency_score + flag_bonus
+    if author.get("identity_confidence") == "low":
+        raw *= LOW_CONFIDENCE_DAMPING
+    return raw
 
 
 def normalize(authors: list[dict[str, Any]]) -> list[dict[str, Any]]:
