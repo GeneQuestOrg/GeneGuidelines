@@ -189,7 +189,9 @@ def ensure_content_schema() -> None:
             url TEXT NOT NULL DEFAULT '',
             city TEXT,
             country TEXT,
-            services_json TEXT NOT NULL DEFAULT '[]'
+            services_json TEXT NOT NULL DEFAULT '[]',
+            source TEXT NOT NULL DEFAULT 'seed'
+                CHECK (source IN ('seed','workflow','reviewer'))
         )
         """
     )
@@ -226,6 +228,7 @@ def ensure_content_schema() -> None:
     ensure_listed_column()
     ensure_care_pathway_draft_columns()
     ensure_official_guideline_pointers_schema()
+    ensure_foundations_source_column()
     sync_guideline_document_bodies_from_file()
     # NOTE: content_prs and disease_trials have FKs to diseases(slug); their
     # seeders (seed_content_prs_if_empty / seed_trials_from_file) are invoked
@@ -281,6 +284,27 @@ def ensure_official_guideline_pointers_schema() -> None:
         """
     )
     conn.commit()
+    conn.close()
+
+
+def ensure_foundations_source_column() -> None:
+    """Add foundations.source for existing deployments (foundations-as-workflow).
+
+    Existing rows were all seeded from content_foundations_seed.json, so the
+    backfill default of 'seed' is correct: they stay visible until the
+    foundations_finder workflow produces 'workflow' rows for a disease, at
+    which point the workflow rows take over as the primary source (see
+    :meth:`SqlaFoundationRepo.list_for_disease`). Zero regression — every
+    current row keeps showing as a seed fallback.
+    """
+    conn = get_connection()
+    cur = conn.cursor()
+    columns = table_columns(conn, "foundations")
+    if "source" not in columns:
+        cur.execute(
+            "ALTER TABLE foundations ADD COLUMN source TEXT NOT NULL DEFAULT 'seed'"
+        )
+        conn.commit()
     conn.close()
 
 
@@ -1413,8 +1437,8 @@ def seed_foundations_from_file() -> None:
         cur.execute(
             """
             INSERT INTO foundations (
-                name, scope, url, city, country, services_json
-            ) VALUES (%s, %s, %s, %s, %s, %s) ON CONFLICT DO NOTHING""",
+                name, scope, url, city, country, services_json, source
+            ) VALUES (%s, %s, %s, %s, %s, %s, 'seed') ON CONFLICT DO NOTHING""",
             (
                 name,
                 str(item.get("scope") or ""),

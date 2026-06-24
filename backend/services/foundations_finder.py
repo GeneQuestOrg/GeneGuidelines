@@ -181,6 +181,9 @@ def _persist_foundations(disease_slug: str, foundations: list[_Foundation]) -> i
             city=f.city,
             country=f.country,
             services_json=_json.dumps(f.services[:6]),
+            # foundations-as-workflow: finder output is the primary source for
+            # the disease page; seed rows are suppressed once these exist.
+            source="workflow",
         )
         inserted += 1
     return inserted

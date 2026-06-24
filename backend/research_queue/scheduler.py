@@ -49,6 +49,7 @@ import json
 import logging
 import os
 import uuid
+from collections.abc import Callable
 from datetime import datetime, timedelta, timezone
 
 from .models import AdmissionResult, JobClass, JobCoro, RunnableFactory
@@ -77,6 +78,9 @@ _ANON_NO_ID = "__anon_no_id__"
 # How often a busy worker refreshes ``locked_at`` and re-polls for work.
 _POLL_INTERVAL_SEC = 0.05
 _HEARTBEAT_INTERVAL_SEC = 30.0
+# When the token budget blocks claiming, the worker waits this long before
+# re-checking (rather than hot-spinning) — the budget window changes slowly.
+_BUDGET_RECHECK_SEC = 60.0
 
 
 class ResearchQueueFull(Exception):
@@ -103,11 +107,15 @@ class ResearchScheduler:
         lock_timeout_sec: int | None = None,
         max_attempts: int | None = None,
         poll_interval_sec: float = _POLL_INTERVAL_SEC,
+        budget_guard: Callable[[], str | None] | None = None,
     ) -> None:
+        # ``minimum=0`` (not 1) so the prod web can set
+        # ``RESEARCH_QUEUE_MAX_CONCURRENT=0`` to run ZERO research workers while
+        # still reaping stale jobs; the dedicated worker process sets it to 1.
         self._max_concurrent = (
             max_concurrent
             if max_concurrent is not None
-            else _env_int("RESEARCH_QUEUE_MAX_CONCURRENT", 1)
+            else _env_int("RESEARCH_QUEUE_MAX_CONCURRENT", 1, minimum=0)
         )
         self._anon_max_pending = (
             anon_max_pending
@@ -141,6 +149,15 @@ class ResearchScheduler:
         self._workers: list[asyncio.Task[None]] = []
         self._wake = asyncio.Event()
         self._reaped = False
+        # Token-budget guard: returns a non-None reason (e.g. "token_budget")
+        # when the worker must NOT claim the next job. Injectable for tests; in
+        # production it defaults lazily to ``token_budget.budget_block_reason``
+        # (see :meth:`_resolve_budget_guard`), which is itself a no-op unless a
+        # monthly limit is configured — so unset env leaves existing behaviour
+        # (and tests) untouched.
+        self._budget_guard = budget_guard
+        self._budget_guard_resolved = budget_guard is not None
+        self._budget_blocked_logged = False
 
     # -- admission -----------------------------------------------------------
 
@@ -248,7 +265,14 @@ class ResearchScheduler:
     async def start(self) -> None:
         """Reap stale jobs and start the worker pool. Idempotent; call at app boot
         so a restart resumes (or drains) the durable queue immediately, rather than
-        waiting for the next :meth:`admit` to lazily start workers."""
+        waiting for the next :meth:`admit` to lazily start workers.
+
+        With ``max_concurrent=0`` (prod web: ``RESEARCH_QUEUE_MAX_CONCURRENT=0``)
+        this still reaps stale jobs but starts ZERO worker coroutines — the
+        ``while len(self._workers) < self._max_concurrent`` loop in
+        :meth:`_ensure_started` never iterates — so the web process never runs
+        research; the dedicated ``backend.worker`` process does.
+        """
         await self._ensure_started()
 
     async def recover_stale_jobs(self) -> int:
@@ -285,9 +309,60 @@ class ResearchScheduler:
             log.info("research_queue: requeue_stale recovered %d job(s)", touched)
         return touched
 
+    def _resolve_budget_guard(self) -> Callable[[], str | None] | None:
+        """Lazily default the budget guard to ``token_budget.budget_block_reason``.
+
+        Kept lazy (imported inside the method) so the scheduler module never
+        imports ``token_budget`` — and therefore never forces ``config`` /
+        ``DB_URL`` to evaluate — at import time. The default is itself cheap: it
+        short-circuits to ``None`` unless ``RESEARCH_TOKEN_BUDGET_MONTHLY`` is
+        set, so an unconfigured budget leaves the worker loop unchanged.
+        """
+        if not self._budget_guard_resolved:
+            try:
+                from . import token_budget
+
+                self._budget_guard = token_budget.budget_block_reason
+            except Exception:  # noqa: BLE001 — never let guard wiring crash the worker
+                self._budget_guard = None
+            self._budget_guard_resolved = True
+        return self._budget_guard
+
+    def _budget_block_reason(self) -> str | None:
+        """Run the (resolved) budget guard, swallowing any error → unblocked."""
+        guard = self._resolve_budget_guard()
+        if guard is None:
+            return None
+        try:
+            return guard()
+        except Exception:  # noqa: BLE001 — a flaky guard must not stall the worker
+            log.debug("research_queue: budget_guard raised; treating as unblocked", exc_info=True)
+            return None
+
     async def _worker_loop(self) -> None:
         worker_id = f"w-{uuid.uuid4().hex[:8]}"
         while True:
+            reason = self._budget_block_reason()
+            if reason is not None:
+                # Budget exhausted: do NOT claim a new job. Leave queued jobs
+                # where they are (their public projection computes blocked_reason
+                # from the same guard) and re-check after a backoff window.
+                if not self._budget_blocked_logged:
+                    log.warning(
+                        "research_queue: worker pausing claims — budget blocked (%s)",
+                        reason,
+                    )
+                    self._budget_blocked_logged = True
+                self._wake.clear()
+                try:
+                    await asyncio.wait_for(self._wake.wait(), timeout=_BUDGET_RECHECK_SEC)
+                except TimeoutError:
+                    pass
+                continue
+            if self._budget_blocked_logged:
+                log.info("research_queue: worker resuming claims — budget no longer blocked")
+                self._budget_blocked_logged = False
+
             job = await asyncio.to_thread(
                 self._repo.claim_next, worker_id=worker_id, now=_now_iso()
             )

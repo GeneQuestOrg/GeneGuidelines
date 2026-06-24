@@ -273,4 +273,28 @@ def get_active_research_runs(
     return {"runs": [to_payload(r) for r in runs]}
 
 
+@router.get("/research/budget")
+def get_research_budget() -> dict[str, object]:
+    """Monthly LLM token budget snapshot.
+
+    Returns ``{limit, spent, remaining, window, blocked}``. ``limit`` of 0 means
+    unlimited (``remaining`` is null, never ``blocked``). Best-effort — a DB
+    error yields an unlimited, nothing-spent snapshot rather than raising.
+    """
+    try:
+        from ..research_queue.token_budget import budget_status
+
+        return budget_status()
+    except Exception:  # noqa: BLE001 — read-only, must not 500 on a DB hiccup
+        from datetime import datetime, timezone
+
+        return {
+            "limit": 0,
+            "spent": 0,
+            "remaining": None,
+            "window": datetime.now(timezone.utc).strftime("%Y-%m"),
+            "blocked": False,
+        }
+
+
 __all__ = ["router"]

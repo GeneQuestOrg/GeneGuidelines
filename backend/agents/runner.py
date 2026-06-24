@@ -177,6 +177,30 @@ def _emit(event_queue: Queue | None, payload: dict) -> None:
         event_queue.put(payload)
 
 
+def _record_agent_token_usage(store: dict, agent_run: Any, model_spec: str | None = None) -> None:
+    """Best-effort: record an agentic run's LLM token usage for the budget ledger.
+
+    The agentic path exposes cumulative usage via ``agent_run.usage()``. Wrapped
+    so a missing method, an unmigrated DB, or any other error never breaks a run."""
+    try:
+        from ..research_queue.token_budget import extract_usage, record_usage
+
+        prompt, completion, total = extract_usage(agent_run)
+        record_usage(
+            execution_id=str(store.get("execution_id") or ""),
+            model_spec=str(model_spec or store.get("model_spec") or "agentic"),
+            prompt_tokens=prompt,
+            completion_tokens=completion,
+            total_tokens=total,
+            disease_slug=(
+                str(store.get("catalog_slug") or store.get("disease_slug") or "").strip()
+                or None
+            ),
+        )
+    except Exception:  # noqa: BLE001 — token capture must never break a run
+        pass
+
+
 def _dbg(hypothesis_id: str, message: str, data: dict[str, Any] | None = None, *, run_id: str = "pre-fix", location: str = "") -> None:
     # #region agent log
     try:
@@ -953,6 +977,10 @@ async def run_agent_async(
                 else:
                     raise
 
+            # Record cumulative LLM token usage for the budget ledger (after the
+            # iter block finished, so usage() is final). Best-effort, never raises.
+            _record_agent_token_usage(store, agent_run)
+
             try:
                 final = getattr(agent_run, "result", None)
                 if final is not None:
@@ -1212,6 +1240,8 @@ async def run_single_node_async(
                                     short = _shorten_mcp_content(content)
                                     _diagnostics.append({"tool": name, "result": short})
                                     emit_fn(event_queue, {"kind": "diagnostic", "tool": name, "result": short})
+        # Record cumulative LLM token usage for the budget ledger (best-effort).
+        _record_agent_token_usage(store, agent_run, model_spec)
         try:
             final = getattr(agent_run, "result", None)
             if final is not None:

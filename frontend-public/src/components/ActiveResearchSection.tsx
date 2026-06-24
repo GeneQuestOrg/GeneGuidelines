@@ -1,6 +1,7 @@
 import { Section } from "@gene-guidelines/ui";
 import type { ResearchRun } from "../types/researchRun";
 import { hrefForActiveResearchRun } from "../utils/activeResearchNav";
+import { blockedBadgeLabel } from "../utils/queuedRun";
 import "./active-research.css";
 
 export interface ActiveResearchSectionProps {
@@ -37,6 +38,7 @@ export function ActiveResearchSection({
         {runs.map((run) => {
           const path = hrefForActiveResearchRun(run);
           const href = `#${path}`;
+          const blockedLabel = blockedBadgeLabel(run.blockedReason);
           return (
             <a
               key={run.runId}
@@ -57,6 +59,9 @@ export function ActiveResearchSection({
                 </span>
               </div>
               <h3 className="active-research__title">{run.label}</h3>
+              {blockedLabel ? (
+                <span className="active-research__blocked">{blockedLabel}</span>
+              ) : null}
               <p className="active-research__cta">Watch live →</p>
             </a>
           );

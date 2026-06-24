@@ -10,6 +10,7 @@ const FIXTURE_RUNS: readonly ResearchRun[] = [
     label: "Noonan syndrome — fresh PubMed sweep",
     startedAt: new Date(Date.now() - 4 * 60_000).toISOString(),
     elapsedSec: 240,
+    blockedReason: null,
   },
 ];
 

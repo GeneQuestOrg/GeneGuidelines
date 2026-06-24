@@ -296,6 +296,16 @@ RESEARCH_QUEUE_LOCK_TIMEOUT_SEC = max(
 RESEARCH_QUEUE_MAX_ATTEMPTS = max(
     1, int((os.environ.get("RESEARCH_QUEUE_MAX_ATTEMPTS") or "").strip() or 3)
 )
+# Monthly LLM token budget the research worker guards against. The worker SUMs
+# total_tokens recorded in the current YYYY-MM window (token_usage ledger) and
+# refuses to claim the next disease job once spend reaches this cap, leaving the
+# job `queued` with blocked_reason="token_budget" until the next window resets.
+# 0 (or unset) = unlimited: the guard is a no-op and existing behaviour/tests are
+# unaffected. Read directly from the environment by token_budget so importing the
+# scheduler never needs a DB_URL; surfaced here for discoverability.
+RESEARCH_TOKEN_BUDGET_MONTHLY = max(
+    0, int((os.environ.get("RESEARCH_TOKEN_BUDGET_MONTHLY") or "").strip() or 0)
+)
 
 QUALITY_FIRST_HARD_MODE = (os.environ.get("QUALITY_FIRST_HARD_MODE") or "1").strip().lower() in (
     "1",

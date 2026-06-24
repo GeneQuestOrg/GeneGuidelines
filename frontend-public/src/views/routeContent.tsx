@@ -17,7 +17,7 @@ import { JoinView } from "./JoinView";
 import { ResearchRunView } from "./ResearchRunView";
 import { StartResearchView } from "./StartResearchView";
 import { MyCaseView } from "./MyCaseView";
-import { TrialsView } from "./TrialsView";
+import { TrialsBrowserView } from "./TrialsBrowserView";
 
 export interface RouteContentProps {
   route: Route;
@@ -86,7 +86,7 @@ export function routeContent({
         />
       );
     case "trials":
-      return <TrialsView initialQuery={route.query} onNav={onNav} />;
+      return <TrialsBrowserView userLoc={userLoc} hash={hash} onNav={onNav} />;
     case "flowchart":
       return <FlowchartView slug={route.slug} onNav={onNav} />;
     case "bibliography":

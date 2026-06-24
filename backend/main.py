@@ -54,7 +54,9 @@ async def lifespan(app: FastAPI):
             # rebuilt from its payload when a worker claims it (rather than failed).
             register_research_factories(scheduler)
             # start() reaps stale jobs AND starts the worker pool, so a deploy/crash
-            # resumes (or drains) the durable queue immediately.
+            # resumes (or drains) the durable queue immediately. In prod the web sets
+            # RESEARCH_QUEUE_MAX_CONCURRENT=0, so this reaps stale jobs but starts ZERO
+            # worker coroutines — the dedicated `backend.worker` process runs research.
             await scheduler.start()
         except Exception as exc:
             logger.warning("Research queue stale-recovery skipped: %s", exc)

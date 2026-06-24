@@ -662,7 +662,22 @@ def get_agent_run(execution_id: str):
             run["queue_position"] = None
         else:
             run["queue_position"] = position
+        # A still-queued run is "blocked" when the monthly token budget is
+        # exhausted (the worker is not claiming new jobs). Computed, not stored.
+        run["blocked_reason"] = _queued_run_blocked_reason()
     return build_agent_run_payload(run)
+
+
+def _queued_run_blocked_reason() -> str | None:
+    """Reason a queued run is not yet starting (best-effort; None when clear)."""
+    try:
+        from ..research_queue.token_budget import budget_block_reason
+    except ImportError:
+        from research_queue.token_budget import budget_block_reason  # type: ignore[no-redef]
+    try:
+        return budget_block_reason()
+    except Exception:  # noqa: BLE001 — read-only status must not 500 on a DB hiccup
+        return None
 
 
 @router.post("/run/{ticket_id}", dependencies=[Depends(require_superadmin)])

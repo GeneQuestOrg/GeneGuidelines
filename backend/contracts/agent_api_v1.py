@@ -38,6 +38,10 @@ class AgentRunPayload(TypedDict):
     # before the work starts. Absent/"running"/"done" otherwise.
     status: str | None
     queue_position: int | None
+    # Why a queued run is not yet starting: "token_budget" when the monthly LLM
+    # budget is exhausted (worker paused claiming), else null. Computed, not
+    # stored — only meaningful while ``status == "queued"``.
+    blocked_reason: str | None
 
 
 def normalize_trace_event(event: dict[str, Any]) -> dict[str, Any]:
@@ -93,6 +97,7 @@ def build_agent_run_payload(run: dict[str, Any]) -> AgentRunPayload:
         started_at=str(run.get("started_at") or "").strip() or None,
         status=str(run.get("status") or "").strip() or None,
         queue_position=_coerce_queue_position(run.get("queue_position")),
+        blocked_reason=str(run.get("blocked_reason") or "").strip() or None,
     )
 
 

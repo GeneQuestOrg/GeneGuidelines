@@ -48,6 +48,18 @@ async def bootstrap_disease_research(
     ``guideline_execution_id`` lets the research queue pre-allocate the
     guideline run id (it pre-registers a ``queued`` record under it so the
     public run page has a stable handle while the job waits for a worker slot).
+
+    MVP limitation (token-budget guard, dedicated-worker plan §5): this returns
+    almost immediately — it fires the finders as detached ``asyncio.create_task``
+    s, so the *job coroutine* completes fast and the scheduler marks the job
+    ``done`` while the real work runs as background tasks in the (forever-living)
+    worker process. The budget guard therefore gates the NEXT disease job from
+    *starting* once the monthly budget is exhausted; it does not interrupt
+    already-running child tasks, and ``RESEARCH_QUEUE_MAX_CONCURRENT=1`` does not
+    serialise the heavy work *within* one disease. Future improvement: have this
+    bootstrap ``await`` its child runs (gather instead of fire-and-forget) so
+    concurrency + budget serialise heavy work — deliberately out of scope for
+    this MVP (do NOT re-architect the fan-out here).
     """
     from ..config import DEFAULT_MODEL_PROFILE
     from .official_guidelines_finder import find_official_guideline_for_disease

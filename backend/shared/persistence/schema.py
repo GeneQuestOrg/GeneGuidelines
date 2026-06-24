@@ -241,6 +241,16 @@ foundations = Table(
     Column("city", Text),
     Column("country", Text),
     Column("services_json", Text, nullable=False, server_default="[]"),
+    # Provenance, mirroring official_guideline_pointers.source: the
+    # foundations_finder workflow is now the PRIMARY source for the disease
+    # page; bundled seed rows ('seed') are a bootstrap/fallback shown only
+    # when no workflow rows exist for that disease yet. 'reviewer' is reserved
+    # for a future curator-confirmed tier.
+    Column("source", Text, nullable=False, server_default="seed"),
+    CheckConstraint(
+        "source IN ('seed','workflow','reviewer')",
+        name="foundations_source_enum",
+    ),
 )
 
 
@@ -548,6 +558,31 @@ Index(
 )
 
 
+# Per-LLM-call token usage ledger. The dedicated research worker (and local
+# single-process dev) appends one row per successful LLM call so the budget
+# guard can SUM spend for the current billing window and refuse to claim new
+# disease jobs once a monthly cap is hit. Greenfield: there was no token
+# capture anywhere before this. Generic Text/Integer types only, so the same
+# DDL is valid on SQLite (offline alembic / tests) and Postgres (production).
+# ``window_key`` is the bucket the SUM groups by — ``YYYY-MM`` for monthly.
+token_usage = Table(
+    "token_usage",
+    metadata,
+    Column("id", Text, primary_key=True),  # uuid4 hex
+    Column("execution_id", Text, nullable=False),
+    Column("disease_slug", Text),  # NULL when the call has no disease context
+    Column("model_spec", Text, nullable=False),
+    Column("prompt_tokens", Integer, nullable=False, server_default="0"),
+    Column("completion_tokens", Integer, nullable=False, server_default="0"),
+    Column("total_tokens", Integer, nullable=False, server_default="0"),
+    Column("window_key", Text, nullable=False),  # e.g. "2026-06" (monthly)
+    Column("created_at", Text, nullable=False),
+)
+
+# Budget SUM hot path: ``WHERE window_key = ?`` then SUM(total_tokens).
+Index("ix_token_usage_window_key", token_usage.c.window_key)
+
+
 disease_alert_subscriptions = Table(
     "disease_alert_subscriptions",
     metadata,
@@ -598,5 +633,6 @@ __all__ = [
     "users",
     "invites",
     "research_jobs",
+    "token_usage",
     "disease_alert_subscriptions",
 ]
