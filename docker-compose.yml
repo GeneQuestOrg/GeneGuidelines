@@ -40,6 +40,11 @@ services:
       start_period: 10s
 
   backend:
+    # Pin the prod arch (linux/amd64). On x86 hosts this is a no-op (native); on
+    # Apple Silicon it runs under Rosetta, which avoids the SIGILL the linux/arm64
+    # `cryptography` Rust wheel hits under Docker Desktop (native dev = `make dev`).
+    # Prod is unaffected: it builds via `az acr build` (Azure x86), not compose.
+    platform: linux/amd64
     build:
       context: .
       dockerfile: Dockerfile.backend
