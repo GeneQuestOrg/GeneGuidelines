@@ -23,7 +23,7 @@ export type Route =
       diseaseSlug?: string;
       diseaseName?: string;
     }
-  | { name: "trials"; query?: string };
+  | { name: "trials"; disease?: string };
 
 export interface UserLocation {
   lat: number;

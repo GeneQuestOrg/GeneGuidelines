@@ -34,6 +34,9 @@ class Foundation:
     country: str | None
     services: tuple[str, ...] = field(default_factory=tuple)
     diseases: tuple[str, ...] = field(default_factory=tuple)
+    # Provenance: 'workflow' (foundations_finder, the primary source for a
+    # disease page), 'seed' (bundled bootstrap/fallback), or 'reviewer'.
+    source: str = "seed"
 
 
 def _decode_services(value: object) -> tuple[str, ...]:
@@ -60,7 +63,21 @@ def foundation_from_row(
         country=None if row.get("country") is None else str(row.get("country")),
         services=_decode_services(row.get("services_json")),
         diseases=diseases,
+        source=str(row.get("source") or "seed"),
     )
+
+
+def _prefer_workflow(founds: list[Foundation]) -> list[Foundation]:
+    """Foundations-as-workflow: prefer finder output, fall back to the seed.
+
+    When a disease has any ``source='workflow'`` foundations, those are the
+    primary source and the bundled ``'seed'`` rows are suppressed. With no
+    workflow rows yet, every row (seed/reviewer) is returned so a freshly
+    bootstrapped disease still shows its bundled foundations. Input order
+    (name-sorted) is preserved.
+    """
+    workflow = [f for f in founds if f.source == "workflow"]
+    return workflow if workflow else founds
 
 
 class FoundationRepo(Protocol):
@@ -101,10 +118,11 @@ class SqlaFoundationRepo(BaseSqlalchemyRepo):
             rows = conn.execute(stmt).mappings().all()
         ids = [int(r["id"]) for r in rows]
         groups = self._diseases_for(ids)
-        return [
+        founds = [
             foundation_from_row(dict(r), diseases=groups.get(int(r["id"]), ()))
             for r in rows
         ]
+        return _prefer_workflow(founds)
 
     def list_all(self) -> list[Foundation]:
         stmt = select(foundations_table).order_by(
@@ -128,11 +146,15 @@ class SqlaFoundationRepo(BaseSqlalchemyRepo):
         city: str | None,
         country: str | None,
         services_json: str,
+        source: str = "workflow",
     ) -> int:
         """Find or create a Foundation by name (case-insensitive), link to disease.
 
         Returns the foundation id. The disease_foundations link uses
-        ON CONFLICT DO NOTHING, so repeated calls are idempotent.
+        ON CONFLICT DO NOTHING, so repeated calls are idempotent. ``source``
+        defaults to ``'workflow'`` (the finder is the caller); when the finder
+        rediscovers a name that was previously seeded, the row is promoted to
+        ``'workflow'`` so the disease page starts preferring the finder output.
         """
         with self._conn() as conn:
             row = conn.execute(
@@ -143,6 +165,12 @@ class SqlaFoundationRepo(BaseSqlalchemyRepo):
 
             if row is not None:
                 foundation_id = int(row[0])
+                if source == "workflow":
+                    conn.execute(
+                        foundations_table.update()
+                        .where(foundations_table.c.id == foundation_id)
+                        .values(source="workflow")
+                    )
             else:
                 foundation_id = conn.execute(
                     pg_insert(foundations_table)
@@ -153,6 +181,7 @@ class SqlaFoundationRepo(BaseSqlalchemyRepo):
                         city=city,
                         country=country,
                         services_json=services_json,
+                        source=source,
                     )
                     .returning(foundations_table.c.id)
                 ).scalar_one()
@@ -171,10 +200,11 @@ class InMemoryFoundationRepo:
         self._items: list[Foundation] = list(seed)
 
     def list_for_disease(self, disease_slug: str) -> list[Foundation]:
-        return sorted(
+        matched = sorted(
             (f for f in self._items if disease_slug in f.diseases),
             key=lambda f: f.name.lower(),
         )
+        return _prefer_workflow(matched)
 
     def list_all(self) -> list[Foundation]:
         return sorted(self._items, key=lambda f: f.name.lower())
@@ -204,4 +234,5 @@ __all__ = [
     "InMemoryFoundationRepo",
     "FoundationService",
     "foundation_from_row",
+    "_prefer_workflow",
 ]

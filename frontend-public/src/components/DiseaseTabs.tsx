@@ -44,6 +44,9 @@ const TAB_ORDER: readonly DiseaseTabId[] = [
   "guidelines",
 ];
 
+/** How many trials the disease-page hub previews before linking out to the /trials browser. */
+const TRIALS_PREVIEW_COUNT = 3;
+
 export function DiseaseTabs({
   disease,
   copy,
@@ -88,6 +91,11 @@ export function DiseaseTabs({
     const rows = attachDoctorDistances(doctorsPayload.doctors, userLoc);
     return sortDoctorsByDistanceThenScore(rows).slice(0, 5);
   }, [doctorsPayload, userLoc]);
+
+  // The disease page is an orientation hub, not a full directory: show the top few
+  // trials (the hook already returns active-first) and link out to the faceted
+  // /trials browser for the complete, filterable set.
+  const previewTrials = useMemo(() => trials.slice(0, TRIALS_PREVIEW_COUNT), [trials]);
 
   return (
     <>
@@ -182,7 +190,18 @@ export function DiseaseTabs({
               ) : trials.length === 0 ? (
                 <p className="d-panel-empty">No active trials matching this disease right now.</p>
               ) : (
-                <TrialsList trials={trials} />
+                <>
+                  <TrialsList trials={previewTrials} />
+                  <div className="page__actions">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      onClick={() => onNav(`/trials?disease=${slug}`)}
+                    >
+                      See all trials ({trials.length}) →
+                    </Button>
+                  </div>
+                </>
               )}
             </Section>
 
@@ -318,12 +337,26 @@ export function DiseaseTabs({
         {tab === "trials" ? (
           <Section title={copy.trialsTitle}>
             <p className="d-panel-stat">{copy.trialsSub(trials.length)}</p>
+            <div className="page__actions">
+              <Button
+                variant="primary"
+                type="button"
+                onClick={() => onNav(`/trials?disease=${slug}`)}
+              >
+                See {disease.nameShort} trials
+              </Button>
+              <Button type="button" onClick={() => onNav("/trials")}>
+                Browse all trials
+              </Button>
+            </div>
             {trialsError != null ? (
               <p className="d-panel-empty" role="alert">{trialsError}</p>
             ) : trialsLoading ? (
               <p className="d-panel-empty">Loading trials…</p>
+            ) : trials.length === 0 ? (
+              <p className="d-panel-empty">No active trials matching this disease right now.</p>
             ) : (
-              <TrialsList trials={trials} />
+              <TrialsList trials={previewTrials} />
             )}
           </Section>
         ) : null}

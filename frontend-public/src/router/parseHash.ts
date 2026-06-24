@@ -87,7 +87,8 @@ export function parseHash(hash: string): Route {
   }
 
   if (parts[0] === "trials") {
-    return { name: "trials", query: query.q };
+    const disease = query.disease ? normalizeDiseaseSlug(query.disease) : null;
+    return disease != null ? { name: "trials", disease } : { name: "trials" };
   }
 
   if (parts[0] === "about") {
