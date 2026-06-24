@@ -18,6 +18,7 @@ function makeRun(flowKey: string, slug = "alport"): ResearchRun {
     label: flowKey,
     startedAt: null,
     elapsedSec: 0,
+    blockedReason: null,
   };
 }
 

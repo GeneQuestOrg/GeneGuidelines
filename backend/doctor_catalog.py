@@ -671,60 +671,26 @@ def _public_doctors_from_finder_report(
 
 
 def _build_finder_docs_index() -> dict[str, list[dict[str, Any]] | None]:
-    """One pass over persisted + in-memory doctor_finder runs (cached per process)."""
-    try:
-        from .routers import doctor_finder as df_router
-    except ImportError:
-        from routers import doctor_finder as df_router
+    """One pass over the PERSISTENT doctor_finder store (cached per process).
+
+    Reads ONLY ``doctor_finder_run_results`` (the durable store). With the
+    dedicated research worker (plan §4.5) the in-memory ``DOCTOR_FINDER_RUNS``
+    map lives in a different process and never holds the worker's runs, so
+    merging it here is both useless and the source of the 2026-06-24 500-error
+    class (comparing two sources with different key shapes). The persistent
+    store is the single source of truth for the catalog.
+    """
     try:
         from .doctor_finder_store import load_successful_reports_for_catalog_index
     except ImportError:
         from doctor_finder_store import load_successful_reports_for_catalog_index
 
-    # Value shape: ((doctor_count, started_at), execution_id, report). The first
-    # element is the SAME sort key the in-memory loop below builds, so the two
-    # sources compare cleanly — seeding it as a bare string crashed the in-memory
-    # comparison with `'>' not supported between tuple and str`.
-    best_reports: dict[str, tuple[tuple[int, str], str, dict[str, Any]]] = {}
-    for slug, (eid, report, started) in load_successful_reports_for_catalog_index().items():
-        seed_authors = report.get("top_authors") if isinstance(report, dict) else None
-        seed_count = len(seed_authors) if isinstance(seed_authors, list) else 0
-        best_reports[slug] = ((seed_count, str(started or "")), eid, report)
-
-    with df_router._DOCTOR_FINDER_RUNS_LOCK:
-        runs = list(df_router.DOCTOR_FINDER_RUNS.items())
-
-    for execution_id, run in runs:
-        if not run.get("done") or run.get("error"):
-            continue
-        run_slug = str(run.get("catalog_slug") or "").strip().lower()
-        if not run_slug:
-            run_slug = _disease_slug_for_name(str(run.get("disease_name") or "")) or ""
-        if not run_slug:
-            continue
-        report = run.get("doctor_report")
-        if not isinstance(report, dict):
-            report = df_router._extract_doctor_report_from_node_outputs(
-                run.get("node_outputs") or {},
-            )
-        if not isinstance(report, dict):
-            continue
-        # Prefer the run with the most doctors, tie-broken by most recent start —
-        # a failed/empty re-run (1-doctor report) must not shadow a real 1000-doctor
-        # run that started earlier. Mirrors the persistent picker in doctor_finder_store.
-        authors = report.get("top_authors")
-        count = len(authors) if isinstance(authors, list) else 0
-        sort_key = (count, str(run.get("started_at") or ""))
-        prev = best_reports.get(run_slug)
-        if prev is None or sort_key > prev[0]:
-            best_reports[run_slug] = (sort_key, execution_id, report)
-
     index: dict[str, list[dict[str, Any]] | None] = {}
-    for slug, (_key, execution_id, report) in best_reports.items():
+    for slug, (eid, report, _started) in load_successful_reports_for_catalog_index().items():
         index[slug] = _public_doctors_from_finder_report(
             slug,
             report,
-            execution_id=execution_id or None,
+            execution_id=eid or None,
         )
     return index
 

@@ -173,6 +173,31 @@ def _log_llm_from_store(store: dict, event: str, node_id: str, **fields: Any) ->
     log_llm_call(event, execution_id=execution_id, node_id=node_id, **fields)
 
 
+def _record_token_usage_from_store(store: dict, res: Any, model_spec: str) -> None:
+    """Best-effort: record this call's LLM token usage for the budget ledger.
+
+    Wrapped so a missing usage field, an unmigrated DB, or any other error never
+    breaks the LLM run (the runner's own try/except would catch it, but keep it
+    self-contained at debug level here too)."""
+    try:
+        from ..research_queue.token_budget import extract_usage, record_usage
+
+        prompt, completion, total = extract_usage(res)
+        record_usage(
+            execution_id=str(store.get("execution_id") or ""),
+            model_spec=model_spec,
+            prompt_tokens=prompt,
+            completion_tokens=completion,
+            total_tokens=total,
+            disease_slug=(
+                str(store.get("catalog_slug") or store.get("disease_slug") or "").strip()
+                or None
+            ),
+        )
+    except Exception:  # noqa: BLE001 — token capture must never break a run
+        pass
+
+
 def is_tpm_request_too_large_error(exc: BaseException) -> bool:
     """True when a single request exceeds the org TPM/token burst limit (OpenAI 429)."""
     msg = f"{type(exc).__name__}: {exc}".lower()
@@ -329,6 +354,7 @@ async def run_llm_simple_async(
                     duration_ms=duration_ms,
                     ok=True,
                 )
+                _record_token_usage_from_store(store, res, active_spec)
                 emit_fn(
                     event_queue,
                     {"kind": sse_kind, "node_id": node_id, "attempt": attempt, "ok": True},
@@ -344,6 +370,7 @@ async def run_llm_simple_async(
                     duration_ms=duration_ms,
                     ok=True,
                 )
+                _record_token_usage_from_store(store, res, active_spec)
                 emit_fn(
                     event_queue,
                     {"kind": sse_kind, "node_id": node_id, "attempt": attempt, "ok": True},

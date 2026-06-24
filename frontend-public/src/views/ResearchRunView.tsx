@@ -21,7 +21,9 @@ import { Button, Section, Status } from "@gene-guidelines/ui";
 import {
   ApiRequestError,
   appendApiKeyQueryForSse,
+  fetchResearchBudget,
   getApiBaseUrl,
+  type ResearchBudget,
 } from "../api/client";
 import { type AgentRunPayloadV1, fetchAgentRun } from "../api/guidelineRun";
 import { repositories } from "../repositories";
@@ -32,7 +34,12 @@ import {
   earliestResearchStartedAtIso,
   researchElapsedSecFromStartedAt,
 } from "../utils/researchElapsed";
-import { isQueued, queuedLabel } from "../utils/queuedRun";
+import {
+  blockedBadgeLabel,
+  isQueued,
+  isTokenBudgetBlocked,
+  queuedLabel,
+} from "../utils/queuedRun";
 import {
   formatActivityTime,
   formatElapsed,
@@ -290,6 +297,33 @@ export function ResearchRunView({
   // workstream starts. Show "Queued — position N" until it flips to running.
   const queued = isQueued(run);
   const queuePosition = run?.queue_position ?? null;
+  // Token budget (research-worker guard): a queued run may be held back because
+  // the monthly LLM budget is exhausted. Show a "Czeka — budżet tokenów" badge
+  // and, when a limit is configured, a "pozostały budżet tokenów" indicator.
+  const budgetBlocked = isTokenBudgetBlocked(run?.blocked_reason);
+  const blockedBadge = blockedBadgeLabel(run?.blocked_reason);
+  const [budget, setBudget] = useState<ResearchBudget | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    async function load(): Promise<void> {
+      try {
+        const next = await fetchResearchBudget();
+        if (!cancelled) {
+          setBudget(next);
+        }
+      } catch {
+        // Best-effort indicator: a failed poll just hides the budget line.
+      }
+    }
+    void load();
+    const id = setInterval(() => void load(), 30_000);
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
+  }, []);
+  // Only render the budget indicator when a limit is set (remaining != null).
+  const budgetLimited = budget != null && budget.remaining != null;
 
   // Partial-results poll: doctors/trials/therapies/foundations counts +
   // official guideline presence + guideline document presence + active
@@ -526,7 +560,15 @@ export function ResearchRunView({
         {queued ? (
           <p className="rrun__queued" role="status">
             <span className="rrun__queued-dot" aria-hidden="true" />
-            {queuedLabel(queuePosition)}
+            {budgetBlocked && blockedBadge ? blockedBadge : queuedLabel(queuePosition)}
+          </p>
+        ) : null}
+
+        {budgetLimited && budget != null ? (
+          <p className="rrun__budget" role="status">
+            Pozostały budżet tokenów:{" "}
+            <b>{budget.remaining?.toLocaleString("pl-PL")}</b> /{" "}
+            {budget.limit.toLocaleString("pl-PL")} ({budget.window})
           </p>
         ) : null}
 
