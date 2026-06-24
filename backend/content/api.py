@@ -47,7 +47,10 @@ router = APIRouter(tags=["content"])
 
 
 _RESEARCH_RUNS_DEFAULT_LIMIT = 3
-_RESEARCH_RUNS_MAX_LIMIT = 10
+# Raised from 10 so the per-disease "reprocessing" badge can fetch enough in-flight
+# runs to reliably spot this disease's run even when several diseases process at once
+# (a bootstrap fans out ~6 runs). The home feed still defaults to 3.
+_RESEARCH_RUNS_MAX_LIMIT = 50
 
 
 @router.get("/diseases", response_model=list[DiseaseResponse])

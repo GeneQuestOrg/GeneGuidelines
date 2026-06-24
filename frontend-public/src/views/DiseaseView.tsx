@@ -48,9 +48,9 @@ export function DiseaseView({ slug, role, userLoc, onNav, alert }: DiseaseViewPr
   const { docs: sourceDocs } = useSourceShelf(slug);
   const { signInAvailable, login } = useAccountContext();
   // Surface "this disease is being re-processed now" from the live research feed
-  // (the worker refreshes a disease's content/specialists). 25 covers a realistic
-  // burst of concurrent runs so this disease's run is not missed by the top-N cap.
-  const { runs: activeRuns } = useActiveResearchRuns(25);
+  // (the worker refreshes a disease's content/specialists). 50 = the endpoint cap,
+  // so this disease's run is not missed even when several diseases process at once.
+  const { runs: activeRuns } = useActiveResearchRuns(50);
   const reprocessingRun = activeRuns.find((r) => r.diseaseSlug === slug) ?? null;
   const copy = getAudienceCopy(audienceForRole(role)).disease;
   const isClinician = isClinicianView(role);
