@@ -63,13 +63,15 @@ class ResearchJob:
 
     Frozen per STYLE.md (DOMAIN = ``@dataclass(frozen=True, slots=True)``).
     The runnable coroutine is *not* stored here — it cannot be persisted; the
-    scheduler holds it in memory keyed by ``execution_id`` and re-registers it
-    on admission. The durable part is everything needed to claim, order, cap,
-    reap, and report position.
+    scheduler holds it in memory keyed by ``execution_id``. ``payload_json`` is
+    the durable spec a registered factory uses to *rebuild* that coroutine after
+    a restart, so the durable part is everything needed to claim, order, cap,
+    reap, report position, AND resurrect an orphaned job.
     """
 
     id: str
     execution_id: str
+    payload_json: str
     priority: int
     status: str
     user_id: str | None
@@ -88,6 +90,7 @@ def job_from_row(row: ResearchJobRow) -> ResearchJob:
     return ResearchJob(
         id=str(row["id"]),
         execution_id=str(row["execution_id"]),
+        payload_json=str(row.get("payload_json") or "{}"),
         priority=int(row["priority"]),
         status=str(row["status"]),
         user_id=_nullable_str(row.get("user_id")),

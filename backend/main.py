@@ -47,8 +47,15 @@ async def lifespan(app: FastAPI):
     if DB_URL:
         try:
             from backend.research_queue import get_scheduler
+            from backend.services.disease_bootstrap import register_research_factories
 
-            await get_scheduler().recover_stale_jobs()
+            scheduler = get_scheduler()
+            # Register factories BEFORE starting so a stale job requeued at boot can be
+            # rebuilt from its payload when a worker claims it (rather than failed).
+            register_research_factories(scheduler)
+            # start() reaps stale jobs AND starts the worker pool, so a deploy/crash
+            # resumes (or drains) the durable queue immediately.
+            await scheduler.start()
         except Exception as exc:
             logger.warning("Research queue stale-recovery skipped: %s", exc)
     yield

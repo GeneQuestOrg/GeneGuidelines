@@ -798,7 +798,10 @@ async def bootstrap_disease(
     )
 
     from ..research_queue import ResearchQueueFull, get_scheduler
-    from ..services.disease_bootstrap import bootstrap_disease_research
+    from ..services.disease_bootstrap import (
+        bootstrap_disease_research,
+        bootstrap_job_spec,
+    )
 
     disease_name = body.name.strip()
     # Pre-allocate the guideline run id so the frontend has a stable handle to
@@ -827,6 +830,12 @@ async def bootstrap_disease(
             run=_run_bootstrap,
             authenticated=user is not None,
             anon_session=(x_anon_session or "").strip() or None,
+            spec=bootstrap_job_spec(
+                disease_slug=slug,
+                disease_name=disease_name,
+                profile=profile_norm,
+                guideline_execution_id=guideline_execution_id,
+            ),
         )
     except ResearchQueueFull as exc:
         # Friendly fair-share refusal — NOT a 429. The frontend shows this as a

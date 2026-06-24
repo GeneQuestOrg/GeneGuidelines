@@ -13,6 +13,7 @@ points at Postgres — SQLite has no SKIP LOCKED, so it is skipped cleanly there
 from __future__ import annotations
 
 import asyncio
+import json
 import os
 from datetime import datetime, timedelta, timezone
 
@@ -153,6 +154,99 @@ async def test_queued_jobs_survive_restart() -> None:
     await _wait_until(lambda: survivor["status"] == "done")
     assert ran2 == ["p2"]
     assert survivor["status"] == "done"
+    await sched2.shutdown()
+
+
+# -- restart resurrection from persisted spec (no in-memory runnable) --------
+
+
+@pytest.mark.asyncio
+async def test_admit_persists_spec_payload() -> None:
+    """``admit(spec=...)`` writes the spec to ``payload_json`` so a factory can
+    rebuild the runnable after a restart."""
+    repo = InMemoryResearchJobRepo()
+    sched = ResearchScheduler(max_concurrent=1, repo=repo)
+
+    async def _noop() -> None:
+        return None
+
+    await sched.admit(
+        run_id="gl-spec",
+        run=_noop,
+        authenticated=True,
+        anon_session=None,
+        spec={"kind": "demo", "tag": "hello"},
+    )
+    await sched.shutdown()
+
+    row = next(r for r in repo._rows.values() if r["execution_id"] == "gl-spec")
+    assert json.loads(row["payload_json"]) == {"kind": "demo", "tag": "hello"}
+
+
+@pytest.mark.asyncio
+async def test_factory_rebuilds_orphaned_job_after_restart() -> None:
+    """A job admitted by a now-dead process (no in-memory runnable) is rebuilt
+    from its persisted spec by a registered factory and runs — the deploy-safe path."""
+    repo = InMemoryResearchJobRepo()
+
+    async def _noop() -> None:
+        return None
+
+    # Process 1: admit with a spec, then crash before running.
+    sched1 = ResearchScheduler(max_concurrent=1, repo=repo)
+    await sched1.admit(
+        run_id="gl-rebuild",
+        run=_noop,
+        authenticated=True,
+        anon_session=None,
+        spec={"kind": "demo", "tag": "world"},
+    )
+    await sched1.shutdown()
+
+    # Process 2: NO in-memory runnable for gl-rebuild — only a registered factory.
+    ran: list[str] = []
+
+    def _factory(spec: dict):
+        async def _run() -> None:
+            ran.append(spec["tag"])
+
+        return _run
+
+    sched2 = ResearchScheduler(max_concurrent=1, repo=repo)
+    sched2.register_runnable_factory("demo", _factory)
+    await sched2.start()
+
+    row = next(r for r in repo._rows.values() if r["execution_id"] == "gl-rebuild")
+    await _wait_until(lambda: row["status"] == "done")
+    assert ran == ["world"]
+    assert row["status"] == "done"
+    await sched2.shutdown()
+
+
+@pytest.mark.asyncio
+async def test_orphaned_job_without_runnable_or_factory_is_failed() -> None:
+    """A job with no in-memory runnable and no reconstructable payload is FAILED,
+    not released-and-retried — the fix for the restart dead-lock where such jobs
+    cycled forever and starved every newer job."""
+    repo = InMemoryResearchJobRepo()
+
+    async def _noop() -> None:
+        return None
+
+    # Admit WITHOUT a spec, then crash: payload is "{}" → not reconstructable.
+    sched1 = ResearchScheduler(max_concurrent=1, repo=repo)
+    await sched1.admit(
+        run_id="gl-orphan", run=_noop, authenticated=True, anon_session=None
+    )
+    await sched1.shutdown()
+
+    sched2 = ResearchScheduler(max_concurrent=1, repo=repo)  # no runnable, no factory
+    await sched2.start()
+
+    row = next(r for r in repo._rows.values() if r["execution_id"] == "gl-orphan")
+    await _wait_until(lambda: row["status"] == "failed")
+    assert row["status"] == "failed"
+    assert "orphaned" in (row["error"] or "")
     await sched2.shutdown()
 
 

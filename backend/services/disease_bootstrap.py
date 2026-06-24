@@ -192,4 +192,71 @@ async def _start_guideline_run(
     return eid
 
 
-__all__ = ["bootstrap_disease_research"]
+# -- durable-queue resurrection ---------------------------------------------
+
+# Spec ``kind`` for a disease-bootstrap job. The research queue persists this in
+# ``research_jobs.payload_json`` at admit; after a restart the registered factory
+# rebuilds the runnable so the job resumes instead of becoming an un-runnable
+# zombie. Keep the string stable — it is written to the DB.
+BOOTSTRAP_JOB_KIND = "bootstrap_disease_research"
+
+
+def bootstrap_job_spec(
+    *,
+    disease_slug: str,
+    disease_name: str,
+    profile: str | None,
+    guideline_execution_id: str,
+) -> dict:
+    """The JSON-serializable spec persisted with a bootstrap job so it survives a restart."""
+    return {
+        "kind": BOOTSTRAP_JOB_KIND,
+        "disease_slug": disease_slug,
+        "disease_name": disease_name,
+        "profile": profile,
+        "guideline_execution_id": guideline_execution_id,
+    }
+
+
+def _build_bootstrap_runnable(spec: dict):
+    """Rebuild a bootstrap coroutine from a persisted spec (see :data:`BOOTSTRAP_JOB_KIND`)."""
+    disease_slug = str(spec["disease_slug"])
+    disease_name = str(spec["disease_name"])
+    profile = spec.get("profile")
+    exec_id = str(spec["guideline_execution_id"])
+
+    async def _run() -> None:
+        # The in-memory ``queued`` run record (register_queued_run) was lost with
+        # the prior process; re-register it so the public run page can poll/render
+        # while this resurrected job executes.
+        from ..routers import agent as agent_router
+
+        agent_router.register_queued_run(
+            exec_id,
+            flow_key="pubmed",
+            pipeline="guideline",
+            label=disease_name,
+            disease_slug=disease_slug,
+        )
+        await bootstrap_disease_research(
+            disease_slug=disease_slug,
+            disease_name=disease_name,
+            profile=profile,
+            guideline_execution_id=exec_id,
+        )
+
+    return _run
+
+
+def register_research_factories(scheduler) -> None:
+    """Register every runnable factory the research queue needs to resurrect jobs
+    after a restart. Called once at app startup (idempotent)."""
+    scheduler.register_runnable_factory(BOOTSTRAP_JOB_KIND, _build_bootstrap_runnable)
+
+
+__all__ = [
+    "bootstrap_disease_research",
+    "BOOTSTRAP_JOB_KIND",
+    "bootstrap_job_spec",
+    "register_research_factories",
+]

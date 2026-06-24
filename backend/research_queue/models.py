@@ -29,6 +29,12 @@ class JobClass(IntEnum):
 # Not persisted: held in memory by the scheduler keyed by execution id.
 JobCoro = Callable[[], Awaitable[None]]
 
+# Rebuilds a JobCoro from a job's persisted payload spec (a plain dict). Used
+# when the in-memory runnable is gone — e.g. a deploy/crash restarted the
+# process after the job was admitted. Registered per spec ``kind`` so the
+# worker can resurrect an orphaned job instead of cycling it forever.
+RunnableFactory = Callable[[dict], JobCoro]
+
 
 @dataclass(frozen=True, slots=True)
 class AdmissionResult:
@@ -45,4 +51,4 @@ class AdmissionResult:
     message: str | None = None
 
 
-__all__ = ["JobClass", "JobCoro", "AdmissionResult"]
+__all__ = ["JobClass", "JobCoro", "RunnableFactory", "AdmissionResult"]

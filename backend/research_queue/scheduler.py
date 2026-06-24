@@ -45,13 +45,14 @@ process holds the runnable picks it up; it is never lost.
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 import os
 import uuid
 from datetime import datetime, timedelta, timezone
 
-from .models import AdmissionResult, JobClass, JobCoro
-from .repository import ResearchJobRepo, SqlaResearchJobRepo
+from .models import AdmissionResult, JobClass, JobCoro, RunnableFactory
+from .repository import ResearchJob, ResearchJobRepo, SqlaResearchJobRepo
 
 log = logging.getLogger(__name__)
 
@@ -132,11 +133,22 @@ class ResearchScheduler:
         # execution_id the row carries. Populated on admit (and re-attachable
         # after a restart via :meth:`register_runnable`).
         self._runnables: dict[str, JobCoro] = {}
+        # Builders that rebuild a runnable from a job's persisted payload spec,
+        # keyed by spec ``kind``. Registered at startup so a job admitted by a
+        # now-dead process can be resurrected after a restart instead of cycling
+        # forever as an un-runnable zombie. See :meth:`_resolve_runnable`.
+        self._factories: dict[str, RunnableFactory] = {}
         self._workers: list[asyncio.Task[None]] = []
         self._wake = asyncio.Event()
         self._reaped = False
 
     # -- admission -----------------------------------------------------------
+
+    def register_runnable_factory(self, kind: str, factory: RunnableFactory) -> None:
+        """Register a builder that rebuilds a job's coroutine from its persisted
+        payload spec. Lets a job admitted by a now-dead process still run after a
+        restart, instead of cycling forever as an un-runnable zombie. Idempotent."""
+        self._factories[kind] = factory
 
     async def admit(
         self,
@@ -146,8 +158,14 @@ class ResearchScheduler:
         authenticated: bool,
         anon_session: str | None,
         user_id: str | None = None,
+        spec: dict | None = None,
     ) -> AdmissionResult:
         """Admit a bootstrap job: insert a durable row, then start a worker.
+
+        ``spec`` is the JSON-serializable description a registered factory uses
+        to rebuild ``run`` after a restart (when the in-memory runnable is gone).
+        Persist it so the job survives a deploy/crash; omit it and the job simply
+        cannot be resurrected (it will be failed rather than cycled).
 
         Raises :class:`ResearchQueueFull` when an anonymous session already
         holds ``anon_max_pending`` unfinished jobs. Authenticated callers are
@@ -178,6 +196,7 @@ class ResearchScheduler:
             user_id=user_id,
             anon_session=bucket,
             created_at=_now_iso(),
+            payload_json=json.dumps(spec) if spec is not None else "{}",
         )
         position = await asyncio.to_thread(self._repo.count_ahead, id=job_id)
 
@@ -225,6 +244,12 @@ class ResearchScheduler:
         return None
 
     # -- worker loop ---------------------------------------------------------
+
+    async def start(self) -> None:
+        """Reap stale jobs and start the worker pool. Idempotent; call at app boot
+        so a restart resumes (or drains) the durable queue immediately, rather than
+        waiting for the next :meth:`admit` to lazily start workers."""
+        await self._ensure_started()
 
     async def recover_stale_jobs(self) -> int:
         """One-time stale recovery (idempotent). Safe to call at startup.
@@ -279,27 +304,61 @@ class ResearchScheduler:
 
             run = self._runnables.get(job.execution_id)
             if run is None:
-                # We claimed a job whose runnable is not registered in this
-                # process — a row that survived a restart, awaiting the caller
-                # to re-register its coroutine. Release it back to ``queued``
-                # (undoing the claim's attempt bump) so it is re-claimable, and
-                # back off so we do not hot-loop on it before re-registration.
+                # We claimed a job whose runnable is not in memory — a row that
+                # survived a restart. Rebuild it from the persisted payload spec.
+                run = self._resolve_runnable(job)
+            if run is None:
+                # Not reconstructable (no spec, unknown kind, or a broken
+                # factory). FAIL it rather than releasing it back to ``queued``:
+                # a release+retry would hot-loop forever and starve every newer
+                # job — the dead-lock this fix removes.
                 log.warning(
-                    "research_queue: claimed job %s (execution %s) has no "
-                    "in-memory runnable; releasing back to queue",
+                    "research_queue: job %s (execution %s) has no runnable and "
+                    "is not reconstructable from payload — failing it",
                     job.id, job.execution_id,
                 )
-                await asyncio.to_thread(self._repo.release_job, id=job.id)
-                self._wake.clear()
-                try:
-                    await asyncio.wait_for(
-                        self._wake.wait(), timeout=self._poll_interval * 4
-                    )
-                except TimeoutError:
-                    pass
+                await asyncio.to_thread(
+                    self._repo.mark_failed,
+                    id=job.id,
+                    finished_at=_now_iso(),
+                    error=(
+                        "orphaned: no in-memory runnable and payload not "
+                        "reconstructable (job outlived the process that admitted "
+                        "it, with no registered factory for its spec)"
+                    ),
+                )
                 continue
 
+            self._runnables[job.execution_id] = run
             await self._run_job(job.id, job.execution_id, run)
+
+    def _resolve_runnable(self, job: ResearchJob) -> JobCoro | None:
+        """Rebuild a job's runnable from its persisted payload spec, or None.
+
+        Returns None when the payload is empty, malformed, names no ``kind``, has
+        no registered factory, or the factory raises — every case in which the
+        worker must fail (not retry) the job.
+        """
+        raw = job.payload_json or ""
+        if not raw or raw == "{}":
+            return None
+        try:
+            spec = json.loads(raw)
+        except (TypeError, ValueError):
+            return None
+        if not isinstance(spec, dict):
+            return None
+        factory = self._factories.get(str(spec.get("kind", "")))
+        if factory is None:
+            return None
+        try:
+            return factory(spec)
+        except Exception:  # noqa: BLE001 — a bad spec must not crash the worker
+            log.exception(
+                "research_queue: factory %r failed to rebuild job %s",
+                spec.get("kind"), job.id,
+            )
+            return None
 
     async def _run_job(self, job_id: str, execution_id: str, run: JobCoro) -> None:
         heartbeat = asyncio.create_task(self._heartbeat_loop(job_id))
