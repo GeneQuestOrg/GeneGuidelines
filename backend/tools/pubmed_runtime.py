@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import html
 import json
 import logging
 import os
@@ -567,15 +568,15 @@ def truncate_text_on_word_boundary(text: str, max_len: int) -> str:
 
 
 def _decode_xml_entities(text: str) -> str:
-    """Decode common HTML/XML entities."""
-    return (text
-        .replace("&amp;", "&")
-        .replace("&lt;", "<")
-        .replace("&gt;", ">")
-        .replace("&quot;", '"')
-        .replace("&#39;", "'")
-        .replace("&#x27;", "'")
-    )
+    """Decode ALL HTML/XML entities, including numeric character references.
+
+    PubMed XML encodes non-ASCII letters as numeric refs (e.g. ``&#x15a;`` → Ś,
+    ``&#x105;`` → ą). The old hand-rolled replace() only covered 6 named entities,
+    so Polish/diacritic affiliations and names came through as literal
+    ``&#x15a;l&#x105;skie`` and rendered verbatim in the UI. ``html.unescape``
+    handles the full set in one pass.
+    """
+    return html.unescape(text)
 
 
 def fetch_authors_with_affiliations_impl(pmids: list[str]) -> dict:

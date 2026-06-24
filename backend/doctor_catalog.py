@@ -104,7 +104,7 @@ def _entry_to_public_doctor(
     affiliation = (
         _decode_stored_text(str(affiliation_raw)) if affiliation_raw is not None else None
     )
-    explicit_city = str(entry.get("city") or "").strip()
+    explicit_city = _decode_stored_text(str(entry.get("city") or "").strip())
     country_raw = str(entry.get("country") or "").strip().upper()
     country_iso = country_raw[:2] if len(country_raw) >= 2 and country_raw[:2].isalpha() else ""
 
@@ -703,13 +703,18 @@ def _build_finder_docs_index() -> dict[str, list[dict[str, Any]] | None]:
             )
         if not isinstance(report, dict):
             continue
-        started = str(run.get("started_at") or "")
+        # Prefer the run with the most doctors, tie-broken by most recent start —
+        # a failed/empty re-run (1-doctor report) must not shadow a real 1000-doctor
+        # run that started earlier. Mirrors the persistent picker in doctor_finder_store.
+        authors = report.get("top_authors")
+        count = len(authors) if isinstance(authors, list) else 0
+        sort_key = (count, str(run.get("started_at") or ""))
         prev = best_reports.get(run_slug)
-        if prev is None or started > prev[0]:
-            best_reports[run_slug] = (started, execution_id, report)
+        if prev is None or sort_key > prev[0]:
+            best_reports[run_slug] = (sort_key, execution_id, report)
 
     index: dict[str, list[dict[str, Any]] | None] = {}
-    for slug, (_started, execution_id, report) in best_reports.items():
+    for slug, (_key, execution_id, report) in best_reports.items():
         index[slug] = _public_doctors_from_finder_report(
             slug,
             report,

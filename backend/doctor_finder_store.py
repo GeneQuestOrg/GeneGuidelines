@@ -156,10 +156,15 @@ def _parse_latest_report_row(row: Any) -> tuple[str, dict[str, Any], str] | None
 
 
 def load_successful_reports_for_catalog_index() -> dict[str, tuple[str, dict[str, Any], str]]:
-    """Newest successful doctor_finder snapshot per catalog slug (one DB round-trip).
+    """Best successful doctor_finder snapshot per catalog slug (one DB round-trip).
 
     Values are ``(execution_id, doctor_report, started_at)``. Rows with a missing
     ``catalog_slug`` are mapped via ``catalog_slug_for_finder_input(disease_name)``.
+
+    "Best" = the LARGEST report, tie-broken by most recent start — NOT simply the
+    most recently started. A failed/empty re-run (e.g. a network blip that yields a
+    1-doctor report in milliseconds) must not shadow the real 1000-doctor run that
+    completed earlier; report size is a robust, cross-DB proxy for doctor count.
     """
     try:
         from .doctor_catalog import catalog_slug_for_finder_input
@@ -177,7 +182,7 @@ def load_successful_reports_for_catalog_index() -> dict[str, tuple[str, dict[str
           AND (error IS NULL OR TRIM(error) = '')
           AND doctor_report_json IS NOT NULL
           AND TRIM(doctor_report_json) != ''
-        ORDER BY started_at DESC
+        ORDER BY LENGTH(doctor_report_json) DESC, started_at DESC
         """
     )
     rows = cur.fetchall() or []
@@ -240,7 +245,8 @@ def load_latest_successful_report_for_catalog_slug(
               AND LOWER(TRIM(disease_name)) = ANY(%s)
             )
           )
-        ORDER BY CASE WHEN catalog_slug = %s THEN 0 ELSE 1 END, started_at DESC
+        ORDER BY CASE WHEN catalog_slug = %s THEN 0 ELSE 1 END,
+                 LENGTH(doctor_report_json) DESC, started_at DESC
         LIMIT 1
         """,
         (slug, disease_names_lower, slug),
