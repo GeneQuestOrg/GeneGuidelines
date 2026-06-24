@@ -232,12 +232,17 @@
 }
 .dmap-btn:hover { background: var(--bg-soft); border-color: var(--ink-4); }
 .dmap-btn__arr { color: var(--ink-4); }
-.dmap-btn--primary { background: var(--ink); color: var(--bg); border-color: var(--ink); }
-.dmap-btn--primary:hover { background: #000; }
-.dmap-btn--primary .dmap-btn__arr { color: color-mix(in oklch, var(--bg) 55%, var(--ink)); }
-.dmap-btn--accent { background: var(--accent); color: #fff; border-color: var(--accent); }
-.dmap-btn--accent:hover { background: var(--accent-ink); }
-.dmap-btn--accent .dmap-btn__arr { color: rgba(255, 255, 255, 0.65); }
+/* Solid-fill buttons need their light text to beat the `.dmap a { color: inherit }`
+   reset above (which has higher specificity than a bare `.dmap-btn--accent`), so
+   these are scoped under `.dmap`. The accent fill uses --accent-ink (darker than
+   --accent) so white text clears a comfortable contrast ratio — the plain --accent
+   fill read as low-contrast. */
+.dmap .dmap-btn--primary { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.dmap .dmap-btn--primary:hover { background: #000; }
+.dmap .dmap-btn--primary .dmap-btn__arr { color: color-mix(in oklch, var(--bg) 55%, var(--ink)); }
+.dmap .dmap-btn--accent { background: var(--accent-ink); color: #fff; border-color: var(--accent-ink); }
+.dmap .dmap-btn--accent:hover { background: color-mix(in oklch, var(--accent-ink) 86%, black); }
+.dmap .dmap-btn--accent .dmap-btn__arr { color: rgba(255, 255, 255, 0.8); }
 
 .dmap-nub { font-family: var(--font-mono); font-size: 11px; background: rgba(0, 0, 0, 0.06); padding: 1px 6px; border-radius: 100px; color: inherit; }
 
