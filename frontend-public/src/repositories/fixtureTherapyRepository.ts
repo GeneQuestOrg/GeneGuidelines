@@ -7,11 +7,13 @@ const FIXTURE: Readonly<Record<string, readonly Therapy[]>> = {
       name: "Observation (children — standard of care)",
       status: "consensus",
       note: "Monitor until skeletal maturity if no pain or functional impairment.",
+      pmids: [],
     },
     {
       name: "Denosumab",
       status: "verified",
       note: "For rapidly progressive lesions; strict calcium monitoring.",
+      pmids: [],
     },
   ],
   mas: [
@@ -19,6 +21,7 @@ const FIXTURE: Readonly<Record<string, readonly Therapy[]>> = {
       name: "Endocrine treatment (per endocrinopathy)",
       status: "consensus",
       note: "Letrozole for precocious puberty; somatostatin analogues for GH excess.",
+      pmids: [],
     },
   ],
   noonan: [
@@ -26,6 +29,7 @@ const FIXTURE: Readonly<Record<string, readonly Therapy[]>> = {
       name: "Recombinant growth hormone",
       status: "consensus",
       note: "FDA-approved for Noonan short stature; higher dose than in GH deficiency.",
+      pmids: [],
     },
   ],
 };

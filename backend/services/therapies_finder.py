@@ -35,8 +35,8 @@ from ._model_resolver import (
 log = logging.getLogger(__name__)
 
 _PUBMED = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils"
-_MAX_REVIEWS = 6
-_EXTRACT_BATCH_SIZE = 2
+_MAX_REVIEWS = 15
+_EXTRACT_BATCH_SIZE = 5
 _EXTRACT_MAX_RETRIES = 1
 
 
@@ -55,6 +55,7 @@ class _Therapy(BaseModel):
     )
     note: str = Field(..., description="One concise clinical sentence: indication, line, key caveat. No PII, no dates.")
     sort_order: int = Field(100, description="Lower = more important. 10/20/30 for consensus, 100 default.")
+    pmids: list[str] = Field(default_factory=list, description="PubMed IDs of the reviews that support this therapy line.")
 
 
 class _TherapyList(BaseModel):
@@ -77,6 +78,8 @@ Rules:
   under the broader name unless the specifics differ.
 - Sort order: 10 for first-line consensus drugs, 20 for second-line, 30 for adjunct,
   100 (default) for everything else. Lower numbers surface first in the UI.
+- ``pmids``: list every PMID that supports this therapy line. Copy them from the
+  [PMID XXXXXX] markers in the input — do not invent PMIDs.
 - Return 0–8 therapies. Quality over quantity.
 """
 
@@ -202,6 +205,7 @@ def _fallback_therapies_from_abstracts(
                 status="pending",
                 note=note,
                 sort_order=100,
+                pmids=[pmid] if pmid else [],
             )
         )
     return therapies
@@ -226,6 +230,129 @@ async def _extract_with_gemma(
     return _TherapyList(therapies=merged), model_spec, used_fallback
 
 
+def _words(name: str) -> set[str]:
+    """Significant lowercase words (>4 chars) from a therapy name."""
+    return {w.lower() for w in re.split(r"\W+", name) if len(w) > 4}
+
+
+# Words that are too common in medical abstracts to discriminate which papers
+# support a specific therapy.  Used by both backfill helpers to avoid assigning
+# monitoring/assessment entries a citation that is really about a drug.
+_BACKFILL_EXCLUDED_WORDS: frozenset[str] = frozenset({
+    "observation", "monitoring", "treatment", "therapy", "clinical",
+    "protocol", "management", "diagnosis", "standard", "indications",
+    "disease", "syndrome", "disorder", "condition", "symptoms",
+    "calcium", "phosphate", "endocrine", "hormone", "patients", "patient",
+    "effects", "changes", "results", "outcome", "growth",
+})
+
+
+def _clean_pmids(raw: list[str]) -> list[str]:
+    """Validate and deduplicate PubMed IDs (numeric strings, 4–10 digits)."""
+    seen: dict[str, None] = {}
+    for p in raw:
+        s = p.strip()
+        if re.fullmatch(r"\d{4,10}", s):
+            seen[s] = None
+    return list(seen)
+
+
+def _specific_keywords(name: str) -> list[str]:
+    """Return keywords from a therapy name that are long and specific enough
+    to anchor a PubMed citation.  Generic clinical terms are excluded."""
+    return [
+        w.lower()
+        for w in re.split(r"[\W_]+", name)
+        if len(w) >= 6 and w.lower() not in _BACKFILL_EXCLUDED_WORDS
+    ]
+
+
+def _backfill_pmids_from_abstracts(
+    therapies: list[_Therapy],
+    abstracts: list[tuple[str, str]],
+) -> list[_Therapy]:
+    """Assign PMIDs to therapies that the LLM left blank.
+
+    Scans each abstract for therapy-name keywords via case-insensitive substring
+    match. More reliable than asking a small LLM to track citations, because
+    specific drug names (bisphosphonates, denosumab, trametinib …) appear
+    verbatim in the supporting articles.  Generic monitoring/assessment entries
+    (no specific keywords) are left untouched to avoid false citations.
+    """
+    result: list[_Therapy] = []
+    for t in therapies:
+        if t.pmids:
+            result.append(t)
+            continue
+        keywords = _specific_keywords(t.name)
+        if not keywords:
+            result.append(t)
+            continue
+        matched = _clean_pmids([
+            pmid
+            for pmid, text in abstracts
+            if any(kw in text.lower() for kw in keywords)
+        ])
+        result.append(
+            _Therapy(
+                name=t.name,
+                status=t.status,
+                note=t.note,
+                sort_order=t.sort_order,
+                pmids=matched,
+            )
+        )
+    return result
+
+
+def _backfill_seed_rows_from_abstracts(
+    disease_slug: str,
+    abstracts: list[tuple[str, str]],
+) -> int:
+    """Direct backfill: scan existing DB rows that still have no PMIDs and match
+    against abstract text by keyword.  Called after _persist_therapies so that
+    seed rows the LLM missed or renamed are still linked to their literature.
+    Entries whose names contain no specific drug keywords are intentionally
+    skipped — assigning monitoring/assessment entries broad citations would be
+    misleading on a clinical page."""
+    try:
+        from ..database import get_connection
+    except ImportError:
+        from database import get_connection  # type: ignore[no-redef]
+
+    conn = get_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute(
+            "SELECT id, name, pmids_json FROM therapies WHERE disease_slug = %s",
+            (disease_slug,),
+        )
+        rows = cur.fetchall()
+        updated = 0
+        for row in rows:
+            if json.loads(row["pmids_json"] or "[]"):
+                continue
+            keywords = _specific_keywords(row["name"])
+            if not keywords:
+                continue
+            clean = _clean_pmids([
+                pmid
+                for pmid, text in abstracts
+                if any(kw in text.lower() for kw in keywords)
+            ])
+            if not clean:
+                continue
+            cur.execute(
+                "UPDATE therapies SET pmids_json = %s WHERE id = %s",
+                (json.dumps(clean), row["id"]),
+            )
+            updated += 1
+        conn.commit()
+        return updated
+    finally:
+        conn.close()
+
+
 def _persist_therapies(disease_slug: str, therapies: list[_Therapy]) -> int:
     valid = {"consensus", "verified", "pending", "preclinical"}
     try:
@@ -233,30 +360,66 @@ def _persist_therapies(disease_slug: str, therapies: list[_Therapy]) -> int:
     except ImportError:
         from database import get_connection  # type: ignore[no-redef]
 
-    inserted = 0
     conn = get_connection()
     cur = conn.cursor()
     try:
+        # If the disease already has therapies (e.g. from seed data), only
+        # update PMIDs on matching rows — don't insert LLM-generated duplicates.
+        cur.execute(
+            "SELECT id, name, pmids_json FROM therapies WHERE disease_slug = %s",
+            (disease_slug,),
+        )
+        existing = cur.fetchall()
+        if existing:
+            # Intentional: for seeded diseases we only merge newly discovered
+            # PMIDs onto matching rows.  We do NOT insert LLM-generated rows,
+            # because seed data is curated and LLM names rarely match exactly —
+            # doing so previously created duplicates (e.g. "bisphosphonates" vs
+            # "Bisphosphonates (pamidronate, zoledronate)").  New therapy lines
+            # should be added via the seed file or a manual content PR.
+            updated = 0
+            for t in therapies:
+                clean_pmids = _clean_pmids(t.pmids)
+                if not clean_pmids:
+                    continue
+                t_words = _words(t.name)
+                for row in existing:
+                    row_id, row_name, row_pmids_json = row["id"], row["name"], row["pmids_json"]
+                    if t_words & _words(row_name):
+                        existing_pmids = json.loads(row_pmids_json or "[]")
+                        merged = _clean_pmids(existing_pmids + clean_pmids)
+                        cur.execute(
+                            "UPDATE therapies SET pmids_json = %s WHERE id = %s",
+                            (json.dumps(merged), row_id),
+                        )
+                        updated += 1
+                        break
+            conn.commit()
+            return updated
+
+        # No existing therapies — insert LLM results as new rows.
+        inserted = 0
         for t in therapies:
             status = t.status.strip().lower()
             if status not in valid or not t.name.strip():
                 continue
             cur.execute(
-                """SELECT id FROM therapies WHERE disease_slug = %s AND LOWER(name) = LOWER(%s)""",
+                "SELECT id FROM therapies WHERE disease_slug = %s AND LOWER(name) = LOWER(%s)",
                 (disease_slug, t.name.strip()),
             )
             if cur.fetchone() is not None:
                 continue
+            clean_pmids = [p.strip() for p in t.pmids if re.fullmatch(r"\d{4,10}", p.strip())]
             cur.execute(
-                """INSERT INTO therapies (disease_slug, name, status, note, sort_order)
-                   VALUES (%s, %s, %s, %s, %s)""",
-                (disease_slug, t.name.strip(), status, t.note.strip(), t.sort_order),
+                """INSERT INTO therapies (disease_slug, name, status, note, sort_order, pmids_json)
+                   VALUES (%s, %s, %s, %s, %s, %s)""",
+                (disease_slug, t.name.strip(), status, t.note.strip(), t.sort_order, json.dumps(clean_pmids)),
             )
             inserted += 1
         conn.commit()
+        return inserted
     finally:
         conn.close()
-    return inserted
 
 
 def _log_run(execution_id: str, disease_slug: str, status: str, error: str | None = None) -> None:
@@ -330,6 +493,7 @@ async def find_therapies_for_disease(
         log.exception("Gemma extraction failed for therapies of %s", disease_name)
         fallback = _fallback_therapies_from_abstracts(abstracts)
         inserted = _persist_therapies(disease_slug, fallback)
+        _backfill_seed_rows_from_abstracts(disease_slug, abstracts)
         _log_run(exec_id, disease_slug, "ready")
         log.warning(
             "therapies_finder: LLM unavailable, persisted %d therapy placeholder(s) from PubMed",
@@ -337,12 +501,15 @@ async def find_therapies_for_disease(
         )
         return inserted
 
-    inserted = _persist_therapies(disease_slug, result.therapies)
+    therapies_with_pmids = _backfill_pmids_from_abstracts(result.therapies, abstracts)
+    inserted = _persist_therapies(disease_slug, therapies_with_pmids)
+    seed_backfilled = _backfill_seed_rows_from_abstracts(disease_slug, abstracts)
     _log_run(exec_id, disease_slug, "ready")
     log.info(
-        "therapies_finder: %d candidate(s), %d inserted (model=%s, fallback=%s)",
+        "therapies_finder: %d candidate(s), %d inserted, %d seed rows backfilled (model=%s, fallback=%s)",
         len(result.therapies),
         inserted,
+        seed_backfilled,
         model_spec,
         used_fallback,
     )

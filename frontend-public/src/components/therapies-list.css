@@ -64,3 +64,48 @@
   color: var(--ink-2);
   line-height: 1.5;
 }
+
+.therapy-row__sources {
+  margin-top: 8px;
+}
+
+.therapy-row__sources-toggle {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-size: var(--fs-xs);
+  color: var(--accent, oklch(0.55 0.13 230));
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  font-family: inherit;
+}
+
+.therapy-row__sources-toggle:hover {
+  opacity: 0.75;
+}
+
+.therapy-row__pmid-list {
+  list-style: none;
+  padding: 0;
+  margin: 6px 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.therapy-row__pmid-link {
+  font-size: var(--fs-xs);
+  font-family: var(--font-mono);
+  color: var(--ink-3);
+  text-decoration: none;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm, 4px);
+  padding: 2px 6px;
+  white-space: nowrap;
+}
+
+.therapy-row__pmid-link:hover {
+  color: var(--ink);
+  border-color: var(--ink-3);
+}
