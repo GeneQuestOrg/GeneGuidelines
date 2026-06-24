@@ -681,9 +681,15 @@ def _build_finder_docs_index() -> dict[str, list[dict[str, Any]] | None]:
     except ImportError:
         from doctor_finder_store import load_successful_reports_for_catalog_index
 
-    best_reports: dict[str, tuple[str, str, dict[str, Any]]] = {}
+    # Value shape: ((doctor_count, started_at), execution_id, report). The first
+    # element is the SAME sort key the in-memory loop below builds, so the two
+    # sources compare cleanly — seeding it as a bare string crashed the in-memory
+    # comparison with `'>' not supported between tuple and str`.
+    best_reports: dict[str, tuple[tuple[int, str], str, dict[str, Any]]] = {}
     for slug, (eid, report, started) in load_successful_reports_for_catalog_index().items():
-        best_reports[slug] = (started, eid, report)
+        seed_authors = report.get("top_authors") if isinstance(report, dict) else None
+        seed_count = len(seed_authors) if isinstance(seed_authors, list) else 0
+        best_reports[slug] = ((seed_count, str(started or "")), eid, report)
 
     with df_router._DOCTOR_FINDER_RUNS_LOCK:
         runs = list(df_router.DOCTOR_FINDER_RUNS.items())

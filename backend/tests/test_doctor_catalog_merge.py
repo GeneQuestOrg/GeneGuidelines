@@ -99,6 +99,48 @@ def test_get_doctors_merges_seed_and_finder(monkeypatch) -> None:
     assert merged["experienceByDisease"]["mas"] == "research_participant"
 
 
+def test_build_finder_index_persistent_and_in_memory_same_slug(monkeypatch) -> None:
+    """Regression: a slug with BOTH a persisted run and an in-memory run must not
+    crash the index build. The two sources were keyed with mismatched types
+    (persisted: started-string; in-memory: (count, started) tuple), raising
+    ``'>' not supported between instances of 'tuple' and 'str'`` — which 500'd the
+    prod doctors endpoint after a finder run. The run with MORE doctors must win."""
+    from backend.doctor_catalog import _build_finder_docs_index
+
+    clear_finder_docs_index()
+
+    def _authors(n: int) -> list[dict]:
+        return [
+            {"author_key": f"a{i}", "display_name": f"Doc {i}", "country": "US"}
+            for i in range(n)
+        ]
+
+    # Persisted store: a real 3-doctor FD run that started EARLIER.
+    monkeypatch.setattr(
+        "backend.doctor_finder_store.load_successful_reports_for_catalog_index",
+        lambda: {"fd": ("eid-persist", {"top_authors": _authors(3)}, "2026-06-23T14:00:00+00:00")},
+    )
+    # In-memory store: a degenerate 1-doctor FD run that started LATER.
+    monkeypatch.setattr(
+        "backend.routers.doctor_finder.DOCTOR_FINDER_RUNS",
+        {
+            "eid-mem": {
+                "done": True,
+                "error": None,
+                "catalog_slug": "fd",
+                "started_at": "2026-06-24T09:00:00+00:00",
+                "doctor_report": {"top_authors": _authors(1)},
+            }
+        },
+    )
+
+    index = _build_finder_docs_index()  # must not raise TypeError
+    assert index.get("fd") is not None
+    # The 3-doctor persisted run beats the later 1-doctor in-memory run.
+    assert len(index["fd"]) == 3
+    clear_finder_docs_index()
+
+
 def test_get_doctors_name_match_without_slug_overlap(monkeypatch) -> None:
     """Finder slug differs but normalized name matches seed — still merge."""
 
