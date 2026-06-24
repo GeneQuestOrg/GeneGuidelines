@@ -47,6 +47,9 @@ export function parseHash(hash: string): Route {
     if (parts[2] === "my-case") {
       return { name: "myCase", slug };
     }
+    if (parts[2] === "map") {
+      return { name: "diseaseMap", slug };
+    }
     if (parts[2] === "guidelines") {
       if (parts[3] === "pr" && parts[4]) {
         return { name: "guidelines", slug, prId: parts[4] };

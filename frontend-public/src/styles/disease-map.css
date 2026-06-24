@@ -1,0 +1,292 @@
+/* Parent "orientation map" (draft12 "Widok choroby - mapa rodzica").
+   An unknown-unknowns narrative spine, not a data hub. Classes are prefixed
+   `dmap-` so the draft's generic names (hero/step/btn/fact/safety) never collide
+   with the app's global styles. Most tokens come from packages/ui tokens.css;
+   only the orange "blind-spot" accent and the xl radius are local. */
+
+.dmap {
+  /* "blind spot" accent for the orientation hooks (unknown-unknowns) */
+  --blind: oklch(0.62 0.14 50);
+  --blind-soft: color-mix(in oklch, var(--blind) 13%, var(--bg-elev));
+  --r-xl: 16px;
+
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 0 24px 120px;
+  color: var(--ink);
+}
+
+.dmap a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* ── Breadcrumb ──────────────────────────────────────────────── */
+.dmap-crumb {
+  padding: 18px 0 0;
+  font-size: var(--fs-sm);
+  color: var(--ink-3);
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.dmap-crumb a { color: var(--ink-2); }
+.dmap-crumb a:hover { color: var(--accent-ink); }
+.dmap-crumb__sep { color: var(--ink-4); }
+
+/* ── Hero ────────────────────────────────────────────────────── */
+.dmap-hero { padding: 40px 0 8px; }
+.dmap-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 22px;
+}
+.dmap-eyebrow__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--st-blue);
+}
+.dmap-eyebrow__sep { color: var(--ink-4); }
+.dmap-title {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: clamp(34px, 6vw, 52px);
+  line-height: 1.08;
+  letter-spacing: -0.01em;
+  margin: 0;
+  color: var(--ink);
+  text-wrap: balance;
+}
+.dmap-title em { font-style: italic; color: var(--accent-ink); }
+.dmap-lede {
+  font-size: 19px;
+  line-height: 1.55;
+  color: var(--ink-2);
+  max-width: 38em;
+  margin: 26px 0 0;
+  text-wrap: pretty;
+}
+.dmap-lede b { color: var(--ink); font-weight: 600; }
+.dmap-facts { display: flex; flex-wrap: wrap; gap: 8px; margin: 30px 0 0; }
+.dmap-fact {
+  font-size: 13px;
+  color: var(--ink-2);
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  border-radius: 100px;
+  padding: 5px 13px;
+  display: inline-flex;
+  gap: 7px;
+  align-items: center;
+}
+.dmap-fact code { font-family: var(--font-mono); font-size: 12px; color: var(--ink); }
+.dmap-fact__k { color: var(--ink-4); }
+
+/* privacy / my-case quiet card */
+.dmap-privacy {
+  display: flex;
+  gap: 15px;
+  align-items: flex-start;
+  margin: 36px 0 0;
+  padding: 17px 19px;
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+}
+.dmap-privacy__ic { flex: none; color: var(--accent); margin-top: 1px; }
+.dmap-privacy__b { font-size: 14.5px; line-height: 1.5; color: var(--ink-2); }
+.dmap-privacy__b b { color: var(--ink); }
+.dmap-privacy__b button {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+  color: var(--accent-ink);
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ── Map intro divider ───────────────────────────────────────── */
+.dmap-intro { margin: 60px 0 8px; padding-top: 30px; border-top: 1px solid var(--line); }
+.dmap-intro__kicker {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--blind);
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.dmap-intro__dot { width: 7px; height: 7px; border-radius: 50%; background: var(--blind); }
+.dmap-intro__title {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: clamp(22px, 3.4vw, 29px);
+  line-height: 1.25;
+  color: var(--ink);
+  margin: 13px 0 0;
+  max-width: 24em;
+}
+.dmap-intro__sub { font-size: 15px; color: var(--ink-3); margin: 12px 0 0; max-width: 40em; }
+
+/* ── Steps / spine ───────────────────────────────────────────── */
+.dmap-steps { margin-top: 30px; }
+.dmap-step {
+  display: grid;
+  grid-template-columns: 64px 1fr;
+  gap: 24px;
+  position: relative;
+  padding-bottom: 14px;
+}
+.dmap-step::before {
+  content: "";
+  position: absolute;
+  left: 31px;
+  top: 8px;
+  bottom: -14px;
+  width: 2px;
+  background: var(--line);
+  z-index: 0;
+}
+.dmap-step:last-of-type::before { display: none; }
+.dmap-step__rail { position: relative; z-index: 1; }
+.dmap-step__num {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--bg-elev);
+  border: 1px solid var(--line-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-serif);
+  font-size: 26px;
+  color: var(--accent-ink);
+}
+.dmap-step__num--zero { font-family: var(--font-mono); font-size: 15px; letter-spacing: -0.02em; }
+.dmap-step__body { padding-bottom: 40px; min-width: 0; }
+.dmap-step__hook {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--blind);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.dmap-step__tri { color: var(--blind); }
+.dmap-step__title {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: clamp(23px, 3.6vw, 30px);
+  line-height: 1.18;
+  letter-spacing: -0.01em;
+  margin: 0;
+  color: var(--ink);
+  text-wrap: balance;
+}
+.dmap-step__lede { font-size: 16px; line-height: 1.6; color: var(--ink-2); margin: 13px 0 0; max-width: 40em; text-wrap: pretty; }
+.dmap-step__lede b { color: var(--ink); font-weight: 600; }
+.dmap-step__lede em { color: var(--ink); font-style: italic; }
+
+/* founder anchor */
+.dmap-anchor { margin: 18px 0 0; padding: 13px 0 13px 18px; border-left: 2px solid var(--line-2); }
+.dmap-anchor__lbl {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-4);
+  margin-bottom: 7px;
+}
+.dmap-anchor__q { font-family: var(--font-serif); font-style: italic; font-size: 16.5px; line-height: 1.5; color: var(--ink-2); }
+
+/* actions */
+.dmap-actions { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 20px; }
+.dmap-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 9px 15px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--line-2);
+  background: var(--bg-elev);
+  color: var(--ink);
+  transition: background 0.15s, border-color 0.15s;
+  cursor: pointer;
+}
+.dmap-btn:hover { background: var(--bg-soft); border-color: var(--ink-4); }
+.dmap-btn__arr { color: var(--ink-4); }
+.dmap-btn--primary { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.dmap-btn--primary:hover { background: #000; }
+.dmap-btn--primary .dmap-btn__arr { color: color-mix(in oklch, var(--bg) 55%, var(--ink)); }
+.dmap-btn--accent { background: var(--accent); color: #fff; border-color: var(--accent); }
+.dmap-btn--accent:hover { background: var(--accent-ink); }
+.dmap-btn--accent .dmap-btn__arr { color: rgba(255, 255, 255, 0.65); }
+
+.dmap-nub { font-family: var(--font-mono); font-size: 11px; background: rgba(0, 0, 0, 0.06); padding: 1px 6px; border-radius: 100px; color: inherit; }
+
+/* ── Pre-diagnosis special card ──────────────────────────────── */
+.dmap-predx { margin: 18px 0 0; background: var(--bg-elev); border: 1px solid var(--line); border-radius: var(--r-lg); padding: 22px 24px; }
+.dmap-predx__tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  background: var(--bg-soft);
+  border: 1px solid var(--line);
+  border-radius: 100px;
+  padding: 3px 11px;
+  margin-bottom: 14px;
+}
+.dmap-predx__title { font-family: var(--font-serif); font-size: 24px; line-height: 1.2; margin: 0; color: var(--ink); }
+.dmap-predx__lede { font-size: 15.5px; line-height: 1.6; color: var(--ink-2); margin: 12px 0 0; max-width: 44em; }
+.dmap-predx__lede b { color: var(--ink); font-weight: 600; }
+
+/* ── Closing safety note ─────────────────────────────────────── */
+.dmap-safety {
+  margin: 56px 0 0;
+  padding: 20px 22px;
+  border-radius: var(--r-lg);
+  background: color-mix(in oklch, var(--st-blue) 7%, var(--bg-elev));
+  border: 1px solid color-mix(in oklch, var(--st-blue) 22%, var(--line));
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+.dmap-safety__ic { flex: none; color: var(--st-blue); margin-top: 2px; }
+.dmap-safety__b { font-size: 14.5px; line-height: 1.6; color: var(--ink-2); }
+.dmap-safety__b b { color: var(--ink); }
+
+.dmap-foot { margin-top: 56px; padding-top: 26px; border-top: 1px solid var(--line); color: var(--ink-3); font-size: 13px; line-height: 1.6; }
+.dmap-foot b { color: var(--ink-2); font-weight: 600; }
+.dmap-foot em { font-style: italic; }
+
+.dmap-loading { padding: 60px 0; color: var(--ink-3); }
+
+@media (max-width: 620px) {
+  .dmap { padding: 0 18px 90px; }
+  .dmap-step { grid-template-columns: 44px 1fr; gap: 16px; }
+  .dmap-step::before { left: 21px; }
+  .dmap-step__num { width: 44px; height: 44px; font-size: 19px; }
+  .dmap-hero { padding: 30px 0 4px; }
+}
