@@ -100,12 +100,20 @@ def _build_justification(author: dict, role: str, flags: AuthorFlags) -> str:
 
 
 def _assign_role(gc: int, rc: int, oc: int, pc: int, cc: int, active: bool) -> str:
-    """Return the first matching role name per cascade rules."""
+    """Return the first matching role name per cascade rules.
+
+    ``active_contributor`` requires real volume of disease-relevant work — at least
+    two original papers, an original plus a review, or three+ papers total. A single
+    review (or one incidental paper) does NOT make someone a contributor; with the
+    article-level relevance gate it should rarely happen, but this is the second line
+    of defence so a lone paper ranks as ``peripheral`` rather than masquerading as a
+    specialist.
+    """
     if gc >= 1:
         return "guideline_author"
     if rc >= 2 or oc >= 5 or pc >= 10:
         return "senior_investigator"
-    if active and (rc >= 1 or oc >= 2):
+    if active and (oc >= 2 or (oc >= 1 and rc >= 1) or pc >= 3):
         return "active_contributor"
     if cc >= 1:
         return "case_reporter"
