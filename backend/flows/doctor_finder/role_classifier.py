@@ -62,13 +62,18 @@ async def _check_clinical_trial(
                 "query.term": f"{last_name} {disease_name}",
                 "filter.overallStatus": "RECRUITING,ACTIVE_NOT_RECRUITING,COMPLETED",
                 "pageSize": 1,
+                # The v2 API only returns ``totalCount`` when this is set — without it
+                # the count is absent and every author read as 0 (no trials), so the
+                # "runs a clinical trial" flag was always False. Fall back to the
+                # presence of a study so a single match still counts.
+                "countTotal": "true",
                 "format": "json",
             }
             resp = await c.get(CLINICALTRIALS_API_V2_BASE, params=params)
             resp.raise_for_status()
             data = resp.json()
             total = int(data.get("totalCount", 0) or 0)
-            return total > 0
+            return total > 0 or bool(data.get("studies"))
         except Exception as exc:
             log.debug("clinicaltrials_check_failed last_name=%s error=%s", last_name, exc)
             return False
