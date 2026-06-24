@@ -100,12 +100,20 @@ def _build_justification(author: dict, role: str, flags: AuthorFlags) -> str:
 
 
 def _assign_role(gc: int, rc: int, oc: int, pc: int, cc: int, active: bool) -> str:
-    """Return the first matching role name per cascade rules."""
+    """Return the first matching role name per cascade rules.
+
+    ``active_contributor`` requires real volume of disease-relevant work — at least
+    two original papers, an original plus a review, or three+ papers total. A single
+    review (or one incidental paper) does NOT make someone a contributor; with the
+    article-level relevance gate it should rarely happen, but this is the second line
+    of defence so a lone paper ranks as ``peripheral`` rather than masquerading as a
+    specialist.
+    """
     if gc >= 1:
         return "guideline_author"
     if rc >= 2 or oc >= 5 or pc >= 10:
         return "senior_investigator"
-    if active and (rc >= 1 or oc >= 2):
+    if active and (oc >= 2 or (oc >= 1 and rc >= 1) or pc >= 3):
         return "active_contributor"
     if cc >= 1:
         return "case_reporter"
@@ -207,6 +215,13 @@ async def run_async(context: dict, *, now: Optional[date] = None) -> dict:
         cc = author.get("case_report_count", 0)
 
         role_name = _assign_role(gc, rc, oc, pc, cc, active)
+        # Identity gate: a low-confidence cluster (initials-only name, or a "common
+        # surname" collision spanning institutions) cannot reach senior_investigator
+        # on counts that may belong to several distinct people. Cap it at
+        # active_contributor; scoring additionally dampens it so it ranks below
+        # ORCID/PubMed-id-verified peers rather than topping the list.
+        if author.get("identity_confidence") == "low" and role_name == "senior_investigator":
+            role_name = "active_contributor"
         justification = _build_justification(author, role_name, flags)
         role = AuthorRole(role=role_name, justification=justification)
 

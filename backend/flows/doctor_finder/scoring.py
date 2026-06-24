@@ -30,6 +30,14 @@ POSITION_MULTIPLIERS: dict[str, float] = {
     "middle": 0.4,
 }
 
+# Per-paper authorship weight. The disease-relevant PAPER COUNT (first/last author
+# especially) is the signal a parent trusts most — "who actually works on this
+# disease, a lot". We scale the summed position multipliers by this factor so volume
+# of relevant work is a primary ranking driver rather than being swamped by the role
+# base. With WEIGHT=6: a first-author paper adds 6.0, last 4.8, middle 2.4; five
+# first-author papers (=30) rivals the role base, which is the intended emphasis.
+POSITION_WEIGHT = 6.0
+
 RECENCY_BONUS_PER_PAPER = 2.0
 
 FLAG_BONUSES: dict[str, float] = {
@@ -41,6 +49,11 @@ FLAG_BONUSES: dict[str, float] = {
 }
 
 MAX_FLAG_BONUS = 15.0
+
+# Low-confidence identities (see author_aggregator._identity_confidence) are dampened
+# so an unverified, possibly-collided cluster ranks below ORCID / PubMed-id-verified
+# peers with comparable counts instead of topping the list on inflated volume.
+LOW_CONFIDENCE_DAMPING = 0.6
 
 
 def compute_raw(author: dict[str, Any], now: date) -> float:
@@ -60,7 +73,7 @@ def compute_raw(author: dict[str, Any], now: date) -> float:
     flags: dict[str, Any] = author.get("flags") or {}
 
     base = ROLE_BASE_SCORES.get(role_name, 5.0)
-    position_score = sum(
+    position_score = POSITION_WEIGHT * sum(
         POSITION_MULTIPLIERS.get(p.get("author_position", "middle"), 0.4)
         for p in papers
     )
@@ -74,7 +87,10 @@ def compute_raw(author: dict[str, Any], now: date) -> float:
         MAX_FLAG_BONUS,
     )
 
-    return base + position_score + recency_score + flag_bonus
+    raw = base + position_score + recency_score + flag_bonus
+    if author.get("identity_confidence") == "low":
+        raw *= LOW_CONFIDENCE_DAMPING
+    return raw
 
 
 def normalize(authors: list[dict[str, Any]]) -> list[dict[str, Any]]:

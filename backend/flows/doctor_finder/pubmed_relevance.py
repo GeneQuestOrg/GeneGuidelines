@@ -95,38 +95,78 @@ def _topic_text(*, title: str, abstract: str, lead_chars: int) -> str:
     return f"{title}\n{head}".lower()
 
 
+def _is_review_pub_type(publication_types: list[str]) -> bool:
+    """True for review / meta-analysis / systematic review — papers that enumerate
+    many diseases in their abstract lead. Guidelines / consensus statements are
+    high-signal and explicitly NOT treated as reviews here (they earn lead-match)."""
+    lowered = [str(t).lower() for t in (publication_types or [])]
+    if any("guideline" in t or "consensus development conference" in t for t in lowered):
+        return False
+    return any(
+        "review" in t or "meta-analysis" in t or "systematic review" in t
+        for t in lowered
+    )
+
+
 def article_text_relevant_to_disease(
     *,
     title: str,
     abstract: str,
     disease_name: str,
     aliases: list[str],
+    publication_types: list[str] | None = None,
     strong_alias_chars: int = DOCTOR_FINDER_STRONG_ALIAS_SUBSTRING_CHARS,
     medium_alias_chars: int = DOCTOR_FINDER_MEDIUM_ALIAS_SUBSTRING_CHARS,
     relevance_lead_chars: int = DOCTOR_FINDER_RELEVANCE_LEAD_CHARS,
 ) -> bool:
-    """Return True if title or abstract lead plausibly centers on this disease.
+    """Return True if the paper plausibly CENTERS on this disease (not just mentions it).
 
-    Matching only the full abstract lets unrelated reviews through when they cite the
-    disease once (e.g. PMID 42123650 lists fibrous dysplasia as a minor Mulibrey feature).
+    Centrality, not mere presence, is the bar. A review enumerates many conditions in
+    its abstract lead, so a single incidental mention there is not evidence its authors
+    are specialists in the disease — the canonical leak being PMID 42123650 ("Mulibrey
+    Nanism…", which lists fibrous dysplasia as a minor feature) putting its last author
+    on the FD list. So:
+
+    - disease in the **title** → relevant (strongest signal), any publication type;
+    - disease only in the **abstract lead** → relevant for primary / case / guideline
+      papers, but **NOT for reviews** (a review must name the disease in its title to
+      credit its authors).
+
+    ``publication_types`` are the raw PubMed strings; when omitted, the legacy
+    title-or-lead behaviour applies (reviews are not down-weighted).
     """
-    topic = _topic_text(title=title, abstract=abstract, lead_chars=relevance_lead_chars)
-    core = disease_name.strip().lower()
-    if core and core in topic:
-        return True
-
     anchors = _anchor_tokens_from_disease(disease_name)
-    if len(anchors) >= 2 and all(t in topic for t in anchors[:2]):
+    core = disease_name.strip().lower()
+
+    def _matches(topic: str) -> bool:
+        if core and core in topic:
+            return True
+        if len(anchors) >= 2 and all(t in topic for t in anchors[:2]):
+            return True
+        for a in aliases:
+            s = a.strip().lower()
+            if not s:
+                continue
+            if len(s) >= strong_alias_chars and s in topic:
+                return True
+            if (
+                len(s) >= medium_alias_chars
+                and s in topic
+                and anchors
+                and all(t in topic for t in anchors[:2])
+            ):
+                return True
+        return False
+
+    # Title is the strongest centrality signal — accept regardless of publication type.
+    if _matches((title or "").lower()):
         return True
 
-    for a in aliases:
-        s = a.strip().lower()
-        if not s:
-            continue
-        if len(s) >= strong_alias_chars and s in topic:
-            return True
-        if len(s) >= medium_alias_chars and s in topic and anchors and all(t in topic for t in anchors[:2]):
-            return True
+    # Disease appears only in the abstract lead. Credit primary/case/guideline papers,
+    # but require reviews to have named the disease in the title (handled above).
+    lead_topic = _topic_text(title=title, abstract=abstract, lead_chars=relevance_lead_chars)
+    if _matches(lead_topic):
+        return not _is_review_pub_type(publication_types or [])
     return False
 
 
@@ -146,6 +186,7 @@ def filter_articles_by_disease_text(
             abstract=abstract,
             disease_name=disease_name,
             aliases=aliases,
+            publication_types=a.get("publication_types") or [],
         ):
             kept.append(a)
     return kept, len(articles) - len(kept)

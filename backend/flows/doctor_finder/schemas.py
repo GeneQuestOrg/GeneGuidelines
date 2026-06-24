@@ -142,6 +142,12 @@ class AggregatedAuthor(BaseModel, frozen=True):
     flags: AuthorFlags = Field(default_factory=AuthorFlags)
     role: Optional[AuthorRole] = None
     score: float = 0.0
+    # Author-identity disambiguation confidence: "high" (ORCID), "medium"
+    # (PubMed author-id, or a name-only cluster consistent in forename +
+    # institution + country), "low" (initials-only, or a cluster spanning
+    # multiple institutions/countries — collision-shaped). Gates ranking so a
+    # low-confidence cluster cannot masquerade as a top "senior_investigator".
+    identity_confidence: str = "low"
     ai_justification: Optional[str] = None
 
 
