@@ -35,6 +35,7 @@ def _foundation(
     name: str,
     diseases: tuple[str, ...],
     scope: str = "International",
+    source: str = "seed",
 ) -> Foundation:
     return Foundation(
         id=id,
@@ -45,6 +46,7 @@ def _foundation(
         country=None,
         services=(),
         diseases=diseases,
+        source=source,
     )
 
 
@@ -91,3 +93,31 @@ def test_list_all_sorts_by_name():
         ],
     )
     assert [f.name for f in svc.list_all()] == ["Alpha", "Zebra"]
+
+
+def test_list_for_disease_prefers_workflow_over_seed():
+    """foundations-as-workflow: once finder rows exist, seed rows are suppressed."""
+    svc = _service(
+        diseases=[_disease("fd")],
+        foundations=[
+            _foundation(id=1, name="Bundled Seed Org", diseases=("fd",), source="seed"),
+            _foundation(id=2, name="Finder Org", diseases=("fd",), source="workflow"),
+        ],
+    )
+    fd = svc.list_for_disease("fd")
+    assert fd is not None
+    assert [f.name for f in fd] == ["Finder Org"]
+
+
+def test_list_for_disease_falls_back_to_seed_when_no_workflow():
+    """With no finder output yet, the bundled seed rows still show (bootstrap)."""
+    svc = _service(
+        diseases=[_disease("fd")],
+        foundations=[
+            _foundation(id=1, name="Seed A", diseases=("fd",), source="seed"),
+            _foundation(id=2, name="Seed B", diseases=("fd",), source="seed"),
+        ],
+    )
+    fd = svc.list_for_disease("fd")
+    assert fd is not None
+    assert sorted(f.name for f in fd) == ["Seed A", "Seed B"]

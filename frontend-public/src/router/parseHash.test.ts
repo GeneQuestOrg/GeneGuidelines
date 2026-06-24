@@ -70,9 +70,11 @@ describe("parseHash", () => {
     expect(parseHash("#/join")).toEqual({ name: "home" });
   });
 
-  it("parses trials registry page", () => {
+  it("parses the trials browser with optional disease facet", () => {
     expect(parseHash("#/trials")).toEqual({ name: "trials" });
-    expect(parseHash("#/trials?q=fibrous")).toEqual({ name: "trials", query: "fibrous" });
+    expect(parseHash("#/trials?disease=fd")).toEqual({ name: "trials", disease: "fd" });
+    // A non-disease query param (e.g. a stale ?q=) leaves the disease facet unset.
+    expect(parseHash("#/trials?q=fibrous")).toEqual({ name: "trials" });
   });
 
   it("parses start research with optional disease", () => {

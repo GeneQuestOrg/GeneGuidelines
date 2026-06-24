@@ -241,6 +241,16 @@ foundations = Table(
     Column("city", Text),
     Column("country", Text),
     Column("services_json", Text, nullable=False, server_default="[]"),
+    # Provenance, mirroring official_guideline_pointers.source: the
+    # foundations_finder workflow is now the PRIMARY source for the disease
+    # page; bundled seed rows ('seed') are a bootstrap/fallback shown only
+    # when no workflow rows exist for that disease yet. 'reviewer' is reserved
+    # for a future curator-confirmed tier.
+    Column("source", Text, nullable=False, server_default="seed"),
+    CheckConstraint(
+        "source IN ('seed','workflow','reviewer')",
+        name="foundations_source_enum",
+    ),
 )
 
 
