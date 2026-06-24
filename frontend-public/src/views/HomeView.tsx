@@ -79,7 +79,13 @@ export function HomeView({ view, onNav }: HomeViewProps) {
         {stats != null ? (
           <div className="intro__meta">
             <span>
-              <b>{stats.diseaseCount}</b> diseases
+              <b>{stats.diseaseCount}</b> diseases{" "}
+              <span
+                className="intro__meta-grow"
+                title="We add diseases on demand and in regular batches — covering all of rare disease at once is costly, so we prioritise the conditions families actually ask for."
+              >
+                (growing)
+              </span>
             </span>
             <span>
               <b>{stats.doctorCount}</b> specialists

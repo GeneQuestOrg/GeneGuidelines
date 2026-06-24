@@ -17,6 +17,7 @@ import { useDisease } from "../hooks/useDisease";
 import { useOfficialGuideline } from "../hooks/useOfficialGuideline";
 import { useSourceShelf } from "../hooks/useSourceShelf";
 import { useRelatedDiseases } from "../hooks/useRelatedDiseases";
+import { useActiveResearchRuns } from "../hooks/useActiveResearchRuns";
 import type { SubscriptionUiStatus } from "../utils/diseaseSubscriptionStorage";
 import { PlaceholderView } from "./PlaceholderView";
 import "../styles/disease-page.css";
@@ -46,6 +47,11 @@ export function DiseaseView({ slug, role, userLoc, onNav, alert }: DiseaseViewPr
   const { pointer: officialPointer } = useOfficialGuideline(slug);
   const { docs: sourceDocs } = useSourceShelf(slug);
   const { signInAvailable, login } = useAccountContext();
+  // Surface "this disease is being re-processed now" from the live research feed
+  // (the worker refreshes a disease's content/specialists). 25 covers a realistic
+  // burst of concurrent runs so this disease's run is not missed by the top-N cap.
+  const { runs: activeRuns } = useActiveResearchRuns(25);
+  const reprocessingRun = activeRuns.find((r) => r.diseaseSlug === slug) ?? null;
   const copy = getAudienceCopy(audienceForRole(role)).disease;
   const isClinician = isClinicianView(role);
 
@@ -122,6 +128,17 @@ export function DiseaseView({ slug, role, userLoc, onNav, alert }: DiseaseViewPr
         <p className="disease-pending-badge" role="status">
           <span className="disease-pending-badge__dot" aria-hidden="true" />
           Not yet in the public catalog — pending curation.
+        </p>
+      ) : null}
+      {reprocessingRun ? (
+        <p className="disease-pending-badge disease-pending-badge--refresh" role="status">
+          <span
+            className="disease-pending-badge__dot disease-pending-badge__dot--pulse"
+            aria-hidden="true"
+          />
+          Refreshing now — {reprocessingRun.label || "research in progress"}
+          {reprocessingRun.elapsedSec != null ? ` · ${reprocessingRun.elapsedSec}s` : ""}.
+          Showing the latest saved results; they may change shortly.
         </p>
       ) : null}
       {bannerAlert === "confirmed" ? (

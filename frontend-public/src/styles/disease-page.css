@@ -25,6 +25,27 @@
   flex: 0 0 auto;
 }
 
+/* "Refreshing now" variant — shown while a research run for this disease is live. */
+.disease-pending-badge--refresh {
+  background: color-mix(in oklch, var(--accent) 10%, var(--bg-elev));
+  border-color: color-mix(in oklch, var(--accent) 35%, var(--line));
+}
+
+.disease-pending-badge__dot--pulse {
+  background: var(--accent);
+  animation: gg-reprocess-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes gg-reprocess-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.25;
+  }
+}
+
 .d-hero {
   padding: 32px 28px;
   background: var(--bg-elev);
