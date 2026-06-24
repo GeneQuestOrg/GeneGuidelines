@@ -12,7 +12,11 @@ PyJWT[crypto]>=2.8
 itsdangerous>=2.1
 
 # Agent (Pydantic AI) + MCP
-pydantic-ai[openai,mcp]
+# Pinned exactly: pydantic-ai ships breaking API renames between minors (e.g. a
+# release after 1.97.0 dropped `MCPServerStdio` from `pydantic_ai.mcp`, red-ing CI
+# on an unpinned install). Bump deliberately after checking backend/agents/agent.py
+# still imports cleanly.
+pydantic-ai[openai,mcp]==1.97.0
 python-dotenv
 psycopg[binary]
 simpleeval
