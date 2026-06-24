@@ -8,6 +8,7 @@ import { DiseaseHero } from "../components/DiseaseHero";
 import { DiseaseSubscribeModal } from "../components/DiseaseSubscribeModal";
 import { loadSubscriptionUiStatus } from "../utils/loadSubscriptionUiStatus";
 import { MyCaseCta } from "../components/MyCaseCta";
+import { OrientationMapCta } from "../components/OrientationMapCta";
 import { DiseaseTabs } from "../components/DiseaseTabs";
 import { OfficialGuidelineBlock } from "../components/OfficialGuidelineBlock";
 import { SynthesisTeaser } from "../components/guidelines/SynthesisTeaser";
@@ -152,6 +153,7 @@ export function DiseaseView({ slug, role, userLoc, onNav, alert }: DiseaseViewPr
           onSaved={() => refreshSubscriptionStatus()}
         />
       ) : null}
+      {!isClinician ? <OrientationMapCta disease={disease} onNav={onNav} /> : null}
       {!isClinician ? <MyCaseCta disease={disease} onNav={onNav} /> : null}
       {sourceDocs.length > 0 ? (
         <Section
