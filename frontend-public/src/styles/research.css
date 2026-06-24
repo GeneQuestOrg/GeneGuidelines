@@ -398,6 +398,13 @@
   animation: rrun-queued-pulse 1.4s ease-in-out infinite;
 }
 
+.rrun__budget {
+  margin: 0 0 18px;
+  font-size: var(--fs-xs, 0.8rem);
+  font-family: var(--font-mono);
+  color: var(--ink-3);
+}
+
 @keyframes rrun-queued-pulse {
   0%,
   100% {

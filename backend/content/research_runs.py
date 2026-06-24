@@ -63,6 +63,10 @@ class ActiveResearchRun:
     label: str
     started_at: str | None
     elapsed_sec: int | None
+    # Computed, not stored: "token_budget" when the monthly LLM budget is
+    # exhausted (so the worker is not claiming new jobs), else None. Lets the
+    # home view show a "Czeka — budżet tokenów" badge without a DB column.
+    blocked_reason: str | None = None
 
 
 def _parse_iso(value: object) -> datetime | None:
@@ -243,6 +247,20 @@ def _sorted_by_started_desc(runs: Iterable[ActiveResearchRun]) -> list[ActiveRes
     )
 
 
+def _current_blocked_reason() -> str | None:
+    """Global token-budget block reason (best-effort; None when unlimited/clear).
+
+    Computed once per projection: the worker pauses claiming new jobs when the
+    monthly budget is exhausted, so every in-flight/queued run carries the same
+    reason. Best-effort — never raises into the read-only API."""
+    try:
+        from ..research_queue.token_budget import budget_block_reason
+
+        return budget_block_reason()
+    except Exception:  # noqa: BLE001 — read-only projection must not fail on this
+        return None
+
+
 def list_active_runs(
     limit: int = 3,
     *,
@@ -258,11 +276,17 @@ def list_active_runs(
         _reap_stale_finder_runs(conn)
         guideline = _rows_from_guideline_store(conn, limit)
         finder = _rows_from_doctor_finder_store(conn, limit)
-        combined = _sorted_by_started_desc([*guideline, *finder])
-        return combined[:limit]
+        combined = _sorted_by_started_desc([*guideline, *finder])[:limit]
     finally:
         if owned:
             conn.close()
+    reason = _current_blocked_reason()
+    if reason is None:
+        return combined
+    # Stamp the budget block reason on every returned run (immutable replace).
+    from dataclasses import replace
+
+    return [replace(run, blocked_reason=reason) for run in combined]
 
 
 def to_payload(run: ActiveResearchRun) -> dict[str, Any]:
@@ -274,6 +298,7 @@ def to_payload(run: ActiveResearchRun) -> dict[str, Any]:
         "label": run.label,
         "startedAt": run.started_at,
         "elapsedSec": run.elapsed_sec,
+        "blockedReason": run.blocked_reason,
     }
 
 

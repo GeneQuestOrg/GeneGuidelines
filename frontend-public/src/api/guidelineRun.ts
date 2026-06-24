@@ -68,6 +68,12 @@ export interface AgentRunPayloadV1 {
   /** Fair-share queue (RES-1): "queued" until a worker slot frees up. */
   status?: string | null;
   queue_position?: number | null;
+  /**
+   * Why a queued run is not yet starting: "token_budget" when the monthly LLM
+   * budget is exhausted (the worker paused claiming), else null. Only
+   * meaningful while `status === "queued"`.
+   */
+  blocked_reason?: string | null;
 }
 
 /**

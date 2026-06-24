@@ -222,6 +222,27 @@ export async function apiPatchJson<T>(
   return parseSuccessJson<T>(res);
 }
 
+/**
+ * Monthly LLM token budget snapshot (GET /api/research/budget).
+ *
+ * `limit === 0` means unlimited: `remaining` is null and `blocked` is always
+ * false. Otherwise `remaining = max(0, limit - spent)` and `blocked` flips true
+ * once `spent >= limit`, at which point the research worker pauses claiming new
+ * disease jobs (queued runs show "Czeka — budżet tokenów").
+ */
+export interface ResearchBudget {
+  readonly limit: number;
+  readonly spent: number;
+  readonly remaining: number | null;
+  readonly window: string;
+  readonly blocked: boolean;
+}
+
+/** Fetch the current token-budget snapshot. Read-only and cheap. */
+export async function fetchResearchBudget(): Promise<ResearchBudget> {
+  return apiGet<ResearchBudget>("/api/research/budget");
+}
+
 export async function apiPostJson<T>(
   path: string,
   body: unknown,

@@ -73,6 +73,17 @@
   color: var(--ink);
 }
 
+.active-research__blocked {
+  align-self: flex-start;
+  font-size: var(--fs-xs);
+  font-family: var(--font-mono);
+  padding: 2px 8px;
+  border-radius: var(--r-sm, 6px);
+  background: color-mix(in oklch, var(--warn, #b45309) 14%, transparent);
+  color: var(--warn, #b45309);
+  border: 1px solid color-mix(in oklch, var(--warn, #b45309) 30%, transparent);
+}
+
 .active-research__cta {
   margin: 0;
   font-size: var(--fs-sm);

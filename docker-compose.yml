@@ -51,6 +51,10 @@ services:
     env_file: .env
     environment:
       DB_URL: postgresql://${POSTGRES_USER:-ggapp}:${POSTGRES_PASSWORD:-testpass}@postgres:5432/${POSTGRES_DB:-geneguidelines}
+      # Web admits jobs + serves status from the DB only — it runs ZERO research
+      # workers (=0). The dedicated `worker` service below does the heavy lifting,
+      # so a long PubMed/finder run can never block serving the site.
+      RESEARCH_QUEUE_MAX_CONCURRENT: "0"
     depends_on:
       postgres:
         condition: service_healthy
@@ -64,6 +68,24 @@ services:
       timeout: 5s
       retries: 5
       start_period: 30s
+
+  # Dedicated research worker — same image as `backend`, no HTTP ingress. Claims
+  # research_jobs rows from the same Postgres and runs the heavy fan-out so the
+  # web process stays responsive. Mirrors the prod `gg-worker` Container App.
+  worker:
+    platform: linux/amd64
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    command: ["python", "-m", "backend.worker"]
+    env_file: .env
+    environment:
+      DB_URL: postgresql://${POSTGRES_USER:-ggapp}:${POSTGRES_PASSWORD:-testpass}@postgres:5432/${POSTGRES_DB:-geneguidelines}
+      # This process IS the research worker pool.
+      RESEARCH_QUEUE_MAX_CONCURRENT: "1"
+    depends_on:
+      postgres:
+        condition: service_healthy
 
   frontend:
     build:

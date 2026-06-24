@@ -119,6 +119,26 @@ jobs:
             --resource-group "${{ env.AZURE_RESOURCE_GROUP }}" \
             --image "${{ env.AZURE_REGISTRY }}.azurecr.io/${{ env.IMAGE_REPOSITORY }}:${{ steps.image.outputs.tag }}"
 
+      # Roll the dedicated research worker to the SAME image tag as gg-public.
+      #
+      # ONE-TIME PROVISIONING (do NOT do it here — this step only rolls an
+      # existing app): create the `gg-worker` Container App once in RG
+      # `geneguidelines-demo` from registry `ggdemo45223`, with:
+      #   - command:  python -m backend.worker
+      #   - NO ingress (internal-only; it never serves HTTP)
+      #   - the SAME secrets/env as gg-public (db-url, LLM keys, Auth0, …)
+      #   - RESEARCH_QUEUE_MAX_CONCURRENT=1   (this process IS the worker pool)
+      #   - min-replicas 1 (scale-to-zero + KEDA on queue depth is a future step)
+      # Also set gg-public's RESEARCH_QUEUE_MAX_CONCURRENT=0 once (manual Azure
+      # env step — this workflow does not manage Container App env vars) so the
+      # web process admits/serves only and never runs research in its event loop.
+      - name: Update gg-worker revision (same image)
+        run: |
+          az containerapp update \
+            --name "gg-worker" \
+            --resource-group "${{ env.AZURE_RESOURCE_GROUP }}" \
+            --image "${{ env.AZURE_REGISTRY }}.azurecr.io/${{ env.IMAGE_REPOSITORY }}:${{ steps.image.outputs.tag }}"
+
       - name: Smoke test /health and /api/account/me
         run: |
           BASE="https://geneguidelines.genequest.org"

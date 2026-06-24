@@ -8,6 +8,7 @@ function run(partial: Partial<ResearchRun> & Pick<ResearchRun, "runId" | "flowKe
     label: "Test run",
     startedAt: null,
     elapsedSec: 0,
+    blockedReason: null,
     ...partial,
   };
 }

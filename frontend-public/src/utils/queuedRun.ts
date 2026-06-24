@@ -22,3 +22,20 @@ export function queuedLabel(position: number | null | undefined): string {
   }
   return "Queued — your run will start as soon as a slot frees up.";
 }
+
+/** True when a queued run is held back by the monthly token budget. */
+export function isTokenBudgetBlocked(
+  blockedReason: string | null | undefined,
+): boolean {
+  return blockedReason === "token_budget";
+}
+
+/** Short badge text for a token-budget-blocked run (Polish, per draft10 copy). */
+export function blockedBadgeLabel(
+  blockedReason: string | null | undefined,
+): string | null {
+  if (isTokenBudgetBlocked(blockedReason)) {
+    return "Czeka — budżet tokenów";
+  }
+  return null;
+}
