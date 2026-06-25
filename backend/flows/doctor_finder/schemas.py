@@ -108,6 +108,10 @@ class AuthorPaper(BaseModel, frozen=True):
     # legacy "every kept paper counts fully" behaviour. ``mesh_major`` is the headline signal.
     relevance: float = 1.0
     mesh_major: bool = False
+    # The paper is genuinely ABOUT the disease (MeSH-major topic or disease-in-title), per
+    # paper_scoring. Defaults to True so legacy/unscored paths keep admitting their authors;
+    # the scored path sets the real value and report_builder gates listing on it.
+    central: bool = True
 
 
 class AuthorFlags(BaseModel, frozen=True):

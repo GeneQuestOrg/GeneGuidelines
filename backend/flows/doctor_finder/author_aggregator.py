@@ -56,6 +56,8 @@ def _build_author_paper(article: dict, author: dict) -> AuthorPaper:
         pubmed_url=article.get("pubmed_url", ""),
         relevance=float(article.get("relevance", 1.0)),
         mesh_major=bool(article.get("mesh_major", False)),
+        # Absent only on unscored/legacy paths — default to admit (matches relevance=1.0).
+        central=bool(article.get("central", True)),
     )
 
 

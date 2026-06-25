@@ -31,6 +31,18 @@ def _role_name(author: dict[str, Any]) -> str:
     return role_dict.get("role", "") if isinstance(role_dict, dict) else ""
 
 
+def _author_has_central_paper(author: dict[str, Any]) -> bool:
+    """True if the author has >=1 paper genuinely ABOUT the disease — a MeSH MAJOR topic or
+    the disease named in the title (paper_scoring's ``central`` flag). This is the admission
+    bar for being listed as a specialist: an incidental abstract-lead / MeSH-minor mention
+    (e.g. the "Mulibrey Nanism" review listing fibrous dysplasia as a minor feature) does
+    not qualify its co-authors."""
+    for p in author.get("papers") or []:
+        if isinstance(p, dict) and p.get("central"):
+            return True
+    return False
+
+
 def _most_frequent_nonempty(values: list[str]) -> Optional[str]:
     cleaned = [v.strip() for v in values if v and str(v).strip()]
     if not cleaned:
@@ -335,13 +347,37 @@ def run(context: dict[str, Any]) -> dict[str, Any]:
                 len(sorted_authors),
                 before_ct,
             )
+    # Centrality admission gate (rock-solid precision): list an author as a specialist only
+    # when >=1 of their papers is genuinely ABOUT the disease (MeSH-major topic or disease in
+    # the title). An incidental mention (the "Mulibrey Nanism" -> fibrous dysplasia leak) no
+    # longer admits anyone. Safe fallback: if no author qualifies (annotation unavailable, or
+    # a genuinely thin disease), keep the unfiltered pool so this gate alone never blanks the
+    # list.
+    central_pool = [a for a in sorted_authors if _author_has_central_paper(a)]
+    if central_pool:
+        if len(central_pool) < len(sorted_authors):
+            log.info(
+                "report_builder: centrality gate kept %d/%d authors with >=1 central paper",
+                len(central_pool),
+                len(sorted_authors),
+            )
+        pool = central_pool
+    else:
+        if sorted_authors:
+            log.warning(
+                "report_builder: centrality gate matched 0/%d authors — keeping unfiltered "
+                "pool (no MeSH-major/title centrality; check annotation)",
+                len(sorted_authors),
+            )
+        pool = sorted_authors
+
     # Keep the whole ranked pool (capped for safety), not a global top-N. A global cut
     # is geo-biased: for a US-dominated literature, top-100 can be 95 US / 0 Poland. We
     # keep every author who cleared the role floor so the UI can rank + filter by country
     # without us silently dropping the only specialists from a given region. The markdown
     # *table* still shows just the headline ``top_n`` rows (table_n) for readability.
-    meaningful = [a for a in sorted_authors if _role_name(a) and _role_name(a) != "peripheral"]
-    kept = (meaningful or sorted_authors)[:DOCTOR_FINDER_REPORT_MAX_AUTHORS]
+    meaningful = [a for a in pool if _role_name(a) and _role_name(a) != "peripheral"]
+    kept = (meaningful or pool)[:DOCTOR_FINDER_REPORT_MAX_AUTHORS]
 
     entries = [_build_entry(rank=i + 1, author=a) for i, a in enumerate(kept)]
 

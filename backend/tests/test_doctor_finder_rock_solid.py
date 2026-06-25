@@ -20,7 +20,7 @@ from backend.flows.doctor_finder.pubmed_relevance import (
     article_text_relevant_to_disease,
 )
 from backend.flows.doctor_finder.role_classifier import _assign_role
-from backend.flows.doctor_finder import scoring
+from backend.flows.doctor_finder import report_builder, scoring
 
 DISEASE = "Fibrous dysplasia"
 ALIASES = ["fibrous dysplasia of bone", "McCune-Albright syndrome", "MAS", "FD"]
@@ -264,3 +264,51 @@ def test_low_confidence_score_is_dampened():
     hi = {**base, "identity_confidence": "high"}
     lo = {**base, "identity_confidence": "low"}
     assert scoring.compute_raw(lo, now) < scoring.compute_raw(hi, now)
+
+
+# -- centrality admission gate (report_builder) ------------------------------
+
+
+def _report_author(name: str, *, central: bool, role: str = "active_contributor", score: float = 10.0):
+    return {
+        "author_key": f"key:{name.lower()}",
+        "last_name": name,
+        "fore_name": "Test",
+        "role": {"role": role},
+        "score": score,
+        "papers": [
+            {
+                "pmid": "1",
+                "title": "A paper",
+                "year": 2025,
+                "publication_types": ["Journal Article"],
+                "author_position": "first",
+                "central": central,
+                "mesh_major": central,
+            }
+        ],
+    }
+
+
+def test_report_drops_authors_without_a_central_paper():
+    # Collins-shape (a paper genuinely about FD) is listed; Ordak-shape (FD only an
+    # incidental mention -> not central) is excluded once at least one author qualifies.
+    central = _report_author("Collins", central=True)
+    incidental = _report_author("Ordak", central=False)
+    report = report_builder.run(
+        {"aggregated_authors": [central, incidental], "initial": {"disease_name": DISEASE}}
+    )["doctor_report"]
+    names = [e["display_name"] for e in report["top_authors"]]
+    assert any("Collins" in n for n in names)
+    assert all("Ordak" not in n for n in names)
+
+
+def test_report_central_gate_falls_back_when_none_qualify():
+    # Safe fallback: if NO author has a central paper, keep the pool (never blank the
+    # list on this gate alone — e.g. annotation unavailable or a genuinely thin disease).
+    a = _report_author("One", central=False)
+    b = _report_author("Two", central=False)
+    report = report_builder.run(
+        {"aggregated_authors": [a, b], "initial": {"disease_name": DISEASE}}
+    )["doctor_report"]
+    assert len(report["top_authors"]) == 2

@@ -103,6 +103,51 @@ def test_annotate_sets_fields_in_place():
     assert n == 1
     assert arts[0]["mesh_major"] is True
     assert arts[0]["relevance"] >= 0.85
+    assert arts[0]["central"] is True
+
+
+# -- centrality admission flag ----------------------------------------------
+
+
+def test_central_flag_true_for_mesh_major_or_title_only():
+    major = score_paper(
+        article={
+            "pmid": "1", "title": "Bone biology of a skeletal disorder", "abstract": "x",
+            "publication_types": ["Journal Article"],
+            "mesh_terms": [{"descriptor": "Fibrous Dysplasia of Bone", "major": True}],
+        },
+        disease_name=DISEASE, aliases=ALIASES,
+    )
+    title = score_paper(
+        article={
+            "pmid": "2", "title": "Fibrous dysplasia management in children", "abstract": "x",
+            "publication_types": ["Journal Article"], "mesh_terms": [],
+        },
+        disease_name=DISEASE, aliases=ALIASES,
+    )
+    assert major.central is True
+    assert title.central is True
+
+
+def test_central_flag_false_for_minor_mesh_and_lead_only():
+    minor = score_paper(
+        article={
+            "pmid": "3", "title": "Bone biology of a skeletal disorder", "abstract": "x",
+            "publication_types": ["Journal Article"],
+            "mesh_terms": [{"descriptor": "Fibrous Dysplasia of Bone", "major": False}],
+        },
+        disease_name=DISEASE, aliases=ALIASES,
+    )
+    lead = score_paper(
+        article={
+            "pmid": "4", "title": "Mulibrey nanism: a clinical review",
+            "abstract": "Features include fibrous dysplasia of bone in a minority of patients.",
+            "publication_types": ["Review"], "mesh_terms": [],
+        },
+        disease_name=DISEASE, aliases=ALIASES,
+    )
+    assert minor.central is False
+    assert lead.central is False
 
 
 # -- author scoring consumes per-paper relevance -----------------------------

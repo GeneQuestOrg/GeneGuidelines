@@ -32,6 +32,13 @@ CENTRALITY_MESH_MINOR = 0.6  # disease tagged as a (non-major) MeSH topic
 CENTRALITY_LEAD = 0.4        # only in the abstract lead (passed the gate, but peripheral)
 CENTRALITY_WEAK = 0.2        # no clear centrality signal
 
+# Admission bar for "this paper proves its authors work on the disease": MeSH MAJOR topic
+# or the disease named in the title. A (non-major) MeSH tag or an abstract-lead mention is
+# enough to KEEP the paper and score it, but NOT enough — on its own — to admit its authors
+# as specialists (the canonical "Mulibrey Nanism" -> fibrous dysplasia leak). report_builder
+# requires each listed author to have >=1 paper at or above this bar.
+CENTRAL_MIN_CENTRALITY = CENTRALITY_TITLE
+
 # Evidence-type weight (guideline > original research > review > case report).
 PUB_TYPE_WEIGHT = {
     "guideline": 1.0,
@@ -58,6 +65,9 @@ class PaperEvidence:
     pub_type_weight: float
     relevance: float
     mesh_major: bool
+    # The paper is genuinely ABOUT the disease (MeSH-major or disease-in-title), i.e. it
+    # clears CENTRAL_MIN_CENTRALITY — the per-author admission signal used downstream.
+    central: bool
     reasons: tuple[str, ...]
 
 
@@ -153,6 +163,7 @@ def score_paper(*, article: dict, disease_name: str, aliases: list[str]) -> Pape
         pub_type_weight=pub_weight,
         relevance=relevance,
         mesh_major=mesh_major,
+        central=centrality >= CENTRAL_MIN_CENTRALITY,
         reasons=tuple(reasons),
     )
 
@@ -167,6 +178,7 @@ def annotate_articles_with_evidence(
         ev = score_paper(article=a, disease_name=disease_name, aliases=aliases)
         a["relevance"] = ev.relevance
         a["mesh_major"] = ev.mesh_major
+        a["central"] = ev.central
         if ev.mesh_major:
             major += 1
     return major
