@@ -91,6 +91,8 @@ export interface PublicDoctor {
   readonly contact: string;
   readonly source?: string;
   readonly executionId?: string | null;
+  /** How certain we are this profile is one real person (ORCID > name match). */
+  readonly identityConfidence?: "high" | "medium" | "low" | null;
   // draft9 directory fields. Optional on the type so fixtures and older API responses stay
   // valid; the backend always returns them (practices has ≥1 entry). Use practicesOf() /
   // tierForDisease() helpers to read with a fallback rather than touching these directly.

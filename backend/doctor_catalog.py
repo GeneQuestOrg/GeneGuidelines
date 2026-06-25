@@ -165,6 +165,7 @@ def _entry_to_public_doctor(
         "contact": "form",
         "source": source,
         "executionId": execution_id,
+        "identityConfidence": str(entry.get("identity_confidence") or "low"),
     }
 
 
@@ -222,13 +223,30 @@ def _merge_publication_lists(seed_pubs: list[Any], finder_pubs: list[Any]) -> li
     return list(by_pmid.values())
 
 
+_IDENTITY_CONF_RANK: dict[str, int] = {"low": 0, "medium": 1, "high": 2}
+_IDENTITY_RANK_CONF: dict[int, str] = {0: "low", 1: "medium", 2: "high"}
+
+
+def _identity_conf_rank_of_row(row: dict[str, Any]) -> int:
+    """Rank a public-doctor row's identity confidence (curated seed counts as verified)."""
+    if str(row.get("source") or "") == "content_seed":
+        return _IDENTITY_CONF_RANK["high"]
+    return _IDENTITY_CONF_RANK.get(str(row.get("identityConfidence") or "low"), 0)
+
+
 def _merge_public_doctor_rows(
     seed: dict[str, Any],
     finder: dict[str, Any],
     *,
     disease_slug: str,
 ) -> dict[str, Any]:
-    """Combine curated seed with a doctor_finder hit (same person)."""
+    """Combine curated seed with a doctor_finder hit (same person).
+
+    Also reused for cross-disease self-merge of the same profile slug, so the
+    merged identity confidence must be derived from the inputs (take the best of
+    the two) rather than assumed — otherwise two name-matched finder rows would
+    be falsely promoted to "verified".
+    """
     slug = str(seed.get("slug") or finder.get("slug") or "").strip()
     diseases = list(dict.fromkeys([*(seed.get("diseases") or []), disease_slug, *(finder.get("diseases") or [])]))
     diseases = [str(d).strip().lower() for d in diseases if str(d).strip()]
@@ -332,6 +350,11 @@ def _merge_public_doctor_rows(
         "contact": str(seed.get("contact") or finder.get("contact") or "form"),
         "source": "merged",
         "executionId": finder.get("executionId"),
+        # Best of the two inputs: a curated seed verifies identity (high), but two
+        # name-matched finder rows stay name-matched — never falsely "verified".
+        "identityConfidence": _IDENTITY_RANK_CONF[
+            max(_identity_conf_rank_of_row(seed), _identity_conf_rank_of_row(finder))
+        ],
         "practices": practices,
         "experienceByDisease": experience_by_disease,
         "addedVia": added_via,

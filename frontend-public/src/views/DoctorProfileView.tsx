@@ -20,7 +20,7 @@ import {
   useLocalParentRecs,
 } from "../utils/localParentRecs";
 import { nearestPractice, practiceList } from "../utils/practices";
-import { pubmedArticleUrl } from "../utils/pubmedUrl";
+import { publicationRecordLink, pubmedArticleUrl } from "../utils/pubmedUrl";
 import { PlaceholderView } from "./PlaceholderView";
 import type { AddedVia } from "../types/doctor";
 import { isWorkflowDoctorSource } from "../types/doctor";
@@ -35,6 +35,42 @@ const PROVENANCE_LABEL: Record<AddedVia, string | null> = {
 
 const MIN_REC_CHARS = 20;
 
+/** How many publications to show before the reader opts into the full shelf. */
+const TOP_PUBLICATIONS = 3;
+
+interface IdentityBadge {
+  readonly label: string;
+  readonly title: string;
+  readonly ok: boolean;
+}
+
+/**
+ * Honest identity-confidence label for the hero. We only badge the two ends of
+ * the scale that carry a signal: a verified identity (positive) and a name-only
+ * match (caution). "medium" stays unbadged to avoid clutter.
+ */
+function identityBadge(
+  confidence: "high" | "medium" | "low" | null | undefined,
+): IdentityBadge | null {
+  if (confidence === "high") {
+    return {
+      label: "Verified identity",
+      title:
+        "Identified by ORCID or a curated match — this profile is one specific person.",
+      ok: true,
+    };
+  }
+  if (confidence === "low") {
+    return {
+      label: "Name-matched only",
+      title:
+        "Matched by name from PubMed without an ORCID — distinct people with similar names may be merged, so treat the counts with caution.",
+      ok: false,
+    };
+  }
+  return null;
+}
+
 export interface DoctorProfileViewProps {
   readonly slug: string;
   readonly userLoc: UserLocation | null;
@@ -47,6 +83,7 @@ export function DoctorProfileView({ slug, userLoc, onNav }: DoctorProfileViewPro
   const { recs: localRecs, addRec } = useLocalParentRecs(slug);
   const relatedTrials = useRelatedTrials(doctor?.diseases ?? []);
   const account = useAccountContext();
+  const [showAllPubs, setShowAllPubs] = useState(false);
 
   if (loading) {
     return (
@@ -83,11 +120,18 @@ export function DoctorProfileView({ slug, userLoc, onNav }: DoctorProfileViewPro
   const roleLabel = pubmedRoleLabel(doctor.pubmedRole);
   const evidence = doctor.evidence;
   const provenanceLabel = PROVENANCE_LABEL[addedViaOf(doctor)];
+  const idBadge = identityBadge(doctor.identityConfidence);
 
   const dataRecs = doctor.parentRecs ?? [];
   const dataRecCount = evidence.parentRecCount ?? dataRecs.length;
   const familyRecCount = dataRecs.length + localRecs.length;
   const venues = practiceList(doctor, userLoc);
+
+  const publications = doctor.publications;
+  const visiblePublications = showAllPubs
+    ? publications
+    : publications.slice(0, TOP_PUBLICATIONS);
+  const recordLink = publicationRecordLink(doctor.slug, doctor.name);
 
   return (
     <section className="page page--doctor">
@@ -104,6 +148,14 @@ export function DoctorProfileView({ slug, userLoc, onNav }: DoctorProfileViewPro
             <div className="dprofile__chips">
               {provenanceLabel ? (
                 <span className="tag tag--source">{provenanceLabel}</span>
+              ) : null}
+              {idBadge ? (
+                <span
+                  className={`tag ${idBadge.ok ? "tag--ok" : "tag--warn"}`}
+                  title={idBadge.title}
+                >
+                  {idBadge.label}
+                </span>
               ) : null}
               {doctor.reviewStatus === "pending" ? (
                 <span className="tag tag--warn">Pending review</span>
@@ -193,6 +245,75 @@ export function DoctorProfileView({ slug, userLoc, onNav }: DoctorProfileViewPro
         </div>
       </Section>
 
+      <Section
+        title="Selected publications"
+        count={publications.length}
+        sub="What this specialist has actually published on these conditions."
+        divider
+      >
+        {publications.length === 0 ? (
+          <p className="d-panel-empty">
+            No indexed publications for this profile in the catalog seed.
+          </p>
+        ) : (
+          <>
+            <ul className="pubs">
+              {visiblePublications.map((pub) => (
+                <li key={pub.pmid} className="pub">
+                  <div className="pub__pos">{pub.position}</div>
+                  <div className="pub__body">
+                    <div className="pub__title">
+                      {pub.title}
+                      {pub.meshMajor ? (
+                        <span title="The disease is a major MeSH topic of this paper — it is about the disease, not just mentioning it.">
+                          {" "}
+                          <Badge variant="ok">★ MeSH-major</Badge>
+                        </span>
+                      ) : null}
+                    </div>
+                    <div className="pub__meta">
+                      <em>{pub.journal}</em>
+                      {pub.year != null ? ` · ${pub.year}` : ""}
+                      {pub.pmid ? (
+                        <>
+                          {" · "}
+                          <a href={pubmedArticleUrl(pub.pmid)} target="_blank" rel="noreferrer">
+                            PMID {pub.pmid}
+                          </a>
+                        </>
+                      ) : null}
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+            <div className="pubs__actions">
+              {publications.length > TOP_PUBLICATIONS ? (
+                <button
+                  type="button"
+                  className="link-btn pubs__more"
+                  onClick={() => setShowAllPubs((value) => !value)}
+                >
+                  {showAllPubs
+                    ? "Show fewer"
+                    : `Show all ${publications.length} selected publications`}
+                </button>
+              ) : null}
+              {recordLink ? (
+                <a
+                  className="pubs__shelf"
+                  href={recordLink.url}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  {recordLink.label} →
+                </a>
+              ) : null}
+            </div>
+          </>
+        )}
+      </Section>
+
       <Section title="Where they practise" count={venues.length} divider>
         <ul className="venues">
           {venues.map(({ practice, km: venueKm, nearest: isNearest }, index) => (
@@ -258,6 +379,20 @@ export function DoctorProfileView({ slug, userLoc, onNav }: DoctorProfileViewPro
         <AddRecForm doctorSlug={slug} account={account} onAdd={addRec} />
       </Section>
 
+      <Section title="Endorsements" divider>
+        {doctor.endorsements.length === 0 ? (
+          <p className="d-panel-empty">No consortium endorsements listed.</p>
+        ) : (
+          <div className="chip-row">
+            {doctor.endorsements.map((label) => (
+              <span key={label} className="chip chip--ok">
+                {label}
+              </span>
+            ))}
+          </div>
+        )}
+      </Section>
+
       {evidence.runsClinicalTrial ? (
         <Section
           title="Related trials"
@@ -273,63 +408,6 @@ export function DoctorProfileView({ slug, userLoc, onNav }: DoctorProfileViewPro
           )}
         </Section>
       ) : null}
-
-      <Section
-        title="Selected publications"
-        count={doctor.publications.length}
-        divider
-      >
-        {doctor.publications.length === 0 ? (
-          <p className="d-panel-empty">
-            No indexed publications for this profile in the catalog seed.
-          </p>
-        ) : (
-          <ul className="pubs">
-            {doctor.publications.map((pub) => (
-              <li key={pub.pmid} className="pub">
-                <div className="pub__pos">{pub.position}</div>
-                <div className="pub__body">
-                  <div className="pub__title">
-                  {pub.title}
-                  {pub.meshMajor ? (
-                    <span title="The disease is a major MeSH topic of this paper — it is about the disease, not just mentioning it.">
-                      {" "}
-                      <Badge variant="ok">★ MeSH-major</Badge>
-                    </span>
-                  ) : null}
-                </div>
-                  <div className="pub__meta">
-                    <em>{pub.journal}</em>
-                    {pub.year != null ? ` · ${pub.year}` : ""}
-                    {pub.pmid ? (
-                      <>
-                        {" · "}
-                        <a href={pubmedArticleUrl(pub.pmid)} target="_blank" rel="noreferrer">
-                          PMID {pub.pmid}
-                        </a>
-                      </>
-                    ) : null}
-                  </div>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </Section>
-
-      <Section title="Endorsements" divider>
-        {doctor.endorsements.length === 0 ? (
-          <p className="d-panel-empty">No consortium endorsements listed.</p>
-        ) : (
-          <div className="chip-row">
-            {doctor.endorsements.map((label) => (
-              <span key={label} className="chip chip--ok">
-                {label}
-              </span>
-            ))}
-          </div>
-        )}
-      </Section>
 
       <div className="dprofile__contact">
         <div>

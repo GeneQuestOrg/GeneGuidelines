@@ -217,6 +217,7 @@ def _build_entry(rank: int, author: dict[str, Any]) -> DoctorEntry:
         flags=flags,
         key_papers=_build_key_papers(papers, KEY_PAPERS_PER_AUTHOR),
         evidence_summary=evidence,
+        identity_confidence=str(author.get("identity_confidence") or "low"),
         ai_justification=author.get("ai_justification"),
     )
 

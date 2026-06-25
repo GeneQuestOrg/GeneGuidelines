@@ -194,6 +194,9 @@ class DoctorEntry(BaseModel, frozen=True):
     flags: AuthorFlags = Field(default_factory=AuthorFlags)
     key_papers: list[KeyPaper] = Field(default_factory=list)
     evidence_summary: EvidenceSummary = Field(default_factory=EvidenceSummary)
+    # Carried through from AggregatedAuthor so the public profile can label how
+    # certain we are this is one real person ("ORCID-verified" vs "name-matched").
+    identity_confidence: str = "low"
     ai_justification: Optional[str] = None
 
 

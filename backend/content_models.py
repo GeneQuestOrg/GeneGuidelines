@@ -233,6 +233,11 @@ class PublicDoctorResponse(BaseModel):
     contact: str = "form"
     source: str = "content_seed"
     executionId: str | None = None
+    # Author-identity disambiguation confidence for doctor_finder rows: "high"
+    # (ORCID, or curated-seed match), "medium" (PubMed author-id / consistent
+    # name cluster), "low" (initials-only / collision-shaped). None for plain
+    # curated seed rows. Drives an honest "ORCID-verified" vs "name-matched" badge.
+    identityConfidence: Literal["high", "medium", "low"] | None = None
     # draft9 directory fields (populated for real in later items; safe empty defaults so the
     # api path never 500s while data catches up).
     practices: list[PracticeResponse] = Field(default_factory=list)

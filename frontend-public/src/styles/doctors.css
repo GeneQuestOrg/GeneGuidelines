@@ -951,6 +951,24 @@
   margin-top: 2px;
 }
 
+.pubs__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 18px;
+  margin-top: 16px;
+}
+
+.pubs__shelf {
+  font-size: var(--fs-xs);
+  color: var(--accent-ink);
+  text-decoration: none;
+}
+
+.pubs__shelf:hover {
+  text-decoration: underline;
+}
+
 .dprofile__contact {
   display: flex;
   gap: 24px;
