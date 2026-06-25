@@ -392,6 +392,112 @@ Doctor verification (`ORCID_CLIENT_ID`, `ORCID_CLIENT_SECRET`, `ORCID_REDIRECT_U
 | **Postgres** | Set `DB_URL` on the Container App (Azure Database for PostgreSQL or equivalent). Without it the backend refuses to start. |
 | **OpenRouter** | Not used as the primary provider on the hosted instance due to rate limits when bursting multiple workflows. |
 
+## Dedicated research worker (`gg-worker`)
+
+Research (the 6-workflow disease bootstrap) runs in a **separate** Container App so
+the web process never blocks its event loop on long PubMed/LLM work:
+
+| App | Role | `RESEARCH_QUEUE_MAX_CONCURRENT` |
+|---|---|---|
+| `gg-public` | web — admits jobs + serves status from Postgres | **0** (runs zero research workers) |
+| `gg-worker` | dedicated processor — claims `research_jobs` and runs them | **1** (this process is the pool) |
+
+Both share the **same Postgres** (`secretref:db-url`) and the **same image tag**.
+The worker has **no ingress** (it never serves HTTP) and runs `python -m backend.worker`.
+The deploy workflow rolls `gg-worker` to the same tag as `gg-public`, but only **if it
+already exists** — provisioning is the one-time manual step below.
+
+### Token budget guard
+
+The worker appends one `token_usage` row per successful LLM call (`backend/research_queue/token_budget.py`)
+and pauses claiming new disease jobs once `SUM(total_tokens)` for the current month
+reaches `RESEARCH_TOKEN_BUDGET_MONTHLY` (`0`/unset = unlimited). Set the cap on **both**
+apps so the web `/api/research/budget` readout and the worker guard agree. Live readout:
+`GET /api/research/budget` → `{"limit","spent","remaining","window","blocked"}`.
+
+### One-time provisioning
+
+Requires the `token_usage` migration applied first (see § Database migrations) — the
+worker queries it on startup. Mirror `gg-public`'s registry auth (ACR admin) and the
+LLM/DB/NCBI secrets onto the new app. The container `command` needs dash args (`-m`),
+which the `az ... --command` flag cannot parse, so create from a JSON/YAML spec:
+
+```bash
+RG=geneguidelines-demo
+# Pull the values to mirror (do not print them):
+S_DB=$(az containerapp secret show -n gg-public -g $RG --secret-name db-url --query value -o tsv)
+S_LLM=$(az containerapp secret show -n gg-public -g $RG --secret-name llm-api-key --query value -o tsv)
+S_NCBI=$(az containerapp secret show -n gg-public -g $RG --secret-name ncbi-api-key --query value -o tsv)
+S_OR=$(az containerapp secret show -n gg-public -g $RG --secret-name openrouter-key --query value -o tsv)
+ACR_PWD=$(az acr credential show -n ggdemo45223 --query "passwords[0].value" -o tsv)
+TAG=$(az containerapp show -n gg-public -g $RG --query "properties.template.containers[0].image" -o tsv | sed 's/.*://')
+
+# Write a 0600 spec (JSON is valid YAML; lets the command carry "-m"):
+python3 - "$S_DB" "$S_LLM" "$S_NCBI" "$S_OR" "$ACR_PWD" "$TAG" > /tmp/gg-worker.json <<'PY'
+import json, sys
+db, llm, ncbi, orr, acr, tag = sys.argv[1:7]
+print(json.dumps({
+  "location": "Poland Central",
+  "properties": {
+    "managedEnvironmentId": "/subscriptions/<SUB_ID>/resourceGroups/geneguidelines-demo/providers/Microsoft.App/managedEnvironments/gg-env",
+    "configuration": {
+      "activeRevisionsMode": "Single",
+      "secrets": [
+        {"name":"db-url","value":db},{"name":"llm-api-key","value":llm},
+        {"name":"ncbi-api-key","value":ncbi},{"name":"openrouter-key","value":orr},
+        {"name":"acr-password","value":acr}],
+      "registries": [{"server":"ggdemo45223.azurecr.io","username":"ggdemo45223","passwordSecretRef":"acr-password"}]
+    },
+    "template": {
+      "containers": [{
+        "name":"gg-worker",
+        "image":f"ggdemo45223.azurecr.io/geneguidelines-backend:{tag}",
+        "command":["python","-m","backend.worker"],
+        "resources":{"cpu":1.0,"memory":"2.0Gi"},
+        "env":[
+          {"name":"MODEL_PROFILE","value":"vllm"},
+          {"name":"LLM_BASE_URL","value":"https://api.siliconflow.com/v1"},
+          {"name":"LLM_MODEL","value":"google/gemma-4-31B-it"},
+          {"name":"LLM_AUTH_HEADER_STYLE","value":"bearer"},
+          {"name":"LLM_API_KEY","secretRef":"llm-api-key"},
+          {"name":"OPENAI_API_KEY","value":"sk-placeholder-unused-in-vllm-mode"},
+          {"name":"OPENROUTER_API_KEY","secretRef":"openrouter-key"},
+          {"name":"DB_URL","secretRef":"db-url"},
+          {"name":"NCBI_API_KEY","secretRef":"ncbi-api-key"},
+          {"name":"RESEARCH_QUEUE_MAX_CONCURRENT","value":"1"},
+          {"name":"RESEARCH_TOKEN_BUDGET_MONTHLY","value":"100000000"}]
+      }],
+      "scale":{"minReplicas":1,"maxReplicas":1}
+    }
+  }
+}, indent=2))
+PY
+chmod 600 /tmp/gg-worker.json
+az containerapp create -n gg-worker -g $RG --yaml /tmp/gg-worker.json
+rm -f /tmp/gg-worker.json   # contains secrets
+
+# Flip the web app to admit-only + same budget (its own revision):
+az containerapp update -n gg-public -g $RG \
+  --set-env-vars RESEARCH_QUEUE_MAX_CONCURRENT=0 RESEARCH_TOKEN_BUDGET_MONTHLY=100000000
+```
+
+Verify: `az containerapp logs show -n gg-worker -g $RG --tail 20 --type console` →
+`scheduler started (max_concurrent=1) — waiting for jobs`; then a bootstrap
+(`POST /api/pipeline/bootstrap-disease`) is admitted by `gg-public` (`status:queued`)
+and processed by `gg-worker`, with `/api/research/budget` `spent` climbing.
+
+### Rollback
+
+Restore today's behavior in two commands: re-enable in-process research on the web app
+and stop the worker.
+
+```bash
+az containerapp update -n gg-public -g geneguidelines-demo --remove-env-vars RESEARCH_QUEUE_MAX_CONCURRENT
+az containerapp update -n gg-worker -g geneguidelines-demo --min-replicas 0 --max-replicas 0   # or: az containerapp delete -n gg-worker -g geneguidelines-demo
+```
+
+The `token_usage` table and migration are additive and harmless to leave in place.
+
 ## CI/CD (GitHub Actions)
 
 Workflow: **`.github/workflows/deploy-azure.yml`**
