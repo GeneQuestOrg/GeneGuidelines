@@ -26,7 +26,7 @@ export interface DoctorsQuery {
   readonly loc: UserLocation | null;
   /** Human label for {@link loc} (e.g. "Warsaw, PL"); null when loc is null. */
   readonly locLabel: string | null;
-  /** Distance cap in km (25 | 100 | 500), or null for no limit. */
+  /** Distance cap in km (25 | 100 | 500 | 2500 | 5000), or null for no limit. */
   readonly maxKm: number | null;
   /** Active sort order. */
   readonly sort: DoctorSort;
@@ -46,7 +46,7 @@ const ROLES: readonly PubmedRole[] = [
   "research_participant",
   "case_study_author",
 ];
-const RADII: readonly number[] = [25, 100, 500];
+const RADII: readonly number[] = [25, 100, 500, 2500, 5000];
 
 export const DEFAULT_DOCTORS_QUERY: DoctorsQuery = {
   disease: null,

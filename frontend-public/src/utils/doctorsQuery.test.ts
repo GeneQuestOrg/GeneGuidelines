@@ -70,6 +70,12 @@ describe("parseDoctorsQuery", () => {
     expect(q.loc).toBeNull();
   });
 
+  it("accepts the extended long-range radii (2500 / 5000 km)", () => {
+    const base = { loc: "52.2,21.0", place: "Warsaw, PL" };
+    expect(parseDoctorsQuery({ ...base, km: "2500" }).maxKm).toBe(2500);
+    expect(parseDoctorsQuery({ ...base, km: "5000" }).maxKm).toBe(5000);
+  });
+
   it("drops maxKm and label when there is no location", () => {
     const q = parseDoctorsQuery({ km: "100", place: "Nowhere" });
     expect(q.loc).toBeNull();

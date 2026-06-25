@@ -53,7 +53,6 @@ export function DiseaseTabs({
   isClinician,
   related,
   relatedLoading,
-  userLoc,
   onNav,
 }: DiseaseTabsProps) {
   const [tab, setTab] = useState<DiseaseTabId>("overview");
@@ -88,9 +87,12 @@ export function DiseaseTabs({
     if (doctorsPayload == null) {
       return [];
     }
-    const rows = attachDoctorDistances(doctorsPayload.doctors, userLoc);
+    // The disease card is a global orientation hub: rank by evidence/score, never by the
+    // visitor's ambient location. Proximity search lives on the /doctors page behind an explicit
+    // location filter, so a nearby low-relevance doctor never displaces a world expert here.
+    const rows = attachDoctorDistances(doctorsPayload.doctors, null);
     return sortDoctorsByDistanceThenScore(rows).slice(0, 5);
-  }, [doctorsPayload, userLoc]);
+  }, [doctorsPayload]);
 
   // The disease page is an orientation hub, not a full directory: show the top few
   // trials (the hook already returns active-first) and link out to the faceted

@@ -152,10 +152,31 @@ export function LocationPicker({ value, label, onChange }: LocationPickerProps) 
             className="loc-picker__geo-btn"
             onClick={handleGeolocate}
             disabled={geoLoading}
-            title="Use my location"
-            aria-label="Use my location"
+            title="Detect my location"
+            aria-label="Detect my location"
           >
-            {geoLoading ? "…" : "⊙"}
+            {geoLoading ? (
+              "…"
+            ) : (
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <circle cx="12" cy="12" r="7" />
+                <line x1="12" y1="1" x2="12" y2="4" />
+                <line x1="12" y1="20" x2="12" y2="23" />
+                <line x1="1" y1="12" x2="4" y2="12" />
+                <line x1="20" y1="12" x2="23" y2="12" />
+                <circle cx="12" cy="12" r="2.5" fill="currentColor" stroke="none" />
+              </svg>
+            )}
           </button>
         </div>
       )}

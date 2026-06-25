@@ -3,7 +3,7 @@ import type { UserLocation } from "../router/types";
 import { LocationPicker } from "./LocationPicker";
 
 /** Distance cap in km, or null for "no limit" (show everyone, nearest first). */
-export type DistanceMax = 25 | 100 | 500 | null;
+export type DistanceMax = 25 | 100 | 500 | 2500 | 5000 | null;
 
 export interface LocationMenuProps {
   readonly value: UserLocation | null;
@@ -17,6 +17,8 @@ const RADIUS_OPTIONS: readonly { value: DistanceMax; label: string }[] = [
   { value: 25, label: "25 km" },
   { value: 100, label: "100 km" },
   { value: 500, label: "500 km" },
+  { value: 2500, label: "2500 km" },
+  { value: 5000, label: "5000 km" },
   { value: null, label: "No limit" },
 ];
 

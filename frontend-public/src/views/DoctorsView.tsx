@@ -59,7 +59,7 @@ const SORT_OPTIONS: readonly { value: string; label: string }[] = [
 
 type ViewMode = "both" | "list" | "map";
 
-export function DoctorsView({ userLoc, hash, onNav }: DoctorsViewProps) {
+export function DoctorsView({ hash, onNav }: DoctorsViewProps) {
   const { doctors, loading, error } = useDoctors();
   const { diseases, loading: diseasesLoading } = useDiseaseCatalog();
   const account = useAccountContext();
@@ -86,7 +86,10 @@ export function DoctorsView({ userLoc, hash, onNav }: DoctorsViewProps) {
     [query, onNav],
   );
 
-  const effectiveUserLoc = query.loc ?? userLoc;
+  // Location is opt-in. Only a place the visitor explicitly chooses (query.loc) drives distance
+  // sorting/filtering; the ambient default-city location must never silently reorder the global
+  // ranking, otherwise a nearby low-relevance doctor outranks a world expert by accident.
+  const effectiveUserLoc = query.loc;
   const activeDiseaseSlug = query.disease;
 
   const activeDiseaseLabel = useMemo(() => {
