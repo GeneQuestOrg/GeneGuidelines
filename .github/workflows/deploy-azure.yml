@@ -132,12 +132,22 @@ jobs:
       # Also set gg-public's RESEARCH_QUEUE_MAX_CONCURRENT=0 once (manual Azure
       # env step — this workflow does not manage Container App env vars) so the
       # web process admits/serves only and never runs research in its event loop.
-      - name: Update gg-worker revision (same image)
+      - name: Update gg-worker revision (same image, if provisioned)
         run: |
-          az containerapp update \
-            --name "gg-worker" \
-            --resource-group "${{ env.AZURE_RESOURCE_GROUP }}" \
-            --image "${{ env.AZURE_REGISTRY }}.azurecr.io/${{ env.IMAGE_REPOSITORY }}:${{ steps.image.outputs.tag }}"
+          # One-time provisioning of gg-worker is manual (see deploy/AZURE.md);
+          # this step only ROLLS an existing app. Skip cleanly when it does not
+          # exist yet so the first deploy of the worker code stays green.
+          if az containerapp show \
+              --name "gg-worker" \
+              --resource-group "${{ env.AZURE_RESOURCE_GROUP }}" \
+              --output none 2>/dev/null; then
+            az containerapp update \
+              --name "gg-worker" \
+              --resource-group "${{ env.AZURE_RESOURCE_GROUP }}" \
+              --image "${{ env.AZURE_REGISTRY }}.azurecr.io/${{ env.IMAGE_REPOSITORY }}:${{ steps.image.outputs.tag }}"
+          else
+            echo "gg-worker not provisioned yet — skipping roll (see deploy/AZURE.md § worker)."
+          fi
 
       - name: Smoke test /health and /api/account/me
         run: |
