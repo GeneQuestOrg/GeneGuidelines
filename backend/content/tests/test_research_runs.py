@@ -223,6 +223,7 @@ def test_to_payload_shape(conn):
         "label",
         "startedAt",
         "elapsedSec",
+        "blockedReason",
     }
     assert payload["diseaseSlug"] == "noonan"
     assert payload["label"] == "Noonan run"
