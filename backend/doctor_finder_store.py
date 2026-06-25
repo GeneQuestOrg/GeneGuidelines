@@ -155,16 +155,73 @@ def _parse_latest_report_row(row: Any) -> tuple[str, dict[str, Any], str] | None
     return (eid, report, started)
 
 
+# A re-run with at least this many ranked authors is a legitimate result that should
+# REPLACE an older run — even when it is *smaller* (e.g. a precision pass that evicts
+# incidental authors). Below it, a run looks like a transient failure (a network blip
+# yielding a 1-doctor report in milliseconds) and must not shadow a real earlier run.
+MIN_PLAUSIBLE_CATALOG_AUTHORS = 3
+
+
+def _report_author_count(report: dict[str, Any]) -> int:
+    authors = report.get("top_authors")
+    return len(authors) if isinstance(authors, list) else 0
+
+
+def _select_best_catalog_runs(
+    rows: list[Any],
+    *,
+    slug_resolver,
+) -> dict[str, tuple[str, dict[str, Any], str]]:
+    """Pick one run per catalog slug from rows ordered most-recent-first.
+
+    Pure (no DB) so the selection policy is unit-testable. Within each slug, the
+    MOST RECENT run whose ranked-author count clears ``MIN_PLAUSIBLE_CATALOG_AUTHORS``
+    wins — a re-run is intentional and should replace its predecessor even when it is
+    smaller. A near-empty run (transient failure) is skipped; if every run for a slug
+    is below the floor, the largest by author count is kept as a last resort.
+    """
+    grouped: dict[str, list[Any]] = {}
+    for row in rows:
+        slug = str(row.get("catalog_slug") or "").strip().lower()
+        if not slug:
+            slug = slug_resolver(str(row.get("disease_name") or "")) or ""
+        if not slug:
+            continue
+        grouped.setdefault(slug, []).append(row)
+
+    best: dict[str, tuple[str, dict[str, Any], str]] = {}
+    for slug, slug_rows in grouped.items():
+        chosen: tuple[str, dict[str, Any], str] | None = None
+        fallback: tuple[str, dict[str, Any], str] | None = None
+        fallback_count = -1
+        for row in slug_rows:  # most recent first
+            parsed = _parse_latest_report_row(row)
+            if parsed is None:
+                continue
+            count = _report_author_count(parsed[1])
+            if count >= MIN_PLAUSIBLE_CATALOG_AUTHORS:
+                chosen = parsed
+                break
+            if count > fallback_count:
+                fallback_count = count
+                fallback = parsed
+        result = chosen if chosen is not None else fallback
+        if result is not None:
+            best[slug] = result
+    return best
+
+
 def load_successful_reports_for_catalog_index() -> dict[str, tuple[str, dict[str, Any], str]]:
-    """Best successful doctor_finder snapshot per catalog slug (one DB round-trip).
+    """Chosen successful doctor_finder snapshot per catalog slug (one DB round-trip).
 
     Values are ``(execution_id, doctor_report, started_at)``. Rows with a missing
     ``catalog_slug`` are mapped via ``catalog_slug_for_finder_input(disease_name)``.
 
-    "Best" = the LARGEST report, tie-broken by most recent start — NOT simply the
-    most recently started. A failed/empty re-run (e.g. a network blip that yields a
-    1-doctor report in milliseconds) must not shadow the real 1000-doctor run that
-    completed earlier; report size is a robust, cross-DB proxy for doctor count.
+    Selection (see :func:`_select_best_catalog_runs`) = the MOST RECENT successful run
+    whose ranked-author count clears ``MIN_PLAUSIBLE_CATALOG_AUTHORS``. A re-run wins
+    even when it is smaller than its predecessor (a precision pass that evicts incidental
+    authors); only a near-empty run (a transient network/parse failure) is skipped so it
+    cannot shadow a real earlier run.
     """
     try:
         from .doctor_catalog import catalog_slug_for_finder_input
@@ -182,25 +239,13 @@ def load_successful_reports_for_catalog_index() -> dict[str, tuple[str, dict[str
           AND (error IS NULL OR TRIM(error) = '')
           AND doctor_report_json IS NOT NULL
           AND TRIM(doctor_report_json) != ''
-        ORDER BY LENGTH(doctor_report_json) DESC, started_at DESC
+        ORDER BY started_at DESC, LENGTH(doctor_report_json) DESC
         """
     )
     rows = cur.fetchall() or []
     conn.close()
 
-    best: dict[str, tuple[str, dict[str, Any], str]] = {}
-    for row in rows:
-        slug = str(row.get("catalog_slug") or "").strip().lower()
-        if not slug:
-            slug = catalog_slug_for_finder_input(str(row.get("disease_name") or "")) or ""
-        if not slug:
-            continue
-        if slug in best:
-            continue
-        parsed = _parse_latest_report_row(row)
-        if parsed is not None:
-            best[slug] = parsed
-    return best
+    return _select_best_catalog_runs(rows, slug_resolver=catalog_slug_for_finder_input)
 
 
 def load_latest_successful_report_for_catalog_slug(
