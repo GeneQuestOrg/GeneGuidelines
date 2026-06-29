@@ -1,0 +1,54 @@
+.info-hint {
+  position: relative;
+  display: inline-flex;
+}
+
+.info-hint__trigger {
+  font: inherit;
+  color: var(--ink-3);
+  background: none;
+  border: none;
+  border-bottom: 1px dotted var(--ink-3);
+  padding: 0;
+  cursor: help;
+}
+
+.info-hint__trigger:hover,
+.info-hint__trigger:focus-visible {
+  color: var(--ink-2);
+  border-bottom-color: var(--ink-2);
+}
+
+.info-hint__bubble {
+  display: none;
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 200;
+  width: max-content;
+  max-width: 280px;
+  padding: 10px 12px;
+  font-size: var(--fs-sm);
+  font-weight: 400;
+  line-height: 1.45;
+  color: var(--ink-2);
+  text-align: left;
+  white-space: normal;
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.16);
+}
+
+/* Instant hover on pointer devices (no native title delay). */
+@media (hover: hover) {
+  .info-hint:hover .info-hint__bubble {
+    display: block;
+  }
+}
+
+/* Keyboard focus, and click/tap pin (the only trigger on touch devices). */
+.info-hint:focus-within .info-hint__bubble,
+.info-hint.is-pinned .info-hint__bubble {
+  display: block;
+}

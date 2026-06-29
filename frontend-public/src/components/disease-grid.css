@@ -28,14 +28,6 @@
   font-weight: 600;
 }
 
-/* "(growing)" hint next to the disease count — explains the on-demand/batch model
-   on hover without adding a clutter line to the condensed hero. */
-.intro__meta-grow {
-  color: var(--ink-3);
-  cursor: help;
-  border-bottom: 1px dotted var(--ink-3);
-}
-
 .d-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));

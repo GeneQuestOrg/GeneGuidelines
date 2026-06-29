@@ -4,6 +4,7 @@ import type { AudienceView } from "../router/types";
 import { getAudienceCopy } from "../copy";
 import { ActiveResearchSection } from "../components/ActiveResearchSection";
 import { DiseaseCard } from "../components/DiseaseCard";
+import { InfoHint } from "../components/InfoHint";
 import { NewDiseaseCard } from "../components/NewDiseaseCard";
 import { useActiveResearchRuns } from "../hooks/useActiveResearchRuns";
 import { useDiseaseCatalog } from "../hooks/useDiseaseCatalog";
@@ -80,12 +81,11 @@ export function HomeView({ view, onNav }: HomeViewProps) {
           <div className="intro__meta">
             <span>
               <b>{stats.diseaseCount}</b> diseases{" "}
-              <span
-                className="intro__meta-grow"
-                title="We add diseases on demand and in regular batches — covering all of rare disease at once is costly, so we prioritise the conditions families actually ask for."
-              >
-                (growing)
-              </span>
+              <InfoHint label="(growing)" ariaLabel="Why the disease count is growing">
+                We add diseases on demand and in regular batches — covering all of rare
+                disease at once is costly, so we prioritise the conditions families
+                actually ask for.
+              </InfoHint>
             </span>
             <span>
               <b>{stats.doctorCount}</b> specialists
