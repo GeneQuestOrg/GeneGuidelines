@@ -25,6 +25,10 @@ export function AppFooter({ onNav }: AppFooterProps) {
           Living guidelines for rare genetic diseases — AI-drafted updates, reviewed by
           specialists, refreshed on demand.
         </p>
+        <p className="site-footer__desc">
+          Powered by <strong>Gemma 4</strong> — an open model that can run on-device, so a
+          family&apos;s documents are de-identified before anything leaves the building.
+        </p>
       </div>
       <nav className="site-footer__links" aria-label="Footer">
         {link("/", "Home")}

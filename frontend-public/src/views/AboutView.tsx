@@ -315,8 +315,9 @@ export function AboutView({ onNav }: AboutViewProps) {
                 catalogue surfaces what exists, even when only one organisation worldwide works on a disease.
               </li>
               <li>
-                A <b>private case-context panel</b> — paste a discharge summary, see what becomes relevant.
-                Identifiers are stripped on the operator&apos;s infrastructure before anything else runs.
+                A <b>private case-context panel</b> — paste a discharge summary or pathology report and get custom
+                research for <em>your</em> case. Gemma 4 strips the identifiers on the operator&apos;s infrastructure
+                first, so nothing personal leaves the building.
               </li>
             </ul>
             <p>
@@ -331,6 +332,12 @@ export function AboutView({ onNav }: AboutViewProps) {
             <p>
               This is not another medical chatbot. The platform is built on reproducible, reviewable workflows where
               every recommendation is anchored to a PMID and every change is signed by a clinician.
+            </p>
+            <p>
+              It runs on <b>Gemma 4</b>, an open model. The strength is not a bigger model — it is prompt engineering
+              grounded in real diagnostic journeys (like the one above), and a system that sharpens with every
+              clinician rating and anonymised family case it sees. Per-disease fine-tuning on that accumulating signal
+              is on the roadmap.
             </p>
             <p>
               Two layers run side by side. <b>Official consensus</b> — where one exists (e.g. Boyce et al. 2019 for
@@ -383,6 +390,7 @@ export function AboutView({ onNav }: AboutViewProps) {
             <p>
               The case-context panel accepts free text — a discharge summary, a biopsy report. The text is read into a
               single request handler&apos;s memory, hashed (SHA-256) for deduplication, and passed to a redaction model
+              — <b>Gemma 4</b>, an open model that can run entirely on the operator&apos;s own hardware —
               running on the operator&apos;s infrastructure. Only a structured payload — facts without identifiers —
               flows downstream. The raw bytes are discarded explicitly: not written to disk, not present in any
               backup.
