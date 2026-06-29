@@ -285,8 +285,8 @@
               ],
               "update": {
                 "doc": "31673695",
-                "supersedes": "22640797",
-                "note": "Updates the older craniofacial guideline’s post-zygotic GNAS framework with a broader mosaic Gαs/cAMP pathophysiology model."
+                "supersedes": "",
+                "note": "Broadens the post-zygotic GNAS framework with a mosaic Gαs/cAMP pathophysiology model; complements rather than supersedes the craniofacial consensus."
               }
             },
             {
@@ -301,7 +301,7 @@
               ],
               "update": {
                 "doc": "38010041",
-                "supersedes": "31196103",
+                "supersedes": "",
                 "note": "Adds child-specific emphasis on somatic Gαs variants, skeletal growth, and age-related lesion progression."
               }
             }
@@ -335,7 +335,7 @@
               ],
               "update": {
                 "doc": "38010041",
-                "supersedes": "31196103",
+                "supersedes": "",
                 "note": "Adds child-specific emphasis on growth-related progression, physiatric care, and pediatric multidisciplinary decision-making."
               }
             },
@@ -351,7 +351,7 @@
               ],
               "update": {
                 "doc": "38010041",
-                "supersedes": "31196103",
+                "supersedes": "",
                 "note": "Clarifies that bisphosphonates are for pain rather than lesion modification, and frames denosumab as investigational/emerging rather than routine therapy."
               },
               "highlight": true
@@ -482,7 +482,7 @@
               ],
               "update": {
                 "doc": "38010041",
-                "supersedes": "31196103",
+                "supersedes": "",
                 "note": "Adds emphasis on childhood growth-related progression and pediatric management challenges."
               }
             },
