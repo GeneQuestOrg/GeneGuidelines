@@ -72,6 +72,20 @@ def _first_initial(s: str) -> str:
     return s[0].lower() if s else ""
 
 
+def _grouping_for(code: str, nppes_grouping: str) -> str:
+    """Resolve a taxonomy grouping. NPPES results usually leave ``grouping`` empty, so fall back
+    to our committed NUCC table keyed by the taxonomy code (which carries the grouping)."""
+    g = (nppes_grouping or "").strip()
+    if g:
+        return g
+    try:
+        from . import specialty_taxonomy
+    except ImportError:  # pragma: no cover - flat-layout shim
+        import specialty_taxonomy  # type: ignore[no-redef]
+    entry = specialty_taxonomy.entry_for_code((code or "").strip())
+    return entry.grouping if entry else ""
+
+
 def _is_physicianish(grouping: str) -> bool:
     g = (grouping or "").lower()
     return any(tok in g for tok in _PHYSICIAN_GROUPINGS)
@@ -140,8 +154,8 @@ def _pick(results: list[dict], *, first_initial: str, have_state: bool) -> Nppes
         basic = r.get("basic") or {}
         if first_initial and _first_initial(str(basic.get("first_name") or "")) != first_initial:
             continue
-        tax = _primary_taxonomy(r)
-        grouping = str((tax or {}).get("grouping") or "")
+        tax = _primary_taxonomy(r) or {}
+        grouping = _grouping_for(str(tax.get("code") or ""), str(tax.get("grouping") or ""))
         if not _is_physicianish(grouping):
             continue
         plausible.append(r)
