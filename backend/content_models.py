@@ -1,9 +1,28 @@
 """Pydantic models for public content API (camelCase JSON — matches frontend-public types)."""
 from __future__ import annotations
 
+from datetime import date
 from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
+
+# Recency bands for "is this person on top of the disease RIGHT NOW" — the signal a family
+# needs (a mis-diagnosis is corrected by someone currently active, not merely titled). Derived
+# from the newest publication year the profile carries; ``unknown`` when no year is present.
+RecencyBand = Literal["active_2y", "active_5y", "older", "unknown"]
+
+
+def recency_band_for_year(last_year: int | None, *, today: date | None = None) -> RecencyBand:
+    """Map the newest publication year to a recency band (Phase 0: whole-profile, not per-disease)."""
+    if last_year is None:
+        return "unknown"
+    current = (today or date.today()).year
+    delta = current - int(last_year)
+    if delta <= 2:
+        return "active_2y"
+    if delta <= 5:
+        return "active_5y"
+    return "older"
 
 
 class GuidelinePromptProfile(BaseModel):
@@ -246,6 +265,13 @@ class PublicDoctorResponse(BaseModel):
     rodo: RodoResponse | None = None
     parentRecs: list[ParentRecResponse] = Field(default_factory=list)
     reviewStatus: Literal["pending"] | None = None
+    # Phase 0 research-axis recency (derived from ``publications`` when not supplied).
+    # ``lastPaperYear`` = newest paper of any kind; ``lastCentralPaperYear`` = newest paper that
+    # is genuinely ABOUT the disease (MeSH-major). ``recencyBand`` powers the "on top of the
+    # disease now" filter/preset without any new data source.
+    lastPaperYear: int | None = None
+    lastCentralPaperYear: int | None = None
+    recencyBand: RecencyBand = "unknown"
 
     @model_validator(mode="after")
     def _derive_directory_defaults(self) -> "PublicDoctorResponse":
@@ -263,6 +289,17 @@ class PublicDoctorResponse(BaseModel):
             ]
         # Keep the sixth evidence signal in sync with the recommendations themselves.
         self.evidence.parentRecCount = len(self.parentRecs)
+        # Derive recency from publications when a producer didn't set it explicitly. Central =
+        # MeSH-major (paper is about the disease), so it reflects disease focus, not any activity.
+        years = [p.year for p in self.publications if p.year is not None]
+        central_years = [p.year for p in self.publications if p.year is not None and p.meshMajor]
+        if self.lastPaperYear is None and years:
+            self.lastPaperYear = max(years)
+        if self.lastCentralPaperYear is None and central_years:
+            self.lastCentralPaperYear = max(central_years)
+        if self.recencyBand == "unknown":
+            basis = self.lastCentralPaperYear or self.lastPaperYear
+            self.recencyBand = recency_band_for_year(basis)
         return self
 
 

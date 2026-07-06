@@ -1,5 +1,10 @@
 import { type PublicDoctor, isWorkflowDoctorSource } from "../types/doctor";
-import { pubmedRoleLabel, VALID_PUBMED_ROLES } from "../utils/doctorLabels";
+import {
+  pubmedRoleLabel,
+  recencyBandOf,
+  recencyLabel,
+  VALID_PUBMED_ROLES,
+} from "../utils/doctorLabels";
 import { DistancePill } from "./DistancePill";
 
 export interface DoctorCardProps {
@@ -12,6 +17,10 @@ export interface DoctorCardProps {
 export function DoctorCard({ doctor, km, compact = false, onNav }: DoctorCardProps) {
   const roleLabel = pubmedRoleLabel(doctor.pubmedRole);
   const safeRoleClass = VALID_PUBMED_ROLES.has(doctor.pubmedRole) ? doctor.pubmedRole : "unknown";
+  // Clinical specialty is a SEPARATE axis from the PubMed research role. Until we have a verified
+  // specialty source, ``specialty`` is empty — say so honestly rather than showing a role token.
+  const specialty = doctor.specialty?.trim();
+  const recencyBand = recencyBandOf(doctor);
   const href = `#/doctor/${doctor.slug}`;
 
   return (
@@ -27,7 +36,11 @@ export function DoctorCard({ doctor, km, compact = false, onNav }: DoctorCardPro
         <div className="doc__name">{doctor.name}</div>
         {km != null ? <DistancePill km={km} /> : null}
       </div>
-      <div className="doc__spec">{doctor.specialty}</div>
+      {specialty ? (
+        <div className="doc__spec">{specialty}</div>
+      ) : (
+        <div className="doc__spec doc__spec--unverified">Specialty not verified</div>
+      )}
       <div className="doc__inst">
         {doctor.institution} · {doctor.city}, {doctor.country}
       </div>
@@ -35,6 +48,18 @@ export function DoctorCard({ doctor, km, compact = false, onNav }: DoctorCardPro
         <>
           <div className="doc__meta">
             <span className={`tag tag--role tag--${safeRoleClass}`}>{roleLabel}</span>
+            {recencyBand !== "unknown" ? (
+              <span
+                className={`tag tag--recency tag--recency-${recencyBand}`}
+                title={
+                  doctor.lastCentralPaperYear || doctor.lastPaperYear
+                    ? `Latest disease-relevant paper: ${doctor.lastCentralPaperYear ?? doctor.lastPaperYear}`
+                    : undefined
+                }
+              >
+                {recencyLabel(recencyBand)}
+              </span>
+            ) : null}
             <span className="tag tag--score">
               PubMed <b>{doctor.score}</b>
               <span className="doc__score-bar">

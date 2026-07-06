@@ -132,10 +132,14 @@ def _entry_to_public_doctor(
         if isinstance(p, dict) and p.get("pmid")
     ]
     pubmed_role = _role_to_pubmed_role(str(entry.get("role") or ""))
+    # Phase 0: the PubMed role is NOT a clinical specialty. Leave ``specialty`` empty for finder
+    # rows (no verified clinical-specialty source yet) instead of leaking a role token like
+    # "case_reporter" into the specialty line. ``role``/``pubmedRole`` still carry the research
+    # axis; the UI shows "Specialty not verified" honestly.
     return {
         "slug": slug,
         "name": display_name,
-        "specialty": str(entry.get("role") or "Clinical researcher"),
+        "specialty": "",
         "role": str(entry.get("role") or ""),
         "institution": str(affiliation or "Affiliation not listed"),
         "city": city,
@@ -296,7 +300,10 @@ def _merge_public_doctor_rows(
     public_source = " · ".join(ps_parts) if ps_parts else str(finder.get("publicSource") or "")
 
     score = max(int(seed.get("score") or 0), int(finder.get("score") or 0))
-    specialty = str(finder.get("specialty") or seed.get("specialty") or "")
+    # Curated seed specialty WINS: the finder has no verified clinical-specialty source (Phase 0
+    # leaves its ``specialty`` empty), so a name-matched finder hit must never overwrite a
+    # hand-curated clinical specialty (regression: Riminucci/Appelman-Dijkstra lost theirs).
+    specialty = str(seed.get("specialty") or finder.get("specialty") or "")
     role = str(finder.get("role") or seed.get("role") or "")
 
     # draft9 directory fields: seed (curated) wins, finder fills gaps. parentRecs/rodo only

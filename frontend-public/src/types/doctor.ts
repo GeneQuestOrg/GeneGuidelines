@@ -20,6 +20,9 @@ export type DoctorTier = PubmedRole;
 
 export type AddedVia = "pubmed" | "parent" | "consortium" | "nil";
 
+/** "Is this person on top of the disease now" band, derived from newest publication year. */
+export type RecencyBand = "active_2y" | "active_5y" | "older" | "unknown";
+
 export type RodoStatus = "published_optout" | "informed" | "pending";
 
 export interface DoctorEvidence {
@@ -102,6 +105,10 @@ export interface PublicDoctor {
   readonly rodo?: Rodo | null;
   readonly parentRecs?: readonly ParentRec[];
   readonly reviewStatus?: "pending" | null;
+  /** Research-axis recency (backend-derived from publications). Optional so older API/fixtures stay valid. */
+  readonly lastPaperYear?: number | null;
+  readonly lastCentralPaperYear?: number | null;
+  readonly recencyBand?: RecencyBand;
 }
 
 export interface DiseaseDoctorsPayload {

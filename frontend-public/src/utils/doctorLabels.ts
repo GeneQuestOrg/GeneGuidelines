@@ -1,4 +1,9 @@
-import type { DoctorTier, PublicDoctor, PubmedRole } from "../types/doctor";
+import type {
+  DoctorTier,
+  PublicDoctor,
+  PubmedRole,
+  RecencyBand,
+} from "../types/doctor";
 
 export const VALID_PUBMED_ROLES = new Set<string>([
   "research_leader",
@@ -26,4 +31,75 @@ export function pubmedRoleLabel(role: PubmedRole): string {
     default:
       return "Unknown";
   }
+}
+
+/** Recency band with a fallback derived from the newest publication year on the profile. */
+export function recencyBandOf(doctor: PublicDoctor): RecencyBand {
+  if (doctor.recencyBand) return doctor.recencyBand;
+  const year = doctor.lastCentralPaperYear ?? doctor.lastPaperYear ?? null;
+  if (year == null) return "unknown";
+  const delta = new Date().getFullYear() - year;
+  if (delta <= 2) return "active_2y";
+  if (delta <= 5) return "active_5y";
+  return "older";
+}
+
+/** Short human label for the recency band, e.g. shown on a card next to disease experience. */
+export function recencyLabel(band: RecencyBand): string {
+  switch (band) {
+    case "active_2y":
+      return "On top of it (≤2y)";
+    case "active_5y":
+      return "Recent (≤5y)";
+    case "older":
+      return "Earlier work";
+    default:
+      return "Recency unknown";
+  }
+}
+
+/**
+ * The types of disease-relevant work a profile carries, derived from existing evidence flags —
+ * no new data source. Powers the "type of work" facet (multi-select).
+ */
+export type WorkType =
+  | "guideline"
+  | "original"
+  | "review"
+  | "trial"
+  | "case_report";
+
+export const WORK_TYPE_ORDER: readonly WorkType[] = [
+  "guideline",
+  "original",
+  "review",
+  "trial",
+  "case_report",
+];
+
+export function workTypeLabel(t: WorkType): string {
+  switch (t) {
+    case "guideline":
+      return "Guideline / consensus author";
+    case "original":
+      return "Original research";
+    case "review":
+      return "Review articles";
+    case "trial":
+      return "Runs a clinical trial";
+    case "case_report":
+      return "Case reports";
+  }
+}
+
+/** Which work types a doctor has, from already-computed evidence (never fabricated). */
+export function workTypesOf(doctor: PublicDoctor): Set<WorkType> {
+  const out = new Set<WorkType>();
+  const ev = doctor.evidence;
+  if (ev.guidelineOrConsensusCoauthor) out.add("guideline");
+  if (ev.firstOrLastAuthorPapers > 0) out.add("original");
+  if (ev.reviewPapers > 0) out.add("review");
+  if (ev.runsClinicalTrial) out.add("trial");
+  if (doctor.pubmedRole === "case_study_author") out.add("case_report");
+  return out;
 }

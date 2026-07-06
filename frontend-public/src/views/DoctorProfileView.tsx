@@ -141,7 +141,13 @@ export function DoctorProfileView({ slug, userLoc, onNav }: DoctorProfileViewPro
           <div>
             {doctor.role ? <div className="dprofile__role">{doctor.role}</div> : null}
             <h1 className="dprofile__name">{doctor.name}</h1>
-            <div className="dprofile__spec">{doctor.specialty}</div>
+            <div className="dprofile__spec">
+              {doctor.specialty?.trim() ? (
+                doctor.specialty
+              ) : (
+                <span className="dprofile__spec--unverified">Specialty not verified</span>
+              )}
+            </div>
             <div className="dprofile__inst">
               {doctor.institution} · {doctor.city}, {doctor.country}
             </div>

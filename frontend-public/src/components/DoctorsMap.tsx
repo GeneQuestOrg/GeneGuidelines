@@ -60,7 +60,7 @@ function buildPopupHtml(d: DoctorWithDistance, practice: Practice): string {
   return `
     <div class="map-popup">
       <div class="map-popup__name">${esc(d.name)}</div>
-      <div class="map-popup__spec">${esc(d.specialty)}</div>
+      <div class="map-popup__spec">${d.specialty?.trim() ? esc(d.specialty) : "Specialty not verified"}</div>
       <div class="map-popup__practice">${practiceLine}</div>
       <div class="map-popup__inst">${esc(practice.city)}, ${esc(d.country)}</div>
       <div class="map-popup__foot">

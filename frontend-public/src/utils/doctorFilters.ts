@@ -1,4 +1,5 @@
-import type { AddedVia, PubmedRole } from "../types/doctor";
+import type { AddedVia, PubmedRole, RecencyBand } from "../types/doctor";
+import { recencyBandOf, workTypesOf, type WorkType } from "./doctorLabels";
 import type { DoctorWithDistance } from "./doctorSort";
 
 /** Provenance of a directory entry. The backend defaults missing rows to PubMed mining. */
@@ -19,7 +20,24 @@ export interface DoctorFilterCriteria {
   readonly parentOnly?: boolean;
   /** Distance cap in km; only applies when set AND the row has a known distance. */
   readonly maxKm?: number | null;
+  /**
+   * Keep only doctors carrying ALL of these disease-relevant work types (AND semantics — each
+   * added facet narrows the set). Empty/undefined keeps every work type.
+   */
+  readonly workTypes?: readonly WorkType[];
+  /**
+   * Minimum recency: "active_2y" keeps only ≤2y; "active_5y" keeps ≤5y; null/undefined keeps all.
+   * "unknown"-band rows are dropped when a recency floor is set (we can't prove they're current).
+   */
+  readonly recency?: RecencyBand | null;
 }
+
+const RECENCY_RANK: Record<RecencyBand, number> = {
+  active_2y: 3,
+  active_5y: 2,
+  older: 1,
+  unknown: 0,
+};
 
 /** True when the doctor carries a parent signal (a family recommendation or parent provenance). */
 export function hasParentSignal(
@@ -36,7 +54,8 @@ export function filterDoctors(
   rows: readonly DoctorWithDistance[],
   criteria: DoctorFilterCriteria,
 ): DoctorWithDistance[] {
-  const { diseaseSlug, role, source, parentOnly, maxKm } = criteria;
+  const { diseaseSlug, role, source, parentOnly, maxKm, workTypes, recency } = criteria;
+  const recencyFloor = recency && recency !== "unknown" ? RECENCY_RANK[recency] : 0;
   return rows.filter((doctor) => {
     if (diseaseSlug && !doctor.diseases.includes(diseaseSlug)) {
       return false;
@@ -51,6 +70,15 @@ export function filterDoctors(
       return false;
     }
     if (maxKm != null && doctor.km != null && doctor.km > maxKm) {
+      return false;
+    }
+    if (workTypes && workTypes.length > 0) {
+      const have = workTypesOf(doctor);
+      if (!workTypes.every((w) => have.has(w))) {
+        return false;
+      }
+    }
+    if (recencyFloor > 0 && RECENCY_RANK[recencyBandOf(doctor)] < recencyFloor) {
       return false;
     }
     return true;

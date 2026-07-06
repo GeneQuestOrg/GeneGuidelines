@@ -1492,3 +1492,62 @@
 .doctors-add-cta {
   margin-top: 14px;
 }
+
+/* Phase 0 — honest specialty line: clinical specialty is a separate axis from PubMed role. */
+.doc__spec--unverified {
+  color: var(--ink-3);
+  font-style: italic;
+}
+
+/* Phase 0 — recency ("on top of the disease now") tag on the card. */
+.tag--recency {
+  background: color-mix(in oklch, var(--accent) 10%, var(--bg-elev));
+  color: var(--accent-ink);
+}
+.tag--recency-active_2y {
+  background: color-mix(in oklch, var(--accent) 20%, var(--bg-elev));
+}
+
+/* Phase 0 — one-click parent presets above the filters. */
+.doctors-presets {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+}
+.doctors-presets__hint {
+  font-size: var(--fs-sm);
+  color: var(--ink-3);
+  font-weight: 600;
+}
+.preset-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 7px 14px;
+  border: 1px solid color-mix(in oklch, var(--accent) 40%, var(--line-2));
+  border-radius: 999px;
+  background: color-mix(in oklch, var(--accent) 8%, var(--bg-elev));
+  color: var(--accent-ink);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  transition: all 120ms;
+}
+.preset-chip:hover {
+  background: color-mix(in oklch, var(--accent) 16%, var(--bg-elev));
+}
+
+/* Phase 0 — "type of work" multi-select chips row (research axis as a parent-facing facet). */
+.dfilters__worktypes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  width: 100%;
+}
+.dfilters__worktypes-label {
+  font-size: var(--fs-sm);
+  color: var(--ink-3);
+  font-weight: 600;
+}

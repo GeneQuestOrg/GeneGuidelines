@@ -17,6 +17,7 @@ import { useDoctors } from "../hooks/useDoctors";
 import { attachDoctorDistances } from "../utils/doctorSort";
 import { filterDoctors, hasParentSignal, type SourceFilter } from "../utils/doctorFilters";
 import {
+  DOCTOR_PRESETS,
   PAGE_SIZE,
   parseDoctorsQuery,
   queryRecordFromHash,
@@ -24,7 +25,12 @@ import {
   sortDoctors,
   type DoctorsQuery,
 } from "../utils/doctorsQuery";
-import { pubmedRoleLabel } from "../utils/doctorLabels";
+import {
+  pubmedRoleLabel,
+  workTypeLabel,
+  WORK_TYPE_ORDER,
+  type WorkType,
+} from "../utils/doctorLabels";
 import "../styles/doctors.css";
 
 export interface DoctorsViewProps {
@@ -53,8 +59,17 @@ const SOURCE_FILTERS: readonly { value: SourceFilter; label: string }[] = [
 const SORT_OPTIONS: readonly { value: string; label: string }[] = [
   { value: "best", label: "Best match" },
   { value: "distance", label: "Nearest" },
+  { value: "recency", label: "Most recent" },
   { value: "score", label: "PubMed score" },
   { value: "name", label: "Name (A–Z)" },
+];
+
+const RECENCY_FILTER_ALL = "all";
+
+const RECENCY_FILTERS: readonly { value: string; label: string }[] = [
+  { value: RECENCY_FILTER_ALL, label: "Any time" },
+  { value: "active_2y", label: "On top of it (≤2y)" },
+  { value: "active_5y", label: "Recent (≤5y)" },
 ];
 
 type ViewMode = "both" | "list" | "map";
@@ -84,6 +99,17 @@ export function DoctorsView({ hash, onNav }: DoctorsViewProps) {
       onNav(serializeDoctorsQuery(next));
     },
     [query, onNav],
+  );
+
+  const toggleWorkType = useCallback(
+    (w: WorkType) => {
+      const has = query.workTypes.includes(w);
+      const workTypes = has
+        ? query.workTypes.filter((x) => x !== w)
+        : [...query.workTypes, w];
+      patchQuery({ workTypes });
+    },
+    [query.workTypes, patchQuery],
   );
 
   // Location is opt-in. Only a place the visitor explicitly chooses (query.loc) drives distance
@@ -132,6 +158,8 @@ export function DoctorsView({ hash, onNav }: DoctorsViewProps) {
       source: query.source,
       parentOnly: query.parentOnly,
       maxKm: query.maxKm,
+      workTypes: query.workTypes,
+      recency: query.recency,
     });
     return sortDoctors(rows, query.sort);
   }, [
@@ -142,6 +170,8 @@ export function DoctorsView({ hash, onNav }: DoctorsViewProps) {
     query.source,
     query.parentOnly,
     query.maxKm,
+    query.workTypes,
+    query.recency,
     query.sort,
     unknownDisease,
   ]);
@@ -210,6 +240,19 @@ export function DoctorsView({ hash, onNav }: DoctorsViewProps) {
           account={account}
           onOpen={() => setAddDoctorOpen(true)}
         />
+        <div className="doctors-presets" role="group" aria-label="Quick filters for families">
+          <span className="doctors-presets__hint">Start here:</span>
+          {DOCTOR_PRESETS.map((preset) => (
+            <button
+              key={preset.id}
+              type="button"
+              className="preset-chip"
+              onClick={() => patchQuery(preset.patch)}
+            >
+              {preset.label}
+            </button>
+          ))}
+        </div>
       </header>
 
       <div className="dfilters">
@@ -244,11 +287,21 @@ export function DoctorsView({ hash, onNav }: DoctorsViewProps) {
             onPickRadius={(km) => patchQuery({ maxKm: km })}
           />
           <FilterMenu
-            label="Experience"
+            label="Disease experience"
             value={query.role ?? ROLE_FILTER_ALL}
             options={ROLE_FILTERS}
             onPick={(v) =>
               patchQuery({ role: v === ROLE_FILTER_ALL ? null : (v as PubmedRole) })
+            }
+          />
+          <FilterMenu
+            label="On the disease"
+            value={query.recency ?? RECENCY_FILTER_ALL}
+            options={RECENCY_FILTERS}
+            onPick={(v) =>
+              patchQuery({
+                recency: v === RECENCY_FILTER_ALL ? null : (v as DoctorsQuery["recency"]),
+              })
             }
           />
           <FilterMenu
@@ -286,6 +339,24 @@ export function DoctorsView({ hash, onNav }: DoctorsViewProps) {
             options={SORT_OPTIONS}
             onPick={(v) => patchQuery({ sort: v as DoctorsQuery["sort"] })}
           />
+        </div>
+
+        <div className="dfilters__worktypes" role="group" aria-label="Type of work on the disease">
+          <span className="dfilters__worktypes-label">Type of work:</span>
+          {WORK_TYPE_ORDER.map((w) => {
+            const active = query.workTypes.includes(w);
+            return (
+              <button
+                key={w}
+                type="button"
+                className={`toggle-chip${active ? " is-active" : ""}`}
+                aria-pressed={active}
+                onClick={() => toggleWorkType(w)}
+              >
+                {workTypeLabel(w)}
+              </button>
+            );
+          })}
         </div>
       </div>
 

@@ -37,6 +37,8 @@ describe("parseDoctorsQuery", () => {
       loc: "52.2,21.0",
       place: "Warsaw, PL",
       km: "100",
+      work: "guideline,original",
+      recency: "active_2y",
       sort: "distance",
       page: "3",
     });
@@ -48,9 +50,17 @@ describe("parseDoctorsQuery", () => {
       loc: { lat: 52.2, lng: 21.0 },
       locLabel: "Warsaw, PL",
       maxKm: 100,
+      workTypes: ["guideline", "original"],
+      recency: "active_2y",
       sort: "distance",
       page: 3,
     });
+  });
+
+  it("drops unknown work types and invalid recency floors", () => {
+    const q = parseDoctorsQuery({ work: "guideline,wizardry", recency: "older" });
+    expect(q.workTypes).toEqual(["guideline"]);
+    expect(q.recency).toBeNull(); // "older" is not a selectable floor
   });
 
   it("falls back to defaults for invalid facet values", () => {
@@ -111,10 +121,21 @@ describe("serializeDoctorsQuery", () => {
       loc: { lat: 52.2, lng: 21 },
       locLabel: "Warsaw, PL",
       maxKm: 100,
+      workTypes: ["guideline", "original"],
+      recency: "active_2y",
       sort: "distance",
       page: 3,
     };
     expect(parseDoctorsQuery(queryRecordFromHash(`#${serializeDoctorsQuery(q)}`))).toEqual(q);
+  });
+
+  it("serializes work types in canonical order regardless of input order", () => {
+    const q: DoctorsQuery = {
+      ...DEFAULT_DOCTORS_QUERY,
+      workTypes: ["original", "guideline"],
+    };
+    // WORK_TYPE_ORDER puts guideline before original; the comma is URL-encoded (%2C).
+    expect(serializeDoctorsQuery(q)).toBe("/doctors?work=guideline%2Coriginal");
   });
 
   it("never serializes maxKm without a location", () => {
@@ -183,5 +204,18 @@ describe("sortDoctors", () => {
     const before = rows.map((d) => d.slug);
     expect(sortDoctors(rows, "best").map((d) => d.slug)).toEqual(["b", "c", "a"]);
     expect(rows.map((d) => d.slug)).toEqual(before);
+  });
+
+  it("sorts by recency (newest disease-relevant year first, unknown last)", () => {
+    const recencyRows: DoctorWithDistance[] = [
+      { ...makeDoctor("old", "Old", 90, null), lastCentralPaperYear: 2012 },
+      { ...makeDoctor("new", "New", 10, null), lastCentralPaperYear: 2025 },
+      { ...makeDoctor("none", "None", 50, null) }, // no year → last
+    ];
+    expect(sortDoctors(recencyRows, "recency").map((d) => d.slug)).toEqual([
+      "new",
+      "old",
+      "none",
+    ]);
   });
 });
