@@ -62,4 +62,43 @@ describe("filterDoctors", () => {
     const result = filterDoctors([near, far, unknown], { maxKm: 100 });
     expect(slugs(result)).toEqual([near.slug, unknown.slug]);
   });
+
+  it("filters by verified clinical specialty group and country", () => {
+    const base = PUBLIC_DOCTORS[0] as PublicDoctor;
+    const surgeonUS: DoctorWithDistance = {
+      ...base, slug: "surg-us", country: "US", km: null,
+      clinicalSpecialties: [
+        { canonicalCode: "207X00000X", labelEn: "Orthopaedic Surgery", group: "Surgery",
+          source: "nppes", confidence: "high" },
+      ],
+    };
+    const endoPL: DoctorWithDistance = {
+      ...base, slug: "endo-pl", country: "PL", km: null,
+      clinicalSpecialties: [
+        { canonicalCode: "207RE0101X", labelEn: "Endocrinology", group: "Internal Medicine",
+          source: "nppes", confidence: "high" },
+      ],
+    };
+    const rows = [surgeonUS, endoPL];
+    expect(slugs(filterDoctors(rows, { specialtyGroup: "Surgery" }))).toEqual(["surg-us"]);
+    expect(slugs(filterDoctors(rows, { country: "PL" }))).toEqual(["endo-pl"]);
+    // A low-confidence specialty is not "verified" and won't match the group filter.
+    const lowConf: DoctorWithDistance = {
+      ...base, slug: "low", km: null,
+      clinicalSpecialties: [
+        { canonicalCode: "207X00000X", labelEn: "Orthopaedic Surgery", group: "Surgery",
+          source: "inferred", confidence: "low" },
+      ],
+    };
+    expect(filterDoctors([lowConf], { specialtyGroup: "Surgery" })).toHaveLength(0);
+  });
+
+  it("seesPatientsOnly keeps sees_patients AND expert_reachable (the 'Mara' rule)", () => {
+    const base = PUBLIC_DOCTORS[0] as PublicDoctor;
+    const clinician: DoctorWithDistance = { ...base, slug: "clin", reachability: "sees_patients", km: null };
+    const expert: DoctorWithDistance = { ...base, slug: "mara", reachability: "expert_reachable", km: null };
+    const unknown: DoctorWithDistance = { ...base, slug: "unk", reachability: "unknown", km: null };
+    const result = filterDoctors([clinician, expert, unknown], { seesPatientsOnly: true });
+    expect(slugs(result)).toEqual(["clin", "mara"]); // expert must NOT be hidden
+  });
 });

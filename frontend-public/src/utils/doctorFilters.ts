@@ -1,5 +1,10 @@
 import type { AddedVia, PubmedRole, RecencyBand } from "../types/doctor";
-import { recencyBandOf, workTypesOf, type WorkType } from "./doctorLabels";
+import {
+  recencyBandOf,
+  specialtyGroupsOf,
+  workTypesOf,
+  type WorkType,
+} from "./doctorLabels";
 import type { DoctorWithDistance } from "./doctorSort";
 
 /** Provenance of a directory entry. The backend defaults missing rows to PubMed mining. */
@@ -30,6 +35,16 @@ export interface DoctorFilterCriteria {
    * "unknown"-band rows are dropped when a recency floor is set (we can't prove they're current).
    */
   readonly recency?: RecencyBand | null;
+  /** Keep only doctors with a verified clinical specialty in this NUCC group. */
+  readonly specialtyGroup?: string | null;
+  /** Keep only doctors practising in this ISO2 country. */
+  readonly country?: string | null;
+  /**
+   * Keep only doctors who see patients — BUT never drop an ``expert_reachable`` profile (the
+   * "Mara" case: a scientist who answers consults must stay visible). So this keeps
+   * ``sees_patients`` OR ``expert_reachable``.
+   */
+  readonly seesPatientsOnly?: boolean;
 }
 
 const RECENCY_RANK: Record<RecencyBand, number> = {
@@ -54,8 +69,12 @@ export function filterDoctors(
   rows: readonly DoctorWithDistance[],
   criteria: DoctorFilterCriteria,
 ): DoctorWithDistance[] {
-  const { diseaseSlug, role, source, parentOnly, maxKm, workTypes, recency } = criteria;
+  const {
+    diseaseSlug, role, source, parentOnly, maxKm, workTypes, recency,
+    specialtyGroup, country, seesPatientsOnly,
+  } = criteria;
   const recencyFloor = recency && recency !== "unknown" ? RECENCY_RANK[recency] : 0;
+  const wantCountry = (country || "").trim().toUpperCase();
   return rows.filter((doctor) => {
     if (diseaseSlug && !doctor.diseases.includes(diseaseSlug)) {
       return false;
@@ -80,6 +99,19 @@ export function filterDoctors(
     }
     if (recencyFloor > 0 && RECENCY_RANK[recencyBandOf(doctor)] < recencyFloor) {
       return false;
+    }
+    if (specialtyGroup && !specialtyGroupsOf(doctor).has(specialtyGroup)) {
+      return false;
+    }
+    if (wantCountry && (doctor.country || "").trim().toUpperCase() !== wantCountry) {
+      return false;
+    }
+    if (seesPatientsOnly) {
+      const r = doctor.reachability ?? "unknown";
+      // Never hide a reachable expert (the "Mara" rule).
+      if (r !== "sees_patients" && r !== "expert_reachable") {
+        return false;
+      }
     }
     return true;
   });

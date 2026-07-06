@@ -199,6 +199,28 @@ class PracticeResponse(BaseModel):
     lat: float
     lng: float
     website: str | None = None
+    # Phase 1: real practice country + provenance. Default "" / "affiliation" / "low" keeps older
+    # rows and fixtures valid while NPPES-sourced rows carry an authoritative address.
+    country: str = ""
+    source: Literal["nppes", "nil", "clinic_llm", "curated", "affiliation"] = "affiliation"
+    confidence: Literal["high", "medium", "low"] = "low"
+
+
+class ClinicalSpecialtyResponse(BaseModel):
+    """A canonical clinical specialty (NUCC code) with provenance — a separate axis from the
+    PubMed research role. ``canonicalCode`` is a NUCC Provider Taxonomy code (closed vocabulary),
+    so specialty names can never duplicate."""
+
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    canonicalCode: str
+    labelEn: str
+    labelPl: str | None = None
+    group: str | None = None
+    source: Literal["nppes", "nil", "clinic_llm", "orcid", "consortium", "curated", "inferred"]
+    confidence: Literal["high", "medium", "low"]
+    asOf: str | None = None
+    snomedId: str | None = None
 
 
 class ParentRecResponse(BaseModel):
@@ -272,6 +294,10 @@ class PublicDoctorResponse(BaseModel):
     lastPaperYear: int | None = None
     lastCentralPaperYear: int | None = None
     recencyBand: RecencyBand = "unknown"
+    # Phase 1 clinical axis — canonical NUCC specialties (separate from the PubMed research role)
+    # and a patient-facing availability signal.
+    clinicalSpecialties: list[ClinicalSpecialtyResponse] = Field(default_factory=list)
+    reachability: Literal["sees_patients", "expert_reachable", "unknown"] = "unknown"
 
     @model_validator(mode="after")
     def _derive_directory_defaults(self) -> "PublicDoctorResponse":

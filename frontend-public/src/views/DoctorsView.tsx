@@ -27,6 +27,7 @@ import {
 } from "../utils/doctorsQuery";
 import {
   pubmedRoleLabel,
+  specialtyGroupsOf,
   workTypeLabel,
   WORK_TYPE_ORDER,
   type WorkType,
@@ -160,6 +161,9 @@ export function DoctorsView({ hash, onNav }: DoctorsViewProps) {
       maxKm: query.maxKm,
       workTypes: query.workTypes,
       recency: query.recency,
+      specialtyGroup: query.specialtyGroup,
+      country: query.country,
+      seesPatientsOnly: query.seesPatients,
     });
     return sortDoctors(rows, query.sort);
   }, [
@@ -172,6 +176,9 @@ export function DoctorsView({ hash, onNav }: DoctorsViewProps) {
     query.maxKm,
     query.workTypes,
     query.recency,
+    query.specialtyGroup,
+    query.country,
+    query.seesPatients,
     query.sort,
     unknownDisease,
   ]);
@@ -196,6 +203,37 @@ export function DoctorsView({ hash, onNav }: DoctorsViewProps) {
         hasParentSignal(d),
     ).length;
   }, [doctors, activeDiseaseSlug, unknownDisease]);
+
+  // Data-density gate for the clinical (specialty/country/sees-patients) filters: only expose
+  // them once enough of the disease-scoped rows actually carry a VERIFIED specialty — otherwise a
+  // near-empty filter would fake a clinical directory we don't have yet.
+  const clinical = useMemo(() => {
+    const scoped = doctors.filter(
+      (d) => !activeDiseaseSlug || d.diseases.includes(activeDiseaseSlug),
+    );
+    const groups = new Set<string>();
+    const countries = new Set<string>();
+    let withSpecialty = 0;
+    let seesPatients = 0;
+    for (const d of scoped) {
+      const g = specialtyGroupsOf(d);
+      if (g.size > 0) withSpecialty += 1;
+      g.forEach((x) => groups.add(x));
+      if (d.country && /^[A-Z]{2}$/.test(d.country)) countries.add(d.country);
+      if (d.reachability === "sees_patients") seesPatients += 1;
+    }
+    const ratio = scoped.length > 0 ? withSpecialty / scoped.length : 0;
+    // Threshold intentionally low (5%) for a rare disease: even a handful of verified surgeons is
+    // exactly the value we want to expose, and every specialty shown is individually honest
+    // (source badge). Set >0 so a disease with zero clinical data hides the facet entirely.
+    const ready = withSpecialty >= 3 || ratio >= 0.05;
+    return {
+      ready,
+      groups: [...groups].sort(),
+      countries: [...countries].sort(),
+      seesPatients,
+    };
+  }, [doctors, activeDiseaseSlug]);
 
   const ready = !loading && error == null;
 
@@ -242,16 +280,19 @@ export function DoctorsView({ hash, onNav }: DoctorsViewProps) {
         />
         <div className="doctors-presets" role="group" aria-label="Quick filters for families">
           <span className="doctors-presets__hint">Start here:</span>
-          {DOCTOR_PRESETS.map((preset) => (
-            <button
-              key={preset.id}
-              type="button"
-              className="preset-chip"
-              onClick={() => patchQuery(preset.patch)}
-            >
-              {preset.label}
-            </button>
-          ))}
+          {DOCTOR_PRESETS
+            // Presets that need clinical data are hidden until the specialty axis has some.
+            .filter((preset) => !preset.needsSpecialty || clinical.ready)
+            .map((preset) => (
+              <button
+                key={preset.id}
+                type="button"
+                className="preset-chip"
+                onClick={() => patchQuery(preset.patch)}
+              >
+                {preset.label}
+              </button>
+            ))}
         </div>
       </header>
 
@@ -304,6 +345,41 @@ export function DoctorsView({ hash, onNav }: DoctorsViewProps) {
               })
             }
           />
+          {clinical.ready ? (
+            <>
+              <FilterMenu
+                label="Specialty"
+                value={query.specialtyGroup ?? "all"}
+                options={[
+                  { value: "all", label: "Any specialty" },
+                  ...clinical.groups.map((g) => ({ value: g, label: g })),
+                ]}
+                onPick={(v) =>
+                  patchQuery({ specialtyGroup: v === "all" ? null : v })
+                }
+              />
+              {clinical.countries.length > 1 ? (
+                <FilterMenu
+                  label="Country"
+                  value={query.country ?? "all"}
+                  options={[
+                    { value: "all", label: "Any country" },
+                    ...clinical.countries.map((c) => ({ value: c, label: c })),
+                  ]}
+                  onPick={(v) => patchQuery({ country: v === "all" ? null : v })}
+                />
+              ) : null}
+              <button
+                type="button"
+                className={`toggle-chip${query.seesPatients ? " is-active" : ""}`}
+                aria-pressed={query.seesPatients}
+                onClick={() => patchQuery({ seesPatients: !query.seesPatients })}
+                title="Show doctors who see patients (experts reachable for a consult are always kept)"
+              >
+                Sees patients
+              </button>
+            </>
+          ) : null}
           <FilterMenu
             label="Source"
             value={query.source}

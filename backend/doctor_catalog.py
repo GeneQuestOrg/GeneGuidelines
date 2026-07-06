@@ -132,14 +132,41 @@ def _entry_to_public_doctor(
         if isinstance(p, dict) and p.get("pmid")
     ]
     pubmed_role = _role_to_pubmed_role(str(entry.get("role") or ""))
-    # Phase 0: the PubMed role is NOT a clinical specialty. Leave ``specialty`` empty for finder
-    # rows (no verified clinical-specialty source yet) instead of leaking a role token like
-    # "case_reporter" into the specialty line. ``role``/``pubmedRole`` still carry the research
-    # axis; the UI shows "Specialty not verified" honestly.
+    # Phase 0: the PubMed role is NOT a clinical specialty. Leave ``specialty`` empty unless
+    # Phase 1 specialty enrichment (NPPES) attached a verified NUCC specialty, in which case the
+    # deprecated ``specialty`` display string mirrors the top canonical label. ``role``/
+    # ``pubmedRole`` still carry the research axis independently.
+    clinical_specialties = [
+        s for s in (entry.get("clinical_specialties") or []) if isinstance(s, dict)
+    ]
+    specialty_display = str(clinical_specialties[0].get("labelEn") or "") if clinical_specialties else ""
+    reachability = str(entry.get("reachability") or "unknown")
+    # A real NPPES practice address supersedes the noisy affiliation-derived city.
+    resolved_practice = entry.get("resolved_practice")
+    practices: list[dict[str, Any]] = []
+    if isinstance(resolved_practice, dict) and resolved_practice.get("city"):
+        p_city = str(resolved_practice.get("city") or city)
+        p_country = str(resolved_practice.get("country") or country)
+        p_lat, p_lng = coords_for_city_country(p_city, p_country)
+        practices = [{
+            "type": str(resolved_practice.get("type") or "primary"),
+            "name": str(resolved_practice.get("name") or affiliation or "Practice location"),
+            "address": resolved_practice.get("address"),
+            "city": p_city,
+            "country": p_country,
+            "lat": p_lat,
+            "lng": p_lng,
+            "source": str(resolved_practice.get("source") or "nppes"),
+            "confidence": str(resolved_practice.get("confidence") or "medium"),
+        }]
+        city, country, lat, lng = p_city, p_country, p_lat, p_lng
     return {
         "slug": slug,
         "name": display_name,
-        "specialty": "",
+        "specialty": specialty_display,
+        "clinicalSpecialties": clinical_specialties,
+        "reachability": reachability,
+        "practices": practices,
         "role": str(entry.get("role") or ""),
         "institution": str(affiliation or "Affiliation not listed"),
         "city": city,
@@ -336,10 +363,34 @@ def _merge_public_doctor_rows(
     rodo = seed.get("rodo") or finder.get("rodo")
     review_status = seed.get("reviewStatus") or finder.get("reviewStatus")
 
+    # Clinical specialties: union seed (curated) + finder (NPPES), deduped by canonical code;
+    # curated entries listed first so a hand-verified specialty wins the display slot.
+    clinical_specialties: list[dict[str, Any]] = []
+    seen_codes: set[str] = set()
+    for s in [
+        *(seed.get("clinicalSpecialties") if isinstance(seed.get("clinicalSpecialties"), list) else []),
+        *(finder.get("clinicalSpecialties") if isinstance(finder.get("clinicalSpecialties"), list) else []),
+    ]:
+        if not isinstance(s, dict):
+            continue
+        code = str(s.get("canonicalCode") or "")
+        if not code or code in seen_codes:
+            continue
+        seen_codes.add(code)
+        clinical_specialties.append(s)
+    # Availability: prefer the strongest known signal, but expert_reachable must never be lost.
+    _reach_rank = {"sees_patients": 2, "expert_reachable": 1, "unknown": 0}
+    reachability = max(
+        (str(seed.get("reachability") or "unknown"), str(finder.get("reachability") or "unknown")),
+        key=lambda r: _reach_rank.get(r, 0),
+    )
+
     return {
         "slug": slug,
         "name": str(seed.get("name") or finder.get("name") or "Unknown"),
         "specialty": specialty,
+        "clinicalSpecialties": clinical_specialties,
+        "reachability": reachability,
         "role": role,
         "institution": institution,
         "city": city,

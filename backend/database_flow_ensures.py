@@ -192,6 +192,103 @@ def _ensure_doctor_finder_geo_node() -> None:
     conn.close()
 
 
+def _ensure_doctor_finder_specialty_node() -> None:
+    """Add df-25 (NPPES specialty enrichment) into existing doctor_finder flows.
+
+    Idempotent: no-op when df-25 already present or the flow was never seeded. Rewires the
+    scoring→report edge (df-5 → df-6) to run through the new node (df-5 → df-25 → df-6), mirroring
+    how df-20 (geo) was inserted between df-2 and df-3.
+    """
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute(
+        "SELECT 1 FROM flow_definitions WHERE flow_key = 'doctor_finder' AND node_id = 'df-25' LIMIT 1",
+    )
+    if cur.fetchone():
+        conn.close()
+        return
+    cur.execute("SELECT 1 FROM flow_definitions WHERE flow_key = 'doctor_finder' LIMIT 1")
+    if not cur.fetchone():
+        conn.close()
+        return
+    path = Path(SEED_DATA_PATH)
+    if not path.exists():
+        conn.close()
+        return
+    data = json.loads(path.read_text(encoding="utf-8"))
+    node = next(
+        (
+            fd
+            for fd in data.get("flow_definitions", [])
+            if fd.get("flow_key") == "doctor_finder" and fd.get("node_id") == "df-25"
+        ),
+        None,
+    )
+    if not isinstance(node, dict):
+        conn.close()
+        return
+    now = datetime.now().isoformat()
+    fd = node
+    merge_strategy = str(fd.get("merge_strategy") or "append").strip() or "append"
+    merge_fields = fd.get("merge_fields") if fd.get("merge_fields") is not None else "[]"
+    merge_key_field = str(fd.get("merge_key_field") or "id").strip() or "id"
+    cur.execute(
+        """INSERT INTO flow_definitions (
+            flow_key, node_id, node_type, label, description, prompt, loop_policy, execution_policy,
+            max_retry, version, updated_at, prompt_mode, model_name, output_schema_key, output_schema, agentic_step_close, python_source,
+            http_url, http_method, http_headers, http_body, rag_operation, rag_body_json, step_name,
+            merge_strategy, merge_fields, merge_key_field,
+            integration_operation, integration_params_json, integration_credentials_json
+        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+        (
+            fd["flow_key"],
+            fd["node_id"],
+            fd["node_type"],
+            fd["label"],
+            fd.get("description"),
+            fd.get("prompt"),
+            fd.get("loop_policy", "none"),
+            fd.get("execution_policy", "auto"),
+            fd.get("max_retry", 3),
+            fd.get("version", 1),
+            now,
+            fd.get("prompt_mode", "agentic"),
+            fd.get("model_name"),
+            fd.get("output_schema_key"),
+            fd.get("output_schema"),
+            1 if fd.get("agentic_step_close") else 0,
+            fd.get("python_source"),
+            fd.get("http_url"),
+            fd.get("http_method"),
+            fd.get("http_headers"),
+            fd.get("http_body"),
+            fd.get("rag_operation", "similar"),
+            fd.get("rag_body_json"),
+            fd.get("step_name"),
+            merge_strategy,
+            merge_fields,
+            merge_key_field,
+            fd.get("integration_operation") or "",
+            fd.get("integration_params_json") or "{}",
+            fd.get("integration_credentials_json") or "",
+        ),
+    )
+    cur.execute(
+        "DELETE FROM flow_edges WHERE flow_key = %s AND source_node_id = %s AND target_node_id = %s",
+        ("doctor_finder", "df-5", "df-6"),
+    )
+    for src, tgt in (("df-5", "df-25"), ("df-25", "df-6")):
+        try:
+            cur.execute(
+                "INSERT INTO flow_edges (flow_key, source_node_id, target_node_id) VALUES (%s, %s, %s) ON CONFLICT DO NOTHING",
+                ("doctor_finder", src, tgt),
+            )
+        except pg_errors.UniqueViolation:
+            pass
+    conn.commit()
+    conn.close()
+
+
 _PARENT_PATHWAY_FLOW_DEFINITION_INSERT_SQL = """INSERT INTO flow_definitions (
                 flow_key, node_id, node_type, label, description, prompt, loop_policy, execution_policy,
                 max_retry, version, updated_at, prompt_mode, model_name, output_schema_key, output_schema, agentic_step_close, python_source,

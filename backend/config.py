@@ -390,8 +390,22 @@ DOCTOR_FINDER_MAX_PMIDS = max(200, min(20_000, DOCTOR_FINDER_MAX_PMIDS))
 # contributors (role != peripheral) up to this safety cap; top_n_authors only sizes
 # the human markdown summary.
 _DF_REPORT_MAX = (os.environ.get("DOCTOR_FINDER_REPORT_MAX_AUTHORS") or "").strip()
-DOCTOR_FINDER_REPORT_MAX_AUTHORS = int(_DF_REPORT_MAX) if _DF_REPORT_MAX else 1000
+# Default lifted 1000 → 20000 (Phase 1): the old 1000 was an arbitrary safety cap that FD
+# already hit exactly (1004 = 1000 finder + seed), silently dropping meaningful contributors
+# for a well-studied disease. This is NOT a global top-N cut (see comment above) — we keep every
+# author who cleared the role floor so the UI can rank/filter without us hiding regional
+# specialists. Still bounded (≤20000) so a pathological run can't blow up memory/response size.
+DOCTOR_FINDER_REPORT_MAX_AUTHORS = int(_DF_REPORT_MAX) if _DF_REPORT_MAX else 20_000
 DOCTOR_FINDER_REPORT_MAX_AUTHORS = max(20, min(20_000, DOCTOR_FINDER_REPORT_MAX_AUTHORS))
+
+# Specialty enrichment (Doctor Finder df-25) — NPPES lookup for US physicians. No key needed
+# (public API). Caps bound the number of external lookups + their concurrency per run.
+_DF_SPEC_MAX = (os.environ.get("DOCTOR_FINDER_SPECIALTY_MAX_LOOKUPS") or "").strip()
+DOCTOR_FINDER_SPECIALTY_MAX_LOOKUPS = int(_DF_SPEC_MAX) if _DF_SPEC_MAX else 400
+DOCTOR_FINDER_SPECIALTY_MAX_LOOKUPS = max(0, min(5000, DOCTOR_FINDER_SPECIALTY_MAX_LOOKUPS))
+_DF_SPEC_CONC = (os.environ.get("DOCTOR_FINDER_SPECIALTY_CONCURRENCY") or "").strip()
+DOCTOR_FINDER_SPECIALTY_CONCURRENCY = int(_DF_SPEC_CONC) if _DF_SPEC_CONC else 6
+DOCTOR_FINDER_SPECIALTY_CONCURRENCY = max(1, min(16, DOCTOR_FINDER_SPECIALTY_CONCURRENCY))
 
 # Brave Search + LLM affiliation geolocation (Doctor Finder df-20). Optional — unset key skips the step.
 BRAVE_API_KEY = (os.environ.get("BRAVE_API_KEY") or "").strip() or None

@@ -1,8 +1,11 @@
 import type {
+  ClinicalSpecialty,
   DoctorTier,
   PublicDoctor,
   PubmedRole,
+  Reachability,
   RecencyBand,
+  SpecialtySource,
 } from "../types/doctor";
 
 export const VALID_PUBMED_ROLES = new Set<string>([
@@ -102,4 +105,54 @@ export function workTypesOf(doctor: PublicDoctor): Set<WorkType> {
   if (ev.runsClinicalTrial) out.add("trial");
   if (doctor.pubmedRole === "case_study_author") out.add("case_report");
   return out;
+}
+
+// --- Phase 1 clinical axis -----------------------------------------------------------------
+
+/** Verified clinical specialties (confidence high|medium). Empty when nothing is verified yet. */
+export function verifiedSpecialties(doctor: PublicDoctor): readonly ClinicalSpecialty[] {
+  return (doctor.clinicalSpecialties ?? []).filter(
+    (s) => s.confidence === "high" || s.confidence === "medium",
+  );
+}
+
+/** The distinct NUCC classification groups a doctor's verified specialties fall under. */
+export function specialtyGroupsOf(doctor: PublicDoctor): Set<string> {
+  const out = new Set<string>();
+  for (const s of verifiedSpecialties(doctor)) {
+    const g = (s.group || s.labelEn || "").trim();
+    if (g) out.add(g);
+  }
+  return out;
+}
+
+/** Short honest badge for how a specialty was sourced. */
+export function specialtySourceBadge(source: SpecialtySource): string {
+  switch (source) {
+    case "nppes":
+      return "NPPES-verified";
+    case "nil":
+      return "NIL-verified";
+    case "curated":
+      return "curated";
+    case "consortium":
+      return "consortium";
+    case "clinic_llm":
+      return "from clinic page";
+    case "orcid":
+      return "from ORCID";
+    case "inferred":
+      return "inferred — unverified";
+  }
+}
+
+export function reachabilityLabel(r: Reachability): string {
+  switch (r) {
+    case "sees_patients":
+      return "Sees patients";
+    case "expert_reachable":
+      return "Expert — reachable for consult";
+    default:
+      return "";
+  }
 }

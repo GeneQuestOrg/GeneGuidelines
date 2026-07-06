@@ -25,6 +25,7 @@ try:
     from .database_flow_ensures import (
         _ensure_doctor_finder_flow,
         _ensure_doctor_finder_geo_node,
+        _ensure_doctor_finder_specialty_node,
         _PARENT_PATHWAY_FLOW_DEFINITION_INSERT_SQL,
         _parent_pathway_flow_definition_insert_params,
         _ensure_parent_pathway_flow,
@@ -38,6 +39,7 @@ except ImportError:
     from database_flow_ensures import (
         _ensure_doctor_finder_flow,
         _ensure_doctor_finder_geo_node,
+        _ensure_doctor_finder_specialty_node,
         _PARENT_PATHWAY_FLOW_DEFINITION_INSERT_SQL,
         _parent_pathway_flow_definition_insert_params,
         _ensure_parent_pathway_flow,
@@ -187,6 +189,7 @@ def init_db():
         from flows.specs._loader import ensure_flows_from_specs  # type: ignore[no-redef]
     ensure_flows_from_specs()
     _ensure_doctor_finder_geo_node()
+    _ensure_doctor_finder_specialty_node()
     _ensure_parent_pathway_flow()
     _upgrade_parent_pathway_flow_add_plan_node()
     _sync_parent_pathway_synth_prompt_from_disk()

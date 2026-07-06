@@ -1551,3 +1551,33 @@
   color: var(--ink-3);
   font-weight: 600;
 }
+
+/* Phase 1 — clinical specialty source badge + reachability line on the card. */
+.doc__spec {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.doc__spec-src {
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: color-mix(in oklch, var(--accent) 12%, var(--bg-elev));
+  color: var(--accent-ink);
+}
+.doc__spec-src--inferred {
+  background: color-mix(in oklch, var(--ink-4) 14%, var(--bg-elev));
+  color: var(--ink-2);
+  font-style: italic;
+}
+.doc__reach {
+  font-size: var(--fs-xs);
+  color: var(--ink-2);
+  margin-top: 2px;
+}
+.doc__reach--expert_reachable {
+  color: var(--accent-ink);
+  font-weight: 600;
+}

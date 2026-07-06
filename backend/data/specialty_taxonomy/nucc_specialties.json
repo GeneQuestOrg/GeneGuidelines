@@ -1,0 +1,6183 @@
+[
+  {
+    "code": "193200000X",
+    "labelEn": "Multi-Specialty",
+    "grouping": "Group",
+    "classification": "Multi-Specialty",
+    "specialization": ""
+  },
+  {
+    "code": "193400000X",
+    "labelEn": "Single Specialty",
+    "grouping": "Group",
+    "classification": "Single Specialty",
+    "specialization": ""
+  },
+  {
+    "code": "207K00000X",
+    "labelEn": "Allergy & Immunology",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Allergy & Immunology",
+    "specialization": ""
+  },
+  {
+    "code": "207KA0200X",
+    "labelEn": "Allergy",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Allergy & Immunology",
+    "specialization": "Allergy"
+  },
+  {
+    "code": "207KI0005X",
+    "labelEn": "Clinical & Laboratory Immunology",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Allergy & Immunology",
+    "specialization": "Clinical & Laboratory Immunology"
+  },
+  {
+    "code": "207L00000X",
+    "labelEn": "Anesthesiology",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Anesthesiology",
+    "specialization": ""
+  },
+  {
+    "code": "207LA0401X",
+    "labelEn": "Addiction Medicine",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Anesthesiology",
+    "specialization": "Addiction Medicine"
+  },
+  {
+    "code": "207LC0200X",
+    "labelEn": "Critical Care Medicine",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Anesthesiology",
+    "specialization": "Critical Care Medicine"
+  },
+  {
+    "code": "207LH0002X",
+    "labelEn": "Hospice and Palliative Medicine",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Anesthesiology",
+    "specialization": "Hospice and Palliative Medicine"
+  },
+  {
+    "code": "207LP2900X",
+    "labelEn": "Pain Medicine",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Anesthesiology",
+    "specialization": "Pain Medicine"
+  },
+  {
+    "code": "207LP3000X",
+    "labelEn": "Pediatric Anesthesiology",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Anesthesiology",
+    "specialization": "Pediatric Anesthesiology"
+  },
+  {
+    "code": "207LP4000X",
+    "labelEn": "Physician Nutrition Specialist",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Anesthesiology",
+    "specialization": "Physician Nutrition Specialist"
+  },
+  {
+    "code": "208U00000X",
+    "labelEn": "Clinical Pharmacology",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Clinical Pharmacology",
+    "specialization": ""
+  },
+  {
+    "code": "208C00000X",
+    "labelEn": "Colon & Rectal Surgery",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Colon & Rectal Surgery",
+    "specialization": ""
+  },
+  {
+    "code": "207N00000X",
+    "labelEn": "Dermatology",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Dermatology",
+    "specialization": ""
+  },
+  {
+    "code": "207NI0002X",
+    "labelEn": "Clinical & Laboratory Dermatological Immunology",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Dermatology",
+    "specialization": "Clinical & Laboratory Dermatological Immunology"
+  },
+  {
+    "code": "207ND0900X",
+    "labelEn": "Dermatopathology",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Dermatology",
+    "specialization": "Dermatopathology"
+  },
+  {
+    "code": "207ND0101X",
+    "labelEn": "MOHS-Micrographic Surgery",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Dermatology",
+    "specialization": "MOHS-Micrographic Surgery"
+  },
+  {
+    "code": "207NP0225X",
+    "labelEn": "Pediatric Dermatology",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Dermatology",
+    "specialization": "Pediatric Dermatology"
+  },
+  {
+    "code": "207NS0135X",
+    "labelEn": "Procedural Dermatology",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Dermatology",
+    "specialization": "Procedural Dermatology"
+  },
+  {
+    "code": "204R00000X",
+    "labelEn": "Electrodiagnostic Medicine",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Electrodiagnostic Medicine",
+    "specialization": ""
+  },
+  {
+    "code": "207P00000X",
+    "labelEn": "Emergency Medicine",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Emergency Medicine",
+    "specialization": ""
+  },
+  {
+    "code": "207PE0004X",
+    "labelEn": "Emergency Medical Services",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Emergency Medicine",
+    "specialization": "Emergency Medical Services"
+  },
+  {
+    "code": "207PH0002X",
+    "labelEn": "Hospice and Palliative Medicine",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Emergency Medicine",
+    "specialization": "Hospice and Palliative Medicine"
+  },
+  {
+    "code": "207PT0002X",
+    "labelEn": "Medical Toxicology",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Emergency Medicine",
+    "specialization": "Medical Toxicology"
+  },
+  {
+    "code": "207PP0204X",
+    "labelEn": "Pediatric Emergency Medicine",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Emergency Medicine",
+    "specialization": "Pediatric Emergency Medicine"
+  },
+  {
+    "code": "207PS0010X",
+    "labelEn": "Sports Medicine",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Emergency Medicine",
+    "specialization": "Sports Medicine"
+  },
+  {
+    "code": "207PE0005X",
+    "labelEn": "Undersea and Hyperbaric Medicine",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Emergency Medicine",
+    "specialization": "Undersea and Hyperbaric Medicine"
+  },
+  {
+    "code": "207Q00000X",
+    "labelEn": "Family Medicine",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Family Medicine",
+    "specialization": ""
+  },
+  {
+    "code": "207QA0401X",
+    "labelEn": "Addiction Medicine",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Family Medicine",
+    "specialization": "Addiction Medicine"
+  },
+  {
+    "code": "207QA0000X",
+    "labelEn": "Adolescent Medicine",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Family Medicine",
+    "specialization": "Adolescent Medicine"
+  },
+  {
+    "code": "207QA0505X",
+    "labelEn": "Adult Medicine",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Family Medicine",
+    "specialization": "Adult Medicine"
+  },
+  {
+    "code": "207QD0401X",
+    "labelEn": "Diabetology",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Family Medicine",
+    "specialization": "Diabetology"
+  },
+  {
+    "code": "207QG0300X",
+    "labelEn": "Geriatric Medicine",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Family Medicine",
+    "specialization": "Geriatric Medicine"
+  },
+  {
+    "code": "207QH0002X",
+    "labelEn": "Hospice and Palliative Medicine",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Family Medicine",
+    "specialization": "Hospice and Palliative Medicine"
+  },
+  {
+    "code": "207QB0002X",
+    "labelEn": "Obesity Medicine",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Family Medicine",
+    "specialization": "Obesity Medicine"
+  },
+  {
+    "code": "207QP0002X",
+    "labelEn": "Physician Nutrition Specialist",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Family Medicine",
+    "specialization": "Physician Nutrition Specialist"
+  },
+  {
+    "code": "207QS1201X",
+    "labelEn": "Sleep Medicine",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Family Medicine",
+    "specialization": "Sleep Medicine"
+  },
+  {
+    "code": "207QS0010X",
+    "labelEn": "Sports Medicine",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Family Medicine",
+    "specialization": "Sports Medicine"
+  },
+  {
+    "code": "208D00000X",
+    "labelEn": "General Practice",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "General Practice",
+    "specialization": ""
+  },
+  {
+    "code": "208M00000X",
+    "labelEn": "Hospitalist",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Hospitalist",
+    "specialization": ""
+  },
+  {
+    "code": "202C00000X",
+    "labelEn": "Independent Medical Examiner",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Independent Medical Examiner",
+    "specialization": ""
+  },
+  {
+    "code": "202D00000X",
+    "labelEn": "Integrative Medicine",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Integrative Medicine",
+    "specialization": ""
+  },
+  {
+    "code": "207R00000X",
+    "labelEn": "Internal Medicine",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Internal Medicine",
+    "specialization": ""
+  },
+  {
+    "code": "207RA0401X",
+    "labelEn": "Addiction Medicine",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Internal Medicine",
+    "specialization": "Addiction Medicine"
+  },
+  {
+    "code": "207RA0000X",
+    "labelEn": "Adolescent Medicine",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Internal Medicine",
+    "specialization": "Adolescent Medicine"
+  },
+  {
+    "code": "207RA0002X",
+    "labelEn": "Adult Congenital Heart Disease",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Internal Medicine",
+    "specialization": "Adult Congenital Heart Disease"
+  },
+  {
+    "code": "207RA0001X",
+    "labelEn": "Advanced Heart Failure and Transplant Cardiology",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Internal Medicine",
+    "specialization": "Advanced Heart Failure and Transplant Cardiology"
+  },
+  {
+    "code": "207RA0201X",
+    "labelEn": "Allergy & Immunology",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Internal Medicine",
+    "specialization": "Allergy & Immunology"
+  },
+  {
+    "code": "207RC0000X",
+    "labelEn": "Cardiovascular Disease",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Internal Medicine",
+    "specialization": "Cardiovascular Disease"
+  },
+  {
+    "code": "207RI0001X",
+    "labelEn": "Clinical & Laboratory Immunology",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Internal Medicine",
+    "specialization": "Clinical & Laboratory Immunology"
+  },
+  {
+    "code": "207RC0001X",
+    "labelEn": "Clinical Cardiac Electrophysiology",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Internal Medicine",
+    "specialization": "Clinical Cardiac Electrophysiology"
+  },
+  {
+    "code": "207RC0200X",
+    "labelEn": "Critical Care Medicine",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Internal Medicine",
+    "specialization": "Critical Care Medicine"
+  },
+  {
+    "code": "207QB0505X",
+    "labelEn": "Diabetology",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Internal Medicine",
+    "specialization": "Diabetology"
+  },
+  {
+    "code": "207RE0101X",
+    "labelEn": "Endocrinology, Diabetes & Metabolism",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Internal Medicine",
+    "specialization": "Endocrinology, Diabetes & Metabolism"
+  },
+  {
+    "code": "207RG0100X",
+    "labelEn": "Gastroenterology",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Internal Medicine",
+    "specialization": "Gastroenterology"
+  },
+  {
+    "code": "207RG0300X",
+    "labelEn": "Geriatric Medicine",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Internal Medicine",
+    "specialization": "Geriatric Medicine"
+  },
+  {
+    "code": "207RH0000X",
+    "labelEn": "Hematology",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Internal Medicine",
+    "specialization": "Hematology"
+  },
+  {
+    "code": "207RH0003X",
+    "labelEn": "Hematology & Oncology",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Internal Medicine",
+    "specialization": "Hematology & Oncology"
+  },
+  {
+    "code": "207RI0008X",
+    "labelEn": "Hepatology",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Internal Medicine",
+    "specialization": "Hepatology"
+  },
+  {
+    "code": "207RH0002X",
+    "labelEn": "Hospice and Palliative Medicine",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Internal Medicine",
+    "specialization": "Hospice and Palliative Medicine"
+  },
+  {
+    "code": "207RH0005X",
+    "labelEn": "Hypertension Specialist",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Internal Medicine",
+    "specialization": "Hypertension Specialist"
+  },
+  {
+    "code": "207RI0200X",
+    "labelEn": "Infectious Disease",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Internal Medicine",
+    "specialization": "Infectious Disease"
+  },
+  {
+    "code": "207RI0011X",
+    "labelEn": "Interventional Cardiology",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Internal Medicine",
+    "specialization": "Interventional Cardiology"
+  },
+  {
+    "code": "207RM1200X",
+    "labelEn": "Magnetic Resonance Imaging (MRI)",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Internal Medicine",
+    "specialization": "Magnetic Resonance Imaging (MRI)"
+  },
+  {
+    "code": "207RX0202X",
+    "labelEn": "Medical Oncology",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Internal Medicine",
+    "specialization": "Medical Oncology"
+  },
+  {
+    "code": "207RN0300X",
+    "labelEn": "Nephrology",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Internal Medicine",
+    "specialization": "Nephrology"
+  },
+  {
+    "code": "207RB0002X",
+    "labelEn": "Obesity Medicine",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Internal Medicine",
+    "specialization": "Obesity Medicine"
+  },
+  {
+    "code": "207RP1002X",
+    "labelEn": "Physician Nutrition Specialist",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Internal Medicine",
+    "specialization": "Physician Nutrition Specialist"
+  },
+  {
+    "code": "207RP1001X",
+    "labelEn": "Pulmonary Disease",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Internal Medicine",
+    "specialization": "Pulmonary Disease"
+  },
+  {
+    "code": "207RR0500X",
+    "labelEn": "Rheumatology",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Internal Medicine",
+    "specialization": "Rheumatology"
+  },
+  {
+    "code": "207RS0012X",
+    "labelEn": "Sleep Medicine",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Internal Medicine",
+    "specialization": "Sleep Medicine"
+  },
+  {
+    "code": "207RS0010X",
+    "labelEn": "Sports Medicine",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Internal Medicine",
+    "specialization": "Sports Medicine"
+  },
+  {
+    "code": "207RT0003X",
+    "labelEn": "Transplant Hepatology",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Internal Medicine",
+    "specialization": "Transplant Hepatology"
+  },
+  {
+    "code": "209800000X",
+    "labelEn": "Legal Medicine",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Legal Medicine",
+    "specialization": ""
+  },
+  {
+    "code": "207SG0202X",
+    "labelEn": "Clinical Biochemical Genetics",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Medical Genetics",
+    "specialization": "Clinical Biochemical Genetics"
+  },
+  {
+    "code": "207SC0300X",
+    "labelEn": "Clinical Cytogenetics",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Medical Genetics",
+    "specialization": "Clinical Cytogenetics"
+  },
+  {
+    "code": "207SG0201X",
+    "labelEn": "Clinical Genetics (M.D.)",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Medical Genetics",
+    "specialization": "Clinical Genetics (M.D.)"
+  },
+  {
+    "code": "207SG0203X",
+    "labelEn": "Clinical Molecular Genetics",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Medical Genetics",
+    "specialization": "Clinical Molecular Genetics"
+  },
+  {
+    "code": "207SG0207X",
+    "labelEn": "Medical Biochemical Genetics",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Medical Genetics",
+    "specialization": "Medical Biochemical Genetics"
+  },
+  {
+    "code": "207SM0001X",
+    "labelEn": "Molecular Genetic Pathology",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Medical Genetics",
+    "specialization": "Molecular Genetic Pathology"
+  },
+  {
+    "code": "207SG0205X",
+    "labelEn": "Ph.D. Medical Genetics",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Medical Genetics",
+    "specialization": "Ph.D. Medical Genetics"
+  },
+  {
+    "code": "207T00000X",
+    "labelEn": "Neurological Surgery",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Neurological Surgery",
+    "specialization": ""
+  },
+  {
+    "code": "204D00000X",
+    "labelEn": "Neuromusculoskeletal Medicine & OMM",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Neuromusculoskeletal Medicine & OMM",
+    "specialization": ""
+  },
+  {
+    "code": "204C00000X",
+    "labelEn": "Neuromusculoskeletal Medicine, Sports Medicine",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Neuromusculoskeletal Medicine, Sports Medicine",
+    "specialization": ""
+  },
+  {
+    "code": "207U00000X",
+    "labelEn": "Nuclear Medicine",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Nuclear Medicine",
+    "specialization": ""
+  },
+  {
+    "code": "207UN0903X",
+    "labelEn": "In Vivo & In Vitro Nuclear Medicine",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Nuclear Medicine",
+    "specialization": "In Vivo & In Vitro Nuclear Medicine"
+  },
+  {
+    "code": "207UN0901X",
+    "labelEn": "Nuclear Cardiology",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Nuclear Medicine",
+    "specialization": "Nuclear Cardiology"
+  },
+  {
+    "code": "207UN0902X",
+    "labelEn": "Nuclear Imaging & Therapy",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Nuclear Medicine",
+    "specialization": "Nuclear Imaging & Therapy"
+  },
+  {
+    "code": "207V00000X",
+    "labelEn": "Obstetrics & Gynecology",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Obstetrics & Gynecology",
+    "specialization": ""
+  },
+  {
+    "code": "207VC0300X",
+    "labelEn": "Complex Family Planning",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Obstetrics & Gynecology",
+    "specialization": "Complex Family Planning"
+  },
+  {
+    "code": "207VC0200X",
+    "labelEn": "Critical Care Medicine",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Obstetrics & Gynecology",
+    "specialization": "Critical Care Medicine"
+  },
+  {
+    "code": "207VF0040X",
+    "labelEn": "Urogynecology and Reconstructive Pelvic Surgery",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Obstetrics & Gynecology",
+    "specialization": "Urogynecology and Reconstructive Pelvic Surgery"
+  },
+  {
+    "code": "207VX0201X",
+    "labelEn": "Gynecologic Oncology",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Obstetrics & Gynecology",
+    "specialization": "Gynecologic Oncology"
+  },
+  {
+    "code": "207VG0400X",
+    "labelEn": "Gynecology",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Obstetrics & Gynecology",
+    "specialization": "Gynecology"
+  },
+  {
+    "code": "207VH0002X",
+    "labelEn": "Hospice and Palliative Medicine",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Obstetrics & Gynecology",
+    "specialization": "Hospice and Palliative Medicine"
+  },
+  {
+    "code": "207VM0101X",
+    "labelEn": "Maternal & Fetal Medicine",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Obstetrics & Gynecology",
+    "specialization": "Maternal & Fetal Medicine"
+  },
+  {
+    "code": "207VB0002X",
+    "labelEn": "Obesity Medicine",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Obstetrics & Gynecology",
+    "specialization": "Obesity Medicine"
+  },
+  {
+    "code": "207VX0000X",
+    "labelEn": "Obstetrics",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Obstetrics & Gynecology",
+    "specialization": "Obstetrics"
+  },
+  {
+    "code": "207VE0102X",
+    "labelEn": "Reproductive Endocrinology",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Obstetrics & Gynecology",
+    "specialization": "Reproductive Endocrinology"
+  },
+  {
+    "code": "207W00000X",
+    "labelEn": "Ophthalmology",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Ophthalmology",
+    "specialization": ""
+  },
+  {
+    "code": "207WX0120X",
+    "labelEn": "Cornea and External Diseases Specialist",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Ophthalmology",
+    "specialization": "Cornea and External Diseases Specialist"
+  },
+  {
+    "code": "207WX0009X",
+    "labelEn": "Glaucoma Specialist",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Ophthalmology",
+    "specialization": "Glaucoma Specialist"
+  },
+  {
+    "code": "207WX0109X",
+    "labelEn": "Neuro-ophthalmology",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Ophthalmology",
+    "specialization": "Neuro-ophthalmology"
+  },
+  {
+    "code": "207WX0200X",
+    "labelEn": "Ophthalmic Plastic and Reconstructive Surgery",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Ophthalmology",
+    "specialization": "Ophthalmic Plastic and Reconstructive Surgery"
+  },
+  {
+    "code": "207WX0110X",
+    "labelEn": "Pediatric Ophthalmology and Strabismus Specialist",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Ophthalmology",
+    "specialization": "Pediatric Ophthalmology and Strabismus Specialist"
+  },
+  {
+    "code": "207WX0107X",
+    "labelEn": "Retina Specialist",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Ophthalmology",
+    "specialization": "Retina Specialist"
+  },
+  {
+    "code": "207WX0108X",
+    "labelEn": "Uveitis and Ocular Inflammatory Disease",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Ophthalmology",
+    "specialization": "Uveitis and Ocular Inflammatory Disease"
+  },
+  {
+    "code": "204E00000X",
+    "labelEn": "Oral & Maxillofacial Surgery",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Oral & Maxillofacial Surgery",
+    "specialization": ""
+  },
+  {
+    "code": "207X00000X",
+    "labelEn": "Orthopaedic Surgery",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Orthopaedic Surgery",
+    "specialization": ""
+  },
+  {
+    "code": "207XS0114X",
+    "labelEn": "Adult Reconstructive Orthopaedic Surgery",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Orthopaedic Surgery",
+    "specialization": "Adult Reconstructive Orthopaedic Surgery"
+  },
+  {
+    "code": "207XX0004X",
+    "labelEn": "Foot and Ankle Surgery",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Orthopaedic Surgery",
+    "specialization": "Foot and Ankle Surgery"
+  },
+  {
+    "code": "207XS0106X",
+    "labelEn": "Hand Surgery",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Orthopaedic Surgery",
+    "specialization": "Hand Surgery"
+  },
+  {
+    "code": "207XS0117X",
+    "labelEn": "Orthopaedic Surgery of the Spine",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Orthopaedic Surgery",
+    "specialization": "Orthopaedic Surgery of the Spine"
+  },
+  {
+    "code": "207XX0801X",
+    "labelEn": "Orthopaedic Trauma",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Orthopaedic Surgery",
+    "specialization": "Orthopaedic Trauma"
+  },
+  {
+    "code": "207XP3100X",
+    "labelEn": "Pediatric Orthopaedic Surgery",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Orthopaedic Surgery",
+    "specialization": "Pediatric Orthopaedic Surgery"
+  },
+  {
+    "code": "207XX0005X",
+    "labelEn": "Sports Medicine",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Orthopaedic Surgery",
+    "specialization": "Sports Medicine"
+  },
+  {
+    "code": "207Y00000X",
+    "labelEn": "Otolaryngology",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Otolaryngology",
+    "specialization": ""
+  },
+  {
+    "code": "207YS0123X",
+    "labelEn": "Facial Plastic Surgery",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Otolaryngology",
+    "specialization": "Facial Plastic Surgery"
+  },
+  {
+    "code": "207YX0602X",
+    "labelEn": "Otolaryngic Allergy",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Otolaryngology",
+    "specialization": "Otolaryngic Allergy"
+  },
+  {
+    "code": "207YX0905X",
+    "labelEn": "Otolaryngology/Facial Plastic Surgery",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Otolaryngology",
+    "specialization": "Otolaryngology/Facial Plastic Surgery"
+  },
+  {
+    "code": "207YX0901X",
+    "labelEn": "Otology & Neurotology",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Otolaryngology",
+    "specialization": "Otology & Neurotology"
+  },
+  {
+    "code": "207YP0228X",
+    "labelEn": "Pediatric Otolaryngology",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Otolaryngology",
+    "specialization": "Pediatric Otolaryngology"
+  },
+  {
+    "code": "207YX0007X",
+    "labelEn": "Plastic Surgery within the Head & Neck",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Otolaryngology",
+    "specialization": "Plastic Surgery within the Head & Neck"
+  },
+  {
+    "code": "207YS0012X",
+    "labelEn": "Sleep Medicine",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Otolaryngology",
+    "specialization": "Sleep Medicine"
+  },
+  {
+    "code": "208VP0014X",
+    "labelEn": "Interventional Pain Medicine",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Pain Medicine",
+    "specialization": "Interventional Pain Medicine"
+  },
+  {
+    "code": "208VP0000X",
+    "labelEn": "Pain Medicine",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Pain Medicine",
+    "specialization": "Pain Medicine"
+  },
+  {
+    "code": "207ZP0101X",
+    "labelEn": "Anatomic Pathology",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Pathology",
+    "specialization": "Anatomic Pathology"
+  },
+  {
+    "code": "207ZP0102X",
+    "labelEn": "Anatomic Pathology & Clinical Pathology",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Pathology",
+    "specialization": "Anatomic Pathology & Clinical Pathology"
+  },
+  {
+    "code": "207ZB0001X",
+    "labelEn": "Blood Banking & Transfusion Medicine",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Pathology",
+    "specialization": "Blood Banking & Transfusion Medicine"
+  },
+  {
+    "code": "207ZP0104X",
+    "labelEn": "Chemical Pathology",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Pathology",
+    "specialization": "Chemical Pathology"
+  },
+  {
+    "code": "207ZC0008X",
+    "labelEn": "Clinical Informatics",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Pathology",
+    "specialization": "Clinical Informatics"
+  },
+  {
+    "code": "207ZC0006X",
+    "labelEn": "Clinical Pathology",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Pathology",
+    "specialization": "Clinical Pathology"
+  },
+  {
+    "code": "207ZP0105X",
+    "labelEn": "Clinical Pathology/Laboratory Medicine",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Pathology",
+    "specialization": "Clinical Pathology/Laboratory Medicine"
+  },
+  {
+    "code": "207ZC0500X",
+    "labelEn": "Cytopathology",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Pathology",
+    "specialization": "Cytopathology"
+  },
+  {
+    "code": "207ZD0900X",
+    "labelEn": "Dermatopathology",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Pathology",
+    "specialization": "Dermatopathology"
+  },
+  {
+    "code": "207ZF0201X",
+    "labelEn": "Forensic Pathology",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Pathology",
+    "specialization": "Forensic Pathology"
+  },
+  {
+    "code": "207ZH0000X",
+    "labelEn": "Hematology",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Pathology",
+    "specialization": "Hematology"
+  },
+  {
+    "code": "207ZI0100X",
+    "labelEn": "Immunopathology",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Pathology",
+    "specialization": "Immunopathology"
+  },
+  {
+    "code": "207ZM0300X",
+    "labelEn": "Medical Microbiology",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Pathology",
+    "specialization": "Medical Microbiology"
+  },
+  {
+    "code": "207ZP0007X",
+    "labelEn": "Molecular Genetic Pathology",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Pathology",
+    "specialization": "Molecular Genetic Pathology"
+  },
+  {
+    "code": "207ZN0500X",
+    "labelEn": "Neuropathology",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Pathology",
+    "specialization": "Neuropathology"
+  },
+  {
+    "code": "207ZP0213X",
+    "labelEn": "Pediatric Pathology",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Pathology",
+    "specialization": "Pediatric Pathology"
+  },
+  {
+    "code": "208000000X",
+    "labelEn": "Pediatrics",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Pediatrics",
+    "specialization": ""
+  },
+  {
+    "code": "2080A0000X",
+    "labelEn": "Adolescent Medicine",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Pediatrics",
+    "specialization": "Adolescent Medicine"
+  },
+  {
+    "code": "2080C0008X",
+    "labelEn": "Child Abuse Pediatrics",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Pediatrics",
+    "specialization": "Child Abuse Pediatrics"
+  },
+  {
+    "code": "2080I0007X",
+    "labelEn": "Clinical & Laboratory Immunology",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Pediatrics",
+    "specialization": "Clinical & Laboratory Immunology"
+  },
+  {
+    "code": "2080P0006X",
+    "labelEn": "Developmental - Behavioral Pediatrics",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Pediatrics",
+    "specialization": "Developmental - Behavioral Pediatrics"
+  },
+  {
+    "code": "2080H0002X",
+    "labelEn": "Hospice and Palliative Medicine",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Pediatrics",
+    "specialization": "Hospice and Palliative Medicine"
+  },
+  {
+    "code": "2080T0002X",
+    "labelEn": "Medical Toxicology",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Pediatrics",
+    "specialization": "Medical Toxicology"
+  },
+  {
+    "code": "2080N0001X",
+    "labelEn": "Neonatal-Perinatal Medicine",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Pediatrics",
+    "specialization": "Neonatal-Perinatal Medicine"
+  },
+  {
+    "code": "2080P0008X",
+    "labelEn": "Neurodevelopmental Disabilities",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Pediatrics",
+    "specialization": "Neurodevelopmental Disabilities"
+  },
+  {
+    "code": "2080B0002X",
+    "labelEn": "Obesity Medicine",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Pediatrics",
+    "specialization": "Obesity Medicine"
+  },
+  {
+    "code": "2080P0201X",
+    "labelEn": "Pediatric Allergy/Immunology",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Pediatrics",
+    "specialization": "Pediatric Allergy/Immunology"
+  },
+  {
+    "code": "2080P0202X",
+    "labelEn": "Pediatric Cardiology",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Pediatrics",
+    "specialization": "Pediatric Cardiology"
+  },
+  {
+    "code": "2080P0203X",
+    "labelEn": "Pediatric Critical Care Medicine",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Pediatrics",
+    "specialization": "Pediatric Critical Care Medicine"
+  },
+  {
+    "code": "2080P0204X",
+    "labelEn": "Pediatric Emergency Medicine",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Pediatrics",
+    "specialization": "Pediatric Emergency Medicine"
+  },
+  {
+    "code": "2080P0205X",
+    "labelEn": "Pediatric Endocrinology",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Pediatrics",
+    "specialization": "Pediatric Endocrinology"
+  },
+  {
+    "code": "2080P0206X",
+    "labelEn": "Pediatric Gastroenterology",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Pediatrics",
+    "specialization": "Pediatric Gastroenterology"
+  },
+  {
+    "code": "2080P0207X",
+    "labelEn": "Pediatric Hematology-Oncology",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Pediatrics",
+    "specialization": "Pediatric Hematology-Oncology"
+  },
+  {
+    "code": "2080P0208X",
+    "labelEn": "Pediatric Infectious Diseases",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Pediatrics",
+    "specialization": "Pediatric Infectious Diseases"
+  },
+  {
+    "code": "2080P0210X",
+    "labelEn": "Pediatric Nephrology",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Pediatrics",
+    "specialization": "Pediatric Nephrology"
+  },
+  {
+    "code": "2080P0214X",
+    "labelEn": "Pediatric Pulmonology",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Pediatrics",
+    "specialization": "Pediatric Pulmonology"
+  },
+  {
+    "code": "2080P0216X",
+    "labelEn": "Pediatric Rheumatology",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Pediatrics",
+    "specialization": "Pediatric Rheumatology"
+  },
+  {
+    "code": "2080T0004X",
+    "labelEn": "Pediatric Transplant Hepatology",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Pediatrics",
+    "specialization": "Pediatric Transplant Hepatology"
+  },
+  {
+    "code": "2080P1004X",
+    "labelEn": "Physician Nutrition Specialist",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Pediatrics",
+    "specialization": "Physician Nutrition Specialist"
+  },
+  {
+    "code": "2080S0012X",
+    "labelEn": "Sleep Medicine",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Pediatrics",
+    "specialization": "Sleep Medicine"
+  },
+  {
+    "code": "2080S0010X",
+    "labelEn": "Sports Medicine",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Pediatrics",
+    "specialization": "Sports Medicine"
+  },
+  {
+    "code": "202K00000X",
+    "labelEn": "Phlebology",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Phlebology",
+    "specialization": ""
+  },
+  {
+    "code": "208100000X",
+    "labelEn": "Physical Medicine & Rehabilitation",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Physical Medicine & Rehabilitation",
+    "specialization": ""
+  },
+  {
+    "code": "2081P0301X",
+    "labelEn": "Brain Injury Medicine",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Physical Medicine & Rehabilitation",
+    "specialization": "Brain Injury Medicine"
+  },
+  {
+    "code": "2081H0002X",
+    "labelEn": "Hospice and Palliative Medicine",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Physical Medicine & Rehabilitation",
+    "specialization": "Hospice and Palliative Medicine"
+  },
+  {
+    "code": "2081N0008X",
+    "labelEn": "Neuromuscular Medicine",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Physical Medicine & Rehabilitation",
+    "specialization": "Neuromuscular Medicine"
+  },
+  {
+    "code": "2081P2900X",
+    "labelEn": "Pain Medicine",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Physical Medicine & Rehabilitation",
+    "specialization": "Pain Medicine"
+  },
+  {
+    "code": "2081P0010X",
+    "labelEn": "Pediatric Rehabilitation Medicine",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Physical Medicine & Rehabilitation",
+    "specialization": "Pediatric Rehabilitation Medicine"
+  },
+  {
+    "code": "2081P0004X",
+    "labelEn": "Spinal Cord Injury Medicine",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Physical Medicine & Rehabilitation",
+    "specialization": "Spinal Cord Injury Medicine"
+  },
+  {
+    "code": "2081S0010X",
+    "labelEn": "Sports Medicine",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Physical Medicine & Rehabilitation",
+    "specialization": "Sports Medicine"
+  },
+  {
+    "code": "208200000X",
+    "labelEn": "Plastic Surgery",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Plastic Surgery",
+    "specialization": ""
+  },
+  {
+    "code": "2082S0099X",
+    "labelEn": "Plastic Surgery Within the Head and Neck",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Plastic Surgery",
+    "specialization": "Plastic Surgery Within the Head and Neck"
+  },
+  {
+    "code": "2082S0105X",
+    "labelEn": "Surgery of the Hand",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Plastic Surgery",
+    "specialization": "Surgery of the Hand"
+  },
+  {
+    "code": "2083A0300X",
+    "labelEn": "Addiction Medicine",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Preventive Medicine",
+    "specialization": "Addiction Medicine"
+  },
+  {
+    "code": "2083A0100X",
+    "labelEn": "Aerospace Medicine",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Preventive Medicine",
+    "specialization": "Aerospace Medicine"
+  },
+  {
+    "code": "2083C0008X",
+    "labelEn": "Clinical Informatics",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Preventive Medicine",
+    "specialization": "Clinical Informatics"
+  },
+  {
+    "code": "2083T0002X",
+    "labelEn": "Medical Toxicology",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Preventive Medicine",
+    "specialization": "Medical Toxicology"
+  },
+  {
+    "code": "2083B0002X",
+    "labelEn": "Obesity Medicine",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Preventive Medicine",
+    "specialization": "Obesity Medicine"
+  },
+  {
+    "code": "2083X0100X",
+    "labelEn": "Occupational Medicine",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Preventive Medicine",
+    "specialization": "Occupational Medicine"
+  },
+  {
+    "code": "2083P0500X",
+    "labelEn": "Preventive Medicine/Occupational Environmental Medicine",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Preventive Medicine",
+    "specialization": "Preventive Medicine/Occupational Environmental Medicine"
+  },
+  {
+    "code": "2083P0901X",
+    "labelEn": "Public Health & General Preventive Medicine",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Preventive Medicine",
+    "specialization": "Public Health & General Preventive Medicine"
+  },
+  {
+    "code": "2083S0010X",
+    "labelEn": "Sports Medicine",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Preventive Medicine",
+    "specialization": "Sports Medicine"
+  },
+  {
+    "code": "2083P0011X",
+    "labelEn": "Undersea and Hyperbaric Medicine",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Preventive Medicine",
+    "specialization": "Undersea and Hyperbaric Medicine"
+  },
+  {
+    "code": "2084A0401X",
+    "labelEn": "Addiction Medicine",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Psychiatry & Neurology",
+    "specialization": "Addiction Medicine"
+  },
+  {
+    "code": "2084P0802X",
+    "labelEn": "Addiction Psychiatry",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Psychiatry & Neurology",
+    "specialization": "Addiction Psychiatry"
+  },
+  {
+    "code": "2084B0040X",
+    "labelEn": "Behavioral Neurology & Neuropsychiatry",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Psychiatry & Neurology",
+    "specialization": "Behavioral Neurology & Neuropsychiatry"
+  },
+  {
+    "code": "2084P0301X",
+    "labelEn": "Brain Injury Medicine",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Psychiatry & Neurology",
+    "specialization": "Brain Injury Medicine"
+  },
+  {
+    "code": "2084P0804X",
+    "labelEn": "Child & Adolescent Psychiatry",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Psychiatry & Neurology",
+    "specialization": "Child & Adolescent Psychiatry"
+  },
+  {
+    "code": "2084N0600X",
+    "labelEn": "Clinical Neurophysiology",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Psychiatry & Neurology",
+    "specialization": "Clinical Neurophysiology"
+  },
+  {
+    "code": "2084D0003X",
+    "labelEn": "Diagnostic Neuroimaging",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Psychiatry & Neurology",
+    "specialization": "Diagnostic Neuroimaging"
+  },
+  {
+    "code": "2084E0001X",
+    "labelEn": "Epilepsy",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Psychiatry & Neurology",
+    "specialization": "Epilepsy"
+  },
+  {
+    "code": "2084F0202X",
+    "labelEn": "Forensic Psychiatry",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Psychiatry & Neurology",
+    "specialization": "Forensic Psychiatry"
+  },
+  {
+    "code": "2084P0805X",
+    "labelEn": "Geriatric Psychiatry",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Psychiatry & Neurology",
+    "specialization": "Geriatric Psychiatry"
+  },
+  {
+    "code": "2084H0002X",
+    "labelEn": "Hospice and Palliative Medicine",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Psychiatry & Neurology",
+    "specialization": "Hospice and Palliative Medicine"
+  },
+  {
+    "code": "2084A2900X",
+    "labelEn": "Neurocritical Care",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Psychiatry & Neurology",
+    "specialization": "Neurocritical Care"
+  },
+  {
+    "code": "2084P0005X",
+    "labelEn": "Neurodevelopmental Disabilities",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Psychiatry & Neurology",
+    "specialization": "Neurodevelopmental Disabilities"
+  },
+  {
+    "code": "2084N0400X",
+    "labelEn": "Neurology",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Psychiatry & Neurology",
+    "specialization": "Neurology"
+  },
+  {
+    "code": "2084N0402X",
+    "labelEn": "Neurology with Special Qualifications in Child Neurology",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Psychiatry & Neurology",
+    "specialization": "Neurology with Special Qualifications in Child Neurology"
+  },
+  {
+    "code": "2084N0008X",
+    "labelEn": "Neuromuscular Medicine",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Psychiatry & Neurology",
+    "specialization": "Neuromuscular Medicine"
+  },
+  {
+    "code": "2084B0002X",
+    "labelEn": "Obesity Medicine",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Psychiatry & Neurology",
+    "specialization": "Obesity Medicine"
+  },
+  {
+    "code": "2084P2900X",
+    "labelEn": "Pain Medicine",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Psychiatry & Neurology",
+    "specialization": "Pain Medicine"
+  },
+  {
+    "code": "2084P0800X",
+    "labelEn": "Psychiatry",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Psychiatry & Neurology",
+    "specialization": "Psychiatry"
+  },
+  {
+    "code": "2084P0015X",
+    "labelEn": "Psychosomatic Medicine",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Psychiatry & Neurology",
+    "specialization": "Psychosomatic Medicine"
+  },
+  {
+    "code": "2084S0012X",
+    "labelEn": "Sleep Medicine",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Psychiatry & Neurology",
+    "specialization": "Sleep Medicine"
+  },
+  {
+    "code": "2084S0010X",
+    "labelEn": "Sports Medicine",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Psychiatry & Neurology",
+    "specialization": "Sports Medicine"
+  },
+  {
+    "code": "2084V0102X",
+    "labelEn": "Vascular Neurology",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Psychiatry & Neurology",
+    "specialization": "Vascular Neurology"
+  },
+  {
+    "code": "2085B0100X",
+    "labelEn": "Body Imaging",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Radiology",
+    "specialization": "Body Imaging"
+  },
+  {
+    "code": "2085D0003X",
+    "labelEn": "Diagnostic Neuroimaging",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Radiology",
+    "specialization": "Diagnostic Neuroimaging"
+  },
+  {
+    "code": "2085R0202X",
+    "labelEn": "Diagnostic Radiology",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Radiology",
+    "specialization": "Diagnostic Radiology"
+  },
+  {
+    "code": "2085U0001X",
+    "labelEn": "Diagnostic Ultrasound",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Radiology",
+    "specialization": "Diagnostic Ultrasound"
+  },
+  {
+    "code": "2085H0002X",
+    "labelEn": "Hospice and Palliative Medicine",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Radiology",
+    "specialization": "Hospice and Palliative Medicine"
+  },
+  {
+    "code": "2085N0700X",
+    "labelEn": "Neuroradiology",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Radiology",
+    "specialization": "Neuroradiology"
+  },
+  {
+    "code": "2085N0904X",
+    "labelEn": "Nuclear Radiology",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Radiology",
+    "specialization": "Nuclear Radiology"
+  },
+  {
+    "code": "2085P0229X",
+    "labelEn": "Pediatric Radiology",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Radiology",
+    "specialization": "Pediatric Radiology"
+  },
+  {
+    "code": "2085R0001X",
+    "labelEn": "Radiation Oncology",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Radiology",
+    "specialization": "Radiation Oncology"
+  },
+  {
+    "code": "2085R0205X",
+    "labelEn": "Radiological Physics",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Radiology",
+    "specialization": "Radiological Physics"
+  },
+  {
+    "code": "2085R0203X",
+    "labelEn": "Therapeutic Radiology",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Radiology",
+    "specialization": "Therapeutic Radiology"
+  },
+  {
+    "code": "2085R0204X",
+    "labelEn": "Vascular & Interventional Radiology",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Radiology",
+    "specialization": "Vascular & Interventional Radiology"
+  },
+  {
+    "code": "208600000X",
+    "labelEn": "Surgery",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Surgery",
+    "specialization": ""
+  },
+  {
+    "code": "2086H0002X",
+    "labelEn": "Hospice and Palliative Medicine",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Surgery",
+    "specialization": "Hospice and Palliative Medicine"
+  },
+  {
+    "code": "2086S0120X",
+    "labelEn": "Pediatric Surgery",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Surgery",
+    "specialization": "Pediatric Surgery"
+  },
+  {
+    "code": "2086P0122X",
+    "labelEn": "Physician Nutrition Specialist",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Surgery",
+    "specialization": "Physician Nutrition Specialist"
+  },
+  {
+    "code": "2086S0122X",
+    "labelEn": "Plastic and Reconstructive Surgery",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Surgery",
+    "specialization": "Plastic and Reconstructive Surgery"
+  },
+  {
+    "code": "2086S0105X",
+    "labelEn": "Surgery of the Hand",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Surgery",
+    "specialization": "Surgery of the Hand"
+  },
+  {
+    "code": "2086S0102X",
+    "labelEn": "Surgical Critical Care",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Surgery",
+    "specialization": "Surgical Critical Care"
+  },
+  {
+    "code": "2086X0206X",
+    "labelEn": "Surgical Oncology",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Surgery",
+    "specialization": "Surgical Oncology"
+  },
+  {
+    "code": "2086S0127X",
+    "labelEn": "Trauma Surgery",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Surgery",
+    "specialization": "Trauma Surgery"
+  },
+  {
+    "code": "2086S0129X",
+    "labelEn": "Vascular Surgery",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Surgery",
+    "specialization": "Vascular Surgery"
+  },
+  {
+    "code": "208G00000X",
+    "labelEn": "Thoracic Surgery (Cardiothoracic Vascular Surgery)",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Thoracic Surgery (Cardiothoracic Vascular Surgery)",
+    "specialization": ""
+  },
+  {
+    "code": "204F00000X",
+    "labelEn": "Transplant Surgery",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Transplant Surgery",
+    "specialization": ""
+  },
+  {
+    "code": "208800000X",
+    "labelEn": "Urology",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Urology",
+    "specialization": ""
+  },
+  {
+    "code": "2088F0040X",
+    "labelEn": "Urogynecology and Reconstructive Pelvic Surgery",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Urology",
+    "specialization": "Urogynecology and Reconstructive Pelvic Surgery"
+  },
+  {
+    "code": "2088P0231X",
+    "labelEn": "Pediatric Urology",
+    "grouping": "Allopathic & Osteopathic Physicians",
+    "classification": "Urology",
+    "specialization": "Pediatric Urology"
+  },
+  {
+    "code": "106E00000X",
+    "labelEn": "Assistant Behavior Analyst",
+    "grouping": "Behavioral Health & Social Service Providers",
+    "classification": "Assistant Behavior Analyst",
+    "specialization": ""
+  },
+  {
+    "code": "106S00000X",
+    "labelEn": "Behavior Technician",
+    "grouping": "Behavioral Health & Social Service Providers",
+    "classification": "Behavior Technician",
+    "specialization": ""
+  },
+  {
+    "code": "103K00000X",
+    "labelEn": "Behavior Analyst",
+    "grouping": "Behavioral Health & Social Service Providers",
+    "classification": "Behavior Analyst",
+    "specialization": ""
+  },
+  {
+    "code": "103G00000X",
+    "labelEn": "Clinical Neuropsychologist",
+    "grouping": "Behavioral Health & Social Service Providers",
+    "classification": "Clinical Neuropsychologist",
+    "specialization": ""
+  },
+  {
+    "code": "103GC0700X",
+    "labelEn": "Clinical",
+    "grouping": "Behavioral Health & Social Service Providers",
+    "classification": "Clinical Neuropsychologist",
+    "specialization": "Clinical"
+  },
+  {
+    "code": "101Y00000X",
+    "labelEn": "Counselor",
+    "grouping": "Behavioral Health & Social Service Providers",
+    "classification": "Counselor",
+    "specialization": ""
+  },
+  {
+    "code": "101YA0400X",
+    "labelEn": "Addiction (Substance Use Disorder)",
+    "grouping": "Behavioral Health & Social Service Providers",
+    "classification": "Counselor",
+    "specialization": "Addiction (Substance Use Disorder)"
+  },
+  {
+    "code": "101YM0800X",
+    "labelEn": "Mental Health",
+    "grouping": "Behavioral Health & Social Service Providers",
+    "classification": "Counselor",
+    "specialization": "Mental Health"
+  },
+  {
+    "code": "101YP1600X",
+    "labelEn": "Pastoral",
+    "grouping": "Behavioral Health & Social Service Providers",
+    "classification": "Counselor",
+    "specialization": "Pastoral"
+  },
+  {
+    "code": "101YP2500X",
+    "labelEn": "Professional",
+    "grouping": "Behavioral Health & Social Service Providers",
+    "classification": "Counselor",
+    "specialization": "Professional"
+  },
+  {
+    "code": "101YS0200X",
+    "labelEn": "School",
+    "grouping": "Behavioral Health & Social Service Providers",
+    "classification": "Counselor",
+    "specialization": "School"
+  },
+  {
+    "code": "101200000X",
+    "labelEn": "Drama Therapist",
+    "grouping": "Behavioral Health & Social Service Providers",
+    "classification": "Drama Therapist",
+    "specialization": ""
+  },
+  {
+    "code": "106H00000X",
+    "labelEn": "Marriage & Family Therapist",
+    "grouping": "Behavioral Health & Social Service Providers",
+    "classification": "Marriage & Family Therapist",
+    "specialization": ""
+  },
+  {
+    "code": "102X00000X",
+    "labelEn": "Poetry Therapist",
+    "grouping": "Behavioral Health & Social Service Providers",
+    "classification": "Poetry Therapist",
+    "specialization": ""
+  },
+  {
+    "code": "102L00000X",
+    "labelEn": "Psychoanalyst",
+    "grouping": "Behavioral Health & Social Service Providers",
+    "classification": "Psychoanalyst",
+    "specialization": ""
+  },
+  {
+    "code": "103T00000X",
+    "labelEn": "Psychologist",
+    "grouping": "Behavioral Health & Social Service Providers",
+    "classification": "Psychologist",
+    "specialization": ""
+  },
+  {
+    "code": "103TA0400X",
+    "labelEn": "Addiction (Substance Use Disorder)",
+    "grouping": "Behavioral Health & Social Service Providers",
+    "classification": "Psychologist",
+    "specialization": "Addiction (Substance Use Disorder)"
+  },
+  {
+    "code": "103TA0700X",
+    "labelEn": "Adult Development & Aging",
+    "grouping": "Behavioral Health & Social Service Providers",
+    "classification": "Psychologist",
+    "specialization": "Adult Development & Aging"
+  },
+  {
+    "code": "103TC0700X",
+    "labelEn": "Clinical",
+    "grouping": "Behavioral Health & Social Service Providers",
+    "classification": "Psychologist",
+    "specialization": "Clinical"
+  },
+  {
+    "code": "103TC2200X",
+    "labelEn": "Clinical Child & Adolescent",
+    "grouping": "Behavioral Health & Social Service Providers",
+    "classification": "Psychologist",
+    "specialization": "Clinical Child & Adolescent"
+  },
+  {
+    "code": "103TB0200X",
+    "labelEn": "Cognitive & Behavioral",
+    "grouping": "Behavioral Health & Social Service Providers",
+    "classification": "Psychologist",
+    "specialization": "Cognitive & Behavioral"
+  },
+  {
+    "code": "103TC1900X",
+    "labelEn": "Counseling",
+    "grouping": "Behavioral Health & Social Service Providers",
+    "classification": "Psychologist",
+    "specialization": "Counseling"
+  },
+  {
+    "code": "103TE1000X",
+    "labelEn": "Educational",
+    "grouping": "Behavioral Health & Social Service Providers",
+    "classification": "Psychologist",
+    "specialization": "Educational"
+  },
+  {
+    "code": "103TE1100X",
+    "labelEn": "Exercise & Sports",
+    "grouping": "Behavioral Health & Social Service Providers",
+    "classification": "Psychologist",
+    "specialization": "Exercise & Sports"
+  },
+  {
+    "code": "103TF0000X",
+    "labelEn": "Family",
+    "grouping": "Behavioral Health & Social Service Providers",
+    "classification": "Psychologist",
+    "specialization": "Family"
+  },
+  {
+    "code": "103TF0200X",
+    "labelEn": "Forensic",
+    "grouping": "Behavioral Health & Social Service Providers",
+    "classification": "Psychologist",
+    "specialization": "Forensic"
+  },
+  {
+    "code": "103TP2701X",
+    "labelEn": "Group Psychotherapy",
+    "grouping": "Behavioral Health & Social Service Providers",
+    "classification": "Psychologist",
+    "specialization": "Group Psychotherapy"
+  },
+  {
+    "code": "103TH0004X",
+    "labelEn": "Health",
+    "grouping": "Behavioral Health & Social Service Providers",
+    "classification": "Psychologist",
+    "specialization": "Health"
+  },
+  {
+    "code": "103TH0100X",
+    "labelEn": "Health Service",
+    "grouping": "Behavioral Health & Social Service Providers",
+    "classification": "Psychologist",
+    "specialization": "Health Service"
+  },
+  {
+    "code": "103TM1700X",
+    "labelEn": "Men & Masculinity",
+    "grouping": "Behavioral Health & Social Service Providers",
+    "classification": "Psychologist",
+    "specialization": "Men & Masculinity"
+  },
+  {
+    "code": "103TM1800X",
+    "labelEn": "Intellectual & Developmental Disabilities",
+    "grouping": "Behavioral Health & Social Service Providers",
+    "classification": "Psychologist",
+    "specialization": "Intellectual & Developmental Disabilities"
+  },
+  {
+    "code": "103TP0016X",
+    "labelEn": "Prescribing (Medical)",
+    "grouping": "Behavioral Health & Social Service Providers",
+    "classification": "Psychologist",
+    "specialization": "Prescribing (Medical)"
+  },
+  {
+    "code": "103TP0814X",
+    "labelEn": "Psychoanalysis",
+    "grouping": "Behavioral Health & Social Service Providers",
+    "classification": "Psychologist",
+    "specialization": "Psychoanalysis"
+  },
+  {
+    "code": "103TP2700X",
+    "labelEn": "Psychotherapy",
+    "grouping": "Behavioral Health & Social Service Providers",
+    "classification": "Psychologist",
+    "specialization": "Psychotherapy"
+  },
+  {
+    "code": "103TR0400X",
+    "labelEn": "Rehabilitation",
+    "grouping": "Behavioral Health & Social Service Providers",
+    "classification": "Psychologist",
+    "specialization": "Rehabilitation"
+  },
+  {
+    "code": "103TS0200X",
+    "labelEn": "School",
+    "grouping": "Behavioral Health & Social Service Providers",
+    "classification": "Psychologist",
+    "specialization": "School"
+  },
+  {
+    "code": "103TW0100X",
+    "labelEn": "Women",
+    "grouping": "Behavioral Health & Social Service Providers",
+    "classification": "Psychologist",
+    "specialization": "Women"
+  },
+  {
+    "code": "104100000X",
+    "labelEn": "Social Worker",
+    "grouping": "Behavioral Health & Social Service Providers",
+    "classification": "Social Worker",
+    "specialization": ""
+  },
+  {
+    "code": "1041C0700X",
+    "labelEn": "Clinical",
+    "grouping": "Behavioral Health & Social Service Providers",
+    "classification": "Social Worker",
+    "specialization": "Clinical"
+  },
+  {
+    "code": "1041S0200X",
+    "labelEn": "School",
+    "grouping": "Behavioral Health & Social Service Providers",
+    "classification": "Social Worker",
+    "specialization": "School"
+  },
+  {
+    "code": "111N00000X",
+    "labelEn": "Chiropractor",
+    "grouping": "Chiropractic Providers",
+    "classification": "Chiropractor",
+    "specialization": ""
+  },
+  {
+    "code": "111NI0013X",
+    "labelEn": "Independent Medical Examiner",
+    "grouping": "Chiropractic Providers",
+    "classification": "Chiropractor",
+    "specialization": "Independent Medical Examiner"
+  },
+  {
+    "code": "111NI0900X",
+    "labelEn": "Internist",
+    "grouping": "Chiropractic Providers",
+    "classification": "Chiropractor",
+    "specialization": "Internist"
+  },
+  {
+    "code": "111NN0400X",
+    "labelEn": "Neurology",
+    "grouping": "Chiropractic Providers",
+    "classification": "Chiropractor",
+    "specialization": "Neurology"
+  },
+  {
+    "code": "111NN1001X",
+    "labelEn": "Nutrition",
+    "grouping": "Chiropractic Providers",
+    "classification": "Chiropractor",
+    "specialization": "Nutrition"
+  },
+  {
+    "code": "111NX0100X",
+    "labelEn": "Occupational Health",
+    "grouping": "Chiropractic Providers",
+    "classification": "Chiropractor",
+    "specialization": "Occupational Health"
+  },
+  {
+    "code": "111NX0800X",
+    "labelEn": "Orthopedic",
+    "grouping": "Chiropractic Providers",
+    "classification": "Chiropractor",
+    "specialization": "Orthopedic"
+  },
+  {
+    "code": "111NP0017X",
+    "labelEn": "Pediatric Chiropractor",
+    "grouping": "Chiropractic Providers",
+    "classification": "Chiropractor",
+    "specialization": "Pediatric Chiropractor"
+  },
+  {
+    "code": "111NR0200X",
+    "labelEn": "Radiology",
+    "grouping": "Chiropractic Providers",
+    "classification": "Chiropractor",
+    "specialization": "Radiology"
+  },
+  {
+    "code": "111NR0400X",
+    "labelEn": "Rehabilitation",
+    "grouping": "Chiropractic Providers",
+    "classification": "Chiropractor",
+    "specialization": "Rehabilitation"
+  },
+  {
+    "code": "111NS0005X",
+    "labelEn": "Sports Physician",
+    "grouping": "Chiropractic Providers",
+    "classification": "Chiropractor",
+    "specialization": "Sports Physician"
+  },
+  {
+    "code": "111NT0100X",
+    "labelEn": "Thermography",
+    "grouping": "Chiropractic Providers",
+    "classification": "Chiropractor",
+    "specialization": "Thermography"
+  },
+  {
+    "code": "125K00000X",
+    "labelEn": "Advanced Practice Dental Therapist",
+    "grouping": "Dental Providers",
+    "classification": "Advanced Practice Dental Therapist",
+    "specialization": ""
+  },
+  {
+    "code": "126800000X",
+    "labelEn": "Dental Assistant",
+    "grouping": "Dental Providers",
+    "classification": "Dental Assistant",
+    "specialization": ""
+  },
+  {
+    "code": "124Q00000X",
+    "labelEn": "Dental Hygienist",
+    "grouping": "Dental Providers",
+    "classification": "Dental Hygienist",
+    "specialization": ""
+  },
+  {
+    "code": "126900000X",
+    "labelEn": "Dental Laboratory Technician",
+    "grouping": "Dental Providers",
+    "classification": "Dental Laboratory Technician",
+    "specialization": ""
+  },
+  {
+    "code": "125J00000X",
+    "labelEn": "Dental Therapist",
+    "grouping": "Dental Providers",
+    "classification": "Dental Therapist",
+    "specialization": ""
+  },
+  {
+    "code": "122300000X",
+    "labelEn": "Dentist",
+    "grouping": "Dental Providers",
+    "classification": "Dentist",
+    "specialization": ""
+  },
+  {
+    "code": "1223D0004X",
+    "labelEn": "Dental Anesthesiology",
+    "grouping": "Dental Providers",
+    "classification": "Dentist",
+    "specialization": "Dental Anesthesiology"
+  },
+  {
+    "code": "1223D0001X",
+    "labelEn": "Dental Public Health",
+    "grouping": "Dental Providers",
+    "classification": "Dentist",
+    "specialization": "Dental Public Health"
+  },
+  {
+    "code": "1223E0200X",
+    "labelEn": "Endodontics",
+    "grouping": "Dental Providers",
+    "classification": "Dentist",
+    "specialization": "Endodontics"
+  },
+  {
+    "code": "1223G0001X",
+    "labelEn": "General Practice",
+    "grouping": "Dental Providers",
+    "classification": "Dentist",
+    "specialization": "General Practice"
+  },
+  {
+    "code": "1223P0106X",
+    "labelEn": "Oral and Maxillofacial Pathology",
+    "grouping": "Dental Providers",
+    "classification": "Dentist",
+    "specialization": "Oral and Maxillofacial Pathology"
+  },
+  {
+    "code": "1223X0008X",
+    "labelEn": "Oral and Maxillofacial Radiology",
+    "grouping": "Dental Providers",
+    "classification": "Dentist",
+    "specialization": "Oral and Maxillofacial Radiology"
+  },
+  {
+    "code": "1223S0112X",
+    "labelEn": "Oral and Maxillofacial Surgery",
+    "grouping": "Dental Providers",
+    "classification": "Dentist",
+    "specialization": "Oral and Maxillofacial Surgery"
+  },
+  {
+    "code": "125Q00000X",
+    "labelEn": "Oral Medicine",
+    "grouping": "Dental Providers",
+    "classification": "Dentist",
+    "specialization": "Oral Medicine"
+  },
+  {
+    "code": "1223X2210X",
+    "labelEn": "Orofacial Pain",
+    "grouping": "Dental Providers",
+    "classification": "Dentist",
+    "specialization": "Orofacial Pain"
+  },
+  {
+    "code": "1223X0400X",
+    "labelEn": "Orthodontics and Dentofacial Orthopedics",
+    "grouping": "Dental Providers",
+    "classification": "Dentist",
+    "specialization": "Orthodontics and Dentofacial Orthopedics"
+  },
+  {
+    "code": "1223P0221X",
+    "labelEn": "Pediatric Dentistry",
+    "grouping": "Dental Providers",
+    "classification": "Dentist",
+    "specialization": "Pediatric Dentistry"
+  },
+  {
+    "code": "1223P0300X",
+    "labelEn": "Periodontics",
+    "grouping": "Dental Providers",
+    "classification": "Dentist",
+    "specialization": "Periodontics"
+  },
+  {
+    "code": "1223P0700X",
+    "labelEn": "Prosthodontics",
+    "grouping": "Dental Providers",
+    "classification": "Dentist",
+    "specialization": "Prosthodontics"
+  },
+  {
+    "code": "122400000X",
+    "labelEn": "Denturist",
+    "grouping": "Dental Providers",
+    "classification": "Denturist",
+    "specialization": ""
+  },
+  {
+    "code": "132700000X",
+    "labelEn": "Dietary Manager",
+    "grouping": "Dietary & Nutritional Service Providers",
+    "classification": "Dietary Manager",
+    "specialization": ""
+  },
+  {
+    "code": "136A00000X",
+    "labelEn": "Dietetic Technician, Registered",
+    "grouping": "Dietary & Nutritional Service Providers",
+    "classification": "Dietetic Technician, Registered",
+    "specialization": ""
+  },
+  {
+    "code": "133V00000X",
+    "labelEn": "Dietitian, Registered",
+    "grouping": "Dietary & Nutritional Service Providers",
+    "classification": "Dietitian, Registered",
+    "specialization": ""
+  },
+  {
+    "code": "133VN1101X",
+    "labelEn": "Nutrition, Gerontological",
+    "grouping": "Dietary & Nutritional Service Providers",
+    "classification": "Dietitian, Registered",
+    "specialization": "Nutrition, Gerontological"
+  },
+  {
+    "code": "133VN1006X",
+    "labelEn": "Nutrition, Metabolic",
+    "grouping": "Dietary & Nutritional Service Providers",
+    "classification": "Dietitian, Registered",
+    "specialization": "Nutrition, Metabolic"
+  },
+  {
+    "code": "133VN1201X",
+    "labelEn": "Nutrition, Obesity and Weight Management",
+    "grouping": "Dietary & Nutritional Service Providers",
+    "classification": "Dietitian, Registered",
+    "specialization": "Nutrition, Obesity and Weight Management"
+  },
+  {
+    "code": "133VN1301X",
+    "labelEn": "Nutrition, Oncology",
+    "grouping": "Dietary & Nutritional Service Providers",
+    "classification": "Dietitian, Registered",
+    "specialization": "Nutrition, Oncology"
+  },
+  {
+    "code": "133VN1004X",
+    "labelEn": "Nutrition, Pediatric",
+    "grouping": "Dietary & Nutritional Service Providers",
+    "classification": "Dietitian, Registered",
+    "specialization": "Nutrition, Pediatric"
+  },
+  {
+    "code": "133VN1401X",
+    "labelEn": "Nutrition, Pediatric Critical Care",
+    "grouping": "Dietary & Nutritional Service Providers",
+    "classification": "Dietitian, Registered",
+    "specialization": "Nutrition, Pediatric Critical Care"
+  },
+  {
+    "code": "133VN1005X",
+    "labelEn": "Nutrition, Renal",
+    "grouping": "Dietary & Nutritional Service Providers",
+    "classification": "Dietitian, Registered",
+    "specialization": "Nutrition, Renal"
+  },
+  {
+    "code": "133VN1501X",
+    "labelEn": "Nutrition, Sports Dietetics",
+    "grouping": "Dietary & Nutritional Service Providers",
+    "classification": "Dietitian, Registered",
+    "specialization": "Nutrition, Sports Dietetics"
+  },
+  {
+    "code": "133N00000X",
+    "labelEn": "Nutritionist",
+    "grouping": "Dietary & Nutritional Service Providers",
+    "classification": "Nutritionist",
+    "specialization": ""
+  },
+  {
+    "code": "133NN1002X",
+    "labelEn": "Nutrition, Education",
+    "grouping": "Dietary & Nutritional Service Providers",
+    "classification": "Nutritionist",
+    "specialization": "Nutrition, Education"
+  },
+  {
+    "code": "146E00000X",
+    "labelEn": "Community Paramedic",
+    "grouping": "Emergency Medical Service Providers",
+    "classification": "Community Paramedic",
+    "specialization": ""
+  },
+  {
+    "code": "146N00000X",
+    "labelEn": "Emergency Medical Technician, Basic",
+    "grouping": "Emergency Medical Service Providers",
+    "classification": "Emergency Medical Technician, Basic",
+    "specialization": ""
+  },
+  {
+    "code": "146M00000X",
+    "labelEn": "Emergency Medical Technician, Intermediate",
+    "grouping": "Emergency Medical Service Providers",
+    "classification": "Emergency Medical Technician, Intermediate",
+    "specialization": ""
+  },
+  {
+    "code": "146L00000X",
+    "labelEn": "Emergency Medical Technician, Paramedic",
+    "grouping": "Emergency Medical Service Providers",
+    "classification": "Emergency Medical Technician, Paramedic",
+    "specialization": ""
+  },
+  {
+    "code": "146D00000X",
+    "labelEn": "Personal Emergency Response Attendant",
+    "grouping": "Emergency Medical Service Providers",
+    "classification": "Personal Emergency Response Attendant",
+    "specialization": ""
+  },
+  {
+    "code": "152W00000X",
+    "labelEn": "Optometrist",
+    "grouping": "Eye and Vision Services Providers",
+    "classification": "Optometrist",
+    "specialization": ""
+  },
+  {
+    "code": "152WC0802X",
+    "labelEn": "Corneal and Contact Management",
+    "grouping": "Eye and Vision Services Providers",
+    "classification": "Optometrist",
+    "specialization": "Corneal and Contact Management"
+  },
+  {
+    "code": "152WL0500X",
+    "labelEn": "Low Vision Rehabilitation",
+    "grouping": "Eye and Vision Services Providers",
+    "classification": "Optometrist",
+    "specialization": "Low Vision Rehabilitation"
+  },
+  {
+    "code": "152WX0102X",
+    "labelEn": "Occupational Vision",
+    "grouping": "Eye and Vision Services Providers",
+    "classification": "Optometrist",
+    "specialization": "Occupational Vision"
+  },
+  {
+    "code": "152WP0200X",
+    "labelEn": "Pediatrics",
+    "grouping": "Eye and Vision Services Providers",
+    "classification": "Optometrist",
+    "specialization": "Pediatrics"
+  },
+  {
+    "code": "152WS0006X",
+    "labelEn": "Sports Vision",
+    "grouping": "Eye and Vision Services Providers",
+    "classification": "Optometrist",
+    "specialization": "Sports Vision"
+  },
+  {
+    "code": "152WV0400X",
+    "labelEn": "Vision Therapy",
+    "grouping": "Eye and Vision Services Providers",
+    "classification": "Optometrist",
+    "specialization": "Vision Therapy"
+  },
+  {
+    "code": "156F00000X",
+    "labelEn": "Technician/Technologist",
+    "grouping": "Eye and Vision Services Providers",
+    "classification": "Technician/Technologist",
+    "specialization": ""
+  },
+  {
+    "code": "156FC0800X",
+    "labelEn": "Contact Lens",
+    "grouping": "Eye and Vision Services Providers",
+    "classification": "Technician/Technologist",
+    "specialization": "Contact Lens"
+  },
+  {
+    "code": "156FC0801X",
+    "labelEn": "Contact Lens Fitter",
+    "grouping": "Eye and Vision Services Providers",
+    "classification": "Technician/Technologist",
+    "specialization": "Contact Lens Fitter"
+  },
+  {
+    "code": "156FX1700X",
+    "labelEn": "Ocularist",
+    "grouping": "Eye and Vision Services Providers",
+    "classification": "Technician/Technologist",
+    "specialization": "Ocularist"
+  },
+  {
+    "code": "156FX1100X",
+    "labelEn": "Ophthalmic",
+    "grouping": "Eye and Vision Services Providers",
+    "classification": "Technician/Technologist",
+    "specialization": "Ophthalmic"
+  },
+  {
+    "code": "156FX1101X",
+    "labelEn": "Ophthalmic Assistant",
+    "grouping": "Eye and Vision Services Providers",
+    "classification": "Technician/Technologist",
+    "specialization": "Ophthalmic Assistant"
+  },
+  {
+    "code": "156FX1800X",
+    "labelEn": "Optician",
+    "grouping": "Eye and Vision Services Providers",
+    "classification": "Technician/Technologist",
+    "specialization": "Optician"
+  },
+  {
+    "code": "156FX1201X",
+    "labelEn": "Optometric Assistant",
+    "grouping": "Eye and Vision Services Providers",
+    "classification": "Technician/Technologist",
+    "specialization": "Optometric Assistant"
+  },
+  {
+    "code": "156FX1202X",
+    "labelEn": "Optometric Technician",
+    "grouping": "Eye and Vision Services Providers",
+    "classification": "Technician/Technologist",
+    "specialization": "Optometric Technician"
+  },
+  {
+    "code": "156FX1900X",
+    "labelEn": "Orthoptist",
+    "grouping": "Eye and Vision Services Providers",
+    "classification": "Technician/Technologist",
+    "specialization": "Orthoptist"
+  },
+  {
+    "code": "164W00000X",
+    "labelEn": "Licensed Practical Nurse",
+    "grouping": "Nursing Service Providers",
+    "classification": "Licensed Practical Nurse",
+    "specialization": ""
+  },
+  {
+    "code": "167G00000X",
+    "labelEn": "Licensed Psychiatric Technician",
+    "grouping": "Nursing Service Providers",
+    "classification": "Licensed Psychiatric Technician",
+    "specialization": ""
+  },
+  {
+    "code": "164X00000X",
+    "labelEn": "Licensed Vocational Nurse",
+    "grouping": "Nursing Service Providers",
+    "classification": "Licensed Vocational Nurse",
+    "specialization": ""
+  },
+  {
+    "code": "163W00000X",
+    "labelEn": "Registered Nurse",
+    "grouping": "Nursing Service Providers",
+    "classification": "Registered Nurse",
+    "specialization": ""
+  },
+  {
+    "code": "163WA0400X",
+    "labelEn": "Addiction (Substance Use Disorder)",
+    "grouping": "Nursing Service Providers",
+    "classification": "Registered Nurse",
+    "specialization": "Addiction (Substance Use Disorder)"
+  },
+  {
+    "code": "163WA2000X",
+    "labelEn": "Administrator",
+    "grouping": "Nursing Service Providers",
+    "classification": "Registered Nurse",
+    "specialization": "Administrator"
+  },
+  {
+    "code": "163WP2201X",
+    "labelEn": "Ambulatory Care",
+    "grouping": "Nursing Service Providers",
+    "classification": "Registered Nurse",
+    "specialization": "Ambulatory Care"
+  },
+  {
+    "code": "163WC3500X",
+    "labelEn": "Cardiac Rehabilitation",
+    "grouping": "Nursing Service Providers",
+    "classification": "Registered Nurse",
+    "specialization": "Cardiac Rehabilitation"
+  },
+  {
+    "code": "163WC0400X",
+    "labelEn": "Case Management",
+    "grouping": "Nursing Service Providers",
+    "classification": "Registered Nurse",
+    "specialization": "Case Management"
+  },
+  {
+    "code": "163WC1400X",
+    "labelEn": "College Health",
+    "grouping": "Nursing Service Providers",
+    "classification": "Registered Nurse",
+    "specialization": "College Health"
+  },
+  {
+    "code": "163WC1500X",
+    "labelEn": "Community Health",
+    "grouping": "Nursing Service Providers",
+    "classification": "Registered Nurse",
+    "specialization": "Community Health"
+  },
+  {
+    "code": "163WC2100X",
+    "labelEn": "Continence Care",
+    "grouping": "Nursing Service Providers",
+    "classification": "Registered Nurse",
+    "specialization": "Continence Care"
+  },
+  {
+    "code": "163WC1600X",
+    "labelEn": "Continuing Education/Staff Development",
+    "grouping": "Nursing Service Providers",
+    "classification": "Registered Nurse",
+    "specialization": "Continuing Education/Staff Development"
+  },
+  {
+    "code": "163WC0200X",
+    "labelEn": "Critical Care Medicine",
+    "grouping": "Nursing Service Providers",
+    "classification": "Registered Nurse",
+    "specialization": "Critical Care Medicine"
+  },
+  {
+    "code": "163WD0400X",
+    "labelEn": "Diabetes Educator",
+    "grouping": "Nursing Service Providers",
+    "classification": "Registered Nurse",
+    "specialization": "Diabetes Educator"
+  },
+  {
+    "code": "163WD1100X",
+    "labelEn": "Dialysis, Peritoneal",
+    "grouping": "Nursing Service Providers",
+    "classification": "Registered Nurse",
+    "specialization": "Dialysis, Peritoneal"
+  },
+  {
+    "code": "163WE0003X",
+    "labelEn": "Emergency",
+    "grouping": "Nursing Service Providers",
+    "classification": "Registered Nurse",
+    "specialization": "Emergency"
+  },
+  {
+    "code": "163WE0900X",
+    "labelEn": "Enterostomal Therapy",
+    "grouping": "Nursing Service Providers",
+    "classification": "Registered Nurse",
+    "specialization": "Enterostomal Therapy"
+  },
+  {
+    "code": "163WF0300X",
+    "labelEn": "Flight",
+    "grouping": "Nursing Service Providers",
+    "classification": "Registered Nurse",
+    "specialization": "Flight"
+  },
+  {
+    "code": "163WG0100X",
+    "labelEn": "Gastroenterology",
+    "grouping": "Nursing Service Providers",
+    "classification": "Registered Nurse",
+    "specialization": "Gastroenterology"
+  },
+  {
+    "code": "163WG0000X",
+    "labelEn": "General Practice",
+    "grouping": "Nursing Service Providers",
+    "classification": "Registered Nurse",
+    "specialization": "General Practice"
+  },
+  {
+    "code": "163WG0600X",
+    "labelEn": "Gerontology",
+    "grouping": "Nursing Service Providers",
+    "classification": "Registered Nurse",
+    "specialization": "Gerontology"
+  },
+  {
+    "code": "163WH0500X",
+    "labelEn": "Hemodialysis",
+    "grouping": "Nursing Service Providers",
+    "classification": "Registered Nurse",
+    "specialization": "Hemodialysis"
+  },
+  {
+    "code": "163WH0200X",
+    "labelEn": "Home Health",
+    "grouping": "Nursing Service Providers",
+    "classification": "Registered Nurse",
+    "specialization": "Home Health"
+  },
+  {
+    "code": "163WH1000X",
+    "labelEn": "Hospice",
+    "grouping": "Nursing Service Providers",
+    "classification": "Registered Nurse",
+    "specialization": "Hospice"
+  },
+  {
+    "code": "163WI0600X",
+    "labelEn": "Infection Control",
+    "grouping": "Nursing Service Providers",
+    "classification": "Registered Nurse",
+    "specialization": "Infection Control"
+  },
+  {
+    "code": "163WI0500X",
+    "labelEn": "Infusion Therapy",
+    "grouping": "Nursing Service Providers",
+    "classification": "Registered Nurse",
+    "specialization": "Infusion Therapy"
+  },
+  {
+    "code": "163WL0100X",
+    "labelEn": "Lactation Consultant",
+    "grouping": "Nursing Service Providers",
+    "classification": "Registered Nurse",
+    "specialization": "Lactation Consultant"
+  },
+  {
+    "code": "163WM0102X",
+    "labelEn": "Maternal Newborn",
+    "grouping": "Nursing Service Providers",
+    "classification": "Registered Nurse",
+    "specialization": "Maternal Newborn"
+  },
+  {
+    "code": "163WM0705X",
+    "labelEn": "Medical-Surgical",
+    "grouping": "Nursing Service Providers",
+    "classification": "Registered Nurse",
+    "specialization": "Medical-Surgical"
+  },
+  {
+    "code": "163WN0002X",
+    "labelEn": "Neonatal Intensive Care",
+    "grouping": "Nursing Service Providers",
+    "classification": "Registered Nurse",
+    "specialization": "Neonatal Intensive Care"
+  },
+  {
+    "code": "163WN0003X",
+    "labelEn": "Neonatal, Low-Risk",
+    "grouping": "Nursing Service Providers",
+    "classification": "Registered Nurse",
+    "specialization": "Neonatal, Low-Risk"
+  },
+  {
+    "code": "163WN0300X",
+    "labelEn": "Nephrology",
+    "grouping": "Nursing Service Providers",
+    "classification": "Registered Nurse",
+    "specialization": "Nephrology"
+  },
+  {
+    "code": "163WN0800X",
+    "labelEn": "Neuroscience",
+    "grouping": "Nursing Service Providers",
+    "classification": "Registered Nurse",
+    "specialization": "Neuroscience"
+  },
+  {
+    "code": "163WM1400X",
+    "labelEn": "Nurse Massage Therapist (NMT)",
+    "grouping": "Nursing Service Providers",
+    "classification": "Registered Nurse",
+    "specialization": "Nurse Massage Therapist (NMT)"
+  },
+  {
+    "code": "163WN1003X",
+    "labelEn": "Nutrition Support",
+    "grouping": "Nursing Service Providers",
+    "classification": "Registered Nurse",
+    "specialization": "Nutrition Support"
+  },
+  {
+    "code": "163WX0002X",
+    "labelEn": "Obstetric, High-Risk",
+    "grouping": "Nursing Service Providers",
+    "classification": "Registered Nurse",
+    "specialization": "Obstetric, High-Risk"
+  },
+  {
+    "code": "163WX0003X",
+    "labelEn": "Obstetric, Inpatient",
+    "grouping": "Nursing Service Providers",
+    "classification": "Registered Nurse",
+    "specialization": "Obstetric, Inpatient"
+  },
+  {
+    "code": "163WX0106X",
+    "labelEn": "Occupational Health",
+    "grouping": "Nursing Service Providers",
+    "classification": "Registered Nurse",
+    "specialization": "Occupational Health"
+  },
+  {
+    "code": "163WX0200X",
+    "labelEn": "Oncology",
+    "grouping": "Nursing Service Providers",
+    "classification": "Registered Nurse",
+    "specialization": "Oncology"
+  },
+  {
+    "code": "163WX1100X",
+    "labelEn": "Ophthalmic",
+    "grouping": "Nursing Service Providers",
+    "classification": "Registered Nurse",
+    "specialization": "Ophthalmic"
+  },
+  {
+    "code": "163WX0800X",
+    "labelEn": "Orthopedic",
+    "grouping": "Nursing Service Providers",
+    "classification": "Registered Nurse",
+    "specialization": "Orthopedic"
+  },
+  {
+    "code": "163WX1500X",
+    "labelEn": "Ostomy Care",
+    "grouping": "Nursing Service Providers",
+    "classification": "Registered Nurse",
+    "specialization": "Ostomy Care"
+  },
+  {
+    "code": "163WX0601X",
+    "labelEn": "Otorhinolaryngology & Head-Neck",
+    "grouping": "Nursing Service Providers",
+    "classification": "Registered Nurse",
+    "specialization": "Otorhinolaryngology & Head-Neck"
+  },
+  {
+    "code": "163WP0000X",
+    "labelEn": "Pain Management",
+    "grouping": "Nursing Service Providers",
+    "classification": "Registered Nurse",
+    "specialization": "Pain Management"
+  },
+  {
+    "code": "163WP0218X",
+    "labelEn": "Pediatric Oncology",
+    "grouping": "Nursing Service Providers",
+    "classification": "Registered Nurse",
+    "specialization": "Pediatric Oncology"
+  },
+  {
+    "code": "163WP0200X",
+    "labelEn": "Pediatrics",
+    "grouping": "Nursing Service Providers",
+    "classification": "Registered Nurse",
+    "specialization": "Pediatrics"
+  },
+  {
+    "code": "163WP1700X",
+    "labelEn": "Perinatal",
+    "grouping": "Nursing Service Providers",
+    "classification": "Registered Nurse",
+    "specialization": "Perinatal"
+  },
+  {
+    "code": "163WS0121X",
+    "labelEn": "Plastic Surgery",
+    "grouping": "Nursing Service Providers",
+    "classification": "Registered Nurse",
+    "specialization": "Plastic Surgery"
+  },
+  {
+    "code": "163WP0808X",
+    "labelEn": "Psychiatric/Mental Health",
+    "grouping": "Nursing Service Providers",
+    "classification": "Registered Nurse",
+    "specialization": "Psychiatric/Mental Health"
+  },
+  {
+    "code": "163WP0809X",
+    "labelEn": "Psychiatric/Mental Health, Adult",
+    "grouping": "Nursing Service Providers",
+    "classification": "Registered Nurse",
+    "specialization": "Psychiatric/Mental Health, Adult"
+  },
+  {
+    "code": "163WP0807X",
+    "labelEn": "Psychiatric/Mental Health, Child & Adolescent",
+    "grouping": "Nursing Service Providers",
+    "classification": "Registered Nurse",
+    "specialization": "Psychiatric/Mental Health, Child & Adolescent"
+  },
+  {
+    "code": "163WR0006X",
+    "labelEn": "Registered Nurse First Assistant",
+    "grouping": "Nursing Service Providers",
+    "classification": "Registered Nurse",
+    "specialization": "Registered Nurse First Assistant"
+  },
+  {
+    "code": "163WR0400X",
+    "labelEn": "Rehabilitation",
+    "grouping": "Nursing Service Providers",
+    "classification": "Registered Nurse",
+    "specialization": "Rehabilitation"
+  },
+  {
+    "code": "163WR1000X",
+    "labelEn": "Reproductive Endocrinology/Infertility",
+    "grouping": "Nursing Service Providers",
+    "classification": "Registered Nurse",
+    "specialization": "Reproductive Endocrinology/Infertility"
+  },
+  {
+    "code": "163WS0200X",
+    "labelEn": "School",
+    "grouping": "Nursing Service Providers",
+    "classification": "Registered Nurse",
+    "specialization": "School"
+  },
+  {
+    "code": "163WU0100X",
+    "labelEn": "Urology",
+    "grouping": "Nursing Service Providers",
+    "classification": "Registered Nurse",
+    "specialization": "Urology"
+  },
+  {
+    "code": "163WW0101X",
+    "labelEn": "Women's Health Care, Ambulatory",
+    "grouping": "Nursing Service Providers",
+    "classification": "Registered Nurse",
+    "specialization": "Women's Health Care, Ambulatory"
+  },
+  {
+    "code": "163WW0000X",
+    "labelEn": "Wound Care",
+    "grouping": "Nursing Service Providers",
+    "classification": "Registered Nurse",
+    "specialization": "Wound Care"
+  },
+  {
+    "code": "372600000X",
+    "labelEn": "Adult Companion",
+    "grouping": "Nursing Service Related Providers",
+    "classification": "Adult Companion",
+    "specialization": ""
+  },
+  {
+    "code": "372500000X",
+    "labelEn": "Chore Provider",
+    "grouping": "Nursing Service Related Providers",
+    "classification": "Chore Provider",
+    "specialization": ""
+  },
+  {
+    "code": "373H00000X",
+    "labelEn": "Day Training/Habilitation Specialist",
+    "grouping": "Nursing Service Related Providers",
+    "classification": "Day Training/Habilitation Specialist",
+    "specialization": ""
+  },
+  {
+    "code": "374J00000X",
+    "labelEn": "Doula",
+    "grouping": "Nursing Service Related Providers",
+    "classification": "Doula",
+    "specialization": ""
+  },
+  {
+    "code": "374U00000X",
+    "labelEn": "Home Health Aide",
+    "grouping": "Nursing Service Related Providers",
+    "classification": "Home Health Aide",
+    "specialization": ""
+  },
+  {
+    "code": "376J00000X",
+    "labelEn": "Homemaker",
+    "grouping": "Nursing Service Related Providers",
+    "classification": "Homemaker",
+    "specialization": ""
+  },
+  {
+    "code": "376K00000X",
+    "labelEn": "Nurse's Aide",
+    "grouping": "Nursing Service Related Providers",
+    "classification": "Nurse's Aide",
+    "specialization": ""
+  },
+  {
+    "code": "376G00000X",
+    "labelEn": "Nursing Home Administrator",
+    "grouping": "Nursing Service Related Providers",
+    "classification": "Nursing Home Administrator",
+    "specialization": ""
+  },
+  {
+    "code": "374T00000X",
+    "labelEn": "Religious Nonmedical Nursing Personnel",
+    "grouping": "Nursing Service Related Providers",
+    "classification": "Religious Nonmedical Nursing Personnel",
+    "specialization": ""
+  },
+  {
+    "code": "374K00000X",
+    "labelEn": "Religious Nonmedical Practitioner",
+    "grouping": "Nursing Service Related Providers",
+    "classification": "Religious Nonmedical Practitioner",
+    "specialization": ""
+  },
+  {
+    "code": "374700000X",
+    "labelEn": "Technician",
+    "grouping": "Nursing Service Related Providers",
+    "classification": "Technician",
+    "specialization": ""
+  },
+  {
+    "code": "3747A0650X",
+    "labelEn": "Attendant Care Provider",
+    "grouping": "Nursing Service Related Providers",
+    "classification": "Technician",
+    "specialization": "Attendant Care Provider"
+  },
+  {
+    "code": "3747P1801X",
+    "labelEn": "Personal Care Attendant",
+    "grouping": "Nursing Service Related Providers",
+    "classification": "Technician",
+    "specialization": "Personal Care Attendant"
+  },
+  {
+    "code": "171100000X",
+    "labelEn": "Acupuncturist",
+    "grouping": "Other Service Providers",
+    "classification": "Acupuncturist",
+    "specialization": ""
+  },
+  {
+    "code": "171M00000X",
+    "labelEn": "Case Manager/Care Coordinator",
+    "grouping": "Other Service Providers",
+    "classification": "Case Manager/Care Coordinator",
+    "specialization": ""
+  },
+  {
+    "code": "174V00000X",
+    "labelEn": "Clinical Ethicist",
+    "grouping": "Other Service Providers",
+    "classification": "Clinical Ethicist",
+    "specialization": ""
+  },
+  {
+    "code": "172V00000X",
+    "labelEn": "Community Health Worker",
+    "grouping": "Other Service Providers",
+    "classification": "Community Health Worker",
+    "specialization": ""
+  },
+  {
+    "code": "171W00000X",
+    "labelEn": "Contractor",
+    "grouping": "Other Service Providers",
+    "classification": "Contractor",
+    "specialization": ""
+  },
+  {
+    "code": "171WH0202X",
+    "labelEn": "Home Modifications",
+    "grouping": "Other Service Providers",
+    "classification": "Contractor",
+    "specialization": "Home Modifications"
+  },
+  {
+    "code": "171WV0202X",
+    "labelEn": "Vehicle Modifications",
+    "grouping": "Other Service Providers",
+    "classification": "Contractor",
+    "specialization": "Vehicle Modifications"
+  },
+  {
+    "code": "172A00000X",
+    "labelEn": "Driver",
+    "grouping": "Other Service Providers",
+    "classification": "Driver",
+    "specialization": ""
+  },
+  {
+    "code": "176P00000X",
+    "labelEn": "Funeral Director",
+    "grouping": "Other Service Providers",
+    "classification": "Funeral Director",
+    "specialization": ""
+  },
+  {
+    "code": "170300000X",
+    "labelEn": "Genetic Counselor, MS",
+    "grouping": "Other Service Providers",
+    "classification": "Genetic Counselor, MS",
+    "specialization": ""
+  },
+  {
+    "code": "171400000X",
+    "labelEn": "Health & Wellness Coach",
+    "grouping": "Other Service Providers",
+    "classification": "Health & Wellness Coach",
+    "specialization": ""
+  },
+  {
+    "code": "174H00000X",
+    "labelEn": "Health Educator",
+    "grouping": "Other Service Providers",
+    "classification": "Health Educator",
+    "specialization": ""
+  },
+  {
+    "code": "175L00000X",
+    "labelEn": "Homeopath",
+    "grouping": "Other Service Providers",
+    "classification": "Homeopath",
+    "specialization": ""
+  },
+  {
+    "code": "171R00000X",
+    "labelEn": "Interpreter",
+    "grouping": "Other Service Providers",
+    "classification": "Interpreter",
+    "specialization": ""
+  },
+  {
+    "code": "174N00000X",
+    "labelEn": "Lactation Consultant, Non-RN",
+    "grouping": "Other Service Providers",
+    "classification": "Lactation Consultant, Non-RN",
+    "specialization": ""
+  },
+  {
+    "code": "175M00000X",
+    "labelEn": "Midwife, Lay",
+    "grouping": "Other Service Providers",
+    "classification": "Midwife, Lay",
+    "specialization": ""
+  },
+  {
+    "code": "173000000X",
+    "labelEn": "Legal Medicine",
+    "grouping": "Other Service Providers",
+    "classification": "Legal Medicine",
+    "specialization": ""
+  },
+  {
+    "code": "172M00000X",
+    "labelEn": "Mechanotherapist",
+    "grouping": "Other Service Providers",
+    "classification": "Mechanotherapist",
+    "specialization": ""
+  },
+  {
+    "code": "176B00000X",
+    "labelEn": "Midwife",
+    "grouping": "Other Service Providers",
+    "classification": "Midwife",
+    "specialization": ""
+  },
+  {
+    "code": "171000000X",
+    "labelEn": "Military Health Care Provider",
+    "grouping": "Other Service Providers",
+    "classification": "Military Health Care Provider",
+    "specialization": ""
+  },
+  {
+    "code": "1710I1002X",
+    "labelEn": "Independent Duty Corpsman",
+    "grouping": "Other Service Providers",
+    "classification": "Military Health Care Provider",
+    "specialization": "Independent Duty Corpsman"
+  },
+  {
+    "code": "1710I1003X",
+    "labelEn": "Independent Duty Medical Technicians",
+    "grouping": "Other Service Providers",
+    "classification": "Military Health Care Provider",
+    "specialization": "Independent Duty Medical Technicians"
+  },
+  {
+    "code": "172P00000X",
+    "labelEn": "Naprapath",
+    "grouping": "Other Service Providers",
+    "classification": "Naprapath",
+    "specialization": ""
+  },
+  {
+    "code": "175F00000X",
+    "labelEn": "Naturopath",
+    "grouping": "Other Service Providers",
+    "classification": "Naturopath",
+    "specialization": ""
+  },
+  {
+    "code": "175T00000X",
+    "labelEn": "Peer Specialist",
+    "grouping": "Other Service Providers",
+    "classification": "Peer Specialist",
+    "specialization": ""
+  },
+  {
+    "code": "170100000X",
+    "labelEn": "Medical Genetics, Ph.D. Medical Genetics",
+    "grouping": "Other Service Providers",
+    "classification": "Medical Genetics, Ph.D. Medical Genetics",
+    "specialization": ""
+  },
+  {
+    "code": "405300000X",
+    "labelEn": "Prevention Professional",
+    "grouping": "Other Service Providers",
+    "classification": "Prevention Professional",
+    "specialization": ""
+  },
+  {
+    "code": "173C00000X",
+    "labelEn": "Reflexologist",
+    "grouping": "Other Service Providers",
+    "classification": "Reflexologist",
+    "specialization": ""
+  },
+  {
+    "code": "173F00000X",
+    "labelEn": "Sleep Specialist, PhD",
+    "grouping": "Other Service Providers",
+    "classification": "Sleep Specialist, PhD",
+    "specialization": ""
+  },
+  {
+    "code": "174400000X",
+    "labelEn": "Specialist",
+    "grouping": "Other Service Providers",
+    "classification": "Specialist",
+    "specialization": ""
+  },
+  {
+    "code": "1744G0900X",
+    "labelEn": "Graphics Designer",
+    "grouping": "Other Service Providers",
+    "classification": "Specialist",
+    "specialization": "Graphics Designer"
+  },
+  {
+    "code": "1744P3200X",
+    "labelEn": "Prosthetics Case Management",
+    "grouping": "Other Service Providers",
+    "classification": "Specialist",
+    "specialization": "Prosthetics Case Management"
+  },
+  {
+    "code": "1744R1103X",
+    "labelEn": "Research Data Abstracter/Coder",
+    "grouping": "Other Service Providers",
+    "classification": "Specialist",
+    "specialization": "Research Data Abstracter/Coder"
+  },
+  {
+    "code": "1744R1102X",
+    "labelEn": "Research Study",
+    "grouping": "Other Service Providers",
+    "classification": "Specialist",
+    "specialization": "Research Study"
+  },
+  {
+    "code": "174M00000X",
+    "labelEn": "Veterinarian",
+    "grouping": "Other Service Providers",
+    "classification": "Veterinarian",
+    "specialization": ""
+  },
+  {
+    "code": "174MM1900X",
+    "labelEn": "Medical Research",
+    "grouping": "Other Service Providers",
+    "classification": "Veterinarian",
+    "specialization": "Medical Research"
+  },
+  {
+    "code": "183500000X",
+    "labelEn": "Pharmacist",
+    "grouping": "Pharmacy Service Providers",
+    "classification": "Pharmacist",
+    "specialization": ""
+  },
+  {
+    "code": "1835P2201X",
+    "labelEn": "Ambulatory Care",
+    "grouping": "Pharmacy Service Providers",
+    "classification": "Pharmacist",
+    "specialization": "Ambulatory Care"
+  },
+  {
+    "code": "1835C0206X",
+    "labelEn": "Cardiology",
+    "grouping": "Pharmacy Service Providers",
+    "classification": "Pharmacist",
+    "specialization": "Cardiology"
+  },
+  {
+    "code": "1835C0207X",
+    "labelEn": "Compounded Sterile Preparations",
+    "grouping": "Pharmacy Service Providers",
+    "classification": "Pharmacist",
+    "specialization": "Compounded Sterile Preparations"
+  },
+  {
+    "code": "1835C0205X",
+    "labelEn": "Critical Care",
+    "grouping": "Pharmacy Service Providers",
+    "classification": "Pharmacist",
+    "specialization": "Critical Care"
+  },
+  {
+    "code": "1835E0208X",
+    "labelEn": "Emergency Medicine",
+    "grouping": "Pharmacy Service Providers",
+    "classification": "Pharmacist",
+    "specialization": "Emergency Medicine"
+  },
+  {
+    "code": "1835G0000X",
+    "labelEn": "General Practice",
+    "grouping": "Pharmacy Service Providers",
+    "classification": "Pharmacist",
+    "specialization": "General Practice"
+  },
+  {
+    "code": "1835G0303X",
+    "labelEn": "Geriatric",
+    "grouping": "Pharmacy Service Providers",
+    "classification": "Pharmacist",
+    "specialization": "Geriatric"
+  },
+  {
+    "code": "1835I0206X",
+    "labelEn": "Infectious Diseases",
+    "grouping": "Pharmacy Service Providers",
+    "classification": "Pharmacist",
+    "specialization": "Infectious Diseases"
+  },
+  {
+    "code": "1835N0905X",
+    "labelEn": "Nuclear",
+    "grouping": "Pharmacy Service Providers",
+    "classification": "Pharmacist",
+    "specialization": "Nuclear"
+  },
+  {
+    "code": "1835N1003X",
+    "labelEn": "Nutrition Support",
+    "grouping": "Pharmacy Service Providers",
+    "classification": "Pharmacist",
+    "specialization": "Nutrition Support"
+  },
+  {
+    "code": "1835X0200X",
+    "labelEn": "Oncology",
+    "grouping": "Pharmacy Service Providers",
+    "classification": "Pharmacist",
+    "specialization": "Oncology"
+  },
+  {
+    "code": "1835P1400X",
+    "labelEn": "Pain Management",
+    "grouping": "Pharmacy Service Providers",
+    "classification": "Pharmacist",
+    "specialization": "Pain Management"
+  },
+  {
+    "code": "1835P0200X",
+    "labelEn": "Pediatrics",
+    "grouping": "Pharmacy Service Providers",
+    "classification": "Pharmacist",
+    "specialization": "Pediatrics"
+  },
+  {
+    "code": "1835P0018X",
+    "labelEn": "Pharmacist Clinician (PhC)/ Clinical Pharmacy Specialist",
+    "grouping": "Pharmacy Service Providers",
+    "classification": "Pharmacist",
+    "specialization": "Pharmacist Clinician (PhC)/ Clinical Pharmacy Specialist"
+  },
+  {
+    "code": "1835P1200X",
+    "labelEn": "Pharmacotherapy",
+    "grouping": "Pharmacy Service Providers",
+    "classification": "Pharmacist",
+    "specialization": "Pharmacotherapy"
+  },
+  {
+    "code": "1835P1300X",
+    "labelEn": "Psychiatric",
+    "grouping": "Pharmacy Service Providers",
+    "classification": "Pharmacist",
+    "specialization": "Psychiatric"
+  },
+  {
+    "code": "1835S0206X",
+    "labelEn": "Solid Organ Transplant",
+    "grouping": "Pharmacy Service Providers",
+    "classification": "Pharmacist",
+    "specialization": "Solid Organ Transplant"
+  },
+  {
+    "code": "183700000X",
+    "labelEn": "Pharmacy Technician",
+    "grouping": "Pharmacy Service Providers",
+    "classification": "Pharmacy Technician",
+    "specialization": ""
+  },
+  {
+    "code": "367A00000X",
+    "labelEn": "Advanced Practice Midwife",
+    "grouping": "Physician Assistants & Advanced Practice Nursing Providers",
+    "classification": "Advanced Practice Midwife",
+    "specialization": ""
+  },
+  {
+    "code": "367H00000X",
+    "labelEn": "Anesthesiologist Assistant",
+    "grouping": "Physician Assistants & Advanced Practice Nursing Providers",
+    "classification": "Anesthesiologist Assistant",
+    "specialization": ""
+  },
+  {
+    "code": "364S00000X",
+    "labelEn": "Clinical Nurse Specialist",
+    "grouping": "Physician Assistants & Advanced Practice Nursing Providers",
+    "classification": "Clinical Nurse Specialist",
+    "specialization": ""
+  },
+  {
+    "code": "364SA2100X",
+    "labelEn": "Acute Care",
+    "grouping": "Physician Assistants & Advanced Practice Nursing Providers",
+    "classification": "Clinical Nurse Specialist",
+    "specialization": "Acute Care"
+  },
+  {
+    "code": "364SA2200X",
+    "labelEn": "Adult Health",
+    "grouping": "Physician Assistants & Advanced Practice Nursing Providers",
+    "classification": "Clinical Nurse Specialist",
+    "specialization": "Adult Health"
+  },
+  {
+    "code": "364SC2300X",
+    "labelEn": "Chronic Care",
+    "grouping": "Physician Assistants & Advanced Practice Nursing Providers",
+    "classification": "Clinical Nurse Specialist",
+    "specialization": "Chronic Care"
+  },
+  {
+    "code": "364SC1501X",
+    "labelEn": "Community Health/Public Health",
+    "grouping": "Physician Assistants & Advanced Practice Nursing Providers",
+    "classification": "Clinical Nurse Specialist",
+    "specialization": "Community Health/Public Health"
+  },
+  {
+    "code": "364SC0200X",
+    "labelEn": "Critical Care Medicine",
+    "grouping": "Physician Assistants & Advanced Practice Nursing Providers",
+    "classification": "Clinical Nurse Specialist",
+    "specialization": "Critical Care Medicine"
+  },
+  {
+    "code": "364SE0003X",
+    "labelEn": "Emergency",
+    "grouping": "Physician Assistants & Advanced Practice Nursing Providers",
+    "classification": "Clinical Nurse Specialist",
+    "specialization": "Emergency"
+  },
+  {
+    "code": "364SE1400X",
+    "labelEn": "Ethics",
+    "grouping": "Physician Assistants & Advanced Practice Nursing Providers",
+    "classification": "Clinical Nurse Specialist",
+    "specialization": "Ethics"
+  },
+  {
+    "code": "364SF0001X",
+    "labelEn": "Family Health",
+    "grouping": "Physician Assistants & Advanced Practice Nursing Providers",
+    "classification": "Clinical Nurse Specialist",
+    "specialization": "Family Health"
+  },
+  {
+    "code": "364SG0600X",
+    "labelEn": "Gerontology",
+    "grouping": "Physician Assistants & Advanced Practice Nursing Providers",
+    "classification": "Clinical Nurse Specialist",
+    "specialization": "Gerontology"
+  },
+  {
+    "code": "364SH1100X",
+    "labelEn": "Holistic",
+    "grouping": "Physician Assistants & Advanced Practice Nursing Providers",
+    "classification": "Clinical Nurse Specialist",
+    "specialization": "Holistic"
+  },
+  {
+    "code": "364SH0200X",
+    "labelEn": "Home Health",
+    "grouping": "Physician Assistants & Advanced Practice Nursing Providers",
+    "classification": "Clinical Nurse Specialist",
+    "specialization": "Home Health"
+  },
+  {
+    "code": "364SI0800X",
+    "labelEn": "Informatics",
+    "grouping": "Physician Assistants & Advanced Practice Nursing Providers",
+    "classification": "Clinical Nurse Specialist",
+    "specialization": "Informatics"
+  },
+  {
+    "code": "364SL0600X",
+    "labelEn": "Long-Term Care",
+    "grouping": "Physician Assistants & Advanced Practice Nursing Providers",
+    "classification": "Clinical Nurse Specialist",
+    "specialization": "Long-Term Care"
+  },
+  {
+    "code": "364SM0705X",
+    "labelEn": "Medical-Surgical",
+    "grouping": "Physician Assistants & Advanced Practice Nursing Providers",
+    "classification": "Clinical Nurse Specialist",
+    "specialization": "Medical-Surgical"
+  },
+  {
+    "code": "364SN0000X",
+    "labelEn": "Neonatal",
+    "grouping": "Physician Assistants & Advanced Practice Nursing Providers",
+    "classification": "Clinical Nurse Specialist",
+    "specialization": "Neonatal"
+  },
+  {
+    "code": "364SN0800X",
+    "labelEn": "Neuroscience",
+    "grouping": "Physician Assistants & Advanced Practice Nursing Providers",
+    "classification": "Clinical Nurse Specialist",
+    "specialization": "Neuroscience"
+  },
+  {
+    "code": "364SX0106X",
+    "labelEn": "Occupational Health",
+    "grouping": "Physician Assistants & Advanced Practice Nursing Providers",
+    "classification": "Clinical Nurse Specialist",
+    "specialization": "Occupational Health"
+  },
+  {
+    "code": "364SX0200X",
+    "labelEn": "Oncology",
+    "grouping": "Physician Assistants & Advanced Practice Nursing Providers",
+    "classification": "Clinical Nurse Specialist",
+    "specialization": "Oncology"
+  },
+  {
+    "code": "364SX0204X",
+    "labelEn": "Oncology, Pediatrics",
+    "grouping": "Physician Assistants & Advanced Practice Nursing Providers",
+    "classification": "Clinical Nurse Specialist",
+    "specialization": "Oncology, Pediatrics"
+  },
+  {
+    "code": "364SP0200X",
+    "labelEn": "Pediatrics",
+    "grouping": "Physician Assistants & Advanced Practice Nursing Providers",
+    "classification": "Clinical Nurse Specialist",
+    "specialization": "Pediatrics"
+  },
+  {
+    "code": "364SP1700X",
+    "labelEn": "Perinatal",
+    "grouping": "Physician Assistants & Advanced Practice Nursing Providers",
+    "classification": "Clinical Nurse Specialist",
+    "specialization": "Perinatal"
+  },
+  {
+    "code": "364SP2800X",
+    "labelEn": "Perioperative",
+    "grouping": "Physician Assistants & Advanced Practice Nursing Providers",
+    "classification": "Clinical Nurse Specialist",
+    "specialization": "Perioperative"
+  },
+  {
+    "code": "364SP0808X",
+    "labelEn": "Psychiatric/Mental Health",
+    "grouping": "Physician Assistants & Advanced Practice Nursing Providers",
+    "classification": "Clinical Nurse Specialist",
+    "specialization": "Psychiatric/Mental Health"
+  },
+  {
+    "code": "364SP0809X",
+    "labelEn": "Psychiatric/Mental Health, Adult",
+    "grouping": "Physician Assistants & Advanced Practice Nursing Providers",
+    "classification": "Clinical Nurse Specialist",
+    "specialization": "Psychiatric/Mental Health, Adult"
+  },
+  {
+    "code": "364SP0807X",
+    "labelEn": "Psychiatric/Mental Health, Child & Adolescent",
+    "grouping": "Physician Assistants & Advanced Practice Nursing Providers",
+    "classification": "Clinical Nurse Specialist",
+    "specialization": "Psychiatric/Mental Health, Child & Adolescent"
+  },
+  {
+    "code": "364SP0810X",
+    "labelEn": "Psychiatric/Mental Health, Child & Family",
+    "grouping": "Physician Assistants & Advanced Practice Nursing Providers",
+    "classification": "Clinical Nurse Specialist",
+    "specialization": "Psychiatric/Mental Health, Child & Family"
+  },
+  {
+    "code": "364SP0811X",
+    "labelEn": "Psychiatric/Mental Health, Chronically Ill",
+    "grouping": "Physician Assistants & Advanced Practice Nursing Providers",
+    "classification": "Clinical Nurse Specialist",
+    "specialization": "Psychiatric/Mental Health, Chronically Ill"
+  },
+  {
+    "code": "364SP0812X",
+    "labelEn": "Psychiatric/Mental Health, Community",
+    "grouping": "Physician Assistants & Advanced Practice Nursing Providers",
+    "classification": "Clinical Nurse Specialist",
+    "specialization": "Psychiatric/Mental Health, Community"
+  },
+  {
+    "code": "364SP0813X",
+    "labelEn": "Psychiatric/Mental Health, Geropsychiatric",
+    "grouping": "Physician Assistants & Advanced Practice Nursing Providers",
+    "classification": "Clinical Nurse Specialist",
+    "specialization": "Psychiatric/Mental Health, Geropsychiatric"
+  },
+  {
+    "code": "364SR0400X",
+    "labelEn": "Rehabilitation",
+    "grouping": "Physician Assistants & Advanced Practice Nursing Providers",
+    "classification": "Clinical Nurse Specialist",
+    "specialization": "Rehabilitation"
+  },
+  {
+    "code": "364SS0200X",
+    "labelEn": "School",
+    "grouping": "Physician Assistants & Advanced Practice Nursing Providers",
+    "classification": "Clinical Nurse Specialist",
+    "specialization": "School"
+  },
+  {
+    "code": "364ST0500X",
+    "labelEn": "Transplantation",
+    "grouping": "Physician Assistants & Advanced Practice Nursing Providers",
+    "classification": "Clinical Nurse Specialist",
+    "specialization": "Transplantation"
+  },
+  {
+    "code": "364SW0102X",
+    "labelEn": "Women's Health",
+    "grouping": "Physician Assistants & Advanced Practice Nursing Providers",
+    "classification": "Clinical Nurse Specialist",
+    "specialization": "Women's Health"
+  },
+  {
+    "code": "367500000X",
+    "labelEn": "Nurse Anesthetist, Certified Registered",
+    "grouping": "Physician Assistants & Advanced Practice Nursing Providers",
+    "classification": "Nurse Anesthetist, Certified Registered",
+    "specialization": ""
+  },
+  {
+    "code": "363L00000X",
+    "labelEn": "Nurse Practitioner",
+    "grouping": "Physician Assistants & Advanced Practice Nursing Providers",
+    "classification": "Nurse Practitioner",
+    "specialization": ""
+  },
+  {
+    "code": "363LA2100X",
+    "labelEn": "Acute Care",
+    "grouping": "Physician Assistants & Advanced Practice Nursing Providers",
+    "classification": "Nurse Practitioner",
+    "specialization": "Acute Care"
+  },
+  {
+    "code": "363LA2200X",
+    "labelEn": "Adult Health",
+    "grouping": "Physician Assistants & Advanced Practice Nursing Providers",
+    "classification": "Nurse Practitioner",
+    "specialization": "Adult Health"
+  },
+  {
+    "code": "363LC1500X",
+    "labelEn": "Community Health",
+    "grouping": "Physician Assistants & Advanced Practice Nursing Providers",
+    "classification": "Nurse Practitioner",
+    "specialization": "Community Health"
+  },
+  {
+    "code": "363LC0200X",
+    "labelEn": "Critical Care Medicine",
+    "grouping": "Physician Assistants & Advanced Practice Nursing Providers",
+    "classification": "Nurse Practitioner",
+    "specialization": "Critical Care Medicine"
+  },
+  {
+    "code": "363LF0000X",
+    "labelEn": "Family",
+    "grouping": "Physician Assistants & Advanced Practice Nursing Providers",
+    "classification": "Nurse Practitioner",
+    "specialization": "Family"
+  },
+  {
+    "code": "363LG0600X",
+    "labelEn": "Gerontology",
+    "grouping": "Physician Assistants & Advanced Practice Nursing Providers",
+    "classification": "Nurse Practitioner",
+    "specialization": "Gerontology"
+  },
+  {
+    "code": "363LN0000X",
+    "labelEn": "Neonatal",
+    "grouping": "Physician Assistants & Advanced Practice Nursing Providers",
+    "classification": "Nurse Practitioner",
+    "specialization": "Neonatal"
+  },
+  {
+    "code": "363LN0005X",
+    "labelEn": "Neonatal, Critical Care",
+    "grouping": "Physician Assistants & Advanced Practice Nursing Providers",
+    "classification": "Nurse Practitioner",
+    "specialization": "Neonatal, Critical Care"
+  },
+  {
+    "code": "363LX0001X",
+    "labelEn": "Obstetrics & Gynecology",
+    "grouping": "Physician Assistants & Advanced Practice Nursing Providers",
+    "classification": "Nurse Practitioner",
+    "specialization": "Obstetrics & Gynecology"
+  },
+  {
+    "code": "363LX0106X",
+    "labelEn": "Occupational Health",
+    "grouping": "Physician Assistants & Advanced Practice Nursing Providers",
+    "classification": "Nurse Practitioner",
+    "specialization": "Occupational Health"
+  },
+  {
+    "code": "363LP0200X",
+    "labelEn": "Pediatrics",
+    "grouping": "Physician Assistants & Advanced Practice Nursing Providers",
+    "classification": "Nurse Practitioner",
+    "specialization": "Pediatrics"
+  },
+  {
+    "code": "363LP0222X",
+    "labelEn": "Pediatrics, Critical Care",
+    "grouping": "Physician Assistants & Advanced Practice Nursing Providers",
+    "classification": "Nurse Practitioner",
+    "specialization": "Pediatrics, Critical Care"
+  },
+  {
+    "code": "363LP1700X",
+    "labelEn": "Perinatal",
+    "grouping": "Physician Assistants & Advanced Practice Nursing Providers",
+    "classification": "Nurse Practitioner",
+    "specialization": "Perinatal"
+  },
+  {
+    "code": "363LP2300X",
+    "labelEn": "Primary Care",
+    "grouping": "Physician Assistants & Advanced Practice Nursing Providers",
+    "classification": "Nurse Practitioner",
+    "specialization": "Primary Care"
+  },
+  {
+    "code": "363LP0808X",
+    "labelEn": "Psychiatric/Mental Health",
+    "grouping": "Physician Assistants & Advanced Practice Nursing Providers",
+    "classification": "Nurse Practitioner",
+    "specialization": "Psychiatric/Mental Health"
+  },
+  {
+    "code": "363LS0200X",
+    "labelEn": "School",
+    "grouping": "Physician Assistants & Advanced Practice Nursing Providers",
+    "classification": "Nurse Practitioner",
+    "specialization": "School"
+  },
+  {
+    "code": "363LW0102X",
+    "labelEn": "Women's Health",
+    "grouping": "Physician Assistants & Advanced Practice Nursing Providers",
+    "classification": "Nurse Practitioner",
+    "specialization": "Women's Health"
+  },
+  {
+    "code": "363A00000X",
+    "labelEn": "Physician Assistant",
+    "grouping": "Physician Assistants & Advanced Practice Nursing Providers",
+    "classification": "Physician Assistant",
+    "specialization": ""
+  },
+  {
+    "code": "363AM0700X",
+    "labelEn": "Medical",
+    "grouping": "Physician Assistants & Advanced Practice Nursing Providers",
+    "classification": "Physician Assistant",
+    "specialization": "Medical"
+  },
+  {
+    "code": "363AS0400X",
+    "labelEn": "Surgical",
+    "grouping": "Physician Assistants & Advanced Practice Nursing Providers",
+    "classification": "Physician Assistant",
+    "specialization": "Surgical"
+  },
+  {
+    "code": "211D00000X",
+    "labelEn": "Assistant, Podiatric",
+    "grouping": "Podiatric Medicine & Surgery Service Providers",
+    "classification": "Assistant, Podiatric",
+    "specialization": ""
+  },
+  {
+    "code": "213E00000X",
+    "labelEn": "Podiatrist",
+    "grouping": "Podiatric Medicine & Surgery Service Providers",
+    "classification": "Podiatrist",
+    "specialization": ""
+  },
+  {
+    "code": "213ES0103X",
+    "labelEn": "Foot & Ankle Surgery",
+    "grouping": "Podiatric Medicine & Surgery Service Providers",
+    "classification": "Podiatrist",
+    "specialization": "Foot & Ankle Surgery"
+  },
+  {
+    "code": "213ES0131X",
+    "labelEn": "Foot Surgery",
+    "grouping": "Podiatric Medicine & Surgery Service Providers",
+    "classification": "Podiatrist",
+    "specialization": "Foot Surgery"
+  },
+  {
+    "code": "213EG0000X",
+    "labelEn": "General Practice",
+    "grouping": "Podiatric Medicine & Surgery Service Providers",
+    "classification": "Podiatrist",
+    "specialization": "General Practice"
+  },
+  {
+    "code": "213EP1101X",
+    "labelEn": "Primary Podiatric Medicine",
+    "grouping": "Podiatric Medicine & Surgery Service Providers",
+    "classification": "Podiatrist",
+    "specialization": "Primary Podiatric Medicine"
+  },
+  {
+    "code": "213EP0504X",
+    "labelEn": "Public Medicine",
+    "grouping": "Podiatric Medicine & Surgery Service Providers",
+    "classification": "Podiatrist",
+    "specialization": "Public Medicine"
+  },
+  {
+    "code": "213ER0200X",
+    "labelEn": "Radiology",
+    "grouping": "Podiatric Medicine & Surgery Service Providers",
+    "classification": "Podiatrist",
+    "specialization": "Radiology"
+  },
+  {
+    "code": "213ES0000X",
+    "labelEn": "Sports Medicine",
+    "grouping": "Podiatric Medicine & Surgery Service Providers",
+    "classification": "Podiatrist",
+    "specialization": "Sports Medicine"
+  },
+  {
+    "code": "229N00000X",
+    "labelEn": "Anaplastologist",
+    "grouping": "Respiratory, Developmental, Rehabilitative and Restorative Service Providers",
+    "classification": "Anaplastologist",
+    "specialization": ""
+  },
+  {
+    "code": "221700000X",
+    "labelEn": "Art Therapist",
+    "grouping": "Respiratory, Developmental, Rehabilitative and Restorative Service Providers",
+    "classification": "Art Therapist",
+    "specialization": ""
+  },
+  {
+    "code": "224Y00000X",
+    "labelEn": "Clinical Exercise Physiologist",
+    "grouping": "Respiratory, Developmental, Rehabilitative and Restorative Service Providers",
+    "classification": "Clinical Exercise Physiologist",
+    "specialization": ""
+  },
+  {
+    "code": "225600000X",
+    "labelEn": "Dance Therapist",
+    "grouping": "Respiratory, Developmental, Rehabilitative and Restorative Service Providers",
+    "classification": "Dance Therapist",
+    "specialization": ""
+  },
+  {
+    "code": "222Q00000X",
+    "labelEn": "Developmental Therapist",
+    "grouping": "Respiratory, Developmental, Rehabilitative and Restorative Service Providers",
+    "classification": "Developmental Therapist",
+    "specialization": ""
+  },
+  {
+    "code": "226300000X",
+    "labelEn": "Kinesiotherapist",
+    "grouping": "Respiratory, Developmental, Rehabilitative and Restorative Service Providers",
+    "classification": "Kinesiotherapist",
+    "specialization": ""
+  },
+  {
+    "code": "225700000X",
+    "labelEn": "Massage Therapist",
+    "grouping": "Respiratory, Developmental, Rehabilitative and Restorative Service Providers",
+    "classification": "Massage Therapist",
+    "specialization": ""
+  },
+  {
+    "code": "224900000X",
+    "labelEn": "Mastectomy Fitter",
+    "grouping": "Respiratory, Developmental, Rehabilitative and Restorative Service Providers",
+    "classification": "Mastectomy Fitter",
+    "specialization": ""
+  },
+  {
+    "code": "225A00000X",
+    "labelEn": "Music Therapist",
+    "grouping": "Respiratory, Developmental, Rehabilitative and Restorative Service Providers",
+    "classification": "Music Therapist",
+    "specialization": ""
+  },
+  {
+    "code": "225X00000X",
+    "labelEn": "Occupational Therapist",
+    "grouping": "Respiratory, Developmental, Rehabilitative and Restorative Service Providers",
+    "classification": "Occupational Therapist",
+    "specialization": ""
+  },
+  {
+    "code": "225XR0403X",
+    "labelEn": "Driving and Community Mobility",
+    "grouping": "Respiratory, Developmental, Rehabilitative and Restorative Service Providers",
+    "classification": "Occupational Therapist",
+    "specialization": "Driving and Community Mobility"
+  },
+  {
+    "code": "225XE0001X",
+    "labelEn": "Environmental Modification",
+    "grouping": "Respiratory, Developmental, Rehabilitative and Restorative Service Providers",
+    "classification": "Occupational Therapist",
+    "specialization": "Environmental Modification"
+  },
+  {
+    "code": "225XE1200X",
+    "labelEn": "Ergonomics",
+    "grouping": "Respiratory, Developmental, Rehabilitative and Restorative Service Providers",
+    "classification": "Occupational Therapist",
+    "specialization": "Ergonomics"
+  },
+  {
+    "code": "225XF0002X",
+    "labelEn": "Feeding, Eating & Swallowing",
+    "grouping": "Respiratory, Developmental, Rehabilitative and Restorative Service Providers",
+    "classification": "Occupational Therapist",
+    "specialization": "Feeding, Eating & Swallowing"
+  },
+  {
+    "code": "225XG0600X",
+    "labelEn": "Gerontology",
+    "grouping": "Respiratory, Developmental, Rehabilitative and Restorative Service Providers",
+    "classification": "Occupational Therapist",
+    "specialization": "Gerontology"
+  },
+  {
+    "code": "225XH1200X",
+    "labelEn": "Hand",
+    "grouping": "Respiratory, Developmental, Rehabilitative and Restorative Service Providers",
+    "classification": "Occupational Therapist",
+    "specialization": "Hand"
+  },
+  {
+    "code": "225XH1300X",
+    "labelEn": "Human Factors",
+    "grouping": "Respiratory, Developmental, Rehabilitative and Restorative Service Providers",
+    "classification": "Occupational Therapist",
+    "specialization": "Human Factors"
+  },
+  {
+    "code": "225XL0004X",
+    "labelEn": "Low Vision",
+    "grouping": "Respiratory, Developmental, Rehabilitative and Restorative Service Providers",
+    "classification": "Occupational Therapist",
+    "specialization": "Low Vision"
+  },
+  {
+    "code": "225XM0800X",
+    "labelEn": "Mental Health",
+    "grouping": "Respiratory, Developmental, Rehabilitative and Restorative Service Providers",
+    "classification": "Occupational Therapist",
+    "specialization": "Mental Health"
+  },
+  {
+    "code": "225XN1300X",
+    "labelEn": "Neurorehabilitation",
+    "grouping": "Respiratory, Developmental, Rehabilitative and Restorative Service Providers",
+    "classification": "Occupational Therapist",
+    "specialization": "Neurorehabilitation"
+  },
+  {
+    "code": "225XP0200X",
+    "labelEn": "Pediatrics",
+    "grouping": "Respiratory, Developmental, Rehabilitative and Restorative Service Providers",
+    "classification": "Occupational Therapist",
+    "specialization": "Pediatrics"
+  },
+  {
+    "code": "225XP0019X",
+    "labelEn": "Physical Rehabilitation",
+    "grouping": "Respiratory, Developmental, Rehabilitative and Restorative Service Providers",
+    "classification": "Occupational Therapist",
+    "specialization": "Physical Rehabilitation"
+  },
+  {
+    "code": "224Z00000X",
+    "labelEn": "Occupational Therapy Assistant",
+    "grouping": "Respiratory, Developmental, Rehabilitative and Restorative Service Providers",
+    "classification": "Occupational Therapy Assistant",
+    "specialization": ""
+  },
+  {
+    "code": "224ZR0403X",
+    "labelEn": "Driving and Community Mobility",
+    "grouping": "Respiratory, Developmental, Rehabilitative and Restorative Service Providers",
+    "classification": "Occupational Therapy Assistant",
+    "specialization": "Driving and Community Mobility"
+  },
+  {
+    "code": "224ZE0001X",
+    "labelEn": "Environmental Modification",
+    "grouping": "Respiratory, Developmental, Rehabilitative and Restorative Service Providers",
+    "classification": "Occupational Therapy Assistant",
+    "specialization": "Environmental Modification"
+  },
+  {
+    "code": "224ZF0002X",
+    "labelEn": "Feeding, Eating & Swallowing",
+    "grouping": "Respiratory, Developmental, Rehabilitative and Restorative Service Providers",
+    "classification": "Occupational Therapy Assistant",
+    "specialization": "Feeding, Eating & Swallowing"
+  },
+  {
+    "code": "224ZL0004X",
+    "labelEn": "Low Vision",
+    "grouping": "Respiratory, Developmental, Rehabilitative and Restorative Service Providers",
+    "classification": "Occupational Therapy Assistant",
+    "specialization": "Low Vision"
+  },
+  {
+    "code": "225000000X",
+    "labelEn": "Orthotic Fitter",
+    "grouping": "Respiratory, Developmental, Rehabilitative and Restorative Service Providers",
+    "classification": "Orthotic Fitter",
+    "specialization": ""
+  },
+  {
+    "code": "222Z00000X",
+    "labelEn": "Orthotist",
+    "grouping": "Respiratory, Developmental, Rehabilitative and Restorative Service Providers",
+    "classification": "Orthotist",
+    "specialization": ""
+  },
+  {
+    "code": "224L00000X",
+    "labelEn": "Pedorthist",
+    "grouping": "Respiratory, Developmental, Rehabilitative and Restorative Service Providers",
+    "classification": "Pedorthist",
+    "specialization": ""
+  },
+  {
+    "code": "225100000X",
+    "labelEn": "Physical Therapist",
+    "grouping": "Respiratory, Developmental, Rehabilitative and Restorative Service Providers",
+    "classification": "Physical Therapist",
+    "specialization": ""
+  },
+  {
+    "code": "2251C2600X",
+    "labelEn": "Cardiopulmonary",
+    "grouping": "Respiratory, Developmental, Rehabilitative and Restorative Service Providers",
+    "classification": "Physical Therapist",
+    "specialization": "Cardiopulmonary"
+  },
+  {
+    "code": "2251E1300X",
+    "labelEn": "Electrophysiology, Clinical",
+    "grouping": "Respiratory, Developmental, Rehabilitative and Restorative Service Providers",
+    "classification": "Physical Therapist",
+    "specialization": "Electrophysiology, Clinical"
+  },
+  {
+    "code": "2251E1200X",
+    "labelEn": "Ergonomics",
+    "grouping": "Respiratory, Developmental, Rehabilitative and Restorative Service Providers",
+    "classification": "Physical Therapist",
+    "specialization": "Ergonomics"
+  },
+  {
+    "code": "2251G0304X",
+    "labelEn": "Geriatrics",
+    "grouping": "Respiratory, Developmental, Rehabilitative and Restorative Service Providers",
+    "classification": "Physical Therapist",
+    "specialization": "Geriatrics"
+  },
+  {
+    "code": "2251H1200X",
+    "labelEn": "Hand",
+    "grouping": "Respiratory, Developmental, Rehabilitative and Restorative Service Providers",
+    "classification": "Physical Therapist",
+    "specialization": "Hand"
+  },
+  {
+    "code": "2251H1300X",
+    "labelEn": "Human Factors",
+    "grouping": "Respiratory, Developmental, Rehabilitative and Restorative Service Providers",
+    "classification": "Physical Therapist",
+    "specialization": "Human Factors"
+  },
+  {
+    "code": "2251N0400X",
+    "labelEn": "Neurology",
+    "grouping": "Respiratory, Developmental, Rehabilitative and Restorative Service Providers",
+    "classification": "Physical Therapist",
+    "specialization": "Neurology"
+  },
+  {
+    "code": "2251X0800X",
+    "labelEn": "Orthopedic",
+    "grouping": "Respiratory, Developmental, Rehabilitative and Restorative Service Providers",
+    "classification": "Physical Therapist",
+    "specialization": "Orthopedic"
+  },
+  {
+    "code": "2251P0200X",
+    "labelEn": "Pediatrics",
+    "grouping": "Respiratory, Developmental, Rehabilitative and Restorative Service Providers",
+    "classification": "Physical Therapist",
+    "specialization": "Pediatrics"
+  },
+  {
+    "code": "2251S0007X",
+    "labelEn": "Sports",
+    "grouping": "Respiratory, Developmental, Rehabilitative and Restorative Service Providers",
+    "classification": "Physical Therapist",
+    "specialization": "Sports"
+  },
+  {
+    "code": "225200000X",
+    "labelEn": "Physical Therapy Assistant",
+    "grouping": "Respiratory, Developmental, Rehabilitative and Restorative Service Providers",
+    "classification": "Physical Therapy Assistant",
+    "specialization": ""
+  },
+  {
+    "code": "224P00000X",
+    "labelEn": "Prosthetist",
+    "grouping": "Respiratory, Developmental, Rehabilitative and Restorative Service Providers",
+    "classification": "Prosthetist",
+    "specialization": ""
+  },
+  {
+    "code": "225B00000X",
+    "labelEn": "Pulmonary Function Technologist",
+    "grouping": "Respiratory, Developmental, Rehabilitative and Restorative Service Providers",
+    "classification": "Pulmonary Function Technologist",
+    "specialization": ""
+  },
+  {
+    "code": "225800000X",
+    "labelEn": "Recreation Therapist",
+    "grouping": "Respiratory, Developmental, Rehabilitative and Restorative Service Providers",
+    "classification": "Recreation Therapist",
+    "specialization": ""
+  },
+  {
+    "code": "226000000X",
+    "labelEn": "Recreational Therapist Assistant",
+    "grouping": "Respiratory, Developmental, Rehabilitative and Restorative Service Providers",
+    "classification": "Recreational Therapist Assistant",
+    "specialization": ""
+  },
+  {
+    "code": "225C00000X",
+    "labelEn": "Rehabilitation Counselor",
+    "grouping": "Respiratory, Developmental, Rehabilitative and Restorative Service Providers",
+    "classification": "Rehabilitation Counselor",
+    "specialization": ""
+  },
+  {
+    "code": "225CA2400X",
+    "labelEn": "Assistive Technology Practitioner",
+    "grouping": "Respiratory, Developmental, Rehabilitative and Restorative Service Providers",
+    "classification": "Rehabilitation Counselor",
+    "specialization": "Assistive Technology Practitioner"
+  },
+  {
+    "code": "225CA2500X",
+    "labelEn": "Assistive Technology Supplier",
+    "grouping": "Respiratory, Developmental, Rehabilitative and Restorative Service Providers",
+    "classification": "Rehabilitation Counselor",
+    "specialization": "Assistive Technology Supplier"
+  },
+  {
+    "code": "225CX0006X",
+    "labelEn": "Orientation and Mobility Training Provider",
+    "grouping": "Respiratory, Developmental, Rehabilitative and Restorative Service Providers",
+    "classification": "Rehabilitation Counselor",
+    "specialization": "Orientation and Mobility Training Provider"
+  },
+  {
+    "code": "225400000X",
+    "labelEn": "Rehabilitation Practitioner",
+    "grouping": "Respiratory, Developmental, Rehabilitative and Restorative Service Providers",
+    "classification": "Rehabilitation Practitioner",
+    "specialization": ""
+  },
+  {
+    "code": "227800000X",
+    "labelEn": "Respiratory Therapist, Certified",
+    "grouping": "Respiratory, Developmental, Rehabilitative and Restorative Service Providers",
+    "classification": "Respiratory Therapist, Certified",
+    "specialization": ""
+  },
+  {
+    "code": "2278C0205X",
+    "labelEn": "Critical Care",
+    "grouping": "Respiratory, Developmental, Rehabilitative and Restorative Service Providers",
+    "classification": "Respiratory Therapist, Certified",
+    "specialization": "Critical Care"
+  },
+  {
+    "code": "2278E1000X",
+    "labelEn": "Educational",
+    "grouping": "Respiratory, Developmental, Rehabilitative and Restorative Service Providers",
+    "classification": "Respiratory Therapist, Certified",
+    "specialization": "Educational"
+  },
+  {
+    "code": "2278E0002X",
+    "labelEn": "Emergency Care",
+    "grouping": "Respiratory, Developmental, Rehabilitative and Restorative Service Providers",
+    "classification": "Respiratory Therapist, Certified",
+    "specialization": "Emergency Care"
+  },
+  {
+    "code": "2278G1100X",
+    "labelEn": "General Care",
+    "grouping": "Respiratory, Developmental, Rehabilitative and Restorative Service Providers",
+    "classification": "Respiratory Therapist, Certified",
+    "specialization": "General Care"
+  },
+  {
+    "code": "2278G0305X",
+    "labelEn": "Geriatric Care",
+    "grouping": "Respiratory, Developmental, Rehabilitative and Restorative Service Providers",
+    "classification": "Respiratory Therapist, Certified",
+    "specialization": "Geriatric Care"
+  },
+  {
+    "code": "2278H0200X",
+    "labelEn": "Home Health",
+    "grouping": "Respiratory, Developmental, Rehabilitative and Restorative Service Providers",
+    "classification": "Respiratory Therapist, Certified",
+    "specialization": "Home Health"
+  },
+  {
+    "code": "2278P3900X",
+    "labelEn": "Neonatal/Pediatrics",
+    "grouping": "Respiratory, Developmental, Rehabilitative and Restorative Service Providers",
+    "classification": "Respiratory Therapist, Certified",
+    "specialization": "Neonatal/Pediatrics"
+  },
+  {
+    "code": "2278P3800X",
+    "labelEn": "Palliative/Hospice",
+    "grouping": "Respiratory, Developmental, Rehabilitative and Restorative Service Providers",
+    "classification": "Respiratory Therapist, Certified",
+    "specialization": "Palliative/Hospice"
+  },
+  {
+    "code": "2278P4000X",
+    "labelEn": "Patient Transport",
+    "grouping": "Respiratory, Developmental, Rehabilitative and Restorative Service Providers",
+    "classification": "Respiratory Therapist, Certified",
+    "specialization": "Patient Transport"
+  },
+  {
+    "code": "2278P1004X",
+    "labelEn": "Pulmonary Diagnostics",
+    "grouping": "Respiratory, Developmental, Rehabilitative and Restorative Service Providers",
+    "classification": "Respiratory Therapist, Certified",
+    "specialization": "Pulmonary Diagnostics"
+  },
+  {
+    "code": "2278P1006X",
+    "labelEn": "Pulmonary Function Technologist",
+    "grouping": "Respiratory, Developmental, Rehabilitative and Restorative Service Providers",
+    "classification": "Respiratory Therapist, Certified",
+    "specialization": "Pulmonary Function Technologist"
+  },
+  {
+    "code": "2278P1005X",
+    "labelEn": "Pulmonary Rehabilitation",
+    "grouping": "Respiratory, Developmental, Rehabilitative and Restorative Service Providers",
+    "classification": "Respiratory Therapist, Certified",
+    "specialization": "Pulmonary Rehabilitation"
+  },
+  {
+    "code": "2278S1500X",
+    "labelEn": "SNF/Subacute Care",
+    "grouping": "Respiratory, Developmental, Rehabilitative and Restorative Service Providers",
+    "classification": "Respiratory Therapist, Certified",
+    "specialization": "SNF/Subacute Care"
+  },
+  {
+    "code": "227900000X",
+    "labelEn": "Respiratory Therapist, Registered",
+    "grouping": "Respiratory, Developmental, Rehabilitative and Restorative Service Providers",
+    "classification": "Respiratory Therapist, Registered",
+    "specialization": ""
+  },
+  {
+    "code": "2279C0205X",
+    "labelEn": "Critical Care",
+    "grouping": "Respiratory, Developmental, Rehabilitative and Restorative Service Providers",
+    "classification": "Respiratory Therapist, Registered",
+    "specialization": "Critical Care"
+  },
+  {
+    "code": "2279E1000X",
+    "labelEn": "Educational",
+    "grouping": "Respiratory, Developmental, Rehabilitative and Restorative Service Providers",
+    "classification": "Respiratory Therapist, Registered",
+    "specialization": "Educational"
+  },
+  {
+    "code": "2279E0002X",
+    "labelEn": "Emergency Care",
+    "grouping": "Respiratory, Developmental, Rehabilitative and Restorative Service Providers",
+    "classification": "Respiratory Therapist, Registered",
+    "specialization": "Emergency Care"
+  },
+  {
+    "code": "2279G1100X",
+    "labelEn": "General Care",
+    "grouping": "Respiratory, Developmental, Rehabilitative and Restorative Service Providers",
+    "classification": "Respiratory Therapist, Registered",
+    "specialization": "General Care"
+  },
+  {
+    "code": "2279G0305X",
+    "labelEn": "Geriatric Care",
+    "grouping": "Respiratory, Developmental, Rehabilitative and Restorative Service Providers",
+    "classification": "Respiratory Therapist, Registered",
+    "specialization": "Geriatric Care"
+  },
+  {
+    "code": "2279H0200X",
+    "labelEn": "Home Health",
+    "grouping": "Respiratory, Developmental, Rehabilitative and Restorative Service Providers",
+    "classification": "Respiratory Therapist, Registered",
+    "specialization": "Home Health"
+  },
+  {
+    "code": "2279P3900X",
+    "labelEn": "Neonatal/Pediatrics",
+    "grouping": "Respiratory, Developmental, Rehabilitative and Restorative Service Providers",
+    "classification": "Respiratory Therapist, Registered",
+    "specialization": "Neonatal/Pediatrics"
+  },
+  {
+    "code": "2279P3800X",
+    "labelEn": "Palliative/Hospice",
+    "grouping": "Respiratory, Developmental, Rehabilitative and Restorative Service Providers",
+    "classification": "Respiratory Therapist, Registered",
+    "specialization": "Palliative/Hospice"
+  },
+  {
+    "code": "2279P4000X",
+    "labelEn": "Patient Transport",
+    "grouping": "Respiratory, Developmental, Rehabilitative and Restorative Service Providers",
+    "classification": "Respiratory Therapist, Registered",
+    "specialization": "Patient Transport"
+  },
+  {
+    "code": "2279P1004X",
+    "labelEn": "Pulmonary Diagnostics",
+    "grouping": "Respiratory, Developmental, Rehabilitative and Restorative Service Providers",
+    "classification": "Respiratory Therapist, Registered",
+    "specialization": "Pulmonary Diagnostics"
+  },
+  {
+    "code": "2279P1006X",
+    "labelEn": "Pulmonary Function Technologist",
+    "grouping": "Respiratory, Developmental, Rehabilitative and Restorative Service Providers",
+    "classification": "Respiratory Therapist, Registered",
+    "specialization": "Pulmonary Function Technologist"
+  },
+  {
+    "code": "2279P1005X",
+    "labelEn": "Pulmonary Rehabilitation",
+    "grouping": "Respiratory, Developmental, Rehabilitative and Restorative Service Providers",
+    "classification": "Respiratory Therapist, Registered",
+    "specialization": "Pulmonary Rehabilitation"
+  },
+  {
+    "code": "2279S1500X",
+    "labelEn": "SNF/Subacute Care",
+    "grouping": "Respiratory, Developmental, Rehabilitative and Restorative Service Providers",
+    "classification": "Respiratory Therapist, Registered",
+    "specialization": "SNF/Subacute Care"
+  },
+  {
+    "code": "225500000X",
+    "labelEn": "Specialist/Technologist",
+    "grouping": "Respiratory, Developmental, Rehabilitative and Restorative Service Providers",
+    "classification": "Specialist/Technologist",
+    "specialization": ""
+  },
+  {
+    "code": "2255A2300X",
+    "labelEn": "Athletic Trainer",
+    "grouping": "Respiratory, Developmental, Rehabilitative and Restorative Service Providers",
+    "classification": "Specialist/Technologist",
+    "specialization": "Athletic Trainer"
+  },
+  {
+    "code": "2255R0406X",
+    "labelEn": "Rehabilitation, Blind",
+    "grouping": "Respiratory, Developmental, Rehabilitative and Restorative Service Providers",
+    "classification": "Specialist/Technologist",
+    "specialization": "Rehabilitation, Blind"
+  },
+  {
+    "code": "231H00000X",
+    "labelEn": "Audiologist",
+    "grouping": "Speech, Language and Hearing Service Providers",
+    "classification": "Audiologist",
+    "specialization": ""
+  },
+  {
+    "code": "231HA2400X",
+    "labelEn": "Assistive Technology Practitioner",
+    "grouping": "Speech, Language and Hearing Service Providers",
+    "classification": "Audiologist",
+    "specialization": "Assistive Technology Practitioner"
+  },
+  {
+    "code": "231HA2500X",
+    "labelEn": "Assistive Technology Supplier",
+    "grouping": "Speech, Language and Hearing Service Providers",
+    "classification": "Audiologist",
+    "specialization": "Assistive Technology Supplier"
+  },
+  {
+    "code": "237600000X",
+    "labelEn": "Audiologist-Hearing Aid Fitter",
+    "grouping": "Speech, Language and Hearing Service Providers",
+    "classification": "Audiologist-Hearing Aid Fitter",
+    "specialization": ""
+  },
+  {
+    "code": "237700000X",
+    "labelEn": "Hearing Instrument Specialist",
+    "grouping": "Speech, Language and Hearing Service Providers",
+    "classification": "Hearing Instrument Specialist",
+    "specialization": ""
+  },
+  {
+    "code": "235500000X",
+    "labelEn": "Specialist/Technologist",
+    "grouping": "Speech, Language and Hearing Service Providers",
+    "classification": "Specialist/Technologist",
+    "specialization": ""
+  },
+  {
+    "code": "2355A2700X",
+    "labelEn": "Audiology Assistant",
+    "grouping": "Speech, Language and Hearing Service Providers",
+    "classification": "Specialist/Technologist",
+    "specialization": "Audiology Assistant"
+  },
+  {
+    "code": "2355S0801X",
+    "labelEn": "Speech-Language Assistant",
+    "grouping": "Speech, Language and Hearing Service Providers",
+    "classification": "Specialist/Technologist",
+    "specialization": "Speech-Language Assistant"
+  },
+  {
+    "code": "235Z00000X",
+    "labelEn": "Speech-Language Pathologist",
+    "grouping": "Speech, Language and Hearing Service Providers",
+    "classification": "Speech-Language Pathologist",
+    "specialization": ""
+  },
+  {
+    "code": "390200000X",
+    "labelEn": "Student in an Organized Health Care Education/Training Program",
+    "grouping": "Student, Health Care",
+    "classification": "Student in an Organized Health Care Education/Training Program",
+    "specialization": ""
+  },
+  {
+    "code": "242T00000X",
+    "labelEn": "Perfusionist",
+    "grouping": "Technologists, Technicians & Other Technical Service Providers",
+    "classification": "Perfusionist",
+    "specialization": ""
+  },
+  {
+    "code": "247100000X",
+    "labelEn": "Radiologic Technologist",
+    "grouping": "Technologists, Technicians & Other Technical Service Providers",
+    "classification": "Radiologic Technologist",
+    "specialization": ""
+  },
+  {
+    "code": "2471B0102X",
+    "labelEn": "Bone Densitometry",
+    "grouping": "Technologists, Technicians & Other Technical Service Providers",
+    "classification": "Radiologic Technologist",
+    "specialization": "Bone Densitometry"
+  },
+  {
+    "code": "2471C1106X",
+    "labelEn": "Cardiac-Interventional Technology",
+    "grouping": "Technologists, Technicians & Other Technical Service Providers",
+    "classification": "Radiologic Technologist",
+    "specialization": "Cardiac-Interventional Technology"
+  },
+  {
+    "code": "2471C1101X",
+    "labelEn": "Cardiovascular-Interventional Technology",
+    "grouping": "Technologists, Technicians & Other Technical Service Providers",
+    "classification": "Radiologic Technologist",
+    "specialization": "Cardiovascular-Interventional Technology"
+  },
+  {
+    "code": "2471C3401X",
+    "labelEn": "Computed Tomography",
+    "grouping": "Technologists, Technicians & Other Technical Service Providers",
+    "classification": "Radiologic Technologist",
+    "specialization": "Computed Tomography"
+  },
+  {
+    "code": "2471M1202X",
+    "labelEn": "Magnetic Resonance Imaging",
+    "grouping": "Technologists, Technicians & Other Technical Service Providers",
+    "classification": "Radiologic Technologist",
+    "specialization": "Magnetic Resonance Imaging"
+  },
+  {
+    "code": "2471M2300X",
+    "labelEn": "Mammography",
+    "grouping": "Technologists, Technicians & Other Technical Service Providers",
+    "classification": "Radiologic Technologist",
+    "specialization": "Mammography"
+  },
+  {
+    "code": "2471N0900X",
+    "labelEn": "Nuclear Medicine Technology",
+    "grouping": "Technologists, Technicians & Other Technical Service Providers",
+    "classification": "Radiologic Technologist",
+    "specialization": "Nuclear Medicine Technology"
+  },
+  {
+    "code": "2471Q0001X",
+    "labelEn": "Quality Management",
+    "grouping": "Technologists, Technicians & Other Technical Service Providers",
+    "classification": "Radiologic Technologist",
+    "specialization": "Quality Management"
+  },
+  {
+    "code": "2471R0002X",
+    "labelEn": "Radiation Therapy",
+    "grouping": "Technologists, Technicians & Other Technical Service Providers",
+    "classification": "Radiologic Technologist",
+    "specialization": "Radiation Therapy"
+  },
+  {
+    "code": "2471C3402X",
+    "labelEn": "Radiography",
+    "grouping": "Technologists, Technicians & Other Technical Service Providers",
+    "classification": "Radiologic Technologist",
+    "specialization": "Radiography"
+  },
+  {
+    "code": "2471S1302X",
+    "labelEn": "Sonography",
+    "grouping": "Technologists, Technicians & Other Technical Service Providers",
+    "classification": "Radiologic Technologist",
+    "specialization": "Sonography"
+  },
+  {
+    "code": "2471V0105X",
+    "labelEn": "Vascular Sonography",
+    "grouping": "Technologists, Technicians & Other Technical Service Providers",
+    "classification": "Radiologic Technologist",
+    "specialization": "Vascular Sonography"
+  },
+  {
+    "code": "2471V0106X",
+    "labelEn": "Vascular-Interventional Technology",
+    "grouping": "Technologists, Technicians & Other Technical Service Providers",
+    "classification": "Radiologic Technologist",
+    "specialization": "Vascular-Interventional Technology"
+  },
+  {
+    "code": "243U00000X",
+    "labelEn": "Radiology Practitioner Assistant",
+    "grouping": "Technologists, Technicians & Other Technical Service Providers",
+    "classification": "Radiology Practitioner Assistant",
+    "specialization": ""
+  },
+  {
+    "code": "246X00000X",
+    "labelEn": "Specialist/Technologist Cardiovascular",
+    "grouping": "Technologists, Technicians & Other Technical Service Providers",
+    "classification": "Specialist/Technologist Cardiovascular",
+    "specialization": ""
+  },
+  {
+    "code": "246XC2901X",
+    "labelEn": "Cardiovascular Invasive Specialist",
+    "grouping": "Technologists, Technicians & Other Technical Service Providers",
+    "classification": "Specialist/Technologist Cardiovascular",
+    "specialization": "Cardiovascular Invasive Specialist"
+  },
+  {
+    "code": "246XS1301X",
+    "labelEn": "Sonography",
+    "grouping": "Technologists, Technicians & Other Technical Service Providers",
+    "classification": "Specialist/Technologist Cardiovascular",
+    "specialization": "Sonography"
+  },
+  {
+    "code": "246XC2903X",
+    "labelEn": "Vascular Specialist",
+    "grouping": "Technologists, Technicians & Other Technical Service Providers",
+    "classification": "Specialist/Technologist Cardiovascular",
+    "specialization": "Vascular Specialist"
+  },
+  {
+    "code": "246Y00000X",
+    "labelEn": "Specialist/Technologist, Health Information",
+    "grouping": "Technologists, Technicians & Other Technical Service Providers",
+    "classification": "Specialist/Technologist, Health Information",
+    "specialization": ""
+  },
+  {
+    "code": "246YC3301X",
+    "labelEn": "Coding Specialist, Hospital Based",
+    "grouping": "Technologists, Technicians & Other Technical Service Providers",
+    "classification": "Specialist/Technologist, Health Information",
+    "specialization": "Coding Specialist, Hospital Based"
+  },
+  {
+    "code": "246YC3302X",
+    "labelEn": "Coding Specialist, Physician Office Based",
+    "grouping": "Technologists, Technicians & Other Technical Service Providers",
+    "classification": "Specialist/Technologist, Health Information",
+    "specialization": "Coding Specialist, Physician Office Based"
+  },
+  {
+    "code": "246YR1600X",
+    "labelEn": "Registered Record Administrator",
+    "grouping": "Technologists, Technicians & Other Technical Service Providers",
+    "classification": "Specialist/Technologist, Health Information",
+    "specialization": "Registered Record Administrator"
+  },
+  {
+    "code": "246Z00000X",
+    "labelEn": "Specialist/Technologist, Other",
+    "grouping": "Technologists, Technicians & Other Technical Service Providers",
+    "classification": "Specialist/Technologist, Other",
+    "specialization": ""
+  },
+  {
+    "code": "246ZA2600X",
+    "labelEn": "Art, Medical",
+    "grouping": "Technologists, Technicians & Other Technical Service Providers",
+    "classification": "Specialist/Technologist, Other",
+    "specialization": "Art, Medical"
+  },
+  {
+    "code": "246ZB0500X",
+    "labelEn": "Biochemist",
+    "grouping": "Technologists, Technicians & Other Technical Service Providers",
+    "classification": "Specialist/Technologist, Other",
+    "specialization": "Biochemist"
+  },
+  {
+    "code": "246ZB0301X",
+    "labelEn": "Biomedical Engineering",
+    "grouping": "Technologists, Technicians & Other Technical Service Providers",
+    "classification": "Specialist/Technologist, Other",
+    "specialization": "Biomedical Engineering"
+  },
+  {
+    "code": "246ZB0302X",
+    "labelEn": "Biomedical Photographer",
+    "grouping": "Technologists, Technicians & Other Technical Service Providers",
+    "classification": "Specialist/Technologist, Other",
+    "specialization": "Biomedical Photographer"
+  },
+  {
+    "code": "246ZB0600X",
+    "labelEn": "Biostatistician",
+    "grouping": "Technologists, Technicians & Other Technical Service Providers",
+    "classification": "Specialist/Technologist, Other",
+    "specialization": "Biostatistician"
+  },
+  {
+    "code": "246ZE0500X",
+    "labelEn": "EEG",
+    "grouping": "Technologists, Technicians & Other Technical Service Providers",
+    "classification": "Specialist/Technologist, Other",
+    "specialization": "EEG"
+  },
+  {
+    "code": "246ZE0600X",
+    "labelEn": "Electroneurodiagnostic",
+    "grouping": "Technologists, Technicians & Other Technical Service Providers",
+    "classification": "Specialist/Technologist, Other",
+    "specialization": "Electroneurodiagnostic"
+  },
+  {
+    "code": "246ZG1000X",
+    "labelEn": "Geneticist, Medical (PhD)",
+    "grouping": "Technologists, Technicians & Other Technical Service Providers",
+    "classification": "Specialist/Technologist, Other",
+    "specialization": "Geneticist, Medical (PhD)"
+  },
+  {
+    "code": "246ZG0701X",
+    "labelEn": "Graphics Methods",
+    "grouping": "Technologists, Technicians & Other Technical Service Providers",
+    "classification": "Specialist/Technologist, Other",
+    "specialization": "Graphics Methods"
+  },
+  {
+    "code": "246ZI1000X",
+    "labelEn": "Illustration, Medical",
+    "grouping": "Technologists, Technicians & Other Technical Service Providers",
+    "classification": "Specialist/Technologist, Other",
+    "specialization": "Illustration, Medical"
+  },
+  {
+    "code": "246ZN0300X",
+    "labelEn": "Nephrology",
+    "grouping": "Technologists, Technicians & Other Technical Service Providers",
+    "classification": "Specialist/Technologist, Other",
+    "specialization": "Nephrology"
+  },
+  {
+    "code": "246ZX2200X",
+    "labelEn": "Orthopedic Assistant",
+    "grouping": "Technologists, Technicians & Other Technical Service Providers",
+    "classification": "Specialist/Technologist, Other",
+    "specialization": "Orthopedic Assistant"
+  },
+  {
+    "code": "246ZC0007X",
+    "labelEn": "Surgical Assistant",
+    "grouping": "Technologists, Technicians & Other Technical Service Providers",
+    "classification": "Specialist/Technologist, Other",
+    "specialization": "Surgical Assistant"
+  },
+  {
+    "code": "246ZS0410X",
+    "labelEn": "Surgical Technologist",
+    "grouping": "Technologists, Technicians & Other Technical Service Providers",
+    "classification": "Specialist/Technologist, Other",
+    "specialization": "Surgical Technologist"
+  },
+  {
+    "code": "246Q00000X",
+    "labelEn": "Specialist/Technologist, Pathology",
+    "grouping": "Technologists, Technicians & Other Technical Service Providers",
+    "classification": "Specialist/Technologist, Pathology",
+    "specialization": ""
+  },
+  {
+    "code": "246QB0000X",
+    "labelEn": "Blood Banking",
+    "grouping": "Technologists, Technicians & Other Technical Service Providers",
+    "classification": "Specialist/Technologist, Pathology",
+    "specialization": "Blood Banking"
+  },
+  {
+    "code": "246QC1000X",
+    "labelEn": "Chemistry",
+    "grouping": "Technologists, Technicians & Other Technical Service Providers",
+    "classification": "Specialist/Technologist, Pathology",
+    "specialization": "Chemistry"
+  },
+  {
+    "code": "246QC2700X",
+    "labelEn": "Cytotechnology",
+    "grouping": "Technologists, Technicians & Other Technical Service Providers",
+    "classification": "Specialist/Technologist, Pathology",
+    "specialization": "Cytotechnology"
+  },
+  {
+    "code": "246QH0401X",
+    "labelEn": "Hemapheresis Practitioner",
+    "grouping": "Technologists, Technicians & Other Technical Service Providers",
+    "classification": "Specialist/Technologist, Pathology",
+    "specialization": "Hemapheresis Practitioner"
+  },
+  {
+    "code": "246QH0000X",
+    "labelEn": "Hematology",
+    "grouping": "Technologists, Technicians & Other Technical Service Providers",
+    "classification": "Specialist/Technologist, Pathology",
+    "specialization": "Hematology"
+  },
+  {
+    "code": "246QH0600X",
+    "labelEn": "Histology",
+    "grouping": "Technologists, Technicians & Other Technical Service Providers",
+    "classification": "Specialist/Technologist, Pathology",
+    "specialization": "Histology"
+  },
+  {
+    "code": "246QI0000X",
+    "labelEn": "Immunology",
+    "grouping": "Technologists, Technicians & Other Technical Service Providers",
+    "classification": "Specialist/Technologist, Pathology",
+    "specialization": "Immunology"
+  },
+  {
+    "code": "246QL0900X",
+    "labelEn": "Laboratory Management",
+    "grouping": "Technologists, Technicians & Other Technical Service Providers",
+    "classification": "Specialist/Technologist, Pathology",
+    "specialization": "Laboratory Management"
+  },
+  {
+    "code": "246QL0901X",
+    "labelEn": "Laboratory Management, Diplomate",
+    "grouping": "Technologists, Technicians & Other Technical Service Providers",
+    "classification": "Specialist/Technologist, Pathology",
+    "specialization": "Laboratory Management, Diplomate"
+  },
+  {
+    "code": "246QM0706X",
+    "labelEn": "Medical Technologist",
+    "grouping": "Technologists, Technicians & Other Technical Service Providers",
+    "classification": "Specialist/Technologist, Pathology",
+    "specialization": "Medical Technologist"
+  },
+  {
+    "code": "246QM0900X",
+    "labelEn": "Microbiology",
+    "grouping": "Technologists, Technicians & Other Technical Service Providers",
+    "classification": "Specialist/Technologist, Pathology",
+    "specialization": "Microbiology"
+  },
+  {
+    "code": "246W00000X",
+    "labelEn": "Technician, Cardiology",
+    "grouping": "Technologists, Technicians & Other Technical Service Providers",
+    "classification": "Technician, Cardiology",
+    "specialization": ""
+  },
+  {
+    "code": "247000000X",
+    "labelEn": "Technician, Health Information",
+    "grouping": "Technologists, Technicians & Other Technical Service Providers",
+    "classification": "Technician, Health Information",
+    "specialization": ""
+  },
+  {
+    "code": "2470A2800X",
+    "labelEn": "Assistant Record Technician",
+    "grouping": "Technologists, Technicians & Other Technical Service Providers",
+    "classification": "Technician, Health Information",
+    "specialization": "Assistant Record Technician"
+  },
+  {
+    "code": "247200000X",
+    "labelEn": "Technician, Other",
+    "grouping": "Technologists, Technicians & Other Technical Service Providers",
+    "classification": "Technician, Other",
+    "specialization": ""
+  },
+  {
+    "code": "2472B0301X",
+    "labelEn": "Biomedical Engineering",
+    "grouping": "Technologists, Technicians & Other Technical Service Providers",
+    "classification": "Technician, Other",
+    "specialization": "Biomedical Engineering"
+  },
+  {
+    "code": "2472D0500X",
+    "labelEn": "Darkroom",
+    "grouping": "Technologists, Technicians & Other Technical Service Providers",
+    "classification": "Technician, Other",
+    "specialization": "Darkroom"
+  },
+  {
+    "code": "2472E0500X",
+    "labelEn": "EEG",
+    "grouping": "Technologists, Technicians & Other Technical Service Providers",
+    "classification": "Technician, Other",
+    "specialization": "EEG"
+  },
+  {
+    "code": "2472R0900X",
+    "labelEn": "Renal Dialysis",
+    "grouping": "Technologists, Technicians & Other Technical Service Providers",
+    "classification": "Technician, Other",
+    "specialization": "Renal Dialysis"
+  },
+  {
+    "code": "2472V0600X",
+    "labelEn": "Veterinary",
+    "grouping": "Technologists, Technicians & Other Technical Service Providers",
+    "classification": "Technician, Other",
+    "specialization": "Veterinary"
+  },
+  {
+    "code": "246R00000X",
+    "labelEn": "Technician, Pathology",
+    "grouping": "Technologists, Technicians & Other Technical Service Providers",
+    "classification": "Technician, Pathology",
+    "specialization": ""
+  },
+  {
+    "code": "247ZC0005X",
+    "labelEn": "Clinical Laboratory Director, Non-physician",
+    "grouping": "Technologists, Technicians & Other Technical Service Providers",
+    "classification": "Technician, Pathology",
+    "specialization": "Clinical Laboratory Director, Non-physician"
+  },
+  {
+    "code": "246RH0600X",
+    "labelEn": "Histology",
+    "grouping": "Technologists, Technicians & Other Technical Service Providers",
+    "classification": "Technician, Pathology",
+    "specialization": "Histology"
+  },
+  {
+    "code": "246RM2200X",
+    "labelEn": "Medical Laboratory",
+    "grouping": "Technologists, Technicians & Other Technical Service Providers",
+    "classification": "Technician, Pathology",
+    "specialization": "Medical Laboratory"
+  },
+  {
+    "code": "246RP1900X",
+    "labelEn": "Phlebotomy",
+    "grouping": "Technologists, Technicians & Other Technical Service Providers",
+    "classification": "Technician, Pathology",
+    "specialization": "Phlebotomy"
+  },
+  {
+    "code": "251B00000X",
+    "labelEn": "Case Management",
+    "grouping": "Agencies",
+    "classification": "Case Management",
+    "specialization": ""
+  },
+  {
+    "code": "251S00000X",
+    "labelEn": "Community/Behavioral Health",
+    "grouping": "Agencies",
+    "classification": "Community/Behavioral Health",
+    "specialization": ""
+  },
+  {
+    "code": "251C00000X",
+    "labelEn": "Day Training, Developmentally Disabled Services",
+    "grouping": "Agencies",
+    "classification": "Day Training, Developmentally Disabled Services",
+    "specialization": ""
+  },
+  {
+    "code": "252Y00000X",
+    "labelEn": "Early Intervention Provider Agency",
+    "grouping": "Agencies",
+    "classification": "Early Intervention Provider Agency",
+    "specialization": ""
+  },
+  {
+    "code": "253J00000X",
+    "labelEn": "Foster Care Agency",
+    "grouping": "Agencies",
+    "classification": "Foster Care Agency",
+    "specialization": ""
+  },
+  {
+    "code": "251E00000X",
+    "labelEn": "Home Health",
+    "grouping": "Agencies",
+    "classification": "Home Health",
+    "specialization": ""
+  },
+  {
+    "code": "251F00000X",
+    "labelEn": "Home Infusion",
+    "grouping": "Agencies",
+    "classification": "Home Infusion",
+    "specialization": ""
+  },
+  {
+    "code": "251G00000X",
+    "labelEn": "Hospice Care, Community Based",
+    "grouping": "Agencies",
+    "classification": "Hospice Care, Community Based",
+    "specialization": ""
+  },
+  {
+    "code": "253Z00000X",
+    "labelEn": "In Home Supportive Care",
+    "grouping": "Agencies",
+    "classification": "In Home Supportive Care",
+    "specialization": ""
+  },
+  {
+    "code": "251300000X",
+    "labelEn": "Local Education Agency (LEA)",
+    "grouping": "Agencies",
+    "classification": "Local Education Agency (LEA)",
+    "specialization": ""
+  },
+  {
+    "code": "251J00000X",
+    "labelEn": "Nursing Care",
+    "grouping": "Agencies",
+    "classification": "Nursing Care",
+    "specialization": ""
+  },
+  {
+    "code": "251T00000X",
+    "labelEn": "Program of All-Inclusive Care for the Elderly (PACE) Provider Organization",
+    "grouping": "Agencies",
+    "classification": "Program of All-Inclusive Care for the Elderly (PACE) Provider Organization",
+    "specialization": ""
+  },
+  {
+    "code": "251K00000X",
+    "labelEn": "Public Health or Welfare",
+    "grouping": "Agencies",
+    "classification": "Public Health or Welfare",
+    "specialization": ""
+  },
+  {
+    "code": "251X00000X",
+    "labelEn": "Supports Brokerage",
+    "grouping": "Agencies",
+    "classification": "Supports Brokerage",
+    "specialization": ""
+  },
+  {
+    "code": "251V00000X",
+    "labelEn": "Voluntary or Charitable",
+    "grouping": "Agencies",
+    "classification": "Voluntary or Charitable",
+    "specialization": ""
+  },
+  {
+    "code": "261Q00000X",
+    "labelEn": "Clinic/Center",
+    "grouping": "Ambulatory Health Care Facilities",
+    "classification": "Clinic/Center",
+    "specialization": ""
+  },
+  {
+    "code": "261QM0855X",
+    "labelEn": "Adolescent and Children Mental Health",
+    "grouping": "Ambulatory Health Care Facilities",
+    "classification": "Clinic/Center",
+    "specialization": "Adolescent and Children Mental Health"
+  },
+  {
+    "code": "261QA0600X",
+    "labelEn": "Adult Day Care",
+    "grouping": "Ambulatory Health Care Facilities",
+    "classification": "Clinic/Center",
+    "specialization": "Adult Day Care"
+  },
+  {
+    "code": "261QM0850X",
+    "labelEn": "Adult Mental Health",
+    "grouping": "Ambulatory Health Care Facilities",
+    "classification": "Clinic/Center",
+    "specialization": "Adult Mental Health"
+  },
+  {
+    "code": "261QA0005X",
+    "labelEn": "Ambulatory Family Planning Facility",
+    "grouping": "Ambulatory Health Care Facilities",
+    "classification": "Clinic/Center",
+    "specialization": "Ambulatory Family Planning Facility"
+  },
+  {
+    "code": "261QA0006X",
+    "labelEn": "Ambulatory Fertility Facility",
+    "grouping": "Ambulatory Health Care Facilities",
+    "classification": "Clinic/Center",
+    "specialization": "Ambulatory Fertility Facility"
+  },
+  {
+    "code": "261QA1903X",
+    "labelEn": "Ambulatory Surgical",
+    "grouping": "Ambulatory Health Care Facilities",
+    "classification": "Clinic/Center",
+    "specialization": "Ambulatory Surgical"
+  },
+  {
+    "code": "261QA0900X",
+    "labelEn": "Amputee",
+    "grouping": "Ambulatory Health Care Facilities",
+    "classification": "Clinic/Center",
+    "specialization": "Amputee"
+  },
+  {
+    "code": "261QA3000X",
+    "labelEn": "Augmentative Communication",
+    "grouping": "Ambulatory Health Care Facilities",
+    "classification": "Clinic/Center",
+    "specialization": "Augmentative Communication"
+  },
+  {
+    "code": "261QB0400X",
+    "labelEn": "Birthing",
+    "grouping": "Ambulatory Health Care Facilities",
+    "classification": "Clinic/Center",
+    "specialization": "Birthing"
+  },
+  {
+    "code": "261QC1500X",
+    "labelEn": "Community Health",
+    "grouping": "Ambulatory Health Care Facilities",
+    "classification": "Clinic/Center",
+    "specialization": "Community Health"
+  },
+  {
+    "code": "261QC1800X",
+    "labelEn": "Corporate Health",
+    "grouping": "Ambulatory Health Care Facilities",
+    "classification": "Clinic/Center",
+    "specialization": "Corporate Health"
+  },
+  {
+    "code": "261QC0050X",
+    "labelEn": "Critical Access Hospital",
+    "grouping": "Ambulatory Health Care Facilities",
+    "classification": "Clinic/Center",
+    "specialization": "Critical Access Hospital"
+  },
+  {
+    "code": "261QD0000X",
+    "labelEn": "Dental",
+    "grouping": "Ambulatory Health Care Facilities",
+    "classification": "Clinic/Center",
+    "specialization": "Dental"
+  },
+  {
+    "code": "261QD1600X",
+    "labelEn": "Developmental Disabilities",
+    "grouping": "Ambulatory Health Care Facilities",
+    "classification": "Clinic/Center",
+    "specialization": "Developmental Disabilities"
+  },
+  {
+    "code": "261QE0002X",
+    "labelEn": "Emergency Care",
+    "grouping": "Ambulatory Health Care Facilities",
+    "classification": "Clinic/Center",
+    "specialization": "Emergency Care"
+  },
+  {
+    "code": "261QE0700X",
+    "labelEn": "End-Stage Renal Disease (ESRD) Treatment",
+    "grouping": "Ambulatory Health Care Facilities",
+    "classification": "Clinic/Center",
+    "specialization": "End-Stage Renal Disease (ESRD) Treatment"
+  },
+  {
+    "code": "261QE0800X",
+    "labelEn": "Endoscopy",
+    "grouping": "Ambulatory Health Care Facilities",
+    "classification": "Clinic/Center",
+    "specialization": "Endoscopy"
+  },
+  {
+    "code": "261QF0050X",
+    "labelEn": "Family Planning, Non-Surgical",
+    "grouping": "Ambulatory Health Care Facilities",
+    "classification": "Clinic/Center",
+    "specialization": "Family Planning, Non-Surgical"
+  },
+  {
+    "code": "261QF0400X",
+    "labelEn": "Federally Qualified Health Center (FQHC)",
+    "grouping": "Ambulatory Health Care Facilities",
+    "classification": "Clinic/Center",
+    "specialization": "Federally Qualified Health Center (FQHC)"
+  },
+  {
+    "code": "261QG0250X",
+    "labelEn": "Genetics",
+    "grouping": "Ambulatory Health Care Facilities",
+    "classification": "Clinic/Center",
+    "specialization": "Genetics"
+  },
+  {
+    "code": "261QH0100X",
+    "labelEn": "Health Service",
+    "grouping": "Ambulatory Health Care Facilities",
+    "classification": "Clinic/Center",
+    "specialization": "Health Service"
+  },
+  {
+    "code": "261QH0700X",
+    "labelEn": "Hearing and Speech",
+    "grouping": "Ambulatory Health Care Facilities",
+    "classification": "Clinic/Center",
+    "specialization": "Hearing and Speech"
+  },
+  {
+    "code": "261QI0500X",
+    "labelEn": "Infusion Therapy",
+    "grouping": "Ambulatory Health Care Facilities",
+    "classification": "Clinic/Center",
+    "specialization": "Infusion Therapy"
+  },
+  {
+    "code": "261QL0400X",
+    "labelEn": "Lithotripsy",
+    "grouping": "Ambulatory Health Care Facilities",
+    "classification": "Clinic/Center",
+    "specialization": "Lithotripsy"
+  },
+  {
+    "code": "261QM1200X",
+    "labelEn": "Magnetic Resonance Imaging (MRI)",
+    "grouping": "Ambulatory Health Care Facilities",
+    "classification": "Clinic/Center",
+    "specialization": "Magnetic Resonance Imaging (MRI)"
+  },
+  {
+    "code": "261QM2500X",
+    "labelEn": "Medical Specialty",
+    "grouping": "Ambulatory Health Care Facilities",
+    "classification": "Clinic/Center",
+    "specialization": "Medical Specialty"
+  },
+  {
+    "code": "261QM3000X",
+    "labelEn": "Medically Fragile Infants and Children Day Care",
+    "grouping": "Ambulatory Health Care Facilities",
+    "classification": "Clinic/Center",
+    "specialization": "Medically Fragile Infants and Children Day Care"
+  },
+  {
+    "code": "261QM0801X",
+    "labelEn": "Mental Health (Including Community Mental Health Center)",
+    "grouping": "Ambulatory Health Care Facilities",
+    "classification": "Clinic/Center",
+    "specialization": "Mental Health (Including Community Mental Health Center)"
+  },
+  {
+    "code": "261QM2800X",
+    "labelEn": "Methadone",
+    "grouping": "Ambulatory Health Care Facilities",
+    "classification": "Clinic/Center",
+    "specialization": "Methadone"
+  },
+  {
+    "code": "261QM1000X",
+    "labelEn": "Migrant Health",
+    "grouping": "Ambulatory Health Care Facilities",
+    "classification": "Clinic/Center",
+    "specialization": "Migrant Health"
+  },
+  {
+    "code": "261QM1103X",
+    "labelEn": "Military Ambulatory Procedure Visits Operational (Transportable)",
+    "grouping": "Ambulatory Health Care Facilities",
+    "classification": "Clinic/Center",
+    "specialization": "Military Ambulatory Procedure Visits Operational (Transportable)"
+  },
+  {
+    "code": "261QM1101X",
+    "labelEn": "Military and U.S. Coast Guard Ambulatory Procedure",
+    "grouping": "Ambulatory Health Care Facilities",
+    "classification": "Clinic/Center",
+    "specialization": "Military and U.S. Coast Guard Ambulatory Procedure"
+  },
+  {
+    "code": "261QM1102X",
+    "labelEn": "Military Outpatient Operational (Transportable) Component",
+    "grouping": "Ambulatory Health Care Facilities",
+    "classification": "Clinic/Center",
+    "specialization": "Military Outpatient Operational (Transportable) Component"
+  },
+  {
+    "code": "261QM1100X",
+    "labelEn": "Military/U.S. Coast Guard Outpatient",
+    "grouping": "Ambulatory Health Care Facilities",
+    "classification": "Clinic/Center",
+    "specialization": "Military/U.S. Coast Guard Outpatient"
+  },
+  {
+    "code": "261QM1300X",
+    "labelEn": "Multi-Specialty",
+    "grouping": "Ambulatory Health Care Facilities",
+    "classification": "Clinic/Center",
+    "specialization": "Multi-Specialty"
+  },
+  {
+    "code": "261QX0100X",
+    "labelEn": "Occupational Medicine",
+    "grouping": "Ambulatory Health Care Facilities",
+    "classification": "Clinic/Center",
+    "specialization": "Occupational Medicine"
+  },
+  {
+    "code": "261QX0200X",
+    "labelEn": "Oncology",
+    "grouping": "Ambulatory Health Care Facilities",
+    "classification": "Clinic/Center",
+    "specialization": "Oncology"
+  },
+  {
+    "code": "261QX0203X",
+    "labelEn": "Oncology, Radiation",
+    "grouping": "Ambulatory Health Care Facilities",
+    "classification": "Clinic/Center",
+    "specialization": "Oncology, Radiation"
+  },
+  {
+    "code": "261QS0132X",
+    "labelEn": "Ophthalmologic Surgery",
+    "grouping": "Ambulatory Health Care Facilities",
+    "classification": "Clinic/Center",
+    "specialization": "Ophthalmologic Surgery"
+  },
+  {
+    "code": "261QS0112X",
+    "labelEn": "Oral and Maxillofacial Surgery",
+    "grouping": "Ambulatory Health Care Facilities",
+    "classification": "Clinic/Center",
+    "specialization": "Oral and Maxillofacial Surgery"
+  },
+  {
+    "code": "261QP3300X",
+    "labelEn": "Pain",
+    "grouping": "Ambulatory Health Care Facilities",
+    "classification": "Clinic/Center",
+    "specialization": "Pain"
+  },
+  {
+    "code": "261QP2000X",
+    "labelEn": "Physical Therapy",
+    "grouping": "Ambulatory Health Care Facilities",
+    "classification": "Clinic/Center",
+    "specialization": "Physical Therapy"
+  },
+  {
+    "code": "261QP1100X",
+    "labelEn": "Podiatric",
+    "grouping": "Ambulatory Health Care Facilities",
+    "classification": "Clinic/Center",
+    "specialization": "Podiatric"
+  },
+  {
+    "code": "261QP2300X",
+    "labelEn": "Primary Care",
+    "grouping": "Ambulatory Health Care Facilities",
+    "classification": "Clinic/Center",
+    "specialization": "Primary Care"
+  },
+  {
+    "code": "261QP2400X",
+    "labelEn": "Prison Health",
+    "grouping": "Ambulatory Health Care Facilities",
+    "classification": "Clinic/Center",
+    "specialization": "Prison Health"
+  },
+  {
+    "code": "261QP0904X",
+    "labelEn": "Public Health, Federal",
+    "grouping": "Ambulatory Health Care Facilities",
+    "classification": "Clinic/Center",
+    "specialization": "Public Health, Federal"
+  },
+  {
+    "code": "261QP0905X",
+    "labelEn": "Public Health, State or Local",
+    "grouping": "Ambulatory Health Care Facilities",
+    "classification": "Clinic/Center",
+    "specialization": "Public Health, State or Local"
+  },
+  {
+    "code": "261QR0200X",
+    "labelEn": "Radiology",
+    "grouping": "Ambulatory Health Care Facilities",
+    "classification": "Clinic/Center",
+    "specialization": "Radiology"
+  },
+  {
+    "code": "261QR0206X",
+    "labelEn": "Radiology, Mammography",
+    "grouping": "Ambulatory Health Care Facilities",
+    "classification": "Clinic/Center",
+    "specialization": "Radiology, Mammography"
+  },
+  {
+    "code": "261QR0208X",
+    "labelEn": "Radiology, Mobile",
+    "grouping": "Ambulatory Health Care Facilities",
+    "classification": "Clinic/Center",
+    "specialization": "Radiology, Mobile"
+  },
+  {
+    "code": "261QR0207X",
+    "labelEn": "Radiology, Mobile Mammography",
+    "grouping": "Ambulatory Health Care Facilities",
+    "classification": "Clinic/Center",
+    "specialization": "Radiology, Mobile Mammography"
+  },
+  {
+    "code": "261QR0800X",
+    "labelEn": "Recovery Care",
+    "grouping": "Ambulatory Health Care Facilities",
+    "classification": "Clinic/Center",
+    "specialization": "Recovery Care"
+  },
+  {
+    "code": "261QR0400X",
+    "labelEn": "Rehabilitation",
+    "grouping": "Ambulatory Health Care Facilities",
+    "classification": "Clinic/Center",
+    "specialization": "Rehabilitation"
+  },
+  {
+    "code": "261QR0404X",
+    "labelEn": "Rehabilitation, Cardiac Facilities",
+    "grouping": "Ambulatory Health Care Facilities",
+    "classification": "Clinic/Center",
+    "specialization": "Rehabilitation, Cardiac Facilities"
+  },
+  {
+    "code": "261QR0401X",
+    "labelEn": "Rehabilitation, Comprehensive Outpatient Rehabilitation Facility (CORF)",
+    "grouping": "Ambulatory Health Care Facilities",
+    "classification": "Clinic/Center",
+    "specialization": "Rehabilitation, Comprehensive Outpatient Rehabilitation Facility (CORF)"
+  },
+  {
+    "code": "261QR0405X",
+    "labelEn": "Rehabilitation, Substance Use Disorder",
+    "grouping": "Ambulatory Health Care Facilities",
+    "classification": "Clinic/Center",
+    "specialization": "Rehabilitation, Substance Use Disorder"
+  },
+  {
+    "code": "261QR1100X",
+    "labelEn": "Research",
+    "grouping": "Ambulatory Health Care Facilities",
+    "classification": "Clinic/Center",
+    "specialization": "Research"
+  },
+  {
+    "code": "261QR1300X",
+    "labelEn": "Rural Health",
+    "grouping": "Ambulatory Health Care Facilities",
+    "classification": "Clinic/Center",
+    "specialization": "Rural Health"
+  },
+  {
+    "code": "261QS1200X",
+    "labelEn": "Sleep Disorder Diagnostic",
+    "grouping": "Ambulatory Health Care Facilities",
+    "classification": "Clinic/Center",
+    "specialization": "Sleep Disorder Diagnostic"
+  },
+  {
+    "code": "261QS1000X",
+    "labelEn": "Student Health",
+    "grouping": "Ambulatory Health Care Facilities",
+    "classification": "Clinic/Center",
+    "specialization": "Student Health"
+  },
+  {
+    "code": "261QU0200X",
+    "labelEn": "Urgent Care",
+    "grouping": "Ambulatory Health Care Facilities",
+    "classification": "Clinic/Center",
+    "specialization": "Urgent Care"
+  },
+  {
+    "code": "261QV0200X",
+    "labelEn": "VA",
+    "grouping": "Ambulatory Health Care Facilities",
+    "classification": "Clinic/Center",
+    "specialization": "VA"
+  },
+  {
+    "code": "273100000X",
+    "labelEn": "Epilepsy Unit",
+    "grouping": "Hospital Units",
+    "classification": "Epilepsy Unit",
+    "specialization": ""
+  },
+  {
+    "code": "275N00000X",
+    "labelEn": "Medicare Defined Swing Bed Unit",
+    "grouping": "Hospital Units",
+    "classification": "Medicare Defined Swing Bed Unit",
+    "specialization": ""
+  },
+  {
+    "code": "273R00000X",
+    "labelEn": "Psychiatric Unit",
+    "grouping": "Hospital Units",
+    "classification": "Psychiatric Unit",
+    "specialization": ""
+  },
+  {
+    "code": "273Y00000X",
+    "labelEn": "Rehabilitation Unit",
+    "grouping": "Hospital Units",
+    "classification": "Rehabilitation Unit",
+    "specialization": ""
+  },
+  {
+    "code": "276400000X",
+    "labelEn": "Rehabilitation, Substance Use Disorder Unit",
+    "grouping": "Hospital Units",
+    "classification": "Rehabilitation, Substance Use Disorder Unit",
+    "specialization": ""
+  },
+  {
+    "code": "287300000X",
+    "labelEn": "Christian Science Sanitorium",
+    "grouping": "Hospitals",
+    "classification": "Christian Science Sanitorium",
+    "specialization": ""
+  },
+  {
+    "code": "281P00000X",
+    "labelEn": "Chronic Disease Hospital",
+    "grouping": "Hospitals",
+    "classification": "Chronic Disease Hospital",
+    "specialization": ""
+  },
+  {
+    "code": "281PC2000X",
+    "labelEn": "Children",
+    "grouping": "Hospitals",
+    "classification": "Chronic Disease Hospital",
+    "specialization": "Children"
+  },
+  {
+    "code": "282N00000X",
+    "labelEn": "General Acute Care Hospital",
+    "grouping": "Hospitals",
+    "classification": "General Acute Care Hospital",
+    "specialization": ""
+  },
+  {
+    "code": "282NC2000X",
+    "labelEn": "Children",
+    "grouping": "Hospitals",
+    "classification": "General Acute Care Hospital",
+    "specialization": "Children"
+  },
+  {
+    "code": "282NC0060X",
+    "labelEn": "Critical Access",
+    "grouping": "Hospitals",
+    "classification": "General Acute Care Hospital",
+    "specialization": "Critical Access"
+  },
+  {
+    "code": "282NR1301X",
+    "labelEn": "Rural",
+    "grouping": "Hospitals",
+    "classification": "General Acute Care Hospital",
+    "specialization": "Rural"
+  },
+  {
+    "code": "282NW0100X",
+    "labelEn": "Women",
+    "grouping": "Hospitals",
+    "classification": "General Acute Care Hospital",
+    "specialization": "Women"
+  },
+  {
+    "code": "282E00000X",
+    "labelEn": "Long Term Care Hospital",
+    "grouping": "Hospitals",
+    "classification": "Long Term Care Hospital",
+    "specialization": ""
+  },
+  {
+    "code": "286500000X",
+    "labelEn": "Military Hospital",
+    "grouping": "Hospitals",
+    "classification": "Military Hospital",
+    "specialization": ""
+  },
+  {
+    "code": "2865C1500X",
+    "labelEn": "Community Health",
+    "grouping": "Hospitals",
+    "classification": "Military Hospital",
+    "specialization": "Community Health"
+  },
+  {
+    "code": "2865M2000X",
+    "labelEn": "Military General Acute Care Hospital",
+    "grouping": "Hospitals",
+    "classification": "Military Hospital",
+    "specialization": "Military General Acute Care Hospital"
+  },
+  {
+    "code": "2865X1600X",
+    "labelEn": "Military General Acute Care Hospital. Operational (Transportable)",
+    "grouping": "Hospitals",
+    "classification": "Military Hospital",
+    "specialization": "Military General Acute Care Hospital. Operational (Transportable)"
+  },
+  {
+    "code": "283Q00000X",
+    "labelEn": "Psychiatric Hospital",
+    "grouping": "Hospitals",
+    "classification": "Psychiatric Hospital",
+    "specialization": ""
+  },
+  {
+    "code": "283X00000X",
+    "labelEn": "Rehabilitation Hospital",
+    "grouping": "Hospitals",
+    "classification": "Rehabilitation Hospital",
+    "specialization": ""
+  },
+  {
+    "code": "283XC2000X",
+    "labelEn": "Children",
+    "grouping": "Hospitals",
+    "classification": "Rehabilitation Hospital",
+    "specialization": "Children"
+  },
+  {
+    "code": "282J00000X",
+    "labelEn": "Religious Nonmedical Health Care Institution",
+    "grouping": "Hospitals",
+    "classification": "Religious Nonmedical Health Care Institution",
+    "specialization": ""
+  },
+  {
+    "code": "284300000X",
+    "labelEn": "Special Hospital",
+    "grouping": "Hospitals",
+    "classification": "Special Hospital",
+    "specialization": ""
+  },
+  {
+    "code": "291U00000X",
+    "labelEn": "Clinical Medical Laboratory",
+    "grouping": "Laboratories",
+    "classification": "Clinical Medical Laboratory",
+    "specialization": ""
+  },
+  {
+    "code": "292200000X",
+    "labelEn": "Dental Laboratory",
+    "grouping": "Laboratories",
+    "classification": "Dental Laboratory",
+    "specialization": ""
+  },
+  {
+    "code": "291900000X",
+    "labelEn": "Military Clinical Medical Laboratory",
+    "grouping": "Laboratories",
+    "classification": "Military Clinical Medical Laboratory",
+    "specialization": ""
+  },
+  {
+    "code": "293D00000X",
+    "labelEn": "Physiological Laboratory",
+    "grouping": "Laboratories",
+    "classification": "Physiological Laboratory",
+    "specialization": ""
+  },
+  {
+    "code": "302F00000X",
+    "labelEn": "Exclusive Provider Organization",
+    "grouping": "Managed Care Organizations",
+    "classification": "Exclusive Provider Organization",
+    "specialization": ""
+  },
+  {
+    "code": "302R00000X",
+    "labelEn": "Health Maintenance Organization",
+    "grouping": "Managed Care Organizations",
+    "classification": "Health Maintenance Organization",
+    "specialization": ""
+  },
+  {
+    "code": "305S00000X",
+    "labelEn": "Point of Service",
+    "grouping": "Managed Care Organizations",
+    "classification": "Point of Service",
+    "specialization": ""
+  },
+  {
+    "code": "305R00000X",
+    "labelEn": "Preferred Provider Organization",
+    "grouping": "Managed Care Organizations",
+    "classification": "Preferred Provider Organization",
+    "specialization": ""
+  },
+  {
+    "code": "311500000X",
+    "labelEn": "Alzheimer Center (Dementia Center)",
+    "grouping": "Nursing & Custodial Care Facilities",
+    "classification": "Alzheimer Center (Dementia Center)",
+    "specialization": ""
+  },
+  {
+    "code": "310400000X",
+    "labelEn": "Assisted Living Facility",
+    "grouping": "Nursing & Custodial Care Facilities",
+    "classification": "Assisted Living Facility",
+    "specialization": ""
+  },
+  {
+    "code": "3104A0630X",
+    "labelEn": "Assisted Living, Behavioral Disturbances",
+    "grouping": "Nursing & Custodial Care Facilities",
+    "classification": "Assisted Living Facility",
+    "specialization": "Assisted Living, Behavioral Disturbances"
+  },
+  {
+    "code": "3104A0625X",
+    "labelEn": "Assisted Living, Mental Illness",
+    "grouping": "Nursing & Custodial Care Facilities",
+    "classification": "Assisted Living Facility",
+    "specialization": "Assisted Living, Mental Illness"
+  },
+  {
+    "code": "317400000X",
+    "labelEn": "Christian Science Facility",
+    "grouping": "Nursing & Custodial Care Facilities",
+    "classification": "Christian Science Facility",
+    "specialization": ""
+  },
+  {
+    "code": "311Z00000X",
+    "labelEn": "Custodial Care Facility",
+    "grouping": "Nursing & Custodial Care Facilities",
+    "classification": "Custodial Care Facility",
+    "specialization": ""
+  },
+  {
+    "code": "311ZA0620X",
+    "labelEn": "Adult Care Home",
+    "grouping": "Nursing & Custodial Care Facilities",
+    "classification": "Custodial Care Facility",
+    "specialization": "Adult Care Home"
+  },
+  {
+    "code": "315D00000X",
+    "labelEn": "Hospice, Inpatient",
+    "grouping": "Nursing & Custodial Care Facilities",
+    "classification": "Hospice, Inpatient",
+    "specialization": ""
+  },
+  {
+    "code": "315P00000X",
+    "labelEn": "Intermediate Care Facility, Intellectual Disabilities",
+    "grouping": "Nursing & Custodial Care Facilities",
+    "classification": "Intermediate Care Facility, Intellectual Disabilities",
+    "specialization": ""
+  },
+  {
+    "code": "310500000X",
+    "labelEn": "Intermediate Care Facility, Mental Illness",
+    "grouping": "Nursing & Custodial Care Facilities",
+    "classification": "Intermediate Care Facility, Mental Illness",
+    "specialization": ""
+  },
+  {
+    "code": "313M00000X",
+    "labelEn": "Nursing Facility/Intermediate Care Facility",
+    "grouping": "Nursing & Custodial Care Facilities",
+    "classification": "Nursing Facility/Intermediate Care Facility",
+    "specialization": ""
+  },
+  {
+    "code": "314000000X",
+    "labelEn": "Skilled Nursing Facility",
+    "grouping": "Nursing & Custodial Care Facilities",
+    "classification": "Skilled Nursing Facility",
+    "specialization": ""
+  },
+  {
+    "code": "3140N1450X",
+    "labelEn": "Nursing Care, Pediatric",
+    "grouping": "Nursing & Custodial Care Facilities",
+    "classification": "Skilled Nursing Facility",
+    "specialization": "Nursing Care, Pediatric"
+  },
+  {
+    "code": "177F00000X",
+    "labelEn": "Lodging",
+    "grouping": "Other Service Providers",
+    "classification": "Lodging",
+    "specialization": ""
+  },
+  {
+    "code": "174200000X",
+    "labelEn": "Meals",
+    "grouping": "Other Service Providers",
+    "classification": "Meals",
+    "specialization": ""
+  },
+  {
+    "code": "320800000X",
+    "labelEn": "Community Based Residential Treatment Facility, Mental Illness",
+    "grouping": "Residential Treatment Facilities",
+    "classification": "Community Based Residential Treatment Facility, Mental Illness",
+    "specialization": ""
+  },
+  {
+    "code": "320900000X",
+    "labelEn": "Community Based Residential Treatment Facility, Intellectual and/or Developmental Disabilities",
+    "grouping": "Residential Treatment Facilities",
+    "classification": "Community Based Residential Treatment Facility, Intellectual and/or Developmental Disabilities",
+    "specialization": ""
+  },
+  {
+    "code": "323P00000X",
+    "labelEn": "Psychiatric Residential Treatment Facility",
+    "grouping": "Residential Treatment Facilities",
+    "classification": "Psychiatric Residential Treatment Facility",
+    "specialization": ""
+  },
+  {
+    "code": "322D00000X",
+    "labelEn": "Residential Treatment Facility, Emotionally Disturbed Children",
+    "grouping": "Residential Treatment Facilities",
+    "classification": "Residential Treatment Facility, Emotionally Disturbed Children",
+    "specialization": ""
+  },
+  {
+    "code": "320600000X",
+    "labelEn": "Residential Treatment Facility, Intellectual and/or Developmental Disabilities",
+    "grouping": "Residential Treatment Facilities",
+    "classification": "Residential Treatment Facility, Intellectual and/or Developmental Disabilities",
+    "specialization": ""
+  },
+  {
+    "code": "320700000X",
+    "labelEn": "Residential Treatment Facility, Physical Disabilities",
+    "grouping": "Residential Treatment Facilities",
+    "classification": "Residential Treatment Facility, Physical Disabilities",
+    "specialization": ""
+  },
+  {
+    "code": "324500000X",
+    "labelEn": "Substance Abuse Rehabilitation Facility",
+    "grouping": "Residential Treatment Facilities",
+    "classification": "Substance Abuse Rehabilitation Facility",
+    "specialization": ""
+  },
+  {
+    "code": "3245S0500X",
+    "labelEn": "Substance Abuse Treatment, Children",
+    "grouping": "Residential Treatment Facilities",
+    "classification": "Substance Abuse Rehabilitation Facility",
+    "specialization": "Substance Abuse Treatment, Children"
+  },
+  {
+    "code": "385H00000X",
+    "labelEn": "Respite Care",
+    "grouping": "Respite Care Facility",
+    "classification": "Respite Care",
+    "specialization": ""
+  },
+  {
+    "code": "385HR2050X",
+    "labelEn": "Respite Care Camp",
+    "grouping": "Respite Care Facility",
+    "classification": "Respite Care",
+    "specialization": "Respite Care Camp"
+  },
+  {
+    "code": "385HR2055X",
+    "labelEn": "Respite Care, Mental Illness, Child",
+    "grouping": "Respite Care Facility",
+    "classification": "Respite Care",
+    "specialization": "Respite Care, Mental Illness, Child"
+  },
+  {
+    "code": "385HR2060X",
+    "labelEn": "Respite Care, Intellectual and/or Developmental Disabilities, Child",
+    "grouping": "Respite Care Facility",
+    "classification": "Respite Care",
+    "specialization": "Respite Care, Intellectual and/or Developmental Disabilities, Child"
+  },
+  {
+    "code": "385HR2065X",
+    "labelEn": "Respite Care, Physical Disabilities, Child",
+    "grouping": "Respite Care Facility",
+    "classification": "Respite Care",
+    "specialization": "Respite Care, Physical Disabilities, Child"
+  },
+  {
+    "code": "331L00000X",
+    "labelEn": "Blood Bank",
+    "grouping": "Suppliers",
+    "classification": "Blood Bank",
+    "specialization": ""
+  },
+  {
+    "code": "332100000X",
+    "labelEn": "Department of Veterans Affairs (VA) Pharmacy",
+    "grouping": "Suppliers",
+    "classification": "Department of Veterans Affairs (VA) Pharmacy",
+    "specialization": ""
+  },
+  {
+    "code": "332B00000X",
+    "labelEn": "Durable Medical Equipment & Medical Supplies",
+    "grouping": "Suppliers",
+    "classification": "Durable Medical Equipment & Medical Supplies",
+    "specialization": ""
+  },
+  {
+    "code": "332BC3200X",
+    "labelEn": "Customized Equipment",
+    "grouping": "Suppliers",
+    "classification": "Durable Medical Equipment & Medical Supplies",
+    "specialization": "Customized Equipment"
+  },
+  {
+    "code": "332BD1200X",
+    "labelEn": "Dialysis Equipment & Supplies",
+    "grouping": "Suppliers",
+    "classification": "Durable Medical Equipment & Medical Supplies",
+    "specialization": "Dialysis Equipment & Supplies"
+  },
+  {
+    "code": "332BN1400X",
+    "labelEn": "Nursing Facility Supplies",
+    "grouping": "Suppliers",
+    "classification": "Durable Medical Equipment & Medical Supplies",
+    "specialization": "Nursing Facility Supplies"
+  },
+  {
+    "code": "332BX2000X",
+    "labelEn": "Oxygen Equipment & Supplies",
+    "grouping": "Suppliers",
+    "classification": "Durable Medical Equipment & Medical Supplies",
+    "specialization": "Oxygen Equipment & Supplies"
+  },
+  {
+    "code": "332BP3500X",
+    "labelEn": "Parenteral & Enteral Nutrition",
+    "grouping": "Suppliers",
+    "classification": "Durable Medical Equipment & Medical Supplies",
+    "specialization": "Parenteral & Enteral Nutrition"
+  },
+  {
+    "code": "333300000X",
+    "labelEn": "Emergency Response System Companies",
+    "grouping": "Suppliers",
+    "classification": "Emergency Response System Companies",
+    "specialization": ""
+  },
+  {
+    "code": "332G00000X",
+    "labelEn": "Eye Bank",
+    "grouping": "Suppliers",
+    "classification": "Eye Bank",
+    "specialization": ""
+  },
+  {
+    "code": "332H00000X",
+    "labelEn": "Eyewear Supplier",
+    "grouping": "Suppliers",
+    "classification": "Eyewear Supplier",
+    "specialization": ""
+  },
+  {
+    "code": "332S00000X",
+    "labelEn": "Hearing Aid Equipment",
+    "grouping": "Suppliers",
+    "classification": "Hearing Aid Equipment",
+    "specialization": ""
+  },
+  {
+    "code": "332U00000X",
+    "labelEn": "Home Delivered Meals",
+    "grouping": "Suppliers",
+    "classification": "Home Delivered Meals",
+    "specialization": ""
+  },
+  {
+    "code": "332800000X",
+    "labelEn": "Indian Health Service/Tribal/Urban Indian Health (I/T/U) Pharmacy",
+    "grouping": "Suppliers",
+    "classification": "Indian Health Service/Tribal/Urban Indian Health (I/T/U) Pharmacy",
+    "specialization": ""
+  },
+  {
+    "code": "335G00000X",
+    "labelEn": "Medical Foods Supplier",
+    "grouping": "Suppliers",
+    "classification": "Medical Foods Supplier",
+    "specialization": ""
+  },
+  {
+    "code": "332000000X",
+    "labelEn": "Military/U.S. Coast Guard Pharmacy",
+    "grouping": "Suppliers",
+    "classification": "Military/U.S. Coast Guard Pharmacy",
+    "specialization": ""
+  },
+  {
+    "code": "332900000X",
+    "labelEn": "Non-Pharmacy Dispensing Site",
+    "grouping": "Suppliers",
+    "classification": "Non-Pharmacy Dispensing Site",
+    "specialization": ""
+  },
+  {
+    "code": "335U00000X",
+    "labelEn": "Organ Procurement Organization",
+    "grouping": "Suppliers",
+    "classification": "Organ Procurement Organization",
+    "specialization": ""
+  },
+  {
+    "code": "333600000X",
+    "labelEn": "Pharmacy",
+    "grouping": "Suppliers",
+    "classification": "Pharmacy",
+    "specialization": ""
+  },
+  {
+    "code": "3336C0002X",
+    "labelEn": "Clinic Pharmacy",
+    "grouping": "Suppliers",
+    "classification": "Pharmacy",
+    "specialization": "Clinic Pharmacy"
+  },
+  {
+    "code": "3336C0003X",
+    "labelEn": "Community/Retail Pharmacy",
+    "grouping": "Suppliers",
+    "classification": "Pharmacy",
+    "specialization": "Community/Retail Pharmacy"
+  },
+  {
+    "code": "3336C0004X",
+    "labelEn": "Compounding Pharmacy",
+    "grouping": "Suppliers",
+    "classification": "Pharmacy",
+    "specialization": "Compounding Pharmacy"
+  },
+  {
+    "code": "3336H0001X",
+    "labelEn": "Home Infusion Therapy Pharmacy",
+    "grouping": "Suppliers",
+    "classification": "Pharmacy",
+    "specialization": "Home Infusion Therapy Pharmacy"
+  },
+  {
+    "code": "3336I0012X",
+    "labelEn": "Institutional Pharmacy",
+    "grouping": "Suppliers",
+    "classification": "Pharmacy",
+    "specialization": "Institutional Pharmacy"
+  },
+  {
+    "code": "3336L0003X",
+    "labelEn": "Long Term Care Pharmacy",
+    "grouping": "Suppliers",
+    "classification": "Pharmacy",
+    "specialization": "Long Term Care Pharmacy"
+  },
+  {
+    "code": "3336M0002X",
+    "labelEn": "Mail Order Pharmacy",
+    "grouping": "Suppliers",
+    "classification": "Pharmacy",
+    "specialization": "Mail Order Pharmacy"
+  },
+  {
+    "code": "3336M0003X",
+    "labelEn": "Managed Care Organization Pharmacy",
+    "grouping": "Suppliers",
+    "classification": "Pharmacy",
+    "specialization": "Managed Care Organization Pharmacy"
+  },
+  {
+    "code": "3336N0007X",
+    "labelEn": "Nuclear Pharmacy",
+    "grouping": "Suppliers",
+    "classification": "Pharmacy",
+    "specialization": "Nuclear Pharmacy"
+  },
+  {
+    "code": "3336S0011X",
+    "labelEn": "Specialty Pharmacy",
+    "grouping": "Suppliers",
+    "classification": "Pharmacy",
+    "specialization": "Specialty Pharmacy"
+  },
+  {
+    "code": "335V00000X",
+    "labelEn": "Portable X-ray and/or Other Portable Diagnostic Imaging Supplier",
+    "grouping": "Suppliers",
+    "classification": "Portable X-ray and/or Other Portable Diagnostic Imaging Supplier",
+    "specialization": ""
+  },
+  {
+    "code": "335E00000X",
+    "labelEn": "Prosthetic/Orthotic Supplier",
+    "grouping": "Suppliers",
+    "classification": "Prosthetic/Orthotic Supplier",
+    "specialization": ""
+  },
+  {
+    "code": "344800000X",
+    "labelEn": "Air Carrier",
+    "grouping": "Transportation Services",
+    "classification": "Air Carrier",
+    "specialization": ""
+  },
+  {
+    "code": "341600000X",
+    "labelEn": "Ambulance",
+    "grouping": "Transportation Services",
+    "classification": "Ambulance",
+    "specialization": ""
+  },
+  {
+    "code": "3416A0800X",
+    "labelEn": "Air Transport",
+    "grouping": "Transportation Services",
+    "classification": "Ambulance",
+    "specialization": "Air Transport"
+  },
+  {
+    "code": "3416L0300X",
+    "labelEn": "Land Transport",
+    "grouping": "Transportation Services",
+    "classification": "Ambulance",
+    "specialization": "Land Transport"
+  },
+  {
+    "code": "3416S0300X",
+    "labelEn": "Water Transport",
+    "grouping": "Transportation Services",
+    "classification": "Ambulance",
+    "specialization": "Water Transport"
+  },
+  {
+    "code": "347B00000X",
+    "labelEn": "Bus",
+    "grouping": "Transportation Services",
+    "classification": "Bus",
+    "specialization": ""
+  },
+  {
+    "code": "341800000X",
+    "labelEn": "Military/U.S. Coast Guard Transport",
+    "grouping": "Transportation Services",
+    "classification": "Military/U.S. Coast Guard Transport",
+    "specialization": ""
+  },
+  {
+    "code": "3418M1120X",
+    "labelEn": "Military or U.S. Coast Guard Ambulance, Air Transport",
+    "grouping": "Transportation Services",
+    "classification": "Military/U.S. Coast Guard Transport",
+    "specialization": "Military or U.S. Coast Guard Ambulance, Air Transport"
+  },
+  {
+    "code": "3418M1110X",
+    "labelEn": "Military or U.S. Coast Guard Ambulance, Ground Transport",
+    "grouping": "Transportation Services",
+    "classification": "Military/U.S. Coast Guard Transport",
+    "specialization": "Military or U.S. Coast Guard Ambulance, Ground Transport"
+  },
+  {
+    "code": "3418M1130X",
+    "labelEn": "Military or U.S. Coast Guard Ambulance, Water Transport",
+    "grouping": "Transportation Services",
+    "classification": "Military/U.S. Coast Guard Transport",
+    "specialization": "Military or U.S. Coast Guard Ambulance, Water Transport"
+  },
+  {
+    "code": "343900000X",
+    "labelEn": "Non-emergency Medical Transport (VAN)",
+    "grouping": "Transportation Services",
+    "classification": "Non-emergency Medical Transport (VAN)",
+    "specialization": ""
+  },
+  {
+    "code": "347C00000X",
+    "labelEn": "Private Vehicle",
+    "grouping": "Transportation Services",
+    "classification": "Private Vehicle",
+    "specialization": ""
+  },
+  {
+    "code": "343800000X",
+    "labelEn": "Secured Medical Transport (VAN)",
+    "grouping": "Transportation Services",
+    "classification": "Secured Medical Transport (VAN)",
+    "specialization": ""
+  },
+  {
+    "code": "344600000X",
+    "labelEn": "Taxi",
+    "grouping": "Transportation Services",
+    "classification": "Taxi",
+    "specialization": ""
+  },
+  {
+    "code": "347D00000X",
+    "labelEn": "Train",
+    "grouping": "Transportation Services",
+    "classification": "Train",
+    "specialization": ""
+  },
+  {
+    "code": "347E00000X",
+    "labelEn": "Transportation Broker",
+    "grouping": "Transportation Services",
+    "classification": "Transportation Broker",
+    "specialization": ""
+  },
+  {
+    "code": "342000000X",
+    "labelEn": "Transportation Network Company",
+    "grouping": "Transportation Services",
+    "classification": "Transportation Network Company",
+    "specialization": ""
+  }
+]

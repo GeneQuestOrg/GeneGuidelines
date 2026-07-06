@@ -33,6 +33,12 @@ export interface DoctorsQuery {
   readonly workTypes: readonly WorkType[];
   /** Minimum recency floor ("active_2y" | "active_5y"), or null for any recency. */
   readonly recency: RecencyBand | null;
+  /** Verified clinical-specialty group (NUCC classification) filter, or null for all. */
+  readonly specialtyGroup: string | null;
+  /** Practice-country (ISO2) filter, or null for all. */
+  readonly country: string | null;
+  /** Keep only doctors who see patients (expert-reachable are always kept too). */
+  readonly seesPatients: boolean;
   /** Active sort order. */
   readonly sort: DoctorSort;
   /** 1-based page number for the list (the map always shows the full filtered set). */
@@ -65,6 +71,9 @@ export const DEFAULT_DOCTORS_QUERY: DoctorsQuery = {
   maxKm: null,
   workTypes: [],
   recency: null,
+  specialtyGroup: null,
+  country: null,
+  seesPatients: false,
   sort: "best",
   page: 1,
 };
@@ -74,18 +83,35 @@ export const DEFAULT_DOCTORS_QUERY: DoctorsQuery = {
  * set of facets so a family that doesn't know how to filter still lands on the right people.
  * Each preset is a partial query merged onto the current disease/location.
  */
-export type DoctorPresetId = "on_top" | "consult" | "anyone_near";
+export type DoctorPresetId = "on_top" | "surgeon_near" | "consult" | "anyone_near";
 
 export const DOCTOR_PRESETS: readonly {
   readonly id: DoctorPresetId;
   readonly label: string;
   readonly patch: Partial<DoctorsQuery>;
+  /** When set, the preset only makes sense once a specialty group is picked (needs clinical data). */
+  readonly needsSpecialty?: boolean;
 }[] = [
   {
     id: "on_top",
     label: "Who's on top of it now",
     // Core case (son's story): a currently-active expert, not merely a titled one.
     patch: { recency: "active_2y", workTypes: [], role: null, sort: "recency", parentOnly: false },
+  },
+  {
+    id: "surgeon_near",
+    label: "A surgeon near me",
+    // Detroit case: a practising surgeon with disease experience, closest first. Only surfaced
+    // when the specialty axis has data (data-density gate in the view).
+    patch: {
+      specialtyGroup: "Surgery",
+      seesPatients: true,
+      sort: "distance",
+      recency: null,
+      workTypes: [],
+      parentOnly: false,
+    },
+    needsSpecialty: true,
   },
   {
     id: "consult",
@@ -146,6 +172,9 @@ export function parseDoctorsQuery(q: Record<string, string>): DoctorsQuery {
   const workTypes = (q.work ? q.work.split(",") : [])
     .filter((w) => WORK_TYPE_SET.has(w)) as WorkType[];
   const recency = RECENCY_FLOORS.has(q.recency) ? (q.recency as RecencyBand) : null;
+  const specialtyGroup = q.spec ? q.spec : null;
+  const countryRaw = (q.country || "").trim().toUpperCase();
+  const country = /^[A-Z]{2}$/.test(countryRaw) ? countryRaw : null;
   return {
     disease: q.disease ? normalizeDiseaseSlug(q.disease) : null,
     role,
@@ -156,6 +185,9 @@ export function parseDoctorsQuery(q: Record<string, string>): DoctorsQuery {
     maxKm,
     workTypes,
     recency,
+    specialtyGroup,
+    country,
+    seesPatients: q.seespt === "1",
     sort,
     page,
   };
@@ -180,6 +212,9 @@ export function serializeDoctorsQuery(query: DoctorsQuery): string {
     add("work", WORK_TYPE_ORDER.filter((w) => query.workTypes.includes(w)).join(","));
   }
   if (query.recency) add("recency", query.recency);
+  if (query.specialtyGroup) add("spec", query.specialtyGroup);
+  if (query.country) add("country", query.country);
+  if (query.seesPatients) add("seespt", "1");
   if (query.loc) {
     add("loc", `${query.loc.lat},${query.loc.lng}`);
     if (query.locLabel) add("place", query.locLabel);

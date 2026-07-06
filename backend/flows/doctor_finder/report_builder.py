@@ -216,12 +216,19 @@ def _build_entry(rank: int, author: dict[str, Any]) -> DoctorEntry:
         case_reports=author.get("case_report_count", 0),
     )
 
+    specialties = author.get("clinical_specialties")
+    resolved_practice = author.get("resolved_practice")
+    # A real NPPES practice address supersedes the noisy PubMed-affiliation city guess.
+    city = _city_vote_from_author(author)
+    if isinstance(resolved_practice, dict) and resolved_practice.get("city"):
+        city = str(resolved_practice["city"])
+
     return DoctorEntry(
         rank=rank,
         author_key=author.get("author_key", ""),
         display_name=display_name,
         affiliation=author.get("institution_primary"),
-        city=_city_vote_from_author(author),
+        city=city,
         country=author.get("country_primary"),
         continent=author.get("continent_primary"),
         role=role_str,
@@ -231,6 +238,9 @@ def _build_entry(rank: int, author: dict[str, Any]) -> DoctorEntry:
         evidence_summary=evidence,
         identity_confidence=str(author.get("identity_confidence") or "low"),
         ai_justification=author.get("ai_justification"),
+        clinical_specialties=specialties if isinstance(specialties, list) else [],
+        reachability=str(author.get("reachability") or "unknown"),
+        resolved_practice=resolved_practice if isinstance(resolved_practice, dict) else None,
     )
 
 

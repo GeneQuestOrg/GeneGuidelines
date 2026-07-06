@@ -39,6 +39,7 @@ class DoctorFinderStepExecutor(NodeExecutor):
             author_aggregator,
             role_classifier,
             scoring,
+            specialty_enrich,
             report_builder,
         )
 
@@ -51,6 +52,7 @@ class DoctorFinderStepExecutor(NodeExecutor):
         _ASYNC_STEPS: dict[str, Callable[[dict[str, Any]], Awaitable[Any]]] = {
             "affiliation_georesolve": affiliation_georesolve.run_async,
             "role_classifier": role_classifier.run_async,
+            "specialty_enrich": specialty_enrich.run_async,
         }
 
         step_name = str(input.node_config.get("step_name") or "").strip()

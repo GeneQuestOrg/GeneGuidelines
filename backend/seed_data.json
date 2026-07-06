@@ -9,52 +9,403 @@
   ],
   "comments": [],
   "tool_catalog": [
-    { "name": "list_available_tools", "category": "General", "execution_mode": "auto", "scope": "operational", "enabled": 1 },
-    { "name": "set_ai_summary", "category": "General", "execution_mode": "auto", "scope": "operational", "enabled": 1 },
-    { "name": "update_ticket_status", "category": "General", "execution_mode": "auto", "scope": "operational", "enabled": 1 },
-    { "name": "request_missing_tool", "category": "General", "execution_mode": "auto", "scope": "operational", "enabled": 1 },
-    { "name": "pubmed_search_articles", "category": "Medical", "execution_mode": "auto", "scope": "operational", "enabled": 1 },
-    { "name": "pubmed_fetch_article_details", "category": "Medical", "execution_mode": "auto", "scope": "operational", "enabled": 1 },
-    { "name": "pubmed_browser_search", "category": "Medical", "execution_mode": "auto", "scope": "operational", "enabled": 1 }
+    {
+      "name": "list_available_tools",
+      "category": "General",
+      "execution_mode": "auto",
+      "scope": "operational",
+      "enabled": 1
+    },
+    {
+      "name": "set_ai_summary",
+      "category": "General",
+      "execution_mode": "auto",
+      "scope": "operational",
+      "enabled": 1
+    },
+    {
+      "name": "update_ticket_status",
+      "category": "General",
+      "execution_mode": "auto",
+      "scope": "operational",
+      "enabled": 1
+    },
+    {
+      "name": "request_missing_tool",
+      "category": "General",
+      "execution_mode": "auto",
+      "scope": "operational",
+      "enabled": 1
+    },
+    {
+      "name": "pubmed_search_articles",
+      "category": "Medical",
+      "execution_mode": "auto",
+      "scope": "operational",
+      "enabled": 1
+    },
+    {
+      "name": "pubmed_fetch_article_details",
+      "category": "Medical",
+      "execution_mode": "auto",
+      "scope": "operational",
+      "enabled": 1
+    },
+    {
+      "name": "pubmed_browser_search",
+      "category": "Medical",
+      "execution_mode": "auto",
+      "scope": "operational",
+      "enabled": 1
+    }
   ],
   "flow_definitions": [
-    { "flow_key": "pubmed", "node_id": "start", "node_type": "trigger", "label": "PubMed Search Input", "description": "Accepts a disease or medical topic from the ticket title/description.", "prompt": "Entry point: take the disease/topic from ticket title and description, pass to agentic retrieval.", "loop_policy": "none", "execution_policy": "auto", "max_retry": 3, "version": 1, "position_x": 0, "position_y": 0 },
-    { "flow_key": "pubmed", "node_id": "pm-1", "node_type": "prompt", "label": "Agentic PubMed Retrieval", "description": "AI agent iteratively searches PubMed tools and can use browser fallback if recall is low.", "prompt": "You are responsible for collecting high-quality clinical evidence from PubMed.\n\nGoal: return a strict JSON object only, with this shape:\n{\n  \"query_text\": \"...\",\n  \"query_variants\": [\"...\"],\n  \"fallback_used\": true/false,\n  \"total_found_estimate\": 0,\n  \"articles\": [\n    {\n      \"pmid\": \"...\",\n      \"title\": \"...\",\n      \"authors\": \"...\",\n      \"source\": \"...\",\n      \"pubdate\": \"...\",\n      \"doi\": \"...\",\n      \"abstract\": \"...\",\n      \"pubmed_url\": \"...\",\n      \"doi_url\": \"...\",\n      \"topic_bucket\": \"pathogenesis|diagnostics|treatment|follow_up|general\"\n    }\n  ],\n  \"evidence_cards\": [\n    {\n      \"pmid\": \"...\",\n      \"topic_bucket\": \"...\",\n      \"inclusion_reason\": \"...\",\n      \"confidence\": \"high|medium|low\",\n      \"title\": \"...\",\n      \"pubdate\": \"...\",\n      \"source\": \"...\"\n    }\n  ]\n}\n\nMandatory process:\n1) Build 3-6 PubMed query variants for the topic.\n2) Call pubmed_search_articles with max_analyze large enough to cover all found PMIDs.\n3) Call pubmed_fetch_article_details ONCE for all retrieved PMIDs (batching is allowed, dropping records is not).\n4) Use pubmed_browser_search only when API path clearly fails or returns zero/near-zero useful records.\n5) Keep all clinically relevant PMIDs in output; do not reduce to top-N sample.\n6) Keep output compact to avoid context overflow (use concise metadata and abstract snippets only).\n7) Do NOT call update_ticket_status in this step.\n8) Return only JSON, no markdown.\n\nTicket context:\n- Title: {{ context.initial.title }}\n- Description: {{ context.initial.description }}", "loop_policy": "none", "execution_policy": "auto", "max_retry": 3, "version": 1, "position_x": 0, "position_y": 160 },
-    { "flow_key": "pubmed", "node_id": "pm-2", "node_type": "code", "label": "Normalize and Rank Evidence", "description": "Parses agent output, normalizes evidence cards and builds deterministic source links.", "prompt": "", "python_source": "def run(context):\n    import json\n\n    outs = context.get('outputs', {})\n    pm1 = outs.get('pm-1', {})\n    raw = pm1.get('output_text', '') if isinstance(pm1, dict) else ''\n\n    data = {}\n    if isinstance(raw, str) and raw.strip():\n        try:\n            data = json.loads(raw)\n        except Exception:\n            s = raw.strip()\n            i = s.find('{')\n            j = s.rfind('}')\n            if i >= 0 and j > i:\n                try:\n                    data = json.loads(s[i:j+1])\n                except Exception:\n                    data = {}\n\n    articles_in = data.get('articles', []) if isinstance(data, dict) else []\n    cards_in = data.get('evidence_cards', []) if isinstance(data, dict) else []\n    fallback_used = bool(data.get('fallback_used')) if isinstance(data, dict) else False\n    total_found_estimate = int(data.get('total_found_estimate') or 0) if isinstance(data, dict) else 0\n    total_requested = int(data.get('total_requested') or len(articles_in)) if isinstance(data, dict) else len(articles_in)\n    query_text = str(data.get('query_text') or context.get('initial', {}).get('title') or '')\n\n    dedup = {}\n    for a in articles_in:\n        if not isinstance(a, dict):\n            continue\n        pmid = str(a.get('pmid', '') or '').strip()\n        if not pmid:\n            continue\n        title = str(a.get('title', '') or '').strip()\n        abstract = str(a.get('abstract', '') or '').strip()\n        score = 0\n        if abstract:\n            score += 2\n        if title:\n            score += 1\n        pubdate = str(a.get('pubdate', '') or '')\n        score += min(len(pubdate), 10) * 0.01\n        prev = dedup.get(pmid)\n        if prev is None or score > prev.get('_score', 0):\n            item = dict(a)\n            item['_score'] = score\n            dedup[pmid] = item\n\n    articles = list(dedup.values())\n    articles.sort(key=lambda x: (str(x.get('pubdate', '')), str(x.get('pmid', ''))), reverse=True)\n    for a in articles:\n        a.pop('_score', None)\n\n    card_by_pmid = {}\n    for c in cards_in:\n        if not isinstance(c, dict):\n            continue\n        pmid = str(c.get('pmid', '') or '').strip()\n        if pmid and pmid not in card_by_pmid:\n            card_by_pmid[pmid] = dict(c)\n\n    evidence_cards = []\n    for a in articles:\n        pmid = str(a.get('pmid', '') or '').strip()\n        c = card_by_pmid.get(pmid, {})\n        if not c:\n            c = {\n                'pmid': pmid,\n                'topic_bucket': a.get('topic_bucket', 'general'),\n                'inclusion_reason': 'Selected for clinical relevance and recency.',\n                'confidence': 'medium',\n                'title': a.get('title', ''),\n                'pubdate': a.get('pubdate', ''),\n                'source': a.get('source', ''),\n            }\n        evidence_cards.append(c)\n\n    total_with_abstract = 0\n    lines = []\n    links_html_lines = []\n    for i, a in enumerate(articles):\n        pmid = str(a.get('pmid', '') or '').strip()\n        title = str(a.get('title', '') or '').strip() or '(untitled)'\n        authors = str(a.get('authors', '') or '').strip()\n        source = str(a.get('source', '') or '').strip()\n        pubdate = str(a.get('pubdate', '') or '').strip()\n        doi = str(a.get('doi', '') or '').strip()\n        abstract = str(a.get('abstract', '') or '').strip()\n        if abstract:\n            total_with_abstract += 1\n        pubmed_url = str(a.get('pubmed_url', '') or '').strip() or (f'https://pubmed.ncbi.nlm.nih.gov/{pmid}/' if pmid else '')\n        doi_url = str(a.get('doi_url', '') or '').strip() or (f'https://doi.org/{doi}' if doi else '')\n\n        line = '[' + str(i+1) + '] ' + title\n        line += '\\n   PMID: ' + (pmid or 'n/a')\n        if authors:\n            line += '\\n   Authors: ' + authors\n        if source or pubdate:\n            line += '\\n   Journal: ' + source + (' (' + pubdate + ')' if pubdate else '')\n        if doi:\n            line += '\\n   DOI: ' + doi\n        if abstract:\n            line += '\\n   Abstract: ' + abstract[:3000]\n        lines.append(line)\n\n        link_parts = []\n        if pubmed_url:\n            link_parts.append('<a href=\"' + pubmed_url + '\" target=\"_blank\" rel=\"noopener noreferrer\">PubMed</a>')\n        if doi_url:\n            link_parts.append('<a href=\"' + doi_url + '\" target=\"_blank\" rel=\"noopener noreferrer\">DOI</a>')\n        links = ' | '.join(link_parts) if link_parts else 'No link available'\n        links_html_lines.append('<li><strong>' + title + '</strong> (PMID: ' + (pmid or 'n/a') + ') — ' + links + '</li>')\n\n    source_links_html = '<ul>' + ''.join(links_html_lines) + '</ul>' if links_html_lines else '<p>No sources to display.</p>'\n\n    return {\n        'query_text': query_text,\n        'query_variants': data.get('query_variants', []) if isinstance(data, dict) else [],\n        'fallback_used': fallback_used,\n        'total_found_estimate': total_found_estimate,\n        'total_requested': total_requested,\n        'total_analyzed': len(articles),\n        'total_with_abstract': total_with_abstract,\n        'article_count': len(articles),\n        'articles': articles,\n        'evidence_cards': evidence_cards,\n        'articles_text': '\\n\\n'.join(lines),\n        'source_links_html': source_links_html,\n    }", "loop_policy": "none", "execution_policy": "auto", "max_retry": 3, "version": 1, "position_x": 0, "position_y": 340 },
-    { "flow_key": "pubmed", "node_id": "pm-3", "node_type": "prompt", "label": "Evidence Quality Scoring", "description": "LLM estimates reliability and evidence strength of the fetched PubMed set.", "prompt": "You are an evidence appraisal assistant.\n\nBased ONLY on the evidence cards and metadata below, estimate credibility of the evidence base for clinical decision support.\n\nDisease/topic: {{ context.pm-2.result.query_text }}\nArticles retrieved: {{ context.pm-2.result.article_count }}\nBrowser fallback used: {{ context.pm-2.result.fallback_used }}\n\n--- Evidence cards ---\n{{ context.pm-2.result.evidence_cards }}\n\n--- Articles ---\n{{ context.pm-2.result.articles_text }}\n\nReturn structured assessment:\n1. evidence_score (0-100)\n2. evidence_level: high/moderate/low/very_low\n3. confidence_index (0-100)\n4. risk_of_bias\n5. main_limitations\n6. consistency_assessment\n7. clinical_reliability_comment\n\nDo not invent study details not present in the input.", "prompt_mode": "simple", "output_schema": "{\"fields\":[{\"name\":\"evidence_score\",\"type\":\"integer\",\"required\":true},{\"name\":\"evidence_level\",\"type\":\"string\",\"required\":true},{\"name\":\"confidence_index\",\"type\":\"integer\",\"required\":true},{\"name\":\"risk_of_bias\",\"type\":\"string\",\"required\":true},{\"name\":\"main_limitations\",\"type\":\"string\",\"required\":true},{\"name\":\"consistency_assessment\",\"type\":\"string\",\"required\":true},{\"name\":\"clinical_reliability_comment\",\"type\":\"string\",\"required\":true}]}", "loop_policy": "none", "execution_policy": "auto", "max_retry": 3, "version": 1, "position_x": 0, "position_y": 520 },
-    { "flow_key": "pubmed", "node_id": "pm-4", "node_type": "prompt", "label": "AI Literature Guideline", "description": "LLM creates an actionable, evidence-based clinical guideline from PubMed findings.", "prompt": "You are a medical research assistant. Build a clinician-grade treatment guideline based ONLY on the evidence below.\n\nDisease/topic: {{ context.pm-2.result.query_text }}\nTotal results estimate: {{ context.pm-2.result.total_found_estimate }}\nTotal requested for analysis: {{ context.pm-2.result.total_requested }}\nTotal analyzed: {{ context.pm-2.result.total_analyzed }}\nTotal with abstracts: {{ context.pm-2.result.total_with_abstract }}\nBrowser fallback used: {{ context.pm-2.result.fallback_used }}\n\nEvidence appraisal inputs:\n- evidence_score: {{ context.pm-3.evidence_score }}\n- evidence_level: {{ context.pm-3.evidence_level }}\n- confidence_index: {{ context.pm-3.confidence_index }}\n- risk_of_bias: {{ context.pm-3.risk_of_bias }}\n- main_limitations: {{ context.pm-3.main_limitations }}\n- consistency_assessment: {{ context.pm-3.consistency_assessment }}\n\nPrebuilt source links HTML (reuse as source_links_html):\n{{ context.pm-2.result.source_links_html }}\n\n--- Articles ---\n{{ context.pm-2.result.articles_text }}\n\nTask:\nPrepare a very detailed end-to-end clinical process from first suspicion to long-term follow-up, suitable for physicians and patient guidance.\n\nRequirements:\n1. Be specific and actionable.\n2. Include pathway: initial assessment, diagnostics, differential diagnosis, treatment strategy (1st/2nd line), contraindications, adverse-event monitoring, escalation criteria, follow-up schedule, special populations.\n3. Add recommendation matrix and red flags sections.\n4. Include concrete evidence-grounded statements from analyzed studies where possible.\n5. Explicitly mark uncertainties and evidence gaps.\n6. Do not invent facts beyond listed articles.\n7. Use professional clinical tone in Polish.\n8. guideline_html should be comprehensive (target >= 2500 words equivalent).\n\nOutput format: professional HTML only (no Markdown), using <h2>, <h3>, <p>, <ul>, <ol>, <li>, <table>, <thead>, <tbody>, <tr>, <th>, <td>, <a>.", "prompt_mode": "simple", "output_schema": "{\"fields\":[{\"name\":\"disease_name\",\"type\":\"string\",\"required\":true},{\"name\":\"guideline_html\",\"type\":\"string\",\"required\":true},{\"name\":\"recommendation_matrix_html\",\"type\":\"string\",\"required\":true},{\"name\":\"red_flags_html\",\"type\":\"string\",\"required\":true},{\"name\":\"contraindications_html\",\"type\":\"string\",\"required\":true},{\"name\":\"follow_up_schedule_html\",\"type\":\"string\",\"required\":true},{\"name\":\"evidence_gaps_html\",\"type\":\"string\",\"required\":true},{\"name\":\"disclaimer_html\",\"type\":\"string\",\"required\":true},{\"name\":\"key_updates\",\"type\":\"string\",\"required\":true},{\"name\":\"confidence_level\",\"type\":\"string\",\"required\":true},{\"name\":\"evidence_score\",\"type\":\"integer\",\"required\":true},{\"name\":\"confidence_index\",\"type\":\"integer\",\"required\":true},{\"name\":\"reliability_assessment_html\",\"type\":\"string\",\"required\":true},{\"name\":\"source_links_html\",\"type\":\"string\",\"required\":true},{\"name\":\"references\",\"type\":\"string\",\"required\":true},{\"name\":\"article_count\",\"type\":\"integer\",\"required\":true}]}", "loop_policy": "none", "execution_policy": "auto", "max_retry": 3, "version": 1, "position_x": 0, "position_y": 700 },
-    { "flow_key": "pubmed", "node_id": "pm_eval", "node_type": "evaluation_check", "label": "Consistency evaluation", "description": "Structured second pass: flags inconsistencies between synthesis and retrieval-derived facts (does not rewrite HTML).", "prompt": "Issue codes (examples — add a clear code when none fit): INTERNAL_CONTRADICTION, CROSS_SECTION_NUMERIC_MISMATCH, PMID_OR_SOURCE_MISMATCH, NUMERIC_OR_COUNT_MISMATCH, SECTION_LEVEL_MISMATCH, IMPOSSIBLE_OR_FAKE_PMID, META_AGENT_TEXT_LEAK, UNSUPPORTED_SCREENING_OR_DOSE_CLAIM.\n\nEmphasis:\n- Compare the same drug, trial primary endpoint, dosing schedule, epidemiology figures, and radiation vs contraindication statements across every heading in SYNTHESIS; each material clash is at least one issue with both locations.\n- Flag PMIDs with implausible digit counts vs realistic PubMed ranges, or citations labeled as PubMed that are clearly Bookshelf/reviews when the text claims a primary article.\n- Flag any visible assistant planning/meta prose.\n- suggested_fix must be one concrete harmonization per issue (single evidence-aligned reading from REFERENCE_FACTS, or explicit downgrade to conditional/unknown when refs are insufficient).", "evaluation_source_nodes_json": "[\"pm-4\"]", "prompt_mode": "simple", "loop_policy": "none", "execution_policy": "auto", "max_retry": 3, "version": 1, "position_x": 0, "position_y": 840 },
-    { "flow_key": "pubmed", "node_id": "pm_fix", "node_type": "prompt", "label": "Guideline consistency repair", "description": "Applies evaluator feedback to the pm-4 draft; same structured schema as the guideline step.", "prompt": "You are revising the Polish clinical guideline structured output produced in step pm-4. You MUST return the same structured fields (same schema) as pm-4.\n\n--- Evaluator (from pm_eval) ---\nissues_found: {{ context.pm_eval.issues_found }}\nquality_summary: {{ context.pm_eval.quality_summary }}\nissues: {{ context.pm_eval.issues }}\ncorrection_instructions:\n{{ context.pm_eval.correction_instructions }}\n\nRules:\n1. Apply correction_instructions and every issue suggested_fix across ALL structured HTML fields so the document is internally consistent (same drug, dose, schedule, trial primary outcome, epidemiology figures, and contraindications must not contradict between sections).\n2. Remove or rewrite any assistant/meta/planning language if flagged; never leave chain-of-thought in clinical HTML.\n3. Do not invent clinical facts beyond the evidence corpus below; remove or qualify citations that cannot be justified from the corpus, including implausible PMIDs.\n4. If issues_found is false or issues is empty, keep pm-4 content except trivial typo fixes that do not change clinical meaning.\n5. Keep professional clinical Polish tone; use valid HTML tags as in the original guideline step.\n\nEvidence corpus (same constraint as pm-4 — stay within these articles):\nDisease/topic: {{ context.pm-2.result.query_text }}\nTotal analyzed: {{ context.pm-2.result.total_analyzed }}\nTotal with abstracts: {{ context.pm-2.result.total_with_abstract }}\nBrowser fallback used: {{ context.pm-2.result.fallback_used }}\n\nEvidence appraisal (reference): evidence_score {{ context.pm-3.evidence_score }}, evidence_level {{ context.pm-3.evidence_level }}, confidence_index {{ context.pm-3.confidence_index }}\n\n--- Articles ---\n{{ context.pm-2.result.articles_text }}\n\n--- Baseline draft from pm-4 (revise as needed) ---\ndisease_name: {{ context[\"pm-4\"].disease_name }}\narticle_count: {{ context[\"pm-4\"].article_count }}\nevidence_score: {{ context[\"pm-4\"].evidence_score }}\nconfidence_index: {{ context[\"pm-4\"].confidence_index }}\nconfidence_level: {{ context[\"pm-4\"].confidence_level }}\nkey_updates: {{ context[\"pm-4\"].key_updates }}\nguideline_html:\n{{ context[\"pm-4\"].guideline_html }}\nrecommendation_matrix_html:\n{{ context[\"pm-4\"].recommendation_matrix_html }}\nred_flags_html:\n{{ context[\"pm-4\"].red_flags_html }}\ncontraindications_html:\n{{ context[\"pm-4\"].contraindications_html }}\nfollow_up_schedule_html:\n{{ context[\"pm-4\"].follow_up_schedule_html }}\nevidence_gaps_html:\n{{ context[\"pm-4\"].evidence_gaps_html }}\ndisclaimer_html:\n{{ context[\"pm-4\"].disclaimer_html }}\nreliability_assessment_html:\n{{ context[\"pm-4\"].reliability_assessment_html }}\nsource_links_html:\n{{ context[\"pm-4\"].source_links_html }}\nreferences:\n{{ context[\"pm-4\"].references }}\n\nProduce the corrected structured output per schema.", "prompt_mode": "simple", "output_schema": "{\"fields\":[{\"name\":\"disease_name\",\"type\":\"string\",\"required\":true},{\"name\":\"guideline_html\",\"type\":\"string\",\"required\":true},{\"name\":\"recommendation_matrix_html\",\"type\":\"string\",\"required\":true},{\"name\":\"red_flags_html\",\"type\":\"string\",\"required\":true},{\"name\":\"contraindications_html\",\"type\":\"string\",\"required\":true},{\"name\":\"follow_up_schedule_html\",\"type\":\"string\",\"required\":true},{\"name\":\"evidence_gaps_html\",\"type\":\"string\",\"required\":true},{\"name\":\"disclaimer_html\",\"type\":\"string\",\"required\":true},{\"name\":\"key_updates\",\"type\":\"string\",\"required\":true},{\"name\":\"confidence_level\",\"type\":\"string\",\"required\":true},{\"name\":\"evidence_score\",\"type\":\"integer\",\"required\":true},{\"name\":\"confidence_index\",\"type\":\"integer\",\"required\":true},{\"name\":\"reliability_assessment_html\",\"type\":\"string\",\"required\":true},{\"name\":\"source_links_html\",\"type\":\"string\",\"required\":true},{\"name\":\"references\",\"type\":\"string\",\"required\":true},{\"name\":\"article_count\",\"type\":\"integer\",\"required\":true}]}", "loop_policy": "none", "execution_policy": "auto", "max_retry": 3, "version": 1, "position_x": 0, "position_y": 920 },
-    { "flow_key": "pubmed", "node_id": "end", "node_type": "end", "label": "End", "description": "Flow completed — literature review ready.", "prompt": "", "loop_policy": "none", "execution_policy": "auto", "max_retry": 3, "version": 1, "position_x": 0, "position_y": 1080 },
-
-    { "flow_key": "doctor_finder", "node_id": "start", "node_type": "trigger", "label": "Start", "description": "Doctor Finder flow entry point.", "prompt": "", "loop_policy": "none", "execution_policy": "auto", "max_retry": 3, "version": 1 },
-    { "flow_key": "doctor_finder", "node_id": "df-1", "node_type": "pubmed_authors_fetch", "label": "PubMed Author Fetch", "description": "Search PubMed and fetch per-author affiliation XML.", "prompt": "", "loop_policy": "none", "execution_policy": "auto", "max_retry": 3, "version": 1 },
-    { "flow_key": "doctor_finder", "node_id": "df-2", "node_type": "doctor_finder_step", "label": "Affiliation Parser", "description": "Parse raw affiliation strings to country/continent.", "prompt": "", "step_name": "affiliation_parser", "loop_policy": "none", "execution_policy": "auto", "max_retry": 3, "version": 1 },
-    { "flow_key": "doctor_finder", "node_id": "df-20", "node_type": "doctor_finder_step", "label": "Affiliation geo (Brave+LLM)", "description": "Infer missing country from web search + structured LLM when PubMed affiliation has no ISO2.", "prompt": "", "step_name": "affiliation_georesolve", "loop_policy": "none", "execution_policy": "auto", "max_retry": 2, "version": 1 },
-    { "flow_key": "doctor_finder", "node_id": "df-3", "node_type": "doctor_finder_step", "label": "Author Aggregator", "description": "Disambiguate and group authors across papers.", "prompt": "", "step_name": "author_aggregator", "loop_policy": "none", "execution_policy": "auto", "max_retry": 3, "version": 1 },
-    { "flow_key": "doctor_finder", "node_id": "df-4", "node_type": "doctor_finder_step", "label": "Role Classifier", "description": "Assign clinical roles and flags to aggregated authors.", "prompt": "", "step_name": "role_classifier", "loop_policy": "none", "execution_policy": "auto", "max_retry": 3, "version": 1 },
-    { "flow_key": "doctor_finder", "node_id": "df-5", "node_type": "doctor_finder_step", "label": "Scoring", "description": "Compute and normalize expert scores 0-100.", "prompt": "", "step_name": "scoring", "loop_policy": "none", "execution_policy": "auto", "max_retry": 3, "version": 1 },
-    { "flow_key": "doctor_finder", "node_id": "df-6", "node_type": "doctor_finder_step", "label": "Report Builder", "description": "Build ranked DoctorReport with Markdown.", "prompt": "", "step_name": "report_builder", "loop_policy": "none", "execution_policy": "auto", "max_retry": 3, "version": 1 },
-    { "flow_key": "doctor_finder", "node_id": "df-7", "node_type": "doctor_finder_ai_justification", "label": "AI Justification", "description": "Generate LLM justifications for top-scored authors.", "prompt": "", "loop_policy": "none", "execution_policy": "auto", "max_retry": 2, "version": 1 },
-    { "flow_key": "doctor_finder", "node_id": "end", "node_type": "end", "label": "End", "description": "Doctor Finder flow complete.", "prompt": "", "loop_policy": "none", "execution_policy": "auto", "max_retry": 1, "version": 1 }
+    {
+      "flow_key": "pubmed",
+      "node_id": "start",
+      "node_type": "trigger",
+      "label": "PubMed Search Input",
+      "description": "Accepts a disease or medical topic from the ticket title/description.",
+      "prompt": "Entry point: take the disease/topic from ticket title and description, pass to agentic retrieval.",
+      "loop_policy": "none",
+      "execution_policy": "auto",
+      "max_retry": 3,
+      "version": 1,
+      "position_x": 0,
+      "position_y": 0
+    },
+    {
+      "flow_key": "pubmed",
+      "node_id": "pm-1",
+      "node_type": "prompt",
+      "label": "Agentic PubMed Retrieval",
+      "description": "AI agent iteratively searches PubMed tools and can use browser fallback if recall is low.",
+      "prompt": "You are responsible for collecting high-quality clinical evidence from PubMed.\n\nGoal: return a strict JSON object only, with this shape:\n{\n  \"query_text\": \"...\",\n  \"query_variants\": [\"...\"],\n  \"fallback_used\": true/false,\n  \"total_found_estimate\": 0,\n  \"articles\": [\n    {\n      \"pmid\": \"...\",\n      \"title\": \"...\",\n      \"authors\": \"...\",\n      \"source\": \"...\",\n      \"pubdate\": \"...\",\n      \"doi\": \"...\",\n      \"abstract\": \"...\",\n      \"pubmed_url\": \"...\",\n      \"doi_url\": \"...\",\n      \"topic_bucket\": \"pathogenesis|diagnostics|treatment|follow_up|general\"\n    }\n  ],\n  \"evidence_cards\": [\n    {\n      \"pmid\": \"...\",\n      \"topic_bucket\": \"...\",\n      \"inclusion_reason\": \"...\",\n      \"confidence\": \"high|medium|low\",\n      \"title\": \"...\",\n      \"pubdate\": \"...\",\n      \"source\": \"...\"\n    }\n  ]\n}\n\nMandatory process:\n1) Build 3-6 PubMed query variants for the topic.\n2) Call pubmed_search_articles with max_analyze large enough to cover all found PMIDs.\n3) Call pubmed_fetch_article_details ONCE for all retrieved PMIDs (batching is allowed, dropping records is not).\n4) Use pubmed_browser_search only when API path clearly fails or returns zero/near-zero useful records.\n5) Keep all clinically relevant PMIDs in output; do not reduce to top-N sample.\n6) Keep output compact to avoid context overflow (use concise metadata and abstract snippets only).\n7) Do NOT call update_ticket_status in this step.\n8) Return only JSON, no markdown.\n\nTicket context:\n- Title: {{ context.initial.title }}\n- Description: {{ context.initial.description }}",
+      "loop_policy": "none",
+      "execution_policy": "auto",
+      "max_retry": 3,
+      "version": 1,
+      "position_x": 0,
+      "position_y": 160
+    },
+    {
+      "flow_key": "pubmed",
+      "node_id": "pm-2",
+      "node_type": "code",
+      "label": "Normalize and Rank Evidence",
+      "description": "Parses agent output, normalizes evidence cards and builds deterministic source links.",
+      "prompt": "",
+      "python_source": "def run(context):\n    import json\n\n    outs = context.get('outputs', {})\n    pm1 = outs.get('pm-1', {})\n    raw = pm1.get('output_text', '') if isinstance(pm1, dict) else ''\n\n    data = {}\n    if isinstance(raw, str) and raw.strip():\n        try:\n            data = json.loads(raw)\n        except Exception:\n            s = raw.strip()\n            i = s.find('{')\n            j = s.rfind('}')\n            if i >= 0 and j > i:\n                try:\n                    data = json.loads(s[i:j+1])\n                except Exception:\n                    data = {}\n\n    articles_in = data.get('articles', []) if isinstance(data, dict) else []\n    cards_in = data.get('evidence_cards', []) if isinstance(data, dict) else []\n    fallback_used = bool(data.get('fallback_used')) if isinstance(data, dict) else False\n    total_found_estimate = int(data.get('total_found_estimate') or 0) if isinstance(data, dict) else 0\n    total_requested = int(data.get('total_requested') or len(articles_in)) if isinstance(data, dict) else len(articles_in)\n    query_text = str(data.get('query_text') or context.get('initial', {}).get('title') or '')\n\n    dedup = {}\n    for a in articles_in:\n        if not isinstance(a, dict):\n            continue\n        pmid = str(a.get('pmid', '') or '').strip()\n        if not pmid:\n            continue\n        title = str(a.get('title', '') or '').strip()\n        abstract = str(a.get('abstract', '') or '').strip()\n        score = 0\n        if abstract:\n            score += 2\n        if title:\n            score += 1\n        pubdate = str(a.get('pubdate', '') or '')\n        score += min(len(pubdate), 10) * 0.01\n        prev = dedup.get(pmid)\n        if prev is None or score > prev.get('_score', 0):\n            item = dict(a)\n            item['_score'] = score\n            dedup[pmid] = item\n\n    articles = list(dedup.values())\n    articles.sort(key=lambda x: (str(x.get('pubdate', '')), str(x.get('pmid', ''))), reverse=True)\n    for a in articles:\n        a.pop('_score', None)\n\n    card_by_pmid = {}\n    for c in cards_in:\n        if not isinstance(c, dict):\n            continue\n        pmid = str(c.get('pmid', '') or '').strip()\n        if pmid and pmid not in card_by_pmid:\n            card_by_pmid[pmid] = dict(c)\n\n    evidence_cards = []\n    for a in articles:\n        pmid = str(a.get('pmid', '') or '').strip()\n        c = card_by_pmid.get(pmid, {})\n        if not c:\n            c = {\n                'pmid': pmid,\n                'topic_bucket': a.get('topic_bucket', 'general'),\n                'inclusion_reason': 'Selected for clinical relevance and recency.',\n                'confidence': 'medium',\n                'title': a.get('title', ''),\n                'pubdate': a.get('pubdate', ''),\n                'source': a.get('source', ''),\n            }\n        evidence_cards.append(c)\n\n    total_with_abstract = 0\n    lines = []\n    links_html_lines = []\n    for i, a in enumerate(articles):\n        pmid = str(a.get('pmid', '') or '').strip()\n        title = str(a.get('title', '') or '').strip() or '(untitled)'\n        authors = str(a.get('authors', '') or '').strip()\n        source = str(a.get('source', '') or '').strip()\n        pubdate = str(a.get('pubdate', '') or '').strip()\n        doi = str(a.get('doi', '') or '').strip()\n        abstract = str(a.get('abstract', '') or '').strip()\n        if abstract:\n            total_with_abstract += 1\n        pubmed_url = str(a.get('pubmed_url', '') or '').strip() or (f'https://pubmed.ncbi.nlm.nih.gov/{pmid}/' if pmid else '')\n        doi_url = str(a.get('doi_url', '') or '').strip() or (f'https://doi.org/{doi}' if doi else '')\n\n        line = '[' + str(i+1) + '] ' + title\n        line += '\\n   PMID: ' + (pmid or 'n/a')\n        if authors:\n            line += '\\n   Authors: ' + authors\n        if source or pubdate:\n            line += '\\n   Journal: ' + source + (' (' + pubdate + ')' if pubdate else '')\n        if doi:\n            line += '\\n   DOI: ' + doi\n        if abstract:\n            line += '\\n   Abstract: ' + abstract[:3000]\n        lines.append(line)\n\n        link_parts = []\n        if pubmed_url:\n            link_parts.append('<a href=\"' + pubmed_url + '\" target=\"_blank\" rel=\"noopener noreferrer\">PubMed</a>')\n        if doi_url:\n            link_parts.append('<a href=\"' + doi_url + '\" target=\"_blank\" rel=\"noopener noreferrer\">DOI</a>')\n        links = ' | '.join(link_parts) if link_parts else 'No link available'\n        links_html_lines.append('<li><strong>' + title + '</strong> (PMID: ' + (pmid or 'n/a') + ') — ' + links + '</li>')\n\n    source_links_html = '<ul>' + ''.join(links_html_lines) + '</ul>' if links_html_lines else '<p>No sources to display.</p>'\n\n    return {\n        'query_text': query_text,\n        'query_variants': data.get('query_variants', []) if isinstance(data, dict) else [],\n        'fallback_used': fallback_used,\n        'total_found_estimate': total_found_estimate,\n        'total_requested': total_requested,\n        'total_analyzed': len(articles),\n        'total_with_abstract': total_with_abstract,\n        'article_count': len(articles),\n        'articles': articles,\n        'evidence_cards': evidence_cards,\n        'articles_text': '\\n\\n'.join(lines),\n        'source_links_html': source_links_html,\n    }",
+      "loop_policy": "none",
+      "execution_policy": "auto",
+      "max_retry": 3,
+      "version": 1,
+      "position_x": 0,
+      "position_y": 340
+    },
+    {
+      "flow_key": "pubmed",
+      "node_id": "pm-3",
+      "node_type": "prompt",
+      "label": "Evidence Quality Scoring",
+      "description": "LLM estimates reliability and evidence strength of the fetched PubMed set.",
+      "prompt": "You are an evidence appraisal assistant.\n\nBased ONLY on the evidence cards and metadata below, estimate credibility of the evidence base for clinical decision support.\n\nDisease/topic: {{ context.pm-2.result.query_text }}\nArticles retrieved: {{ context.pm-2.result.article_count }}\nBrowser fallback used: {{ context.pm-2.result.fallback_used }}\n\n--- Evidence cards ---\n{{ context.pm-2.result.evidence_cards }}\n\n--- Articles ---\n{{ context.pm-2.result.articles_text }}\n\nReturn structured assessment:\n1. evidence_score (0-100)\n2. evidence_level: high/moderate/low/very_low\n3. confidence_index (0-100)\n4. risk_of_bias\n5. main_limitations\n6. consistency_assessment\n7. clinical_reliability_comment\n\nDo not invent study details not present in the input.",
+      "prompt_mode": "simple",
+      "output_schema": "{\"fields\":[{\"name\":\"evidence_score\",\"type\":\"integer\",\"required\":true},{\"name\":\"evidence_level\",\"type\":\"string\",\"required\":true},{\"name\":\"confidence_index\",\"type\":\"integer\",\"required\":true},{\"name\":\"risk_of_bias\",\"type\":\"string\",\"required\":true},{\"name\":\"main_limitations\",\"type\":\"string\",\"required\":true},{\"name\":\"consistency_assessment\",\"type\":\"string\",\"required\":true},{\"name\":\"clinical_reliability_comment\",\"type\":\"string\",\"required\":true}]}",
+      "loop_policy": "none",
+      "execution_policy": "auto",
+      "max_retry": 3,
+      "version": 1,
+      "position_x": 0,
+      "position_y": 520
+    },
+    {
+      "flow_key": "pubmed",
+      "node_id": "pm-4",
+      "node_type": "prompt",
+      "label": "AI Literature Guideline",
+      "description": "LLM creates an actionable, evidence-based clinical guideline from PubMed findings.",
+      "prompt": "You are a medical research assistant. Build a clinician-grade treatment guideline based ONLY on the evidence below.\n\nDisease/topic: {{ context.pm-2.result.query_text }}\nTotal results estimate: {{ context.pm-2.result.total_found_estimate }}\nTotal requested for analysis: {{ context.pm-2.result.total_requested }}\nTotal analyzed: {{ context.pm-2.result.total_analyzed }}\nTotal with abstracts: {{ context.pm-2.result.total_with_abstract }}\nBrowser fallback used: {{ context.pm-2.result.fallback_used }}\n\nEvidence appraisal inputs:\n- evidence_score: {{ context.pm-3.evidence_score }}\n- evidence_level: {{ context.pm-3.evidence_level }}\n- confidence_index: {{ context.pm-3.confidence_index }}\n- risk_of_bias: {{ context.pm-3.risk_of_bias }}\n- main_limitations: {{ context.pm-3.main_limitations }}\n- consistency_assessment: {{ context.pm-3.consistency_assessment }}\n\nPrebuilt source links HTML (reuse as source_links_html):\n{{ context.pm-2.result.source_links_html }}\n\n--- Articles ---\n{{ context.pm-2.result.articles_text }}\n\nTask:\nPrepare a very detailed end-to-end clinical process from first suspicion to long-term follow-up, suitable for physicians and patient guidance.\n\nRequirements:\n1. Be specific and actionable.\n2. Include pathway: initial assessment, diagnostics, differential diagnosis, treatment strategy (1st/2nd line), contraindications, adverse-event monitoring, escalation criteria, follow-up schedule, special populations.\n3. Add recommendation matrix and red flags sections.\n4. Include concrete evidence-grounded statements from analyzed studies where possible.\n5. Explicitly mark uncertainties and evidence gaps.\n6. Do not invent facts beyond listed articles.\n7. Use professional clinical tone in Polish.\n8. guideline_html should be comprehensive (target >= 2500 words equivalent).\n\nOutput format: professional HTML only (no Markdown), using <h2>, <h3>, <p>, <ul>, <ol>, <li>, <table>, <thead>, <tbody>, <tr>, <th>, <td>, <a>.",
+      "prompt_mode": "simple",
+      "output_schema": "{\"fields\":[{\"name\":\"disease_name\",\"type\":\"string\",\"required\":true},{\"name\":\"guideline_html\",\"type\":\"string\",\"required\":true},{\"name\":\"recommendation_matrix_html\",\"type\":\"string\",\"required\":true},{\"name\":\"red_flags_html\",\"type\":\"string\",\"required\":true},{\"name\":\"contraindications_html\",\"type\":\"string\",\"required\":true},{\"name\":\"follow_up_schedule_html\",\"type\":\"string\",\"required\":true},{\"name\":\"evidence_gaps_html\",\"type\":\"string\",\"required\":true},{\"name\":\"disclaimer_html\",\"type\":\"string\",\"required\":true},{\"name\":\"key_updates\",\"type\":\"string\",\"required\":true},{\"name\":\"confidence_level\",\"type\":\"string\",\"required\":true},{\"name\":\"evidence_score\",\"type\":\"integer\",\"required\":true},{\"name\":\"confidence_index\",\"type\":\"integer\",\"required\":true},{\"name\":\"reliability_assessment_html\",\"type\":\"string\",\"required\":true},{\"name\":\"source_links_html\",\"type\":\"string\",\"required\":true},{\"name\":\"references\",\"type\":\"string\",\"required\":true},{\"name\":\"article_count\",\"type\":\"integer\",\"required\":true}]}",
+      "loop_policy": "none",
+      "execution_policy": "auto",
+      "max_retry": 3,
+      "version": 1,
+      "position_x": 0,
+      "position_y": 700
+    },
+    {
+      "flow_key": "pubmed",
+      "node_id": "pm_eval",
+      "node_type": "evaluation_check",
+      "label": "Consistency evaluation",
+      "description": "Structured second pass: flags inconsistencies between synthesis and retrieval-derived facts (does not rewrite HTML).",
+      "prompt": "Issue codes (examples — add a clear code when none fit): INTERNAL_CONTRADICTION, CROSS_SECTION_NUMERIC_MISMATCH, PMID_OR_SOURCE_MISMATCH, NUMERIC_OR_COUNT_MISMATCH, SECTION_LEVEL_MISMATCH, IMPOSSIBLE_OR_FAKE_PMID, META_AGENT_TEXT_LEAK, UNSUPPORTED_SCREENING_OR_DOSE_CLAIM.\n\nEmphasis:\n- Compare the same drug, trial primary endpoint, dosing schedule, epidemiology figures, and radiation vs contraindication statements across every heading in SYNTHESIS; each material clash is at least one issue with both locations.\n- Flag PMIDs with implausible digit counts vs realistic PubMed ranges, or citations labeled as PubMed that are clearly Bookshelf/reviews when the text claims a primary article.\n- Flag any visible assistant planning/meta prose.\n- suggested_fix must be one concrete harmonization per issue (single evidence-aligned reading from REFERENCE_FACTS, or explicit downgrade to conditional/unknown when refs are insufficient).",
+      "evaluation_source_nodes_json": "[\"pm-4\"]",
+      "prompt_mode": "simple",
+      "loop_policy": "none",
+      "execution_policy": "auto",
+      "max_retry": 3,
+      "version": 1,
+      "position_x": 0,
+      "position_y": 840
+    },
+    {
+      "flow_key": "pubmed",
+      "node_id": "pm_fix",
+      "node_type": "prompt",
+      "label": "Guideline consistency repair",
+      "description": "Applies evaluator feedback to the pm-4 draft; same structured schema as the guideline step.",
+      "prompt": "You are revising the Polish clinical guideline structured output produced in step pm-4. You MUST return the same structured fields (same schema) as pm-4.\n\n--- Evaluator (from pm_eval) ---\nissues_found: {{ context.pm_eval.issues_found }}\nquality_summary: {{ context.pm_eval.quality_summary }}\nissues: {{ context.pm_eval.issues }}\ncorrection_instructions:\n{{ context.pm_eval.correction_instructions }}\n\nRules:\n1. Apply correction_instructions and every issue suggested_fix across ALL structured HTML fields so the document is internally consistent (same drug, dose, schedule, trial primary outcome, epidemiology figures, and contraindications must not contradict between sections).\n2. Remove or rewrite any assistant/meta/planning language if flagged; never leave chain-of-thought in clinical HTML.\n3. Do not invent clinical facts beyond the evidence corpus below; remove or qualify citations that cannot be justified from the corpus, including implausible PMIDs.\n4. If issues_found is false or issues is empty, keep pm-4 content except trivial typo fixes that do not change clinical meaning.\n5. Keep professional clinical Polish tone; use valid HTML tags as in the original guideline step.\n\nEvidence corpus (same constraint as pm-4 — stay within these articles):\nDisease/topic: {{ context.pm-2.result.query_text }}\nTotal analyzed: {{ context.pm-2.result.total_analyzed }}\nTotal with abstracts: {{ context.pm-2.result.total_with_abstract }}\nBrowser fallback used: {{ context.pm-2.result.fallback_used }}\n\nEvidence appraisal (reference): evidence_score {{ context.pm-3.evidence_score }}, evidence_level {{ context.pm-3.evidence_level }}, confidence_index {{ context.pm-3.confidence_index }}\n\n--- Articles ---\n{{ context.pm-2.result.articles_text }}\n\n--- Baseline draft from pm-4 (revise as needed) ---\ndisease_name: {{ context[\"pm-4\"].disease_name }}\narticle_count: {{ context[\"pm-4\"].article_count }}\nevidence_score: {{ context[\"pm-4\"].evidence_score }}\nconfidence_index: {{ context[\"pm-4\"].confidence_index }}\nconfidence_level: {{ context[\"pm-4\"].confidence_level }}\nkey_updates: {{ context[\"pm-4\"].key_updates }}\nguideline_html:\n{{ context[\"pm-4\"].guideline_html }}\nrecommendation_matrix_html:\n{{ context[\"pm-4\"].recommendation_matrix_html }}\nred_flags_html:\n{{ context[\"pm-4\"].red_flags_html }}\ncontraindications_html:\n{{ context[\"pm-4\"].contraindications_html }}\nfollow_up_schedule_html:\n{{ context[\"pm-4\"].follow_up_schedule_html }}\nevidence_gaps_html:\n{{ context[\"pm-4\"].evidence_gaps_html }}\ndisclaimer_html:\n{{ context[\"pm-4\"].disclaimer_html }}\nreliability_assessment_html:\n{{ context[\"pm-4\"].reliability_assessment_html }}\nsource_links_html:\n{{ context[\"pm-4\"].source_links_html }}\nreferences:\n{{ context[\"pm-4\"].references }}\n\nProduce the corrected structured output per schema.",
+      "prompt_mode": "simple",
+      "output_schema": "{\"fields\":[{\"name\":\"disease_name\",\"type\":\"string\",\"required\":true},{\"name\":\"guideline_html\",\"type\":\"string\",\"required\":true},{\"name\":\"recommendation_matrix_html\",\"type\":\"string\",\"required\":true},{\"name\":\"red_flags_html\",\"type\":\"string\",\"required\":true},{\"name\":\"contraindications_html\",\"type\":\"string\",\"required\":true},{\"name\":\"follow_up_schedule_html\",\"type\":\"string\",\"required\":true},{\"name\":\"evidence_gaps_html\",\"type\":\"string\",\"required\":true},{\"name\":\"disclaimer_html\",\"type\":\"string\",\"required\":true},{\"name\":\"key_updates\",\"type\":\"string\",\"required\":true},{\"name\":\"confidence_level\",\"type\":\"string\",\"required\":true},{\"name\":\"evidence_score\",\"type\":\"integer\",\"required\":true},{\"name\":\"confidence_index\",\"type\":\"integer\",\"required\":true},{\"name\":\"reliability_assessment_html\",\"type\":\"string\",\"required\":true},{\"name\":\"source_links_html\",\"type\":\"string\",\"required\":true},{\"name\":\"references\",\"type\":\"string\",\"required\":true},{\"name\":\"article_count\",\"type\":\"integer\",\"required\":true}]}",
+      "loop_policy": "none",
+      "execution_policy": "auto",
+      "max_retry": 3,
+      "version": 1,
+      "position_x": 0,
+      "position_y": 920
+    },
+    {
+      "flow_key": "pubmed",
+      "node_id": "end",
+      "node_type": "end",
+      "label": "End",
+      "description": "Flow completed — literature review ready.",
+      "prompt": "",
+      "loop_policy": "none",
+      "execution_policy": "auto",
+      "max_retry": 3,
+      "version": 1,
+      "position_x": 0,
+      "position_y": 1080
+    },
+    {
+      "flow_key": "doctor_finder",
+      "node_id": "start",
+      "node_type": "trigger",
+      "label": "Start",
+      "description": "Doctor Finder flow entry point.",
+      "prompt": "",
+      "loop_policy": "none",
+      "execution_policy": "auto",
+      "max_retry": 3,
+      "version": 1
+    },
+    {
+      "flow_key": "doctor_finder",
+      "node_id": "df-1",
+      "node_type": "pubmed_authors_fetch",
+      "label": "PubMed Author Fetch",
+      "description": "Search PubMed and fetch per-author affiliation XML.",
+      "prompt": "",
+      "loop_policy": "none",
+      "execution_policy": "auto",
+      "max_retry": 3,
+      "version": 1
+    },
+    {
+      "flow_key": "doctor_finder",
+      "node_id": "df-2",
+      "node_type": "doctor_finder_step",
+      "label": "Affiliation Parser",
+      "description": "Parse raw affiliation strings to country/continent.",
+      "prompt": "",
+      "step_name": "affiliation_parser",
+      "loop_policy": "none",
+      "execution_policy": "auto",
+      "max_retry": 3,
+      "version": 1
+    },
+    {
+      "flow_key": "doctor_finder",
+      "node_id": "df-20",
+      "node_type": "doctor_finder_step",
+      "label": "Affiliation geo (Brave+LLM)",
+      "description": "Infer missing country from web search + structured LLM when PubMed affiliation has no ISO2.",
+      "prompt": "",
+      "step_name": "affiliation_georesolve",
+      "loop_policy": "none",
+      "execution_policy": "auto",
+      "max_retry": 2,
+      "version": 1
+    },
+    {
+      "flow_key": "doctor_finder",
+      "node_id": "df-3",
+      "node_type": "doctor_finder_step",
+      "label": "Author Aggregator",
+      "description": "Disambiguate and group authors across papers.",
+      "prompt": "",
+      "step_name": "author_aggregator",
+      "loop_policy": "none",
+      "execution_policy": "auto",
+      "max_retry": 3,
+      "version": 1
+    },
+    {
+      "flow_key": "doctor_finder",
+      "node_id": "df-4",
+      "node_type": "doctor_finder_step",
+      "label": "Role Classifier",
+      "description": "Assign clinical roles and flags to aggregated authors.",
+      "prompt": "",
+      "step_name": "role_classifier",
+      "loop_policy": "none",
+      "execution_policy": "auto",
+      "max_retry": 3,
+      "version": 1
+    },
+    {
+      "flow_key": "doctor_finder",
+      "node_id": "df-5",
+      "node_type": "doctor_finder_step",
+      "label": "Scoring",
+      "description": "Compute and normalize expert scores 0-100.",
+      "prompt": "",
+      "step_name": "scoring",
+      "loop_policy": "none",
+      "execution_policy": "auto",
+      "max_retry": 3,
+      "version": 1
+    },
+    {
+      "flow_key": "doctor_finder",
+      "node_id": "df-25",
+      "node_type": "doctor_finder_step",
+      "label": "Specialty Enrich (NPPES)",
+      "description": "Attach canonical NUCC clinical specialty + practice address for US physicians via NPPES.",
+      "prompt": "",
+      "step_name": "specialty_enrich",
+      "loop_policy": "none",
+      "execution_policy": "auto",
+      "max_retry": 3,
+      "version": 1
+    },
+    {
+      "flow_key": "doctor_finder",
+      "node_id": "df-6",
+      "node_type": "doctor_finder_step",
+      "label": "Report Builder",
+      "description": "Build ranked DoctorReport with Markdown.",
+      "prompt": "",
+      "step_name": "report_builder",
+      "loop_policy": "none",
+      "execution_policy": "auto",
+      "max_retry": 3,
+      "version": 1
+    },
+    {
+      "flow_key": "doctor_finder",
+      "node_id": "df-7",
+      "node_type": "doctor_finder_ai_justification",
+      "label": "AI Justification",
+      "description": "Generate LLM justifications for top-scored authors.",
+      "prompt": "",
+      "loop_policy": "none",
+      "execution_policy": "auto",
+      "max_retry": 2,
+      "version": 1
+    },
+    {
+      "flow_key": "doctor_finder",
+      "node_id": "end",
+      "node_type": "end",
+      "label": "End",
+      "description": "Doctor Finder flow complete.",
+      "prompt": "",
+      "loop_policy": "none",
+      "execution_policy": "auto",
+      "max_retry": 1,
+      "version": 1
+    }
   ],
   "flow_edges": [
-    { "flow_key": "pubmed", "source_node_id": "start", "target_node_id": "pm-1" },
-    { "flow_key": "pubmed", "source_node_id": "pm-1", "target_node_id": "pm-2" },
-    { "flow_key": "pubmed", "source_node_id": "pm-2", "target_node_id": "pm-3" },
-    { "flow_key": "pubmed", "source_node_id": "pm-3", "target_node_id": "pm-4" },
-    { "flow_key": "pubmed", "source_node_id": "pm-4", "target_node_id": "pm_eval" },
-    { "flow_key": "pubmed", "source_node_id": "pm_eval", "target_node_id": "pm_fix" },
-    { "flow_key": "pubmed", "source_node_id": "pm_fix", "target_node_id": "end" },
-
-    { "flow_key": "doctor_finder", "source_node_id": "start", "target_node_id": "df-1" },
-    { "flow_key": "doctor_finder", "source_node_id": "df-1", "target_node_id": "df-2" },
-    { "flow_key": "doctor_finder", "source_node_id": "df-2", "target_node_id": "df-20" },
-    { "flow_key": "doctor_finder", "source_node_id": "df-20", "target_node_id": "df-3" },
-    { "flow_key": "doctor_finder", "source_node_id": "df-3", "target_node_id": "df-4" },
-    { "flow_key": "doctor_finder", "source_node_id": "df-4", "target_node_id": "df-5" },
-    { "flow_key": "doctor_finder", "source_node_id": "df-5", "target_node_id": "df-6" },
-    { "flow_key": "doctor_finder", "source_node_id": "df-6", "target_node_id": "df-7" },
-    { "flow_key": "doctor_finder", "source_node_id": "df-7", "target_node_id": "end" }
+    {
+      "flow_key": "pubmed",
+      "source_node_id": "start",
+      "target_node_id": "pm-1"
+    },
+    {
+      "flow_key": "pubmed",
+      "source_node_id": "pm-1",
+      "target_node_id": "pm-2"
+    },
+    {
+      "flow_key": "pubmed",
+      "source_node_id": "pm-2",
+      "target_node_id": "pm-3"
+    },
+    {
+      "flow_key": "pubmed",
+      "source_node_id": "pm-3",
+      "target_node_id": "pm-4"
+    },
+    {
+      "flow_key": "pubmed",
+      "source_node_id": "pm-4",
+      "target_node_id": "pm_eval"
+    },
+    {
+      "flow_key": "pubmed",
+      "source_node_id": "pm_eval",
+      "target_node_id": "pm_fix"
+    },
+    {
+      "flow_key": "pubmed",
+      "source_node_id": "pm_fix",
+      "target_node_id": "end"
+    },
+    {
+      "flow_key": "doctor_finder",
+      "source_node_id": "start",
+      "target_node_id": "df-1"
+    },
+    {
+      "flow_key": "doctor_finder",
+      "source_node_id": "df-1",
+      "target_node_id": "df-2"
+    },
+    {
+      "flow_key": "doctor_finder",
+      "source_node_id": "df-2",
+      "target_node_id": "df-20"
+    },
+    {
+      "flow_key": "doctor_finder",
+      "source_node_id": "df-20",
+      "target_node_id": "df-3"
+    },
+    {
+      "flow_key": "doctor_finder",
+      "source_node_id": "df-3",
+      "target_node_id": "df-4"
+    },
+    {
+      "flow_key": "doctor_finder",
+      "source_node_id": "df-4",
+      "target_node_id": "df-5"
+    },
+    {
+      "flow_key": "doctor_finder",
+      "source_node_id": "df-6",
+      "target_node_id": "df-7"
+    },
+    {
+      "flow_key": "doctor_finder",
+      "source_node_id": "df-7",
+      "target_node_id": "end"
+    },
+    {
+      "flow_key": "doctor_finder",
+      "source_node_id": "df-5",
+      "target_node_id": "df-25"
+    },
+    {
+      "flow_key": "doctor_finder",
+      "source_node_id": "df-25",
+      "target_node_id": "df-6"
+    }
   ]
 }

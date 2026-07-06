@@ -1,8 +1,11 @@
 import { type PublicDoctor, isWorkflowDoctorSource } from "../types/doctor";
 import {
   pubmedRoleLabel,
+  reachabilityLabel,
   recencyBandOf,
   recencyLabel,
+  specialtySourceBadge,
+  verifiedSpecialties,
   VALID_PUBMED_ROLES,
 } from "../utils/doctorLabels";
 import { DistancePill } from "./DistancePill";
@@ -17,9 +20,13 @@ export interface DoctorCardProps {
 export function DoctorCard({ doctor, km, compact = false, onNav }: DoctorCardProps) {
   const roleLabel = pubmedRoleLabel(doctor.pubmedRole);
   const safeRoleClass = VALID_PUBMED_ROLES.has(doctor.pubmedRole) ? doctor.pubmedRole : "unknown";
-  // Clinical specialty is a SEPARATE axis from the PubMed research role. Until we have a verified
-  // specialty source, ``specialty`` is empty — say so honestly rather than showing a role token.
-  const specialty = doctor.specialty?.trim();
+  // Clinical specialty is a SEPARATE axis from the PubMed research role. Prefer verified NUCC
+  // specialties (with a source badge); fall back to the deprecated free-text field; else say
+  // "not verified" honestly rather than showing a role token.
+  const specialties = verifiedSpecialties(doctor);
+  const primarySpecialty = specialties[0];
+  const specialtyText = primarySpecialty?.labelEn ?? doctor.specialty?.trim();
+  const reachText = reachabilityLabel(doctor.reachability ?? "unknown");
   const recencyBand = recencyBandOf(doctor);
   const href = `#/doctor/${doctor.slug}`;
 
@@ -36,14 +43,28 @@ export function DoctorCard({ doctor, km, compact = false, onNav }: DoctorCardPro
         <div className="doc__name">{doctor.name}</div>
         {km != null ? <DistancePill km={km} /> : null}
       </div>
-      {specialty ? (
-        <div className="doc__spec">{specialty}</div>
+      {specialtyText ? (
+        <div className="doc__spec">
+          {specialtyText}
+          {primarySpecialty ? (
+            <span className={`doc__spec-src doc__spec-src--${primarySpecialty.source}`}>
+              {specialtySourceBadge(primarySpecialty.source)}
+            </span>
+          ) : null}
+        </div>
       ) : (
         <div className="doc__spec doc__spec--unverified">Specialty not verified</div>
       )}
       <div className="doc__inst">
         {doctor.institution} · {doctor.city}, {doctor.country}
       </div>
+      {!compact && reachText ? (
+        <div
+          className={`doc__reach doc__reach--${doctor.reachability}`}
+        >
+          {reachText}
+        </div>
+      ) : null}
       {!compact ? (
         <>
           <div className="doc__meta">

@@ -52,6 +52,9 @@ describe("parseDoctorsQuery", () => {
       maxKm: 100,
       workTypes: ["guideline", "original"],
       recency: "active_2y",
+      specialtyGroup: null,
+      country: null,
+      seesPatients: false,
       sort: "distance",
       page: 3,
     });
@@ -123,6 +126,9 @@ describe("serializeDoctorsQuery", () => {
       maxKm: 100,
       workTypes: ["guideline", "original"],
       recency: "active_2y",
+      specialtyGroup: "Surgery",
+      country: "US",
+      seesPatients: true,
       sort: "distance",
       page: 3,
     };
@@ -141,6 +147,18 @@ describe("serializeDoctorsQuery", () => {
   it("never serializes maxKm without a location", () => {
     const q: DoctorsQuery = { ...DEFAULT_DOCTORS_QUERY, maxKm: 100 };
     expect(serializeDoctorsQuery(q)).toBe("/doctors");
+  });
+
+  it("parses specialty group, country, and sees-patients facets", () => {
+    const q = parseDoctorsQuery({ spec: "Surgery", country: "us", seespt: "1" });
+    expect(q.specialtyGroup).toBe("Surgery");
+    expect(q.country).toBe("US"); // upper-cased
+    expect(q.seesPatients).toBe(true);
+  });
+
+  it("rejects a non-ISO2 country token", () => {
+    expect(parseDoctorsQuery({ country: "USA" }).country).toBeNull();
+    expect(parseDoctorsQuery({ country: "12" }).country).toBeNull();
   });
 });
 

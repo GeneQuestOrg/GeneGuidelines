@@ -202,6 +202,16 @@ class DoctorEntry(BaseModel, frozen=True):
     # certain we are this is one real person ("ORCID-verified" vs "name-matched").
     identity_confidence: str = "low"
     ai_justification: Optional[str] = None
+    # Phase 1 clinical axis (from specialty_enrich / NPPES). Each item is a canonical NUCC
+    # specialty dict: {canonicalCode, labelEn, group, source, confidence}. Empty when we could
+    # not verify a specialty (kept honestly empty rather than guessing).
+    clinical_specialties: list[dict] = Field(default_factory=list)
+    # "sees_patients" | "expert_reachable" | "unknown" — drives the parent-facing availability
+    # signal. Never used to hide an expert (see plan §3.2b, the "Mara" case).
+    reachability: str = "unknown"
+    # Real practice location from an authoritative source (NPPES), when available:
+    # {name, address, city, country, source, confidence}. Fixes the state-abbrev-as-city bug.
+    resolved_practice: Optional[dict] = None
 
 
 class DoctorReport(BaseModel, frozen=True):

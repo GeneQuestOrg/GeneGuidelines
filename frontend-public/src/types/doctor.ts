@@ -23,6 +23,30 @@ export type AddedVia = "pubmed" | "parent" | "consortium" | "nil";
 /** "Is this person on top of the disease now" band, derived from newest publication year. */
 export type RecencyBand = "active_2y" | "active_5y" | "older" | "unknown";
 
+export type SpecialtySource =
+  | "nppes"
+  | "nil"
+  | "clinic_llm"
+  | "orcid"
+  | "consortium"
+  | "curated"
+  | "inferred";
+
+/** A canonical clinical specialty (NUCC code) — a separate axis from the PubMed research role. */
+export interface ClinicalSpecialty {
+  readonly canonicalCode: string;
+  readonly labelEn: string;
+  readonly labelPl?: string | null;
+  readonly group?: string | null;
+  readonly source: SpecialtySource;
+  readonly confidence: "high" | "medium" | "low";
+  readonly asOf?: string | null;
+  readonly snomedId?: string | null;
+}
+
+/** Availability signal. "expert_reachable" (e.g. a scientist who answers consults) is NEVER hidden. */
+export type Reachability = "sees_patients" | "expert_reachable" | "unknown";
+
 export type RodoStatus = "published_optout" | "informed" | "pending";
 
 export interface DoctorEvidence {
@@ -46,6 +70,10 @@ export interface Practice {
   readonly lat: number;
   readonly lng: number;
   readonly website?: string;
+  /** Phase 1: real practice country + provenance (e.g. an NPPES LOCATION address). */
+  readonly country?: string;
+  readonly source?: "nppes" | "nil" | "clinic_llm" | "curated" | "affiliation";
+  readonly confidence?: "high" | "medium" | "low";
 }
 
 /** A recommendation left by a parent/carer — a signal PubMed mining cannot surface. */
@@ -109,6 +137,10 @@ export interface PublicDoctor {
   readonly lastPaperYear?: number | null;
   readonly lastCentralPaperYear?: number | null;
   readonly recencyBand?: RecencyBand;
+  /** Phase 1 clinical axis — canonical NUCC specialties (separate from the PubMed research role). */
+  readonly clinicalSpecialties?: readonly ClinicalSpecialty[];
+  /** Patient-facing availability signal; "expert_reachable" is never hidden by the "sees patients" toggle. */
+  readonly reachability?: Reachability;
 }
 
 export interface DiseaseDoctorsPayload {
