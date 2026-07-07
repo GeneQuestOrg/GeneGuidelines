@@ -235,6 +235,20 @@ export function DoctorsView({ hash, onNav }: DoctorsViewProps) {
     };
   }, [doctors, activeDiseaseSlug]);
 
+  // Count of active "advanced" filters so we can badge the disclosure trigger.
+  const advancedActiveCount = useMemo(() => {
+    let n = 0;
+    if (query.role != null) n += 1;
+    if (query.recency != null) n += 1;
+    if (query.workTypes.length > 0) n += 1;
+    if (query.source !== "all") n += 1;
+    if (query.parentOnly) n += 1;
+    if (query.seesPatients) n += 1;
+    return n;
+  }, [query.role, query.recency, query.workTypes, query.source, query.parentOnly, query.seesPatients]);
+
+  const [advancedOpen, setAdvancedOpen] = useState(false);
+
   const ready = !loading && error == null;
 
   return (
@@ -297,29 +311,30 @@ export function DoctorsView({ hash, onNav }: DoctorsViewProps) {
       </header>
 
       <div className="dfilters">
-        {activeDiseaseSlug != null ? (
-          <div className="dchip">
-            <span className="dchip__label">{activeDiseaseLabel}</span>
-            <button
-              type="button"
-              className="dchip__x"
-              onClick={handleClearDisease}
-              aria-label="Clear disease filter"
-            >
-              ×
-            </button>
-          </div>
-        ) : (
-          <div className="dfilters__search">
-            <DiseaseAutocomplete
-              placeholder="Filter by disease — name, gene, OMIM…"
-              onPick={handlePickDisease}
-              onMissingClick={() => onNav("/start-research")}
-            />
-          </div>
-        )}
+        {/* ── Primary row: disease + location + clinical facets + sort ── */}
+        <div className="dfilters__primary">
+          {activeDiseaseSlug != null ? (
+            <div className="dchip">
+              <span className="dchip__label">{activeDiseaseLabel}</span>
+              <button
+                type="button"
+                className="dchip__x"
+                onClick={handleClearDisease}
+                aria-label="Clear disease filter"
+              >
+                ×
+              </button>
+            </div>
+          ) : (
+            <div className="dfilters__search">
+              <DiseaseAutocomplete
+                placeholder="Filter by disease — name, gene, OMIM…"
+                onPick={handlePickDisease}
+                onMissingClick={() => onNav("/start-research")}
+              />
+            </div>
+          )}
 
-        <div className="dfilters__menus">
           <LocationMenu
             value={query.loc}
             label={query.locLabel}
@@ -327,24 +342,7 @@ export function DoctorsView({ hash, onNav }: DoctorsViewProps) {
             onChange={handleLocationChange}
             onPickRadius={(km) => patchQuery({ maxKm: km })}
           />
-          <FilterMenu
-            label="Disease experience"
-            value={query.role ?? ROLE_FILTER_ALL}
-            options={ROLE_FILTERS}
-            onPick={(v) =>
-              patchQuery({ role: v === ROLE_FILTER_ALL ? null : (v as PubmedRole) })
-            }
-          />
-          <FilterMenu
-            label="On the disease"
-            value={query.recency ?? RECENCY_FILTER_ALL}
-            options={RECENCY_FILTERS}
-            onPick={(v) =>
-              patchQuery({
-                recency: v === RECENCY_FILTER_ALL ? null : (v as DoctorsQuery["recency"]),
-              })
-            }
-          />
+
           {clinical.ready ? (
             <>
               <FilterMenu
@@ -369,6 +367,67 @@ export function DoctorsView({ hash, onNav }: DoctorsViewProps) {
                   onPick={(v) => patchQuery({ country: v === "all" ? null : v })}
                 />
               ) : null}
+            </>
+          ) : null}
+
+          <FilterMenu
+            label="Sort"
+            value={query.sort}
+            neutralValue="best"
+            options={SORT_OPTIONS}
+            onPick={(v) => patchQuery({ sort: v as DoctorsQuery["sort"] })}
+          />
+
+          {/* "More filters" disclosure trigger */}
+          <button
+            type="button"
+            className={`dfilters__more-btn${advancedOpen ? " is-open" : ""}${advancedActiveCount > 0 ? " has-active" : ""}`}
+            aria-expanded={advancedOpen}
+            aria-controls="dfilters-advanced"
+            onClick={() => setAdvancedOpen((o) => !o)}
+          >
+            {advancedActiveCount > 0
+              ? `More filters (${advancedActiveCount})`
+              : "More filters"}
+            <span className={`fmenu__chev${advancedOpen ? " is-open" : ""}`} aria-hidden="true">
+              ▾
+            </span>
+          </button>
+        </div>
+
+        {/* ── Advanced filters: hidden until expanded ── */}
+        {advancedOpen ? (
+          <div
+            id="dfilters-advanced"
+            className="dfilters__advanced"
+            role="group"
+            aria-label="Advanced filters"
+          >
+            <FilterMenu
+              label="Disease experience"
+              value={query.role ?? ROLE_FILTER_ALL}
+              options={ROLE_FILTERS}
+              onPick={(v) =>
+                patchQuery({ role: v === ROLE_FILTER_ALL ? null : (v as PubmedRole) })
+              }
+            />
+            <FilterMenu
+              label="On the disease"
+              value={query.recency ?? RECENCY_FILTER_ALL}
+              options={RECENCY_FILTERS}
+              onPick={(v) =>
+                patchQuery({
+                  recency: v === RECENCY_FILTER_ALL ? null : (v as DoctorsQuery["recency"]),
+                })
+              }
+            />
+            <FilterMenu
+              label="Source"
+              value={query.source}
+              options={SOURCE_FILTERS}
+              onPick={(v) => patchQuery({ source: v as SourceFilter })}
+            />
+            {clinical.ready ? (
               <button
                 type="button"
                 className={`toggle-chip${query.seesPatients ? " is-active" : ""}`}
@@ -378,62 +437,52 @@ export function DoctorsView({ hash, onNav }: DoctorsViewProps) {
               >
                 Sees patients
               </button>
-            </>
-          ) : null}
-          <FilterMenu
-            label="Source"
-            value={query.source}
-            options={SOURCE_FILTERS}
-            onPick={(v) => patchQuery({ source: v as SourceFilter })}
-          />
-          <button
-            type="button"
-            className={`toggle-chip${query.parentOnly ? " is-active" : ""}`}
-            aria-pressed={query.parentOnly}
-            onClick={() => patchQuery({ parentOnly: !query.parentOnly })}
-            title="Show only doctors recommended by parents"
-          >
-            <svg
-              width="13"
-              height="13"
-              viewBox="0 0 24 24"
-              fill={query.parentOnly ? "currentColor" : "none"}
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
+            ) : null}
+            <button
+              type="button"
+              className={`toggle-chip${query.parentOnly ? " is-active" : ""}`}
+              aria-pressed={query.parentOnly}
+              onClick={() => patchQuery({ parentOnly: !query.parentOnly })}
+              title="Show only doctors recommended by parents"
             >
-              <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21l7.8-7.5 1-1.1a5.5 5.5 0 0 0 0-7.8z" />
-            </svg>
-            Recommended by parents ({recommendedCount})
-          </button>
-          <FilterMenu
-            label="Sort"
-            value={query.sort}
-            neutralValue="best"
-            options={SORT_OPTIONS}
-            onPick={(v) => patchQuery({ sort: v as DoctorsQuery["sort"] })}
-          />
-        </div>
-
-        <div className="dfilters__worktypes" role="group" aria-label="Type of work on the disease">
-          <span className="dfilters__worktypes-label">Type of work:</span>
-          {WORK_TYPE_ORDER.map((w) => {
-            const active = query.workTypes.includes(w);
-            return (
-              <button
-                key={w}
-                type="button"
-                className={`toggle-chip${active ? " is-active" : ""}`}
-                aria-pressed={active}
-                onClick={() => toggleWorkType(w)}
+              <svg
+                width="13"
+                height="13"
+                viewBox="0 0 24 24"
+                fill={query.parentOnly ? "currentColor" : "none"}
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
               >
-                {workTypeLabel(w)}
-              </button>
-            );
-          })}
-        </div>
+                <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21l7.8-7.5 1-1.1a5.5 5.5 0 0 0 0-7.8z" />
+              </svg>
+              Recommended by parents ({recommendedCount})
+            </button>
+            <div
+              className="dfilters__worktypes"
+              role="group"
+              aria-label="Type of work on the disease"
+            >
+              <span className="dfilters__worktypes-label">Type of work:</span>
+              {WORK_TYPE_ORDER.map((w) => {
+                const active = query.workTypes.includes(w);
+                return (
+                  <button
+                    key={w}
+                    type="button"
+                    className={`toggle-chip${active ? " is-active" : ""}`}
+                    aria-pressed={active}
+                    onClick={() => toggleWorkType(w)}
+                  >
+                    {workTypeLabel(w)}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ) : null}
       </div>
 
       {diseasesLoading ? (

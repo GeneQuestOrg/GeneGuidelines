@@ -1219,10 +1219,17 @@
 /* ── Doctors: compact "Google-Flights-style" filter bar (ported from draft9) ── */
 .dfilters {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 10px;
-  flex-wrap: wrap;
   margin-bottom: 20px;
+}
+
+/* Primary row: always-visible facets */
+.dfilters__primary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .dfilters__search {
@@ -1237,6 +1244,60 @@
   max-width: 460px;
 }
 
+/* "More filters" disclosure trigger */
+.dfilters__more-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border: 1px solid var(--line-2);
+  border-radius: 999px;
+  background: var(--bg-elev);
+  color: var(--ink-2);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  white-space: nowrap;
+  transition: border-color 120ms, background 120ms, color 120ms;
+}
+
+.dfilters__more-btn:hover {
+  border-color: var(--ink-4);
+  color: var(--ink);
+}
+
+.dfilters__more-btn.is-open {
+  border-color: var(--ink-4);
+  color: var(--ink);
+}
+
+.dfilters__more-btn.has-active {
+  background: color-mix(in oklch, var(--accent) 12%, var(--bg-elev));
+  border-color: color-mix(in oklch, var(--accent) 45%, var(--line-2));
+  color: var(--accent-ink);
+}
+
+/* Advanced filters panel — shown when expanded */
+.dfilters__advanced {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 12px 14px;
+  background: var(--bg-soft);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  animation: fmenuIn 120ms ease;
+}
+
+/* Separator between primary and advanced to visually group the work-type chips */
+.dfilters__advanced .dfilters__worktypes {
+  width: 100%;
+  margin-top: 4px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+
+/* Legacy menus row — no longer used, kept for reference */
 .dfilters__menus {
   display: flex;
   align-items: center;
@@ -1474,7 +1535,7 @@
 }
 
 @media (max-width: 600px) {
-  .dfilters {
+  .dfilters__primary {
     flex-direction: column;
     align-items: stretch;
   }
@@ -1485,6 +1546,16 @@
 
   .dfilters__menus {
     justify-content: flex-start;
+  }
+
+  .dfilters__advanced {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .dfilters__advanced .dfilters__worktypes {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }
 
