@@ -87,6 +87,20 @@ def test_georesolve_rejects_low_confidence(monkeypatch: pytest.MonkeyPatch) -> N
     assert out["articles"][0]["authors"][0]["parsed_affiliation"]["country_code"] is None
 
 
+def test_brave_skips_llm_when_no_web_hits(monkeypatch: pytest.MonkeyPatch) -> None:
+    """No Brave snippets (empty result / 429) => the LLM must NOT be called (no retry-storm)."""
+    _disable_free_resolvers(monkeypatch)
+    monkeypatch.setattr(cfg, "BRAVE_API_KEY", "test-subscription-token")
+    monkeypatch.setattr(ag, "brave_web_search", AsyncMock(return_value=[]))
+    llm = AsyncMock(return_value={"country_iso2": "US", "confidence": 0.99, "rationale": "x"})
+    with patch("backend.flows.doctor_finder.affiliation_georesolve.run_llm_simple_async", new=llm):
+        raw = "National Institutes of Health, Bethesda, MD, USA campus"
+        ctx = {"articles": [_article_with_unresolved_affiliation(raw)]}
+        out = asyncio.run(ag.run_async(ctx))
+    assert out["articles"][0]["authors"][0]["parsed_affiliation"]["country_code"] is None
+    assert llm.await_count == 0
+
+
 def test_ror_resolves_before_brave_is_touched(monkeypatch: pytest.MonkeyPatch) -> None:
     """ROR is the primary resolver: a confident ROR hit must short-circuit before Brave/LLM."""
     monkeypatch.setattr(cfg, "DOCTOR_FINDER_GEO_ROR_ENABLED", True)

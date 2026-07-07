@@ -195,6 +195,13 @@ async def _resolve_one(
 
     query = _brave_query(raw, institution)
     hits = await brave_web_search(query, api_key=api_key, client=http_client)
+    # No web evidence (genuinely no results, or a 429 on Brave's 1 req/s free tier) => do NOT call
+    # the LLM. Without snippets it can only guess from the raw string ROR already failed on, which
+    # reliably yields a below-threshold (rejected) answer AND triggers max_retry schema retries — a
+    # storm that dominated df-20 runtime. Skipping keeps Brave evidence-based and the stage fast.
+    if not hits:
+        _cache_put(key, None)
+        return None
     block = format_brave_hits_for_llm(hits)
     user_prompt = (
         f"Affiliation string from PubMed:\n{raw[:1200]}\n\n"
