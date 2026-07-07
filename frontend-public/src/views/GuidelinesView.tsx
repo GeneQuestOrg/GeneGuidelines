@@ -116,8 +116,9 @@ export function GuidelinesView({
     }
   }
 
-  // Provenance detail ("where we know this from") — clinician-only.
-  if (srcParaId != null && isClinicianView(role) && synthesis != null) {
+  // Provenance detail ("where we know this from") — public: the source trail behind a claim is
+  // shown to everyone (incl. logged-out) to make the evidence transparent and raise credibility.
+  if (srcParaId != null && synthesis != null) {
     return (
       <ProvenanceDetailView
         slug={slug}

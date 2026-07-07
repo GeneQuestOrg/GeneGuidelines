@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
 import type { AnalyzedPaper, AnalyzedPaperVerdict } from "../types/analyzedPaper";
 import type { ViewRole } from "../auth/resolveRole";
-import { isClinicianView } from "../auth/resolveRole";
 import { RolePill } from "../components/guidelines/RolePill";
 import { useBibliography } from "../hooks/useBibliography";
 import { useDisease } from "../hooks/useDisease";
@@ -117,27 +116,8 @@ export function BibliographyView({ slug, role, onNav }: BibliographyViewProps) {
   );
   const usedCount = (counts.shelf ?? 0) + (counts.suggestion ?? 0);
 
-  if (!isClinicianView(role)) {
-    return (
-      <div className="page">
-        <div className="gx-empty">
-          <div>
-            <b>Clinician sign-in required.</b>
-            <p>
-              The analyzed bibliography is an audit view for clinicians and researchers.
-            </p>
-            <button
-              type="button"
-              className="btn btn--ghost btn--sm"
-              onClick={() => onNav(`/diseases/${slug}/guidelines`)}
-            >
-              ← Back to guidelines
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // Sources are public: the analyzed bibliography is shown to everyone (incl. logged-out) to
+  // make the evidence trail transparent and raise credibility. No role gate.
 
   if (diseaseLoading) {
     return <p className="page__loading">Loading…</p>;
