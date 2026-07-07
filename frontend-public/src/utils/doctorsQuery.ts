@@ -164,7 +164,14 @@ export function parseDoctorsQuery(q: Record<string, string>): DoctorsQuery {
   const source = SOURCES.includes(q.source as SourceFilter)
     ? (q.source as SourceFilter)
     : "all";
-  const sort = SORTS.includes(q.sort as DoctorSort) ? (q.sort as DoctorSort) : "best";
+  // Default sort: once a location is set, rank Nearest-first (the point of picking a location) —
+  // a soft ordering, not a hard radius cut, so a sparse rare-disease result never zeroes out.
+  // An explicit ?sort= always wins (user override).
+  const sort = SORTS.includes(q.sort as DoctorSort)
+    ? (q.sort as DoctorSort)
+    : loc != null
+      ? "distance"
+      : "best";
   const kmNum = Number(q.km);
   const maxKm = loc != null && RADII.includes(kmNum) ? kmNum : null;
   const pageNum = Math.trunc(Number(q.page));
@@ -220,7 +227,10 @@ export function serializeDoctorsQuery(query: DoctorsQuery): string {
     if (query.locLabel) add("place", query.locLabel);
     if (query.maxKm != null) add("km", String(query.maxKm));
   }
-  if (query.sort !== "best") add("sort", query.sort);
+  // Emit sort unless it matches the location-aware default (no loc → "best"; loc set → "distance"),
+  // so the canonical URL stays clean AND the user can still pin "best" while a location is set.
+  const defaultSort: DoctorSort = query.loc != null ? "distance" : "best";
+  if (query.sort !== defaultSort) add("sort", query.sort);
   if (query.page > 1) add("page", String(query.page));
 
   return params.length > 0 ? `/doctors?${params.join("&")}` : "/doctors";
