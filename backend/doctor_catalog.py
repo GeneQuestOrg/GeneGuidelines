@@ -5,6 +5,7 @@ import html
 import json
 import re
 import threading
+import unicodedata
 from pathlib import Path
 from typing import Any, Literal
 
@@ -51,13 +52,30 @@ def clear_finder_docs_index() -> None:
         _APPROVED_RECS_BY_SLUG_CACHE = None
 
 
+# Diacritics NFKD doesn't decompose (Latin letters with strokes/ligatures). Everything else
+# (ą ć ę ń ó ś ź ż, accents) folds via NFKD + combining-mark strip below.
+_TRANSLIT = {
+    "ł": "l", "Ł": "l", "ø": "o", "Ø": "o", "đ": "d", "Đ": "d",
+    "ß": "ss", "æ": "ae", "Æ": "ae", "œ": "oe", "Œ": "oe", "ð": "d", "þ": "th",
+}
+
+
+def _ascii_fold(text: str) -> str:
+    """Transliterate diacritics/special letters to ASCII so slugs never carry non-ASCII
+    (e.g. ``Błaszyk`` → ``blaszyk``). Prevents ``%C5%82``-style URLs that 404 the profile page."""
+    mapped = "".join(_TRANSLIT.get(ch, ch) for ch in text)
+    decomposed = unicodedata.normalize("NFKD", mapped)
+    return "".join(c for c in decomposed if not unicodedata.combining(c))
+
+
 def slugify_doctor_name(display_name: str, author_key: str | None = None) -> str:
-    """Stable URL slug for a clinician profile."""
+    """Stable, ASCII-only URL slug for a clinician profile."""
     if author_key:
-        cleaned = author_key.replace("name:", "").replace("_", "-")
-        if cleaned and _SLUG_RE.sub("", cleaned):
+        cleaned = _ascii_fold(author_key.replace("name:", "").replace("_", "-")).lower()
+        cleaned = _SLUG_RE.sub("-", cleaned).strip("-")
+        if cleaned:
             return cleaned[:64].strip("-")
-    base = display_name.lower().strip()
+    base = _ascii_fold(display_name).lower().strip()
     slug = _SLUG_RE.sub("-", base).strip("-")
     return slug[:64] if slug else "clinician"
 

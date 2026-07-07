@@ -1,6 +1,17 @@
 import { normalizeDiseaseSlug } from "./slug";
 import type { Route } from "./types";
 
+/** Safely percent-decode a path segment (slug). `window.location.hash` is not auto-decoded, so a
+ *  slug with non-ASCII chars (e.g. Polish `ł` → `%C5%82`) arrives encoded; the API client then
+ *  `encodeURIComponent`s it again → double-encoding → 404. Decode here so the client encodes once. */
+function safeDecode(value: string): string {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+}
+
 function parseQuery(queryRaw: string | undefined): Record<string, string> {
   const query: Record<string, string> = {};
   if (!queryRaw) {
@@ -75,7 +86,7 @@ export function parseHash(hash: string): Route {
   }
 
   if (parts[0] === "doctor" && parts[1]) {
-    return { name: "doctor", slug: parts[1] };
+    return { name: "doctor", slug: safeDecode(parts[1]) };
   }
 
   if (parts[0] === "add-disease" || parts[0] === "start-research") {
