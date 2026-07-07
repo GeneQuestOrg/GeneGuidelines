@@ -353,8 +353,24 @@ async def _run_brave_stage(
     context: dict[str, Any],
     emit_fn: Callable[..., Any],
     event_queue: Any,
+    max_lookups: int,
 ) -> list[tuple[str, str, str | None]]:
-    """Last resort: Brave web search + LLM. Reached only for what ROR/Nominatim left unresolved."""
+    """Last resort: Brave web search + LLM. Reached only for what ROR/Nominatim left unresolved.
+
+    ``max_lookups`` caps the PAID stage independently of how many affiliations entered the pipeline:
+    only the first (most frequent) ``max_lookups`` unresolved affiliations are searched; the rest
+    stay unresolved. Keeps spend bounded regardless of DOCTOR_FINDER_GEO_MAX_AFFILIATIONS.
+    """
+    if max_lookups <= 0:
+        return remaining
+    to_process = remaining[:max_lookups]
+    overflow = remaining[max_lookups:]
+    if overflow:
+        log.info(
+            "affiliation_georesolve: brave capped at %d lookup(s); %d affiliation(s) left unresolved",
+            max_lookups,
+            len(overflow),
+        )
     model_spec = _model_spec(context)
     store: dict[str, Any] = {}
     sem = asyncio.Semaphore(DOCTOR_FINDER_GEO_BRAVE_CONCURRENCY)
@@ -379,10 +395,10 @@ async def _run_brave_stage(
             except Exception:  # noqa: BLE001
                 results[key] = None
 
-    await asyncio.gather(*(_bounded(t) for t in remaining))
+    await asyncio.gather(*(_bounded(t) for t in to_process))
 
-    still: list[tuple[str, str, str | None]] = []
-    for t in remaining:
+    still: list[tuple[str, str, str | None]] = list(overflow)
+    for t in to_process:
         p = results.get(t[0])
         if p:
             patches[t[0]] = p
@@ -404,6 +420,7 @@ async def run_async(context: dict[str, Any]) -> dict[str, Any]:
         return context
 
     from ...config import (
+        DOCTOR_FINDER_GEO_BRAVE_MAX_LOOKUPS,
         DOCTOR_FINDER_GEO_NOMINATIM_ENABLED,
         DOCTOR_FINDER_GEO_NOMINATIM_MAX_LOOKUPS,
         DOCTOR_FINDER_GEO_NOMINATIM_MIN_INTERVAL_SEC,
@@ -452,7 +469,7 @@ async def run_async(context: dict[str, Any]) -> dict[str, Any]:
         )
         _emit_geo_progress(context, done=len(patches), total=total)
 
-    if brave_key and remaining:
+    if brave_key and remaining and DOCTOR_FINDER_GEO_BRAVE_MAX_LOOKUPS > 0:
         remaining = await _run_brave_stage(
             remaining,
             patches,
@@ -460,6 +477,7 @@ async def run_async(context: dict[str, Any]) -> dict[str, Any]:
             context=context,
             emit_fn=emit_fn,
             event_queue=event_queue,
+            max_lookups=DOCTOR_FINDER_GEO_BRAVE_MAX_LOOKUPS,
         )
 
     _emit_geo_progress(context, done=total, total=total)

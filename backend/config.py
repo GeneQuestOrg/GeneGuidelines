@@ -407,11 +407,23 @@ _DF_SPEC_CONC = (os.environ.get("DOCTOR_FINDER_SPECIALTY_CONCURRENCY") or "").st
 DOCTOR_FINDER_SPECIALTY_CONCURRENCY = int(_DF_SPEC_CONC) if _DF_SPEC_CONC else 6
 DOCTOR_FINDER_SPECIALTY_CONCURRENCY = max(1, min(16, DOCTOR_FINDER_SPECIALTY_CONCURRENCY))
 
-# Brave Search + LLM affiliation geolocation (Doctor Finder df-20). Optional — unset key skips the step.
-BRAVE_API_KEY = (os.environ.get("BRAVE_API_KEY") or "").strip() or None
+# Affiliation geolocation (Doctor Finder df-20). How many unique unresolved affiliation strings
+# ENTER the resolver chain per run (frequency-ordered). This is the FREE budget — the primary ROR
+# stage costs nothing — so it is sized to cover a whole disease's long tail, not the old 280 that
+# was a Brave-era cost cap. The paid Brave stage has its OWN, much smaller cap below, so raising
+# this never raises spend; it just lets ROR/Nominatim place more clinicians on the map.
 _DFG_GEO_MAX = (os.environ.get("DOCTOR_FINDER_GEO_MAX_AFFILIATIONS") or "").strip()
-DOCTOR_FINDER_GEO_MAX_AFFILIATIONS = int(_DFG_GEO_MAX) if _DFG_GEO_MAX else 280
-DOCTOR_FINDER_GEO_MAX_AFFILIATIONS = max(1, min(500, DOCTOR_FINDER_GEO_MAX_AFFILIATIONS))
+DOCTOR_FINDER_GEO_MAX_AFFILIATIONS = int(_DFG_GEO_MAX) if _DFG_GEO_MAX else 2000
+DOCTOR_FINDER_GEO_MAX_AFFILIATIONS = max(1, min(10000, DOCTOR_FINDER_GEO_MAX_AFFILIATIONS))
+
+# Brave Search + LLM geo fallback (df-20, last resort). Optional — unset key skips the step.
+BRAVE_API_KEY = (os.environ.get("BRAVE_API_KEY") or "").strip() or None
+# Separate, deliberately small cap on the PAID Brave stage: even when thousands of affiliations
+# enter the pipeline, Brave runs for at most this many that ROR + Nominatim could not resolve, so
+# cost stays bounded (~$5 / 1000 queries) regardless of DOCTOR_FINDER_GEO_MAX_AFFILIATIONS. 0 = off.
+_DFG_BRAVE_MAX = (os.environ.get("DOCTOR_FINDER_GEO_BRAVE_MAX_LOOKUPS") or "").strip()
+DOCTOR_FINDER_GEO_BRAVE_MAX_LOOKUPS = int(_DFG_BRAVE_MAX) if _DFG_BRAVE_MAX else 200
+DOCTOR_FINDER_GEO_BRAVE_MAX_LOOKUPS = max(0, min(2000, DOCTOR_FINDER_GEO_BRAVE_MAX_LOOKUPS))
 _DFG_GEO_CONC = (os.environ.get("DOCTOR_FINDER_GEO_BRAVE_CONCURRENCY") or "").strip()
 DOCTOR_FINDER_GEO_BRAVE_CONCURRENCY = int(_DFG_GEO_CONC) if _DFG_GEO_CONC else 4
 DOCTOR_FINDER_GEO_BRAVE_CONCURRENCY = max(1, min(16, DOCTOR_FINDER_GEO_BRAVE_CONCURRENCY))

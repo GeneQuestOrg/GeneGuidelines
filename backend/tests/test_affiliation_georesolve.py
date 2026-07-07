@@ -172,6 +172,52 @@ def test_apply_patches_uses_second_affiliation_line_when_only_that_line_gets_geo
     assert pa["geo_source"] == "brave_web_llm"
 
 
+def test_brave_stage_respects_paid_cap(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Even with many unresolved affiliations, the PAID Brave stage runs at most max_lookups times."""
+    _disable_free_resolvers(monkeypatch)
+    monkeypatch.setattr(cfg, "BRAVE_API_KEY", "test-subscription-token")
+    monkeypatch.setattr(cfg, "DOCTOR_FINDER_GEO_BRAVE_MAX_LOOKUPS", 1)
+    brave = AsyncMock(return_value=[{"title": "x", "url": "https://x", "description": "United States"}])
+    monkeypatch.setattr(ag, "brave_web_search", brave)
+
+    def _article(pmid: str, raw: str) -> dict:
+        return {
+            "pmid": pmid,
+            "title": "t",
+            "authors": [
+                {
+                    "last_name": "Doe",
+                    "fore_name": pmid,
+                    "parsed_affiliation": {
+                        "raw": raw,
+                        "institution": raw.split(",")[0],
+                        "city": None,
+                        "country_name": None,
+                        "country_code": None,
+                        "continent": None,
+                    },
+                }
+            ],
+        }
+
+    ctx = {
+        "articles": [
+            _article("1", "Alpha Institute, Cityone"),
+            _article("2", "Beta Institute, Citytwo"),
+        ]
+    }
+    with patch(
+        "backend.flows.doctor_finder.affiliation_georesolve.run_llm_simple_async",
+        new=AsyncMock(return_value={"country_iso2": "US", "confidence": 0.92, "rationale": "1"}),
+    ):
+        out = asyncio.run(ag.run_async(ctx))
+
+    codes = [a["authors"][0]["parsed_affiliation"]["country_code"] for a in out["articles"]]
+    assert codes.count("US") == 1
+    assert codes.count(None) == 1
+    assert brave.await_count == 1
+
+
 def test_collect_tasks_orders_by_global_frequency() -> None:
     """Common unresolved affiliation strings should rank before rare ones within the cap."""
     common = "National Institutes of Health, Bethesda, Maryland"
