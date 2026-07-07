@@ -133,6 +133,17 @@ Local `.env` only — never commit secrets to `.env`, `CLAUDE.md`, or any tracke
 - Never skip git hooks (`--no-verify`, `--no-gpg-sign`).
 - PR summary: what, why, test plan.
 
+### Deploy & remotes (READ before touching production)
+
+Production is **medical** and cannot be un-shipped. Deploy is fully automated:
+
+- **Deploy = push to the `production` branch → GitHub Actions `deploy-azure.yml` → Azure Container Apps.** That's the only code path to live. **Never deploy code by hand with `az`.** (`az` is only ever used for one-off secret/env changes such as `BRAVE_API_KEY`; that restarts the app on the *same image* and changes no code.)
+- **`origin` must use the SSH alias `git@github.com-genequest:GeneQuestOrg/GeneGuidelines.git`.** The plain `github.com` host is pinned (`IdentitiesOnly yes`) to the `dmiskiew` key, which is **not** authorized on GeneQuestOrg — it fails with `Permission denied (publickey)`. The `github.com-genequest` alias uses the `genequest` key that is authorized.
+- **Always push/fetch by remote name** (`git push origin production`, `git fetch origin`). **Never push by explicit URL** (`git push https://…/GeneGuidelines.git production`): a URL push updates the real remote branch but leaves the local `origin/*` tracking ref stale, so `git status` then lies with a phantom "ahead N". If you ever must push by URL, run `git fetch origin` immediately afterward to resync.
+- **Before concluding anything about divergence, `git fetch origin` first.** "local production is N commits ahead of origin / live wasn't deployed from origin" is almost always a stale tracking ref — verify with a real fetch before theorizing about alternate deploy paths.
+- **Verify every deploy:** `gh run watch <id> --exit-status`, then hit the live API/health to confirm the change landed.
+- **Branch hygiene:** delete branches once merged (`git branch -d`, which refuses unless fully merged so no unique work is lost). Don't accumulate dozens of stale local branches or long-lived local-only branches that never reach `origin`.
+
 ## Agent pipeline (for in-editor / Claude Code use)
 
 When you have an approved plan:
