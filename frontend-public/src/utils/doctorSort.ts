@@ -12,9 +12,10 @@ export function attachDoctorDistances(
 ): DoctorWithDistance[] {
   return doctors.map((doctor) => ({
     ...doctor,
-    km: userLoc
-      ? haversineKm(userLoc, { lat: doctor.lat, lng: doctor.lng })
-      : null,
+    km:
+      userLoc && doctor.lat != null && doctor.lng != null
+        ? haversineKm(userLoc, { lat: doctor.lat, lng: doctor.lng })
+        : null,
   }));
 }
 

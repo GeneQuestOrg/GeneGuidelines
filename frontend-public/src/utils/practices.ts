@@ -33,7 +33,10 @@ export function practiceList(
 ): readonly PracticeWithDistance[] {
   const withKm = practicesOf(doctor).map((practice) => ({
     practice,
-    km: userLoc ? haversineKm(userLoc, { lat: practice.lat, lng: practice.lng }) : null,
+    km:
+      userLoc && practice.lat != null && practice.lng != null
+        ? haversineKm(userLoc, { lat: practice.lat, lng: practice.lng })
+        : null,
   }));
   if (userLoc) {
     withKm.sort((a, b) => (a.km ?? Infinity) - (b.km ?? Infinity));

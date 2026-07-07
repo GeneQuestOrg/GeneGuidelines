@@ -67,8 +67,9 @@ export interface Practice {
   readonly name: string;
   readonly address?: string;
   readonly city: string;
-  readonly lat: number;
-  readonly lng: number;
+  /** null when the location is unknown (map skips the pin rather than plotting a wrong default). */
+  readonly lat: number | null;
+  readonly lng: number | null;
   readonly website?: string;
   /** Phase 1: real practice country + provenance (e.g. an NPPES LOCATION address). */
   readonly country?: string;
@@ -110,8 +111,9 @@ export interface PublicDoctor {
   readonly institution: string;
   readonly city: string;
   readonly country: string;
-  readonly lat: number;
-  readonly lng: number;
+  /** null when the location is unknown (map skips the pin rather than plotting a wrong default). */
+  readonly lat: number | null;
+  readonly lng: number | null;
   readonly diseases: readonly string[];
   readonly pubmedRole: PubmedRole;
   readonly score: number;

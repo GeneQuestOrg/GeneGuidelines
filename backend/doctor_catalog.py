@@ -117,7 +117,8 @@ def _entry_to_public_doctor(
         )
         if explicit_city and (not city or city == "—"):
             city = explicit_city
-    lat, lng = coords_for_city_country(city, country)
+    _coords = coords_for_city_country(city, country)
+    lat, lng = _coords if _coords is not None else (None, None)
     key_papers = entry.get("key_papers") or []
     publications = [
         {
@@ -147,7 +148,8 @@ def _entry_to_public_doctor(
     if isinstance(resolved_practice, dict) and resolved_practice.get("city"):
         p_city = str(resolved_practice.get("city") or city)
         p_country = str(resolved_practice.get("country") or country)
-        p_lat, p_lng = coords_for_city_country(p_city, p_country)
+        _p_coords = coords_for_city_country(p_city, p_country)
+        p_lat, p_lng = _p_coords if _p_coords is not None else (None, None)
         p_state = str(resolved_practice.get("state") or "")
         practices = [{
             "type": str(resolved_practice.get("type") or "primary"),
@@ -348,8 +350,12 @@ def _merge_public_doctor_rows(
         cc = [c for c in (seed_country, finder_country) if _country_bucket(c)]
         country = cc[0] if cc else (finder_country or seed_country or "—")
 
-    lat = float(seed.get("lat") or finder.get("lat") or 0.0)
-    lng = float(seed.get("lng") or finder.get("lng") or 0.0)
+    # Preserve a precise (seed-curated) coordinate, else the finder's; when neither knows the
+    # location keep it None so the map skips the pin instead of dropping it onto null island (0,0).
+    _lat_val = seed.get("lat") or finder.get("lat")
+    _lng_val = seed.get("lng") or finder.get("lng")
+    lat = float(_lat_val) if _lat_val is not None else None
+    lng = float(_lng_val) if _lng_val is not None else None
 
     endorsements: list[str] = []
     for src in (seed.get("endorsements"), finder.get("endorsements")):
@@ -715,7 +721,8 @@ def _submission_to_public_doctor(submission: Any) -> dict[str, Any]:
     """Map an approved :class:`DoctorSubmission` to a public-doctor row."""
     city = str(getattr(submission, "city", "") or "").strip() or "—"
     country = str(getattr(submission, "country", "") or "").strip().upper()[:2] or "—"
-    lat, lng = coords_for_city_country(city, country)
+    _coords = coords_for_city_country(city, country)
+    lat, lng = _coords if _coords is not None else (None, None)
     disease_slug = str(getattr(submission, "disease_slug", "") or "").strip().lower()
     diseases = [disease_slug] if disease_slug else []
     return {

@@ -97,7 +97,8 @@ export function DoctorsMap({ doctors, userLoc, onNav }: DoctorsMapProps) {
     let extended = false;
 
     for (const { doctor: d, practice } of pins) {
-      const latlng: L.LatLngExpression = [practice.lat, practice.lng];
+      // practicePins() already dropped pairs with non-finite coordinates, so these are real numbers.
+      const latlng: L.LatLngExpression = [practice.lat as number, practice.lng as number];
       const marker = L.marker(latlng, { icon: roleMarkerIcon(d.pubmedRole) });
       marker.bindPopup(buildPopupHtml(d, practice), { maxWidth: 240 });
       marker.on("popupopen", () => {

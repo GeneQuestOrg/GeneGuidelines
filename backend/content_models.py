@@ -196,8 +196,9 @@ class PracticeResponse(BaseModel):
     name: str
     address: str | None = None
     city: str
-    lat: float
-    lng: float
+    # None when the location is unknown — the map skips the pin instead of plotting a wrong default.
+    lat: float | None = None
+    lng: float | None = None
     website: str | None = None
     # Phase 1: real practice country + provenance. Default "" / "affiliation" / "low" keeps older
     # rows and fixtures valid while NPPES-sourced rows carry an authoritative address.
@@ -257,8 +258,9 @@ class PublicDoctorResponse(BaseModel):
     institution: str
     city: str
     country: str
-    lat: float
-    lng: float
+    # None when the location is unknown — the map skips the pin instead of plotting a wrong default.
+    lat: float | None = None
+    lng: float | None = None
     diseases: list[str]
     pubmedRole: Literal[
         "research_leader",

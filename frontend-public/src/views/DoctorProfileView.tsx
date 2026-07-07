@@ -116,7 +116,10 @@ export function DoctorProfileView({ slug, userLoc, onNav }: DoctorProfileViewPro
   }
 
   const nearest = nearestPractice(doctor, userLoc);
-  const km = userLoc != null ? haversineKm(userLoc, { lat: nearest.lat, lng: nearest.lng }) : null;
+  const km =
+    userLoc != null && nearest.lat != null && nearest.lng != null
+      ? haversineKm(userLoc, { lat: nearest.lat, lng: nearest.lng })
+      : null;
   const roleLabel = pubmedRoleLabel(doctor.pubmedRole);
   const evidence = doctor.evidence;
   const provenanceLabel = PROVENANCE_LABEL[addedViaOf(doctor)];

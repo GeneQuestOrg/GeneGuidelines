@@ -158,8 +158,14 @@ def _iso2_country_coords() -> dict[str, tuple[float, float]]:
     return out
 
 
-def coords_for_city_country(city: str, country: str) -> tuple[float, float]:
-    """Resolve map coordinates for a clinician card."""
+def coords_for_city_country(city: str, country: str) -> tuple[float, float] | None:
+    """Resolve approximate map coordinates for a clinician card.
+
+    Returns ``None`` when we know neither the city nor a usable country: placing such a clinician
+    at an arbitrary default (previously the Asia centroid) scattered thousands of unlocated PubMed
+    authors onto the wrong continent. ``None`` lets callers omit coordinates so the map simply skips
+    the pin (the clinician still appears in the list) instead of asserting a location we don't have.
+    """
     city_key = (city or "").strip()
     if city_key and city_key != "—":
         hit = _CITY_COORDS_LOWER.get(city_key.lower())
@@ -172,7 +178,6 @@ def coords_for_city_country(city: str, country: str) -> tuple[float, float]:
         if hit is not None:
             return hit
 
-    if iso2:
         try:
             from .flows.doctor_finder.country_continent_table import continent_for_iso_alpha2
         except ImportError:
@@ -182,4 +187,4 @@ def coords_for_city_country(city: str, country: str) -> tuple[float, float]:
         if continent and continent in _CONTINENT_CENTROIDS:
             return _CONTINENT_CENTROIDS[continent]
 
-    return _CONTINENT_CENTROIDS["Asia"]
+    return None

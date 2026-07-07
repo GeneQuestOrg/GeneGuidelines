@@ -23,3 +23,10 @@ def test_distinct_countries_get_distinct_coords() -> None:
     jp = coords_for_city_country("—", "JP")
     kr = coords_for_city_country("—", "KR")
     assert jp != kr
+
+
+def test_unknown_city_and_country_returns_none() -> None:
+    """Neither city nor country known => no coordinates (map skips the pin, no wrong-continent default)."""
+    assert coords_for_city_country("—", "—") is None
+    assert coords_for_city_country("Nowhereville", "") is None
+    assert coords_for_city_country("", "") is None
