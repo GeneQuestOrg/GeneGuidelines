@@ -24,7 +24,7 @@ export const parentCopy: AudienceCopy = {
       "Plain language. What to do now, which questions to ask, and where to find help.",
     doctorPersonaTitle: "Clinician",
     doctorPersonaSub:
-      "Full pathways, literature, dosing detail, and open PRs for review.",
+      "Full pathways, literature, dosing detail, and proposed updates for review.",
     skeletonNoticeTitle: "Skeleton coverage.",
     skeletonNoticeBody:
       "Sections exist but content is still minimal — a full AI guideline pipeline will follow in a later release.",
@@ -86,7 +86,7 @@ export const parentCopy: AudienceCopy = {
     openPrsTitle: "Updates in review",
     openPrsSub: (count) =>
       count === 0
-        ? "No open pull requests — the published guideline is current."
+        ? "No proposed updates — the published guideline is current."
         : `${count} proposed updates await specialist review.`,
     officialGuidelineTitle: "Official guideline (ground truth)",
     officialGuidelineSub: "Consensus document approved by the specialist network.",

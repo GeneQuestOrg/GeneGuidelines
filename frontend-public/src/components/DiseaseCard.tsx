@@ -47,7 +47,6 @@ export function DiseaseCard({ disease, onNav }: DiseaseCardProps) {
       <div className="d-card__meta">
         <span>{disease.doctorsCount} specialists</span>
         <span>{disease.trialsCount} trials</span>
-        {disease.openPRs > 0 ? <span>{disease.openPRs} open PRs</span> : null}
       </div>
     </a>
   );

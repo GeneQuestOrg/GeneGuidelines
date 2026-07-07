@@ -6,14 +6,14 @@ export const doctorCopy: AudienceCopy = {
     titleLine1: "Evidence-based guidelines for",
     titleEmphasis: "rare genetic disease.",
     subtitle:
-      "Specialist-reviewed pathways, literature, and PR workflows — built for clinical practice.",
+      "Specialist-reviewed pathways, literature, and proposed-update workflows — built for clinical practice.",
     searchPlaceholder: "Search diseases, genes, OMIM, or phenotype…",
     aboutLinkLabel: "Why we built this",
     browseCta: "Browse diseases",
     researchCta: "Start research",
     newDiseaseTitle: "Add a new disease",
     newDiseaseSub:
-      "Launch the PubMed pipeline to draft sections, surface experts, and open PRs for consortium review.",
+      "Launch the PubMed pipeline to draft sections, surface experts, and open proposed updates for consortium review.",
     newDiseaseCta: "Start research →",
     diseasesSectionTitle: "Disease catalog",
   },
@@ -23,7 +23,7 @@ export const doctorCopy: AudienceCopy = {
     parentPersonaSub: "Plain-language pathway and family resources.",
     doctorPersonaTitle: "Clinician",
     doctorPersonaSub:
-      "Full guideline text, diagnostic algorithms, dosing, literature trace, and PR queue.",
+      "Full guideline text, diagnostic algorithms, dosing, literature trace, and proposed-update queue.",
     skeletonNoticeTitle: "Skeleton coverage.",
     skeletonNoticeBody:
       "Minimal sections only — run the full pipeline before citing in clinical decisions.",
@@ -56,7 +56,7 @@ export const doctorCopy: AudienceCopy = {
     ],
     redFlagsTitle: "Documentation red flags",
     redFlags: [
-      { text: "Guideline citation without checking open PRs for superseding text." },
+      { text: "Guideline citation without checking proposed updates for superseding text." },
       { text: "Off-label therapy without published evidence in this disease." },
     ],
     doctorsTitle: "PubMed-ranked experts",
@@ -66,14 +66,14 @@ export const doctorCopy: AudienceCopy = {
     trialsSub: (count) => `${count} trials with recruitment status tracked.`,
     trialsEmpty: "No trials indexed.",
     guidelinesTitle: "Living guideline document",
-    guidelinesSub: "Section-level provenance, citations, and in-context PR diffs.",
+    guidelinesSub: "Section-level provenance, citations, and in-context proposed-update diffs.",
     guidelinesCta: "Open full document",
     myCaseCta: "🔒 My case",
     notifyCta: "🔔 Notify me",
     notifyPendingCta: "🔔 Pending confirmation",
     notifySubscribedCta: "🔔 Subscribed",
     synthesisCta: "📄 Synthesis + sources",
-    openPrsTitle: "Open pull requests",
+    openPrsTitle: "Updates in review",
     openPrsSub: (count) =>
       count === 0 ? "No drafts pending review." : `${count} drafts awaiting reviewer sign-off.`,
     officialGuidelineTitle: "Current consensus guideline",

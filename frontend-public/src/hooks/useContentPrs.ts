@@ -29,7 +29,7 @@ export function useContentPrs(diseaseSlug: string): ContentPrsState {
         }
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : "Could not load pull requests.");
+          setError(err instanceof Error ? err.message : "Could not load proposed updates.");
           setPrs([]);
         }
       } finally {

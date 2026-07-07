@@ -93,9 +93,6 @@ export function HomeView({ view, onNav }: HomeViewProps) {
             <span>
               <b>{stats.recruitingTrialCount}</b> recruiting trials
             </span>
-            <span>
-              <b>{stats.openPrCount}</b> open PRs
-            </span>
           </div>
         ) : null}
       </header>

@@ -32,7 +32,7 @@ export function useGuidelinePr(prId: string | undefined): GuidelinePrState {
         }
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : "Could not load pull request.");
+          setError(err instanceof Error ? err.message : "Could not load proposed update.");
           setPr(null);
         }
       } finally {

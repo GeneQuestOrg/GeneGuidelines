@@ -93,7 +93,7 @@ export function GuidelineCitationRail({
               peer-reviewed article{pr.papers.length === 1 ? "" : "s"}.
             </p>
             {items.length === 0 ? (
-              <p className="gl__cits-empty">No indexed citations for this PR.</p>
+              <p className="gl__cits-empty">No indexed citations for this proposed update.</p>
             ) : (
               <ol className="gl__cits">
                 {items.map(({ pmid, citation }, i) =>
