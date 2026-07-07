@@ -8,6 +8,7 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import logging
+import time
 from collections import Counter
 from typing import Any, Callable
 
@@ -459,24 +460,38 @@ async def run_async(context: dict[str, Any]) -> dict[str, Any]:
     remaining = list(tasks)
 
     if ror_enabled and remaining:
+        t0 = time.monotonic()
+        before = len(patches)
         remaining = await _run_ror_stage(
             remaining,
             patches,
             concurrency=DOCTOR_FINDER_GEO_ROR_CONCURRENCY,
             min_score=DOCTOR_FINDER_GEO_ROR_MIN_SCORE,
         )
+        log.info(
+            "affiliation_georesolve: ror stage resolved %d/%d in %.1fs (%d remaining)",
+            len(patches) - before, total, time.monotonic() - t0, len(remaining),
+        )
         _emit_geo_progress(context, done=len(patches), total=total)
 
     if nominatim_enabled and remaining:
+        t0 = time.monotonic()
+        before = len(patches)
         remaining = await _run_nominatim_stage(
             remaining,
             patches,
             max_lookups=DOCTOR_FINDER_GEO_NOMINATIM_MAX_LOOKUPS,
             min_interval_sec=DOCTOR_FINDER_GEO_NOMINATIM_MIN_INTERVAL_SEC,
         )
+        log.info(
+            "affiliation_georesolve: nominatim stage resolved %d/%d in %.1fs (%d remaining)",
+            len(patches) - before, total, time.monotonic() - t0, len(remaining),
+        )
         _emit_geo_progress(context, done=len(patches), total=total)
 
     if brave_key and remaining and DOCTOR_FINDER_GEO_BRAVE_MAX_LOOKUPS > 0:
+        t0 = time.monotonic()
+        before = len(patches)
         remaining = await _run_brave_stage(
             remaining,
             patches,
@@ -485,6 +500,10 @@ async def run_async(context: dict[str, Any]) -> dict[str, Any]:
             emit_fn=emit_fn,
             event_queue=event_queue,
             max_lookups=DOCTOR_FINDER_GEO_BRAVE_MAX_LOOKUPS,
+        )
+        log.info(
+            "affiliation_georesolve: brave stage resolved %d/%d in %.1fs (cap=%d)",
+            len(patches) - before, total, time.monotonic() - t0, DOCTOR_FINDER_GEO_BRAVE_MAX_LOOKUPS,
         )
 
     _emit_geo_progress(context, done=total, total=total)

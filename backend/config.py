@@ -418,11 +418,13 @@ DOCTOR_FINDER_GEO_MAX_AFFILIATIONS = max(1, min(10000, DOCTOR_FINDER_GEO_MAX_AFF
 
 # Brave Search + LLM geo fallback (df-20, last resort). Optional — unset key skips the step.
 BRAVE_API_KEY = (os.environ.get("BRAVE_API_KEY") or "").strip() or None
-# Separate, deliberately small cap on the PAID Brave stage: even when thousands of affiliations
-# enter the pipeline, Brave runs for at most this many that ROR + Nominatim could not resolve, so
-# cost stays bounded (~$5 / 1000 queries) regardless of DOCTOR_FINDER_GEO_MAX_AFFILIATIONS. 0 = off.
+# Separate, deliberately small cap on the PAID Brave stage. Each Brave lookup also drives one LLM
+# call (~seconds, with schema retries), so this is the run-TIME governor as much as the cost one:
+# ROR + Nominatim (free, fast) do the bulk, and Brave only mops up the few most-frequent strings
+# they both missed. Kept small (30) so a reseed stays a ~few-minute job, not a ~40-min LLM tail,
+# regardless of DOCTOR_FINDER_GEO_MAX_AFFILIATIONS. 0 = off.
 _DFG_BRAVE_MAX = (os.environ.get("DOCTOR_FINDER_GEO_BRAVE_MAX_LOOKUPS") or "").strip()
-DOCTOR_FINDER_GEO_BRAVE_MAX_LOOKUPS = int(_DFG_BRAVE_MAX) if _DFG_BRAVE_MAX else 200
+DOCTOR_FINDER_GEO_BRAVE_MAX_LOOKUPS = int(_DFG_BRAVE_MAX) if _DFG_BRAVE_MAX else 30
 DOCTOR_FINDER_GEO_BRAVE_MAX_LOOKUPS = max(0, min(2000, DOCTOR_FINDER_GEO_BRAVE_MAX_LOOKUPS))
 _DFG_GEO_CONC = (os.environ.get("DOCTOR_FINDER_GEO_BRAVE_CONCURRENCY") or "").strip()
 DOCTOR_FINDER_GEO_BRAVE_CONCURRENCY = int(_DFG_GEO_CONC) if _DFG_GEO_CONC else 4
