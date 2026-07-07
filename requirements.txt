@@ -24,6 +24,10 @@ simpleeval
 # Country lookup (Doctor Finder geo enrichment)
 pycountry>=24.0
 
+# Offline city gazetteer (bundled GeoNames data) — places clinicians whose PubMed affiliation
+# gave a city but no country ("Moscow", "Wuhan City", "Daejeon 34141") on the public doctor map.
+geonamescache>=2.0
+
 # PDF text extraction for private-context uploads (hospital discharge summaries).
 # Runs locally; the original bytes never leave the server. Gemma 4 then strips
 # PII before any text goes to the synthesis model.

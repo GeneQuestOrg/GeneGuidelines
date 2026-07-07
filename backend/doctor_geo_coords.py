@@ -1,12 +1,18 @@
 """Map city / ISO-2 country codes to approximate lat/lng for the public doctor directory."""
 from __future__ import annotations
 
+import re
 from functools import lru_cache
 
 try:
     import pycountry
 except ImportError:  # pragma: no cover
     pycountry = None  # type: ignore[assignment]
+
+try:
+    import geonamescache
+except ImportError:  # pragma: no cover
+    geonamescache = None  # type: ignore[assignment]
 
 _CONTINENT_CENTROIDS: dict[str, tuple[float, float]] = {
     "Africa": (8.0, 20.0),
@@ -158,25 +164,101 @@ def _iso2_country_coords() -> dict[str, tuple[float, float]]:
     return out
 
 
-def coords_for_city_country(city: str, country: str) -> tuple[float, float] | None:
-    """Resolve approximate map coordinates for a clinician card.
+def _norm_city_name(city: str) -> str:
+    """Lowercase a city string and strip postal codes / punctuation for gazetteer lookup."""
+    s = (city or "").strip().lower()
+    s = re.sub(r"\d+", " ", s)          # postal codes ("Daejeon 34141", "6220 Rabat")
+    s = re.sub(r"[^\w\s\-]", " ", s)    # punctuation
+    s = re.sub(r"\s+", " ", s).strip()
+    return s
 
-    Returns ``None`` when we know neither the city nor a usable country: placing such a clinician
-    at an arbitrary default (previously the Asia centroid) scattered thousands of unlocated PubMed
-    authors onto the wrong continent. ``None`` lets callers omit coordinates so the map simply skips
-    the pin (the clinician still appears in the list) instead of asserting a location we don't have.
+
+@lru_cache(maxsize=1)
+def _city_gazetteer() -> tuple[dict[str, tuple[float, float, str]], dict[tuple[str, str], tuple[float, float]]]:
+    """Build a GeoNames city index for placing clinicians whose affiliation gave a city but no country.
+
+    Returns ``(by_name, by_name_country)`` where the global ``by_name`` keeps the highest-population
+    place per name (so ambiguous names like "Moscow"/"Washington"/"Cambridge" resolve to the dominant
+    city) and ``by_name_country`` lets callers that already know the country avoid a same-name city on
+    another continent. Primary GeoNames names only (no alternate names) — the extra localized aliases
+    ~10x the index for +2% coverage that the hand-curated ``_CITY_COORDS`` above already handles.
     """
+    by_name: dict[str, tuple[float, float, str]] = {}
+    by_name_country: dict[tuple[str, str], tuple[float, float]] = {}
+    if geonamescache is None:  # pragma: no cover - dependency always present in prod
+        return by_name, by_name_country
+    name_pop: dict[str, int] = {}
+    nc_pop: dict[tuple[str, str], int] = {}
+    for c in geonamescache.GeonamesCache().get_cities().values():
+        try:
+            lat = float(c["latitude"])
+            lng = float(c["longitude"])
+        except (KeyError, TypeError, ValueError):
+            continue
+        cc = str(c.get("countrycode") or "").upper()
+        pop = int(c.get("population") or 0)
+        k = _norm_city_name(str(c.get("name") or ""))
+        if len(k) < 3 or not any(ch.isalpha() for ch in k):
+            continue
+        if pop > name_pop.get(k, -1):
+            name_pop[k] = pop
+            by_name[k] = (lat, lng, cc)
+        if cc:
+            key = (k, cc)
+            if pop > nc_pop.get(key, -1):
+                nc_pop[key] = pop
+                by_name_country[key] = (lat, lng)
+    return by_name, by_name_country
+
+
+def _gazetteer_lookup(city: str, iso2: str | None) -> tuple[float, float, str] | None:
+    """Resolve a city to (lat, lng, iso2) via GeoNames, scoped to ``iso2`` when the country is known.
+
+    When the country is known we ONLY accept a same-country match (else return None so the caller
+    falls back to the country centroid) — this prevents a US "Cambridge" from landing in the UK.
+    When the country is unknown (the bucket this feature targets) we take the global highest-population
+    match and report its country so the caller can backfill it.
+    """
+    by_name, by_name_country = _city_gazetteer()
+
+    def _try(key: str) -> tuple[float, float, str] | None:
+        if len(key) < 3:
+            return None
+        if iso2:
+            e = by_name_country.get((key, iso2))
+            return (e[0], e[1], iso2) if e is not None else None
+        return by_name.get(key)
+
+    k = _norm_city_name(city)
+    hit = _try(k)
+    if hit is None and k.endswith(" city"):
+        hit = _try(k[:-5].strip())
+    return hit
+
+
+def resolve_location(city: str, country: str) -> tuple[float, float, str | None] | None:
+    """Approximate map coords for a clinician plus the resolved ISO-2 country (if any), or None.
+
+    Order of trust: hand-curated ``_CITY_COORDS`` → GeoNames gazetteer (country-scoped when the
+    country is known, else global highest-population) → country override/centroid. Returns ``None``
+    when neither a city nor a usable country is known, so the map omits the pin instead of guessing.
+    The third tuple element lets callers backfill a country that was missing on the source record.
+    """
+    iso2 = normalize_country_iso2(country)
+
     city_key = (city or "").strip()
     if city_key and city_key != "—":
         hit = _CITY_COORDS_LOWER.get(city_key.lower())
         if hit is not None:
-            return hit
+            return (hit[0], hit[1], iso2)
+        gaz = _gazetteer_lookup(city_key, iso2)
+        if gaz is not None:
+            return gaz
 
-    iso2 = normalize_country_iso2(country)
     if iso2:
         hit = _iso2_country_coords().get(iso2)
         if hit is not None:
-            return hit
+            return (hit[0], hit[1], iso2)
 
         try:
             from .flows.doctor_finder.country_continent_table import continent_for_iso_alpha2
@@ -185,6 +267,18 @@ def coords_for_city_country(city: str, country: str) -> tuple[float, float] | No
 
         continent = continent_for_iso_alpha2(iso2)
         if continent and continent in _CONTINENT_CENTROIDS:
-            return _CONTINENT_CENTROIDS[continent]
+            centroid = _CONTINENT_CENTROIDS[continent]
+            return (centroid[0], centroid[1], iso2)
 
     return None
+
+
+def coords_for_city_country(city: str, country: str) -> tuple[float, float] | None:
+    """Approximate map coordinates for a clinician card, or ``None`` when the location is unknown.
+
+    Thin wrapper over :func:`resolve_location` for callers that only need coordinates (see that
+    function for the resolution order and the ``None`` semantics that keep unlocated clinicians off
+    the map instead of at an arbitrary default).
+    """
+    loc = resolve_location(city, country)
+    return None if loc is None else (loc[0], loc[1])

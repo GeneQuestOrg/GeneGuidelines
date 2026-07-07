@@ -10,12 +10,12 @@ from typing import Any, Literal
 
 try:
     from .config import BACKEND_DIR
-    from .content_db import get_disease_by_slug, list_diseases, list_diseases_catalog, normalize_disease_slug
-    from .doctor_geo_coords import coords_for_city_country
+    from .content_db import get_disease_by_slug, list_diseases_catalog, normalize_disease_slug
+    from .doctor_geo_coords import coords_for_city_country, resolve_location
 except ImportError:
     from config import BACKEND_DIR
-    from content_db import get_disease_by_slug, list_diseases, list_diseases_catalog, normalize_disease_slug
-    from doctor_geo_coords import coords_for_city_country
+    from content_db import get_disease_by_slug, list_diseases_catalog, normalize_disease_slug
+    from doctor_geo_coords import coords_for_city_country, resolve_location
 
 CONTENT_DOCTORS_PATH = BACKEND_DIR / "content_doctors.json"
 
@@ -117,8 +117,15 @@ def _entry_to_public_doctor(
         )
         if explicit_city and (not city or city == "—"):
             city = explicit_city
-    _coords = coords_for_city_country(city, country)
-    lat, lng = _coords if _coords is not None else (None, None)
+    _loc = resolve_location(city, country)
+    if _loc is not None:
+        lat, lng, _resolved_iso2 = _loc
+        # Backfill a country the source record lacked (bucket B: a real city, no country) so the
+        # card + country filter stay consistent with the pin the gazetteer just placed.
+        if _resolved_iso2 and not (len(country) == 2 and country.isalpha()):
+            country = _resolved_iso2
+    else:
+        lat, lng = None, None
     key_papers = entry.get("key_papers") or []
     publications = [
         {
