@@ -3,6 +3,11 @@ import { userLocationFromCity } from "./config/cities";
 import { useHashRouter } from "./router/useHashRouter";
 import { useTweaks } from "./hooks/useTweaks";
 import { JudgesBanner } from "./components/JudgesBanner";
+import {
+  JB_SESSION_FROM_KAGGLE_KEY,
+  JB_STATE_KEY,
+  judgesBannerRelevant,
+} from "./components/judgesBannerState";
 import { PublicHeader } from "./components/PublicHeader";
 import { AppFooter } from "./components/AppFooter";
 import { ErrorBoundary } from "./components/ErrorBoundary";
@@ -53,6 +58,20 @@ function AppShell() {
     }
     return new URLSearchParams(hash.slice(queryStart + 1)).get("from") === "kaggle";
   }, [hash]);
+  /* The Kaggle juror banner is for judges only — render it for a ?from=kaggle arrival, a
+     remembered Kaggle session, or a prior explicit interaction. A fresh family/clinician visitor
+     never sees a hackathon ribbon on the public site. */
+  const showJudgesBanner = useMemo(() => {
+    let stored: string | null = null;
+    let sessionFromKaggle = false;
+    try {
+      stored = localStorage.getItem(JB_STATE_KEY);
+      sessionFromKaggle = sessionStorage.getItem(JB_SESSION_FROM_KAGGLE_KEY) === "1";
+    } catch {
+      /* storage blocked → treat as no prior context */
+    }
+    return judgesBannerRelevant({ stored, fromKaggle, sessionFromKaggle });
+  }, [fromKaggle]);
   const { tweaks, setTweak } = useTweaks();
   const { account, isAuthenticated } = useAccountContext();
   const { viewAs } = useViewAsContext();
@@ -83,7 +102,9 @@ function AppShell() {
 
   return (
     <div className="app-shell">
-      <JudgesBanner route={route} onNav={navigate} fromKaggle={fromKaggle} />
+      {showJudgesBanner ? (
+        <JudgesBanner route={route} onNav={navigate} fromKaggle={fromKaggle} />
+      ) : null}
       <PublicHeader
         route={route}
         onNav={navigate}

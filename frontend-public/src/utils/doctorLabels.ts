@@ -156,3 +156,44 @@ export function reachabilityLabel(r: Reachability): string {
       return "";
   }
 }
+
+// US state / territory abbreviations the finder's geo step sometimes mis-stores as a country.
+const US_STATE_ABBREVS = new Set([
+  "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA", "HI", "ID", "IL", "IN", "IA",
+  "KS", "KY", "LA", "ME", "MD", "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ",
+  "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC", "SD", "TN", "TX", "UT", "VT",
+  "VA", "WA", "WV", "WI", "WY", "DC",
+]);
+
+/**
+ * Honest, clean "where they practise" label. Prefers a real NPPES practice (City, ST) over the
+ * noisy PubMed-affiliation guess, and scrubs the classic artifacts: a US state abbrev parsed as a
+ * country ("Washington, MD" → "Washington, DC"), and "City, City" duplication ("MD, MD" → "MD").
+ */
+export function doctorLocation(doctor: PublicDoctor): string {
+  const nppes = (doctor.practices ?? []).find((p) => p.source === "nppes" && p.city);
+  if (nppes) {
+    const st = (nppes.state || "").trim().toUpperCase();
+    if (st) return `${nppes.city}, ${st}`;
+    return nppes.country ? `${nppes.city}, ${nppes.country}` : nppes.city;
+  }
+  const city = (doctor.city || "").trim();
+  const country = (doctor.country || "").trim();
+  const cityUP = city.toUpperCase();
+  const countryUP = country.toUpperCase();
+  const parts: string[] = [];
+  if (city && city !== "—") parts.push(city);
+  if (
+    country &&
+    country !== "—" &&
+    countryUP !== cityUP &&
+    !US_STATE_ABBREVS.has(countryUP)
+  ) {
+    // A real country/ISO token distinct from the city.
+    parts.push(country);
+  } else if (US_STATE_ABBREVS.has(countryUP) && !US_STATE_ABBREVS.has(cityUP)) {
+    // The "country" is actually a US state → render "City, ST".
+    parts.push(countryUP);
+  }
+  return parts.length > 0 ? parts.join(", ") : "Location not listed";
+}

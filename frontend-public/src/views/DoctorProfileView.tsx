@@ -12,7 +12,7 @@ import { useDiseaseCatalog } from "../hooks/useDiseaseCatalog";
 import { useDoctor } from "../hooks/useDoctor";
 import { useRelatedTrials } from "../hooks/useRelatedTrials";
 import { addedViaOf } from "../utils/doctorFilters";
-import { pubmedRoleLabel, tierForDisease } from "../utils/doctorLabels";
+import { doctorLocation, pubmedRoleLabel, tierForDisease } from "../utils/doctorLabels";
 import { haversineKm } from "../utils/geo";
 import {
   type LocalParentRec,
@@ -149,7 +149,7 @@ export function DoctorProfileView({ slug, userLoc, onNav }: DoctorProfileViewPro
               )}
             </div>
             <div className="dprofile__inst">
-              {doctor.institution} · {doctor.city}, {doctor.country}
+              {doctor.institution} · {doctorLocation(doctor)}
             </div>
             <div className="dprofile__chips">
               {provenanceLabel ? (

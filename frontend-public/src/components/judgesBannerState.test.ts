@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   isBannerState,
+  judgesBannerRelevant,
   resolveInitialState,
   shouldRememberKaggleSession,
 } from "./judgesBannerState";
@@ -65,6 +66,32 @@ describe("resolveInitialState", () => {
     expect(
       resolveInitialState({ stored: "garbage", fromKaggle: true, sessionFromKaggle: false }),
     ).toBe("expanded");
+  });
+});
+
+describe("judgesBannerRelevant", () => {
+  it("is false for a fresh family visitor (no Kaggle context)", () => {
+    expect(
+      judgesBannerRelevant({ stored: null, fromKaggle: false, sessionFromKaggle: false }),
+    ).toBe(false);
+  });
+
+  it("is true on a ?from=kaggle arrival, a remembered session, or a prior interaction", () => {
+    expect(
+      judgesBannerRelevant({ stored: null, fromKaggle: true, sessionFromKaggle: false }),
+    ).toBe(true);
+    expect(
+      judgesBannerRelevant({ stored: null, fromKaggle: false, sessionFromKaggle: true }),
+    ).toBe(true);
+    expect(
+      judgesBannerRelevant({ stored: "pill", fromKaggle: false, sessionFromKaggle: false }),
+    ).toBe(true);
+  });
+
+  it("ignores an invalid stored value", () => {
+    expect(
+      judgesBannerRelevant({ stored: "garbage", fromKaggle: false, sessionFromKaggle: false }),
+    ).toBe(false);
   });
 });
 

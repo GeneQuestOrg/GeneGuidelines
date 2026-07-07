@@ -98,6 +98,7 @@ def _specialty_from_match(match: nppes.NppesMatch) -> dict[str, Any] | None:
             "name": match.org_name or "Practice location (NPPES)",
             "address": match.address_1 or None,
             "city": match.city or "—",
+            "state": match.state or "",
             "country": "US",
             "source": "nppes",
             "confidence": match.confidence,

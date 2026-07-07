@@ -1,5 +1,6 @@
 import { type PublicDoctor, isWorkflowDoctorSource } from "../types/doctor";
 import {
+  doctorLocation,
   pubmedRoleLabel,
   reachabilityLabel,
   recencyBandOf,
@@ -56,7 +57,7 @@ export function DoctorCard({ doctor, km, compact = false, onNav }: DoctorCardPro
         <div className="doc__spec doc__spec--unverified">Specialty not verified</div>
       )}
       <div className="doc__inst">
-        {doctor.institution} · {doctor.city}, {doctor.country}
+        {doctor.institution} · {doctorLocation(doctor)}
       </div>
       {!compact && reachText ? (
         <div

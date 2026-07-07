@@ -42,6 +42,19 @@ export function shouldRememberKaggleSession(stored: string | null, fromKaggle: b
   return fromKaggle && !isBannerState(stored);
 }
 
+/** Whether the Kaggle juror banner should render at all.
+
+    It is relevant only to judges: a `?from=kaggle` arrival, a remembered Kaggle session, or a
+    prior explicit interaction (stored state). A fresh family/clinician visitor with no Kaggle
+    context sees nothing — the public site is not a hackathon page. */
+export function judgesBannerRelevant({
+  stored,
+  fromKaggle,
+  sessionFromKaggle,
+}: ResolveInitialStateInput): boolean {
+  return fromKaggle || sessionFromKaggle || isBannerState(stored);
+}
+
 /** Pure resolver for the banner's initial state. */
 export function resolveInitialState({
   stored,

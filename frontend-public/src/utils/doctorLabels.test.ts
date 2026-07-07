@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { PUBLIC_DOCTORS } from "../data/publicDoctors";
 import type { PublicDoctor } from "../types/doctor";
-import { pubmedRoleLabel, tierForDisease } from "./doctorLabels";
+import { doctorLocation, pubmedRoleLabel, tierForDisease } from "./doctorLabels";
 
 const bySlug = (slug: string): PublicDoctor => {
   const doctor = PUBLIC_DOCTORS.find((d) => d.slug === slug);
@@ -39,5 +39,38 @@ describe("pubmedRoleLabel", () => {
     expect(pubmedRoleLabel("research_participant")).toBe("Contributed");
     expect(pubmedRoleLabel("case_study_author")).toBe("Case studies");
     expect(pubmedRoleLabel("unknown")).toBe("Unknown");
+  });
+});
+
+describe("doctorLocation", () => {
+  const base = PUBLIC_DOCTORS[0] as PublicDoctor;
+
+  it("prefers a real NPPES practice (City, ST) over the noisy top-level fields", () => {
+    const d: PublicDoctor = {
+      ...base, city: "WASHINGTON", country: "MD",
+      practices: [{ type: "primary", name: "NIH", city: "Washington", state: "DC",
+        country: "US", lat: 0, lng: 0, source: "nppes", confidence: "high" }],
+    };
+    expect(doctorLocation(d)).toBe("Washington, DC");
+  });
+
+  it("drops a US-state-abbrev mis-stored as country and renders City, ST", () => {
+    const d: PublicDoctor = { ...base, city: "Bethesda", country: "MD", practices: [] };
+    expect(doctorLocation(d)).toBe("Bethesda, MD");
+  });
+
+  it("collapses City, City duplication ('MD, MD' → 'MD')", () => {
+    const d: PublicDoctor = { ...base, city: "MD", country: "MD", practices: [] };
+    expect(doctorLocation(d)).toBe("MD");
+  });
+
+  it("keeps a real ISO country distinct from the city", () => {
+    const d: PublicDoctor = { ...base, city: "Rome", country: "IT", practices: [] };
+    expect(doctorLocation(d)).toBe("Rome, IT");
+  });
+
+  it("says location not listed when nothing usable is present", () => {
+    const d: PublicDoctor = { ...base, city: "—", country: "—", practices: [] };
+    expect(doctorLocation(d)).toBe("Location not listed");
   });
 });

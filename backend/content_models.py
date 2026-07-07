@@ -202,6 +202,7 @@ class PracticeResponse(BaseModel):
     # Phase 1: real practice country + provenance. Default "" / "affiliation" / "low" keeps older
     # rows and fixtures valid while NPPES-sourced rows carry an authoritative address.
     country: str = ""
+    state: str = ""  # US state (USPS 2-letter) when known, for an honest "City, ST" label.
     source: Literal["nppes", "nil", "clinic_llm", "curated", "affiliation"] = "affiliation"
     confidence: Literal["high", "medium", "low"] = "low"
 

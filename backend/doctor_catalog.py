@@ -148,11 +148,13 @@ def _entry_to_public_doctor(
         p_city = str(resolved_practice.get("city") or city)
         p_country = str(resolved_practice.get("country") or country)
         p_lat, p_lng = coords_for_city_country(p_city, p_country)
+        p_state = str(resolved_practice.get("state") or "")
         practices = [{
             "type": str(resolved_practice.get("type") or "primary"),
             "name": str(resolved_practice.get("name") or affiliation or "Practice location"),
             "address": resolved_practice.get("address"),
             "city": p_city,
+            "state": p_state,
             "country": p_country,
             "lat": p_lat,
             "lng": p_lng,
@@ -257,6 +259,14 @@ def _merge_evidence_dicts(seed_ev: dict[str, Any], finder_ev: dict[str, Any]) ->
     }
 
 
+def _nppes_practice(row: dict[str, Any]) -> dict[str, Any] | None:
+    """The row's NPPES-sourced practice (authoritative government address), if any."""
+    for p in row.get("practices") or []:
+        if isinstance(p, dict) and str(p.get("source") or "") == "nppes" and p.get("city"):
+            return p
+    return None
+
+
 def _merge_publication_lists(seed_pubs: list[Any], finder_pubs: list[Any]) -> list[dict[str, Any]]:
     by_pmid: dict[str, dict[str, Any]] = {}
     for pub in (seed_pubs or []) + (finder_pubs or []):
@@ -315,15 +325,28 @@ def _merge_public_doctor_rows(
     finder_inst = str(finder.get("institution") or "").strip()
     institution = finder_inst if len(finder_inst) > len(seed_inst) else (seed_inst or finder_inst)
 
+    # Prefer a clean, authoritative location. An NPPES-sourced practice (real government address)
+    # beats a PubMed-affiliation guess, and a clean ISO2 country beats a US-state-abbrev artifact
+    # ("MD") or "—". This stops the dedup merge from regressing "Washington, US" to "WASHINGTON, MD".
+    seed_pr = _nppes_practice(seed)
+    finder_pr = _nppes_practice(finder)
+    authoritative = seed_pr or finder_pr
+
     seed_city = str(seed.get("city") or "").strip()
     finder_city = str(finder.get("city") or "").strip()
-    city = finder_city if seed_city in {"", "—"} else seed_city
-    if not city:
-        city = finder_city or seed_city or "—"
-
     seed_country = str(seed.get("country") or "").strip()
     finder_country = str(finder.get("country") or "").strip()
-    country = finder_country or seed_country or "—"
+
+    if authoritative:
+        city = str(authoritative.get("city") or "").strip() or finder_city or seed_city or "—"
+        country = str(authoritative.get("country") or "").strip() or "—"
+    else:
+        city = finder_city if seed_city in {"", "—"} else seed_city
+        if not city:
+            city = finder_city or seed_city or "—"
+        # A clean 2-letter ISO country wins over a state-abbrev/"—" bucket.
+        cc = [c for c in (seed_country, finder_country) if _country_bucket(c)]
+        country = cc[0] if cc else (finder_country or seed_country or "—")
 
     lat = float(seed.get("lat") or finder.get("lat") or 0.0)
     lng = float(seed.get("lng") or finder.get("lng") or 0.0)
@@ -355,11 +378,15 @@ def _merge_public_doctor_rows(
         **(finder.get("experienceByDisease") if isinstance(finder.get("experienceByDisease"), dict) else {}),
         **(seed.get("experienceByDisease") if isinstance(seed.get("experienceByDisease"), dict) else {}),
     }
-    practices = (
-        seed.get("practices")
-        if isinstance(seed.get("practices"), list) and seed.get("practices")
-        else finder.get("practices")
-    ) or []
+    # An NPPES practice (authoritative address) wins; else curated seed practices; else finder's.
+    if authoritative is not None:
+        practices = [authoritative]
+    else:
+        practices = (
+            seed.get("practices")
+            if isinstance(seed.get("practices"), list) and seed.get("practices")
+            else finder.get("practices")
+        ) or []
     # Dedup like publications/endorsements above: the global directory self-merges the same
     # seed row once per disease, so a plain concat would multiply each recommendation.
     parent_recs: list[dict[str, Any]] = []

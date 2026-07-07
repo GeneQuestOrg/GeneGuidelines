@@ -72,6 +72,7 @@ export interface Practice {
   readonly website?: string;
   /** Phase 1: real practice country + provenance (e.g. an NPPES LOCATION address). */
   readonly country?: string;
+  readonly state?: string;
   readonly source?: "nppes" | "nil" | "clinic_llm" | "curated" | "affiliation";
   readonly confidence?: "high" | "medium" | "low";
 }
