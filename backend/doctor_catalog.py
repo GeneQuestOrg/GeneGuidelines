@@ -222,6 +222,22 @@ def _canonical_name_key(display_name: str) -> str:
     return s
 
 
+def _loose_name_key(display_name: str) -> str:
+    """First + last name token only, dropping middle names/initials.
+
+    PubMed renders the same person inconsistently ("Edward Hsiao" vs "Edward C Hsiao" vs
+    "Edward C. Hsiao"), which defeats the exact ``_canonical_name_key`` match and leaves a curated
+    seed row un-merged next to its finder row (flagship experts appearing twice). This looser key
+    collapses those variants. Used only as a SECONDARY match tier, and only when both keys have a
+    real first + last token (single-token names are too collision-prone to loose-match).
+    """
+    canon = _canonical_name_key(display_name)
+    tokens = [t for t in canon.split(" ") if t]
+    if len(tokens) < 2:
+        return ""
+    return f"{tokens[0]} {tokens[-1]}"
+
+
 def _pick_pubmed_role(a: str, b: str) -> str:
     ra = (a or "unknown").strip()
     rb = (b or "unknown").strip()
@@ -425,6 +441,7 @@ def _merge_public_doctor_rows(
 def _finder_index_matching_seed(seed: dict[str, Any], finder_docs: list[dict[str, Any]], used: set[int]) -> int | None:
     sslug = str(seed.get("slug") or "").strip().lower()
     snk = _canonical_name_key(str(seed.get("name") or ""))
+    slk = _loose_name_key(str(seed.get("name") or ""))
     for i, f in enumerate(finder_docs):
         if i in used:
             continue
@@ -434,6 +451,13 @@ def _finder_index_matching_seed(seed: dict[str, Any], finder_docs: list[dict[str
         if i in used:
             continue
         if snk and _canonical_name_key(str(f.get("name") or "")) == snk:
+            return i
+    # Secondary tier: collapse middle-initial variants ("Edward Hsiao" ~ "Edward C Hsiao") so a
+    # curated seed expert merges with their finder row instead of appearing twice.
+    for i, f in enumerate(finder_docs):
+        if i in used:
+            continue
+        if slk and _loose_name_key(str(f.get("name") or "")) == slk:
             return i
     return None
 
@@ -456,12 +480,80 @@ def _ensure_experience_key(row: dict[str, Any], disease_slug: str) -> None:
     row["experienceByDisease"] = experience
 
 
+# US state / territory abbreviations that the finder geo step sometimes mis-stores in the country
+# field (e.g. "MD" for Maryland). Treated as "country unknown" for dedup so a state-vs-ISO2 quirk
+# doesn't keep the same person split.
+_US_STATE_ABBREVS = frozenset({
+    "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA", "HI", "ID", "IL", "IN", "IA",
+    "KS", "KY", "LA", "ME", "MD", "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ",
+    "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC", "SD", "TN", "TX", "UT", "VT",
+    "VA", "WA", "WV", "WI", "WY", "DC",
+})
+
+
+def _country_bucket(country: str) -> str:
+    """Normalize a country value for dedup: dirty/unknown (empty, "—", a US state abbrev) → ""."""
+    c = (country or "").strip().upper()
+    if not c or c == "—" or c in _US_STATE_ABBREVS:
+        return ""
+    return c[:2] if len(c) >= 2 and c[:2].isalpha() else ""
+
+
+def _dedup_finder_docs(finder_docs: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Collapse finder rows that are the same real person split across author clusters.
+
+    PubMed disambiguation fragments one person into several ``author_key`` clusters (ORCID-keyed +
+    initials-keyed), so "Michael T Collins" / "Alison Boyce" appeared 2–3× in the public list. We
+    merge rows sharing the same loose name key (first+last), UNLESS both carry a real, *different*
+    ISO country (then they're probably distinct same-surname people). The finder's geo step often
+    mis-stores a US state abbrev ("MD") or "—" as the country, so those count as unknown and never
+    block a merge. Single-token names never loose-merge (too collision-prone).
+    """
+    order: list[str] = []
+    by_key: dict[str, dict[str, Any]] = {}
+    # Track the known country for each merged bucket to guard against fusing distinct people.
+    key_country: dict[str, str] = {}
+
+    for f in finder_docs:
+        if not isinstance(f, dict):
+            continue
+        slug = str(f.get("slug") or "").strip().lower()
+        loose = _loose_name_key(str(f.get("name") or ""))
+        cbucket = _country_bucket(str(f.get("country") or ""))
+
+        key: str | None = None
+        if loose:
+            # Reuse an existing loose-name bucket if country is compatible (one side unknown, or
+            # both the same known country).
+            cand = f"name:{loose}"
+            existing_c = key_country.get(cand)
+            if cand in by_key and (not existing_c or not cbucket or existing_c == cbucket):
+                key = cand
+            elif cand not in by_key:
+                key = cand
+        if key is None:
+            # Distinct known country on a same-name row, or no usable loose name → keep standalone
+            # (fall back to slug identity so identical slugs still collapse).
+            key = f"slug:{slug}" if slug else f"row:{len(order)}"
+
+        if key in by_key:
+            by_key[key] = _merge_public_doctor_rows(by_key[key], f, disease_slug="")
+            if cbucket and not key_country.get(key):
+                key_country[key] = cbucket
+        else:
+            by_key[key] = f
+            key_country[key] = cbucket
+            order.append(key)
+    return [by_key[k] for k in order]
+
+
 def _merge_seed_and_finder_docs(
     disease_slug: str,
     seeded: list[dict[str, Any]],
     finder_docs: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
     """Curated seed + workflow hits: match by slug or normalized name; append unmatched finder rows."""
+    finder_docs = _dedup_finder_docs(finder_docs)
     used_finder: set[int] = set()
     out: list[dict[str, Any]] = []
 
@@ -810,7 +902,8 @@ def _merged_doctors_for_catalog_slug(
         merged = [_apply_approved_recs(d) for d in merged]
         return "merged", merged + parent_added
     if live:
-        live_with_recs = [_apply_approved_recs(d) for d in live]
+        # Dedup finder-only rows too (same person split across author clusters).
+        live_with_recs = [_apply_approved_recs(d) for d in _dedup_finder_docs(live)]
         return "doctor_finder", live_with_recs + parent_added
     if seeded:
         seeded_with_recs = [_apply_approved_recs(d) for d in seeded]
