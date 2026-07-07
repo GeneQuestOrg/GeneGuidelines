@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from backend.config import CORS_ORIGINS
 from backend.database import init_db, run_seed_if_empty
 from backend.routers import agent, tickets, tools, flows
-from backend.config import DB_URL, MEMORY_POSTGRES_DSN
+from backend.config import DB_URL, MEMORY_POSTGRES_DSN, AUTH0_DOMAIN
 import logging
 
 logger = logging.getLogger(__name__)
@@ -82,6 +82,14 @@ app.add_middleware(
 )
 
 
+# Auth0 token exchange (POST /oauth/token) + userinfo run from the SPA's JS, so the
+# bundled-app CSP must allow XHR to the Auth0 tenant — otherwise `connect-src 'self'`
+# blocks the code→token exchange and login silently fails (no token, isAuthenticated
+# stays false). Derived from AUTH0_DOMAIN so it tracks the tenant and adds nothing when
+# Auth0 is unconfigured (dev / self-hosted).
+_AUTH0_CONNECT_SRC = f" https://{AUTH0_DOMAIN}" if AUTH0_DOMAIN else ""
+
+
 def _content_security_policy_for_path(path: str) -> str:
     """Strict default for JSON API; relaxed for Swagger/ReDoc + bundled SPA."""
     if path.startswith("/docs") or path.startswith("/redoc") or path == "/openapi.json":
@@ -104,7 +112,7 @@ def _content_security_policy_for_path(path: str) -> str:
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
             "img-src 'self' data: blob: https://*.tile.openstreetmap.org; "
             "font-src 'self' data: https://fonts.gstatic.com; "
-            "connect-src 'self'; "
+            f"connect-src 'self'{_AUTH0_CONNECT_SRC}; "
             "frame-ancestors 'none'; "
             "base-uri 'self'"
         )
