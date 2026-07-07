@@ -1,4 +1,8 @@
-"""Brave web search + structured LLM: infer country/continent for PubMed affiliations missing ISO2."""
+"""Infer country/continent for PubMed affiliations missing ISO2, cheapest source first.
+
+Resolver chain (df-20), each stage only sees what the previous could not resolve:
+ROR (free registry) → Nominatim (free OSM geocoder, 1 req/s) → Brave web search + LLM (paid, last resort).
+"""
 from __future__ import annotations
 
 import asyncio
@@ -160,7 +164,7 @@ def _cache_put(key: str, value: dict[str, Any] | None) -> None:
     _GEO_RESULT_CACHE[key] = value
 
 
-def _patch_from_iso2(iso2: str, confidence: float) -> dict[str, Any]:
+def _patch_from_iso2(iso2: str, confidence: float, source: str = "brave_web_llm") -> dict[str, Any]:
     c = pycountry.countries.get(alpha_2=iso2)
     name = c.name if c else iso2
     cont = continent_for_iso_alpha2(iso2)
@@ -168,7 +172,7 @@ def _patch_from_iso2(iso2: str, confidence: float) -> dict[str, Any]:
         "country_code": iso2,
         "country_name": name,
         "continent": cont,
-        "geo_source": "brave_web_llm",
+        "geo_source": source,
         "geo_confidence": round(float(confidence), 3),
     }
 
@@ -267,15 +271,152 @@ def _apply_patches(articles: list[dict[str, Any]], patches: dict[str, dict[str, 
     return out
 
 
+async def _run_ror_stage(
+    remaining: list[tuple[str, str, str | None]],
+    patches: dict[str, dict[str, Any]],
+    *,
+    concurrency: int,
+    min_score: float,
+) -> list[tuple[str, str, str | None]]:
+    """Fill countries from ROR (free, no key). Returns the tasks ROR could not confidently resolve."""
+    from . import ror
+
+    results: dict[str, Any] = {}
+    sem = asyncio.Semaphore(max(1, concurrency))
+
+    async with httpx.AsyncClient(timeout=ror.ROR_TIMEOUT_SEC) as client:
+
+        async def _one(t: tuple[str, str, str | None]) -> None:
+            key, raw, _inst = t
+            async with sem:
+                try:
+                    results[key] = await ror.lookup_affiliation_country(raw, min_score=min_score, client=client)
+                except Exception:  # noqa: BLE001 - a resolver must never fail the whole run
+                    results[key] = None
+
+        await asyncio.gather(*(_one(t) for t in remaining))
+
+    still: list[tuple[str, str, str | None]] = []
+    for t in remaining:
+        m = results.get(t[0])
+        if m and getattr(m, "country_code", None):
+            patch = _patch_from_iso2(m.country_code, min(1.0, m.score or 0.95), source="ror")
+            patches[t[0]] = patch
+            _cache_put(t[0], patch)
+        else:
+            still.append(t)
+    return still
+
+
+async def _run_nominatim_stage(
+    remaining: list[tuple[str, str, str | None]],
+    patches: dict[str, dict[str, Any]],
+    *,
+    max_lookups: int,
+    min_interval_sec: float,
+) -> list[tuple[str, str, str | None]]:
+    """Fill countries from Nominatim (free). Sequential + bounded per OSM's 1 req/s fair-use policy."""
+    from . import nominatim
+
+    if max_lookups <= 0:
+        return list(remaining)
+
+    still: list[tuple[str, str, str | None]] = []
+    used = 0
+    async with httpx.AsyncClient(timeout=nominatim.NOMINATIM_TIMEOUT_SEC) as client:
+        for t in remaining:
+            key, raw, inst = t
+            if used >= max_lookups:
+                still.append(t)
+                continue
+            if used > 0:
+                await asyncio.sleep(min_interval_sec)  # OSM fair-use: keep <=1 req/s
+            try:
+                m = await nominatim.lookup_affiliation_country(raw, institution=inst, client=client)
+            except Exception:  # noqa: BLE001
+                m = None
+            used += 1
+            if m and m.country_code:
+                patch = _patch_from_iso2(m.country_code, 0.75, source="nominatim")
+                patches[key] = patch
+                _cache_put(key, patch)
+            else:
+                still.append(t)
+    return still
+
+
+async def _run_brave_stage(
+    remaining: list[tuple[str, str, str | None]],
+    patches: dict[str, dict[str, Any]],
+    *,
+    api_key: str,
+    context: dict[str, Any],
+    emit_fn: Callable[..., Any],
+    event_queue: Any,
+) -> list[tuple[str, str, str | None]]:
+    """Last resort: Brave web search + LLM. Reached only for what ROR/Nominatim left unresolved."""
+    model_spec = _model_spec(context)
+    store: dict[str, Any] = {}
+    sem = asyncio.Semaphore(DOCTOR_FINDER_GEO_BRAVE_CONCURRENCY)
+    results: dict[str, Any] = {}
+
+    async def _bounded(t: tuple[str, str, str | None]) -> None:
+        key, raw, inst = t
+        async with sem:
+            try:
+                async with httpx.AsyncClient(timeout=20.0) as client:
+                    results[key] = await _resolve_one(
+                        key,
+                        raw,
+                        inst,
+                        api_key=api_key,
+                        model_spec=model_spec,
+                        store=store,
+                        emit_fn=emit_fn,
+                        event_queue=event_queue,
+                        http_client=client,
+                    )
+            except Exception:  # noqa: BLE001
+                results[key] = None
+
+    await asyncio.gather(*(_bounded(t) for t in remaining))
+
+    still: list[tuple[str, str, str | None]] = []
+    for t in remaining:
+        p = results.get(t[0])
+        if p:
+            patches[t[0]] = p
+        else:
+            still.append(t)
+    return still
+
+
 async def run_async(context: dict[str, Any]) -> dict[str, Any]:
-    """Enrich ``articles[*].authors[*].parsed_affiliation`` with Brave+LLM country when ISO2 was missing."""
+    """Enrich affiliations missing an ISO country, cheapest source first.
+
+    Staged resolver chain — each stage only sees affiliations the previous one could not resolve:
+      1. ROR — free, no key, canonical institution registry with a verified ISO country (PRIMARY).
+      2. Nominatim — free OpenStreetMap geocoder, 1 req/s, bounded per run (SECONDARY).
+      3. Brave web search + LLM — paid, LAST resort; runs only when ``BRAVE_API_KEY`` is set.
+    """
     articles = list(context.get("articles") or [])
     if not articles:
         return context
 
-    api_key = _brave_api_key()
-    if not api_key:
-        log.info("affiliation_georesolve: BRAVE_API_KEY not set; skipping Brave+LLM geo step")
+    from ...config import (
+        DOCTOR_FINDER_GEO_NOMINATIM_ENABLED,
+        DOCTOR_FINDER_GEO_NOMINATIM_MAX_LOOKUPS,
+        DOCTOR_FINDER_GEO_NOMINATIM_MIN_INTERVAL_SEC,
+        DOCTOR_FINDER_GEO_ROR_CONCURRENCY,
+        DOCTOR_FINDER_GEO_ROR_ENABLED,
+        DOCTOR_FINDER_GEO_ROR_MIN_SCORE,
+    )
+
+    brave_key = _brave_api_key()
+    ror_enabled = bool(DOCTOR_FINDER_GEO_ROR_ENABLED)
+    nominatim_enabled = bool(DOCTOR_FINDER_GEO_NOMINATIM_ENABLED) and DOCTOR_FINDER_GEO_NOMINATIM_MAX_LOOKUPS > 0
+    if not (ror_enabled or nominatim_enabled or brave_key):
+        log.info("affiliation_georesolve: no resolver available (ROR/Nominatim off, no Brave key); skipping")
         return context
 
     tasks = _collect_tasks(articles)
@@ -288,47 +429,53 @@ async def run_async(context: dict[str, Any]) -> dict[str, Any]:
     if isinstance(tup, tuple) and len(tup) >= 2 and callable(tup[0]):
         emit_fn = tup[0]
         event_queue = tup[1]
-    model_spec = _model_spec(context)
-    store: dict[str, Any] = {}
+
     total = len(tasks)
-    sem = asyncio.Semaphore(DOCTOR_FINDER_GEO_BRAVE_CONCURRENCY)
     patches: dict[str, dict[str, Any]] = {}
-    done = 0
+    remaining = list(tasks)
 
-    async def _bounded(t: tuple[str, str, str | None]) -> None:
-        nonlocal done
-        key, raw, inst = t
-        async with sem:
-            try:
-                async with httpx.AsyncClient(timeout=20.0) as client:
-                    patch = await _resolve_one(
-                        key,
-                        raw,
-                        inst,
-                        api_key=api_key,
-                        model_spec=model_spec,
-                        store=store,
-                        emit_fn=emit_fn,
-                        event_queue=event_queue,
-                        http_client=client,
-                    )
-                if patch:
-                    patches[key] = patch
-            finally:
-                done += 1
-                if done % 5 == 0 or done == total:
-                    _emit_geo_progress(context, done=done, total=total)
+    if ror_enabled and remaining:
+        remaining = await _run_ror_stage(
+            remaining,
+            patches,
+            concurrency=DOCTOR_FINDER_GEO_ROR_CONCURRENCY,
+            min_score=DOCTOR_FINDER_GEO_ROR_MIN_SCORE,
+        )
+        _emit_geo_progress(context, done=len(patches), total=total)
 
-    await asyncio.gather(*(_bounded(t) for t in tasks))
+    if nominatim_enabled and remaining:
+        remaining = await _run_nominatim_stage(
+            remaining,
+            patches,
+            max_lookups=DOCTOR_FINDER_GEO_NOMINATIM_MAX_LOOKUPS,
+            min_interval_sec=DOCTOR_FINDER_GEO_NOMINATIM_MIN_INTERVAL_SEC,
+        )
+        _emit_geo_progress(context, done=len(patches), total=total)
+
+    if brave_key and remaining:
+        remaining = await _run_brave_stage(
+            remaining,
+            patches,
+            api_key=brave_key,
+            context=context,
+            emit_fn=emit_fn,
+            event_queue=event_queue,
+        )
+
+    _emit_geo_progress(context, done=total, total=total)
 
     if not patches:
-        log.info("affiliation_georesolve: no high-confidence patches from %d affiliation(s)", total)
+        log.info("affiliation_georesolve: no country patches from %d affiliation(s)", total)
         return context
 
+    resolved_by = Counter(p.get("geo_source") for p in patches.values())
     enriched = _apply_patches(articles, patches)
     log.info(
-        "affiliation_georesolve: applied %d unique affiliation patch(es) from %d Brave+LLM attempt(s)",
+        "affiliation_georesolve: resolved %d/%d affiliation(s) [ror=%d nominatim=%d brave=%d]",
         len(patches),
         total,
+        resolved_by.get("ror", 0),
+        resolved_by.get("nominatim", 0),
+        resolved_by.get("brave_web_llm", 0),
     )
     return {**context, "articles": enriched}

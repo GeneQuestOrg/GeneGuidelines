@@ -422,6 +422,35 @@ _DFG_GEO_MINCH = (os.environ.get("DOCTOR_FINDER_GEO_MIN_AFF_CHARS") or "").strip
 DOCTOR_FINDER_GEO_MIN_AFF_CHARS = int(_DFG_GEO_MINCH) if _DFG_GEO_MINCH else 14
 DOCTOR_FINDER_GEO_MIN_AFF_CHARS = max(8, min(200, DOCTOR_FINDER_GEO_MIN_AFF_CHARS))
 
+# ROR (Research Organization Registry) — free, no-auth institution→country resolver. PRIMARY geo
+# resolver in df-20: it runs BEFORE the paid Brave+LLM fallback so most missing countries are
+# filled for free. We trust ONLY matches ROR itself flags ``chosen: true`` (better empty than a
+# confident-looking same-name org in the wrong country).
+DOCTOR_FINDER_GEO_ROR_ENABLED = (
+    (os.environ.get("DOCTOR_FINDER_GEO_ROR_ENABLED") or "1").strip().lower()
+    in ("1", "true", "yes", "on")
+)
+_DFG_ROR_CONC = (os.environ.get("DOCTOR_FINDER_GEO_ROR_CONCURRENCY") or "").strip()
+DOCTOR_FINDER_GEO_ROR_CONCURRENCY = int(_DFG_ROR_CONC) if _DFG_ROR_CONC else 6
+DOCTOR_FINDER_GEO_ROR_CONCURRENCY = max(1, min(12, DOCTOR_FINDER_GEO_ROR_CONCURRENCY))
+_DFG_ROR_MINSCORE = (os.environ.get("DOCTOR_FINDER_GEO_ROR_MIN_SCORE") or "").strip()
+DOCTOR_FINDER_GEO_ROR_MIN_SCORE = float(_DFG_ROR_MINSCORE) if _DFG_ROR_MINSCORE else 0.9
+DOCTOR_FINDER_GEO_ROR_MIN_SCORE = max(0.5, min(1.0, DOCTOR_FINDER_GEO_ROR_MIN_SCORE))
+
+# Nominatim (OpenStreetMap) — free country resolver, SECONDARY to ROR and still before Brave. OSM's
+# usage policy caps us at 1 req/s + a valid identifying User-Agent, so it runs sequentially with a
+# >=1s spacing and is bounded per run. Enabled by default; set MAX_LOOKUPS=0 to disable in practice.
+DOCTOR_FINDER_GEO_NOMINATIM_ENABLED = (
+    (os.environ.get("DOCTOR_FINDER_GEO_NOMINATIM_ENABLED") or "1").strip().lower()
+    in ("1", "true", "yes", "on")
+)
+_DFG_NOM_MAX = (os.environ.get("DOCTOR_FINDER_GEO_NOMINATIM_MAX_LOOKUPS") or "").strip()
+DOCTOR_FINDER_GEO_NOMINATIM_MAX_LOOKUPS = int(_DFG_NOM_MAX) if _DFG_NOM_MAX else 60
+DOCTOR_FINDER_GEO_NOMINATIM_MAX_LOOKUPS = max(0, min(280, DOCTOR_FINDER_GEO_NOMINATIM_MAX_LOOKUPS))
+_DFG_NOM_INT = (os.environ.get("DOCTOR_FINDER_GEO_NOMINATIM_MIN_INTERVAL_SEC") or "").strip()
+DOCTOR_FINDER_GEO_NOMINATIM_MIN_INTERVAL_SEC = float(_DFG_NOM_INT) if _DFG_NOM_INT else 1.1
+DOCTOR_FINDER_GEO_NOMINATIM_MIN_INTERVAL_SEC = max(1.0, min(5.0, DOCTOR_FINDER_GEO_NOMINATIM_MIN_INTERVAL_SEC))
+
 PUBMED_RETRIEVAL_MIN_PMIDS_PER_DOMAIN = int(
     (os.environ.get("PUBMED_RETRIEVAL_MIN_PMIDS_PER_DOMAIN") or "").strip() or 50
 )

@@ -81,7 +81,7 @@ class ParsedAffiliation(BaseModel, frozen=True):
     geo_source: Optional[str] = Field(
         default=None,
         max_length=32,
-        description="Set when country/continent was inferred via Brave web search + LLM (df-20).",
+        description="How country/continent was inferred in df-20: 'ror' | 'nominatim' | 'brave_web_llm'.",
     )
     geo_confidence: Optional[float] = Field(default=None, ge=0.0, le=1.0)
 
