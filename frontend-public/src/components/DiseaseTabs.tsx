@@ -7,7 +7,6 @@ import { DiseaseCard } from "./DiseaseCard";
 import { DoctorCard } from "./DoctorCard";
 import { DiseaseOpenPrList } from "./DiseaseOpenPrList";
 import { FoundationsList } from "./FoundationsList";
-import { QuestionsForDoctor } from "./QuestionsForDoctor";
 import { TherapiesList } from "./TherapiesList";
 import { TrialsList } from "./TrialsList";
 import { CompactSourceShelf } from "./guidelines/CompactSourceShelf";
@@ -216,45 +215,18 @@ export function DiseaseTabs({
               </Section>
             ) : null}
 
-            {/* Generic starter helpers — demoted below the substantive lead sections (guidelines,
-                doctors, orientation map, trials, therapies). Most useful to someone newly
-                diagnosed; a family already mid-treatment leads with the real content above. */}
-            <Section
-              title={orientation?.whatToDoNowTitle ?? copy.pathwayTitle}
-              sub={orientation?.whatToDoNowBody ?? copy.pathwaySub}
-              divider
-            >
-              <div className="path">
-                <ol className="path__steps">
-                  {copy.pathwaySteps.map((step, i) => (
-                    <li key={step.title}>
-                      <b>
-                        {i + 1}. {step.title}
-                      </b>{" "}
-                      {step.body}
-                    </li>
+            {/* The full "What to do now" and "Questions for the doctor" now live on the Guidelines
+                page (What to do now + Red flags already render there). The disease page keeps only
+                the safety-critical Red flags — "when to seek a second opinion". */}
+            <Section title={copy.redFlagsTitle} divider>
+              <aside className="path__redflags">
+                <ul>
+                  {copy.redFlags.map((flag) => (
+                    <li key={flag.text}>{flag.text}</li>
                   ))}
-                </ol>
-                <aside className="path__redflags">
-                  <h3>{copy.redFlagsTitle}</h3>
-                  <ul>
-                    {copy.redFlags.map((flag) => (
-                      <li key={flag.text}>{flag.text}</li>
-                    ))}
-                  </ul>
-                </aside>
-              </div>
+                </ul>
+              </aside>
             </Section>
-
-            {orientation != null ? (
-              <Section
-                title={orientation.questionsForDoctorTitle}
-                sub={orientation.questionsForDoctorSub}
-                divider
-              >
-                <QuestionsForDoctor questions={orientation.questionsForDoctor} />
-              </Section>
-            ) : null}
 
             {/* "Updates in review" = AI-proposed guideline changes awaiting expert review — a
                 clinician/researcher concept, hidden from the parent view to avoid confusion. */}
