@@ -119,47 +119,10 @@ export function DiseaseTabs({
       <div role="tabpanel" className="d-tab-panel">
         {tab === "overview" ? (
           <>
-            <Section
-              title={orientation?.whatToDoNowTitle ?? copy.pathwayTitle}
-              sub={orientation?.whatToDoNowBody ?? copy.pathwaySub}
-            >
-              <div className="path">
-                <ol className="path__steps">
-                  {copy.pathwaySteps.map((step, i) => (
-                    <li key={step.title}>
-                      <b>
-                        {i + 1}. {step.title}
-                      </b>{" "}
-                      {step.body}
-                    </li>
-                  ))}
-                </ol>
-                <aside className="path__redflags">
-                  <h3>{copy.redFlagsTitle}</h3>
-                  <ul>
-                    {copy.redFlags.map((flag) => (
-                      <li key={flag.text}>{flag.text}</li>
-                    ))}
-                  </ul>
-                </aside>
-              </div>
-            </Section>
-
-            {orientation != null ? (
-              <Section
-                title={orientation.questionsForDoctorTitle}
-                sub={orientation.questionsForDoctorSub}
-                divider
-              >
-                <QuestionsForDoctor questions={orientation.questionsForDoctor} />
-              </Section>
-            ) : null}
-
             {previewDoctors.length > 0 ? (
               <Section
                 title="Specialists"
                 sub={copy.doctorsSub(disease.doctorsCount)}
-                divider
               >
                 <div className="d-doctors-preview">
                   {previewDoctors.slice(0, 3).map((doctor) => (
@@ -253,7 +216,49 @@ export function DiseaseTabs({
               </Section>
             ) : null}
 
-            {openPrs.length > 0 ? (
+            {/* Generic starter helpers — demoted below the substantive lead sections (guidelines,
+                doctors, orientation map, trials, therapies). Most useful to someone newly
+                diagnosed; a family already mid-treatment leads with the real content above. */}
+            <Section
+              title={orientation?.whatToDoNowTitle ?? copy.pathwayTitle}
+              sub={orientation?.whatToDoNowBody ?? copy.pathwaySub}
+              divider
+            >
+              <div className="path">
+                <ol className="path__steps">
+                  {copy.pathwaySteps.map((step, i) => (
+                    <li key={step.title}>
+                      <b>
+                        {i + 1}. {step.title}
+                      </b>{" "}
+                      {step.body}
+                    </li>
+                  ))}
+                </ol>
+                <aside className="path__redflags">
+                  <h3>{copy.redFlagsTitle}</h3>
+                  <ul>
+                    {copy.redFlags.map((flag) => (
+                      <li key={flag.text}>{flag.text}</li>
+                    ))}
+                  </ul>
+                </aside>
+              </div>
+            </Section>
+
+            {orientation != null ? (
+              <Section
+                title={orientation.questionsForDoctorTitle}
+                sub={orientation.questionsForDoctorSub}
+                divider
+              >
+                <QuestionsForDoctor questions={orientation.questionsForDoctor} />
+              </Section>
+            ) : null}
+
+            {/* "Updates in review" = AI-proposed guideline changes awaiting expert review — a
+                clinician/researcher concept, hidden from the parent view to avoid confusion. */}
+            {isClinician && openPrs.length > 0 ? (
               <Section
                 title={copy.openPrsTitle}
                 sub={copy.openPrsSub(openPrs.length)}
