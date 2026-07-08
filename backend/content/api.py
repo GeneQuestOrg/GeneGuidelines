@@ -185,7 +185,7 @@ def list_foundations(
 async def upload_private_context(
     slug: str,
     user: PrivateContextUser,
-    file: UploadFile = File(..., description="Discharge summary, lab result, or report (.txt, .md, .pdf)."),
+    file: UploadFile = File(..., description="Discharge summary, lab result, report, or scan (.txt, .md, .pdf, .jpg, .jpeg, .png)."),
     service: PrivateContextService = Depends(provide_private_context_service),
 ) -> PrivateContextResponse:
     """Upload a private discharge / report. Parent account required when Auth0 is on.

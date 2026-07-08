@@ -28,3 +28,14 @@ pycountry>=24.0
 # Runs locally; the original bytes never leave the server. Gemma 4 then strips
 # PII before any text goes to the synthesis model.
 pypdf>=6.0
+
+# OCR fallback for SCANNED PDFs and image uploads (.jpg/.png) in My Case.
+# PyMuPDF rasterises pages to images in memory (never on disk); Pillow
+# normalises uploaded photos. The rendered page images are read by the SAME
+# Gemma-4 vision endpoint used for redaction (no new service, same in-memory
+# privacy path). pytesseract is a fully-local last-resort OCR when no vision
+# endpoint is configured — it needs the system `tesseract-ocr` binary plus the
+# Polish language pack (`tesseract-ocr-pol`); see Dockerfile.backend.
+PyMuPDF>=1.24
+Pillow>=10.0
+pytesseract>=0.3.10

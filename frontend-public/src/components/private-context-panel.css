@@ -484,3 +484,113 @@
   border-radius: 3px;
   margin-right: 4px;
 }
+
+/* --- Multi-file batch queue -------------------------------------------- */
+.pc-queue {
+  margin: 12px 0;
+  padding: 12px 14px;
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  border-left: 3px solid oklch(0.55 0.13 195);
+  border-radius: var(--r-md);
+}
+
+.pc-queue__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.pc-queue__title {
+  font-weight: 600;
+  color: var(--ink);
+  font-size: var(--fs-sm);
+}
+
+.pc-queue__counts {
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+}
+
+.pc-queue__failed {
+  color: var(--st-red);
+}
+
+.pc-queue__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pc-queue__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  font-size: var(--fs-sm);
+  color: var(--ink-2);
+}
+
+.pc-queue__dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ink-4);
+}
+
+.pc-queue__item.is-processing .pc-queue__dot {
+  background: oklch(0.7 0.15 85);
+  animation: pc-queue-pulse 1s ease-in-out infinite;
+}
+
+.pc-queue__item.is-done .pc-queue__dot {
+  background: oklch(0.55 0.13 155);
+}
+
+.pc-queue__item.is-failed .pc-queue__dot {
+  background: var(--st-red);
+}
+
+@keyframes pc-queue-pulse {
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.pc-queue__name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pc-queue__status {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+}
+
+.pc-queue__item.is-done .pc-queue__status {
+  color: oklch(0.5 0.12 155);
+}
+
+.pc-queue__err {
+  flex: 1 1 100%;
+  font-size: var(--fs-xs);
+  color: var(--st-red);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

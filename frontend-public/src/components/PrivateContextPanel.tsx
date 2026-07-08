@@ -1,6 +1,10 @@
 import { useRef, useState } from "react";
 import { Badge, Button } from "@gene-guidelines/ui";
-import { usePrivateContexts, type RedactionStage } from "../hooks/usePrivateContexts";
+import {
+  usePrivateContexts,
+  type QueueItem,
+  type RedactionStage,
+} from "../hooks/usePrivateContexts";
 import type {
   PiiBreakdown,
   PrivateContext,
@@ -79,6 +83,57 @@ function StageProgress({ stage }: { stage: RedactionStage }) {
           );
         })}
       </ol>
+    </div>
+  );
+}
+
+const QUEUE_STATUS_LABEL: Record<QueueItem["status"], string> = {
+  queued: "Queued",
+  processing: "Processing…",
+  done: "Done",
+  failed: "Failed",
+};
+
+function BatchQueue({ queue }: { queue: readonly QueueItem[] }) {
+  if (queue.length === 0) return null;
+  const done = queue.filter((q) => q.status === "done").length;
+  const failed = queue.filter((q) => q.status === "failed").length;
+  const pending = queue.length - done - failed;
+  return (
+    <div className="pc-queue" role="status" aria-live="polite">
+      <div className="pc-queue__head">
+        <span className="pc-queue__title">
+          Processing {queue.length} document{queue.length === 1 ? "" : "s"}
+        </span>
+        <span className="pc-queue__counts">
+          <b>{done}</b> done
+          {failed > 0 ? (
+            <>
+              {" · "}
+              <b className="pc-queue__failed">{failed}</b> failed
+            </>
+          ) : null}
+          {pending > 0 ? <> · {pending} left</> : null}
+        </span>
+      </div>
+      <ul className="pc-queue__list">
+        {queue.map((q) => (
+          <li key={q.id} className={`pc-queue__item is-${q.status}`}>
+            <span className="pc-queue__dot" aria-hidden />
+            <span className="pc-queue__name">{q.filename}</span>
+            <span className="pc-queue__status">
+              {q.status === "done" && typeof q.facts === "number"
+                ? `${q.facts} facts`
+                : QUEUE_STATUS_LABEL[q.status]}
+            </span>
+            {q.status === "failed" && q.error ? (
+              <span className="pc-queue__err" title={q.error}>
+                {q.error}
+              </span>
+            ) : null}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
@@ -240,21 +295,12 @@ function AuditBadge({ ctx }: { ctx: PrivateContext }) {
 }
 
 export function PrivateContextPanel({ diseaseSlug }: PrivateContextPanelProps) {
-  const { contexts, uploading, stage, error, lastUpload, upload } =
+  const { contexts, uploading, stage, error, lastUpload, queue, uploadBatch } =
     usePrivateContexts(diseaseSlug);
   const fileRef = useRef<HTMLInputElement | null>(null);
   const [expandedId, setExpandedId] = useState<number | null>(null);
 
   const handlePick = () => fileRef.current?.click();
-
-  // Upload several files one after another (the hook is single-flight on
-  // `uploading`), so a parent can add a list of documents instead of one
-  // oversized PDF — each lands in the list below as it finishes.
-  const handleFiles = async (files: File[]) => {
-    for (const file of files) {
-      await upload(file);
-    }
-  };
 
   // The "previous uploads" list excludes the most-recent one (it is already
   // rendered up top in the split-view).
@@ -276,14 +322,14 @@ export function PrivateContextPanel({ diseaseSlug }: PrivateContextPanelProps) {
         <input
           ref={fileRef}
           type="file"
-          accept=".txt,.md,.pdf"
+          accept=".txt,.md,.pdf,.jpg,.jpeg,.png,image/jpeg,image/png"
           multiple
           style={{ display: "none" }}
           onChange={(e) => {
             const files = Array.from(e.target.files ?? []);
             e.target.value = ""; // allow re-uploading the same file
             if (files.length > 0) {
-              void handleFiles(files);
+              void uploadBatch(files);
             }
           }}
         />
@@ -295,7 +341,10 @@ export function PrivateContextPanel({ diseaseSlug }: PrivateContextPanelProps) {
         >
           {uploading ? "Gemma 4 redacting…" : "Add private context"}
         </Button>
-        <span className="pc-supported">Supported: .txt · .md · .pdf · ≤ 30 MB · add several to build a list</span>
+        <span className="pc-supported">
+          Supported: .txt · .md · .pdf · .jpg · .png · ≤ 30 MB · scans and
+          photos are read by OCR · add several at once
+        </span>
       </div>
 
       {error != null ? (
@@ -303,6 +352,8 @@ export function PrivateContextPanel({ diseaseSlug }: PrivateContextPanelProps) {
           {error}
         </p>
       ) : null}
+
+      <BatchQueue queue={queue} />
 
       <StageProgress stage={stage} />
 
