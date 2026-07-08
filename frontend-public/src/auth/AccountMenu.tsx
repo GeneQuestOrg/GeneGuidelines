@@ -28,12 +28,17 @@ function initialsFromEmail(email: string): string {
   return local.slice(0, 2).toUpperCase();
 }
 
+export interface AccountMenuProps {
+  /** App navigation callback (hash paths, e.g. `/account`). */
+  onNav?: (path: string) => void;
+}
+
 /**
  * Header account control. Replaces the localStorage `authOpen`/AuthModal stub on
  * the Auth0 path. Renders nothing when Auth0 is unconfigured (the env gate), so
  * the header looks exactly as it does today.
  */
-export function AccountMenu() {
+export function AccountMenu({ onNav }: AccountMenuProps = {}) {
   const { signInAvailable, isAuthenticated, account, login, logout, loading } =
     useAccountContext();
   const { viewAs, setViewAs } = useViewAsContext();
@@ -113,6 +118,19 @@ export function AccountMenu() {
           </div>
           {pending ? <DoctorVerificationPanel /> : null}
           {canInvite ? <InviteDoctorAction /> : null}
+          {onNav != null ? (
+            <button
+              type="button"
+              role="menuitem"
+              className="account-menu__item"
+              onClick={() => {
+                setOpen(false);
+                onNav("/account");
+              }}
+            >
+              Profile
+            </button>
+          ) : null}
           {adminUrl != null ? (
             <a
               href={adminUrl}

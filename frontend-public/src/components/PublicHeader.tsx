@@ -81,7 +81,7 @@ export function PublicHeader({
   // Auth0 mode (env-gated): the AccountMenu owns sign-in/out; the stub controls
   // below only run when no Auth0 tenant is configured.
   const mobileMenuActions = signInAvailable ? (
-    <AccountMenu />
+    <AccountMenu onNav={onNav} />
   ) : account != null ? (
     <>
       <button
@@ -118,7 +118,7 @@ export function PublicHeader({
       >
         <div className="hdr-actions hdr-actions--desktop" ref={menuRef}>
           {signInAvailable ? (
-            <AccountMenu />
+            <AccountMenu onNav={onNav} />
           ) : account != null ? (
             <>
               <button
