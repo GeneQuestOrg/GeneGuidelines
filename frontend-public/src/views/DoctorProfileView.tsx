@@ -405,7 +405,7 @@ export function DoctorProfileView({ slug, userLoc, onNav }: DoctorProfileViewPro
       {evidence.runsClinicalTrial ? (
         <Section
           title="Related trials"
-          sub="Shown because this specialist is linked to a trial for this condition on ClinicalTrials.gov."
+          sub="This specialist is involved in clinical-trial research. Below are active trials for this condition on ClinicalTrials.gov — not necessarily this doctor's own."
           divider
         >
           {relatedTrials.loading ? (
