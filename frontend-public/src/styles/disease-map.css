@@ -10,7 +10,9 @@
   --blind-soft: color-mix(in oklch, var(--blind) 13%, var(--bg-elev));
   --r-xl: 16px;
 
-  max-width: 880px;
+  /* Match the rest of the site content width (section.page ≈ 1200) — the old 880px cap made the
+     parent orientation map look narrower than every other page. */
+  max-width: 100%;
   margin: 0 auto;
   padding: 0 24px 120px;
   color: var(--ink);
