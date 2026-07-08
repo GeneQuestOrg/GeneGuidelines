@@ -9,6 +9,24 @@ export type RedactionStage =
   | "extracting"
   | "discarding";
 
+export type QueueItemStatus = "queued" | "processing" | "done" | "failed";
+
+/** One document in a multi-file upload batch, with its own live status. */
+export interface QueueItem {
+  readonly id: string;
+  readonly filename: string;
+  readonly status: QueueItemStatus;
+  /** Facts extracted (set once done). */
+  readonly facts?: number;
+  /** Error text when status === "failed". */
+  readonly error?: string;
+}
+
+/** Reject obviously-too-many files before we hammer the single-worker backend.
+ * A parent adding a whole imaging CD (thousands of files) is a mistake we catch
+ * up front with a clear message rather than a 20-minute silent grind. */
+export const MAX_BATCH_FILES = 25;
+
 export interface PrivateContextsState {
   contexts: readonly PrivateContext[];
   loading: boolean;
@@ -16,8 +34,16 @@ export interface PrivateContextsState {
   stage: RedactionStage;
   error: string | null;
   lastUpload: PrivateContext | null;
+  /** Per-file status for the in-flight (or just-finished) batch. */
+  queue: readonly QueueItem[];
   upload(file: File): Promise<PrivateContext | null>;
+  uploadBatch(files: File[]): Promise<void>;
+  clearQueue(): void;
   reload(): Promise<void>;
+}
+
+function factCount(ctx: PrivateContext): number {
+  return ctx.clinicalFactsExtracted;
 }
 
 export function usePrivateContexts(diseaseSlug: string): PrivateContextsState {
@@ -27,12 +53,15 @@ export function usePrivateContexts(diseaseSlug: string): PrivateContextsState {
   const [stage, setStage] = useState<RedactionStage>("idle");
   const [error, setError] = useState<string | null>(null);
   const [lastUpload, setLastUpload] = useState<PrivateContext | null>(null);
+  const [queue, setQueue] = useState<readonly QueueItem[]>([]);
   const stageTimersRef = useRef<number[]>([]);
 
   const clearStageTimers = useCallback(() => {
     stageTimersRef.current.forEach((id) => window.clearTimeout(id));
     stageTimersRef.current = [];
   }, []);
+
+  const clearQueue = useCallback(() => setQueue([]), []);
 
   const reload = useCallback(async () => {
     const repo = repositories().privateContexts;
@@ -114,7 +143,102 @@ export function usePrivateContexts(diseaseSlug: string): PrivateContextsState {
     [diseaseSlug, clearStageTimers],
   );
 
+  // Upload a batch of files one after another (the backend is single-worker,
+  // so we deliberately go sequential rather than stampede it) and surface a
+  // per-file status so the parent can watch 15 documents land instead of a
+  // single opaque spinner. Each file gets its own queue row that transitions
+  // queued → processing → done | failed. A `failed` row from the backend
+  // (unsupported type, OCR came back empty, redaction timed out) is a
+  // per-file failure that must NOT stop the rest of the batch.
+  const uploadBatch = useCallback(
+    async (files: File[]): Promise<void> => {
+      if (files.length === 0) return;
+      const capped = files.slice(0, MAX_BATCH_FILES);
+      if (files.length > MAX_BATCH_FILES) {
+        setError(
+          `You selected ${files.length} files. Processing the first ${MAX_BATCH_FILES} — ` +
+            "add the rest in another batch. (Please don't upload a whole imaging CD; " +
+            "those thousands of scan slices aren't documents to read.)",
+        );
+      } else {
+        setError(null);
+      }
+
+      const items: QueueItem[] = capped.map((f, i) => ({
+        id: `${Date.now()}-${i}-${f.name}`,
+        filename: f.name,
+        status: "queued",
+      }));
+      setQueue(items);
+      setUploading(true);
+
+      const patch = (id: string, next: Partial<QueueItem>) =>
+        setQueue((prev) =>
+          prev.map((it) => (it.id === id ? { ...it, ...next } : it)),
+        );
+
+      for (let i = 0; i < capped.length; i++) {
+        const file = capped[i];
+        const item = items[i];
+        patch(item.id, { status: "processing" });
+        clearStageTimers();
+        setStage("reading");
+        stageTimersRef.current.push(
+          window.setTimeout(() => setStage("redacting"), 700),
+          window.setTimeout(() => setStage("extracting"), 1800),
+          window.setTimeout(() => setStage("discarding"), 3200),
+        );
+        try {
+          const result = await repositories().privateContexts.upload(
+            diseaseSlug,
+            file,
+          );
+          clearStageTimers();
+          setStage("idle");
+          if (result == null) {
+            patch(item.id, { status: "failed", error: "Disease not found." });
+            continue;
+          }
+          setLastUpload(result);
+          setContexts((prev) => [result, ...prev]);
+          if (result.status === "failed") {
+            patch(item.id, {
+              status: "failed",
+              error: result.error ?? "Redaction failed.",
+            });
+          } else {
+            patch(item.id, { status: "done", facts: factCount(result) });
+          }
+        } catch (err) {
+          clearStageTimers();
+          setStage("idle");
+          patch(item.id, {
+            status: "failed",
+            error: err instanceof Error ? err.message : "Upload failed.",
+          });
+        }
+      }
+
+      clearStageTimers();
+      setStage("idle");
+      setUploading(false);
+    },
+    [diseaseSlug, clearStageTimers],
+  );
+
   useEffect(() => () => clearStageTimers(), [clearStageTimers]);
 
-  return { contexts, loading, uploading, stage, error, lastUpload, upload, reload };
+  return {
+    contexts,
+    loading,
+    uploading,
+    stage,
+    error,
+    lastUpload,
+    queue,
+    upload,
+    uploadBatch,
+    clearQueue,
+    reload,
+  };
 }

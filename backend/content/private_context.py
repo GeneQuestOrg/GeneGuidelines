@@ -21,6 +21,7 @@ is the deployment target for clinics that need the bytes to stay on-premise.
 from __future__ import annotations
 
 import asyncio
+import base64
 import hashlib
 import json
 import logging
@@ -60,7 +61,12 @@ class ClinicalFinding(BaseModel):
     )
     category: str = Field(
         ...,
-        description="One of: 'finding', 'intervention', 'mutation', 'outcome', 'imaging'.",
+        description=(
+            "Exactly one of: 'diagnosis', 'differential', 'finding', "
+            "'histopathology', 'imaging', 'lab'. Use 'diagnosis' for the "
+            "confirmed diagnosis, 'differential' for a diagnosis that was "
+            "considered then confirmed or excluded."
+        ),
     )
 
 
@@ -193,17 +199,100 @@ PDF lost most of its content; 120k covers ~40 pages. Still bounded as a
 defence against pathological megabyte inputs blowing the context / the bill —
 documents beyond this should be uploaded in parts (the panel keeps a list)."""
 
+MIN_TEXT_LAYER_CHARS = 200
+"""Below this, a PDF's embedded text layer is treated as effectively empty and
+we fall back to OCR. Real scans often carry a ~96-char stub text layer (a
+letterhead, a scanner watermark) that holds almost no clinical content; a hard
+"empty or not" test let those through with near-nothing. 200 chars ~= a couple
+of lines, well under any genuine one-page report but above a stub."""
+
+OCR_MAX_PAGES = 15
+"""Render at most this many PDF pages to images for OCR. A multi-page scan is
+common (a 2-3 page discharge summary); a whole imaging CD is not a document to
+transcribe. Bounds run-time and the number of vision calls per upload."""
+
+OCR_RENDER_DPI = 200
+"""DPI to rasterise PDF pages at for OCR. 200 is a good legibility/size trade
+for A4 clinical scans; higher barely helps the model and inflates the payload."""
+
 
 class UnsupportedUploadError(Exception):
     """Raised when the uploaded file is not a supported text source."""
 
 
-def extract_text_from_upload(filename: str, content: bytes) -> str:
-    """Extract plain text from an uploaded discharge / report.
+# A transcriber turns a list of in-memory page images (PNG bytes) into text.
+# Injectable so tests never hit the network and so the vision-vs-Tesseract
+# choice lives in one place. Returns the concatenated transcription.
+class PageTranscriber(Protocol):
+    def __call__(self, images: list[bytes], *, filename: str) -> str: ...
 
-    Supported: ``.txt``, ``.md``, ``.pdf``. PDFs use ``pypdf`` (pure Python,
-    no external binary). The bytes are processed entirely in memory — the
-    caller is responsible for dropping the reference once we return.
+
+def _render_pdf_to_page_images(content: bytes, *, max_pages: int) -> list[bytes]:
+    """Rasterise PDF pages to PNG bytes, in memory. Requires PyMuPDF (fitz).
+
+    Never writes to disk. Raises :class:`UnsupportedUploadError` if PyMuPDF is
+    not installed (deploy must ship it — see Dockerfile.backend).
+    """
+    try:
+        import fitz  # PyMuPDF
+    except ImportError as exc:  # pragma: no cover - deploy-time dependency
+        raise UnsupportedUploadError(
+            "This document has no embedded text and needs OCR, which requires "
+            "PyMuPDF (pip install PyMuPDF). Install it, or upload a text-based PDF."
+        ) from exc
+    images: list[bytes] = []
+    try:
+        doc = fitz.open(stream=content, filetype="pdf")
+    except Exception as exc:
+        raise UnsupportedUploadError(f"Could not read PDF for OCR: {exc}") from exc
+    try:
+        for page in doc:
+            if len(images) >= max_pages:
+                break
+            pix = page.get_pixmap(dpi=OCR_RENDER_DPI)
+            images.append(pix.tobytes("png"))
+    finally:
+        doc.close()
+    return images
+
+
+def _image_bytes_to_png(content: bytes) -> bytes:
+    """Normalise an uploaded image to a single PNG, bounding its dimensions.
+
+    Keeps the request small and the format predictable for the vision model.
+    Runs entirely in memory (Pillow on a BytesIO); nothing is written to disk.
+    """
+    try:
+        from PIL import Image
+    except ImportError as exc:  # pragma: no cover - deploy-time dependency
+        raise UnsupportedUploadError(
+            "Image OCR requires Pillow (pip install Pillow)."
+        ) from exc
+    try:
+        img = Image.open(BytesIO(content))
+        img.thumbnail((2000, 2000))
+        out = BytesIO()
+        img.convert("RGB").save(out, format="PNG")
+        return out.getvalue()
+    except Exception as exc:
+        raise UnsupportedUploadError(f"Could not read image: {exc}") from exc
+
+
+def extract_text_from_upload(
+    filename: str,
+    content: bytes,
+    *,
+    transcriber: PageTranscriber | None = None,
+) -> str:
+    """Extract plain text from an uploaded discharge / report / scan.
+
+    Supported: ``.txt``, ``.md``, ``.pdf``, and images (``.jpg``, ``.jpeg``,
+    ``.png``). Text-based PDFs use ``pypdf`` (pure Python). When a PDF has no
+    (or only a stub) text layer, or when the upload is an image, we rasterise
+    the pages in memory and OCR them via ``transcriber`` — by default the
+    Gemma-4 vision transcriber, keeping the same in-memory, no-new-service
+    privacy path. Everything runs in memory; the caller drops the bytes once
+    we return.
     """
     name = (filename or "").lower()
     if name.endswith((".txt", ".md")):
@@ -213,6 +302,18 @@ def extract_text_from_upload(filename: str, content: bytes) -> str:
             raise UnsupportedUploadError(
                 f"Could not decode {filename} as UTF-8 text: {exc}"
             ) from exc
+
+    transcribe = transcriber or default_page_transcriber
+
+    if name.endswith((".jpg", ".jpeg", ".png")):
+        png = _image_bytes_to_png(content)
+        text = transcribe([png], filename=filename).strip()
+        if not text:
+            raise UnsupportedUploadError(
+                f"Could not read any text from image {filename}."
+            )
+        return text
+
     if name.endswith(".pdf"):
         try:
             from pypdf import PdfReader
@@ -231,15 +332,201 @@ def extract_text_from_upload(filename: str, content: bytes) -> str:
             except Exception:
                 continue
         text = "\n".join(p.strip() for p in pages if p.strip())
-        if not text.strip():
+        if len(text.strip()) >= MIN_TEXT_LAYER_CHARS:
+            return text
+
+        # Thin or empty text layer → OCR the rendered pages. This is the fix
+        # for scanned discharge summaries: instead of rejecting them, read them.
+        log.info(
+            "private-context: PDF %s has a thin text layer (%d chars) — OCR fallback",
+            filename,
+            len(text.strip()),
+        )
+        images = _render_pdf_to_page_images(content, max_pages=OCR_MAX_PAGES)
+        if not images:
+            raise UnsupportedUploadError(f"PDF {filename} has no readable pages.")
+        ocr_text = transcribe(images, filename=filename).strip()
+        # Keep whichever is richer: if OCR came back empty, fall back to the stub.
+        best = ocr_text if len(ocr_text) >= len(text.strip()) else text.strip()
+        if not best:
             raise UnsupportedUploadError(
-                "PDF appears to be scanned (no extractable text). Save it as plain "
-                "text first, or use a PDF with embedded text."
+                f"PDF {filename} appears to be scanned and OCR returned no text."
             )
-        return text
+        return best
+
     raise UnsupportedUploadError(
-        f"Unsupported file type for {filename}. Accepted: .txt, .md, .pdf."
+        f"Unsupported file type for {filename}. Accepted: .txt, .md, .pdf, "
+        ".jpg, .jpeg, .png."
     )
+
+
+# ---------------------------------------------------------------------------
+# Vision transcriber — Gemma-4 reads page images over the SAME in-memory,
+# OpenAI-compatible path the redaction step uses. No new external service, no
+# disk. Falls back to local Tesseract only when no vision endpoint is
+# configured (privacy-consistent: fully local).
+# ---------------------------------------------------------------------------
+
+
+_VISION_TRANSCRIBE_PROMPT = (
+    "You are an OCR engine for clinical documents, many in Polish. Transcribe "
+    "ALL text visible in this page image, verbatim, preserving line structure. "
+    "Include headings, tables, lab values with units, diagnoses, and any "
+    "handwriting you can read. Do NOT translate, summarise, correct, or add "
+    "anything. Output only the transcription."
+)
+
+
+def _vision_model_client_and_id() -> tuple[Any, str] | None:
+    """Resolve an OpenAI-compatible client + model id that supports image input.
+
+    Prefers the self-hosted / configured Gemma endpoint (vLLM/SiliconFlow via
+    ``LLM_*``); Gemma 4 is natively multimodal and the hosted endpoints accept
+    ``image_url`` content parts. Returns ``None`` when no vision-capable
+    endpoint is configured, so the caller can fall back to local Tesseract.
+    """
+    from openai import AsyncOpenAI
+
+    from ..config import (
+        LLM_MODEL_ID,
+        OPENROUTER_API_KEY,
+        OPENROUTER_BASE_URL,
+        VLLM_API_KEY,
+        VLLM_AUTH_HEADER_STYLE,
+        VLLM_BASE_URL,
+    )
+
+    if VLLM_API_KEY and VLLM_BASE_URL:
+        if VLLM_AUTH_HEADER_STYLE == "raw":
+            client = AsyncOpenAI(
+                api_key="gene-guidelines-vllm",
+                base_url=VLLM_BASE_URL,
+                default_headers={"Authorization": VLLM_API_KEY},
+            )
+        else:
+            client = AsyncOpenAI(api_key=VLLM_API_KEY, base_url=VLLM_BASE_URL)
+        return client, LLM_MODEL_ID
+
+    if OPENROUTER_API_KEY:
+        client = AsyncOpenAI(api_key=OPENROUTER_API_KEY, base_url=OPENROUTER_BASE_URL)
+        # A multimodal Gemma on OpenRouter (image-capable). Free tier is fine here.
+        return client, "google/gemma-4-31b-it"
+
+    return None
+
+
+async def _transcribe_images_with_vision_async(
+    images: list[bytes], *, filename: str, timeout_seconds: float = 120.0
+) -> str:
+    """OCR page images via the configured vision model, one call per page."""
+    resolved = _vision_model_client_and_id()
+    if resolved is None:
+        return _transcribe_images_with_tesseract(images, filename=filename)
+    client, model_id = resolved
+    parts: list[str] = []
+    try:
+        for idx, png in enumerate(images):
+            b64 = base64.b64encode(png).decode("ascii")
+            try:
+                resp = await asyncio.wait_for(
+                    client.chat.completions.create(
+                        model=model_id,
+                        messages=[
+                            {
+                                "role": "user",
+                                "content": [
+                                    {"type": "text", "text": _VISION_TRANSCRIBE_PROMPT},
+                                    {
+                                        "type": "image_url",
+                                        "image_url": {
+                                            "url": f"data:image/png;base64,{b64}"
+                                        },
+                                    },
+                                ],
+                            }
+                        ],
+                        max_tokens=2000,
+                        temperature=0,
+                    ),
+                    timeout=timeout_seconds,
+                )
+                page_text = (resp.choices[0].message.content or "").strip()
+                if page_text:
+                    parts.append(page_text)
+            except Exception:
+                log.exception(
+                    "private-context: vision OCR failed on page %d of %s",
+                    idx + 1,
+                    filename,
+                )
+                # One flaky page must not sink the whole document.
+                continue
+    finally:
+        try:
+            await client.close()
+        except Exception:
+            pass
+    return "\n\n".join(parts)
+
+
+def _transcribe_images_with_tesseract(images: list[bytes], *, filename: str) -> str:
+    """Local, fully offline OCR fallback. Polish + English if the packs exist.
+
+    Privacy-consistent (no bytes leave the host). Quality on handwriting and
+    noisy Polish scans is materially worse than the vision model — this is the
+    last resort when no vision endpoint is configured.
+    """
+    try:
+        import pytesseract
+        from PIL import Image
+    except ImportError:
+        log.warning(
+            "private-context: no vision endpoint and pytesseract/Pillow missing — "
+            "cannot OCR %s",
+            filename,
+        )
+        return ""
+    langs = "pol+eng"
+    try:
+        available = set(pytesseract.get_languages(config=""))
+        if "pol" not in available:
+            langs = "eng" if "eng" in available else (next(iter(available), "eng"))
+            log.warning(
+                "private-context: Tesseract has no 'pol' pack (have %s); Polish OCR "
+                "quality will be poor. Install tesseract-ocr-pol.",
+                sorted(available),
+            )
+    except Exception:
+        pass
+    parts: list[str] = []
+    for png in images:
+        try:
+            img = Image.open(BytesIO(png))
+            parts.append(pytesseract.image_to_string(img, lang=langs).strip())
+        except Exception:
+            log.exception("private-context: tesseract OCR failed on a page of %s", filename)
+            continue
+    return "\n\n".join(p for p in parts if p)
+
+
+def default_page_transcriber(images: list[bytes], *, filename: str) -> str:
+    """Synchronous entry point used by :func:`extract_text_from_upload`.
+
+    Bridges to the async vision call. Safe to call from a synchronous context
+    (the upload path parses synchronously); if an event loop is already
+    running we hand off to a worker thread so we never re-enter the loop.
+    """
+    coro = _transcribe_images_with_vision_async(images, filename=filename)
+    try:
+        asyncio.get_running_loop()
+    except RuntimeError:
+        return asyncio.run(coro)
+    # A loop is already running (e.g. under the async upload path): run the
+    # coroutine to completion in a private loop on a worker thread.
+    import concurrent.futures
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+        return pool.submit(lambda: asyncio.run(coro)).result()
 
 
 # ---------------------------------------------------------------------------
@@ -249,8 +536,10 @@ def extract_text_from_upload(filename: str, content: bytes) -> str:
 
 REDACTION_SYSTEM_PROMPT = """\
 You are a medical privacy filter. You receive a hospital discharge summary,
-pathology report, lab result, or similar clinical document. Your job is to
-return ONLY de-identified, structured clinical facts.
+pathology report, lab result, or similar clinical document — often in Polish,
+and sometimes noisy OCR output from a scan. Your job is to return ONLY
+de-identified, structured clinical facts. Always write the facts in English,
+even when the source is Polish.
 
 ABSOLUTE RULES — these are non-negotiable:
 
@@ -263,12 +552,21 @@ ABSOLUTE RULES — these are non-negotiable:
 3. NEVER include addresses, hospital names, city names, postal codes, phone
    numbers, email addresses, or any government ID (PESEL, SSN, NHS number,
    case number, MRN).
-4. KEEP genetic variant strings (e.g. "GNAS c.601C>T", "PTPN11 p.Asn308Asp").
-   These are not PII.
-5. KEEP clinical findings, intervention class names, imaging findings,
-   outcome categories — written as one short de-identified sentence each.
+4. KEEP genetic variant strings (e.g. "GNAS c.601C>T", "PTPN11 p.Asn308Asp")
+   AND the name of any mutated gene even without a variant string (e.g. a
+   "GNAS mutation"). These are not PII. Put every gene/variant in ``mutations``.
+5. KEEP the clinical substance — this is the whole point:
+   - the CONFIRMED diagnosis (category 'diagnosis');
+   - any DIFFERENTIAL that was considered and then confirmed or excluded, and
+     WHY (category 'differential') — e.g. "fibrous dysplasia confirmed and
+     juvenile trabecular ossifying fibroma excluded on the basis of a GNAS
+     mutation";
+   - histopathology / immunohistochemistry results (e.g. "SATB2 positive"),
+     imaging findings, and abnormal or clinically-relevant lab values (with
+     units) — one short de-identified sentence each.
+   Preserve the diagnostic reasoning, not just isolated observations.
 6. If you are uncertain whether a token is identifying, DROP IT. Conservatism
-   is the rule.
+   is the rule for identifiers — but never drop a clinical fact to be safe.
 
 Return the structured fields from the schema. For ``pii_breakdown``, COUNT
 the identifier-like tokens you removed in each category (conservative
@@ -621,8 +919,12 @@ __all__ = [
     "PrivateContextService",
     "extract_redacted_facts_async",
     "extract_text_from_upload",
+    "default_page_transcriber",
+    "PageTranscriber",
     "UnsupportedUploadError",
     "private_context_from_row",
     "REDACTION_SYSTEM_PROMPT",
     "MAX_INPUT_CHARS",
+    "MIN_TEXT_LAYER_CHARS",
+    "OCR_MAX_PAGES",
 ]

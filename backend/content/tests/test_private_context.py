@@ -80,6 +80,89 @@ def test_extract_text_rejects_corrupt_pdf():
 
 
 # ---------------------------------------------------------------------------
+# OCR / image support — the fix for scanned PDFs and photo uploads.
+# ---------------------------------------------------------------------------
+
+
+def _one_pixel_png() -> bytes:
+    """Smallest valid PNG (1x1 white) — enough to exercise the image path."""
+    import base64
+
+    return base64.b64decode(
+        b"iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk"
+        b"+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+    )
+
+
+def test_extract_text_from_image_uses_transcriber():
+    """A .jpg/.png upload is OCR'd via the injected transcriber (no network)."""
+    calls: list[str] = []
+
+    def fake_transcriber(images, *, filename):
+        calls.append(filename)
+        assert len(images) == 1  # one page image for a single photo
+        return "monostotic fibrous dysplasia of the right maxilla"
+
+    text = extract_text_from_upload(
+        "visit.jpg", _one_pixel_png(), transcriber=fake_transcriber
+    )
+    assert "fibrous dysplasia" in text
+    assert calls == ["visit.jpg"]
+
+
+def test_extract_text_image_empty_transcription_raises():
+    def empty_transcriber(images, *, filename):
+        return "   "
+
+    with pytest.raises(UnsupportedUploadError):
+        extract_text_from_upload(
+            "blank.png", _one_pixel_png(), transcriber=empty_transcriber
+        )
+
+
+def test_scanned_pdf_falls_back_to_ocr_transcriber():
+    """A PDF with an empty/thin text layer must OCR its pages, not reject."""
+    fitz = pytest.importorskip("fitz")  # PyMuPDF; skip if not installed locally
+    # Build a one-page PDF with NO text (a blank page ~ a scan with no OCR layer).
+    doc = fitz.open()
+    doc.new_page(width=595, height=842)
+    pdf_bytes = doc.tobytes()
+    doc.close()
+
+    seen: dict[str, object] = {}
+
+    def fake_transcriber(images, *, filename):
+        seen["pages"] = len(images)
+        seen["filename"] = filename
+        return "OCR: right maxillary fibrous dysplasia, GNAS mutation confirmed"
+
+    text = extract_text_from_upload(
+        "scan.pdf", pdf_bytes, transcriber=fake_transcriber
+    )
+    assert "GNAS" in text
+    assert seen["pages"] == 1
+    assert seen["filename"] == "scan.pdf"
+
+
+def test_text_layer_pdf_skips_ocr():
+    """A PDF with a real text layer must NOT trigger the OCR transcriber."""
+    fitz = pytest.importorskip("fitz")
+    doc = fitz.open()
+    page = doc.new_page(width=595, height=842)
+    # Well over MIN_TEXT_LAYER_CHARS of real text.
+    body = ("Rozpoznanie dysplazja wloknista. " * 20).strip()
+    page.insert_text((50, 100), body, fontsize=11)
+    pdf_bytes = doc.tobytes()
+    doc.close()
+
+    def boom(images, *, filename):  # pragma: no cover - must not be called
+        raise AssertionError("OCR transcriber should not run for a text-layer PDF")
+
+    text = extract_text_from_upload("report.pdf", pdf_bytes, transcriber=boom)
+    assert "dysplazja" in text.lower()
+
+
+# ---------------------------------------------------------------------------
 # Service — disease validation
 # ---------------------------------------------------------------------------
 
