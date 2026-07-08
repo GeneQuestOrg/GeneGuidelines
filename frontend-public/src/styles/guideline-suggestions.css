@@ -181,17 +181,17 @@
 }
 .gx-tri__rate {
   margin-top: 11px;
-  padding: 11px 14px 12px;
+  padding: 9px 14px 10px;
   border-top: 1px solid var(--line);
   cursor: default;
-  background: color-mix(in oklch, var(--bg-soft) 50%, var(--bg-elev));
+  background: color-mix(in oklch, var(--bg-soft) 40%, var(--bg-elev));
 }
 .gx-tri__count {
   display: flex;
   align-items: center;
   gap: 5px;
   flex-wrap: wrap;
-  margin-bottom: 9px;
+  margin-bottom: 7px;
   font-size: 11px;
   color: var(--ink-3);
 }
@@ -258,56 +258,84 @@
   color: oklch(0.46 0.12 75);
 }
 
-/* ── 3-state rating control ── */
+/* ── 3-state rating control (segmented) ── */
+/*
+ * Layout: .gx-rate is a flex row that holds the segmented control
+ * (.gx-rate__seg) plus the optional "held" badge. The three .gx-sig buttons
+ * live inside .gx-rate__seg and form a single connected control.
+ *
+ * Design intent: always-visible, clearly button-shaped, touch/keyboard/hover
+ * accessible. "Incorrect" has no resting color treatment — only the
+ * aria-pressed="true" state brings a muted tint — preventing it from reading
+ * as a badge or verdict at rest.
+ */
 .gx-rate {
-  display: inline-flex;
-  gap: 7px;
-  flex-wrap: wrap;
+  display: flex;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.gx-rate__seg {
+  display: flex;
+  align-items: stretch;
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-sm);
+  overflow: hidden;
+  background: var(--bg);
 }
 .gx-sig {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  border-radius: 99px;
-  border: 1px solid var(--line-2);
-  background: var(--bg-elev);
-  font-size: var(--fs-xs);
-  font-weight: 600;
-  color: var(--ink-2);
+  justify-content: center;
+  padding: 5px 10px;
+  border: none;
+  border-right: 1px solid var(--line-2);
+  background: transparent;
+  font-size: 11px;
+  font-weight: 500;
+  font-family: var(--font-sans);
+  color: var(--ink-3);
   cursor: pointer;
-  transition: all 120ms;
+  white-space: nowrap;
+  line-height: 1;
+  transition: background 80ms, color 80ms;
 }
-.gx-sig:hover {
-  border-color: var(--ink-4);
+.gx-sig:last-child {
+  border-right: none;
 }
-.gx-sig svg {
-  width: 13px;
-  height: 13px;
-}
-.gx-sig--useful.on {
-  background: color-mix(in oklch, var(--st-green) 16%, var(--bg-elev));
-  color: var(--st-green);
-  border-color: color-mix(in oklch, var(--st-green) 40%, var(--line));
-}
-.gx-sig--not.on {
+.gx-sig:hover:not(:disabled) {
   background: var(--bg-soft);
   color: var(--ink-2);
-  border-color: var(--ink-4);
 }
-.gx-sig--wrong {
-  color: oklch(0.48 0.15 25);
-  border-color: color-mix(in oklch, var(--st-red) 26%, var(--line-2));
+.gx-sig:active:not(:disabled) {
+  background: var(--line);
 }
-.gx-sig--wrong.on {
-  background: color-mix(in oklch, var(--st-red) 14%, var(--bg-elev));
-  color: oklch(0.46 0.16 25);
-  border-color: color-mix(in oklch, var(--st-red) 42%, var(--line));
+.gx-sig:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+  z-index: 1;
+  position: relative;
+}
+/* Active/pressed states — drive by aria-pressed, not a class */
+.gx-sig--useful[aria-pressed="true"] {
+  background: color-mix(in oklch, var(--st-green) 14%, var(--bg-elev));
+  color: oklch(0.42 0.10 145);
+  font-weight: 600;
+}
+.gx-sig--not[aria-pressed="true"] {
+  background: var(--bg-soft);
+  color: var(--ink);
+  font-weight: 600;
+}
+/* Incorrect: no resting red — muted amber-red only when pressed */
+.gx-sig--wrong[aria-pressed="true"] {
+  background: color-mix(in oklch, var(--st-red) 10%, var(--bg-elev));
+  color: oklch(0.44 0.13 30);
+  font-weight: 600;
 }
 .gx-sig:disabled {
   cursor: not-allowed;
-  opacity: 0.5;
+  opacity: 0.45;
 }
 .gx-held {
   display: inline-flex;
