@@ -501,6 +501,53 @@ invites = Table(
 Index("ix_invites_created_by", invites.c.created_by)
 
 
+# Manual verification requests (self-serve verification). A doctor or researcher
+# who cannot (or prefers not to) auto-verify via an ORCID link submits identity
+# evidence — an ORCID iD, a professional licence number, an institution, and/or
+# a free-text note — for a superadmin to review. Approval flips ``users.verified``
+# to true (via the same ``AccountService.set_verified`` path a superadmin uses in
+# the Users view); rejection records the decision and leaves the account
+# unverified. ORCID auto-verify never touches this table — it verifies directly.
+#
+# Generic column types (Text) only, so the same DDL is valid on both SQLite
+# (offline alembic / Kaggle snapshot) and Postgres (production engine). ``role``
+# snapshots the requester's role at submission time (audit fact).
+verification_requests = Table(
+    "verification_requests",
+    metadata,
+    Column("id", Text, primary_key=True),  # uuid4 hex
+    Column(
+        "user_id",
+        Text,
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+    ),
+    Column("role", Text, nullable=False),
+    Column("orcid", Text),
+    Column("license_no", Text),
+    Column("institution", Text),
+    Column("note", Text),
+    Column("status", Text, nullable=False, server_default="pending"),
+    Column("created_at", Text, nullable=False),
+    Column("updated_at", Text, nullable=False),
+    Column("reviewed_by", Text, ForeignKey("users.id")),
+    Column("reviewed_at", Text),
+    CheckConstraint(
+        "role IN ('doctor','researcher')",
+        name="verification_request_role_enum",
+    ),
+    CheckConstraint(
+        "status IN ('pending','approved','rejected')",
+        name="verification_request_status_enum",
+    ),
+)
+
+# The admin review queue lists pending requests; the requester's own history is
+# looked up by user. Both hit these indexes.
+Index("ix_verification_requests_status", verification_requests.c.status)
+Index("ix_verification_requests_user_id", verification_requests.c.user_id)
+
+
 # -- research_queue domain ----------------------------------------------------
 #
 # Durable fair-share admission queue for disease-bootstrap fan-outs (RES-2).
@@ -632,6 +679,7 @@ __all__ = [
     "disease_index_aliases",
     "users",
     "invites",
+    "verification_requests",
     "research_jobs",
     "token_usage",
     "disease_alert_subscriptions",

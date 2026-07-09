@@ -29,15 +29,19 @@ from itsdangerous import BadSignature, URLSafeTimedSerializer
 from .jwt import Claims
 from .models import (
     SELECTABLE_ROLES,
+    VERIFIABLE_ROLES,
     Auth0Sub,
     Invite,
     InviteToken,
     Role,
     User,
     UserId,
+    VerificationRequest,
+    VerificationRequestId,
+    VerificationStatus,
 )
 from .orcid import OrcidConfig, OrcidTokenClient
-from .repository import InviteRepo, UserRepo
+from .repository import InviteRepo, UserRepo, VerificationRequestRepo
 
 # How long a doctor invite stays valid (PLAN: ~30 days).
 INVITE_TTL_DAYS = 30
@@ -49,6 +53,10 @@ INVITE_CREATOR_ROLES: frozenset[Role] = frozenset({Role.PARENT, Role.SUPERADMIN}
 # ORCID state token lifetime — the user has to come back from ORCID within this.
 ORCID_STATE_TTL_SECONDS = 600
 _ORCID_STATE_SALT = "account.orcid.state.v1"
+
+# Free-text note cap on a manual verification request (defence-in-depth against
+# an oversized body; the Pydantic DTO enforces the same bound at the boundary).
+VERIFICATION_NOTE_MAX_CHARS = 2000
 
 
 @dataclass(slots=True)
@@ -63,6 +71,7 @@ class AccountService:
     repo: UserRepo
     superadmin_emails: frozenset[str]
     invite_repo: InviteRepo | None = None
+    verification_repo: VerificationRequestRepo | None = None
     orcid_config: OrcidConfig | None = None
     orcid_client: OrcidTokenClient | None = None
 
@@ -212,7 +221,17 @@ class AccountService:
         return config.authorize_url(state)
 
     def orcid_callback(self, *, code: str, state: str) -> User:
-        """Exchange ``code`` for an iD and store it on the state-bound user.
+        """Exchange ``code`` for an iD, store it, and auto-verify the user.
+
+        This is the *self-serve* verification path (founder's decision: "auto
+        where possible"). A successful, ORCID-validated code→token exchange
+        proves the state-bound user controls the returned iD, so we both store
+        the iD and — for a doctor or researcher — flip ``verified`` to true.
+        The flag is set **server-side only**, after the exchange; the client
+        never supplies it. Parents / superadmins keep their existing
+        ``verified`` value (verification is meaningless for those roles), and a
+        user who has not yet picked a role is *not* auto-verified — they would
+        have to link ORCID again after choosing doctor/researcher.
 
         Raises ``503`` when ORCID is off, ``400`` on a bad/expired state or a
         failed exchange.
@@ -229,10 +248,144 @@ class AccountService:
             raise HTTPException(
                 status_code=400, detail="ORCID authorization failed."
             ) from exc
-        updated = self.repo.set_orcid(user_id, token.orcid, _now().isoformat())
+        now = _now().isoformat()
+        updated = self.repo.set_orcid(user_id, token.orcid, now)
         if updated is None:
             raise HTTPException(status_code=404, detail="User not found.")
+        # Auto-verify only a doctor/researcher, and only if not already verified
+        # (idempotent, avoids a redundant write). The role check reads the
+        # freshly-persisted user, never a client-supplied value.
+        if updated.role in VERIFIABLE_ROLES and not updated.verified:
+            verified = self.repo.set_verified(user_id, True, now)
+            if verified is not None:
+                updated = verified
         return updated
+
+    # -- manual verification requests (self-serve) --------------------------
+
+    def submit_verification_request(
+        self,
+        user: User,
+        *,
+        orcid: str | None = None,
+        license_no: str | None = None,
+        institution: str | None = None,
+        note: str | None = None,
+    ) -> VerificationRequest:
+        """Open a manual verification request for a doctor / researcher.
+
+        Never sets ``verified`` — that only happens on superadmin approval (see
+        :meth:`review_verification_request`) or the ORCID auto-path. Raises:
+
+        - ``403`` when the caller is not a doctor / researcher (parents and
+          superadmins do not need verification).
+        - ``409`` when the caller is already verified, or already has a pending
+          request (one open request at a time).
+        - ``400`` when no evidence at all is supplied.
+        """
+        if user.role not in VERIFIABLE_ROLES:
+            raise HTTPException(
+                status_code=403,
+                detail="Verification is for doctor and researcher accounts.",
+            )
+        if user.verified:
+            raise HTTPException(
+                status_code=409,
+                detail="Your account is already verified.",
+            )
+        repo = self._verifications()
+        if repo.has_pending_for_user(str(user.id)):
+            raise HTTPException(
+                status_code=409,
+                detail="You already have a verification request under review.",
+            )
+        orcid = _clean(orcid)
+        license_no = _clean(license_no)
+        institution = _clean(institution)
+        note = _clean(note)
+        if not any((orcid, license_no, institution, note)):
+            raise HTTPException(
+                status_code=400,
+                detail="Provide at least one of: ORCID, licence number, "
+                "institution, or a note.",
+            )
+        if note is not None and len(note) > VERIFICATION_NOTE_MAX_CHARS:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Note must be at most {VERIFICATION_NOTE_MAX_CHARS} characters.",
+            )
+        now = _now_iso()
+        request = VerificationRequest(
+            id=VerificationRequestId(uuid.uuid4().hex),
+            user_id=user.id,
+            role=user.role,
+            orcid=orcid,
+            license_no=license_no,
+            institution=institution,
+            note=note,
+            status=VerificationStatus.PENDING,
+            created_at=now,
+            updated_at=now,
+            reviewed_by=None,
+            reviewed_at=None,
+        )
+        return repo.insert(request)
+
+    def my_verification_requests(self, user: User) -> list[VerificationRequest]:
+        """Return ``user``'s own verification requests, newest first."""
+        return self._verifications().list_for_user(str(user.id))
+
+    def list_pending_verification_requests(self) -> list[VerificationRequest]:
+        """Superadmin: the review queue — pending requests, oldest first."""
+        return self._verifications().list_pending()
+
+    def verification_requester_email(self, request: VerificationRequest) -> str | None:
+        """The email of the account behind ``request`` (for the admin queue)."""
+        requester = self.repo.get_by_id(str(request.user_id))
+        return requester.email if requester is not None else None
+
+    def review_verification_request(
+        self, request_id: str, *, approve: bool, reviewer: User
+    ) -> VerificationRequest:
+        """Superadmin: approve or reject a pending request.
+
+        Approval flips the requester's ``users.verified`` to true via
+        :meth:`set_verified` (the same path the Users view uses); rejection only
+        records the decision. Idempotency / concurrency is enforced by the
+        repository's conditional update — a request that is no longer pending
+        yields ``409``.
+
+        Raises ``404`` when the request is unknown.
+        """
+        repo = self._verifications()
+        existing = repo.get(request_id)
+        if existing is None:
+            raise HTTPException(status_code=404, detail="Verification request not found.")
+        if not existing.is_pending:
+            raise HTTPException(
+                status_code=409,
+                detail="This verification request has already been reviewed.",
+            )
+        now = _now_iso()
+        status = (
+            VerificationStatus.APPROVED if approve else VerificationStatus.REJECTED
+        )
+        reviewed = repo.mark_reviewed(
+            request_id, status=status, reviewed_by=str(reviewer.id), when=now
+        )
+        if reviewed is None or reviewed.status is not status:
+            # Lost a race with a concurrent review (the conditional update
+            # matched zero rows) — fail closed rather than double-apply.
+            raise HTTPException(
+                status_code=409,
+                detail="This verification request has already been reviewed.",
+            )
+        if approve:
+            # set_verified is the single authoritative write of ``verified``;
+            # reusing it keeps admin-approve and this path behaviourally
+            # identical. A vanished user row is a 404 as everywhere else.
+            self.set_verified(str(existing.user_id), True)
+        return reviewed
 
     # -- internals ----------------------------------------------------------
 
@@ -240,6 +393,13 @@ class AccountService:
         if self.invite_repo is None:  # pragma: no cover - always wired in app
             raise HTTPException(status_code=503, detail="Invites are not available.")
         return self.invite_repo
+
+    def _verifications(self) -> VerificationRequestRepo:
+        if self.verification_repo is None:  # pragma: no cover - always wired in app
+            raise HTTPException(
+                status_code=503, detail="Verification requests are not available."
+            )
+        return self.verification_repo
 
     def _orcid_config(self) -> OrcidConfig:
         if not self.orcid_enabled():
@@ -347,4 +507,5 @@ __all__ = [
     "parse_superadmin_emails",
     "INVITE_TTL_DAYS",
     "INVITE_CREATOR_ROLES",
+    "VERIFICATION_NOTE_MAX_CHARS",
 ]

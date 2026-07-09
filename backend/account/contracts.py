@@ -11,9 +11,9 @@ All request/response models set ``extra="forbid"`` (reject unknown keys) and
 
 from __future__ import annotations
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
-from .models import Invite, Role, User
+from .models import Invite, Role, User, VerificationRequest, VerificationStatus
 
 
 class MeResponse(BaseModel):
@@ -126,6 +126,78 @@ class OrcidLoginResponse(BaseModel):
     authorize_url: str
 
 
+class SubmitVerificationRequest(BaseModel):
+    """Body of ``POST /api/account/verification-requests`` — manual submission.
+
+    All fields optional individually, but the service rejects a wholly empty
+    body (400): a doctor/researcher must supply at least one piece of evidence.
+    ``verified`` is deliberately **not** a field — the client can never set it;
+    verification is granted only server-side (ORCID auto-path or superadmin
+    approval).
+    """
+
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    orcid: str | None = Field(default=None, max_length=64)
+    license_no: str | None = Field(default=None, max_length=128)
+    institution: str | None = Field(default=None, max_length=256)
+    note: str | None = Field(default=None, max_length=2000)
+
+
+class VerificationRequestResponse(BaseModel):
+    """A verification request as seen by its owner or a superadmin reviewer."""
+
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    id: str
+    user_id: str
+    role: Role
+    orcid: str | None = None
+    license_no: str | None = None
+    institution: str | None = None
+    note: str | None = None
+    status: VerificationStatus
+    created_at: str
+    updated_at: str
+    reviewed_by: str | None = None
+    reviewed_at: str | None = None
+    # Requester email — filled only for the admin queue (never leaks another
+    # user's email on the self-serve ``mine`` path).
+    user_email: str | None = None
+
+
+class ReviewVerificationRequest(BaseModel):
+    """Body of ``POST /api/account/verification-requests/{id}/review`` (superadmin).
+
+    ``approve=true`` verifies the requester (flips ``users.verified``);
+    ``approve=false`` rejects and leaves the account unverified.
+    """
+
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    approve: bool
+
+
+def verification_request_to_response(
+    request: VerificationRequest, *, user_email: str | None = None
+) -> VerificationRequestResponse:
+    return VerificationRequestResponse(
+        id=str(request.id),
+        user_id=str(request.user_id),
+        role=request.role,
+        orcid=request.orcid,
+        license_no=request.license_no,
+        institution=request.institution,
+        note=request.note,
+        status=request.status,
+        created_at=request.created_at,
+        updated_at=request.updated_at,
+        reviewed_by=str(request.reviewed_by) if request.reviewed_by is not None else None,
+        reviewed_at=request.reviewed_at,
+        user_email=user_email,
+    )
+
+
 def invite_preview_to_response(
     invite: Invite, *, inviter_display: str, expired: bool
 ) -> InvitePreviewResponse:
@@ -176,7 +248,11 @@ __all__ = [
     "InvitePreviewResponse",
     "OrcidStatusResponse",
     "OrcidLoginResponse",
+    "SubmitVerificationRequest",
+    "VerificationRequestResponse",
+    "ReviewVerificationRequest",
     "me_to_response",
     "admin_user_to_response",
     "invite_preview_to_response",
+    "verification_request_to_response",
 ]

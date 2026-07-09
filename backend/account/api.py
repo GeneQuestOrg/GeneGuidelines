@@ -15,7 +15,11 @@ Routes (mounted under ``/api`` by ``backend.main``):
 - ``POST  /api/account/invites/{token}/accept`` — redeem invite -> doctor role
 - ``GET   /api/account/orcid/status``         — whether ORCID verify is available
 - ``GET   /api/account/orcid/login``          — ORCID authorize URL (signed state)
-- ``GET   /api/account/orcid/callback``       — ORCID code exchange -> store iD
+- ``GET   /api/account/orcid/callback``       — ORCID code exchange -> auto-verify
+- ``POST  /api/account/verification-requests`` — doctor/researcher: submit manual review
+- ``GET   /api/account/verification-requests/mine`` — the caller's own requests
+- ``GET   /api/account/verification-requests`` — superadmin: pending review queue
+- ``POST  /api/account/verification-requests/{id}/review`` — superadmin: approve/reject
 """
 
 from __future__ import annotations
@@ -33,10 +37,14 @@ from .contracts import (
     MeResponse,
     OrcidLoginResponse,
     OrcidStatusResponse,
+    ReviewVerificationRequest,
     SelectRoleRequest,
+    SubmitVerificationRequest,
+    VerificationRequestResponse,
     admin_user_to_response,
     invite_preview_to_response,
     me_to_response,
+    verification_request_to_response,
 )
 from .deps import (
     CurrentUser,
@@ -188,6 +196,91 @@ def orcid_callback(
     """
     updated = service.orcid_callback(code=code, state=state)
     return me_to_response(updated)
+
+
+# -- Manual verification requests (self-serve, hybrid with ORCID auto-verify) --
+
+
+@router.post(
+    "/verification-requests",
+    response_model=VerificationRequestResponse,
+    status_code=201,
+)
+def submit_verification_request(
+    body: SubmitVerificationRequest,
+    user: CurrentUser,
+    service: Annotated[AccountService, Depends(provide_account_service)],
+) -> VerificationRequestResponse:
+    """Doctor / researcher: submit identity evidence for manual review.
+
+    403 for a non-verifiable role; 409 when already verified or a request is
+    already pending; 400 when no evidence is supplied. Never sets ``verified``
+    — a superadmin approves the resulting request.
+    """
+    request = service.submit_verification_request(
+        user,
+        orcid=body.orcid,
+        license_no=body.license_no,
+        institution=body.institution,
+        note=body.note,
+    )
+    return verification_request_to_response(request)
+
+
+@router.get(
+    "/verification-requests/mine",
+    response_model=list[VerificationRequestResponse],
+)
+def my_verification_requests(
+    user: CurrentUser,
+    service: Annotated[AccountService, Depends(provide_account_service)],
+) -> list[VerificationRequestResponse]:
+    """The caller's own verification requests (newest first)."""
+    return [
+        verification_request_to_response(r)
+        for r in service.my_verification_requests(user)
+    ]
+
+
+@router.get(
+    "/verification-requests",
+    response_model=list[VerificationRequestResponse],
+)
+def list_verification_requests(
+    _admin: Annotated[User | None, Depends(require_superadmin)],
+    service: Annotated[AccountService, Depends(provide_account_service)],
+) -> list[VerificationRequestResponse]:
+    """Superadmin: the pending review queue (oldest first), with requester email."""
+    return [
+        verification_request_to_response(
+            r, user_email=service.verification_requester_email(r)
+        )
+        for r in service.list_pending_verification_requests()
+    ]
+
+
+@router.post(
+    "/verification-requests/{request_id}/review",
+    response_model=VerificationRequestResponse,
+)
+def review_verification_request(
+    request_id: str,
+    body: ReviewVerificationRequest,
+    admin: Annotated[User | None, Depends(require_superadmin)],
+    service: Annotated[AccountService, Depends(provide_account_service)],
+) -> VerificationRequestResponse:
+    """Superadmin: approve (-> verify the user) or reject a pending request.
+
+    404 unknown request; 409 already reviewed. The API-key superadmin path has
+    no user row, so the reviewer id is recorded only on the JWT path; approval
+    still verifies the requester either way.
+    """
+    reviewed = service.review_verification_request(
+        request_id, approve=body.approve, reviewer=admin or _MACHINE_REVIEWER
+    )
+    return verification_request_to_response(
+        reviewed, user_email=service.verification_requester_email(reviewed)
+    )
 
 
 __all__ = ["router"]

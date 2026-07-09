@@ -30,7 +30,14 @@ from ..auth import api_key_from_env, api_key_matches
 from .jwt import Auth0Verifier, Claims
 from .models import Role, User
 from .orcid import HttpxOrcidTokenClient, OrcidConfig, OrcidTokenClient
-from .repository import InviteRepo, SqlaInviteRepo, SqlaUserRepo, UserRepo
+from .repository import (
+    InviteRepo,
+    SqlaInviteRepo,
+    SqlaUserRepo,
+    SqlaVerificationRequestRepo,
+    UserRepo,
+    VerificationRequestRepo,
+)
 from .service import AccountService, parse_superadmin_emails
 
 _bearer = HTTPBearer(auto_error=False)
@@ -55,6 +62,11 @@ def provide_invite_repo() -> InviteRepo:
     return SqlaInviteRepo()
 
 
+def provide_verification_repo() -> VerificationRequestRepo:
+    """Return the production verification-request repository."""
+    return SqlaVerificationRequestRepo()
+
+
 def provide_orcid_config() -> OrcidConfig:
     """Return the ORCID OAuth config from env (``enabled`` is False when unset)."""
     return OrcidConfig.from_env()
@@ -72,6 +84,7 @@ def provide_orcid_client(
 def provide_account_service(
     repo: UserRepo = Depends(provide_user_repo),
     invite_repo: InviteRepo = Depends(provide_invite_repo),
+    verification_repo: VerificationRequestRepo = Depends(provide_verification_repo),
     orcid_config: OrcidConfig = Depends(provide_orcid_config),
     orcid_client: OrcidTokenClient | None = Depends(provide_orcid_client),
 ) -> AccountService:
@@ -84,6 +97,7 @@ def provide_account_service(
         repo=repo,
         superadmin_emails=parse_superadmin_emails(SUPERADMIN_EMAILS),
         invite_repo=invite_repo,
+        verification_repo=verification_repo,
         orcid_config=orcid_config,
         orcid_client=orcid_client,
     )
@@ -271,6 +285,7 @@ __all__ = [
     "provide_verifier",
     "provide_user_repo",
     "provide_invite_repo",
+    "provide_verification_repo",
     "provide_orcid_config",
     "provide_orcid_client",
     "provide_account_service",
