@@ -7,6 +7,7 @@ from .decision_executor import DecisionExecutor
 from .evaluation_check_executor import EvaluationCheckExecutor
 from .guideline_bibliography_write_executor import GuidelineBibliographyWriteExecutor
 from .guideline_factcheck_load_executor import GuidelineFactcheckLoadExecutor
+from .guideline_quote_extract_load_executor import GuidelineQuoteExtractLoadExecutor
 from .guideline_monitor_search_executor import GuidelineMonitorSearchExecutor
 from .guideline_shelf_load_executor import GuidelineShelfLoadExecutor
 from .guideline_shelf_search_executor import GuidelineShelfSearchExecutor
@@ -38,6 +39,7 @@ EXECUTOR_REGISTRY = {
     "evaluation_check": EvaluationCheckExecutor,
     "guideline_bibliography_write": GuidelineBibliographyWriteExecutor,
     "guideline_factcheck_load": GuidelineFactcheckLoadExecutor,
+    "guideline_quote_extract_load": GuidelineQuoteExtractLoadExecutor,
     "guideline_monitor_search": GuidelineMonitorSearchExecutor,
     "guideline_shelf_load": GuidelineShelfLoadExecutor,
     "guideline_shelf_search": GuidelineShelfSearchExecutor,
