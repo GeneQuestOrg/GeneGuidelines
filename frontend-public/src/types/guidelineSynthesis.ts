@@ -33,6 +33,25 @@ export interface ParagraphUpdate {
   readonly note: string;
 }
 
+/**
+ * A grounded paraphrase of the passage in a cited abstract that backs one claim
+ * (Feature 4, "Where we know this from"). NEVER a verbatim quote — the engine
+ * only holds public PubMed abstracts, so we surface a short paraphrase in our
+ * own words + PMID attribution. The backend emits these ONLY for claims judged
+ * "supported" against the cited abstract, after a deterministic PMID-provenance
+ * gate (each `pmid` is guaranteed to be among the paragraph's `citations`).
+ */
+export interface SourceQuote {
+  /** PMID of the cited abstract this paraphrase is drawn from (digits only). */
+  readonly pmid: string;
+  /** 1–2 short sentences, paraphrased in our own words (never a verbatim copy). */
+  readonly paraphrase: string;
+  /** Source-shelf docId (optional; for Bookshelf docs without a PMID). */
+  readonly doc?: string;
+  /** Optional: which aspect of the claim this passage backs. */
+  readonly supports?: string;
+}
+
 export interface SynthesisParagraph {
   readonly id: string;
   readonly text: string;
@@ -40,6 +59,12 @@ export interface SynthesisParagraph {
   readonly source?: ParagraphSource;
   /** Cited PMIDs, in citation order. */
   readonly citations?: readonly string[];
+  /**
+   * Grounded paraphrases of the cited abstract(s) that back this claim
+   * (Feature 4; additive, optional). Present only for "supported" claims;
+   * absent for "unsupported"/"uncertain" claims and for older syntheses.
+   */
+  readonly quotes?: readonly SourceQuote[];
   readonly update?: ParagraphUpdate;
   readonly highlight?: boolean;
 }

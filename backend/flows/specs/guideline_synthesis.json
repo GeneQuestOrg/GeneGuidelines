@@ -69,10 +69,28 @@
       "prompt": "Synthesise the MONITORING AND FOLLOW-UP section of a living clinical guideline for {{ context.initial.disease_name }}, using ONLY the source documents on the shelf below.\n\nSource shelf (each has docId, role, title, scope, covers, abstract):\n{{ context.gs-shelf.shelf_docs }}\n\nRules:\n- Write one short intro sentence, then 2-5 paragraphs.\n- Every paragraph MUST set source.doc to the docId of the shelf document it is drawn from. Do NOT invent facts beyond the shelf.\n- citations may list PMIDs ONLY if that PMID appears on the shelf; otherwise leave citations empty.\n- Stay at the level of patient guidance.\n- Focus: the surveillance schedule, what is tracked, and how often."
     },
     {
+      "node_id": "gs-quotes-load",
+      "node_type": "guideline_quote_extract_load",
+      "label": "Load claims + cited abstracts",
+      "description": "Collect the freshly-synthesised paragraphs (from the section nodes) + the abstracts already fetched by gs-shelf, so the extractor can paraphrase the passage that backs each claim (Feature 4; zero extra PubMed calls).",
+      "prompt_mode": "agentic",
+      "max_retry": 1
+    },
+    {
+      "node_id": "gs-quotes",
+      "node_type": "prompt",
+      "label": "Extract grounded source paraphrases",
+      "description": "Per claim: judge support against the cited abstract and, ONLY when supported, paraphrase the backing passage (1-2 sentences, our own words). Feeds the 'Where we know this from' provenance view.",
+      "prompt_mode": "simple",
+      "output_schema_key": "guideline_quotes",
+      "max_retry": 2,
+      "prompt": "You are grounding an AI-written clinical synthesis for {{ context.initial.disease_name }}. For each claim below, look ONLY at the abstract of the source it cites — do NOT bring in outside knowledge.\n\nSource abstracts (docId, pmid, title, abstract):\n{{ context.gs-quotes-load.sources }}\n\nClaims (each: section_id, paragraph_id, text, cited_doc, cited_pmid, citations):\n{{ context.gs-quotes-load.claims }}\n\nFor EACH claim return an object with section_id, paragraph_id, a verdict, and a quotes list:\n- First decide the verdict: 'supported' = the cited abstract clearly backs the claim; 'unsupported' = it does not back it or contradicts it; 'uncertain' = the abstract is too thin to tell. Be strict: an abstract that does not mention the specific claim is 'uncertain', not 'supported'.\n- ONLY when the verdict is 'supported', add one (rarely two) quote(s). Each quote: pmid (a PMID that is in this claim's citations), paraphrase, and optionally supports. If the verdict is 'unsupported' or 'uncertain', return an EMPTY quotes list — that is the correct answer, not a failure.\n- The paraphrase MUST be 1-2 short sentences in YOUR OWN WORDS (max ~400 characters). NEVER copy a sentence verbatim from the abstract; summarise it. Stay strictly faithful to the abstract — add no claim the abstract does not make.\n- Use ONLY the PMIDs given in that claim's citations. Never invent a PMID and never attribute to a paper not cited by the claim."
+    },
+    {
       "node_id": "gs-write",
       "node_type": "guideline_synthesis_writer",
       "label": "Assemble + write synthesis",
-      "description": "Collect the section outputs and upsert the synthesis into the GL-4 guideline_synthesis table (terminal node).",
+      "description": "Collect the section outputs (with grounded paraphrases merged in) and upsert the synthesis into the GL-4 guideline_synthesis table (terminal node).",
       "prompt_mode": "agentic",
       "max_retry": 1
     },
@@ -90,11 +108,13 @@
     {"source_node_id": "gs-shelf", "target_node_id": "gs-sec-therapy"},
     {"source_node_id": "gs-shelf", "target_node_id": "gs-sec-surgery"},
     {"source_node_id": "gs-shelf", "target_node_id": "gs-sec-monitoring"},
-    {"source_node_id": "gs-sec-diagnosis", "target_node_id": "gs-write"},
-    {"source_node_id": "gs-sec-histopathology", "target_node_id": "gs-write"},
-    {"source_node_id": "gs-sec-therapy", "target_node_id": "gs-write"},
-    {"source_node_id": "gs-sec-surgery", "target_node_id": "gs-write"},
-    {"source_node_id": "gs-sec-monitoring", "target_node_id": "gs-write"},
+    {"source_node_id": "gs-sec-diagnosis", "target_node_id": "gs-quotes-load"},
+    {"source_node_id": "gs-sec-histopathology", "target_node_id": "gs-quotes-load"},
+    {"source_node_id": "gs-sec-therapy", "target_node_id": "gs-quotes-load"},
+    {"source_node_id": "gs-sec-surgery", "target_node_id": "gs-quotes-load"},
+    {"source_node_id": "gs-sec-monitoring", "target_node_id": "gs-quotes-load"},
+    {"source_node_id": "gs-quotes-load", "target_node_id": "gs-quotes"},
+    {"source_node_id": "gs-quotes", "target_node_id": "gs-write"},
     {"source_node_id": "gs-write", "target_node_id": "end"}
   ]
 }

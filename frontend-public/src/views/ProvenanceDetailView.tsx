@@ -5,13 +5,19 @@ import type { SourceDoc } from "../types/sourceDoc";
 import { sourceDocUrl } from "../types/sourceDoc";
 import type { ViewRole } from "../auth/resolveRole";
 import { RolePill } from "../components/guidelines/RolePill";
-import { shortDocLabel, pubmedUrl } from "../utils/guidelineSynthesis";
+import {
+  paraphrasesForPmid,
+  shortDocLabel,
+  pubmedUrl,
+} from "../utils/guidelineSynthesis";
 
 /**
  * "Where we know this from" (draft10 `ProvenanceDetail`, /guidelines/source/:paraId).
  * The synthesis claim on the left, the literature it rests on on the right.
- * GL-3b shows the cited PMIDs as the basis; paraphrased source quotes
- * (SOURCE_BASIS) arrive with the backend (GL-4). Clinician-only.
+ * GL-3b shows the cited PMIDs as the basis; Feature 4 additionally surfaces a
+ * grounded PARAPHRASE (our own words, never verbatim) of the passage in the
+ * cited abstract that backs the claim — shown only for "supported" claims, with
+ * a link to the original on PubMed. Clinician-only.
  */
 export interface ProvenanceDetailViewProps {
   slug: string;
@@ -98,8 +104,9 @@ export function ProvenanceDetailView({
 
       <p className="gx-prov__lead">
         On the left — the claim from the synthesis. On the right — the literature it rests
-        on. Each links to its original on PubMed. (Paraphrased source quotes arrive with the
-        backend.)
+        on. Where the cited abstract clearly supports the claim, we show a short paraphrase
+        of the backing passage in our own words (never a verbatim quote); each links to its
+        original on PubMed.
       </p>
 
       <div className="prov">
@@ -131,22 +138,60 @@ export function ProvenanceDetailView({
             {citations.length}{" "}
             {citations.length === 1 ? "basis reference" : "basis references"}
           </div>
-          {citations.map((pmid) => (
-            <div key={pmid} className="prov__frag">
-              <div className="prov__fraghd">
-                <span className="prov__fragsrc">Source reference</span>
-                <a
-                  className="gx-pmid"
-                  href={pubmedUrl(pmid)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  PMID {pmid}
-                </a>
+          {citations.map((pmid) => {
+            const paraphrases = paraphrasesForPmid(para, pmid);
+            return (
+              <div key={pmid} className="prov__frag">
+                <div className="prov__fraghd">
+                  <span className="prov__fragsrc">Source reference</span>
+                  <a
+                    className="gx-pmid"
+                    href={pubmedUrl(pmid)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    PMID {pmid}
+                  </a>
+                </div>
+                {paraphrases.length > 0 ? (
+                  paraphrases.map((q, i) => (
+                    <div key={i} className="prov__para">
+                      <span className="prov__paratag">
+                        <svg
+                          width="12"
+                          height="12"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          aria-hidden="true"
+                        >
+                          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                        </svg>
+                        In our words — paraphrased, not a quote
+                      </span>
+                      <p className="prov__paratx">{q.paraphrase}</p>
+                      {q.supports !== undefined && q.supports !== "" ? (
+                        <p className="prov__parasupports">Backs: {q.supports}</p>
+                      ) : null}
+                      <a
+                        className="prov__paralink"
+                        href={pubmedUrl(pmid)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Read the original abstract on PubMed ↗
+                      </a>
+                    </div>
+                  ))
+                ) : (
+                  <div className="prov__title">Cited in support of this claim.</div>
+                )}
               </div>
-              <div className="prov__title">Cited in support of this claim.</div>
-            </div>
-          ))}
+            );
+          })}
           {citations.length === 0 ? (
             <div className="gx-empty">
               <div>

@@ -18,6 +18,7 @@ from __future__ import annotations
 import logging
 from datetime import datetime, timezone
 
+from ..agents.schemas import SOURCE_QUOTE_MAX_CHARS
 from ..contracts.guidelines_v1 import EPISTEMIC_LEVEL_SYNTHESIS
 from .base import NodeExecutor, NodeInput, NodeOutput
 
@@ -63,7 +64,11 @@ class GuidelineSynthesisWriterExecutor(NodeExecutor):
         shelf_docs = shelf.get("shelf_docs") or []
         source_ids = [str(d.get("docId")) for d in shelf_docs if isinstance(d, dict) and d.get("docId")]
 
-        sections = self._collect_sections(context, section_specs)
+        # Feature 4: grounded per-claim paraphrases produced by the gs-quotes node,
+        # indexed by (section_id, paragraph_id). Absent on older flows → no quotes.
+        quotes_by_para = _collect_quotes(context.get("gs-quotes"))
+
+        sections = self._collect_sections(context, section_specs, quotes_by_para)
         if not sections:
             return NodeOutput(
                 data={"ok": False, "error": "no section nodes produced paragraphs; nothing to write."}
@@ -101,7 +106,9 @@ class GuidelineSynthesisWriterExecutor(NodeExecutor):
             data={"ok": True, "slug": slug, "sectionCount": len(sections), "sourceCount": len(source_ids)}
         )
 
-    def _collect_sections(self, context: dict, section_specs: list[dict]) -> list[dict]:
+    def _collect_sections(
+        self, context: dict, section_specs: list[dict], quotes_by_para: dict[tuple[str, str], list[dict]]
+    ) -> list[dict]:
         """Assemble sections in spec order from ``gs-sec-<id>`` node outputs."""
         sections: list[dict] = []
         for spec in section_specs:
@@ -110,7 +117,7 @@ class GuidelineSynthesisWriterExecutor(NodeExecutor):
             if not isinstance(out, dict):
                 log.info("guideline_synthesis_writer: section %s missing from context — skipping", sid)
                 continue
-            paragraphs = _clean_paragraphs(out.get("paragraphs"))
+            paragraphs = _clean_paragraphs(out.get("paragraphs"), sid, quotes_by_para)
             if not paragraphs:
                 log.info("guideline_synthesis_writer: section %s has no valid paragraphs — skipping", sid)
                 continue
@@ -138,8 +145,15 @@ def _normalize_section_specs(raw) -> list[dict]:
     return specs
 
 
-def _clean_paragraphs(raw) -> list[dict]:
-    """Keep only structurally valid paragraphs (must carry a source.doc)."""
+def _clean_paragraphs(
+    raw, section_id: str = "", quotes_by_para: dict[tuple[str, str], list[dict]] | None = None
+) -> list[dict]:
+    """Keep only structurally valid paragraphs (must carry a source.doc).
+
+    Merges Feature-4 grounded paraphrases (``quotes``) matched by
+    ``(section_id, paragraph_id)`` after a deterministic provenance gate.
+    """
+    quotes_by_para = quotes_by_para or {}
     out: list[dict] = []
     if not isinstance(raw, list):
         return out
@@ -151,12 +165,17 @@ def _clean_paragraphs(raw) -> list[dict]:
         text = str(p.get("text") or "").strip()
         if not doc or not text:
             continue
+        pid = str(p.get("id") or "").strip() or f"p{len(out) + 1}"
+        citations = [str(c).strip() for c in (p.get("citations") or []) if str(c).strip().isdigit()]
         para = {
-            "id": str(p.get("id") or "").strip() or f"p{len(out) + 1}",
+            "id": pid,
             "text": text,
             "source": {"doc": doc, "loc": str(source.get("loc") or "").strip()},
-            "citations": [str(c).strip() for c in (p.get("citations") or []) if str(c).strip().isdigit()],
+            "citations": citations,
         }
+        quotes = _gate_quotes(quotes_by_para.get((section_id, pid), []), citations)
+        if quotes:
+            para["quotes"] = quotes
         upd = p.get("update")
         if isinstance(upd, dict) and str(upd.get("doc") or "").strip():
             para["update"] = {
@@ -167,4 +186,60 @@ def _clean_paragraphs(raw) -> list[dict]:
         if p.get("highlight"):
             para["highlight"] = True
         out.append(para)
+    return out
+
+
+def _collect_quotes(raw) -> dict[tuple[str, str], list[dict]]:
+    """Index the ``gs-quotes`` node output by (section_id, paragraph_id).
+
+    Only paragraphs the extractor judged ``supported`` carry quotes; any other
+    verdict is treated as "no quotes" (conservative — founder v1 decision).
+    """
+    index: dict[tuple[str, str], list[dict]] = {}
+    if not isinstance(raw, dict):
+        return index
+    for entry in raw.get("paragraphs") or []:
+        if not isinstance(entry, dict):
+            continue
+        sid = str(entry.get("section_id") or "").strip()
+        pid = str(entry.get("paragraph_id") or "").strip()
+        if not sid or not pid:
+            continue
+        verdict = str(entry.get("verdict") or "supported").strip().lower()
+        if verdict and verdict != "supported":
+            continue  # never surface a paraphrase for an unsupported/uncertain claim
+        raw_quotes = entry.get("quotes")
+        if isinstance(raw_quotes, list) and raw_quotes:
+            index[(sid, pid)] = raw_quotes
+    return index
+
+
+def _gate_quotes(raw_quotes: list, citations: list[str]) -> list[dict]:
+    """Deterministic guardrails on model-generated paraphrases (writer-without-invention).
+
+    - Drop any quote whose PMID is not among the paragraph's citations (anti-hallucination).
+    - Hard-truncate the paraphrase to the anti-copyright ceiling.
+    - Require digits-only PMID and a non-empty paraphrase.
+    """
+    allowed = set(citations)
+    out: list[dict] = []
+    for q in raw_quotes or []:
+        if not isinstance(q, dict):
+            continue
+        pmid = str(q.get("pmid") or "").strip()
+        if not pmid.isdigit() or pmid not in allowed:
+            continue
+        paraphrase = " ".join(str(q.get("paraphrase") or "").split()).strip()
+        if not paraphrase:
+            continue
+        if len(paraphrase) > SOURCE_QUOTE_MAX_CHARS:
+            paraphrase = paraphrase[:SOURCE_QUOTE_MAX_CHARS].rstrip() + "…"
+        quote = {"pmid": pmid, "paraphrase": paraphrase}
+        doc = str(q.get("doc") or "").strip()
+        if doc:
+            quote["doc"] = doc
+        supports = str(q.get("supports") or "").strip()
+        if supports:
+            quote["supports"] = supports
+        out.append(quote)
     return out

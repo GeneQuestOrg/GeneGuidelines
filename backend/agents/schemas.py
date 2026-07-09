@@ -136,6 +136,46 @@ class GuidelineParagraphUpdate(BaseModel):
     note: str = Field(default="", description="Plain note on what changed (optional)")
 
 
+# Hard cap on a per-claim paraphrase — anti-copyright guardrail (Feature 4).
+# A paraphrase is 1–2 sentences; this ceiling forces summary, not extraction.
+SOURCE_QUOTE_MAX_CHARS = 400
+
+
+class SourceQuote(BaseModel):
+    """A grounded paraphrase of the passage in a cited abstract that backs one claim.
+
+    NOT a verbatim quote — the engine only ever holds PubMed abstracts (public), so
+    what we attach is a short paraphrase-in-our-own-words + PMID attribution, which is
+    copyright-safe. The hard ``max_length`` on ``paraphrase`` is a second guardrail on
+    top of the extraction prompt: it forces a summary rather than an extractive copy.
+    """
+
+    model_config = ConfigDict(extra="ignore", str_strip_whitespace=True)
+
+    pmid: str = Field(..., description="PMID of the cited abstract this paraphrase is drawn from (digits only)")
+    doc: str = Field(default="", description="docId on the shelf (optional; for Bookshelf docs without a PMID)")
+    paraphrase: str = Field(
+        ...,
+        min_length=1,
+        max_length=SOURCE_QUOTE_MAX_CHARS,
+        description="1–2 sentences, PARAPHRASED in our own words (never a verbatim copy) from the cited abstract",
+    )
+    supports: str = Field(default="", description="Optional: which aspect of the claim this passage backs")
+
+    @field_validator("doc", "supports", mode="before")
+    @classmethod
+    def _none_to_empty(cls, v: object) -> object:
+        return "" if v is None else v
+
+    @field_validator("pmid")
+    @classmethod
+    def _pmid_digits(cls, v: str) -> str:
+        s = (v or "").strip()
+        if not s.isdigit():
+            raise ValueError(f"pmid {v!r} must be digits only")
+        return s
+
+
 class GuidelineParagraph(BaseModel):
     """One provenance-bearing paragraph of a synthesis section."""
 
@@ -145,10 +185,14 @@ class GuidelineParagraph(BaseModel):
     text: str = Field(..., min_length=1, description="The paragraph prose — faithful to the source, no invention beyond the shelf")
     source: GuidelineParagraphSource = Field(..., description="Which shelf document (and section) this is drawn from")
     citations: list[str] = Field(default_factory=list, description="PMIDs backing this paragraph — only PMIDs present on the shelf")
+    quotes: list[SourceQuote] = Field(
+        default_factory=list,
+        description="Grounded paraphrases of the cited abstract(s) that back this claim (Feature 4; additive, optional)",
+    )
     update: GuidelineParagraphUpdate | None = Field(default=None, description="Set when a newer document updates an older one here")
     highlight: bool = Field(default=False, description="Visually emphasise this paragraph (e.g. a safety-critical point)")
 
-    @field_validator("citations", mode="before")
+    @field_validator("citations", "quotes", mode="before")
     @classmethod
     def _citations_none_to_empty(cls, v: object) -> object:
         return [] if v is None else v
@@ -412,6 +456,59 @@ class GuidelineFactCheckOutput(BaseModel):
     summary: str = Field(default="", description="One-paragraph overall read for the operator/expert")
 
 
+class GuidelineParagraphQuotes(BaseModel):
+    """The grounded paraphrases extracted for one synthesis paragraph (Feature 4).
+
+    Emitted by the ``gs-quotes`` node, keyed back to a paragraph by
+    ``(section_id, paragraph_id)``. ``quotes`` is empty when the cited abstract does
+    NOT clearly support the claim (unsupported / uncertain) — an empty list is the
+    correct, conservative answer, not a failure.
+    """
+
+    model_config = ConfigDict(extra="ignore", str_strip_whitespace=True)
+
+    section_id: str = Field(..., min_length=1, description="id of the synthesis section")
+    paragraph_id: str = Field(..., min_length=1, description="id of the paragraph these quotes back")
+    verdict: str = Field(
+        default="supported",
+        description="supported / unsupported / uncertain — quotes are extracted ONLY when supported",
+    )
+    quotes: list[SourceQuote] = Field(
+        default_factory=list,
+        description="Grounded paraphrases (empty unless the claim is clearly supported by the cited abstract)",
+    )
+
+    @field_validator("quotes", mode="before")
+    @classmethod
+    def _quotes_none_to_empty(cls, v: object) -> object:
+        return [] if v is None else v
+
+    @field_validator("verdict")
+    @classmethod
+    def _verdict_valid(cls, v: str) -> str:
+        x = (v or "").strip().lower() or "supported"
+        if x not in ("supported", "unsupported", "uncertain"):
+            raise ValueError("verdict must be supported / unsupported / uncertain")
+        return x
+
+
+class GuidelineQuoteExtractionOutput(BaseModel):
+    """Per-paragraph grounded-paraphrase extraction (Feature 4 — 'Where we know this from').
+
+    For each claim the node judges support against the cited abstract and, ONLY when
+    supported, paraphrases the backing passage (1–2 sentences, our own words, PMID
+    attribution). The writer merges these into the synthesis paragraphs after a
+    deterministic PMID-provenance gate.
+    """
+
+    model_config = ConfigDict(extra="ignore", str_strip_whitespace=True)
+
+    paragraphs: list[GuidelineParagraphQuotes] = Field(
+        default_factory=list,
+        description="One entry per checked paragraph (may be empty)",
+    )
+
+
 # Registry: key from flow_definitions.output_schema_key → Pydantic model
 PRESET_OUTPUT_SCHEMAS: dict[str, Type[BaseModel]] = {
     "ai_summary": AiSummaryOutput,
@@ -421,6 +518,7 @@ PRESET_OUTPUT_SCHEMAS: dict[str, Type[BaseModel]] = {
     "guideline_triage": GuidelineTriageOutput,
     "guideline_suggestions": GuidelineSuggestionsOutput,
     "guideline_factcheck": GuidelineFactCheckOutput,
+    "guideline_quotes": GuidelineQuoteExtractionOutput,
 }
 
 

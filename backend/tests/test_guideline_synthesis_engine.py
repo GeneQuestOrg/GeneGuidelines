@@ -302,12 +302,31 @@ def test_flow_spec_is_valid_and_connected() -> None:
         assert node["prompt_mode"] == "simple"
         assert node["output_schema_key"] == "guideline_section"
 
+    # Feature 4: the quote-extraction pair sits between the sections and the writer.
+    assert nodes["gs-quotes-load"]["node_type"] == "guideline_quote_extract_load"
+    assert nodes["gs-quotes"]["node_type"] == "prompt"
+    assert nodes["gs-quotes"]["output_schema_key"] == "guideline_quotes"
+
     # Every edge endpoint is a real node; shelf fans out to all sections, which
-    # fan in to the writer.
+    # fan in to gs-quotes-load → gs-quotes → gs-write (Feature 4 rewiring).
     for e in spec["edges"]:
         assert e["source_node_id"] in nodes
         assert e["target_node_id"] in nodes
     sec_targets = {e["target_node_id"] for e in spec["edges"] if e["source_node_id"] == "gs-shelf"}
     assert sec_targets == {f"gs-sec-{s}" for s in ("diagnosis", "histopathology", "therapy", "surgery", "monitoring")}
+    # Section nodes now fan into the quote loader, not directly into the writer.
+    quote_load_sources = {
+        e["source_node_id"] for e in spec["edges"] if e["target_node_id"] == "gs-quotes-load"
+    }
+    assert quote_load_sources == {
+        f"gs-sec-{s}" for s in ("diagnosis", "histopathology", "therapy", "surgery", "monitoring")
+    }
+    # And the writer is fed by exactly the quote-extraction node.
     writers = {e["source_node_id"] for e in spec["edges"] if e["target_node_id"] == "gs-write"}
-    assert writers == {f"gs-sec-{s}" for s in ("diagnosis", "histopathology", "therapy", "surgery", "monitoring")}
+    assert writers == {"gs-quotes"}
+    quote_edges = {(e["source_node_id"], e["target_node_id"]) for e in spec["edges"]}
+    assert ("gs-quotes-load", "gs-quotes") in quote_edges
+    assert ("gs-quotes", "gs-write") in quote_edges
+    # No section node still shortcuts straight into the writer.
+    for s in ("diagnosis", "histopathology", "therapy", "surgery", "monitoring"):
+        assert (f"gs-sec-{s}", "gs-write") not in quote_edges
