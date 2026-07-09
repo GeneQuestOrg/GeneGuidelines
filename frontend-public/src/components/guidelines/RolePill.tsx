@@ -7,6 +7,7 @@ const ROLE_PILL: Record<ViewRole, readonly [string, string]> = {
   doctor: ["gx-role--clin", "Reading as · clinician"],
   "doctor-unverified": ["gx-role--clin", "Clinician · unverified"],
   researcher: ["gx-role--clin", "Reading as · researcher"],
+  "researcher-unverified": ["gx-role--clin", "Researcher · unverified"],
 };
 
 export function RolePill({ role }: { role: ViewRole }) {

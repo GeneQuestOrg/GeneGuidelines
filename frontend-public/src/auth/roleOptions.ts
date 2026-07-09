@@ -21,7 +21,8 @@ export const ROLE_OPTIONS: readonly RoleOption[] = [
   {
     value: "researcher",
     label: "Researcher",
-    description: "Track the evidence base and contribute to research workstreams.",
+    description:
+      "Track the evidence base and contribute to research workstreams (verification required).",
   },
 ] as const;
 
@@ -37,10 +38,10 @@ export function shouldShowRolePicker(
   return isAuthenticated && role === null;
 }
 
-/** Doctors await superadmin approval after picking their role. */
+/** Doctors and researchers await verification (ORCID or admin approval) after picking a role. */
 export function isPendingVerification(
   role: AccountRole | null,
   verified: boolean,
 ): boolean {
-  return role === "doctor" && !verified;
+  return (role === "doctor" || role === "researcher") && !verified;
 }

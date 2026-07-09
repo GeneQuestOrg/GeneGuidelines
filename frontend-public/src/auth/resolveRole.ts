@@ -13,7 +13,8 @@ export type ViewRole =
   | "parent"
   | "doctor"
   | "doctor-unverified"
-  | "researcher";
+  | "researcher"
+  | "researcher-unverified";
 
 /** Dev/demo override (Tweaks panel only). `"auto"` = resolve from auth. */
 export type PreviewRole = "auto" | ViewRole;
@@ -25,6 +26,7 @@ export const PREVIEW_ROLES: readonly PreviewRole[] = [
   "doctor",
   "doctor-unverified",
   "researcher",
+  "researcher-unverified",
 ] as const;
 
 export function isPreviewRole(value: unknown): value is PreviewRole {
@@ -55,6 +57,7 @@ export function resolveRole(
     case "doctor":
       return account.verified ? "doctor" : "doctor-unverified";
     case "researcher":
+      return account.verified ? "researcher" : "researcher-unverified";
     case "superadmin":
       return "researcher";
     case "parent":
@@ -64,13 +67,17 @@ export function resolveRole(
   }
 }
 
-/** Clinician-facing surfaces (full text, suggestions, source trail). */
+/** Clinician-facing surfaces (full text, suggestions, source trail). Only VERIFIED
+ *  clinicians qualify — an unverified doctor/researcher stays on the parent projection
+ *  until an admin (or ORCID) verifies them, so they cannot see or rate the expert layer. */
 export function isClinicianView(role: ViewRole): boolean {
-  return role === "doctor" || role === "doctor-unverified" || role === "researcher";
+  return role === "doctor" || role === "researcher";
 }
 
 export function isParentSide(role: ViewRole): boolean {
-  return role === "anon" || role === "parent";
+  // Everything that is not a verified-clinician surface renders the parent projection —
+  // anon, parent, and unverified doctor/researcher.
+  return !isClinicianView(role);
 }
 
 /** Only verified clinicians produce ranking signal (D5); unverified can read. */
