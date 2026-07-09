@@ -690,6 +690,82 @@ def _ensure_guideline_bibliography_tail_nodes() -> None:
     conn.close()
 
 
+_SYNTHESIS_QUOTE_SECTION_NODES = (
+    "gs-sec-diagnosis",
+    "gs-sec-histopathology",
+    "gs-sec-therapy",
+    "gs-sec-surgery",
+    "gs-sec-monitoring",
+)
+
+
+def _ensure_guideline_synthesis_quote_nodes() -> None:
+    """Add Feature-4 quote-extraction nodes to guideline_synthesis on existing DBs.
+
+    The JSON spec loader skips a flow that already has any node, so databases created
+    before Feature 4 keep the old ``gs-sec-* → gs-write`` wiring. This one-time repair
+    (idempotent on ``gs-quotes`` presence) inserts ``gs-quotes-load`` + ``gs-quotes``
+    from the bundled spec and rewires the section nodes through them into the writer:
+    ``gs-sec-* → gs-quotes-load → gs-quotes → gs-write``.
+    """
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute(
+        "SELECT 1 FROM flow_definitions WHERE flow_key = %s AND node_id = %s LIMIT 1",
+        ("guideline_synthesis", "gs-quotes"),
+    )
+    if cur.fetchone():
+        conn.close()
+        return
+    cur.execute(
+        "SELECT 1 FROM flow_definitions WHERE flow_key = %s AND node_id = %s LIMIT 1",
+        ("guideline_synthesis", "gs-write"),
+    )
+    if not cur.fetchone():
+        conn.close()
+        return
+    spec = _load_guideline_spec("guideline_synthesis")
+    if not spec:
+        conn.close()
+        return
+    nodes_by_id = {n.get("node_id"): n for n in spec.get("nodes") or [] if isinstance(n, dict)}
+    now = datetime.now().isoformat()
+    for node_id in ("gs-quotes-load", "gs-quotes"):
+        node = nodes_by_id.get(node_id)
+        if not isinstance(node, dict) or not node.get("node_type"):
+            conn.close()
+            return
+        fd = {**node, "flow_key": "guideline_synthesis"}
+        cur.execute(
+            """INSERT INTO flow_definitions (
+                flow_key, node_id, node_type, label, description, prompt, loop_policy, execution_policy,
+                max_retry, version, updated_at, prompt_mode, model_name, output_schema_key, output_schema, agentic_step_close, python_source,
+                http_url, http_method, http_headers, http_body, rag_operation, rag_body_json, step_name,
+                merge_strategy, merge_fields, merge_key_field,
+                integration_operation, integration_params_json, integration_credentials_json
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+            _flow_definition_insert_from_spec_node(fd, now),
+        )
+    # Rewire: each section node now feeds gs-quotes-load, not gs-write.
+    for sec in _SYNTHESIS_QUOTE_SECTION_NODES:
+        cur.execute(
+            "DELETE FROM flow_edges WHERE flow_key = %s AND source_node_id = %s AND target_node_id = %s",
+            ("guideline_synthesis", sec, "gs-write"),
+        )
+    new_edges = [(sec, "gs-quotes-load") for sec in _SYNTHESIS_QUOTE_SECTION_NODES]
+    new_edges += [("gs-quotes-load", "gs-quotes"), ("gs-quotes", "gs-write")]
+    for src, tgt in new_edges:
+        try:
+            cur.execute(
+                "INSERT INTO flow_edges (flow_key, source_node_id, target_node_id) VALUES (%s, %s, %s) ON CONFLICT DO NOTHING",
+                ("guideline_synthesis", src, tgt),
+            )
+        except pg_errors.UniqueViolation:
+            pass
+    conn.commit()
+    conn.close()
+
+
 def _sync_guideline_shelf_classify_prompt_from_spec() -> None:
     """Refresh gsb-classify prompt so shelf runs emit ``considered`` negative paths."""
     spec = _load_guideline_spec("guideline_shelf_build")
