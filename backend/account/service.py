@@ -345,7 +345,7 @@ class AccountService:
         return requester.email if requester is not None else None
 
     def review_verification_request(
-        self, request_id: str, *, approve: bool, reviewer: User
+        self, request_id: str, *, approve: bool, reviewer: User | None = None
     ) -> VerificationRequest:
         """Superadmin: approve or reject a pending request.
 
@@ -355,7 +355,10 @@ class AccountService:
         repository's conditional update — a request that is no longer pending
         yields ``409``.
 
-        Raises ``404`` when the request is unknown.
+        ``reviewer`` is the JWT-resolved superadmin, or ``None`` on the legacy
+        API-key path (a shared machine secret has no user row); in that case the
+        reviewer id is recorded as the sentinel ``"api-key"`` rather than a real
+        ``users.id``. Raises ``404`` when the request is unknown.
         """
         repo = self._verifications()
         existing = repo.get(request_id)
@@ -370,8 +373,9 @@ class AccountService:
         status = (
             VerificationStatus.APPROVED if approve else VerificationStatus.REJECTED
         )
+        reviewer_id = str(reviewer.id) if reviewer is not None else "api-key"
         reviewed = repo.mark_reviewed(
-            request_id, status=status, reviewed_by=str(reviewer.id), when=now
+            request_id, status=status, reviewed_by=reviewer_id, when=now
         )
         if reviewed is None or reviewed.status is not status:
             # Lost a race with a concurrent review (the conditional update

@@ -276,7 +276,7 @@ def review_verification_request(
     still verifies the requester either way.
     """
     reviewed = service.review_verification_request(
-        request_id, approve=body.approve, reviewer=admin or _MACHINE_REVIEWER
+        request_id, approve=body.approve, reviewer=admin
     )
     return verification_request_to_response(
         reviewed, user_email=service.verification_requester_email(reviewed)
