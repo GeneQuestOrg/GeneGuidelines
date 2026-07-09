@@ -1,5 +1,6 @@
 import { Badge, Button, Section } from "@gene-guidelines/ui";
 import { useAccountContext } from "../auth/accountContext";
+import { DoctorVerificationPanel } from "../auth/DoctorVerificationPanel";
 import { isPendingVerification } from "../auth/roleOptions";
 import type { AccountRole } from "../types/account";
 
@@ -126,6 +127,12 @@ export function AccountView({ onNav, onSignIn }: AccountViewProps) {
           ) : null}
         </dl>
       </Section>
+
+      {pending ? (
+        <Section title="Verification">
+          <DoctorVerificationPanel role={account.role} />
+        </Section>
+      ) : null}
 
       <p className="page__actions">
         <Button variant="ghost" onClick={() => onNav("/")}>

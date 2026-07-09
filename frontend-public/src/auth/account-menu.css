@@ -226,3 +226,68 @@ a.account-menu__item {
   color: var(--st-red);
   margin: 6px 0 0;
 }
+
+.verification-panel__form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.verification-panel__field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.verification-panel__field > span {
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+}
+
+.verification-panel__input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 6px 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--bg-soft);
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--fs-xs);
+}
+
+.verification-panel__input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.verification-panel__textarea {
+  resize: vertical;
+  min-height: 2.4rem;
+}
+
+.verification-panel__submit {
+  align-self: flex-start;
+  margin-top: 2px;
+}
+
+.verification-panel__submit:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.verification-panel__submitted {
+  margin-top: 6px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: color-mix(in oklch, var(--st-amber) 12%, var(--bg-elev));
+}
+
+.verification-panel__submitted-title {
+  margin: 0 0 2px;
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: oklch(0.42 0.12 75);
+}

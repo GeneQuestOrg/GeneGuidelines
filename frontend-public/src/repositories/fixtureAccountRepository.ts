@@ -1,8 +1,11 @@
+import { ApiRequestError } from "../api/client";
 import type {
   InviteCreated,
   InvitePreview,
   MeAccount,
   SelectableRole,
+  SubmitVerificationInput,
+  VerificationRequest,
 } from "../types/account";
 import type { AccountRepository } from "./types";
 
@@ -24,13 +27,26 @@ let fixtureAccount: MeAccount = {
 /** In-memory invite store keyed by token, so accept/preview round-trip in fixtures. */
 const fixtureInvites = new Map<string, InvitePreview>();
 
+/** In-memory verification requests for the fixture account (newest first). */
+let fixtureVerificationRequests: VerificationRequest[] = [];
+
+/** Roles that carry verification — mirrors the backend `VERIFIABLE_ROLES`. */
+const VERIFIABLE_ROLES = new Set(["doctor", "researcher"]);
+
+function cleanField(value: string | undefined): string | null {
+  const trimmed = value?.trim();
+  return trimmed != null && trimmed.length > 0 ? trimmed : null;
+}
+
 export const fixtureAccountRepository: AccountRepository = {
   async me(): Promise<MeAccount> {
     return fixtureAccount;
   },
   async selectRole(role: SelectableRole): Promise<MeAccount> {
-    // Doctors require approval; everyone else is considered verified.
-    fixtureAccount = { ...fixtureAccount, role, verified: role !== "doctor" };
+    // Doctors and researchers require verification; a parent needs none, so it
+    // is treated as verified for the fixture's pending-state gate.
+    fixtureAccount = { ...fixtureAccount, role, verified: role === "parent" };
+    fixtureVerificationRequests = [];
     return fixtureAccount;
   },
   async createInvite(input): Promise<InviteCreated> {
@@ -69,5 +85,56 @@ export const fixtureAccountRepository: AccountRepository = {
   },
   async orcidLoginUrl(): Promise<string> {
     return "https://orcid.org/oauth/authorize";
+  },
+  async submitVerificationRequest(
+    input: SubmitVerificationInput,
+  ): Promise<VerificationRequest> {
+    // Mirror the backend guards so the offline panel behaves like production.
+    if (fixtureAccount.role == null || !VERIFIABLE_ROLES.has(fixtureAccount.role)) {
+      throw new ApiRequestError(
+        403,
+        "Verification is for doctor and researcher accounts.",
+      );
+    }
+    if (fixtureAccount.verified) {
+      throw new ApiRequestError(409, "Your account is already verified.");
+    }
+    if (fixtureVerificationRequests.some((r) => r.status === "pending")) {
+      throw new ApiRequestError(
+        409,
+        "You already have a verification request under review.",
+      );
+    }
+    const orcid = cleanField(input.orcid);
+    const licenseNo = cleanField(input.licenseNo);
+    const institution = cleanField(input.institution);
+    const note = cleanField(input.note);
+    if (orcid == null && licenseNo == null && institution == null && note == null) {
+      throw new ApiRequestError(
+        400,
+        "Provide at least one of: ORCID, licence number, institution, or a note.",
+      );
+    }
+    const now = new Date().toISOString();
+    const request: VerificationRequest = {
+      id: `fixture-vr-${Math.random().toString(36).slice(2, 10)}`,
+      userId: fixtureAccount.id,
+      role: fixtureAccount.role,
+      orcid,
+      licenseNo,
+      institution,
+      note,
+      status: "pending",
+      createdAt: now,
+      updatedAt: now,
+      reviewedBy: null,
+      reviewedAt: null,
+      userEmail: null,
+    };
+    fixtureVerificationRequests = [request, ...fixtureVerificationRequests];
+    return request;
+  },
+  async myVerificationRequests(): Promise<readonly VerificationRequest[]> {
+    return fixtureVerificationRequests;
   },
 };
