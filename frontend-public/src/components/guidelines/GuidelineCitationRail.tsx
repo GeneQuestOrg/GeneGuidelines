@@ -3,7 +3,7 @@ import type { Citation } from "../../types/guidelineDocument";
 import type { GuidelinePrDetail } from "../../types/contentPr";
 import { citationDisplayIndex } from "../../utils/guidelineReader";
 import { pubmedArticleUrl } from "../../utils/pubmedUrl";
-import { GuidelineCitationItem } from "./GuidelineCitationItem";
+import { CitationParaphrase, GuidelineCitationItem } from "./GuidelineCitationItem";
 
 export interface GuidelineCitationRailProps {
   orderedPmids: readonly string[];
@@ -11,6 +11,12 @@ export interface GuidelineCitationRailProps {
   activeParaId: string | null;
   diffMode: boolean;
   pr: GuidelinePrDetail | null;
+  /**
+   * Feature 4: grounded paraphrases keyed by PMID for the active paragraph
+   * (our own words, "supported" claims only). A PMID with no entry falls back
+   * to the plain PubMed link, so this is fully additive.
+   */
+  paraphrasesByPmid?: Readonly<Record<string, string>>;
 }
 
 function lookupCitation(pmid: string): Citation | null {
@@ -27,22 +33,22 @@ interface CitationStubProps {
   pmid: string;
   index: number;
   highlight?: boolean;
+  paraphrase?: string;
 }
 
-function CitationStub({ pmid, index, highlight = false }: CitationStubProps) {
+function CitationStub({ pmid, index, highlight = false, paraphrase }: CitationStubProps) {
+  const url = pubmedArticleUrl(pmid);
+  const showParaphrase = paraphrase !== undefined && paraphrase.trim() !== "";
   return (
     <li className={["gl__cit", highlight ? "gl__cit--hl" : ""].filter(Boolean).join(" ")}>
       <span className="gl__cit-num">{index}</span>
       <div className="gl__cit-body">
         <div className="gl__cit-title">
-          <a
-            href={pubmedArticleUrl(pmid)}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
+          <a href={url} target="_blank" rel="noopener noreferrer">
             View on PubMed
           </a>
         </div>
+        {showParaphrase ? <CitationParaphrase text={paraphrase} url={url} /> : null}
         <div className="gl__cit-tags">
           <code className="gl__cit-pmid">PMID {pmid}</code>
         </div>
@@ -57,6 +63,7 @@ export function GuidelineCitationRail({
   activeParaId,
   diffMode,
   pr,
+  paraphrasesByPmid,
 }: GuidelineCitationRailProps) {
   const prPmids = pr?.papers.map((p) => p.pmid) ?? [];
 
@@ -141,6 +148,7 @@ export function GuidelineCitationRail({
                   citation={citation}
                   index={index}
                   highlight={activeParaId != null}
+                  paraphrase={paraphrasesByPmid?.[pmid]}
                 />
               ) : (
                 <CitationStub
@@ -148,6 +156,7 @@ export function GuidelineCitationRail({
                   pmid={pmid}
                   index={index}
                   highlight={activeParaId != null}
+                  paraphrase={paraphrasesByPmid?.[pmid]}
                 />
               ),
             )}

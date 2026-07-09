@@ -537,6 +537,41 @@
   font-family: var(--font-mono);
 }
 
+/* Feature 4: grounded paraphrase of the abstract (our words, not a quote). */
+.gl__cit-para {
+  margin-top: 8px;
+  padding: 9px 11px;
+  border-radius: var(--r-sm);
+  background: color-mix(in oklch, var(--accent) 5%, var(--bg-soft));
+  border-left: 3px solid color-mix(in oklch, var(--accent) 45%, var(--line));
+}
+.gl__cit-para-tag {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--accent-ink);
+  margin-bottom: 5px;
+}
+.gl__cit-para-tx {
+  font-family: var(--font-serif);
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+  color: var(--ink);
+  margin: 0;
+}
+.gl__cit-para-link {
+  display: inline-block;
+  margin-top: 6px;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent-ink);
+  text-decoration: none;
+  border-bottom: 1px solid color-mix(in oklch, var(--accent) 30%, transparent);
+}
+
 .gl__cits-empty {
   color: var(--ink-3);
   font-size: var(--fs-xs);
