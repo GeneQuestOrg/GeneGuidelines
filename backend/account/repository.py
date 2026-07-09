@@ -26,7 +26,20 @@ from ..shared.persistence.base_repo import BaseSqlalchemyRepo
 from ..shared.persistence.dialect import nocase_order
 from ..shared.persistence.schema import invites as invites_table
 from ..shared.persistence.schema import users as users_table
-from .models import Auth0Sub, Invite, InviteToken, Role, User, UserId
+from ..shared.persistence.schema import (
+    verification_requests as verification_requests_table,
+)
+from .models import (
+    Auth0Sub,
+    Invite,
+    InviteToken,
+    Role,
+    User,
+    UserId,
+    VerificationRequest,
+    VerificationRequestId,
+    VerificationStatus,
+)
 
 
 class UserRow(TypedDict):
@@ -350,6 +363,238 @@ def _as_invite_row(mapping: dict[str, object]) -> InviteRow:
     return mapping  # type: ignore[return-value]
 
 
+# ---------------------------------------------------------------------------
+# Verification requests (self-serve manual verification)
+# ---------------------------------------------------------------------------
+
+
+class VerificationRequestRow(TypedDict):
+    """Shape of a ``verification_requests`` row as returned by the database."""
+
+    id: str
+    user_id: str
+    role: str
+    orcid: str | None
+    license_no: str | None
+    institution: str | None
+    note: str | None
+    status: str
+    created_at: str
+    updated_at: str
+    reviewed_by: str | None
+    reviewed_at: str | None
+
+
+def verification_request_from_row(row: VerificationRequestRow) -> VerificationRequest:
+    """Map a ``verification_requests`` row to a :class:`VerificationRequest`."""
+    reviewed_by = _nullable_str(row.get("reviewed_by"))
+    return VerificationRequest(
+        id=VerificationRequestId(str(row["id"])),
+        user_id=UserId(str(row["user_id"])),
+        role=Role.from_str(row.get("role")) or Role.DOCTOR,
+        orcid=_nullable_str(row.get("orcid")),
+        license_no=_nullable_str(row.get("license_no")),
+        institution=_nullable_str(row.get("institution")),
+        note=_nullable_str(row.get("note")),
+        status=VerificationStatus.from_str(row.get("status"))
+        or VerificationStatus.PENDING,
+        created_at=str(row["created_at"]),
+        updated_at=str(row["updated_at"]),
+        reviewed_by=UserId(reviewed_by) if reviewed_by is not None else None,
+        reviewed_at=_nullable_str(row.get("reviewed_at")),
+    )
+
+
+class VerificationRequestRepo(Protocol):
+    """Port — :class:`backend.account.service.AccountService` depends on this."""
+
+    def get(self, request_id: str) -> VerificationRequest | None: ...
+    def insert(self, request: VerificationRequest) -> VerificationRequest: ...
+    def list_pending(self) -> list[VerificationRequest]: ...
+    def list_for_user(self, user_id: str) -> list[VerificationRequest]: ...
+    def has_pending_for_user(self, user_id: str) -> bool: ...
+    def mark_reviewed(
+        self,
+        request_id: str,
+        *,
+        status: VerificationStatus,
+        reviewed_by: str,
+        when: str,
+    ) -> VerificationRequest | None: ...
+
+
+class SqlaVerificationRequestRepo(BaseSqlalchemyRepo):
+    """Production impl — SQLAlchemy 2.0 Core (no ORM)."""
+
+    def __init__(self, engine: Engine | None = None) -> None:
+        super().__init__(engine)
+
+    def get(self, request_id: str) -> VerificationRequest | None:
+        stmt = select(verification_requests_table).where(
+            verification_requests_table.c.id == request_id
+        )
+        with self._conn() as conn:
+            row = conn.execute(stmt).mappings().first()
+        return (
+            verification_request_from_row(_as_verification_row(dict(row)))
+            if row
+            else None
+        )
+
+    def insert(self, request: VerificationRequest) -> VerificationRequest:
+        stmt = insert(verification_requests_table).values(
+            id=str(request.id),
+            user_id=str(request.user_id),
+            role=request.role.value,
+            orcid=request.orcid,
+            license_no=request.license_no,
+            institution=request.institution,
+            note=request.note,
+            status=request.status.value,
+            created_at=request.created_at,
+            updated_at=request.updated_at,
+            reviewed_by=(
+                str(request.reviewed_by) if request.reviewed_by is not None else None
+            ),
+            reviewed_at=request.reviewed_at,
+        )
+        with self._conn() as conn:
+            conn.execute(stmt)
+        return request
+
+    def list_pending(self) -> list[VerificationRequest]:
+        stmt = (
+            select(verification_requests_table)
+            .where(
+                verification_requests_table.c.status
+                == VerificationStatus.PENDING.value
+            )
+            .order_by(verification_requests_table.c.created_at)
+        )
+        return self._list(stmt)
+
+    def list_for_user(self, user_id: str) -> list[VerificationRequest]:
+        stmt = (
+            select(verification_requests_table)
+            .where(verification_requests_table.c.user_id == user_id)
+            .order_by(verification_requests_table.c.created_at.desc())
+        )
+        return self._list(stmt)
+
+    def has_pending_for_user(self, user_id: str) -> bool:
+        stmt = (
+            select(verification_requests_table.c.id)
+            .where(verification_requests_table.c.user_id == user_id)
+            .where(
+                verification_requests_table.c.status
+                == VerificationStatus.PENDING.value
+            )
+            .limit(1)
+        )
+        with self._conn() as conn:
+            return conn.execute(stmt).first() is not None
+
+    def mark_reviewed(
+        self,
+        request_id: str,
+        *,
+        status: VerificationStatus,
+        reviewed_by: str,
+        when: str,
+    ) -> VerificationRequest | None:
+        # Conditional update: only a still-pending request transitions, so a
+        # concurrent double-review cannot both apply (the second matches zero
+        # rows and the service re-reads the now-terminal request).
+        stmt = (
+            update(verification_requests_table)
+            .where(verification_requests_table.c.id == request_id)
+            .where(
+                verification_requests_table.c.status
+                == VerificationStatus.PENDING.value
+            )
+            .values(
+                status=status.value,
+                reviewed_by=reviewed_by,
+                reviewed_at=when,
+                updated_at=when,
+            )
+        )
+        with self._conn() as conn:
+            conn.execute(stmt)
+        return self.get(request_id)
+
+    def _list(self, stmt) -> list[VerificationRequest]:  # type: ignore[no-untyped-def]
+        with self._conn() as conn:
+            rows = conn.execute(stmt).mappings().all()
+        return [
+            verification_request_from_row(_as_verification_row(dict(r))) for r in rows
+        ]
+
+
+class InMemoryVerificationRequestRepo:
+    """Dict-backed impl — used by API tests and viable for DB-less dev."""
+
+    def __init__(self) -> None:
+        self._by_id: dict[str, VerificationRequest] = {}
+
+    def get(self, request_id: str) -> VerificationRequest | None:
+        return self._by_id.get(request_id)
+
+    def insert(self, request: VerificationRequest) -> VerificationRequest:
+        if request.id in self._by_id:
+            raise ValueError(f"verification request {request.id} already exists")
+        self._by_id[str(request.id)] = request
+        return request
+
+    def list_pending(self) -> list[VerificationRequest]:
+        return sorted(
+            (r for r in self._by_id.values() if r.is_pending),
+            key=lambda r: r.created_at,
+        )
+
+    def list_for_user(self, user_id: str) -> list[VerificationRequest]:
+        return sorted(
+            (r for r in self._by_id.values() if str(r.user_id) == user_id),
+            key=lambda r: r.created_at,
+            reverse=True,
+        )
+
+    def has_pending_for_user(self, user_id: str) -> bool:
+        return any(
+            str(r.user_id) == user_id and r.is_pending
+            for r in self._by_id.values()
+        )
+
+    def mark_reviewed(
+        self,
+        request_id: str,
+        *,
+        status: VerificationStatus,
+        reviewed_by: str,
+        when: str,
+    ) -> VerificationRequest | None:
+        from dataclasses import replace
+
+        existing = self._by_id.get(request_id)
+        if existing is None:
+            return None
+        if existing.is_pending:
+            existing = replace(
+                existing,
+                status=status,
+                reviewed_by=UserId(reviewed_by),
+                reviewed_at=when,
+                updated_at=when,
+            )
+            self._by_id[request_id] = existing
+        return existing
+
+
+def _as_verification_row(mapping: dict[str, object]) -> VerificationRequestRow:
+    """Narrow a SQLAlchemy mapping to :class:`VerificationRequestRow`."""
+    return mapping  # type: ignore[return-value]
+
+
 __all__ = [
     "UserRow",
     "UserRepo",
@@ -361,4 +606,9 @@ __all__ = [
     "SqlaInviteRepo",
     "InMemoryInviteRepo",
     "invite_from_row",
+    "VerificationRequestRow",
+    "VerificationRequestRepo",
+    "SqlaVerificationRequestRepo",
+    "InMemoryVerificationRequestRepo",
+    "verification_request_from_row",
 ]

@@ -72,3 +72,109 @@ describe("apiAccountRepository invites + ORCID", () => {
     );
   });
 });
+
+describe("apiAccountRepository verification requests", () => {
+  beforeEach(() => {
+    vi.stubGlobal("fetch", vi.fn());
+  });
+
+  it("submitVerificationRequest posts snake_case and maps the response", async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      jsonResponse(
+        {
+          id: "vr-1",
+          user_id: "u-1",
+          role: "researcher",
+          orcid: "0000-0002-1825-0097",
+          license_no: null,
+          institution: "Institute of X",
+          note: null,
+          status: "pending",
+          created_at: "2026-07-09T10:00:00Z",
+          updated_at: "2026-07-09T10:00:00Z",
+          reviewed_by: null,
+          reviewed_at: null,
+          user_email: null,
+        },
+        201,
+      ),
+    );
+    const created = await apiAccountRepository.submitVerificationRequest({
+      orcid: "0000-0002-1825-0097",
+      institution: "Institute of X",
+    });
+    expect(created).toEqual({
+      id: "vr-1",
+      userId: "u-1",
+      role: "researcher",
+      orcid: "0000-0002-1825-0097",
+      licenseNo: null,
+      institution: "Institute of X",
+      note: null,
+      status: "pending",
+      createdAt: "2026-07-09T10:00:00Z",
+      updatedAt: "2026-07-09T10:00:00Z",
+      reviewedBy: null,
+      reviewedAt: null,
+      userEmail: null,
+    });
+    const [url, init] = vi.mocked(fetch).mock.calls[0];
+    expect(url).toBe("/api/account/verification-requests");
+    expect(init?.method).toBe("POST");
+    expect(JSON.parse(init?.body as string)).toEqual({
+      orcid: "0000-0002-1825-0097",
+      license_no: null,
+      institution: "Institute of X",
+      note: null,
+    });
+  });
+
+  it("myVerificationRequests maps a list of requests", async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      jsonResponse([
+        {
+          id: "vr-2",
+          user_id: "u-1",
+          role: "doctor",
+          orcid: null,
+          license_no: "LIC-99",
+          institution: null,
+          note: "Please verify.",
+          status: "pending",
+          created_at: "2026-07-09T11:00:00Z",
+          updated_at: "2026-07-09T11:00:00Z",
+          reviewed_by: null,
+          reviewed_at: null,
+          user_email: null,
+        },
+      ]),
+    );
+    const mine = await apiAccountRepository.myVerificationRequests();
+    expect(mine).toHaveLength(1);
+    expect(mine[0]).toMatchObject({
+      id: "vr-2",
+      role: "doctor",
+      licenseNo: "LIC-99",
+      note: "Please verify.",
+      status: "pending",
+    });
+    expect(vi.mocked(fetch).mock.calls[0][0]).toBe(
+      "/api/account/verification-requests/mine",
+    );
+  });
+
+  it("surfaces a 409 as an ApiRequestError with the backend detail", async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      jsonResponse(
+        { detail: "You already have a verification request under review." },
+        409,
+      ),
+    );
+    await expect(
+      apiAccountRepository.submitVerificationRequest({ note: "again" }),
+    ).rejects.toMatchObject({
+      status: 409,
+      message: expect.stringContaining("already have a verification request"),
+    });
+  });
+});

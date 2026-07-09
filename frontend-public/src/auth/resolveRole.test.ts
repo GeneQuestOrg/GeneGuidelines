@@ -32,7 +32,10 @@ describe("resolveRole", () => {
     expect(resolveRole(acct(null), "auto", true)).toBe("parent");
     expect(resolveRole(acct("doctor", true), "auto", true)).toBe("doctor");
     expect(resolveRole(acct("doctor", false), "auto", true)).toBe("doctor-unverified");
-    expect(resolveRole(acct("researcher"), "auto", true)).toBe("researcher");
+    expect(resolveRole(acct("researcher", true), "auto", true)).toBe("researcher");
+    expect(resolveRole(acct("researcher", false), "auto", true)).toBe(
+      "researcher-unverified",
+    );
     expect(resolveRole(acct("superadmin"), "auto", true)).toBe("researcher");
   });
 
@@ -52,13 +55,18 @@ describe("resolveRole", () => {
 
 describe("role helpers", () => {
   it("isClinicianView / isParentSide partition the roles", () => {
+    // Only VERIFIED clinicians are a clinician view; unverified doctor/researcher
+    // stay on the parent projection until an admin (or ORCID) verifies them.
     expect(isClinicianView("doctor")).toBe(true);
-    expect(isClinicianView("doctor-unverified")).toBe(true);
+    expect(isClinicianView("doctor-unverified")).toBe(false);
     expect(isClinicianView("researcher")).toBe(true);
+    expect(isClinicianView("researcher-unverified")).toBe(false);
     expect(isClinicianView("parent")).toBe(false);
     expect(isClinicianView("anon")).toBe(false);
     expect(isParentSide("anon")).toBe(true);
     expect(isParentSide("parent")).toBe(true);
+    expect(isParentSide("doctor-unverified")).toBe(true);
+    expect(isParentSide("researcher-unverified")).toBe(true);
     expect(isParentSide("doctor")).toBe(false);
   });
 
@@ -74,8 +82,10 @@ describe("role helpers", () => {
     expect(audienceForRole("anon")).toBe("parent");
     expect(audienceForRole("parent")).toBe("parent");
     expect(audienceForRole("doctor")).toBe("doctor");
-    expect(audienceForRole("doctor-unverified")).toBe("doctor");
+    // Unverified clinicians read the parent-audience copy until verified.
+    expect(audienceForRole("doctor-unverified")).toBe("parent");
     expect(audienceForRole("researcher")).toBe("doctor");
+    expect(audienceForRole("researcher-unverified")).toBe("parent");
   });
 
   it("isPreviewRole validates persisted tweak values", () => {

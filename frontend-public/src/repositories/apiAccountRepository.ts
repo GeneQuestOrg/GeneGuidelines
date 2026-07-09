@@ -5,6 +5,9 @@ import type {
   InvitePreview,
   MeAccount,
   SelectableRole,
+  SubmitVerificationInput,
+  VerificationRequest,
+  VerificationStatus,
 } from "../types/account";
 import type { AccountRepository } from "./types";
 
@@ -45,6 +48,43 @@ interface InvitePreviewResponse {
   doctor_slug: string | null;
   expired: boolean;
   used: boolean;
+}
+
+/** Wire shape of a verification request (snake_case, per backend canon). */
+interface VerificationRequestResponse {
+  id: string;
+  user_id: string;
+  role: AccountRole;
+  orcid: string | null;
+  license_no: string | null;
+  institution: string | null;
+  note: string | null;
+  status: VerificationStatus;
+  created_at: string;
+  updated_at: string;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  user_email: string | null;
+}
+
+function verificationRequestFromResponse(
+  row: VerificationRequestResponse,
+): VerificationRequest {
+  return {
+    id: row.id,
+    userId: row.user_id,
+    role: row.role,
+    orcid: row.orcid,
+    licenseNo: row.license_no,
+    institution: row.institution,
+    note: row.note,
+    status: row.status,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    reviewedBy: row.reviewed_by,
+    reviewedAt: row.reviewed_at,
+    userEmail: row.user_email,
+  };
 }
 
 export const apiAccountRepository: AccountRepository = {
@@ -89,5 +129,27 @@ export const apiAccountRepository: AccountRepository = {
   async orcidLoginUrl(): Promise<string> {
     const row = await apiGet<{ authorize_url: string }>("/api/account/orcid/login");
     return row.authorize_url;
+  },
+  async submitVerificationRequest(
+    input: SubmitVerificationInput,
+  ): Promise<VerificationRequest> {
+    // Send only the four evidence fields (the DTO forbids extra keys); absent
+    // fields go as null so the backend applies its own "at least one" rule.
+    const row = await apiPostJson<VerificationRequestResponse>(
+      "/api/account/verification-requests",
+      {
+        orcid: input.orcid ?? null,
+        license_no: input.licenseNo ?? null,
+        institution: input.institution ?? null,
+        note: input.note ?? null,
+      },
+    );
+    return verificationRequestFromResponse(row);
+  },
+  async myVerificationRequests(): Promise<readonly VerificationRequest[]> {
+    const rows = await apiGet<VerificationRequestResponse[]>(
+      "/api/account/verification-requests/mine",
+    );
+    return rows.map(verificationRequestFromResponse);
   },
 };

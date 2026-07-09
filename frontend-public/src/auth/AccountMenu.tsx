@@ -116,7 +116,7 @@ export function AccountMenu({ onNav }: AccountMenuProps = {}) {
               </span>
             ) : null}
           </div>
-          {pending ? <DoctorVerificationPanel /> : null}
+          {pending ? <DoctorVerificationPanel role={account?.role ?? null} /> : null}
           {canInvite ? <InviteDoctorAction /> : null}
           {onNav != null ? (
             <button

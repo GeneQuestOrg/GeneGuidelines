@@ -3,6 +3,8 @@ import type {
   InvitePreview,
   MeAccount,
   SelectableRole,
+  SubmitVerificationInput,
+  VerificationRequest,
 } from "../types/account";
 import type { CatalogStats, ContentPrSummary, Disease, GuidelineMeta } from "../types";
 import type { GuidelinePrDetail } from "../types/contentPr";
@@ -130,4 +132,18 @@ export interface AccountRepository {
   orcidEnabled(): Promise<boolean>;
   /** ORCID authorize URL to redirect to (`GET /api/account/orcid/login`). */
   orcidLoginUrl(): Promise<string>;
+  /**
+   * Submit manual identity evidence for review
+   * (`POST /api/account/verification-requests`). Doctor / researcher only;
+   * rejects with 403 (non-verifiable role), 409 (already verified/pending), or
+   * 400 (no evidence). Never grants verification directly.
+   */
+  submitVerificationRequest(
+    input: SubmitVerificationInput,
+  ): Promise<VerificationRequest>;
+  /**
+   * The caller's own verification requests, newest first
+   * (`GET /api/account/verification-requests/mine`).
+   */
+  myVerificationRequests(): Promise<readonly VerificationRequest[]>;
 }

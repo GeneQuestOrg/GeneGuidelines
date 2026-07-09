@@ -28,9 +28,34 @@ UserId = NewType("UserId", str)
 # An invite token — a ``secrets.token_urlsafe(32)`` string (the ``invites`` PK).
 InviteToken = NewType("InviteToken", str)
 
+# A verification-request id — a uuid4 hex string (the ``verification_requests`` PK).
+VerificationRequestId = NewType("VerificationRequestId", str)
+
 # Auth0 ``sub`` claim, e.g. ``"auth0|653f…"`` or ``"google-oauth2|…"``. The
 # stable identity link between an Auth0 account and our ``users`` row.
 Auth0Sub = NewType("Auth0Sub", str)
+
+
+class VerificationStatus(StrEnum):
+    """Lifecycle of a manual verification request (``verification_requests.status``).
+
+    A request opens ``PENDING``; a superadmin transitions it to ``APPROVED`` (which
+    also flips ``users.verified`` to true) or ``REJECTED``. Terminal states are
+    never edited in place — a fresh request is submitted instead.
+    """
+
+    PENDING = "pending"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+
+    @classmethod
+    def from_str(cls, raw: str | None) -> VerificationStatus | None:
+        if not raw:
+            return None
+        try:
+            return cls(raw.strip().lower())
+        except ValueError:
+            return None
 
 
 class Role(StrEnum):
@@ -67,6 +92,11 @@ class Role(StrEnum):
 SELECTABLE_ROLES: frozenset[Role] = frozenset(
     {Role.PARENT, Role.DOCTOR, Role.RESEARCHER}
 )
+
+# Roles whose accounts carry verification (the expert layer): a verified doctor
+# or researcher may rate AI suggestions. Parents never need verification, and
+# superadmin is inherently trusted — neither may open a verification request.
+VERIFIABLE_ROLES: frozenset[Role] = frozenset({Role.DOCTOR, Role.RESEARCHER})
 
 
 @dataclass(frozen=True, slots=True)
@@ -143,12 +173,47 @@ class Invite:
         return now >= expires
 
 
+@dataclass(frozen=True, slots=True)
+class VerificationRequest:
+    """A manual verification request as persisted in ``verification_requests``.
+
+    A doctor or researcher who cannot (or prefers not to) auto-verify via ORCID
+    submits identity evidence — an ORCID iD, a professional licence number, an
+    institution, and/or a free-text note — for a superadmin to review. Approval
+    flips ``users.verified`` to true; rejection leaves the account unverified.
+    All timestamps are ISO-8601 UTC strings, matching the rest of the account
+    domain. ``role`` snapshots the requester's role at submission time (an audit
+    fact — the user's live role may change independently).
+    """
+
+    id: VerificationRequestId
+    user_id: UserId
+    role: Role
+    orcid: str | None
+    license_no: str | None
+    institution: str | None
+    note: str | None
+    status: VerificationStatus
+    created_at: str
+    updated_at: str
+    reviewed_by: UserId | None
+    reviewed_at: str | None
+
+    @property
+    def is_pending(self) -> bool:
+        return self.status is VerificationStatus.PENDING
+
+
 __all__ = [
     "UserId",
     "Auth0Sub",
     "InviteToken",
+    "VerificationRequestId",
     "Role",
     "SELECTABLE_ROLES",
+    "VERIFIABLE_ROLES",
+    "VerificationStatus",
     "User",
     "Invite",
+    "VerificationRequest",
 ]

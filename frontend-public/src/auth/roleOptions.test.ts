@@ -31,17 +31,19 @@ describe("shouldShowRolePicker", () => {
 });
 
 describe("isPendingVerification", () => {
-  it("is true only for unverified doctors", () => {
+  it("is true for unverified doctors and researchers", () => {
     expect(isPendingVerification("doctor", false)).toBe(true);
+    expect(isPendingVerification("researcher", false)).toBe(true);
   });
 
-  it("is false for verified doctors", () => {
+  it("is false once the clinician / researcher is verified", () => {
     expect(isPendingVerification("doctor", true)).toBe(false);
+    expect(isPendingVerification("researcher", true)).toBe(false);
   });
 
-  it("is false for non-doctor roles regardless of verified flag", () => {
+  it("is false for roles that never require verification", () => {
     expect(isPendingVerification("parent", false)).toBe(false);
-    expect(isPendingVerification("researcher", false)).toBe(false);
+    expect(isPendingVerification("superadmin", false)).toBe(false);
     expect(isPendingVerification(null, false)).toBe(false);
   });
 });
