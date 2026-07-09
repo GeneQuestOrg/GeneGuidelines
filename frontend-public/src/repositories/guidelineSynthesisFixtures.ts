@@ -80,6 +80,14 @@ const FD_SYNTHESIS: GuidelineSynthesis = {
           source: { doc: "boyce2019", loc: "§ Imaging" },
           text: "A bone scan is done only once at diagnosis, to assess extent (mono- vs polyostotic). Routine repetition is not recommended, given the cumulative radiation dose and low clinical value in follow-up.",
           citations: ["31196103"],
+          quotes: [
+            {
+              pmid: "31196103",
+              paraphrase:
+                "The consensus advises a single bone scan at diagnosis to gauge whether disease is mono- or polyostotic, and warns against routine repeat scanning in follow-up because it adds radiation exposure without changing management.",
+              supports: "one-time staging scan, not routine follow-up imaging",
+            },
+          ],
           highlight: true,
         },
       ],
@@ -100,6 +108,13 @@ const FD_SYNTHESIS: GuidelineSynthesis = {
           source: { doc: "boyce2019", loc: "§ Genetic confirmation" },
           text: "Molecular testing for a somatic GNAS mutation (most often R201H or R201C in exon 8) is pathognomonic for FD and mandatory on any biopsy suspicious for FD. Absence of the mutation does not exclude FD (mosaicism), but a positive result confirms the diagnosis with 100% specificity.",
           citations: ["31196103"],
+          quotes: [
+            {
+              pmid: "31196103",
+              paraphrase:
+                "According to the consortium statement, finding a somatic activating GNAS mutation confirms fibrous dysplasia, whereas a negative blood result does not exclude it — the mutation is mosaic and may only be detectable in affected tissue.",
+            },
+          ],
         },
         {
           id: "hp-mosaic",
@@ -146,6 +161,13 @@ const FD_SYNTHESIS: GuidelineSynthesis = {
           },
           text: "Denosumab 60 mg s.c. every 4 weeks for 6 doses (induction phase), then every 12 weeks if CTX < 0.3 ng/mL is maintained. Monitor calcium and 25-OH-D weekly during induction, monthly during maintenance.",
           citations: ["38010041"],
+          quotes: [
+            {
+              pmid: "38010041",
+              paraphrase:
+                "The 2024 pediatric review presents denosumab as an option for aggressive or bisphosphonate-refractory fibrous dysplasia, but stresses tight calcium monitoring and a planned exit strategy because stopping the drug can trigger rebound bone turnover.",
+            },
+          ],
         },
         {
           id: "tx-denosumab-stop",

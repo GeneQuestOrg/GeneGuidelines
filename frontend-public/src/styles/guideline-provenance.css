@@ -260,3 +260,56 @@
   color: var(--ink-2);
   line-height: 1.5;
 }
+
+/* ── Feature 4: grounded paraphrase of the cited abstract (our words) ── */
+.prov__para {
+  margin-top: 10px;
+  padding: 11px 13px;
+  border-radius: var(--r-sm);
+  background: color-mix(in oklch, var(--accent) 5%, var(--bg-soft));
+  border: 1px solid var(--line);
+  border-left: 3px solid color-mix(in oklch, var(--accent) 45%, var(--line));
+}
+.prov__para + .prov__para {
+  margin-top: 8px;
+}
+.prov__paratag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--accent-ink);
+  margin-bottom: 6px;
+}
+.prov__paratag svg {
+  flex-shrink: 0;
+}
+.prov__paratx {
+  font-family: var(--font-serif);
+  font-size: var(--fs-sm);
+  line-height: 1.55;
+  color: var(--ink);
+  margin: 0;
+}
+.prov__parasupports {
+  font-family: var(--font-sans);
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+  line-height: 1.5;
+  margin: 6px 0 0;
+}
+.prov__paralink {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 8px;
+  font-family: var(--font-sans);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--accent-ink);
+  text-decoration: none;
+  border-bottom: 1px solid color-mix(in oklch, var(--accent) 30%, transparent);
+}
