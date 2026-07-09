@@ -38,6 +38,7 @@ export interface PrivateContextsState {
   queue: readonly QueueItem[];
   upload(file: File): Promise<PrivateContext | null>;
   uploadBatch(files: File[]): Promise<void>;
+  retryItem(id: string): Promise<void>;
   clearQueue(): void;
   reload(): Promise<void>;
 }
@@ -55,13 +56,18 @@ export function usePrivateContexts(diseaseSlug: string): PrivateContextsState {
   const [lastUpload, setLastUpload] = useState<PrivateContext | null>(null);
   const [queue, setQueue] = useState<readonly QueueItem[]>([]);
   const stageTimersRef = useRef<number[]>([]);
+  // Retain each batch file so a failed row can be retried (transient endpoint timeouts are common).
+  const filesRef = useRef<Map<string, File>>(new Map());
 
   const clearStageTimers = useCallback(() => {
     stageTimersRef.current.forEach((id) => window.clearTimeout(id));
     stageTimersRef.current = [];
   }, []);
 
-  const clearQueue = useCallback(() => setQueue([]), []);
+  const clearQueue = useCallback(() => {
+    setQueue([]);
+    filesRef.current.clear();
+  }, []);
 
   const reload = useCallback(async () => {
     const repo = repositories().privateContexts;
@@ -181,6 +187,7 @@ export function usePrivateContexts(diseaseSlug: string): PrivateContextsState {
         const file = capped[i];
         const item = items[i];
         patch(item.id, { status: "processing" });
+        filesRef.current.set(item.id, file);
         clearStageTimers();
         setStage("reading");
         stageTimersRef.current.push(
@@ -226,6 +233,52 @@ export function usePrivateContexts(diseaseSlug: string): PrivateContextsState {
     [diseaseSlug, clearStageTimers],
   );
 
+  // Re-run one failed document (its File is retained in filesRef). Transient endpoint
+  // timeouts are common (chat-029), so a retry usually succeeds where the first attempt failed.
+  const retryItem = useCallback(
+    async (id: string): Promise<void> => {
+      const file = filesRef.current.get(id);
+      if (!file) return;
+      const patch = (next: Partial<QueueItem>) =>
+        setQueue((prev) => prev.map((it) => (it.id === id ? { ...it, ...next } : it)));
+      patch({ status: "processing", error: undefined });
+      setUploading(true);
+      clearStageTimers();
+      setStage("reading");
+      stageTimersRef.current.push(
+        window.setTimeout(() => setStage("redacting"), 700),
+        window.setTimeout(() => setStage("extracting"), 1800),
+        window.setTimeout(() => setStage("discarding"), 3200),
+      );
+      try {
+        const result = await repositories().privateContexts.upload(diseaseSlug, file);
+        clearStageTimers();
+        setStage("idle");
+        if (result == null) {
+          patch({ status: "failed", error: "Disease not found." });
+          return;
+        }
+        setLastUpload(result);
+        setContexts((prev) => [result, ...prev]);
+        if (result.status === "failed") {
+          patch({ status: "failed", error: result.error ?? "Redaction failed." });
+        } else {
+          patch({ status: "done", facts: factCount(result) });
+        }
+      } catch (err) {
+        clearStageTimers();
+        setStage("idle");
+        patch({
+          status: "failed",
+          error: err instanceof Error ? err.message : "Upload failed.",
+        });
+      } finally {
+        setUploading(false);
+      }
+    },
+    [diseaseSlug, clearStageTimers],
+  );
+
   useEffect(() => () => clearStageTimers(), [clearStageTimers]);
 
   return {
@@ -238,6 +291,7 @@ export function usePrivateContexts(diseaseSlug: string): PrivateContextsState {
     queue,
     upload,
     uploadBatch,
+    retryItem,
     clearQueue,
     reload,
   };

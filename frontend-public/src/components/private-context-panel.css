@@ -594,3 +594,20 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+.pc-queue__retry {
+  flex: none;
+  margin-left: auto;
+  padding: 3px 10px;
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--accent-ink, var(--ink));
+  background: transparent;
+  border: 1px solid var(--line-2, var(--line));
+  border-radius: var(--r-sm, 6px);
+  cursor: pointer;
+}
+
+.pc-queue__retry:hover {
+  border-color: var(--accent-ink, var(--ink));
+}

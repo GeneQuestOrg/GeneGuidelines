@@ -601,7 +601,8 @@ async def extract_redacted_facts_async(
     disease_slug: str,
     raw_text: str,
     model_spec: str | None = None,
-    timeout_seconds: float = 60.0,
+    timeout_seconds: float = 90.0,
+    attempts: int = 3,
 ) -> tuple[RedactedFacts, str]:
     """Call Gemma 4 with the redaction prompt and return validated facts.
 
@@ -664,7 +665,18 @@ async def extract_redacted_facts_async(
         model_spec=model_spec,
         max_tokens=2000,
     )
-    res = await asyncio.wait_for(agent.run(user_prompt), timeout=timeout_seconds)
+    # The vLLM/SiliconFlow endpoint is intermittently slow — some calls hang past the timeout
+    # while a retry moments later succeeds (chat-029 "flaky endpoint"). Extraction is idempotent,
+    # so retry with backoff before surfacing a failure to the parent instead of a one-shot timeout.
+    res = None
+    for attempt in range(max(1, attempts)):
+        try:
+            res = await asyncio.wait_for(agent.run(user_prompt), timeout=timeout_seconds)
+            break
+        except Exception:  # noqa: BLE001 - transient endpoint timeout / network error
+            if attempt + 1 >= max(1, attempts):
+                raise
+            await asyncio.sleep(1.5 * (attempt + 1))
     out = getattr(res, "output", None) or getattr(res, "data", None)
     if isinstance(out, RedactedFacts):
         return out, model_spec

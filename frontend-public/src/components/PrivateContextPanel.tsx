@@ -94,7 +94,13 @@ const QUEUE_STATUS_LABEL: Record<QueueItem["status"], string> = {
   failed: "Failed",
 };
 
-function BatchQueue({ queue }: { queue: readonly QueueItem[] }) {
+function BatchQueue({
+  queue,
+  onRetry,
+}: {
+  queue: readonly QueueItem[];
+  onRetry: (id: string) => void;
+}) {
   if (queue.length === 0) return null;
   const done = queue.filter((q) => q.status === "done").length;
   const failed = queue.filter((q) => q.status === "failed").length;
@@ -130,6 +136,15 @@ function BatchQueue({ queue }: { queue: readonly QueueItem[] }) {
               <span className="pc-queue__err" title={q.error}>
                 {q.error}
               </span>
+            ) : null}
+            {q.status === "failed" ? (
+              <button
+                type="button"
+                className="pc-queue__retry"
+                onClick={() => onRetry(q.id)}
+              >
+                Retry
+              </button>
             ) : null}
           </li>
         ))}
@@ -295,7 +310,7 @@ function AuditBadge({ ctx }: { ctx: PrivateContext }) {
 }
 
 export function PrivateContextPanel({ diseaseSlug }: PrivateContextPanelProps) {
-  const { contexts, uploading, stage, error, lastUpload, queue, uploadBatch } =
+  const { contexts, uploading, stage, error, lastUpload, queue, uploadBatch, retryItem } =
     usePrivateContexts(diseaseSlug);
   const fileRef = useRef<HTMLInputElement | null>(null);
   const [expandedId, setExpandedId] = useState<number | null>(null);
@@ -353,7 +368,7 @@ export function PrivateContextPanel({ diseaseSlug }: PrivateContextPanelProps) {
         </p>
       ) : null}
 
-      <BatchQueue queue={queue} />
+      <BatchQueue queue={queue} onRetry={retryItem} />
 
       <StageProgress stage={stage} />
 
