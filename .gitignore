@@ -5,6 +5,9 @@ node_modules/
 .env
 .env.local
 .env.bak*
+.env.deploybak
+# Session transcript dumps at repo root (e.g. 2026-07-09-*.txt)
+/2026-*.txt
 deploy/htpasswd
 deploy/backups/
 backups/
