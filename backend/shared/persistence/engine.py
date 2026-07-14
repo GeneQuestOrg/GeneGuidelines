@@ -39,7 +39,20 @@ def _build_engine() -> Engine:
         url = "postgresql+psycopg://" + url[len("postgresql://") :]
     elif url.startswith("postgres://"):
         url = "postgresql+psycopg://" + url[len("postgres://") :]
-    return create_engine(url, future=True, echo=False)
+    # pool_pre_ping: validate each pooled connection (lightweight SELECT 1) before use,
+    # transparently discarding+reconnecting dead ones. Azure Postgres (burstable) drops
+    # idle connections / restarts for maintenance, which otherwise surfaces as an
+    # intermittent 500 "psycopg.errors.AdminShutdown: terminating connection due to
+    # administrator command" on the first request after the drop.
+    # pool_recycle: proactively retire connections older than 5 min so we never hand out
+    # one the server has already silently closed.
+    return create_engine(
+        url,
+        future=True,
+        echo=False,
+        pool_pre_ping=True,
+        pool_recycle=300,
+    )
 
 
 def reset_engine_for_tests() -> None:
