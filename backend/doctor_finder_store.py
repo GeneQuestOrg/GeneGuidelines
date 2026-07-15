@@ -95,6 +95,55 @@ def save_doctor_finder_run_result(
     except ImportError:
         from doctor_catalog import clear_finder_docs_index
     clear_finder_docs_index()
+    # Finding 3: refresh the denormalized diseases.doctors_count HERE, at finder
+    # completion — the primary, correctly-ordered refresh point (finalize's call
+    # at guideline-publish can race ahead of the finder). Best-effort: a refresh
+    # hiccup must never fail the run persistence.
+    if slug_norm and error is None:
+        try:
+            try:
+                from .content_db import refresh_disease_doctors_count
+            except ImportError:
+                from content_db import refresh_disease_doctors_count
+            refresh_disease_doctors_count(slug_norm)
+        except Exception:  # noqa: BLE001
+            log.debug("refresh_disease_doctors_count failed for %s", slug_norm, exc_info=True)
+
+
+def finder_results_version_key() -> tuple[int, str] | None:
+    """Cheap change-detector for the persisted doctor_finder store.
+
+    Returns ``(row_count, max_finished_at)`` — a value that changes whenever a
+    run is inserted or re-persisted (``save_doctor_finder_run_result`` always
+    stamps a fresh ``finished_at``). The catalog's per-process finder-index cache
+    (:func:`backend.doctor_catalog._finder_docs_index`) compares this key and
+    rebuilds when it moves, so a run persisted by the ``gg-worker`` process
+    becomes visible to the read-serving ``gg-public`` process without a restart
+    (the ``clear_finder_docs_index`` in-process hook only fires in the worker).
+
+    One lightweight ``COUNT + MAX`` per read is acceptable (audit B3a). Returns
+    ``None`` on any error so the caller degrades to plain memoisation rather than
+    thrashing the cache.
+    """
+    try:
+        # Schema is ensured once at startup; skip the per-read CREATE-IF-NOT-EXISTS
+        # (Finding 6). If the table is somehow absent the query raises and we
+        # degrade to plain memoisation via the except below.
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT COUNT(*) AS c, MAX(finished_at) AS m FROM doctor_finder_run_results"
+        )
+        row = cur.fetchone()
+        conn.close()
+        if row is None:
+            return (0, "")
+        count = int(row.get("c") or 0)
+        max_finished = str(row.get("m") or "")
+        return (count, max_finished)
+    except Exception:  # noqa: BLE001 — version probe must never break a read
+        log.debug("finder_results_version_key probe failed", exc_info=True)
+        return None
 
 
 def load_doctor_finder_run_result(execution_id: str) -> dict[str, Any] | None:

@@ -111,6 +111,11 @@ async def bootstrap_disease_research(
     guideline_id = await _start_guideline_run(
         disease_slug, disease_name, profile_norm, guideline_execution_id
     )
+    # B2a: build the source shelf so a bootstrap-only disease actually gets a
+    # bibliography (guideline_analyzed_papers, verdict=shelf). Previously the
+    # shelf builder ran ONLY from the manual admin endpoint, so FD/MAS/Noonan
+    # were populated by hand and every fresh bootstrap (e.g. FOP) had 0 sources.
+    shelf_id = await _start_shelf_build(disease_slug, disease_name, profile_norm)
 
     return {
         "official_guidelines": ogf_id,
@@ -119,6 +124,7 @@ async def bootstrap_disease_research(
         "foundations": fdn_id,
         "doctor_finder": doctor_finder_id,
         "guideline": guideline_id,
+        "shelf": shelf_id,
     }
 
 
@@ -201,6 +207,50 @@ async def _start_guideline_run(
     )
     eid = str(result.get("execution_id") or "")
     log.info("disease_bootstrap: fired guideline %s for %s", eid, disease_slug)
+    return eid
+
+
+async def _start_shelf_build(
+    disease_slug: str,
+    disease_name: str,
+    profile: str,
+) -> str:
+    """Fire the source-shelf build flow (B2a) — mirrors the admin endpoint
+    ``POST /diseases/{slug}/guideline-shelf/run``. Broadly searches PubMed +
+    Bookshelf, an LLM classifies each doc onto the shelf, and the writer tail
+    node persists ``guideline_analyzed_papers`` (the disease bibliography)."""
+    from .. import database as db
+    from ..content_db import get_disease_by_slug
+    from ..routers import agent as agent_router
+
+    loop = asyncio.get_event_loop()
+    disease = await loop.run_in_executor(
+        None, lambda: get_disease_by_slug(disease_slug, include_prompt_profile=False)
+    )
+    if disease is None:
+        log.warning("disease_bootstrap: cannot start shelf; disease %s missing", disease_slug)
+        return ""
+
+    label = f"Shelf · {disease_name}"
+    ticket_id = await loop.run_in_executor(
+        None,
+        lambda: db.create_ticket(
+            title=label,
+            description=f"Source-shelf discovery for {disease_name} (PubMed + Bookshelf).",
+            reporter_name="GeneGuidelines/bootstrap",
+            category="guideline_shelf",
+        ),
+    )
+    result = await agent_router.start_agent_run(
+        ticket_id,
+        flow_key="guideline_shelf_build",
+        profile=profile,
+        label=label,
+        pipeline="guideline",
+        disease_initial={"disease_slug": disease_slug, "disease_name": disease_name},
+    )
+    eid = str(result.get("execution_id") or "")
+    log.info("disease_bootstrap: fired shelf-build %s for %s", eid, disease_slug)
     return eid
 
 

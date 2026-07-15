@@ -209,7 +209,7 @@ def _post_run_publish_guideline_document(execution_id: str, store: dict[str, Any
         GuidelinePublishError,
         build_ai_draft_document_payload,
     )
-    from ..content_db import upsert_guideline_document
+    from ..content_db import finalize_bootstrapped_disease, upsert_guideline_document
 
     disease_name = (
         str(store.get("label") or "").strip()
@@ -246,6 +246,20 @@ def _post_run_publish_guideline_document(execution_id: str, store: dict[str, Any
     except Exception:  # noqa: BLE001 — never let publish failure swallow the run
         log.exception(
             "publish-guideline: upsert failed for %s (slug=%s)",
+            execution_id, disease_slug,
+        )
+        return
+
+    # B7a+B7b: a landed guideline document IS the "bootstrap complete" signal.
+    # finalize_bootstrapped_disease flips coverage skeleton->full (the only code
+    # path that sets 'full'; a fresh bootstrap otherwise stays 'skeleton' forever),
+    # refreshes the denormalized doctors_count, and stamps the completion marker.
+    # Isolated so a reconcile hiccup cannot undo the successful publish.
+    try:
+        finalize_bootstrapped_disease(disease_slug)
+    except Exception:  # noqa: BLE001 — completion reconcile is best-effort
+        log.exception(
+            "publish-guideline: bootstrap finalize failed for %s (slug=%s)",
             execution_id, disease_slug,
         )
 

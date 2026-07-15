@@ -972,6 +972,77 @@ def refresh_disease_doctors_count(slug: str) -> int:
     return max(0, int(count))
 
 
+def set_disease_coverage(slug: str, coverage: str) -> None:
+    """Set the ``coverage`` badge for a disease (e.g. ``skeleton`` -> ``full``).
+
+    The single home for the coverage flip so the guideline-publish bridge (B7a)
+    and the bootstrap-completion aggregate (B7b) never duplicate the UPDATE. A
+    value outside the known set is ignored (defensive — the column is free-text
+    but the UI only understands ``skeleton`` / ``full``).
+    """
+    normalized = normalize_disease_slug(slug)
+    if normalized is None:
+        return
+    value = (coverage or "").strip().lower()
+    if value not in ("skeleton", "full"):
+        return
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute(
+        "UPDATE diseases SET coverage = %s WHERE slug = %s",
+        (value, normalized),
+    )
+    conn.commit()
+    conn.close()
+
+
+def finalize_bootstrapped_disease(slug: str) -> dict[str, Any]:
+    """Reconcile a disease row once its bootstrap research has landed.
+
+    Idempotent completion step. **Deliberately does NOT touch ``coverage``.**
+    ``coverage='full'`` means *human-vetted*: curated skeletons (MAS/Noonan)
+    intentionally stay ``skeleton`` and show a clinical "run the full pipeline
+    before citing in clinical decisions" warning that ``full`` would silently
+    remove. A bootstrap produces an *unvetted* AI-draft, so coverage correctly
+    stays ``skeleton`` until a human vets it. (Review 2026-07-15, Finding 1 —
+    auto-flip was a medical-safety regression on guideline re-runs.)
+
+    This step only:
+      * refreshes the denormalized ``doctors_count`` (backup — the primary
+        refresh now fires at doctor_finder completion; Finding 3), and
+      * stamps ``ai_draft_date`` ONLY IF unset, so a re-run never clobbers the
+        original "Last revised" date (Finding 4).
+
+    Returns a small summary dict for logging/tests. Safe to call repeatedly.
+    """
+    normalized = normalize_disease_slug(slug)
+    if normalized is None:
+        return {"slug": slug, "finalized": False}
+    row = get_disease_by_slug(normalized)
+    if row is None:
+        # Well-formed slug but no such disease row — nothing to reconcile.
+        return {"slug": normalized, "finalized": False}
+    doctors_count = refresh_disease_doctors_count(normalized)
+    stamped = False
+    if not row.get("aiDraftDate"):
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute(
+            "UPDATE diseases SET ai_draft_date = %s "
+            "WHERE slug = %s AND (ai_draft_date IS NULL OR ai_draft_date = '')",
+            (date.today().isoformat(), normalized),
+        )
+        conn.commit()
+        conn.close()
+        stamped = True
+    return {
+        "slug": normalized,
+        "finalized": True,
+        "doctors_count": doctors_count,
+        "ai_draft_date_stamped": stamped,
+    }
+
+
 def update_disease_catalog_from_bootstrap(
     slug: str,
     *,
