@@ -1014,6 +1014,9 @@ def finalize_bootstrapped_disease(slug: str) -> dict[str, Any]:
     normalized = normalize_disease_slug(slug)
     if normalized is None:
         return {"slug": slug, "finalized": False}
+    if get_disease_by_slug(normalized) is None:
+        # Well-formed slug but no such disease row — nothing to reconcile.
+        return {"slug": normalized, "finalized": False}
     set_disease_coverage(normalized, "full")
     doctors_count = refresh_disease_doctors_count(normalized)
     completed_at = date.today().isoformat()
