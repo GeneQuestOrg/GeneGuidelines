@@ -209,7 +209,7 @@ def _post_run_publish_guideline_document(execution_id: str, store: dict[str, Any
         GuidelinePublishError,
         build_ai_draft_document_payload,
     )
-    from ..content_db import set_disease_coverage, upsert_guideline_document
+    from ..content_db import finalize_bootstrapped_disease, upsert_guideline_document
 
     disease_name = (
         str(store.get("label") or "").strip()
@@ -250,15 +250,16 @@ def _post_run_publish_guideline_document(execution_id: str, store: dict[str, Any
         )
         return
 
-    # B7a: a landed guideline document IS the "full coverage" signal — flip the
-    # disease off the seed-only 'skeleton' badge. The only code path that sets
-    # 'full'; a freshly bootstrapped disease otherwise stays 'skeleton' forever.
-    # Isolated so a coverage-write hiccup cannot undo the successful publish.
+    # B7a+B7b: a landed guideline document IS the "bootstrap complete" signal.
+    # finalize_bootstrapped_disease flips coverage skeleton->full (the only code
+    # path that sets 'full'; a fresh bootstrap otherwise stays 'skeleton' forever),
+    # refreshes the denormalized doctors_count, and stamps the completion marker.
+    # Isolated so a reconcile hiccup cannot undo the successful publish.
     try:
-        set_disease_coverage(disease_slug, "full")
-    except Exception:  # noqa: BLE001 — coverage flip is best-effort
+        finalize_bootstrapped_disease(disease_slug)
+    except Exception:  # noqa: BLE001 — completion reconcile is best-effort
         log.exception(
-            "publish-guideline: coverage flip failed for %s (slug=%s)",
+            "publish-guideline: bootstrap finalize failed for %s (slug=%s)",
             execution_id, disease_slug,
         )
 
