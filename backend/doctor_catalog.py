@@ -32,6 +32,10 @@ _TOKEN_RE = re.compile(r"[a-z0-9]+", re.I)
 _MIN_CATALOG_NAME_MATCH_SCORE = 45
 
 _FINDER_DOCS_INDEX: dict[str, list[dict[str, Any]] | None] | None = None
+# Version key the cached index was built at (row_count, max_finished_at) — see
+# B3a. Lets any process self-invalidate when the persistent doctor_finder store
+# changes, even though clear_finder_docs_index() only fires in the worker.
+_FINDER_DOCS_INDEX_VERSION: tuple[int, str] | None = None
 _ALL_DOCTORS_CACHE: list[dict[str, Any]] | None = None
 _CONTENT_DOCTORS_CACHE: list[dict[str, Any]] | None = None
 # DOC-5 approved contributions, cached per process alongside the finder index.
@@ -42,10 +46,12 @@ _CATALOG_CACHE_LOCK = threading.RLock()
 
 def clear_finder_docs_index() -> None:
     """Drop cached doctor_finder rows (call after a run finishes)."""
-    global _FINDER_DOCS_INDEX, _ALL_DOCTORS_CACHE, _CONTENT_DOCTORS_CACHE
+    global _FINDER_DOCS_INDEX, _FINDER_DOCS_INDEX_VERSION
+    global _ALL_DOCTORS_CACHE, _CONTENT_DOCTORS_CACHE
     global _APPROVED_SUBMISSIONS_CACHE, _APPROVED_RECS_BY_SLUG_CACHE
     with _CATALOG_CACHE_LOCK:
         _FINDER_DOCS_INDEX = None
+        _FINDER_DOCS_INDEX_VERSION = None
         _ALL_DOCTORS_CACHE = None
         _CONTENT_DOCTORS_CACHE = None
         _APPROVED_SUBMISSIONS_CACHE = None
@@ -931,10 +937,27 @@ def _build_finder_docs_index() -> dict[str, list[dict[str, Any]] | None]:
 
 
 def _finder_docs_index() -> dict[str, list[dict[str, Any]] | None]:
-    global _FINDER_DOCS_INDEX
+    """Return the cached persistent finder index, rebuilding it when the DB moved.
+
+    B3a: the index is a process-lifetime memoized global. ``clear_finder_docs_index``
+    only fires in the worker, so the read-serving process would otherwise pin a
+    stale index (``doctorsCount=0`` for a freshly bootstrapped disease) until a
+    restart. We compare a cheap DB version key (row count + newest ``finished_at``)
+    and rebuild in ANY process when it changes. If the probe fails we fall back to
+    plain memoisation (rebuild only when unset) rather than thrash.
+    """
+    global _FINDER_DOCS_INDEX, _FINDER_DOCS_INDEX_VERSION
+    try:
+        from .doctor_finder_store import finder_results_version_key
+    except ImportError:
+        from doctor_finder_store import finder_results_version_key
+
+    version = finder_results_version_key()
     with _CATALOG_CACHE_LOCK:
-        if _FINDER_DOCS_INDEX is None:
+        stale = version is not None and version != _FINDER_DOCS_INDEX_VERSION
+        if _FINDER_DOCS_INDEX is None or stale:
             _FINDER_DOCS_INDEX = _build_finder_docs_index()
+            _FINDER_DOCS_INDEX_VERSION = version
         return _FINDER_DOCS_INDEX
 
 

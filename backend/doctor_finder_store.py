@@ -97,6 +97,40 @@ def save_doctor_finder_run_result(
     clear_finder_docs_index()
 
 
+def finder_results_version_key() -> tuple[int, str] | None:
+    """Cheap change-detector for the persisted doctor_finder store.
+
+    Returns ``(row_count, max_finished_at)`` — a value that changes whenever a
+    run is inserted or re-persisted (``save_doctor_finder_run_result`` always
+    stamps a fresh ``finished_at``). The catalog's per-process finder-index cache
+    (:func:`backend.doctor_catalog._finder_docs_index`) compares this key and
+    rebuilds when it moves, so a run persisted by the ``gg-worker`` process
+    becomes visible to the read-serving ``gg-public`` process without a restart
+    (the ``clear_finder_docs_index`` in-process hook only fires in the worker).
+
+    One lightweight ``COUNT + MAX`` per read is acceptable (audit B3a). Returns
+    ``None`` on any error so the caller degrades to plain memoisation rather than
+    thrashing the cache.
+    """
+    try:
+        ensure_doctor_finder_run_results_schema()
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT COUNT(*) AS c, MAX(finished_at) AS m FROM doctor_finder_run_results"
+        )
+        row = cur.fetchone()
+        conn.close()
+        if row is None:
+            return (0, "")
+        count = int(row.get("c") or 0)
+        max_finished = str(row.get("m") or "")
+        return (count, max_finished)
+    except Exception:  # noqa: BLE001 — version probe must never break a read
+        log.debug("finder_results_version_key probe failed", exc_info=True)
+        return None
+
+
 def load_doctor_finder_run_result(execution_id: str) -> dict[str, Any] | None:
     """Load persisted run for GET /api/doctor-finder/run/{id} when RAM entry was pruned."""
     if not execution_id:

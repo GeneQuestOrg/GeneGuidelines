@@ -209,7 +209,7 @@ def _post_run_publish_guideline_document(execution_id: str, store: dict[str, Any
         GuidelinePublishError,
         build_ai_draft_document_payload,
     )
-    from ..content_db import upsert_guideline_document
+    from ..content_db import set_disease_coverage, upsert_guideline_document
 
     disease_name = (
         str(store.get("label") or "").strip()
@@ -246,6 +246,19 @@ def _post_run_publish_guideline_document(execution_id: str, store: dict[str, Any
     except Exception:  # noqa: BLE001 — never let publish failure swallow the run
         log.exception(
             "publish-guideline: upsert failed for %s (slug=%s)",
+            execution_id, disease_slug,
+        )
+        return
+
+    # B7a: a landed guideline document IS the "full coverage" signal — flip the
+    # disease off the seed-only 'skeleton' badge. The only code path that sets
+    # 'full'; a freshly bootstrapped disease otherwise stays 'skeleton' forever.
+    # Isolated so a coverage-write hiccup cannot undo the successful publish.
+    try:
+        set_disease_coverage(disease_slug, "full")
+    except Exception:  # noqa: BLE001 — coverage flip is best-effort
+        log.exception(
+            "publish-guideline: coverage flip failed for %s (slug=%s)",
             execution_id, disease_slug,
         )
 

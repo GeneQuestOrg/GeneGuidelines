@@ -972,6 +972,68 @@ def refresh_disease_doctors_count(slug: str) -> int:
     return max(0, int(count))
 
 
+def set_disease_coverage(slug: str, coverage: str) -> None:
+    """Set the ``coverage`` badge for a disease (e.g. ``skeleton`` -> ``full``).
+
+    The single home for the coverage flip so the guideline-publish bridge (B7a)
+    and the bootstrap-completion aggregate (B7b) never duplicate the UPDATE. A
+    value outside the known set is ignored (defensive — the column is free-text
+    but the UI only understands ``skeleton`` / ``full``).
+    """
+    normalized = normalize_disease_slug(slug)
+    if normalized is None:
+        return
+    value = (coverage or "").strip().lower()
+    if value not in ("skeleton", "full"):
+        return
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute(
+        "UPDATE diseases SET coverage = %s WHERE slug = %s",
+        (value, normalized),
+    )
+    conn.commit()
+    conn.close()
+
+
+def finalize_bootstrapped_disease(slug: str) -> dict[str, Any]:
+    """Reconcile a disease row once its bootstrap research has landed (B7b).
+
+    A single idempotent completion step run at the end of the bootstrap fan-out
+    (see :func:`backend.services.disease_bootstrap.bootstrap_disease_research`):
+
+      * flips ``coverage`` to ``full`` (the disease now has a guideline + finders;
+        composes with B7a via the shared :func:`set_disease_coverage`),
+      * refreshes the denormalized ``doctors_count`` from the live public
+        directory via :func:`refresh_disease_doctors_count` (previously dead code),
+      * stamps ``ai_draft_date`` as the durable "bootstrap completed" marker
+        (reused rather than adding a column — migration-free).
+
+    Returns a small summary dict for logging/tests. Safe to call repeatedly.
+    """
+    normalized = normalize_disease_slug(slug)
+    if normalized is None:
+        return {"slug": slug, "finalized": False}
+    set_disease_coverage(normalized, "full")
+    doctors_count = refresh_disease_doctors_count(normalized)
+    completed_at = date.today().isoformat()
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute(
+        "UPDATE diseases SET ai_draft_date = %s WHERE slug = %s",
+        (completed_at, normalized),
+    )
+    conn.commit()
+    conn.close()
+    return {
+        "slug": normalized,
+        "finalized": True,
+        "coverage": "full",
+        "doctors_count": doctors_count,
+        "completed_at": completed_at,
+    }
+
+
 def update_disease_catalog_from_bootstrap(
     slug: str,
     *,
