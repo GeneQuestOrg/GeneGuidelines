@@ -37,6 +37,10 @@ _FINDER_DOCS_INDEX: dict[str, list[dict[str, Any]] | None] | None = None
 # changes, even though clear_finder_docs_index() only fires in the worker.
 _FINDER_DOCS_INDEX_VERSION: tuple[int, str] | None = None
 _ALL_DOCTORS_CACHE: list[dict[str, Any]] | None = None
+# Finding 2: version-gate the global all-doctors cache off the same finder key,
+# so the home-page global doctorCount also refreshes cross-process (not only
+# per-disease counts) without a restart.
+_ALL_DOCTORS_CACHE_VERSION: tuple[int, str] | None = None
 _CONTENT_DOCTORS_CACHE: list[dict[str, Any]] | None = None
 # DOC-5 approved contributions, cached per process alongside the finder index.
 _APPROVED_SUBMISSIONS_CACHE: list[dict[str, Any]] | None = None
@@ -47,12 +51,13 @@ _CATALOG_CACHE_LOCK = threading.RLock()
 def clear_finder_docs_index() -> None:
     """Drop cached doctor_finder rows (call after a run finishes)."""
     global _FINDER_DOCS_INDEX, _FINDER_DOCS_INDEX_VERSION
-    global _ALL_DOCTORS_CACHE, _CONTENT_DOCTORS_CACHE
+    global _ALL_DOCTORS_CACHE, _ALL_DOCTORS_CACHE_VERSION, _CONTENT_DOCTORS_CACHE
     global _APPROVED_SUBMISSIONS_CACHE, _APPROVED_RECS_BY_SLUG_CACHE
     with _CATALOG_CACHE_LOCK:
         _FINDER_DOCS_INDEX = None
         _FINDER_DOCS_INDEX_VERSION = None
         _ALL_DOCTORS_CACHE = None
+        _ALL_DOCTORS_CACHE_VERSION = None
         _CONTENT_DOCTORS_CACHE = None
         _APPROVED_SUBMISSIONS_CACHE = None
         _APPROVED_RECS_BY_SLUG_CACHE = None
@@ -1055,9 +1060,15 @@ def _merge_global_doctor_entries(a: dict[str, Any], b: dict[str, Any]) -> dict[s
 
 def list_all_doctors() -> list[dict[str, Any]]:
     """All doctors: seed file + per-disease doctor_finder merge, deduped by slug."""
-    global _ALL_DOCTORS_CACHE
+    global _ALL_DOCTORS_CACHE, _ALL_DOCTORS_CACHE_VERSION
+    try:
+        from .doctor_finder_store import finder_results_version_key
+    except ImportError:
+        from doctor_finder_store import finder_results_version_key
+    version = finder_results_version_key()
     with _CATALOG_CACHE_LOCK:
-        if _ALL_DOCTORS_CACHE is not None:
+        stale = version is not None and version != _ALL_DOCTORS_CACHE_VERSION
+        if _ALL_DOCTORS_CACHE is not None and not stale:
             return _ALL_DOCTORS_CACHE
 
         by_slug: dict[str, dict[str, Any]] = {}
@@ -1113,6 +1124,7 @@ def list_all_doctors() -> list[dict[str, Any]]:
         # DOC-5: apply approved parent recs to every row (seed-file rows that
         # carry no disease never went through the per-disease merge above).
         _ALL_DOCTORS_CACHE = [_apply_approved_recs(doc) for doc in by_slug.values()]
+        _ALL_DOCTORS_CACHE_VERSION = version
         return _ALL_DOCTORS_CACHE
 
 

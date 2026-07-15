@@ -997,43 +997,49 @@ def set_disease_coverage(slug: str, coverage: str) -> None:
 
 
 def finalize_bootstrapped_disease(slug: str) -> dict[str, Any]:
-    """Reconcile a disease row once its bootstrap research has landed (B7b).
+    """Reconcile a disease row once its bootstrap research has landed.
 
-    A single idempotent completion step run at the end of the bootstrap fan-out
-    (see :func:`backend.services.disease_bootstrap.bootstrap_disease_research`):
+    Idempotent completion step. **Deliberately does NOT touch ``coverage``.**
+    ``coverage='full'`` means *human-vetted*: curated skeletons (MAS/Noonan)
+    intentionally stay ``skeleton`` and show a clinical "run the full pipeline
+    before citing in clinical decisions" warning that ``full`` would silently
+    remove. A bootstrap produces an *unvetted* AI-draft, so coverage correctly
+    stays ``skeleton`` until a human vets it. (Review 2026-07-15, Finding 1 —
+    auto-flip was a medical-safety regression on guideline re-runs.)
 
-      * flips ``coverage`` to ``full`` (the disease now has a guideline + finders;
-        composes with B7a via the shared :func:`set_disease_coverage`),
-      * refreshes the denormalized ``doctors_count`` from the live public
-        directory via :func:`refresh_disease_doctors_count` (previously dead code),
-      * stamps ``ai_draft_date`` as the durable "bootstrap completed" marker
-        (reused rather than adding a column — migration-free).
+    This step only:
+      * refreshes the denormalized ``doctors_count`` (backup — the primary
+        refresh now fires at doctor_finder completion; Finding 3), and
+      * stamps ``ai_draft_date`` ONLY IF unset, so a re-run never clobbers the
+        original "Last revised" date (Finding 4).
 
     Returns a small summary dict for logging/tests. Safe to call repeatedly.
     """
     normalized = normalize_disease_slug(slug)
     if normalized is None:
         return {"slug": slug, "finalized": False}
-    if get_disease_by_slug(normalized) is None:
+    row = get_disease_by_slug(normalized)
+    if row is None:
         # Well-formed slug but no such disease row — nothing to reconcile.
         return {"slug": normalized, "finalized": False}
-    set_disease_coverage(normalized, "full")
     doctors_count = refresh_disease_doctors_count(normalized)
-    completed_at = date.today().isoformat()
-    conn = get_connection()
-    cur = conn.cursor()
-    cur.execute(
-        "UPDATE diseases SET ai_draft_date = %s WHERE slug = %s",
-        (completed_at, normalized),
-    )
-    conn.commit()
-    conn.close()
+    stamped = False
+    if not row.get("aiDraftDate"):
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute(
+            "UPDATE diseases SET ai_draft_date = %s "
+            "WHERE slug = %s AND (ai_draft_date IS NULL OR ai_draft_date = '')",
+            (date.today().isoformat(), normalized),
+        )
+        conn.commit()
+        conn.close()
+        stamped = True
     return {
         "slug": normalized,
         "finalized": True,
-        "coverage": "full",
         "doctors_count": doctors_count,
-        "completed_at": completed_at,
+        "ai_draft_date_stamped": stamped,
     }
 
 

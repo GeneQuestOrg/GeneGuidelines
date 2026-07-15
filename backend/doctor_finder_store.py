@@ -95,6 +95,19 @@ def save_doctor_finder_run_result(
     except ImportError:
         from doctor_catalog import clear_finder_docs_index
     clear_finder_docs_index()
+    # Finding 3: refresh the denormalized diseases.doctors_count HERE, at finder
+    # completion — the primary, correctly-ordered refresh point (finalize's call
+    # at guideline-publish can race ahead of the finder). Best-effort: a refresh
+    # hiccup must never fail the run persistence.
+    if slug_norm and error is None:
+        try:
+            try:
+                from .content_db import refresh_disease_doctors_count
+            except ImportError:
+                from content_db import refresh_disease_doctors_count
+            refresh_disease_doctors_count(slug_norm)
+        except Exception:  # noqa: BLE001
+            log.debug("refresh_disease_doctors_count failed for %s", slug_norm, exc_info=True)
 
 
 def finder_results_version_key() -> tuple[int, str] | None:
@@ -113,7 +126,9 @@ def finder_results_version_key() -> tuple[int, str] | None:
     thrashing the cache.
     """
     try:
-        ensure_doctor_finder_run_results_schema()
+        # Schema is ensured once at startup; skip the per-read CREATE-IF-NOT-EXISTS
+        # (Finding 6). If the table is somehow absent the query raises and we
+        # degrade to plain memoisation via the except below.
         conn = get_connection()
         cur = conn.cursor()
         cur.execute(

@@ -63,16 +63,32 @@ def test_set_disease_coverage_flips_and_rejects_unknown(skeleton_disease: str) -
     assert get_disease_by_slug(slug)["coverage"] == "full"
 
 
-def test_finalize_bootstrapped_disease_reconciles_row(skeleton_disease: str) -> None:
+def test_finalize_leaves_coverage_alone_and_stamps_draft_date(skeleton_disease: str) -> None:
     slug = skeleton_disease
     result = finalize_bootstrapped_disease(slug)
     assert result["finalized"] is True
-    assert result["coverage"] == "full"
     row = get_disease_by_slug(slug)
-    assert row["coverage"] == "full"  # B7a
-    assert row["aiDraftDate"], "completion marker (ai_draft_date) must be stamped"  # B7b
-    # doctors_count is refreshed via the previously-dead refresh_disease_doctors_count
+    # Finding 1 (safety): finalize must NOT flip coverage — 'full' is a human
+    # vetting decision; auto-promoting a curated skeleton (MAS/Noonan) would
+    # silently remove the clinical "not vetted" warning.
+    assert row["coverage"] == "skeleton"
+    # ai_draft_date is stamped because it was NULL on the skeleton fixture
+    assert row["aiDraftDate"], "ai_draft_date must be stamped when unset"
+    assert result["ai_draft_date_stamped"] is True
     assert isinstance(result["doctors_count"], int)
+
+
+def test_finalize_does_not_clobber_existing_draft_date(skeleton_disease: str) -> None:
+    slug = skeleton_disease
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("UPDATE diseases SET ai_draft_date = %s WHERE slug = %s", ("2024-01-01", slug))
+    conn.commit()
+    conn.close()
+    result = finalize_bootstrapped_disease(slug)
+    # Finding 4: a re-run must not clobber the original "Last revised" date.
+    assert result["ai_draft_date_stamped"] is False
+    assert get_disease_by_slug(slug)["aiDraftDate"] == "2024-01-01"
 
 
 def test_finalize_unknown_slug_is_noop() -> None:
