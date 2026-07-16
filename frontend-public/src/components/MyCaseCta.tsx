@@ -11,7 +11,7 @@ export function MyCaseCta({ disease, onNav }: MyCaseCtaProps) {
 
   return (
     <a
-      href={`#${path}`}
+      href={path}
       className="mycase-cta"
       onClick={(e) => {
         e.preventDefault();

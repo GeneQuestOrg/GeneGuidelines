@@ -365,7 +365,7 @@ function JudgesBannerExpanded({ onNav, onCollapse, onDismiss, route }: JudgesBan
               <div className="jb__step-body">
                 <div className="jb__step-title">Six parallel workflows per disease</div>
                 <p className="jb__step-text">
-                  <a href="#/start-research" onClick={goToStartResearch} className="jb__step-link">
+                  <a href="/start-research" onClick={goToStartResearch} className="jb__step-link">
                     Click <em>Start research</em>
                   </a>{" "}
                   to fan out six concurrent Gemma 4 workflows for a new entry: the consensus-paper
@@ -400,7 +400,7 @@ function JudgesBannerExpanded({ onNav, onCollapse, onDismiss, route }: JudgesBan
               <div className="jb__step-body">
                 <div className="jb__step-title">Privacy by data flow, not policy</div>
                 <p className="jb__step-text">
-                  <a href="#/diseases/fd" onClick={goToFD} className="jb__step-link">
+                  <a href="/diseases/fd" onClick={goToFD} className="jb__step-link">
                     Open the FD page → <em>Private case context</em>
                   </a>{" "}
                   and upload a discharge summary. Gemma 4 strips identifiers in-memory across

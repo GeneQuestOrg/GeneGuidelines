@@ -9,7 +9,7 @@ export interface NewDiseaseCardProps {
 export function NewDiseaseCard({ copy, onNav }: NewDiseaseCardProps) {
   return (
     <a
-      href="#/start-research"
+      href="/start-research"
       className="new-disease-card"
       onClick={(e) => {
         e.preventDefault();

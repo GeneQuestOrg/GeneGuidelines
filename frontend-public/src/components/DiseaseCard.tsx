@@ -9,7 +9,7 @@ export interface DiseaseCardProps {
 export function DiseaseCard({ disease, onNav }: DiseaseCardProps) {
   return (
     <a
-      href={`#/diseases/${disease.slug}`}
+      href={`/diseases/${disease.slug}`}
       className={`d-card d-card--${disease.accent}`}
       onClick={(e) => {
         e.preventDefault();

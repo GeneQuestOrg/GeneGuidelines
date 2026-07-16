@@ -31,17 +31,15 @@ export interface DiseaseViewProps {
   alert?: string;
 }
 
-function parseAlertFromHash(): string | undefined {
+function parseAlertFromSearch(): string | undefined {
   if (typeof window === "undefined") return undefined;
-  const query = window.location.hash.split("?")[1];
-  if (!query) return undefined;
-  return new URLSearchParams(query).get("alert") ?? undefined;
+  return new URLSearchParams(window.location.search).get("alert") ?? undefined;
 }
 
 export function DiseaseView({ slug, role, userLoc, onNav, alert }: DiseaseViewProps) {
   const [showSubscribe, setShowSubscribe] = useState(false);
   const [subscriptionStatus, setSubscriptionStatus] = useState<SubscriptionUiStatus>("none");
-  const [bannerAlert] = useState<string | undefined>(alert ?? parseAlertFromHash());
+  const [bannerAlert] = useState<string | undefined>(alert ?? parseAlertFromSearch());
   const { disease, loading, error } = useDisease(slug);
   const { related, loading: relatedLoading } = useRelatedDiseases(disease?.related ?? []);
   const { pointer: officialPointer } = useOfficialGuideline(slug);

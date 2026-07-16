@@ -24,8 +24,8 @@ export interface RouteContentProps {
   view: AudienceView;
   role: ViewRole;
   userLoc: UserLocation | null;
-  /** Current window hash — passed to views (e.g. the doctors directory) that own URL-synced query state. */
-  hash: string;
+  /** Current `location.search` — passed to views (e.g. the doctors directory) that own URL-synced query state. */
+  search: string;
   onNav: (path: string) => void;
   onSignIn: () => void;
 }
@@ -35,7 +35,7 @@ export function routeContent({
   view,
   role,
   userLoc,
-  hash,
+  search,
   onNav,
   onSignIn,
 }: RouteContentProps): ReactNode {
@@ -68,7 +68,7 @@ export function routeContent({
       return (
         <DoctorsView
           userLoc={userLoc}
-          hash={hash}
+          search={search}
           onNav={onNav}
         />
       );
@@ -86,7 +86,7 @@ export function routeContent({
         />
       );
     case "trials":
-      return <TrialsBrowserView userLoc={userLoc} hash={hash} onNav={onNav} />;
+      return <TrialsBrowserView userLoc={userLoc} search={search} onNav={onNav} />;
     case "flowchart":
       return <FlowchartView slug={route.slug} onNav={onNav} />;
     case "bibliography":

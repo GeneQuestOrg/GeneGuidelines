@@ -1,6 +1,6 @@
 import { lazy, Suspense, useMemo, useState } from "react";
 import { userLocationFromCity } from "./config/cities";
-import { useHashRouter } from "./router/useHashRouter";
+import { useHistoryRouter } from "./router/useHistoryRouter";
 import { useTweaks } from "./hooks/useTweaks";
 import { JudgesBanner } from "./components/JudgesBanner";
 import {
@@ -48,16 +48,13 @@ export default function App() {
 }
 
 function AppShell() {
-  const { route, hash, navigate } = useHashRouter();
+  const { route, search, navigate } = useHistoryRouter();
   /* Judges arriving from the Kaggle submission link (?from=kaggle) get the
      full juror panel; everyone else gets the collapsed ribbon. */
-  const fromKaggle = useMemo(() => {
-    const queryStart = hash.indexOf("?");
-    if (queryStart === -1) {
-      return false;
-    }
-    return new URLSearchParams(hash.slice(queryStart + 1)).get("from") === "kaggle";
-  }, [hash]);
+  const fromKaggle = useMemo(
+    () => new URLSearchParams(search).get("from") === "kaggle",
+    [search],
+  );
   /* The Kaggle juror banner is for judges only — render it for a ?from=kaggle arrival, a
      remembered Kaggle session, or a prior explicit interaction. A fresh family/clinician visitor
      never sees a hackathon ribbon on the public site. */
@@ -94,7 +91,7 @@ function AppShell() {
         view,
         role,
         userLoc,
-        hash,
+        search,
         onNav: navigate,
         onSignIn: () => setAuthOpen(true),
       })
@@ -118,7 +115,7 @@ function AppShell() {
       <RolePickerGate />
       {import.meta.env.DEV ? <TweaksPanel tweaks={tweaks} onTweak={setTweak} /> : null}
       {import.meta.env.DEV && route.name !== "devComponents" ? (
-        <a className="dev-link" href="#/dev/components">
+        <a className="dev-link" href="/dev/components">
           dev/components →
         </a>
       ) : null}

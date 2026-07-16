@@ -233,7 +233,7 @@ export function StartResearchView({ onNav }: StartResearchViewProps) {
               with a divider so its diagnostic-research framing does not
               bleed into the disease-name flow above. */}
           <a
-            href="#/start-research/by-symptoms"
+            href="/start-research/by-symptoms"
             className="symp-link"
             onClick={(event) => {
               event.preventDefault();

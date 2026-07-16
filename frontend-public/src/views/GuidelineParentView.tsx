@@ -185,7 +185,7 @@ export function GuidelineParentView({
                 <p className="gx-parentguide__hint">
                   Full decision pathway:{" "}
                   <a
-                    href={`#/diseases/${disease.slug}/flowchart`}
+                    href={`/diseases/${disease.slug}/flowchart`}
                     onClick={(e) => {
                       e.preventDefault();
                       onNav(`/diseases/${disease.slug}/flowchart`);

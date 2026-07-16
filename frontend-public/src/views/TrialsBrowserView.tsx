@@ -14,7 +14,7 @@ import {
   PAGE_SIZE,
   filterTrials,
   parseTrialsQuery,
-  queryRecordFromHash,
+  queryRecordFromSearch,
   serializeTrialsQuery,
   sortTrials,
   type TrialsQuery,
@@ -25,8 +25,8 @@ import "../styles/doctors.css";
 
 export interface TrialsBrowserViewProps {
   readonly userLoc: UserLocation | null;
-  /** Current window hash — the single source of truth for every facet, sort, and page. */
-  readonly hash: string;
+  /** Current `location.search` — the single source of truth for every facet, sort, and page. */
+  readonly search: string;
   readonly onNav: (path: string) => void;
 }
 
@@ -57,7 +57,7 @@ const SORT_OPTIONS: readonly { value: string; label: string }[] = [
 
 type ViewMode = "both" | "list" | "map";
 
-export function TrialsBrowserView({ userLoc, hash, onNav }: TrialsBrowserViewProps) {
+export function TrialsBrowserView({ userLoc, search, onNav }: TrialsBrowserViewProps) {
   const { trials, loading, error } = useTrials();
   const { diseases, loading: diseasesLoading } = useDiseaseCatalog();
   const [viewMode, setViewMode] = useState<ViewMode>("both");
@@ -67,7 +67,7 @@ export function TrialsBrowserView({ userLoc, hash, onNav }: TrialsBrowserViewPro
 
   // The full faceted state lives in the URL: one parsed query object is the single source of
   // truth, so deep-links, shares, and the browser back button all restore the exact view.
-  const query = useMemo(() => parseTrialsQuery(queryRecordFromHash(hash)), [hash]);
+  const query = useMemo(() => parseTrialsQuery(queryRecordFromSearch(search)), [search]);
 
   const patchQuery = useCallback(
     (partial: Partial<TrialsQuery>) => {

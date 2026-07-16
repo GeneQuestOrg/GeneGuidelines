@@ -27,7 +27,7 @@ function MyCaseCrumbs({
   return (
     <nav className="mycase__crumbs" aria-label="Breadcrumb">
       <a
-        href="#/"
+        href="/"
         onClick={(e) => {
           e.preventDefault();
           onNav("/");
@@ -37,7 +37,7 @@ function MyCaseCrumbs({
       </a>
       <span aria-hidden>›</span>
       <a
-        href={`#/diseases/${slug}`}
+        href={`/diseases/${slug}`}
         onClick={(e) => {
           e.preventDefault();
           onNav(`/diseases/${slug}`);
