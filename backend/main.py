@@ -218,12 +218,50 @@ def health():
     return {"status": "ok"}
 
 
-# Serve frontend static files from /app/static if present (bundled into the
-# Docker image at build time). HTML history-mode SPA: html=True makes
-# StaticFiles return index.html for unmatched paths.
-from pathlib import Path as _Path
-from fastapi.staticfiles import StaticFiles as _StaticFiles
+# Serve the bundled public SPA (frontend-public/dist → /app/static, copied in
+# Dockerfile.backend). The public app is a HISTORY-mode SPA, so an unknown
+# non-API, non-asset path must resolve to index.html — otherwise a deep link
+# such as /diseases/fd 404s on a hard refresh or a crawler visit.
+# StaticFiles(html=True) only does that for *directory* requests, so an explicit
+# catch-all is required. Registered LAST (after every /api router, /api-info and
+# /health) so those win the match; only genuinely unknown paths reach here.
+from pathlib import Path as _Path  # noqa: E402
+from fastapi import HTTPException  # noqa: E402
+from fastapi.responses import FileResponse  # noqa: E402
+from fastapi.staticfiles import StaticFiles as _StaticFiles  # noqa: E402
+
 _static_dir = _Path("/app/static")
-if _static_dir.exists():
-    app.mount("/", _StaticFiles(directory=str(_static_dir), html=True), name="static")
-    logger.info("Mounted frontend static files from %s", _static_dir)
+_static_root = _static_dir.resolve()
+
+# Framework/API paths that must never be answered with the SPA shell — an
+# unknown one returns a JSON 404 so API clients never receive HTML.
+_NON_SPA_EXACT: frozenset[str] = frozenset(
+    {"health", "api-info", "docs", "redoc", "openapi.json"}
+)
+
+# Mount hashed build assets narrowly (long-cache, correct MIME, range support).
+_assets_dir = _static_dir / "assets"
+if _assets_dir.is_dir():
+    app.mount("/assets", _StaticFiles(directory=str(_assets_dir)), name="assets")
+    logger.info("Mounted SPA assets from %s", _assets_dir)
+
+
+@app.get("/{full_path:path}", include_in_schema=False)
+def spa_fallback(full_path: str) -> FileResponse:
+    """History-mode SPA fallback: index.html for app routes, real files verbatim,
+    and a JSON 404 for unknown API/framework paths (never HTML)."""
+    if full_path.startswith("api") or full_path in _NON_SPA_EXACT:
+        raise HTTPException(status_code=404)
+    if not _static_dir.is_dir():
+        # No bundle (local dev / API-only run): behave like before — 404.
+        raise HTTPException(status_code=404)
+    candidate = (_static_dir / full_path).resolve()
+    # Serve a real bundled file (logo.png, robots.txt, sitemap.xml, favicon, …)
+    # only when it stays within the static root (guards against path traversal).
+    if (
+        full_path
+        and candidate.is_file()
+        and candidate.is_relative_to(_static_root)
+    ):
+        return FileResponse(candidate)
+    return FileResponse(_static_dir / "index.html")
