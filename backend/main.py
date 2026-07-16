@@ -250,7 +250,7 @@ if _assets_dir.is_dir():
 def spa_fallback(full_path: str) -> FileResponse:
     """History-mode SPA fallback: index.html for app routes, real files verbatim,
     and a JSON 404 for unknown API/framework paths (never HTML)."""
-    if full_path.startswith("api") or full_path in _NON_SPA_EXACT:
+    if full_path == "api" or full_path.startswith("api/") or full_path in _NON_SPA_EXACT:
         raise HTTPException(status_code=404)
     if not _static_dir.is_dir():
         # No bundle (local dev / API-only run): behave like before — 404.

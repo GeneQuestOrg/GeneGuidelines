@@ -59,6 +59,16 @@ def test_unknown_api_path_returns_json_404_not_html(spa_client: TestClient) -> N
     assert "<title>" not in resp.text
 
 
+def test_api_prefix_but_not_segment_serves_spa(spa_client: TestClient) -> None:
+    # A top-level route that merely *starts with* "api" (e.g. a future "/api-guide"
+    # SPA route) must NOT be swallowed by the API 404 guard — only real "api/..."
+    # segments are. Guards the startswith("api") -> segment-test hardening.
+    for path in ("/api-guide", "/apiary", "/apis"):
+        resp = spa_client.get(path)
+        assert resp.status_code == 200, path
+        assert "text/html" in resp.headers["content-type"], path
+
+
 def test_real_bundled_file_served_verbatim(spa_client: TestClient) -> None:
     resp = spa_client.get("/robots.txt")
     assert resp.status_code == 200
