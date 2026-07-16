@@ -127,14 +127,15 @@ export const DOCTOR_PRESETS: readonly {
   },
 ];
 
-/** Split the query string of a hash route into a decoded key→value record. */
-export function queryRecordFromHash(hash: string): Record<string, string> {
-  const q = hash.indexOf("?");
+/** Split a `location.search` string (with or without a leading `?`) into a decoded key→value record. */
+export function queryRecordFromSearch(search: string): Record<string, string> {
+  const q = search.indexOf("?");
   const record: Record<string, string> = {};
-  if (q === -1) {
+  const raw = q === -1 ? search : search.slice(q + 1);
+  if (!raw) {
     return record;
   }
-  for (const part of hash.slice(q + 1).split("&")) {
+  for (const part of raw.split("&")) {
     if (!part) continue;
     const [key, value] = part.split("=");
     if (key) {
@@ -154,7 +155,7 @@ function parseLoc(raw: string | undefined): UserLocation | null {
 }
 
 /**
- * Parse a query record (from {@link queryRecordFromHash}) into a validated {@link DoctorsQuery}.
+ * Parse a query record (from {@link queryRecordFromSearch}) into a validated {@link DoctorsQuery}.
  * Every field falls back to its default when missing or invalid, so a hand-edited or stale URL
  * can never throw or produce an out-of-range facet.
  */
@@ -201,7 +202,7 @@ export function parseDoctorsQuery(q: Record<string, string>): DoctorsQuery {
 }
 
 /**
- * Serialize a {@link DoctorsQuery} back to a `/doctors?…` hash path, omitting every default so
+ * Serialize a {@link DoctorsQuery} back to a `/doctors?…` path, omitting every default so
  * the canonical empty view stays a clean `/doctors`. Keys are emitted in a stable order so the
  * same state always yields the same URL (shareable, cache-friendly, back-button-stable).
  */

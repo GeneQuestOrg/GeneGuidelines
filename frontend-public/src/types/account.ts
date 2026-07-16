@@ -23,7 +23,7 @@ export interface MeAccount {
 /** Result of minting a doctor invite (`POST /api/account/invites`). */
 export interface InviteCreated {
   readonly token: string;
-  /** Frontend landing path; rendered as `#${urlPath}` → `#/join/{token}`. */
+  /** Frontend landing path (history-router form), e.g. `/join/{token}`. */
   readonly urlPath: string;
   readonly expiresAt: string;
 }

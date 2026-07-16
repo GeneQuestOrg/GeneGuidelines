@@ -16,7 +16,7 @@ export function OrientationMapCta({ disease, onNav }: OrientationMapCtaProps) {
 
   return (
     <a
-      href={`#${path}`}
+      href={path}
       className="orientation-cta"
       onClick={(e) => {
         e.preventDefault();

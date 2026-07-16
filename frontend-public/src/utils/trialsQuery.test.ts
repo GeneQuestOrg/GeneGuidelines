@@ -5,20 +5,20 @@ import {
   DEFAULT_TRIALS_QUERY,
   filterTrials,
   parseTrialsQuery,
-  queryRecordFromHash,
+  queryRecordFromSearch,
   serializeTrialsQuery,
   sortTrials,
   trialMatchesPhase,
   type TrialsQuery,
 } from "./trialsQuery";
 
-describe("queryRecordFromHash", () => {
+describe("queryRecordFromSearch", () => {
   it("returns an empty record when there is no query string", () => {
-    expect(queryRecordFromHash("#/trials")).toEqual({});
+    expect(queryRecordFromSearch("")).toEqual({});
   });
 
   it("decodes key/value pairs", () => {
-    expect(queryRecordFromHash("#/trials?disease=fd&place=Warsaw%2C%20PL")).toEqual({
+    expect(queryRecordFromSearch("?disease=fd&place=Warsaw%2C%20PL")).toEqual({
       disease: "fd",
       place: "Warsaw, PL",
     });
@@ -118,7 +118,7 @@ describe("serializeTrialsQuery", () => {
       sort: "nearest",
       page: 3,
     };
-    expect(parseTrialsQuery(queryRecordFromHash(`#${serializeTrialsQuery(q)}`))).toEqual(q);
+    expect(parseTrialsQuery(queryRecordFromSearch(serializeTrialsQuery(q)))).toEqual(q);
   });
 
   it("never serializes maxKm without a location", () => {

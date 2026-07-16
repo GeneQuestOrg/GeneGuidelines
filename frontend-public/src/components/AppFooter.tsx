@@ -7,7 +7,7 @@ export interface AppFooterProps {
 export function AppFooter({ onNav }: AppFooterProps) {
   const link = (path: string, label: string) => (
     <a
-      href={`#${path}`}
+      href={path}
       onClick={(e) => {
         e.preventDefault();
         onNav(path);

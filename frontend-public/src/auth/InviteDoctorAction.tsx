@@ -1,17 +1,17 @@
 import { useState } from "react";
 import { repositories } from "../repositories";
 
-/** Build the full shareable URL (`https://host/#/join/{token}`) from a path. */
+/** Build the full shareable URL (`https://host/join/{token}`) from a path. */
 function inviteUrlFromPath(urlPath: string): string {
-  const { origin, pathname } = window.location;
-  return `${origin}${pathname}#${urlPath}`;
+  return `${window.location.origin}${urlPath}`;
 }
 
 /**
  * "Invite their doctor" action in the account menu (parents / superadmins).
- * Mints an invite and shows a copyable `#/join/{token}` URL the parent can send
+ * Mints an invite and shows a copyable `/join/{token}` URL the parent can send
  * to their clinician. The doctor signs in via that link and is set up as an
- * (unverified) clinician.
+ * (unverified) clinician. (Old `#/join/{token}` invites still resolve via the
+ * legacy-hash shim in `main.tsx`.)
  */
 export function InviteDoctorAction() {
   const [url, setUrl] = useState<string | null>(null);

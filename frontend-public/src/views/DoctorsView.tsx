@@ -20,7 +20,7 @@ import {
   DOCTOR_PRESETS,
   PAGE_SIZE,
   parseDoctorsQuery,
-  queryRecordFromHash,
+  queryRecordFromSearch,
   serializeDoctorsQuery,
   sortDoctors,
   type DoctorsQuery,
@@ -36,8 +36,8 @@ import "../styles/doctors.css";
 
 export interface DoctorsViewProps {
   readonly userLoc: UserLocation | null;
-  /** Current window hash — the single source of truth for every facet, sort, and page. */
-  readonly hash: string;
+  /** Current `location.search` — the single source of truth for every facet, sort, and page. */
+  readonly search: string;
   readonly onNav: (path: string) => void;
 }
 
@@ -75,7 +75,7 @@ const RECENCY_FILTERS: readonly { value: string; label: string }[] = [
 
 type ViewMode = "both" | "list" | "map";
 
-export function DoctorsView({ hash, onNav }: DoctorsViewProps) {
+export function DoctorsView({ search, onNav }: DoctorsViewProps) {
   const { doctors, loading, error } = useDoctors();
   const { diseases, loading: diseasesLoading } = useDiseaseCatalog();
   const account = useAccountContext();
@@ -88,8 +88,8 @@ export function DoctorsView({ hash, onNav }: DoctorsViewProps) {
   // The full faceted state lives in the URL: one parsed query object is the single source of
   // truth, so deep-links, shares, and the browser back button all restore the exact view.
   const query = useMemo(
-    () => parseDoctorsQuery(queryRecordFromHash(hash)),
-    [hash],
+    () => parseDoctorsQuery(queryRecordFromSearch(search)),
+    [search],
   );
 
   const patchQuery = useCallback(

@@ -44,7 +44,7 @@ export function HomeView({ view, onNav }: HomeViewProps) {
         <p className="hero__lead">
           {copy.subtitle}{" "}
           <a
-            href="#/about"
+            href="/about"
             className="hero__about-link"
             onClick={(e) => {
               e.preventDefault();

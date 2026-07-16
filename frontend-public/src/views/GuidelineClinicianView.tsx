@@ -131,7 +131,7 @@ export function GuidelineClinicianView({
               <p>
                 No AI baseline has been assembled for this disease yet. For now,{" "}
                 <a
-                  href={`#/diseases/${disease.slug}`}
+                  href={`/diseases/${disease.slug}`}
                   onClick={(e) => {
                     e.preventDefault();
                     onNav(`/diseases/${disease.slug}`);

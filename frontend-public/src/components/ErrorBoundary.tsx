@@ -44,7 +44,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
             <Button type="button" variant="primary" onClick={() => window.location.reload()}>
               Reload
             </Button>
-            <Button type="button" variant="ghost" as="a" href="#/">
+            <Button type="button" variant="ghost" as="a" href="/">
               Home
             </Button>
           </div>

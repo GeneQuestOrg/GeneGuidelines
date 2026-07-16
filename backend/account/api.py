@@ -115,8 +115,8 @@ def create_invite(
 ) -> InviteCreatedResponse:
     """Mint a doctor invite (signed-in parent or superadmin only; 403 otherwise).
 
-    ``url_path`` is the frontend landing path; the client renders it as
-    ``#/join/{token}``.
+    ``url_path`` is the frontend landing path (history-router form), e.g.
+    ``/join/{token}``.
     """
     invite = service.create_invite(
         user, email=body.email, doctor_slug=body.doctor_slug

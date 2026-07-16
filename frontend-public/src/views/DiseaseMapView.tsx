@@ -60,7 +60,7 @@ export function DiseaseMapView({ slug, onNav }: DiseaseMapViewProps) {
     <section className="page">
       <div className="dmap">
         <nav className="dmap-crumb" aria-label="breadcrumb">
-          <a href="#/diseases" onClick={go("/diseases")}>
+          <a href="/diseases" onClick={go("/diseases")}>
             Diseases
           </a>
           <span className="dmap-crumb__sep">/</span>
@@ -185,7 +185,7 @@ export function DiseaseMapView({ slug, onNav }: DiseaseMapViewProps) {
                 {hasGuideline ? (
                   <a
                     className="dmap-btn dmap-btn--accent"
-                    href={`#/diseases/${slug}/guidelines`}
+                    href={`/diseases/${slug}/guidelines`}
                     onClick={go(`/diseases/${slug}/guidelines`)}
                   >
                     What to confirm, and in what order
@@ -194,7 +194,7 @@ export function DiseaseMapView({ slug, onNav }: DiseaseMapViewProps) {
                 ) : null}
                 <a
                   className="dmap-btn"
-                  href={`#/diseases/${slug}/my-case`}
+                  href={`/diseases/${slug}/my-case`}
                   onClick={go(`/diseases/${slug}/my-case`)}
                 >
                   Questions for your doctor
@@ -236,7 +236,7 @@ export function DiseaseMapView({ slug, onNav }: DiseaseMapViewProps) {
               <div className="dmap-actions">
                 <a
                   className="dmap-btn dmap-btn--accent"
-                  href={`#/doctors?disease=${slug}`}
+                  href={`/doctors?disease=${slug}`}
                   onClick={go(`/doctors?disease=${slug}`)}
                 >
                   Doctors who know {nameShort} near you
@@ -245,7 +245,7 @@ export function DiseaseMapView({ slug, onNav }: DiseaseMapViewProps) {
                   ) : null}
                   <span className="dmap-btn__arr" aria-hidden>→</span>
                 </a>
-                <a className="dmap-btn" href="#/doctors" onClick={go("/doctors")}>
+                <a className="dmap-btn" href="/doctors" onClick={go("/doctors")}>
                   Recommend a doctor
                 </a>
               </div>
@@ -288,7 +288,7 @@ export function DiseaseMapView({ slug, onNav }: DiseaseMapViewProps) {
               <div className="dmap-actions">
                 <a
                   className="dmap-btn dmap-btn--accent"
-                  href={`#/diseases/${slug}/guidelines`}
+                  href={`/diseases/${slug}/guidelines`}
                   onClick={go(`/diseases/${slug}/guidelines`)}
                 >
                   {hasGuideline ? "Open the guideline — synthesis + sources" : "See what we have so far"}
@@ -327,7 +327,7 @@ export function DiseaseMapView({ slug, onNav }: DiseaseMapViewProps) {
               <div className="dmap-actions">
                 <a
                   className="dmap-btn dmap-btn--accent"
-                  href={`#/diseases/${slug}`}
+                  href={`/diseases/${slug}`}
                   onClick={go(`/diseases/${slug}`)}
                 >
                   Foundations supporting {nameShort}
@@ -359,7 +359,7 @@ export function DiseaseMapView({ slug, onNav }: DiseaseMapViewProps) {
               <div className="dmap-actions">
                 <a
                   className="dmap-btn dmap-btn--accent"
-                  href={`#/diseases/${slug}`}
+                  href={`/diseases/${slug}`}
                   onClick={go(`/diseases/${slug}`)}
                 >
                   Clinical trials near you
@@ -368,7 +368,7 @@ export function DiseaseMapView({ slug, onNav }: DiseaseMapViewProps) {
                   ) : null}
                   <span className="dmap-btn__arr" aria-hidden>→</span>
                 </a>
-                <a className="dmap-btn" href={`#/diseases/${slug}`} onClick={go(`/diseases/${slug}`)}>
+                <a className="dmap-btn" href={`/diseases/${slug}`} onClick={go(`/diseases/${slug}`)}>
                   Promising therapies and their status
                 </a>
               </div>

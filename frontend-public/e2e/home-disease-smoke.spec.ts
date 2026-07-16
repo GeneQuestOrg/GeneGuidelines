@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 
 test.describe("public home → disease flow", () => {
   test("navigates to FD, toggles persona, shows tabs", async ({ page }) => {
-    await page.goto("/#/");
+    await page.goto("/");
 
     await expect(page.getByRole("heading", { level: 1 })).toContainText(/families|guidelines/i);
 
@@ -10,7 +10,7 @@ test.describe("public home → disease flow", () => {
     await expect(fdCard).toBeVisible();
     await fdCard.click();
 
-    await expect(page).toHaveURL(/#\/diseases\/fd/);
+    await expect(page).toHaveURL(/\/diseases\/fd/);
     await expect(page.getByRole("heading", { level: 1, name: "Fibrous Dysplasia" })).toBeVisible();
 
     const personaGroup = page.getByRole("radiogroup", { name: /You are reading as/i });

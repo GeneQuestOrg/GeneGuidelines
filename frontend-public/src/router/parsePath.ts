@@ -1,7 +1,7 @@
 import { normalizeDiseaseSlug } from "./slug";
 import type { Route } from "./types";
 
-/** Safely percent-decode a path segment (slug). `window.location.hash` is not auto-decoded, so a
+/** Safely percent-decode a path segment (slug). `window.location.pathname` is percent-encoded, so a
  *  slug with non-ASCII chars (e.g. Polish `ł` → `%C5%82`) arrives encoded; the API client then
  *  `encodeURIComponent`s it again → double-encoding → 404. Decode here so the client encodes once. */
 function safeDecode(value: string): string {
@@ -12,12 +12,14 @@ function safeDecode(value: string): string {
   }
 }
 
-function parseQuery(queryRaw: string | undefined): Record<string, string> {
+/** Parse a query string (with or without a leading `?`) into a decoded key→value record. */
+function parseQuery(search: string | undefined): Record<string, string> {
   const query: Record<string, string> = {};
-  if (!queryRaw) {
+  if (!search) {
     return query;
   }
-  for (const part of queryRaw.split("&")) {
+  const raw = search.startsWith("?") ? search.slice(1) : search;
+  for (const part of raw.split("&")) {
     const [key, value] = part.split("=");
     if (key) {
       query[key] = decodeURIComponent(value ?? "");
@@ -26,13 +28,10 @@ function parseQuery(queryRaw: string | undefined): Record<string, string> {
   return query;
 }
 
-/** Parse `window.location.hash` into a typed route (English path segments). */
-export function parseHash(hash: string): Route {
-  const raw = hash || "#/";
-  const withoutHash = raw.startsWith("#") ? raw.slice(1) : raw;
-  const [pathRaw, queryRaw] = withoutHash.split("?");
-  const path = pathRaw || "/";
-  const query = parseQuery(queryRaw);
+/** Parse `location.pathname` + `location.search` into a typed route (English path segments). */
+export function parsePath(pathname: string, search: string): Route {
+  const path = pathname || "/";
+  const query = parseQuery(search);
   const parts = path.split("/").filter(Boolean);
 
   if (parts.length === 0) {

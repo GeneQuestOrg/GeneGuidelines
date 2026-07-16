@@ -104,7 +104,14 @@ function Auth0AccountProvider({ children }: { children: ReactNode }) {
   }, [isAuthenticated]);
 
   const login = useCallback(() => {
-    void loginWithRedirect();
+    // Carry the current route so onRedirectCallback (main.tsx) returns the user
+    // to where they were — a deep disease page, or a /join/{token} invite flow —
+    // instead of bouncing to home after the Auth0 round-trip.
+    void loginWithRedirect({
+      appState: {
+        returnTo: window.location.pathname + window.location.search,
+      },
+    });
   }, [loginWithRedirect]);
 
   const logout = useCallback(() => {

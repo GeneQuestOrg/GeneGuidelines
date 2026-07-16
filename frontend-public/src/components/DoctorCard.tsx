@@ -29,7 +29,7 @@ export function DoctorCard({ doctor, km, compact = false, onNav }: DoctorCardPro
   const specialtyText = primarySpecialty?.labelEn ?? doctor.specialty?.trim();
   const reachText = reachabilityLabel(doctor.reachability ?? "unknown");
   const recencyBand = recencyBandOf(doctor);
-  const href = `#/doctor/${doctor.slug}`;
+  const href = `/doctor/${doctor.slug}`;
 
   return (
     <a

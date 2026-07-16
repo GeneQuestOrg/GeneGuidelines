@@ -17,10 +17,12 @@ export interface AppHeaderProps {
   mobileMenuContent?: ReactNode;
 }
 
+// Public app uses a history (path) router → real `/` URLs. The admin app still
+// runs a hash router, so its defaults keep the `#/` form.
 const DEFAULT_PUBLIC_LINKS: NavLink[] = [
-  { href: "#/diseases", label: "Diseases" },
-  { href: "#/doctors", label: "Doctors" },
-  { href: "#/about", label: "About" },
+  { href: "/diseases", label: "Diseases" },
+  { href: "/doctors", label: "Doctors" },
+  { href: "/about", label: "About" },
 ];
 
 const DEFAULT_ADMIN_LINKS: NavLink[] = [
@@ -37,6 +39,9 @@ export function AppHeader({
 }: AppHeaderProps) {
   const isAdmin = variant === "admin";
   const links = navLinks ?? (isAdmin ? DEFAULT_ADMIN_LINKS : DEFAULT_PUBLIC_LINKS);
+  // Brand + safe-href fallback follow the app's router: `#/` for the hash-routed
+  // admin app, `/` for the history-routed public app.
+  const homeHref = isAdmin ? "#/" : "/";
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -52,7 +57,7 @@ export function AppHeader({
   return (
     <header className="hdr">
       <div className="hdr__row">
-        <a href="#/" className="hdr__brand">
+        <a href={homeHref} className="hdr__brand">
           <span className="hdr__mark">
             <img src="/logo.png" alt="" />
           </span>
@@ -82,7 +87,7 @@ export function AppHeader({
           {links.map((link) => (
             <a
               key={link.href}
-              href={safeBrandHref(link.href, "#/")}
+              href={safeBrandHref(link.href, homeHref)}
               className={link.active === true ? "is-active" : undefined}
             >
               {link.label}

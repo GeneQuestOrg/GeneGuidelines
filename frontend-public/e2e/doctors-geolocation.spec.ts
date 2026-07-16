@@ -8,7 +8,7 @@ test.describe("doctors — geolocation and location picker", () => {
     await context.grantPermissions(["geolocation"]);
     await context.setGeolocation(WARSAW);
 
-    await page.goto("/#/doctors");
+    await page.goto("/doctors");
     await expect(page.getByRole("heading", { name: "Find a specialist" })).toBeVisible();
 
     // Before geolocation: distance filter row is hidden
@@ -27,7 +27,7 @@ test.describe("doctors — geolocation and location picker", () => {
     await context.grantPermissions(["geolocation"]);
     await context.setGeolocation(LEIDEN);
 
-    await page.goto("/#/doctors");
+    await page.goto("/doctors");
     await page.getByRole("button", { name: "Use my location" }).click();
 
     // Wait for distance badges to appear
@@ -49,7 +49,7 @@ test.describe("doctors — geolocation and location picker", () => {
     await context.grantPermissions(["geolocation"]);
     await context.setGeolocation(WARSAW);
 
-    await page.goto("/#/doctors");
+    await page.goto("/doctors");
     await page.getByRole("button", { name: "Use my location" }).click();
     await expect(page.locator(".pill--dist").first()).toBeVisible({ timeout: 5000 });
 
@@ -73,7 +73,7 @@ test.describe("doctors — geolocation and location picker", () => {
     await context.grantPermissions(["geolocation"]);
     await context.setGeolocation(WARSAW);
 
-    await page.goto("/#/doctors");
+    await page.goto("/doctors");
     await page.getByRole("button", { name: "Use my location" }).click();
     await expect(page.locator(".loc-picker__badge")).toBeVisible();
 
@@ -85,7 +85,7 @@ test.describe("doctors — geolocation and location picker", () => {
   });
 
   test("view toggle switches between list, both, and map modes", async ({ page }) => {
-    await page.goto("/#/doctors");
+    await page.goto("/doctors");
     await expect(page.getByRole("heading", { name: "Find a specialist" })).toBeVisible();
 
     // Default: both list and map visible

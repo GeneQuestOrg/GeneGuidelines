@@ -35,9 +35,9 @@ function buildNavLinks(route: Route): NavLink[] {
   // logo as the implicit "home" target. Trials live inside individual
   // disease detail views, not as a top-level destination.
   const base = [
-    { href: "#/doctors", label: "Doctors" },
-    { href: "#/start-research", label: "Start Research" },
-    { href: "#/about", label: "About" },
+    { href: "/doctors", label: "Doctors" },
+    { href: "/start-research", label: "Start Research" },
+    { href: "/about", label: "About" },
   ];
   return base.map((link) => ({
     ...link,

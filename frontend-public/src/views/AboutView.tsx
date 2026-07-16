@@ -493,7 +493,7 @@ export function AboutView({ onNav }: AboutViewProps) {
             <h2 className="about__h2 about__h2--cta">Where to go next</h2>
             <div className="about__ctas">
               <a
-                href="#/"
+                href="/"
                 className="about__cta"
                 onClick={(e) => {
                   e.preventDefault();
@@ -507,7 +507,7 @@ export function AboutView({ onNav }: AboutViewProps) {
                 </span>
               </a>
               <a
-                href="#/doctors"
+                href="/doctors"
                 className="about__cta"
                 onClick={(e) => {
                   e.preventDefault();
@@ -523,7 +523,7 @@ export function AboutView({ onNav }: AboutViewProps) {
                 </span>
               </a>
               <a
-                href="#/start-research"
+                href="/start-research"
                 className="about__cta"
                 onClick={(e) => {
                   e.preventDefault();

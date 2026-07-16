@@ -4,19 +4,19 @@ import type { DoctorWithDistance } from "./doctorSort";
 import {
   DEFAULT_DOCTORS_QUERY,
   parseDoctorsQuery,
-  queryRecordFromHash,
+  queryRecordFromSearch,
   serializeDoctorsQuery,
   sortDoctors,
   type DoctorsQuery,
 } from "./doctorsQuery";
 
-describe("queryRecordFromHash", () => {
+describe("queryRecordFromSearch", () => {
   it("returns an empty record when there is no query string", () => {
-    expect(queryRecordFromHash("#/doctors")).toEqual({});
+    expect(queryRecordFromSearch("")).toEqual({});
   });
 
   it("decodes key/value pairs", () => {
-    expect(queryRecordFromHash("#/doctors?disease=fd&place=Warsaw%2C%20PL")).toEqual({
+    expect(queryRecordFromSearch("?disease=fd&place=Warsaw%2C%20PL")).toEqual({
       disease: "fd",
       place: "Warsaw, PL",
     });
@@ -132,7 +132,7 @@ describe("serializeDoctorsQuery", () => {
       sort: "distance",
       page: 3,
     };
-    expect(parseDoctorsQuery(queryRecordFromHash(`#${serializeDoctorsQuery(q)}`))).toEqual(q);
+    expect(parseDoctorsQuery(queryRecordFromSearch(serializeDoctorsQuery(q)))).toEqual(q);
   });
 
   it("serializes work types in canonical order regardless of input order", () => {
