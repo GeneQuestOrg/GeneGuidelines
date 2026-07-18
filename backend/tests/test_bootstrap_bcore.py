@@ -19,6 +19,7 @@ from backend.content_db import (
     finalize_bootstrapped_disease,
     get_disease_by_slug,
     set_disease_coverage,
+    set_disease_listed,
 )
 from backend.database import get_connection, init_db
 
@@ -89,6 +90,28 @@ def test_finalize_does_not_clobber_existing_draft_date(skeleton_disease: str) ->
     # Finding 4: a re-run must not clobber the original "Last revised" date.
     assert result["ai_draft_date_stamped"] is False
     assert get_disease_by_slug(slug)["aiDraftDate"] == "2024-01-01"
+
+
+def test_finalize_lists_unlisted_disease(skeleton_disease: str) -> None:
+    # A freshly bootstrapped disease is created listed=0 (unlisted-until-visible).
+    # Finalize must put it in the public catalog so whoever ran the research can
+    # actually find it (2026-07-18: unlisted result read as "it didn't save").
+    slug = skeleton_disease
+    set_disease_listed(slug, False)
+    assert get_disease_by_slug(slug)["listed"] is False
+    result = finalize_bootstrapped_disease(slug)
+    assert result["listed_flipped"] is True
+    assert get_disease_by_slug(slug)["listed"] is True, (
+        "a completed research must be catalog-visible"
+    )
+
+
+def test_finalize_leaves_already_listed_disease_alone(skeleton_disease: str) -> None:
+    slug = skeleton_disease  # fixture defaults to listed=1
+    assert get_disease_by_slug(slug)["listed"] is True
+    result = finalize_bootstrapped_disease(slug)
+    assert result["listed_flipped"] is False
+    assert get_disease_by_slug(slug)["listed"] is True
 
 
 def test_finalize_unknown_slug_is_noop() -> None:

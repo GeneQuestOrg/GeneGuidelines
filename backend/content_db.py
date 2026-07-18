@@ -1035,11 +1035,25 @@ def finalize_bootstrapped_disease(slug: str) -> dict[str, Any]:
         conn.commit()
         conn.close()
         stamped = True
+
+    # A research that landed a published guideline MUST be findable: put the
+    # disease into the public catalog. Reuse set_disease_listed (the same helper
+    # DiseaseService.set_listed / the PATCH endpoint use) rather than inlining
+    # SQL, so listing lives in one place. DISTINCT from `coverage` (human-vetted):
+    # a listed AI-draft still carries the "AI draft / pending curation" badge;
+    # `listed` controls catalog visibility only. Whoever ran the research
+    # otherwise cannot find their result — it exists only via direct link, which
+    # reads as "it didn't save" (2026-07-18 incident).
+    listed_flipped = not row.get("listed", False)
+    if listed_flipped:
+        set_disease_listed(normalized, True)
+
     return {
         "slug": normalized,
         "finalized": True,
         "doctors_count": doctors_count,
         "ai_draft_date_stamped": stamped,
+        "listed_flipped": listed_flipped,
     }
 
 

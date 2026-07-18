@@ -1,6 +1,7 @@
 import { Section } from "@gene-guidelines/ui";
 import type { ResearchRun } from "../types/researchRun";
 import { hrefForActiveResearchRun } from "../utils/activeResearchNav";
+import { groupActiveResearchRuns } from "../utils/activeResearchGroups";
 import { blockedBadgeLabel } from "../utils/queuedRun";
 import "./active-research.css";
 
@@ -25,23 +26,31 @@ function formatElapsed(seconds: number | null): string {
   return `${hours}h ${minutes % 60}m`;
 }
 
+function workstreamSummary(count: number): string {
+  return count === 1 ? "1 workstream" : `${count} workstreams`;
+}
+
 export function ActiveResearchSection({
   runs,
   onNav,
 }: ActiveResearchSectionProps) {
-  if (runs.length === 0) {
+  // Group per disease: one "run research" fans out into several backend runs
+  // (guideline + finders), and the home feed must show one card per disease,
+  // not a separate tile per worker.
+  const groups = groupActiveResearchRuns(runs);
+  if (groups.length === 0) {
     return null;
   }
   return (
-    <Section title="Active research" count={runs.length}>
+    <Section title="Active research" count={groups.length}>
       <div className="active-research__grid">
-        {runs.map((run) => {
-          const path = hrefForActiveResearchRun(run);
+        {groups.map((group) => {
+          const path = hrefForActiveResearchRun(group.primaryRun);
           const href = `#${path}`;
-          const blockedLabel = blockedBadgeLabel(run.blockedReason);
+          const blockedLabel = blockedBadgeLabel(group.blockedReason);
           return (
             <a
-              key={run.runId}
+              key={group.key}
               href={href}
               className="active-research__card"
               onClick={(e) => {
@@ -52,13 +61,13 @@ export function ActiveResearchSection({
               <div className="active-research__top">
                 <span className="active-research__dot" aria-hidden />
                 <span className="active-research__flow">
-                  {run.flowKey.replace(/_/g, " ")}
+                  {workstreamSummary(group.workstreamCount)}
                 </span>
                 <span className="active-research__elapsed">
-                  {formatElapsed(run.elapsedSec)}
+                  {formatElapsed(group.elapsedSec)}
                 </span>
               </div>
-              <h3 className="active-research__title">{run.label}</h3>
+              <h3 className="active-research__title">{group.label}</h3>
               {blockedLabel ? (
                 <span className="active-research__blocked">{blockedLabel}</span>
               ) : null}

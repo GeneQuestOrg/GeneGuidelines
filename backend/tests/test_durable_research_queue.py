@@ -108,6 +108,25 @@ def test_count_unfinished_for_session_ignores_terminal() -> None:
     assert repo.count_unfinished_for_session("other") == 0
 
 
+def test_terminal_jobs_are_never_deleted_from_the_store() -> None:
+    # Durability guarantee (Darek, 2026-07-18): a submitted research must NEVER
+    # disappear from the DB. The queue only transitions status
+    # (queued -> running -> done/failed); it must never DELETE a row, so a
+    # completed OR failed job stays permanently on record.
+    repo = InMemoryResearchJobRepo()
+    now = _iso(datetime.now(timezone.utc))
+    _seed(repo, id="done-job")
+    _seed(repo, id="failed-job")
+    repo.mark_done(id="done-job", finished_at=now)
+    repo.mark_failed(id="failed-job", finished_at=now, error="boom")
+    # Rows still present after reaching a terminal state.
+    assert "done-job" in repo._rows and repo._rows["done-job"]["status"] == "done"
+    assert "failed-job" in repo._rows and repo._rows["failed-job"]["status"] == "failed"
+    # Structural guarantee: the repository exposes no way to remove a job.
+    for name in ("delete", "delete_job", "remove", "remove_job", "drop", "purge"):
+        assert not hasattr(repo, name), f"queue repo must not expose {name}()"
+
+
 # -- durability: a new scheduler over the same store sees queued jobs --------
 
 
