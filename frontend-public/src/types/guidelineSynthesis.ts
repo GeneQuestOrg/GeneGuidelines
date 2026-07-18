@@ -14,7 +14,16 @@
  *     `suggestions` (GL-3), never merged here.
  */
 
-export type SynthesisStatus = "consensus" | "verified" | "pending" | "superseded";
+// "draft" = fresh AI synthesis written by the engine (e.g. from a bootstrap),
+// not yet expert-reviewed — the honest default the synthesis_writer emits. It is
+// NOT "pending", so it clears the level-(c) gate and renders as a level-(a)
+// synthesis; the epistemic framing stays "AI summary, not an official guideline".
+export type SynthesisStatus =
+  | "draft"
+  | "consensus"
+  | "verified"
+  | "pending"
+  | "superseded";
 
 /** Provenance: which source-shelf document and section a claim comes from. */
 export interface ParagraphSource {

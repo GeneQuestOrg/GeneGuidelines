@@ -264,6 +264,86 @@ def _post_run_publish_guideline_document(execution_id: str, store: dict[str, Any
         )
 
 
+def _shelf_doc_count(disease_slug: str) -> int:
+    """Number of source documents on a disease's shelf (0 when none / on error).
+
+    Read off the event loop; the completion hook gates synthesis on this so an
+    ultra-rare disease whose shelf-build found nothing is not sent through five
+    synthesis prompt nodes only to write an empty document.
+    """
+    try:
+        from ..guidelines.repository import SqlaGuidelinesRepo
+
+        return len(SqlaGuidelinesRepo().list_source_documents(disease_slug))
+    except Exception:  # noqa: BLE001 — a count read must never break the run's finally
+        log.exception("chain-synthesis: shelf-count read failed for %s", disease_slug)
+        return 0
+
+
+async def _maybe_start_synthesis_after_shelf(execution_id: str, store: dict[str, Any]) -> None:
+    """Fire the level-(a) synthesis run once a bootstrap shelf-build completes.
+
+    This is the sequencing seam for the disease bootstrap: synthesis reads the
+    ``guideline_source_documents`` shelf, so it cannot run as a 4th concurrent
+    fan-out task (it would race / synthesise an empty shelf). Instead the shelf
+    build's completion signals that the shelf is ready, and this post-flow hook
+    (analogous to :func:`_post_run_publish_guideline_document`) enqueues synthesis
+    — without blocking the fire-and-forget bootstrap request.
+
+    Fires ONLY when every guard holds:
+      * the finished flow is ``guideline_shelf_build``;
+      * it was flagged to chain (``chain_synthesis`` — the bootstrap sets it, the
+        manual admin shelf endpoint does not, preserving operator control);
+      * the shelf run did not error;
+      * the persisted shelf is non-empty.
+
+    Fully failure-isolated: any error is logged and swallowed so a synthesis
+    hiccup never breaks the shelf run or the rest of the bootstrap fan-out.
+    """
+    if str(store.get("flow_key") or "") != "guideline_shelf_build":
+        return
+    if not store.get("chain_synthesis"):
+        return
+    if store.get("error"):
+        log.info(
+            "chain-synthesis: skip %s — shelf run errored (%s)",
+            execution_id, store.get("error"),
+        )
+        return
+
+    initial = store.get("disease_initial")
+    initial = initial if isinstance(initial, dict) else {}
+    disease_slug = str(initial.get("disease_slug") or "").strip().lower()
+    disease_name = str(initial.get("disease_name") or "").strip()
+    if not disease_slug:
+        log.info("chain-synthesis: skip %s — no disease_slug in shelf run context", execution_id)
+        return
+
+    loop = asyncio.get_event_loop()
+    shelf_size = await loop.run_in_executor(None, lambda: _shelf_doc_count(disease_slug))
+    if shelf_size <= 0:
+        log.info(
+            "chain-synthesis: skip %s — shelf empty for %s (no sources to synthesise)",
+            execution_id, disease_slug,
+        )
+        return
+
+    try:
+        from ..services.disease_bootstrap import start_synthesis_run
+
+        await start_synthesis_run(
+            disease_slug=disease_slug,
+            disease_name=disease_name or disease_slug,
+            profile=str(store.get("profile") or DEFAULT_MODEL_PROFILE),
+        )
+        log.info(
+            "chain-synthesis: fired synthesis for %s after shelf-build %s (%d source docs)",
+            disease_slug, execution_id, shelf_size,
+        )
+    except Exception:  # noqa: BLE001 — a synthesis-fire failure must not break the shelf run
+        log.exception("chain-synthesis: failed to start synthesis for %s", disease_slug)
+
+
 async def execute_agent_async(
     execution_id: str,
     ticket_id: int,
@@ -305,6 +385,11 @@ async def execute_agent_async(
             None,
             lambda: _post_run_publish_guideline_document(execution_id, store),
         )
+        # Chain the level-(a) synthesis after a bootstrap shelf-build completes.
+        # Awaited (not run_in_executor): it needs the event loop to create the
+        # synthesis run task. Failure-isolated inside the hook — a synthesis
+        # hiccup must not break the shelf run or the rest of the bootstrap.
+        await _maybe_start_synthesis_after_shelf(execution_id, store)
 
 
 async def _execute_agent_async_body(
@@ -517,6 +602,7 @@ async def start_agent_run(
     pathway_locale: str = "en",
     refresh_pubmed: bool = False,
     execution_id: str | None = None,
+    chain_synthesis: bool = False,
 ) -> dict:
     """Start agent run; shared by POST /run/{ticket_id} and pipeline guideline-run.
 
@@ -524,6 +610,12 @@ async def start_agent_run(
     pre-registers a ``queued`` run record under this id so the public run page
     has a stable handle while the job waits for a worker slot). When omitted a
     fresh uuid is minted as before.
+
+    ``chain_synthesis`` (shelf-build runs only): when True, the level-(a)
+    synthesis flow is fired automatically once THIS shelf-build completes (see
+    :func:`_maybe_start_synthesis_after_shelf`). The disease bootstrap sets it so a
+    fresh disease gets its AI baseline without racing an empty shelf; the manual
+    admin shelf endpoint leaves it False so operators keep step-by-step control.
     """
     profile_norm = (profile or "").strip().lower() or DEFAULT_MODEL_PROFILE
     if profile_norm not in MODEL_PROFILES:
@@ -553,6 +645,7 @@ async def start_agent_run(
         "disease_slug": (disease_slug or "").strip().lower() or None,
         "pathway_locale": (pathway_locale or "en").strip()[:2] or "en",
         "refresh_pubmed": bool(refresh_pubmed),
+        "chain_synthesis": bool(chain_synthesis),
     }
     if isinstance(disease_initial, dict) and disease_initial:
         run_record["disease_initial"] = dict(disease_initial)

@@ -13,7 +13,14 @@ Parallel (fire-and-forget):
 
 Chain (fire after each predecessor completes):
   6. guideline pipeline         — clinician living guideline (PubMed + agentic)
-  7. (future) parent pathway    — fires after guideline publish; deferred to operator
+  7. shelf-build → synthesis     — the level-(a) AI baseline (``guideline_synthesis``)
+                                   is fired from the shelf-build flow's completion
+                                   hook (``routers/agent.py``), NOT as a 4th concurrent
+                                   fan-out task: synthesis reads the shelf, so running
+                                   it concurrently would race / synthesise an empty
+                                   shelf. See ``start_synthesis_run`` + the shelf-build
+                                   ``chain_synthesis`` flag.
+  8. (future) parent pathway    — fires after guideline publish; deferred to operator
 
 The orchestrator returns immediately with a dict of execution ids; each
 workflow logs its progress to ``guideline_run_results`` so the
@@ -248,9 +255,73 @@ async def _start_shelf_build(
         label=label,
         pipeline="guideline",
         disease_initial={"disease_slug": disease_slug, "disease_name": disease_name},
+        # Chain the level-(a) synthesis once THIS shelf-build completes (see the
+        # shelf-build completion hook in routers/agent.py). Only the bootstrap
+        # sets this flag — the manual admin shelf endpoint leaves it False so an
+        # operator keeps step-by-step control (shelf, then synthesis, by hand).
+        chain_synthesis=True,
     )
     eid = str(result.get("execution_id") or "")
-    log.info("disease_bootstrap: fired shelf-build %s for %s", eid, disease_slug)
+    log.info("disease_bootstrap: fired shelf-build %s for %s (chain_synthesis=True)", eid, disease_slug)
+    return eid
+
+
+async def start_synthesis_run(
+    disease_slug: str,
+    disease_name: str,
+    profile: str,
+) -> str:
+    """Fire the level-(a) synthesis flow over a disease's (already-built) shelf.
+
+    Mirrors the manual admin endpoint ``POST /diseases/{slug}/guideline-synthesis/run``:
+    loads the disease's ``guideline_source_documents`` + abstracts, synthesises one
+    section per node strictly from the shelf (provenance per paragraph), and the
+    terminal writer upserts the synthesis into the ``guideline_synthesis`` table
+    (idempotent — a re-run replaces, it does not duplicate).
+
+    Called from the shelf-build completion hook (``routers/agent.py``) so a fresh
+    bootstrap disease gets its AI baseline automatically once the shelf exists —
+    never on an empty shelf, never racing the shelf build. Soft-fails (returns ""
+    and logs) when the disease row is missing, so a hiccup cannot break the caller.
+    """
+    from .. import database as db
+    from ..content_db import get_disease_by_slug
+    from ..contracts.guidelines_v1 import SYNTHESIS_SECTIONS
+    from ..routers import agent as agent_router
+
+    loop = asyncio.get_event_loop()
+    disease = await loop.run_in_executor(
+        None, lambda: get_disease_by_slug(disease_slug, include_prompt_profile=False)
+    )
+    if disease is None:
+        log.warning("disease_bootstrap: cannot start synthesis; disease %s missing", disease_slug)
+        return ""
+
+    resolved_name = str(disease.get("name") or disease_name or disease_slug).strip() or disease_slug
+    label = f"Synthesis · {resolved_name}"
+    ticket_id = await loop.run_in_executor(
+        None,
+        lambda: db.create_ticket(
+            title=label,
+            description=f"Guideline synthesis (level a) over the source shelf for {resolved_name}.",
+            reporter_name="GeneGuidelines/bootstrap",
+            category="guideline_synthesis",
+        ),
+    )
+    result = await agent_router.start_agent_run(
+        ticket_id,
+        flow_key="guideline_synthesis",
+        profile=profile,
+        label=label,
+        pipeline="guideline",
+        disease_initial={
+            "disease_slug": disease_slug,
+            "disease_name": resolved_name,
+            "sections": [dict(s) for s in SYNTHESIS_SECTIONS],
+        },
+    )
+    eid = str(result.get("execution_id") or "")
+    log.info("disease_bootstrap: fired synthesis %s for %s", eid, disease_slug)
     return eid
 
 
@@ -318,6 +389,7 @@ def register_research_factories(scheduler) -> None:
 
 __all__ = [
     "bootstrap_disease_research",
+    "start_synthesis_run",
     "BOOTSTRAP_JOB_KIND",
     "bootstrap_job_spec",
     "register_research_factories",
