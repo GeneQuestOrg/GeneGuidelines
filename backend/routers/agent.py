@@ -652,13 +652,35 @@ def get_agent_run(execution_id: str):
         run = AGENT_RUNS.get(execution_id)
         if run is not None:
             run = dict(run)
-    if run is None:
+    # Cross-process staleness guard: the in-memory record is authoritative only
+    # on the process that actually runs the job. In production the web process
+    # pre-registers a "queued" marker (register_queued_run) while the dedicated
+    # worker process runs the job and records its terminal result ONLY in the
+    # durable store — the web process's marker is never advanced past
+    # "queued"/"running". So whenever the local record is missing OR still
+    # non-terminal, consult the durable store and let a terminal stored result
+    # win; otherwise the public run page polls "running" forever even though the
+    # guideline was published (the run never appears to finish).
+    local_nonterminal = (
+        run is not None
+        and not run.get("done")
+        and str(run.get("status") or "") in ("queued", "running")
+    )
+    if run is None or local_nonterminal:
         try:
             from ..guideline_run_store import load_guideline_run_result
         except ImportError:
             from guideline_run_store import load_guideline_run_result
 
-        run = load_guideline_run_result(execution_id)
+        stored = load_guideline_run_result(execution_id)
+        if stored and (
+            stored.get("done")
+            or str(stored.get("status") or "")
+            in ("done", "completed", "error", "failed")
+        ):
+            run = stored
+        elif run is None:
+            run = stored
     if not run:
         raise HTTPException(status_code=404, detail="Unknown execution_id")
     if str(run.get("status") or "") == "queued":
