@@ -201,3 +201,53 @@ def test_shelf_flow_spec_valid_and_connected() -> None:
         ("gsb-write", "gsb-bib"),
         ("gsb-bib", "end"),
     }
+
+
+def test_enrich_docs_from_pubmed_backfills_blank_author_year(monkeypatch) -> None:
+    """The write step must backfill blank authors/year/journal from PubMed by
+    PMID — the classify node drops that metadata, which rendered "· n/a"."""
+    from backend.executors import guideline_shelf_write_executor as wex
+
+    docs = [
+        {"pmid": "33653979", "authors": "", "year": "n/a", "journal": "", "title": "A"},
+        {"pmid": "999", "authors": "Existing A", "year": "2010", "journal": "J", "title": "B"},
+        {"pmid": None, "bookshelf": "NBK1", "authors": "", "year": "n/a", "journal": ""},
+    ]
+
+    def _fake_meta(pmids):
+        assert pmids == ["33653979", "999"]  # only real PMIDs, order preserved
+        return [
+            {"pmid": "33653979", "authors": "Ricca AM, Han IC", "journal": "Curr Opin Ophthalmol", "year": 2021},
+            {"pmid": "999", "authors": "Other Z", "journal": "Other J", "year": 2020},
+        ]
+
+    monkeypatch.setattr(
+        "backend.services.official_guidelines_finder._pubmed_metadata", _fake_meta
+    )
+    wex._enrich_docs_from_pubmed(docs)
+
+    # blank doc is filled from PubMed
+    assert docs[0]["authors"] == "Ricca AM, Han IC"
+    assert docs[0]["year"] == "2021"
+    assert docs[0]["journal"] == "Curr Opin Ophthalmol"
+    # a doc that already had metadata is NOT clobbered
+    assert docs[1]["authors"] == "Existing A"
+    assert docs[1]["year"] == "2010"
+    # a doc without a PMID is left untouched
+    assert docs[2]["year"] == "n/a"
+    assert docs[2]["authors"] == ""
+
+
+def test_enrich_docs_from_pubmed_soft_fails(monkeypatch) -> None:
+    """A PubMed error must not raise — docs keep their existing (blank) values."""
+    from backend.executors import guideline_shelf_write_executor as wex
+
+    def _boom(_pmids):
+        raise RuntimeError("network down")
+
+    monkeypatch.setattr(
+        "backend.services.official_guidelines_finder._pubmed_metadata", _boom
+    )
+    docs = [{"pmid": "1", "authors": "", "year": "n/a", "journal": ""}]
+    wex._enrich_docs_from_pubmed(docs)  # must not raise
+    assert docs[0]["year"] == "n/a"

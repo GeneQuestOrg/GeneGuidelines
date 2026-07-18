@@ -10,6 +10,7 @@ present, else the Bookshelf id.
 """
 from __future__ import annotations
 
+import asyncio
 import logging
 import re
 
@@ -128,6 +129,13 @@ class GuidelineShelfWriteExecutor(NodeExecutor):
         if not docs:
             return NodeOutput(data={"ok": False, "error": "no shelf docs had a usable identifier."})
 
+        # Backfill authors/year/journal from PubMed by PMID. The classify node
+        # returns role/title/pmid but drops bibliographic metadata, so tiles
+        # rendered "· n/a" with no author even though the same PMIDs carry full
+        # metadata in the bibliography. Best-effort, off the event loop.
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(None, _enrich_docs_from_pubmed, docs)
+
         try:
             self._get_repo().replace_source_documents(slug, docs)
         except Exception as exc:  # noqa: BLE001 — a write failure must fail the node
@@ -135,6 +143,37 @@ class GuidelineShelfWriteExecutor(NodeExecutor):
             return NodeOutput(data={"ok": False, "error": f"shelf write failed: {exc}"})
 
         return NodeOutput(data={"ok": True, "slug": slug, "docCount": len(docs), "kinds": kinds})
+
+
+def _enrich_docs_from_pubmed(docs: list[dict]) -> None:
+    """Fill blank authors/year/journal from PubMed esummary, keyed by PMID.
+
+    The classify node preserves only role/title/pmid, so shelf tiles rendered
+    "· n/a" with no author. We already hold the PMIDs, so fetch the same
+    esummary the bibliography uses and backfill in place. Soft-fails: on any
+    error (or missing record) each doc keeps its existing value. Mutates ``docs``.
+    """
+    pmids = [str(d.get("pmid")) for d in docs if d.get("pmid")]
+    if not pmids:
+        return
+    try:
+        from ..services.official_guidelines_finder import _pubmed_metadata
+
+        meta = {str(m.get("pmid")): m for m in _pubmed_metadata(pmids)}
+    except Exception as exc:  # noqa: BLE001 — enrichment is best-effort
+        log.warning("guideline_shelf_write: PubMed enrichment skipped: %s", exc)
+        return
+    for d in docs:
+        m = meta.get(str(d.get("pmid") or ""))
+        if not m:
+            continue
+        if not d.get("authors"):
+            d["authors"] = str(m.get("authors") or "").strip()
+        year = m.get("year")
+        if (not d.get("year") or d.get("year") == "n/a") and isinstance(year, int) and year > 0:
+            d["year"] = str(year)
+        if not d.get("journal"):
+            d["journal"] = _clean_journal(str(m.get("journal") or ""))
 
 
 def _find_classified_docs(context: dict) -> list:
