@@ -183,6 +183,25 @@ def test_jit_provisioning_creates_then_reuses_row(make_client, signing_key, repo
     assert len(repo.list_users()) == 1
 
 
+def test_refresh_backfills_email_for_account_provisioned_blank(
+    make_client, signing_key, repo
+) -> None:
+    # Provisioned before the Auth0 Login Action carried the email claim → blank
+    # email. _refresh (not just _create) must sync it once the claim arrives,
+    # else the profile stays blank forever.
+    client = make_client()
+    blank = _make_token(signing_key, sub="auth0|late-email", email="")
+    r1 = client.get("/api/account/me", headers=_auth(blank))
+    assert r1.status_code == 200
+    assert r1.json()["email"] == ""
+
+    with_email = _make_token(signing_key, sub="auth0|late-email", email="doc@example.com")
+    r2 = client.get("/api/account/me", headers=_auth(with_email))
+    assert r2.status_code == 200
+    assert r2.json()["email"] == "doc@example.com"
+    assert len(repo.list_users()) == 1  # same row, email backfilled in place
+
+
 def test_superadmin_bootstrap_when_email_verified(make_client, signing_key) -> None:
     client = make_client(superadmin_emails="DAREK@genequest.org, other@x.io")
     token = _make_token(

@@ -76,6 +76,7 @@ class UserRepo(Protocol):
     def set_role(self, user_id: str, role: Role, when: str) -> User | None: ...
     def set_verified(self, user_id: str, verified: bool, when: str) -> User | None: ...
     def set_orcid(self, user_id: str, orcid: str, when: str) -> User | None: ...
+    def set_email(self, user_id: str, email: str, when: str) -> User | None: ...
     def list_users(self) -> list[User]: ...
 
 
@@ -150,6 +151,16 @@ class SqlaUserRepo(BaseSqlalchemyRepo):
             conn.execute(stmt)
         return self.get_by_id(user_id)
 
+    def set_email(self, user_id: str, email: str, when: str) -> User | None:
+        stmt = (
+            update(users_table)
+            .where(users_table.c.id == user_id)
+            .values(email=email, updated_at=when)
+        )
+        with self._conn() as conn:
+            conn.execute(stmt)
+        return self.get_by_id(user_id)
+
     def list_users(self) -> list[User]:
         stmt = select(users_table).order_by(nocase_order(users_table.c.email))
         with self._conn() as conn:
@@ -219,6 +230,16 @@ class InMemoryUserRepo:
         if existing is None:
             return None
         updated = replace(existing, orcid=orcid, updated_at=when)
+        self._by_id[user_id] = updated
+        return updated
+
+    def set_email(self, user_id: str, email: str, when: str) -> User | None:
+        from dataclasses import replace
+
+        existing = self._by_id.get(user_id)
+        if existing is None:
+            return None
+        updated = replace(existing, email=email, updated_at=when)
         self._by_id[user_id] = updated
         return updated
 

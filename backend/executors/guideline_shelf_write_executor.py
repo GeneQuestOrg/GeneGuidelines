@@ -115,7 +115,12 @@ class GuidelineShelfWriteExecutor(NodeExecutor):
                     "title": str(d.get("title") or "").strip(),
                     "authors": str(d.get("authors") or "").strip(),
                     "journal": _clean_journal(str(d.get("journal") or "")),
-                    "year": _clean_year(str(d.get("year") or "")) or "n/a",
+                    # Bookshelf entries (GeneReviews / StatPearls) are living
+                    # references with no fixed year — label them accordingly
+                    # rather than "n/a". PMID entries fall back to "n/a" and get
+                    # a real year backfilled from PubMed esummary below.
+                    "year": _clean_year(str(d.get("year") or ""))
+                    or ("continuously updated" if bookshelf else "n/a"),
                     "scope": str(d.get("scope") or "").strip(),
                     "covers": list(d.get("covers") or []),
                     "pmid": pmid or None,

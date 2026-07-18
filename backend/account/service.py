@@ -286,6 +286,14 @@ class AccountService:
             promoted = self.repo.set_role(str(user.id), Role.SUPERADMIN, now)
             if promoted is not None:
                 user = promoted
+        # Backfill / keep the email in sync with the IdP. Accounts provisioned
+        # before the Auth0 Login Action added the email claim stored a blank
+        # email, and _refresh (unlike _create) never updated it — so the profile
+        # stayed blank forever. Sync whenever the token carries a different email.
+        if claims.email and claims.email != user.email:
+            synced = self.repo.set_email(str(user.id), claims.email, now)
+            if synced is not None:
+                user = synced
         self.repo.touch_login(str(user.id), now)
         # Reflect the touch locally without a re-read (repo already persisted it).
         return user.__class__(
