@@ -24,6 +24,8 @@ export interface HomeCopy {
   titleLine1: string;
   titleEmphasis: string;
   subtitle: string;
+  /** Hero mission link → /about ("Why we built this →"). */
+  whyLink: string;
 
   /* LEFT card — "I know the disease". */
   knowKicker: string;
@@ -47,7 +49,6 @@ export interface HomeCopy {
   findsSub: string;
   finds: readonly HomeFind[];
   honestFootnote: string;
-  honestLinkLabel: string;
 
   /* "Ostatnio dodane" disease rail. */
   diseasesSectionTitle: string;

@@ -3,6 +3,7 @@
   "titleLine1": "A rare disease.",
   "titleEmphasis": "One place to start.",
   "subtitle": "Find everything already known about your disease in one place: guidelines in plain language and with sources, doctors who genuinely know it, and clinical trials. Gathered so that what is already known reaches the family and the doctor in time.",
+  "whyLink": "Why we built this",
 
   "knowKicker": "I know the disease",
   "knowTitle": "I know what I'm looking for",
@@ -43,7 +44,6 @@
     }
   ],
   "honestFootnote": "Honestly: this is an AI-written summary of official guidelines and the literature (with links to sources) — not an official guideline, and no one formally signs off on it; clinicians can rate it and flag concerns. Informational material, not a diagnosis.",
-  "honestLinkLabel": "Why we do this",
 
   "diseasesSectionTitle": "Recently added",
   "diseasesSectionSub": "This isn't the whole catalog — the newest diseases that have been through our research. You can commission any other in a minute.",

@@ -64,6 +64,10 @@
   margin: 0 0 8px;
   text-wrap: pretty;
 }
+.page--home .intro__why {
+  margin: 4px 0 0;
+  font-size: 14px;
+}
 
 /* ── two doors ───────────────────────────────────────────────────────────── */
 .page--home .doors {
@@ -167,6 +171,10 @@
 .page--home .door .search input {
   font-size: var(--fs-md);
   padding: 12px 0;
+}
+/* Match the DiseaseAutocomplete typeahead (left "I know the disease" door). */
+.page--home .door .ac__input {
+  font-size: var(--fs-md);
 }
 .page--home .door__hint {
   color: var(--ink-3);

@@ -4,7 +4,9 @@ import { useTranslation } from "react-i18next";
 import { SearchBar, Button, Section } from "@gene-guidelines/ui";
 import type { AudienceView } from "../router/types";
 import { useAudienceCopy } from "../copy";
+import type { DiseaseSuggestion } from "../api/diseaseIndex";
 import { ActiveResearchSection } from "../components/ActiveResearchSection";
+import { DiseaseAutocomplete } from "../components/DiseaseAutocomplete";
 import { DiseaseCard } from "../components/DiseaseCard";
 import { NewDiseaseCard } from "../components/NewDiseaseCard";
 import { useActiveResearchRuns } from "../hooks/useActiveResearchRuns";
@@ -57,18 +59,24 @@ const iconChat: ReactNode = (
 );
 
 export function HomeView({ view, onNav }: HomeViewProps) {
-  const [query, setQuery] = useState("");
   const [symptomQuery, setSymptomQuery] = useState("");
   const [addQuery, setAddQuery] = useState("");
-  const { diseases, loading, error } = useDiseaseCatalog(query);
+  const { diseases, loading, error } = useDiseaseCatalog();
   const { runs: activeRuns } = useActiveResearchRuns(3);
   const { t } = useTranslation("common");
   const copy = useAudienceCopy(view).home;
 
-  // LEFT card — "I know the disease": forgiving multilingual catalog search.
-  const goSearch = () => {
-    const q = query.trim();
-    onNav(q ? `/diseases?q=${encodeURIComponent(q)}` : "/diseases");
+  // LEFT card — "I know the disease": forgiving multilingual typeahead over the
+  // rare-disease index (same DiseaseAutocomplete used on /start-research).
+  // Picking a hit that already has a catalog page jumps straight there;
+  // an in-index-but-not-yet-bootstrapped hit (or a "not on the list" click)
+  // hands off to the research entry, keeping the homepage lightweight.
+  const goPickedDisease = (suggestion: DiseaseSuggestion) => {
+    if (suggestion.hasLocalRecord && suggestion.localSlug) {
+      onNav(`/diseases/${encodeURIComponent(suggestion.localSlug)}`);
+    } else {
+      onNav("/start-research");
+    }
   };
 
   // RIGHT card — "I don't know the diagnosis". There is no dedicated
@@ -99,6 +107,18 @@ export function HomeView({ view, onNav }: HomeViewProps) {
           <em>{copy.titleEmphasis}</em>
         </h1>
         <p className="intro__sub">{copy.subtitle}</p>
+        <p className="intro__why">
+          <a
+            className="lnk"
+            href="/about"
+            onClick={(e) => {
+              e.preventDefault();
+              onNav("/about");
+            }}
+          >
+            {copy.whyLink} <span className="arw" aria-hidden>→</span>
+          </a>
+        </p>
       </div>
 
       {/* ── TWO DOORS ── */}
@@ -113,21 +133,13 @@ export function HomeView({ view, onNav }: HomeViewProps) {
           </div>
           <h2 className="door__title">{copy.knowTitle}</h2>
           <p className="door__desc">{copy.knowDesc}</p>
-          <form
-            className="door__form"
-            onSubmit={(e) => {
-              e.preventDefault();
-              goSearch();
-            }}
-          >
-            <SearchBar
-              value={query}
-              onChange={setQuery}
+          <div className="door__form">
+            <DiseaseAutocomplete
               placeholder={copy.searchPlaceholder}
-              icon={iconSearch}
-              aria-label={copy.knowTitle}
+              onPick={goPickedDisease}
+              onMissingClick={() => onNav("/start-research")}
             />
-          </form>
+          </div>
           <p className="door__hint">{copy.searchHint}</p>
           {chips.length > 0 ? (
             <div className="quicklinks">
@@ -219,17 +231,7 @@ export function HomeView({ view, onNav }: HomeViewProps) {
           ))}
         </div>
         <p className="finds-foot">
-          <span>{copy.honestFootnote}</span>{" "}
-          <a
-            className="lnk"
-            href="/about"
-            onClick={(e) => {
-              e.preventDefault();
-              onNav("/about");
-            }}
-          >
-            {copy.honestLinkLabel} <span className="arw" aria-hidden>→</span>
-          </a>
+          <span>{copy.honestFootnote}</span>
         </p>
       </Section>
 

@@ -31,6 +31,7 @@ export function buildHomeCopy(t: TFunction): HomeCopy {
     titleLine1: t("titleLine1"),
     titleEmphasis: t("titleEmphasis"),
     subtitle: t("subtitle"),
+    whyLink: t("whyLink"),
 
     knowKicker: t("knowKicker"),
     knowTitle: t("knowTitle"),
@@ -51,7 +52,6 @@ export function buildHomeCopy(t: TFunction): HomeCopy {
     findsSub: t("findsSub"),
     finds: objectResult<HomeFind[]>(t, "finds"),
     honestFootnote: t("honestFootnote"),
-    honestLinkLabel: t("honestLinkLabel"),
 
     diseasesSectionTitle: t("diseasesSectionTitle"),
     diseasesSectionSub: t("diseasesSectionSub"),

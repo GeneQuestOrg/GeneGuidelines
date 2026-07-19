@@ -24,7 +24,7 @@ export function SearchBar({
     <div className="search">
       {icon != null && <span className="search__icon" aria-hidden>{icon}</span>}
       <input
-        type="search"
+        type="text"
         value={value}
         onChange={handleChange}
         placeholder={placeholder}

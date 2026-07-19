@@ -31,7 +31,7 @@ describe("SearchBar", () => {
     const onChange = vi.fn();
     const user = userEvent.setup();
     const { rerender } = render(<SearchBar value="" onChange={onChange} />);
-    await user.type(screen.getByRole("searchbox"), "P");
+    await user.type(screen.getByRole("textbox"), "P");
     expect(onChange).toHaveBeenCalled();
     rerender(<SearchBar value="P" onChange={onChange} />);
   });

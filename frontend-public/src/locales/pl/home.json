@@ -3,6 +3,7 @@
   "titleLine1": "Rzadka choroba.",
   "titleEmphasis": "Jedno miejsce, żeby zacząć.",
   "subtitle": "Znajdź w jednym miejscu wszystko, co już wiadomo o Twojej chorobie: wytyczne prostym językiem i ze źródłami, lekarzy, którzy naprawdę ją znają, oraz badania kliniczne. Zebrane tak, żeby ta wiedza dotarła do rodziny i lekarza na czas.",
+  "whyLink": "Dlaczego to robimy",
 
   "knowKicker": "Znam chorobę",
   "knowTitle": "Wiem, czego szukam",
@@ -43,7 +44,6 @@
     }
   ],
   "honestFootnote": "Uczciwie: to AI-owy skrót oficjalnych wytycznych i literatury (z odnośnikami do źródeł) — nie oficjalna wytyczna i nikt się pod nim oficjalnie nie podpisuje; lekarze mogą go oceniać i zgłaszać uwagi. Materiał informacyjny, nie diagnoza.",
-  "honestLinkLabel": "Dlaczego to robimy",
 
   "diseasesSectionTitle": "Ostatnio dodane",
   "diseasesSectionSub": "To nie cały katalog — najnowsze choroby, które przeszły przez nasz research. Każdą inną zlecisz w minutę.",
