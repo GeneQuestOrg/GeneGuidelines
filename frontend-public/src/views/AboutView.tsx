@@ -258,9 +258,10 @@ export function AboutView({ onNav }: AboutViewProps) {
                 articles for the primary-care doctor — ready to print or email. A 30-minute read.
               </li>
               <li>
-                <b>Or point them at the guideline document.</b> Each disease has a <em>living guideline</em>{" "}
-                reviewed by specialists, fully cited and audit-trailed. The same text an expert in Leiden or Rome
-                would read.
+                <b>Or point them at the guideline document.</b> Each disease has a <em>living guideline</em> — an
+                AI-drafted, fully-cited summary of the official guidelines and the literature that clinicians can
+                rate and flag; nobody officially signs off on it. The same text an expert in Leiden or Rome would
+                read.
               </li>
             </ol>
 

@@ -203,9 +203,10 @@ export function StartResearchView({ onNav }: StartResearchViewProps) {
               required
             />
             <span>
-              I understand the AI output is <b>pending verification</b>{" "}
-              until reviewed by a specialist clinician. The content does
-              not replace medical advice.
+              I understand the AI output is an <b>AI-generated draft</b> —
+              a source-cited summary that no one has officially verified or
+              signed off — and it does not replace medical advice; I should
+              read it with a clinician.
             </span>
           </label>
 
