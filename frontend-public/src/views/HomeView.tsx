@@ -1,8 +1,9 @@
 import { useState } from "react";
 import type { ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { SearchBar, Button, Section } from "@gene-guidelines/ui";
 import type { AudienceView } from "../router/types";
-import { getAudienceCopy } from "../copy";
+import { useAudienceCopy } from "../copy";
 import { ActiveResearchSection } from "../components/ActiveResearchSection";
 import { DiseaseCard } from "../components/DiseaseCard";
 import { NewDiseaseCard } from "../components/NewDiseaseCard";
@@ -61,7 +62,8 @@ export function HomeView({ view, onNav }: HomeViewProps) {
   const [addQuery, setAddQuery] = useState("");
   const { diseases, loading, error } = useDiseaseCatalog(query);
   const { runs: activeRuns } = useActiveResearchRuns(3);
-  const copy = getAudienceCopy(view).home;
+  const { t } = useTranslation("common");
+  const copy = useAudienceCopy(view).home;
 
   // LEFT card — "I know the disease": forgiving multilingual catalog search.
   const goSearch = () => {
@@ -85,7 +87,7 @@ export function HomeView({ view, onNav }: HomeViewProps) {
 
   return (
     <div className="page page--home">
-      {/* ── HERO — WARIANT A (default; B/C in copy/home.ts) ── */}
+      {/* ── HERO — WARIANT A (default) ── */}
       <div className="intro">
         <span className="eyebrow">
           <span className="dot" aria-hidden />
@@ -247,7 +249,7 @@ export function HomeView({ view, onNav }: HomeViewProps) {
         divider
       >
         {loading ? (
-          <p className="page__lead">Ładowanie katalogu…</p>
+          <p className="page__lead">{t("loadingCatalog")}</p>
         ) : (
           <div className="d-grid">
             {diseases.map((d) => (

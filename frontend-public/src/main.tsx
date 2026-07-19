@@ -4,6 +4,7 @@ import { Auth0Provider } from "@auth0/auth0-react";
 import "@gene-guidelines/ui/styles/tokens.css";
 import "@gene-guidelines/ui/styles/base.css";
 import "./index.css";
+import "./i18n";
 import App from "./App.tsx";
 import { getAuth0Config } from "./auth/authConfig";
 

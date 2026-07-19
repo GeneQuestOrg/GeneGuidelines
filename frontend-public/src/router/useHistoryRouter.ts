@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { parsePath } from "./parsePath";
+import { splitLocale, withLocalePrefix, type Locale } from "./locale";
 import type { Route } from "./types";
 
 interface RouterLocation {
@@ -69,8 +70,19 @@ export interface HistoryRouter {
   route: Route;
   /** Current `location.search` (e.g. ``?disease=fd``) — the query source for URL-synced views. */
   search: string;
-  /** Navigate to an in-app path (with or without leading `#`, which is stripped). */
+  /**
+   * Active locale, parsed from the URL prefix (``/pl/…`` → ``pl``; unprefixed → ``en``).
+   * The URL is the single source of truth for language.
+   */
+  locale: Locale;
+  /**
+   * Navigate to an in-app path. Callers pass the canonical (English, unprefixed)
+   * path, e.g. ``/diseases/fd``; the active locale prefix is applied automatically,
+   * so an in-app link keeps the visitor in their chosen language.
+   */
   navigate: (path: string) => void;
+  /** Switch language, staying on the current route (re-prefixes the URL). */
+  setLocale: (locale: Locale) => void;
 }
 
 /**
@@ -86,19 +98,41 @@ export function useHistoryRouter(): HistoryRouter {
     const initial = readLocation();
     return { pathname: canonicalizePath(initial.pathname), search: initial.search };
   });
-  const route = parsePath(loc.pathname, loc.search);
+  // The stored pathname carries the locale prefix; strip it for route parsing and
+  // expose the parsed locale separately. English is the canonical, unprefixed space.
+  const { locale, pathname: barePath } = splitLocale(loc.pathname);
+  const route = parsePath(barePath, loc.search);
 
-  const navigate = useCallback((path: string) => {
-    const clean = path.startsWith("#") ? path.slice(1) : path;
-    const url = new URL(clean, window.location.origin);
-    const pathname = canonicalizePath(url.pathname);
-    const next = pathname + url.search;
+  const applyLocation = useCallback((fullPathname: string, search: string) => {
+    const next = fullPathname + search;
     if (window.location.pathname + window.location.search !== next) {
       window.history.pushState(null, "", next);
     }
-    setLoc({ pathname, search: url.search });
+    setLoc({ pathname: fullPathname, search });
     window.scrollTo(0, 0);
   }, []);
+
+  const navigate = useCallback(
+    (path: string) => {
+      const clean = path.startsWith("#") ? path.slice(1) : path;
+      const url = new URL(clean, window.location.origin);
+      // Drop any locale prefix the caller may have included, then re-apply the
+      // locale currently in the address bar (the source of truth) so in-app links
+      // stay in the visitor's chosen language.
+      const { pathname: bare } = splitLocale(canonicalizePath(url.pathname));
+      const activeLocale = splitLocale(window.location.pathname).locale;
+      applyLocation(withLocalePrefix(bare, activeLocale), url.search);
+    },
+    [applyLocation],
+  );
+
+  const setLocale = useCallback(
+    (next: Locale) => {
+      const { pathname: bare } = splitLocale(canonicalizePath(window.location.pathname));
+      applyLocation(withLocalePrefix(bare, next), window.location.search);
+    },
+    [applyLocation],
+  );
 
   useEffect(() => {
     const syncFromLocation = () => {
@@ -133,5 +167,5 @@ export function useHistoryRouter(): HistoryRouter {
     };
   }, [navigate]);
 
-  return { route, search: loc.search, navigate };
+  return { route, search: loc.search, locale, navigate, setLocale };
 }

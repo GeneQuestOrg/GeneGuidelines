@@ -1,0 +1,90 @@
+{
+  "personaLabel": "Czytasz jako",
+  "parentPersonaTitle": "Pacjent / opiekun",
+  "parentPersonaSub": "Prostym językiem. Co robić teraz, o co pytać i gdzie szukać pomocy.",
+  "doctorPersonaTitle": "Lekarz",
+  "doctorPersonaSub": "Pełne ścieżki, literatura, szczegóły dawkowania i proponowane zmiany do przeglądu.",
+  "skeletonNoticeTitle": "Pokrycie szkieletowe.",
+  "skeletonNoticeBody": "Sekcje istnieją, ale treść jest jeszcze minimalna — pełny pipeline wytycznych AI pojawi się w kolejnym wydaniu.",
+  "relatedTitle": "Powiązane choroby",
+  "tabs": {
+    "overview": "Przegląd",
+    "doctors": "Specjaliści",
+    "trials": "Badania kliniczne",
+    "guidelines": "Wytyczne"
+  },
+  "pathwayTitle": "Karta pacjenta",
+  "pathwaySub": "Kolejne kroki prostym językiem: potwierdź diagnozę, zmapuj zajęcie narządów, znajdź właściwe wsparcie i zaplanuj kontrole.",
+  "pathwaySteps": [
+    {
+      "title": "Potwierdź diagnozę.",
+      "body": "Wykonaj zalecane badanie genetyczne dla tej choroby — sama histologia często nie wystarcza."
+    },
+    {
+      "title": "Zmapuj zakres choroby.",
+      "body": "Obrazowanie pokazuje, gdzie choroba jest aktywna. Powtarzaj tylko przy zmianie objawów, nie według sztywnego kalendarza."
+    },
+    {
+      "title": "Skonsultuj się ze specjalistą doświadczonym w tej chorobie.",
+      "body": "Nie każdy miejscowy specjalista widział tę chorobę — skorzystaj z listy specjalistów w zakładce Specjaliści."
+    },
+    {
+      "title": "Zaplanuj długoterminową opiekę.",
+      "body": "Kontrole co 6–12 miesięcy; leczenie zależy od bólu, funkcji i progresji."
+    },
+    {
+      "title": "Sprawdź badania kliniczne.",
+      "body": "W chorobach rzadkich udział w badaniu klinicznym bywa najlepszą dostępną opcją leczenia."
+    }
+  ],
+  "redFlagsTitle": "Sygnały ostrzegawcze — kiedy szukać drugiej opinii",
+  "redFlags": [
+    { "text": "Zalecana jest agresywna operacja bez przekonującego wskazania." },
+    { "text": "Diagnoza opiera się wyłącznie na histologii, bez potwierdzenia genetycznego." },
+    { "text": "Brak skierowania do międzynarodowej sieci ekspertów lub rejestru pacjentów." }
+  ],
+  "doctorsTitle": "Specjaliści",
+  "doctorsSub_one": "{{count}} specjalista powiązany z tą chorobą w naszym katalogu. Filtruj według lokalizacji w pełnym katalogu.",
+  "doctorsSub_few": "{{count}} specjalistów powiązanych z tą chorobą w naszym katalogu. Filtruj według lokalizacji w pełnym katalogu.",
+  "doctorsSub_many": "{{count}} specjalistów powiązanych z tą chorobą w naszym katalogu. Filtruj według lokalizacji w pełnym katalogu.",
+  "doctorsSub_other": "{{count}} specjalistów powiązanych z tą chorobą w naszym katalogu. Filtruj według lokalizacji w pełnym katalogu.",
+  "doctorsEmpty": "Nie ma jeszcze specjalistów wskazanych dla tej choroby.",
+  "trialsTitle": "Badania kliniczne",
+  "trialsSub_one": "{{count}} aktywne lub rekrutujące badanie powiązane z tą chorobą.",
+  "trialsSub_few": "{{count}} aktywne lub rekrutujące badania powiązane z tą chorobą.",
+  "trialsSub_many": "{{count}} aktywnych lub rekrutujących badań powiązanych z tą chorobą.",
+  "trialsSub_other": "{{count}} aktywnych lub rekrutujących badań powiązanych z tą chorobą.",
+  "trialsEmpty": "Nie ma jeszcze wskazanych rekrutujących badań.",
+  "guidelinesTitle": "Żywa wytyczna",
+  "guidelinesSub": "Przystępne streszczenie aktualnego dokumentu konsensusu — pełne cytowania w czytniku.",
+  "guidelinesCta": "Przeczytaj wytyczną",
+  "myCaseCta": "🔒 Moja sprawa",
+  "notifyCta": "🔔 Powiadom mnie",
+  "notifyPendingCta": "🔔 Oczekuje potwierdzenia",
+  "notifySubscribedCta": "🔔 Subskrybujesz",
+  "synthesisCta": "📄 Synteza + źródła",
+  "openPrsTitle": "Zmiany w przeglądzie",
+  "openPrsSubNone": "Brak proponowanych zmian — opublikowana wytyczna jest aktualna.",
+  "openPrsSub_one": "{{count}} proponowana zmiana czeka na przegląd specjalisty.",
+  "openPrsSub_few": "{{count}} proponowane zmiany czekają na przegląd specjalisty.",
+  "openPrsSub_many": "{{count}} proponowanych zmian czeka na przegląd specjalisty.",
+  "openPrsSub_other": "{{count}} proponowanych zmian czeka na przegląd specjalisty.",
+  "officialGuidelineTitle": "Oficjalna wytyczna (źródło prawdy)",
+  "officialGuidelineSub": "AI-owy przegląd dowodów, ze źródłami.",
+  "orientation": {
+    "whatToDoNowTitle": "Co robić teraz",
+    "whatToDoNowBody": "Prostym językiem: potwierdź diagnozę genetycznie, zmapuj, gdzie choroba jest aktywna, znajdź specjalistę, który zna tę chorobę, i spokojnie zaplanuj długoterminową opiekę. Kroki poniżej prowadzą przez to w kolejności, w jakiej będą potrzebne.",
+    "questionsForDoctorTitle": "Pytania do lekarza",
+    "questionsForDoctorSub": "Skopiuj je do notatek i weź na wizytę — proste pytania, które posuwają wizytę do przodu.",
+    "questionsForDoctor": [
+      "Czy zrobiliśmy test GNAS / DNA, czy opieramy się tylko na histologii?",
+      "Czy operacja jest pilna, czy na razie możemy obserwować i monitorować?",
+      "Czy obrazowanie ma być jednorazowe, żeby zmapować zakres, czy powtarzane według harmonogramu?",
+      "Czy ten ośrodek leczył już dokładnie tę chorobę — czy powinniśmy uzyskać drugą opinię z sieci ekspertów?",
+      "Które objawy lub zmiany powinny skłonić nas do szybszego kontaktu z lekarzem?"
+    ],
+    "familyDoctorTitle": "Materiały dla lekarza rodzinnego",
+    "familyDoctorSub": "Gotowe do druku lub wysłania. Lekarz rodzinny często nie ma czasu, żeby samodzielnie znaleźć te publikacje — zabierz dokumenty źródłowe na następną wizytę.",
+    "takeToDoctorCta": "Zabierz to do lekarza — drukuj / wyślij"
+  }
+}

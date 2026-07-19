@@ -1,0 +1,60 @@
+{
+  "eyebrow": "Rare genetic diseases · for families and clinicians",
+  "titleLine1": "A rare disease.",
+  "titleEmphasis": "One place to start.",
+  "subtitle": "Find everything already known about your disease in one place: guidelines in plain language and with sources, doctors who genuinely know it, and clinical trials. Gathered so that what is already known reaches the family and the doctor in time.",
+
+  "knowKicker": "I know the disease",
+  "knowTitle": "I know what I'm looking for",
+  "knowDesc": "Go straight to the disease page — a step-by-step \"what to do\" map (what to check, which doctors to look for, what to ask at the visit), with guidelines, trials, and foundations alongside.",
+  "searchPlaceholder": "e.g. fibrous dysplasia, dysplazja włóknista, MAS, GNAS…",
+  "searchHint": "Search in English, Latin, by gene name, or by symptom — spelling and typos are fine.",
+
+  "dontKicker": "I don't have a diagnosis",
+  "dontBadge": "Public beta",
+  "dontTitle": "I don't know where to start",
+  "dontDescLead": "Only have a symptom or a genetic test result? Type what you have — we'll show possible directions and which specialist to talk to. ",
+  "dontDescEmph": "With citations, not a diagnosis.",
+  "symptomPlaceholder": "e.g. café-au-lait spots  ·  or  GNAS c.601C>T",
+  "symptomExamples": [
+    { "label": "Symptom", "hint": "café-au-lait spots" },
+    { "label": "Variant", "hint": "GNAS c.601C>T" }
+  ],
+  "dontCta": "Start finding your way",
+
+  "findsTitle": "What you'll find here",
+  "findsSub": "In one place, for any rare disease — and if yours isn't here yet, you can commission a research run.",
+  "finds": [
+    {
+      "title": "Guidelines in plain language — and the full versions to print",
+      "body": "A short, understandable summary of what is known about the disease — with a link to the source behind every sentence. Alongside it, the full original documents to print and show your doctor."
+    },
+    {
+      "title": "Doctors with real experience in this disease",
+      "body": "A rare disease is rare — even an excellent specialist may never have seen it. It's not about competence, it's about scale: we help you find the few who have hands-on experience with it, and sort them by distance from you."
+    },
+    {
+      "title": "Therapies and clinical trials — including abroad",
+      "body": "Including those not reimbursed in your country but running at centers abroad — sometimes those are the ones that offer a real chance. We show what is recruiting right now and where."
+    },
+    {
+      "title": "Foundations that can help",
+      "body": "The kind of support that can change a lot with these diagnoses — patient organizations and foundations focused on the specific disease."
+    }
+  ],
+  "honestFootnote": "Honestly: this is an AI-written summary of official guidelines and the literature (with links to sources) — not an official guideline, and no one formally signs off on it; clinicians can rate it and flag concerns. Informational material, not a diagnosis.",
+  "honestLinkLabel": "Why we do this",
+
+  "diseasesSectionTitle": "Recently added",
+  "diseasesSectionSub": "This isn't the whole catalog — the newest diseases that have been through our research. You can commission any other in a minute.",
+
+  "newDiseaseEyebrow": "For any rare disease",
+  "newDiseaseTitle": "Your disease isn't here?",
+  "newDiseaseSub": "Commission an AI research run — the pipeline searches PubMed and the web, and finds doctors and trials. First results in ~10 minutes.",
+  "newDiseaseCta": "Run AI research",
+
+  "addTitle": "Your disease isn't here? You can add it.",
+  "addSub": "Commission an AI research run for any rare disease — if it isn't in the database, the pipeline searches PubMed and the web and adds it. Missing some information or a feature? Tell us too.",
+  "addPlaceholder": "e.g. Rett syndrome…",
+  "addCta": "Run research"
+}

@@ -1,0 +1,32 @@
+.locale-switcher {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--bg-elev);
+}
+
+.locale-switcher__btn {
+  font: inherit;
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  line-height: 1;
+  padding: 5px 9px;
+  border: none;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--muted, var(--ink));
+  cursor: pointer;
+}
+
+.locale-switcher__btn:hover {
+  color: var(--ink);
+}
+
+.locale-switcher__btn.is-active {
+  background: var(--accent);
+  color: var(--bg-elev);
+  cursor: default;
+}

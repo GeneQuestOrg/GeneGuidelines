@@ -1,0 +1,69 @@
+{
+  "personaLabel": "Czytasz jako",
+  "parentPersonaTitle": "Pacjent / opiekun",
+  "parentPersonaSub": "Ścieżka prostym językiem i zasoby dla rodziny.",
+  "doctorPersonaTitle": "Lekarz",
+  "doctorPersonaSub": "Pełny tekst wytycznej, algorytmy diagnostyczne, dawkowanie, ślad literaturowy i kolejka proponowanych zmian.",
+  "skeletonNoticeTitle": "Pokrycie szkieletowe.",
+  "skeletonNoticeBody": "Tylko minimalne sekcje — uruchom pełny pipeline przed cytowaniem w decyzjach klinicznych.",
+  "relatedTitle": "Powiązane fenotypy",
+  "tabs": {
+    "overview": "Przegląd",
+    "doctors": "Eksperci",
+    "trials": "Badania",
+    "guidelines": "Wytyczna"
+  },
+  "pathwayTitle": "Algorytm diagnostyczny (streszczenie)",
+  "pathwaySub": "Kolejne kroki wysokiego poziomu, prostym językiem.",
+  "pathwaySteps": [
+    {
+      "title": "Potwierdzenie genetyczne.",
+      "body": "Udokumentuj wariant patogenny; odnotuj mozaikowość, gdy istotna."
+    },
+    {
+      "title": "Wyjściowe obrazowanie i badania laboratoryjne.",
+      "body": "Ustal zakres i zajęcie endokrynne przed terapią."
+    },
+    {
+      "title": "Przegląd wielodyscyplinarny.",
+      "body": "Ortopedia, endokrynologia, genetyka — skoordynowany plan."
+    },
+    {
+      "title": "Terapia i nadzór.",
+      "body": "Stosuj dawkowanie konsensusowe; udokumentuj odstępstwa wraz z uzasadnieniem."
+    }
+  ],
+  "redFlagsTitle": "Sygnały ostrzegawcze w dokumentacji",
+  "redFlags": [
+    { "text": "Cytowanie wytycznej bez sprawdzenia, czy proponowane zmiany nie zastępują jej treści." },
+    { "text": "Terapia poza wskazaniami bez opublikowanych dowodów w tej chorobie." }
+  ],
+  "doctorsTitle": "Eksperci uszeregowani wg PubMed",
+  "doctorsSub_one": "{{count}} autor z ocenioną trafnością dla tej choroby.",
+  "doctorsSub_few": "{{count}} autorów z ocenioną trafnością dla tej choroby.",
+  "doctorsSub_many": "{{count}} autorów z ocenioną trafnością dla tej choroby.",
+  "doctorsSub_other": "{{count}} autorów z ocenioną trafnością dla tej choroby.",
+  "doctorsEmpty": "Uruchom Doctor Finder, aby wypełnić listę ekspertów.",
+  "trialsTitle": "Rekrutujące badania",
+  "trialsSub_one": "{{count}} badanie ze śledzonym statusem rekrutacji.",
+  "trialsSub_few": "{{count}} badania ze śledzonym statusem rekrutacji.",
+  "trialsSub_many": "{{count}} badań ze śledzonym statusem rekrutacji.",
+  "trialsSub_other": "{{count}} badań ze śledzonym statusem rekrutacji.",
+  "trialsEmpty": "Brak zindeksowanych badań.",
+  "guidelinesTitle": "Dokument żywej wytycznej",
+  "guidelinesSub": "Proweniencja na poziomie sekcji, cytowania i różnice proponowanych zmian w kontekście.",
+  "guidelinesCta": "Otwórz pełny dokument",
+  "myCaseCta": "🔒 Moja sprawa",
+  "notifyCta": "🔔 Powiadom mnie",
+  "notifyPendingCta": "🔔 Oczekuje potwierdzenia",
+  "notifySubscribedCta": "🔔 Subskrybujesz",
+  "synthesisCta": "📄 Synteza + źródła",
+  "openPrsTitle": "Zmiany w przeglądzie",
+  "openPrsSubNone": "Brak wersji roboczych oczekujących na przegląd.",
+  "openPrsSub_one": "{{count}} wersja robocza oczekuje na akceptację recenzenta.",
+  "openPrsSub_few": "{{count}} wersje robocze oczekują na akceptację recenzenta.",
+  "openPrsSub_many": "{{count}} wersji roboczych oczekuje na akceptację recenzenta.",
+  "openPrsSub_other": "{{count}} wersji roboczych oczekuje na akceptację recenzenta.",
+  "officialGuidelineTitle": "Aktualna wytyczna konsensusowa",
+  "officialGuidelineSub": "Dokument referencyjny — AI-owy przegląd dowodów, ze źródłami."
+}

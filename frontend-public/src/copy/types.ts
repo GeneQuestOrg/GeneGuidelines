@@ -14,8 +14,9 @@ export interface HomeFind {
 
 /**
  * Homepage copy — draft13 "Koncepcja A, wersja dopracowana v2". The homepage is a
- * single audience-agnostic design, so the parent and doctor audiences share one
- * `homeCopy` object (see ./home.ts).
+ * single audience-agnostic design, so both audiences share one `home` namespace.
+ * Strings live in `src/locales/{en,pl}/home.json`; `buildHomeCopy` reassembles them
+ * into this shape (see ../copy/build.ts).
  */
 export interface HomeCopy {
   /* Hero — WARIANT A (default; wariant B/C kept as comments in ./home.ts). */

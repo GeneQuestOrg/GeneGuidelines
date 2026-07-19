@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Button, Status } from "@gene-guidelines/ui";
 import type { Disease } from "../types";
 import type { DiseaseCopy } from "../copy";
@@ -21,7 +22,15 @@ export function DiseaseHero({
   onNav,
   onSubscribe,
 }: DiseaseHeroProps) {
+  const { t } = useTranslation("common");
   const slug = disease.slug;
+  // The "pending" status carries the safety-critical epistemic frame ("AI-drafted…,
+  // not an official guideline"). Localize it so a Polish reader sees Polish framing;
+  // other statuses keep the shared-UI English defaults for now.
+  const statusOverride =
+    disease.status === "pending"
+      ? { label: t("status.pending.label"), text: t("status.pending.text") }
+      : {};
   const notifyLabel =
     subscriptionStatus === "confirmed"
       ? copy.notifySubscribedCta
@@ -36,7 +45,7 @@ export function DiseaseHero({
         <div className="d-hero__title-block">
           <h1 className="d-hero__name">{disease.name}</h1>
         </div>
-        <Status status={disease.status} />
+        <Status status={disease.status} {...statusOverride} />
       </div>
       <p className="d-hero__summary">{disease.summary}</p>
       <dl className="d-hero__facts">

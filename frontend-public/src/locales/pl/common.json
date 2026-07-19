@@ -1,0 +1,46 @@
+{
+  "nav": {
+    "doctors": "Lekarze",
+    "startResearch": "Zleć research",
+    "about": "O projekcie"
+  },
+  "account": {
+    "account": "Konto",
+    "signIn": "Zaloguj się",
+    "signOut": "Wyloguj się"
+  },
+  "localeSwitcher": {
+    "label": "Język",
+    "english": "English",
+    "polish": "Polski"
+  },
+  "footer": {
+    "brand": "GeneQuest Foundation",
+    "desc": "Żywe wytyczne dla rzadkich chorób genetycznych — AI-owy skrót oficjalnych wytycznych i literatury, ze źródłami, odświeżany na żądanie. Nie oficjalna wytyczna; lekarze mogą go oceniać i zgłaszać uwagi.",
+    "poweredByLead": "Napędzane przez ",
+    "poweredByModel": "Gemma 4",
+    "poweredByTail": " — otwarty model, który może działać lokalnie na urządzeniu, więc dokumenty rodziny są odpersonalizowane, zanim cokolwiek opuści budynek.",
+    "navLabel": "Stopka",
+    "home": "Strona główna",
+    "startResearch": "Zleć research",
+    "about": "O projekcie",
+    "account": "Twoje konto"
+  },
+  "disclaimer": {
+    "doctor": {
+      "title": "Wyłącznie wsparcie decyzji klinicznej",
+      "body": "Ten dokument to wynik oprogramowania opartego na dowodach, do omówienia z zespołem leczącym. Nie zastępuje samodzielnej oceny klinicznej, protokołów instytucji ani bezpośredniego badania pacjenta."
+    },
+    "parent": {
+      "title": "Materiał informacyjny — nie porada medyczna",
+      "body": "To, co tu czytasz, pochodzi z opublikowanych źródeł i może być niepełne lub nieaktualne. Diagnozę, leczenie i dalszą opiekę zawsze potwierdzaj u swoich lekarzy."
+    }
+  },
+  "status": {
+    "pending": {
+      "label": "Ze źródłami",
+      "text": "AI-owy skrót z cytowanych, recenzowanych źródeł — czytaj z lekarzem; nie oficjalna wytyczna."
+    }
+  },
+  "loadingCatalog": "Ładowanie katalogu…"
+}

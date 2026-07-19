@@ -1,14 +1,20 @@
 import { useRef, useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import { AppHeader, AuthModal, useAccount, type NavLink } from "@gene-guidelines/ui";
 import type { Account } from "@gene-guidelines/ui";
 import type { Route } from "../router/types";
+import type { Locale } from "../router/locale";
 import { useAccountContext } from "../auth/accountContext";
 import { AccountMenu } from "../auth/AccountMenu";
+import { LocaleSwitcher } from "./LocaleSwitcher";
 import "./public-header.css";
 
 export interface PublicHeaderProps {
   route: Route;
   onNav: (path: string) => void;
+  locale: Locale;
+  onSetLocale: (locale: Locale) => void;
   authOpen?: boolean;
   onAuthOpenChange?: (open: boolean) => void;
 }
@@ -30,14 +36,14 @@ function routeMatchesNav(route: Route, href: string): boolean {
   return false;
 }
 
-function buildNavLinks(route: Route): NavLink[] {
+function buildNavLinks(route: Route, t: TFunction): NavLink[] {
   // Mirrors the original draft2 layout: three primary links plus the brand
   // logo as the implicit "home" target. Trials live inside individual
   // disease detail views, not as a top-level destination.
   const base = [
-    { href: "/doctors", label: "Doctors" },
-    { href: "/start-research", label: "Start Research" },
-    { href: "/about", label: "About" },
+    { href: "/doctors", label: t("nav.doctors") },
+    { href: "/start-research", label: t("nav.startResearch") },
+    { href: "/about", label: t("nav.about") },
   ];
   return base.map((link) => ({
     ...link,
@@ -48,9 +54,12 @@ function buildNavLinks(route: Route): NavLink[] {
 export function PublicHeader({
   route,
   onNav,
+  locale,
+  onSetLocale,
   authOpen: authOpenProp,
   onAuthOpenChange,
 }: PublicHeaderProps) {
+  const { t } = useTranslation("common");
   const { signInAvailable } = useAccountContext();
   const [account, setAccount] = useAccount();
   const [authOpenLocal, setAuthOpenLocal] = useState(false);
@@ -80,43 +89,49 @@ export function PublicHeader({
 
   // Auth0 mode (env-gated): the AccountMenu owns sign-in/out; the stub controls
   // below only run when no Auth0 tenant is configured.
-  const mobileMenuActions = signInAvailable ? (
-    <AccountMenu onNav={onNav} />
-  ) : account != null ? (
+  const mobileMenuActions = (
     <>
-      <button
-        type="button"
-        className="hdr-mobile-menu__btn"
-        onClick={() => onNav("/account")}
-      >
-        Account
-      </button>
-      <button
-        type="button"
-        className="hdr-mobile-menu__btn"
-        onClick={() => setAccount(null)}
-      >
-        Sign out
-      </button>
+      <LocaleSwitcher locale={locale} onChange={onSetLocale} />
+      {signInAvailable ? (
+        <AccountMenu onNav={onNav} />
+      ) : account != null ? (
+        <>
+          <button
+            type="button"
+            className="hdr-mobile-menu__btn"
+            onClick={() => onNav("/account")}
+          >
+            {t("account.account")}
+          </button>
+          <button
+            type="button"
+            className="hdr-mobile-menu__btn"
+            onClick={() => setAccount(null)}
+          >
+            {t("account.signOut")}
+          </button>
+        </>
+      ) : (
+        <button
+          type="button"
+          className="hdr-mobile-menu__btn hdr-mobile-menu__btn--primary"
+          onClick={() => setAuthOpen(true)}
+        >
+          {t("account.signIn")}
+        </button>
+      )}
     </>
-  ) : (
-    <button
-      type="button"
-      className="hdr-mobile-menu__btn hdr-mobile-menu__btn--primary"
-      onClick={() => setAuthOpen(true)}
-    >
-      Sign in
-    </button>
   );
 
   return (
     <>
       <AppHeader
         variant="public"
-        navLinks={buildNavLinks(route)}
+        navLinks={buildNavLinks(route, t)}
         mobileMenuContent={mobileMenuActions}
       >
         <div className="hdr-actions hdr-actions--desktop" ref={menuRef}>
+          <LocaleSwitcher locale={locale} onChange={onSetLocale} />
           {signInAvailable ? (
             <AccountMenu onNav={onNav} />
           ) : account != null ? (
@@ -140,7 +155,7 @@ export function PublicHeader({
                       onNav("/account");
                     }}
                   >
-                    Account
+                    {t("account.account")}
                   </button>
                   <button
                     type="button"
@@ -150,7 +165,7 @@ export function PublicHeader({
                       setMenuOpen(false);
                     }}
                   >
-                    Sign out
+                    {t("account.signOut")}
                   </button>
                 </div>
               ) : null}
@@ -161,7 +176,7 @@ export function PublicHeader({
               className="hdr-actions__btn hdr-actions__btn--primary"
               onClick={() => setAuthOpen(true)}
             >
-              Sign in
+              {t("account.signIn")}
             </button>
           )}
         </div>

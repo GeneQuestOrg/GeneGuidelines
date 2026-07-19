@@ -1,0 +1,46 @@
+{
+  "nav": {
+    "doctors": "Doctors",
+    "startResearch": "Start Research",
+    "about": "About"
+  },
+  "account": {
+    "account": "Account",
+    "signIn": "Sign in",
+    "signOut": "Sign out"
+  },
+  "localeSwitcher": {
+    "label": "Language",
+    "english": "English",
+    "polish": "Polski"
+  },
+  "footer": {
+    "brand": "GeneQuest Foundation",
+    "desc": "Living guidelines for rare genetic diseases — an AI-drafted, source-cited summary of official guidelines and the literature, refreshed on demand. Not an official guideline; clinicians can rate and flag it.",
+    "poweredByLead": "Powered by ",
+    "poweredByModel": "Gemma 4",
+    "poweredByTail": " — an open model that can run on-device, so a family's documents are de-identified before anything leaves the building.",
+    "navLabel": "Footer",
+    "home": "Home",
+    "startResearch": "Start research",
+    "about": "About the project",
+    "account": "Your account"
+  },
+  "disclaimer": {
+    "doctor": {
+      "title": "Clinical decision support only",
+      "body": "This document is evidence-based software output for discussion with your care team. It does not replace independent clinical judgment, institutional protocols, or direct examination of the patient."
+    },
+    "parent": {
+      "title": "Informational — not medical advice",
+      "body": "What you read here is curated from published sources and may be incomplete or outdated. Always confirm diagnosis, treatment, and follow-up with your own clinicians."
+    }
+  },
+  "status": {
+    "pending": {
+      "label": "Source-backed",
+      "text": "AI-drafted from cited peer-reviewed sources — read with a clinician; not an official guideline."
+    }
+  },
+  "loadingCatalog": "Loading catalog…"
+}

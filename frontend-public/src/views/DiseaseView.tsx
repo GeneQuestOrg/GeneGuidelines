@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { UserLocation } from "../router/types";
-import { getAudienceCopy } from "../copy";
+import { useAudienceCopy } from "../copy";
 import { useAccountContext } from "../auth/accountContext";
 import { audienceForRole, isClinicianView, type ViewRole } from "../auth/resolveRole";
 import { Section, Button } from "@gene-guidelines/ui";
@@ -50,7 +50,7 @@ export function DiseaseView({ slug, role, userLoc, onNav, alert }: DiseaseViewPr
   // so this disease's run is not missed even when several diseases process at once.
   const { runs: activeRuns } = useActiveResearchRuns(50);
   const reprocessingRun = activeRuns.find((r) => r.diseaseSlug === slug) ?? null;
-  const copy = getAudienceCopy(audienceForRole(role)).disease;
+  const copy = useAudienceCopy(audienceForRole(role)).disease;
   const isClinician = isClinicianView(role);
 
   useEffect(() => {

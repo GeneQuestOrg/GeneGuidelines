@@ -31,17 +31,26 @@ export interface StatusProps {
   /** Optional revision date shown after the label (draft12: label + optional date — no names channel). */
   date?: string;
   compact?: boolean;
+  /**
+   * Optional locale-aware overrides for the pill label and hover text. The shared
+   * `packages/ui` stays i18n-agnostic; consumers (e.g. the public site in Polish)
+   * pass translated strings, while the admin app uses the built-in English defaults.
+   */
+  label?: string;
+  text?: string;
 }
 
-export function Status({ status, date, compact = false }: StatusProps) {
+export function Status({ status, date, compact = false, label, text }: StatusProps) {
   const m = STATUS_META[status] ?? STATUS_META.pending;
+  const resolvedLabel = label ?? m.label;
+  const resolvedText = text ?? m.text;
   return (
     <span
       className={`status status--${status}${compact ? " status--compact" : ""}`}
-      title={m.text}
+      title={resolvedText}
     >
       <span className="status__dot" style={{ background: m.dot }} aria-hidden />
-      <span className="status__label">{m.label}</span>
+      <span className="status__label">{resolvedLabel}</span>
       {date != null && !compact ? <span className="status__date">{" · " + date}</span> : null}
     </span>
   );

@@ -1,6 +1,7 @@
-import { lazy, Suspense, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { userLocationFromCity } from "./config/cities";
 import { useHistoryRouter } from "./router/useHistoryRouter";
+import i18n from "./i18n";
 import { useTweaks } from "./hooks/useTweaks";
 import { JudgesBanner } from "./components/JudgesBanner";
 import {
@@ -48,7 +49,24 @@ export default function App() {
 }
 
 function AppShell() {
-  const { route, search, navigate } = useHistoryRouter();
+  const { route, search, navigate, locale, setLocale } = useHistoryRouter();
+  /* URL is the source of truth for locale: keep i18next and the document metadata
+     in sync with the active URL prefix on every navigation. English is the default
+     (unprefixed); Polish is the opt-in alternate under `/pl/`. */
+  useEffect(() => {
+    if (i18n.language !== locale) {
+      void i18n.changeLanguage(locale);
+    }
+    document.documentElement.lang = locale;
+    document
+      .querySelector('meta[property="og:locale"]')
+      ?.setAttribute("content", locale);
+    try {
+      localStorage.setItem("gg.locale", locale);
+    } catch {
+      /* storage blocked (private mode / disabled) — locale still lives in the URL */
+    }
+  }, [locale]);
   /* Judges arriving from the Kaggle submission link (?from=kaggle) get the
      full juror panel; everyone else gets the collapsed ribbon. */
   const fromKaggle = useMemo(
@@ -105,6 +123,8 @@ function AppShell() {
       <PublicHeader
         route={route}
         onNav={navigate}
+        locale={locale}
+        onSetLocale={setLocale}
         authOpen={authOpen}
         onAuthOpenChange={setAuthOpen}
       />
