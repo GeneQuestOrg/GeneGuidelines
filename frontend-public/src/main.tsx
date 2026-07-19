@@ -20,9 +20,17 @@ function redirectLegacyHash(): void {
   const { hash, pathname, search } = window.location;
   if (hash.startsWith("#/") && pathname === "/" && search === "") {
     window.history.replaceState(null, "", hash.slice(1));
+    // `replaceState` fires no `popstate`, so when the app is already mounted
+    // (an old `#/…` link pasted into a loaded tab changes only the hash and
+    // does NOT reload) the history router must be told to re-parse the URL.
+    window.dispatchEvent(new PopStateEvent("popstate"));
   }
 }
 redirectLegacyHash();
+// Load-time call above covers a fresh navigation to `…/#/diseases/fd`. This also
+// covers an in-session hash change (pasting an old `#/…` link into an already-open
+// tab reloads nothing), so backward-compat holds in both cases.
+window.addEventListener("hashchange", redirectLegacyHash);
 
 /**
  * Env-gated Auth0 wiring. When `VITE_AUTH0_DOMAIN` is unset the app renders with
