@@ -1,24 +1,37 @@
 import type { HomeCopy } from "../copy";
-import "../styles/disease-page.css";
+import "../styles/home.css";
 
 export interface NewDiseaseCardProps {
   copy: HomeCopy;
   onNav: (path: string) => void;
 }
 
+/**
+ * Emphasised "run research for any disease" tile (draft13 v2). This is the
+ * primary call in the disease rail — a filled accent card, not a faint dashed
+ * placeholder. Lives inside the `.d-grid`, styled by `.d-card--new` in home.css.
+ */
 export function NewDiseaseCard({ copy, onNav }: NewDiseaseCardProps) {
   return (
     <a
       href="/start-research"
-      className="new-disease-card"
+      className="d-card d-card--new"
       onClick={(e) => {
         e.preventDefault();
         onNav("/start-research");
       }}
     >
-      <h3 className="new-disease-card__title">{copy.newDiseaseTitle}</h3>
-      <p className="new-disease-card__sub">{copy.newDiseaseSub}</p>
-      <span className="new-disease-card__cta">{copy.newDiseaseCta}</span>
+      <span className="d-card__neweyebrow">
+        <span aria-hidden>◆</span> {copy.newDiseaseEyebrow}
+      </span>
+      <div className="d-card__newic" aria-hidden>
+        +
+      </div>
+      <h3 className="d-card__newt">{copy.newDiseaseTitle}</h3>
+      <p className="d-card__news">{copy.newDiseaseSub}</p>
+      <span className="d-card__newcta">
+        {copy.newDiseaseCta} <span className="arw" aria-hidden>→</span>
+      </span>
     </a>
   );
 }

@@ -1,18 +1,68 @@
 import type { AudienceView } from "../router/types";
 
+/** A tappable example chip in the "I don't know the diagnosis" card. */
+export interface HomeExample {
+  label: string;
+  hint: string;
+}
+
+/** One "Co tu znajdziesz" plain-language point. */
+export interface HomeFind {
+  title: string;
+  body: string;
+}
+
+/**
+ * Homepage copy — draft13 "Koncepcja A, wersja dopracowana v2". The homepage is a
+ * single audience-agnostic design, so the parent and doctor audiences share one
+ * `homeCopy` object (see ./home.ts).
+ */
 export interface HomeCopy {
+  /* Hero — WARIANT A (default; wariant B/C kept as comments in ./home.ts). */
   eyebrow: string;
   titleLine1: string;
   titleEmphasis: string;
   subtitle: string;
+
+  /* LEFT card — "I know the disease". */
+  knowKicker: string;
+  knowTitle: string;
+  knowDesc: string;
   searchPlaceholder: string;
-  aboutLinkLabel: string;
-  browseCta: string;
-  researchCta: string;
+  searchHint: string;
+
+  /* RIGHT card — "I don't know the diagnosis". */
+  dontKicker: string;
+  dontBadge: string;
+  dontTitle: string;
+  dontDescLead: string;
+  dontDescEmph: string;
+  symptomPlaceholder: string;
+  symptomExamples: readonly HomeExample[];
+  dontCta: string;
+
+  /* "Co tu znajdziesz" + honest disclosure. */
+  findsTitle: string;
+  findsSub: string;
+  finds: readonly HomeFind[];
+  honestFootnote: string;
+  honestLinkLabel: string;
+
+  /* "Ostatnio dodane" disease rail. */
+  diseasesSectionTitle: string;
+  diseasesSectionSub: string;
+
+  /* Emphasised "run research for any disease" tile. */
+  newDiseaseEyebrow: string;
   newDiseaseTitle: string;
   newDiseaseSub: string;
   newDiseaseCta: string;
-  diseasesSectionTitle: string;
+
+  /* Feedback bar — "add your disease". */
+  addTitle: string;
+  addSub: string;
+  addPlaceholder: string;
+  addCta: string;
 }
 
 export interface PathwayStep {

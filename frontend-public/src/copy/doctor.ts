@@ -1,22 +1,8 @@
+import { homeCopy } from "./home";
 import type { AudienceCopy } from "./types";
 
 export const doctorCopy: AudienceCopy = {
-  home: {
-    eyebrow: "GeneQuest Foundation · Living guidelines",
-    titleLine1: "Evidence-based guidelines for",
-    titleEmphasis: "rare genetic disease.",
-    subtitle:
-      "Specialist-reviewed pathways, literature, and proposed-update workflows — built for clinical practice.",
-    searchPlaceholder: "Search diseases, genes, OMIM, or phenotype…",
-    aboutLinkLabel: "Why we built this",
-    browseCta: "Browse diseases",
-    researchCta: "Start research",
-    newDiseaseTitle: "Add a new disease",
-    newDiseaseSub:
-      "Launch the PubMed pipeline to draft sections, surface experts, and open proposed updates for consortium review.",
-    newDiseaseCta: "Start research →",
-    diseasesSectionTitle: "Disease catalog",
-  },
+  home: homeCopy,
   disease: {
     personaLabel: "You are reading as",
     parentPersonaTitle: "Patient / caregiver",

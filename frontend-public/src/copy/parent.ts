@@ -1,22 +1,8 @@
+import { homeCopy } from "./home";
 import type { AudienceCopy } from "./types";
 
 export const parentCopy: AudienceCopy = {
-  home: {
-    eyebrow: "GeneQuest Foundation · Living guidelines",
-    titleLine1: "Clear answers for families",
-    titleEmphasis: "navigating rare genetic disease.",
-    subtitle:
-      "Living guidelines, specialists, and trials in one place — every change reviewed by experts.",
-    searchPlaceholder: "Search diseases, genes, or symptoms…",
-    aboutLinkLabel: "Why we built this",
-    browseCta: "Browse all diseases",
-    researchCta: "Start research",
-    newDiseaseTitle: "Don't see your condition?",
-    newDiseaseSub:
-      "Start an AI research run — we scan PubMed, surface specialists and trials, and draft a first guideline for review.",
-    newDiseaseCta: "Start research →",
-    diseasesSectionTitle: "Diseases",
-  },
+  home: homeCopy,
   disease: {
     personaLabel: "You are reading as",
     parentPersonaTitle: "Patient / caregiver",
