@@ -104,3 +104,74 @@ def test_filter_drops_irrelevant() -> None:
     assert dropped == 1
     assert len(kept) == 1
     assert kept[0]["pmid"] == "2"
+
+
+# -- gene-aware search (ultra-rare diseases: name finds ~0 papers, gene finds experts) ------
+
+
+def test_build_query_includes_gene_when_present() -> None:
+    q = build_doctor_finder_pubmed_query(
+        "Severe growth deficiency-strabismus-extensive dermal melanocytosis-"
+        "intellectual disability syndrome",
+        [],
+        clinical_focus=True,
+        gene="PUS3",
+    )
+    # Gene is OR'd into the disease block as a Title/Abstract phrase (no invalid [Gene] field).
+    assert '"PUS3"[Title/Abstract]' in q
+    assert "[Gene]" not in q
+    assert " OR " in q  # gene phrase OR'd with the disease phrase
+    assert "humans[MeSH Terms]" in q  # still scoped to human clinical literature
+
+
+def test_build_query_omits_gene_when_absent() -> None:
+    q_none = build_doctor_finder_pubmed_query("fibrous dysplasia", [], clinical_focus=True)
+    q_empty = build_doctor_finder_pubmed_query(
+        "fibrous dysplasia", [], clinical_focus=True, gene=""
+    )
+    assert "Title/Abstract" in q_none
+    # No gene term appears, and empty/None behave identically (graceful degradation).
+    assert q_none == q_empty
+
+
+def test_build_query_skips_too_short_gene() -> None:
+    # A 1–2 char "symbol" is too collision-prone to admit as an OR term.
+    q = build_doctor_finder_pubmed_query("some disease", [], clinical_focus=False, gene="X")
+    assert '"X"[Title/Abstract]' not in q
+
+
+def test_article_relevant_by_gene_when_name_absent() -> None:
+    # Paper never names the (ultra-rare) disease, only the gene — still relevant via gene.
+    assert article_text_relevant_to_disease(
+        title="Biallelic PUS3 mutations cause intellectual disability and growth failure",
+        abstract="",
+        disease_name="Severe growth deficiency-strabismus syndrome",
+        aliases=[],
+        gene="PUS3",
+    )
+
+
+def test_gene_match_is_whole_token_not_substring() -> None:
+    # Gene 'PUS3' must not match inside a longer token like 'PUS3X'.
+    assert not article_text_relevant_to_disease(
+        title="Characterisation of the PUS3X pseudogene locus in rodents",
+        abstract="",
+        disease_name="Severe growth deficiency-strabismus syndrome",
+        aliases=[],
+        gene="PUS3",
+    )
+
+
+def test_filter_keeps_gene_sourced_article() -> None:
+    arts = [
+        {"pmid": "1", "title": "Unrelated cardiology cohort study", "abstract": ""},
+        {"pmid": "2", "title": "PUS3-related disorder: a new case series", "abstract": ""},
+    ]
+    kept, dropped = filter_articles_by_disease_text(
+        arts,
+        disease_name="Severe growth deficiency-strabismus syndrome",
+        aliases=[],
+        gene="PUS3",
+    )
+    assert dropped == 1
+    assert [a["pmid"] for a in kept] == ["2"]

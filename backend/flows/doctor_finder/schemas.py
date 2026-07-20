@@ -27,6 +27,11 @@ class DoctorFinderInput(BaseModel, frozen=True):
 
     disease_name: str = Field(min_length=1, max_length=500)
     disease_aliases: list[str] = Field(default_factory=list, max_length=20)
+    """Causative gene symbol (e.g. GNAS, ACVR1, PUS3). OR'd into the PubMed search so that
+    ultra-rare diseases whose NAME finds ~0 papers still return the authors who publish on
+    the gene. Optional; when empty the backend resolves it from the disease row, and if that
+    also yields nothing the search degrades gracefully to name + aliases."""
+    gene: Optional[str] = Field(default=None, max_length=64)
     country: Optional[str] = None
     continent: Optional[str] = None
     max_results: int = Field(default=200, ge=1, le=500)

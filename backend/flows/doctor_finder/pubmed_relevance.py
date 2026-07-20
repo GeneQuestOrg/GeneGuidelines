@@ -43,14 +43,48 @@ def _phrase_ta(term: str) -> str:
     return f'"{inner}"[Title/Abstract]'
 
 
+# Shortest gene symbol we will search on / treat as a relevance anchor. A 1–2 char
+# token is too collision-prone (matches unrelated abbreviations); 3+ covers real
+# symbols like PUS3, GNAS, ACVR1 without ballooning recall.
+_MIN_GENE_CHARS = 3
+
+
+def _normalize_gene(gene: str | None) -> str:
+    """Trimmed gene symbol, or '' when absent / too short to use safely."""
+    g = (gene or "").strip()
+    return g if len(g) >= _MIN_GENE_CHARS else ""
+
+
+def gene_symbol_in_text(text: str, gene: str | None) -> bool:
+    """True when the gene symbol appears as a standalone token (case-insensitive).
+
+    Uses alphanumeric boundaries rather than ``\\b`` so 'PUS3' matches 'PUS3' but not
+    'PUS3X' / 'aPUS3' — keeping short symbols from leaking as substrings of longer words.
+    """
+    g = _normalize_gene(gene)
+    if not g or not text:
+        return False
+    pattern = rf"(?<![A-Za-z0-9]){re.escape(g)}(?![A-Za-z0-9])"
+    return re.search(pattern, text, re.IGNORECASE) is not None
+
+
 def build_doctor_finder_pubmed_query(
     disease_name: str,
     aliases: list[str],
     *,
     clinical_focus: bool,
+    gene: str | None = None,
     min_alias_or_chars: int = DOCTOR_FINDER_MIN_ALIAS_OR_CHARS,
 ) -> str:
-    """Build an esearch query: OR of TA phrases (disease + long aliases) plus optional clinical filter."""
+    """Build an esearch query: OR of TA phrases (disease + long aliases + optional gene)
+    plus an optional clinical filter.
+
+    For ultra-rare diseases the NAME yields ~0 PubMed papers, so the causative gene is
+    the real handle on the expert literature: OR-ing ``"GENE"[Title/Abstract]`` in surfaces
+    the authors who actually publish on it. We scope the gene to Title/Abstract (not a bare
+    all-fields term, and not a ``[Gene]`` field — PubMed has no such search field) and keep
+    the ``humans[MeSH Terms]`` / anti-veterinary clinical filter, so recall stays bounded.
+    """
     parts: list[str] = []
     primary = _phrase_ta(disease_name)
     if primary:
@@ -63,6 +97,11 @@ def build_doctor_finder_pubmed_query(
         p = _phrase_ta(a)
         if p and p not in parts:
             parts.append(p)
+    gene_sym = _normalize_gene(gene)
+    if gene_sym:
+        gene_phrase = _phrase_ta(gene_sym)
+        if gene_phrase and gene_phrase not in parts:
+            parts.append(gene_phrase)
     if not parts:
         inner = disease_name.replace('"', "").strip() or "disease"
         parts.append(_phrase_ta(inner))
@@ -114,6 +153,7 @@ def article_text_relevant_to_disease(
     abstract: str,
     disease_name: str,
     aliases: list[str],
+    gene: str | None = None,
     publication_types: list[str] | None = None,
     strong_alias_chars: int = DOCTOR_FINDER_STRONG_ALIAS_SUBSTRING_CHARS,
     medium_alias_chars: int = DOCTOR_FINDER_MEDIUM_ALIAS_SUBSTRING_CHARS,
@@ -137,11 +177,16 @@ def article_text_relevant_to_disease(
     """
     anchors = _anchor_tokens_from_disease(disease_name)
     core = disease_name.strip().lower()
+    gene_sym = _normalize_gene(gene)
 
     def _matches(topic: str) -> bool:
         if core and core in topic:
             return True
         if len(anchors) >= 2 and all(t in topic for t in anchors[:2]):
+            return True
+        # Gene symbol is the disease's real handle for gene-only-known conditions —
+        # a standalone-token match counts like a strong alias (same title/lead rules apply).
+        if gene_sym and gene_symbol_in_text(topic, gene_sym):
             return True
         for a in aliases:
             s = a.strip().lower()
@@ -175,6 +220,7 @@ def filter_articles_by_disease_text(
     *,
     disease_name: str,
     aliases: list[str],
+    gene: str | None = None,
 ) -> tuple[list[dict[str, Any]], int]:
     """Drop articles whose title + abstract lead do not match ``article_text_relevant_to_disease``."""
     kept: list[dict[str, Any]] = []
@@ -186,6 +232,7 @@ def filter_articles_by_disease_text(
             abstract=abstract,
             disease_name=disease_name,
             aliases=aliases,
+            gene=gene,
             publication_types=a.get("publication_types") or [],
         ):
             kept.append(a)

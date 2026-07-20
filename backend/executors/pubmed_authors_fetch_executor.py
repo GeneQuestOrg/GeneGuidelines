@@ -23,6 +23,9 @@ class PubmedAuthorsFetchExecutor(NodeExecutor):
         initial = input.initial_data or {}
         disease_name = str(initial.get("disease_name") or "").strip()
         aliases: list[str] = [str(a) for a in (initial.get("disease_aliases") or []) if str(a).strip()]
+        # Causative gene symbol (from the disease row, threaded in by the router). For
+        # ultra-rare diseases the NAME finds ~0 papers; the gene surfaces the real experts.
+        gene = str(initial.get("gene") or "").strip()
         try:
             from ..config import DOCTOR_FINDER_MAX_PMIDS
         except ImportError:  # pragma: no cover - flat-layout import shim
@@ -45,7 +48,9 @@ class PubmedAuthorsFetchExecutor(NodeExecutor):
             filter_articles_by_disease_text,
         )
 
-        query = build_doctor_finder_pubmed_query(disease_name, aliases, clinical_focus=clinical_focus)
+        query = build_doctor_finder_pubmed_query(
+            disease_name, aliases, clinical_focus=clinical_focus, gene=gene
+        )
 
         bundle: FlowRuntimeBundle | None = input.flow_runtime
         emit = bundle.emit_fn if bundle else lambda q, p: None
@@ -53,8 +58,8 @@ class PubmedAuthorsFetchExecutor(NodeExecutor):
 
         emit(eq, {"kind": _DOCTOR_FINDER_PROGRESS_KIND, "stage": "search", "query": query})
         log.info(
-            "doctor_finder: searching PubMed query=%r max_pmids=%d page_size=%d variants=%d",
-            query, max_pmids, page_size, len(query_variants or []),
+            "doctor_finder: searching PubMed query=%r gene=%r max_pmids=%d page_size=%d variants=%d",
+            query, gene or None, max_pmids, page_size, len(query_variants or []),
         )
 
         try:
@@ -110,6 +115,7 @@ class PubmedAuthorsFetchExecutor(NodeExecutor):
             articles,
             disease_name=disease_name,
             aliases=aliases,
+            gene=gene,
         )
         if dropped:
             log.info(
@@ -123,7 +129,7 @@ class PubmedAuthorsFetchExecutor(NodeExecutor):
         from ..flows.doctor_finder.paper_scoring import annotate_articles_with_evidence
 
         mesh_major = annotate_articles_with_evidence(
-            articles, disease_name=disease_name, aliases=aliases
+            articles, disease_name=disease_name, aliases=aliases, gene=gene
         )
         log.info(
             "doctor_finder: scored %d kept articles (%d are a MeSH-major topic for the disease)",

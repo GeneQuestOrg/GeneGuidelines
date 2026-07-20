@@ -182,6 +182,35 @@ def test_run_result_structure(client):
     assert result["disease_name"] == "fibrous dysplasia"
 
 
+def test_resolve_disease_gene_from_row():
+    """Router resolves the causative gene from the disease catalog row (threading path)."""
+    from backend.routers.doctor_finder import _resolve_disease_gene
+
+    with (
+        patch("backend.doctor_catalog.catalog_slug_for_finder_input", return_value="pus3-syndrome"),
+        patch("backend.content_db.get_disease_by_slug", return_value={"gene": "PUS3"}),
+    ):
+        assert _resolve_disease_gene("Severe growth deficiency-strabismus syndrome") == "PUS3"
+
+
+def test_resolve_disease_gene_graceful_when_unresolved():
+    """No slug / no row / no gene → empty string (search degrades to name+aliases)."""
+    from backend.routers.doctor_finder import _resolve_disease_gene
+
+    with patch("backend.doctor_catalog.catalog_slug_for_finder_input", return_value=None):
+        assert _resolve_disease_gene("Totally unknown disease") == ""
+    with (
+        patch("backend.doctor_catalog.catalog_slug_for_finder_input", return_value="x"),
+        patch("backend.content_db.get_disease_by_slug", return_value=None),
+    ):
+        assert _resolve_disease_gene("x") == ""
+    with (
+        patch("backend.doctor_catalog.catalog_slug_for_finder_input", return_value="x"),
+        patch("backend.content_db.get_disease_by_slug", return_value={"gene": ""}),
+    ):
+        assert _resolve_disease_gene("x") == ""
+
+
 def test_run_defaults_clinical_focus_true(client):
     """POST /run without clinical_focus should use model default=True."""
     with patch(

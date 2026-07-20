@@ -150,6 +150,75 @@ def test_central_flag_false_for_minor_mesh_and_lead_only():
     assert lead.central is False
 
 
+# -- gene-sourced centrality (ultra-rare disease found via its gene) ---------
+
+
+PUS3_DISEASE = "Severe growth deficiency-strabismus syndrome"
+
+
+def test_gene_in_title_is_central_even_without_disease_name():
+    ev = score_paper(
+        article={
+            "pmid": "1",
+            "title": "Biallelic PUS3 variants cause intellectual disability",
+            "abstract": "x",
+            "publication_types": ["Journal Article"],
+            "mesh_terms": [],
+        },
+        disease_name=PUS3_DISEASE,
+        aliases=[],
+        gene="PUS3",
+    )
+    # Gene named in the title == "about it" — earns title centrality + the admission flag.
+    assert ev.centrality == 0.75
+    assert ev.central is True
+
+
+def test_gene_only_in_lead_is_kept_but_not_central():
+    ev = score_paper(
+        article={
+            "pmid": "2",
+            "title": "A broad review of tRNA modification disorders",
+            "abstract": "Among many genes discussed, PUS3 is mentioned as one example.",
+            "publication_types": ["Journal Article"],
+            "mesh_terms": [],
+        },
+        disease_name=PUS3_DISEASE,
+        aliases=[],
+        gene="PUS3",
+    )
+    assert ev.centrality == 0.4  # abstract-lead only
+    assert ev.central is False
+
+
+def test_no_gene_signal_scores_weak():
+    ev = score_paper(
+        article={
+            "pmid": "3",
+            "title": "Unrelated cardiology cohort study",
+            "abstract": "No relevant content here.",
+            "publication_types": ["Journal Article"],
+            "mesh_terms": [],
+        },
+        disease_name=PUS3_DISEASE,
+        aliases=[],
+        gene="PUS3",
+    )
+    assert ev.central is False
+
+
+def test_annotate_threads_gene():
+    arts = [{
+        "pmid": "1",
+        "title": "PUS3-related neurodevelopmental disorder: case series",
+        "abstract": "",
+        "publication_types": ["Journal Article"],
+        "mesh_terms": [],
+    }]
+    annotate_articles_with_evidence(arts, disease_name=PUS3_DISEASE, aliases=[], gene="PUS3")
+    assert arts[0]["central"] is True
+
+
 # -- author scoring consumes per-paper relevance -----------------------------
 
 

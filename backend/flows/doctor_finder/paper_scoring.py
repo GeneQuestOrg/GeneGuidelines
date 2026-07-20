@@ -23,7 +23,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from .pubmed_relevance import _anchor_tokens_from_disease
+from .pubmed_relevance import _anchor_tokens_from_disease, gene_symbol_in_text
 
 # Centrality: how much the paper is ABOUT the disease (best signal wins).
 CENTRALITY_MESH_MAJOR = 1.0  # disease is a MAJOR MeSH topic — the paper is about it
@@ -112,7 +112,9 @@ def _disease_in_mesh(
     return matched, False, descriptor
 
 
-def _disease_in_text(text: str, disease_name: str, aliases: list[str]) -> bool:
+def _disease_in_text(
+    text: str, disease_name: str, aliases: list[str], gene: str | None = None
+) -> bool:
     t = (text or "").lower()
     if not t:
         return False
@@ -122,11 +124,20 @@ def _disease_in_text(text: str, disease_name: str, aliases: list[str]) -> bool:
     anchors = _anchor_tokens_from_disease(disease_name)
     if len(anchors) >= 2 and all(a in t for a in anchors[:2]):
         return True
+    if gene and gene_symbol_in_text(text, gene):
+        return True
     return any(a.strip().lower() in t for a in aliases if len(a.strip()) >= 5)
 
 
-def score_paper(*, article: dict, disease_name: str, aliases: list[str]) -> PaperEvidence:
-    """Grade one fetched article's disease-evidence strength. Pure + deterministic."""
+def score_paper(
+    *, article: dict, disease_name: str, aliases: list[str], gene: str | None = None
+) -> PaperEvidence:
+    """Grade one fetched article's disease-evidence strength. Pure + deterministic.
+
+    For gene-only-known ultra-rare diseases the causative gene symbol in the title is
+    as strong an "about it" signal as the disease name — it earns CENTRALITY_TITLE and
+    thus the ``central`` admission flag, so its authors are not filtered out downstream.
+    """
     reasons: list[str] = []
 
     mesh_matched, mesh_major, mesh_desc = _disease_in_mesh(
@@ -139,15 +150,15 @@ def score_paper(*, article: dict, disease_name: str, aliases: list[str]) -> Pape
     if mesh_major:
         centrality = CENTRALITY_MESH_MAJOR
         reasons.append(f"MeSH major topic: {mesh_desc}")
-    elif _disease_in_text(title, disease_name, aliases):
+    elif _disease_in_text(title, disease_name, aliases, gene):
         centrality = CENTRALITY_TITLE
-        reasons.append("disease in title")
+        reasons.append("disease/gene in title")
     elif mesh_matched:
         centrality = CENTRALITY_MESH_MINOR
         reasons.append(f"MeSH topic (minor): {mesh_desc}")
-    elif _disease_in_text(lead, disease_name, aliases):
+    elif _disease_in_text(lead, disease_name, aliases, gene):
         centrality = CENTRALITY_LEAD
-        reasons.append("disease in abstract lead")
+        reasons.append("disease/gene in abstract lead")
     else:
         centrality = CENTRALITY_WEAK
         reasons.append("no clear centrality signal")
@@ -169,13 +180,13 @@ def score_paper(*, article: dict, disease_name: str, aliases: list[str]) -> Pape
 
 
 def annotate_articles_with_evidence(
-    articles: list[dict], *, disease_name: str, aliases: list[str]
+    articles: list[dict], *, disease_name: str, aliases: list[str], gene: str | None = None
 ) -> int:
     """Score each article in place (sets ``relevance`` + ``mesh_major``). Returns the
     count flagged as MeSH-major (i.e. genuinely about the disease) — handy for logs."""
     major = 0
     for a in articles:
-        ev = score_paper(article=a, disease_name=disease_name, aliases=aliases)
+        ev = score_paper(article=a, disease_name=disease_name, aliases=aliases, gene=gene)
         a["relevance"] = ev.relevance
         a["mesh_major"] = ev.mesh_major
         a["central"] = ev.central

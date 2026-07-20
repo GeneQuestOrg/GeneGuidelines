@@ -157,6 +157,36 @@ def _emit(event_queue: Queue, payload: dict) -> None:
         event_queue.put(payload)
 
 
+def _resolve_disease_gene(disease_name: str) -> str:
+    """Best-effort causative gene symbol for a disease, read from the content catalog row.
+
+    Ultra-rare diseases often have ~0 PubMed hits by name, so the gene is the real handle
+    on the expert literature (df-1 OR's it into the esearch query). Returns "" when the
+    disease can't be resolved to a catalog slug or the row carries no gene — the search
+    then degrades gracefully to disease name + aliases.
+    """
+    name = (disease_name or "").strip()
+    if not name:
+        return ""
+    try:
+        from ..content_db import get_disease_by_slug
+        from ..doctor_catalog import catalog_slug_for_finder_input
+    except ImportError:  # pragma: no cover - flat-layout import shim
+        from content_db import get_disease_by_slug  # type: ignore[no-redef]
+        from doctor_catalog import catalog_slug_for_finder_input  # type: ignore[no-redef]
+    try:
+        slug = catalog_slug_for_finder_input(name)
+        if not slug:
+            return ""
+        disease = get_disease_by_slug(slug)
+        if not isinstance(disease, dict):
+            return ""
+        return str(disease.get("gene") or "").strip()
+    except Exception:
+        log.exception("doctor_finder: gene lookup failed for disease=%r", name)
+        return ""
+
+
 def _resolve_llm_model_spec(ctx: dict) -> str:
     """Pick pydantic-ai model spec for simple LLM calls (alias suggest, df-7)."""
     raw = (ctx.get("llm_model_override") or "").strip()
@@ -202,6 +232,21 @@ async def _execute_doctor_finder(
                     "kind": "sys",
                     "text": f"[SYSTEM] doctor_finder: using {len(ctx_dict['disease_aliases'])} disease alias(es) for PubMed.",
                 },
+            )
+
+        # Thread the disease's causative gene into df-1's PubMed search. Explicit input wins;
+        # otherwise resolve it from the disease row so ultra-rare diseases (name → ~0 papers)
+        # still return the authors who publish on the gene. Empty gene degrades to name+aliases.
+        gene_in = str(ctx_dict.get("gene") or "").strip()
+        if not gene_in:
+            resolved_gene = _resolve_disease_gene(str(ctx_dict.get("disease_name") or ""))
+            if resolved_gene:
+                ctx_dict["gene"] = resolved_gene
+                gene_in = resolved_gene
+        if gene_in:
+            _emit(
+                event_queue,
+                {"kind": "sys", "text": f"[SYSTEM] doctor_finder: including gene {gene_in} in PubMed search."},
             )
 
         store["initial_context"] = ctx_dict
