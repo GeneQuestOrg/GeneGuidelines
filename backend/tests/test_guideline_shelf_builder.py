@@ -93,7 +93,7 @@ def test_shelf_search_returns_candidates(monkeypatch) -> None:
     ]
     monkeypatch.setattr(
         "backend.executors.guideline_shelf_search_executor._collect_shelf_candidates",
-        lambda name: fake,
+        lambda name, gene=None: fake,
     )
     ex = GuidelineShelfSearchExecutor()
     out = asyncio.run(
@@ -101,6 +101,97 @@ def test_shelf_search_returns_candidates(monkeypatch) -> None:
     )
     assert out.data["ok"] is True
     assert out.data["candidate_count"] == 2
+
+
+# ── gene-aware shelf search (ultra-rare: name finds ~0 sources, gene finds them) ──
+
+
+def test_collect_shelf_candidates_ors_gene_into_pubmed_and_books(monkeypatch) -> None:
+    """Gene is OR'd into every PubMed query (Title/Abstract) and adds Bookshelf queries."""
+    from backend.executors import guideline_shelf_search_executor as se
+
+    calls: list[tuple[str, str]] = []
+    monkeypatch.setattr(se, "_esearch_ids", lambda db, term, retmax: calls.append((db, term)) or [])
+    # No pmids returned → fetch_article_details_impl is never reached (no network).
+    se._collect_shelf_candidates("Ultra Rare Disease", gene="PUS3")
+
+    pubmed_terms = [t for db, t in calls if db == "pubmed"]
+    books_terms = [t for db, t in calls if db == "books"]
+    assert pubmed_terms and books_terms
+    for t in pubmed_terms:
+        assert '"PUS3"[Title/Abstract]' in t  # gene OR'd in, Title/Abstract scoped
+        assert '"Ultra Rare Disease"[Title/Abstract]' in t  # disease name kept
+        assert " OR " in t  # OR (broaden) not AND (narrow)
+        assert "[Gene]" not in t  # no invalid PubMed field
+    # GeneReviews is gene-titled → a gene Bookshelf query is added.
+    assert any('"PUS3"' in t for t in books_terms)
+
+
+def test_collect_shelf_candidates_omits_gene_when_absent_or_short(monkeypatch) -> None:
+    from backend.executors import guideline_shelf_search_executor as se
+
+    for gene in (None, "", "X"):  # absent / empty / too-short (<3 chars)
+        calls: list[tuple[str, str]] = []
+        monkeypatch.setattr(se, "_esearch_ids", lambda db, term, retmax: calls.append((db, term)) or [])
+        se._collect_shelf_candidates("Fibrous Dysplasia", gene=gene)
+        pubmed_terms = [t for db, t in calls if db == "pubmed"]
+        assert pubmed_terms
+        for t in pubmed_terms:
+            assert "OR" not in t.split("AND")[0]  # disease block is name-only (no gene OR)
+            assert '"Fibrous Dysplasia"[Title/Abstract]' in t
+
+
+def test_shelf_search_resolves_gene_from_disease_row(monkeypatch) -> None:
+    """Executor resolves the causative gene from the disease_slug row and threads it in."""
+    from backend.executors import guideline_shelf_search_executor as se
+
+    captured: dict[str, object] = {}
+
+    def _fake_collect(name, gene=None):
+        captured["name"] = name
+        captured["gene"] = gene
+        return [{"pmid": "1", "title": "t", "authors": "", "journal": "", "year": "2020", "abstract": ""}]
+
+    monkeypatch.setattr(se, "_collect_shelf_candidates", _fake_collect)
+    monkeypatch.setattr("backend.content_db.get_disease_gene", lambda slug: "PUS3")
+    ex = se.GuidelineShelfSearchExecutor()
+    out = asyncio.run(
+        ex.execute(
+            NodeInput(
+                node_config={},
+                context={},
+                initial_data={"disease_name": "Ultra Rare", "disease_slug": "pus3-syndrome"},
+            )
+        )
+    )
+    assert out.data["ok"] is True
+    assert captured["gene"] == "PUS3"
+
+
+def test_shelf_search_explicit_gene_wins_over_row(monkeypatch) -> None:
+    from backend.executors import guideline_shelf_search_executor as se
+
+    captured: dict[str, object] = {}
+    monkeypatch.setattr(
+        se, "_collect_shelf_candidates", lambda name, gene=None: captured.update(gene=gene) or [{"pmid": "1", "title": "t"}]
+    )
+    # Row resolver must NOT be consulted when an explicit gene is supplied.
+    monkeypatch.setattr(
+        "backend.content_db.get_disease_gene",
+        lambda slug: (_ for _ in ()).throw(AssertionError("row resolver should not be called")),
+    )
+    ex = se.GuidelineShelfSearchExecutor()
+    out = asyncio.run(
+        ex.execute(
+            NodeInput(
+                node_config={},
+                context={},
+                initial_data={"disease_name": "D", "disease_slug": "s", "gene": "ACVR1"},
+            )
+        )
+    )
+    assert out.data["ok"] is True
+    assert captured["gene"] == "ACVR1"
 
 
 def test_shelf_search_missing_disease_name() -> None:

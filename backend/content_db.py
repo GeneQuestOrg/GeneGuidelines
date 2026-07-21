@@ -2,10 +2,13 @@
 from __future__ import annotations
 
 import json
+import logging
 import re
 from datetime import date
 from pathlib import Path
 from typing import Any
+
+log = logging.getLogger(__name__)
 
 try:
     from .config import BACKEND_DIR
@@ -1128,6 +1131,27 @@ def get_disease_by_slug(
     if row is None:
         return None
     return _row_to_disease(row, include_prompt_profile=include_prompt_profile)
+
+
+def get_disease_gene(slug: str) -> str:
+    """Best-effort causative gene symbol for a disease slug, read from the catalog row.
+
+    Ultra-rare diseases yield ~0 hits when searched by NAME, so the literature finders
+    OR the causative gene into their PubMed / registry queries (mirrors the doctor-finder
+    gene work). Returns "" when the slug is empty / unknown, the row is missing, or it
+    carries no gene — callers then degrade gracefully to a name-only search.
+    """
+    s = (slug or "").strip()
+    if not s:
+        return ""
+    try:
+        disease = get_disease_by_slug(s)
+    except Exception:
+        log.exception("get_disease_gene: lookup failed for slug=%r", s)
+        return ""
+    if not isinstance(disease, dict):
+        return ""
+    return str(disease.get("gene") or "").strip()
 
 
 # Trial statuses counted as "active recruiting" on the public home view.

@@ -47,6 +47,7 @@ from ..content.official_guideline import (
     SqlaOfficialGuidelineRepo,
 )
 from ..content.repository import SqlaDiseaseRepo
+from ..flows.doctor_finder.pubmed_relevance import _normalize_gene
 
 log = logging.getLogger(__name__)
 
@@ -124,10 +125,27 @@ def _http_get_json(url: str) -> dict[str, Any]:
         return json.load(r)
 
 
-def _pubmed_search(disease_name: str) -> list[str]:
-    """Return up to ``_MAX_CANDIDATES`` PMIDs from PubMed esearch."""
+def _resolve_gene_for_slug(disease_slug: str) -> str:
+    """Causative gene symbol for the disease row (''=absent/unresolved → name-only search)."""
+    try:
+        from ..content_db import get_disease_gene
+    except ImportError:  # pragma: no cover - flat-layout import shim
+        from content_db import get_disease_gene  # type: ignore[no-redef]
+    return get_disease_gene(disease_slug)
+
+
+def _pubmed_search(disease_name: str, gene: str | None = None) -> list[str]:
+    """Return up to ``_MAX_CANDIDATES`` PMIDs from PubMed esearch.
+
+    For ultra-rare diseases the NAME finds ~0 consensus papers; OR the causative gene in
+    as a Title/Abstract phrase (kept under the consensus/guideline + Review AND-filter so
+    recall stays bounded). Empty / too-short gene → name-only (graceful degradation).
+    """
+    gene_sym = _normalize_gene(gene)
+    name_ta = f'"{disease_name}"[Title/Abstract]'
+    disease_block = f'({name_ta} OR "{gene_sym}"[Title/Abstract])' if gene_sym else name_ta
     term = (
-        f'"{disease_name}"[Title/Abstract] AND '
+        f"{disease_block} AND "
         f"(consensus OR guideline OR \"best practice\") AND "
         f"Review[ptyp]"
     )
@@ -197,13 +215,18 @@ def _resolve_gemma_model_spec() -> str:
 async def _rank_with_gemma(
     disease_name: str,
     candidates: list[dict[str, Any]],
+    gene: str | None = None,
 ) -> tuple[_RankedConsensus, str]:
     """Send the candidate list to Gemma, return the structured pick + the model spec used."""
     from ._model_resolver import run_structured_with_ollama_fallback
 
     primary_spec = _resolve_gemma_model_spec()
+    # Name the causative gene so a guideline that titles the gene (not the rare disease name)
+    # is recognised as on-topic rather than dismissed — same reasoning as doctor-finder.
+    gene_sym = _normalize_gene(gene)
+    gene_ctx = f" (causative gene: {gene_sym})" if gene_sym else ""
     user_prompt = (
-        f"Disease: {disease_name}\n\n"
+        f"Disease: {disease_name}{gene_ctx}\n\n"
         f"Candidates from PubMed (ranked by relevance):\n\n"
         f"{_format_candidates(candidates)}\n\n"
         "Pick the single paper most likely to be the recognised consensus "
@@ -275,6 +298,7 @@ async def find_official_guideline_for_disease(
     disease_name: str,
     *,
     execution_id: str | None = None,
+    gene: str | None = None,
 ) -> OfficialGuideline | None:
     """Run the full find-the-consensus workflow and persist the pointer.
 
@@ -291,8 +315,12 @@ async def find_official_guideline_for_disease(
         _log_run(exec_id, disease_slug, "failed", error="disease slug not found")
         return None
 
+    # Causative gene: explicit arg wins; otherwise resolve it from the disease row so
+    # ultra-rare diseases (name → ~0 consensus papers) still surface gene-indexed guidelines.
+    resolved_gene = (gene or "").strip() or _resolve_gene_for_slug(disease_slug)
+
     try:
-        pmids = _pubmed_search(disease_name)
+        pmids = _pubmed_search(disease_name, resolved_gene)
     except Exception as exc:
         log.exception("PubMed esearch failed for %s", disease_name)
         _log_run(exec_id, disease_slug, "failed", error=f"esearch: {exc}")
@@ -314,7 +342,7 @@ async def find_official_guideline_for_disease(
         return None
 
     try:
-        ranked, model_spec = await _rank_with_gemma(disease_name, candidates)
+        ranked, model_spec = await _rank_with_gemma(disease_name, candidates, resolved_gene)
     except Exception as exc:
         log.exception("Gemma ranking failed for %s", disease_name)
         _log_run(exec_id, disease_slug, "failed", error=f"ranker: {exc}")

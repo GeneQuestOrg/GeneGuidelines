@@ -27,6 +27,7 @@ from datetime import datetime, timezone
 from pydantic import BaseModel, ConfigDict, Field
 
 from ..config import FINDER_LLM_TIMEOUT_SEC
+from ..flows.doctor_finder.pubmed_relevance import _normalize_gene
 from ._model_resolver import (
     resolve_gemma_or_fallback_spec,
     run_structured_with_ollama_fallback,
@@ -81,10 +82,25 @@ Rules:
 """
 
 
-def _pubmed_search_review_pmids(disease_name: str) -> list[str]:
+def _resolve_gene_for_slug(disease_slug: str) -> str:
+    """Causative gene symbol for the disease row (''=absent/unresolved → name-only search)."""
+    try:
+        from ..content_db import get_disease_gene
+    except ImportError:  # pragma: no cover - flat-layout import shim
+        from content_db import get_disease_gene  # type: ignore[no-redef]
+    return get_disease_gene(disease_slug)
+
+
+def _pubmed_search_review_pmids(disease_name: str, gene: str | None = None) -> list[str]:
+    # For ultra-rare diseases the NAME finds ~0 reviews; OR the causative gene in as a
+    # Title/Abstract phrase (kept under the review/guideline AND-filter so recall stays
+    # bounded). Empty / too-short gene → name-only (graceful degradation).
+    gene_sym = _normalize_gene(gene)
+    name_ta = f'"{disease_name}"[Title/Abstract]'
+    disease_block = f'({name_ta} OR "{gene_sym}"[Title/Abstract])' if gene_sym else name_ta
     params = {
         "db": "pubmed",
-        "term": f'"{disease_name}"[Title/Abstract] AND (review[Publication Type] OR guideline[Publication Type])',
+        "term": f"{disease_block} AND (review[Publication Type] OR guideline[Publication Type])",
         "retmax": _MAX_REVIEWS,
         "sort": "relevance",
         "retmode": "json",
@@ -134,14 +150,19 @@ async def _extract_batch_with_gemma(
     abstracts: list[tuple[str, str]],
     *,
     primary_spec: str,
+    gene: str | None = None,
 ) -> tuple[list[_Therapy], str, bool]:
     _ws_re = re.compile(r"\s+")
     bundle = "\n\n---\n\n".join(
         "[PMID " + pmid + "]\n" + _ws_re.sub(" ", body)[:2400]
         for pmid, body in abstracts
     )
+    # Name the causative gene so the LLM keeps gene-sourced reviews (a review that discusses
+    # the gene is on-topic for a gene-only-known disease — same reasoning as doctor-finder).
+    gene_sym = _normalize_gene(gene)
+    gene_ctx = f" (causative gene: {gene_sym})" if gene_sym else ""
     user_prompt = (
-        f"Disease: {disease_name}\n\n"
+        f"Disease: {disease_name}{gene_ctx}\n\n"
         f"PubMed reviews (excerpts):\n\n{bundle}\n\n"
         "Extract therapy lines per the rules. Up to 8."
     )
@@ -208,7 +229,7 @@ def _fallback_therapies_from_abstracts(
 
 
 async def _extract_with_gemma(
-    disease_name: str, abstracts: list[tuple[str, str]]
+    disease_name: str, abstracts: list[tuple[str, str]], gene: str | None = None
 ) -> tuple[_TherapyList, str, bool]:
     primary_spec = resolve_gemma_or_fallback_spec()
     merged: list[_Therapy] = []
@@ -220,6 +241,7 @@ async def _extract_with_gemma(
             disease_name,
             batch,
             primary_spec=primary_spec,
+            gene=gene,
         )
         merged.extend(batch_therapies)
         used_fallback = used_fallback or batch_fallback
@@ -308,12 +330,17 @@ async def find_therapies_for_disease(
     disease_name: str,
     *,
     execution_id: str | None = None,
+    gene: str | None = None,
 ) -> int:
     exec_id = execution_id or f"trp-{uuid.uuid4().hex[:12]}"
     _log_run(exec_id, disease_slug, "running")
 
+    # Causative gene: explicit arg wins; otherwise resolve it from the disease row so
+    # ultra-rare diseases (name → ~0 reviews) still surface gene-indexed therapy literature.
+    resolved_gene = (gene or "").strip() or _resolve_gene_for_slug(disease_slug)
+
     try:
-        pmids = _pubmed_search_review_pmids(disease_name)
+        pmids = _pubmed_search_review_pmids(disease_name, resolved_gene)
         abstracts = _pubmed_fetch_abstracts(pmids)
     except Exception as exc:
         log.exception("PubMed lookup failed for therapies of %s", disease_name)
@@ -325,7 +352,9 @@ async def find_therapies_for_disease(
         return 0
 
     try:
-        result, model_spec, used_fallback = await _extract_with_gemma(disease_name, abstracts)
+        result, model_spec, used_fallback = await _extract_with_gemma(
+            disease_name, abstracts, resolved_gene
+        )
     except Exception as exc:
         log.exception("Gemma extraction failed for therapies of %s", disease_name)
         fallback = _fallback_therapies_from_abstracts(abstracts)

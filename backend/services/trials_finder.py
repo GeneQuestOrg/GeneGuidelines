@@ -28,6 +28,7 @@ from typing import Any
 from pydantic import BaseModel, ConfigDict, Field
 
 from ..config import FINDER_LLM_TIMEOUT_SEC
+from ..flows.doctor_finder.pubmed_relevance import _normalize_gene
 from ._model_resolver import (
     resolve_gemma_or_fallback_spec,
     run_structured_with_ollama_fallback,
@@ -78,9 +79,12 @@ You normalise clinical trial records into a structured schema for a rare
 disease registry. You receive a list of studies from ClinicalTrials.gov
 for a named disease. For each study:
 
-1. Decide whether the primary indication is actually this disease, or
-   whether the trial is for a different condition that mentions it as a
-   secondary outcome. Reject the latter by setting ``relevance < 0.3``.
+1. Decide whether the trial actually targets this disease — or its causative
+   gene when one is named in the prompt (a gene-therapy or gene-directed trial
+   for that gene counts as targeting the disease, even if it never uses the
+   disease name). A trial for a genuinely DIFFERENT condition that only mentions
+   the disease or gene as a secondary outcome is off-topic — reject it by
+   setting ``relevance < 0.3``.
 2. Project the fields into the schema. Use the literal NCT identifier
    from the candidate list — never invent.
 3. Eligibility summary: one or two plain sentences a parent can read.
@@ -97,35 +101,75 @@ Return ALL studies passed in — including ones you classify as off-topic
 """
 
 
-def _fetch_clinicaltrials(disease_name: str) -> list[dict[str, Any]]:
-    """Return up to ``_MAX_STUDIES`` study records from ClinicalTrials.gov API v2."""
+_CT_GOV_FIELDS = [
+    "NCTId",
+    "BriefTitle",
+    "OverallStatus",
+    "Phase",
+    "LeadSponsorName",
+    "LocationCity",
+    "LocationCountry",
+    "MinimumAge",
+    "MaximumAge",
+    "OverallOfficialName",
+    "EligibilityCriteria",
+    "EnrollmentCount",
+    "Condition",
+]
+
+
+def _resolve_gene_for_slug(disease_slug: str) -> str:
+    """Causative gene symbol for the disease row (''=absent/unresolved → condition-only)."""
+    try:
+        from ..content_db import get_disease_gene
+    except ImportError:  # pragma: no cover - flat-layout import shim
+        from content_db import get_disease_gene  # type: ignore[no-redef]
+    return get_disease_gene(disease_slug)
+
+
+def _ctgov_fetch(query_params: dict[str, str]) -> list[dict[str, Any]]:
+    """One ClinicalTrials.gov API v2 studies request → list of raw study records."""
     params = {
-        "query.cond": disease_name,
+        **query_params,
         "pageSize": _MAX_STUDIES,
         "format": "json",
-        "fields": ",".join(
-            [
-                "NCTId",
-                "BriefTitle",
-                "OverallStatus",
-                "Phase",
-                "LeadSponsorName",
-                "LocationCity",
-                "LocationCountry",
-                "MinimumAge",
-                "MaximumAge",
-                "OverallOfficialName",
-                "EligibilityCriteria",
-                "EnrollmentCount",
-                "Condition",
-            ]
-        ),
+        "fields": ",".join(_CT_GOV_FIELDS),
     }
     url = f"{_CT_GOV_API}?{urllib.parse.urlencode(params)}"
     req = urllib.request.Request(url, headers={"User-Agent": "GeneGuidelines/0.1"})
     with urllib.request.urlopen(req, timeout=20) as r:
         data = json.load(r)
     return list(data.get("studies", []))
+
+
+def _raw_nct(study: dict[str, Any]) -> str:
+    ident = ((study.get("protocolSection") or {}).get("identificationModule") or {})
+    return str(ident.get("nctId") or "").strip()
+
+
+def _fetch_clinicaltrials(disease_name: str, gene: str | None = None) -> list[dict[str, Any]]:
+    """Studies for the disease, unioned with gene-indexed studies when a gene is known.
+
+    ClinicalTrials.gov ANDs ``query.cond`` with ``query.term``, so the gene cannot be added
+    to the condition search without narrowing it. Instead we run a SEPARATE ``query.term=<gene>``
+    search — surfacing gene-therapy / gene-indexed trials that never name the (ultra-rare)
+    disease — and merge by NCT. Condition hits come first; the merged list is capped at
+    ``_MAX_STUDIES`` so the downstream LLM budget is unchanged. Empty / too-short gene →
+    condition-only (graceful). The LLM relevance-extraction still drops trials that merely
+    mention the gene/disease but do not target it.
+    """
+    studies = _ctgov_fetch({"query.cond": disease_name})
+    gene_sym = _normalize_gene(gene)
+    if gene_sym and len(studies) < _MAX_STUDIES:
+        seen = {n for n in (_raw_nct(s) for s in studies) if n}
+        for s in _ctgov_fetch({"query.term": gene_sym}):
+            nct = _raw_nct(s)
+            if nct and nct not in seen:
+                seen.add(nct)
+                studies.append(s)
+                if len(studies) >= _MAX_STUDIES:
+                    break
+    return studies[:_MAX_STUDIES]
 
 
 def _flatten_study(study: dict[str, Any]) -> dict[str, Any]:
@@ -255,10 +299,15 @@ async def _extract_batch_with_gemma(
     studies: list[dict[str, Any]],
     *,
     primary_spec: str,
+    gene: str | None = None,
 ) -> tuple[list[_ExtractedTrial], str, bool]:
     """Extract one batch; returns (trials, model_spec, used_fallback)."""
+    # Name the causative gene so gene-therapy / gene-directed trials for the gene are scored
+    # relevant instead of dropped for "doesn't name the disease" (same reasoning as doctor-finder).
+    gene_sym = _normalize_gene(gene)
+    gene_ctx = f" (causative gene: {gene_sym})" if gene_sym else ""
     user_prompt = (
-        f"Disease: {disease_name}\n\n"
+        f"Disease: {disease_name}{gene_ctx}\n\n"
         f"ClinicalTrials.gov studies:\n\n"
         f"{_format_studies_for_gemma(studies)}\n\n"
         "Return all studies, with relevance score for each. NCT ids must "
@@ -296,7 +345,7 @@ async def _extract_batch_with_gemma(
 
 
 async def _extract_with_gemma(
-    disease_name: str, studies: list[dict[str, Any]]
+    disease_name: str, studies: list[dict[str, Any]], gene: str | None = None
 ) -> tuple[_TrialList, str, bool]:
     primary_spec = resolve_gemma_or_fallback_spec()
     merged: list[_ExtractedTrial] = []
@@ -308,6 +357,7 @@ async def _extract_with_gemma(
             disease_name,
             batch,
             primary_spec=primary_spec,
+            gene=gene,
         )
         merged.extend(batch_trials)
         used_fallback = used_fallback or batch_fallback
@@ -417,13 +467,18 @@ async def find_trials_for_disease(
     disease_name: str,
     *,
     execution_id: str | None = None,
+    gene: str | None = None,
 ) -> int:
     """Run the trials finder workflow. Returns the number of trials persisted."""
     exec_id = execution_id or f"trf-{uuid.uuid4().hex[:12]}"
     _log_run(exec_id, disease_slug, "running")
 
+    # Causative gene: explicit arg wins; otherwise resolve it from the disease row so
+    # ultra-rare diseases (cond → ~0 trials) still surface gene-therapy / gene-indexed trials.
+    resolved_gene = (gene or "").strip() or _resolve_gene_for_slug(disease_slug)
+
     try:
-        raw_studies = _fetch_clinicaltrials(disease_name)
+        raw_studies = _fetch_clinicaltrials(disease_name, resolved_gene)
     except Exception as exc:
         log.exception("ClinicalTrials.gov fetch failed for %s", disease_name)
         _log_run(exec_id, disease_slug, "failed", error=f"ct.gov: {exc}")
@@ -440,7 +495,9 @@ async def find_trials_for_disease(
         return 0
 
     try:
-        result, model_spec, used_fallback = await _extract_with_gemma(disease_name, studies)
+        result, model_spec, used_fallback = await _extract_with_gemma(
+            disease_name, studies, resolved_gene
+        )
     except Exception as exc:
         log.exception("Gemma extraction failed for trials of %s", disease_name)
         safe_trials = _fallback_trials_from_studies(studies)
