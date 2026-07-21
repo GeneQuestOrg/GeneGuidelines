@@ -89,7 +89,7 @@ async def wider_search(
     knob keeps governing AI spend.
     """
     try:
-        candidates, elapsed_ms = await service.search(body.query.strip())
+        result = await service.search(body.query.strip())
     except Exception as exc:  # noqa: BLE001 — the upstream is best-effort
         raise HTTPException(
             status_code=503,
@@ -98,8 +98,10 @@ async def wider_search(
 
     return WiderSearchResponse(
         query=body.query.strip(),
-        candidates=[_candidate_dto(c) for c in candidates],
-        elapsedMs=elapsed_ms,
+        candidates=[_candidate_dto(c) for c in result.candidates],
+        elapsedMs=result.elapsed_ms,
+        notes=result.notes,
+        judged=result.judged,
     )
 
 
@@ -116,6 +118,7 @@ def _candidate_dto(candidate: WiderSearchCandidate) -> WiderSearchCandidateDto:
         scopeLabel=candidate.scope_label,
         confidence=candidate.confidence,
         modelUsed=candidate.model_used,
+        evidence=candidate.evidence,
     )
 
 

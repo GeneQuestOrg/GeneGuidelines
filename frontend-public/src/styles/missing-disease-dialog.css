@@ -193,12 +193,48 @@
   font-size: 0.9rem;
 }
 
+.miss-modal__results-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
 .miss-modal__results-title {
-  margin: 0 0 12px;
+  margin: 0;
   font-size: 0.85rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--ink-3);
+}
+
+.miss-modal__verify {
+  font-size: 0.72rem;
+  padding: 2px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.miss-modal__verify--yes {
+  background: rgba(15, 118, 110, 0.14);
+  color: var(--accent-teal, var(--accent-ink));
+}
+
+.miss-modal__verify--no {
+  background: rgba(245, 158, 11, 0.16);
+  color: oklch(0.45 0.13 75);
+}
+
+.miss-modal__notes {
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  border-radius: var(--r-sm, 6px);
+  background: var(--bg-2, var(--bg-soft));
+  border: 1px solid var(--line);
+  color: var(--ink-2);
+  font-size: 0.85rem;
+  line-height: 1.5;
 }
 
 .miss-card {
@@ -290,6 +326,25 @@
   padding: 1px 6px;
   border-radius: 4px;
   font-family: var(--font-mono, ui-monospace, "SF Mono", monospace);
+}
+
+.miss-card__evidence {
+  margin: 0 0 12px;
+  padding: 8px 12px;
+  border-radius: var(--r-sm, 6px);
+  background: var(--bg-2, var(--bg-soft));
+  color: var(--ink-2);
+  font-size: 0.83rem;
+  line-height: 1.5;
+}
+
+.miss-card__evidence-label {
+  display: block;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ink-3);
+  margin-bottom: 2px;
 }
 
 .miss-card__notice {

@@ -90,60 +90,75 @@ class WiderSearchCandidate:
     scope_label: str
     confidence: float
     model_used: str
+    evidence: str = ""
+
+
+@dataclass(slots=True)
+class WiderSearchResult:
+    """Full wider-search result: verified candidates + human-readable context."""
+
+    candidates: list[WiderSearchCandidate]
+    notes: str
+    elapsed_ms: int
+    judged: bool
+    model_used: str
 
 
 # Function alias kept loose so the dependency injection in ``deps.py`` can
-# wrap the real implementation in tests / offline mode.
-from typing import Awaitable, Callable, Tuple
+# wrap the real implementation in tests / offline mode. The provider returns
+# a :class:`backend.services.disease_wider_search.WiderIdentification`; it is
+# duck-typed here so this module does not import ``backend.services`` at load
+# time, keeping the dependency direction acyclic.
+from typing import Awaitable, Callable
 
 from .models import (
     DiseaseCategory as _DiseaseCategoryAlias,  # re-export for typing only
 )
 
-# Signature: query string -> (metadata, model_spec)
-WiderLookupCallable = Callable[
-    [str],
-    Awaitable[Tuple[object, str]],
-]
+# Signature: query string -> WiderIdentification (candidates + notes + models).
+WiderLookupCallable = Callable[[str], Awaitable[object]]
 
 
 @dataclass(slots=True)
 class WiderDiseaseSearchService:
-    """Gemma-backed search invoked by the "Wider search" dialog.
+    """Two-model wider search invoked by the "Help us find your disease" dialog.
 
-    Wraps :func:`backend.services.disease_metadata_lookup.lookup_disease_metadata`
-    so the upstream HTTP route stays unchanged for the existing bootstrap
-    flow. The wrapper adds:
-
-    1. Optional category extraction (Gemma already returns canonical name,
-       OMIM, gene; the category is emitted by an upgraded prompt that the
-       upstream module owns — :func:`is_in_scope` decides what to do with
-       the answer).
-    2. The :class:`WiderSearchCandidate` shape that maps cleanly to the
-       Pydantic DTO without re-deriving fields in the router.
+    Delegates the generator→judge pipeline to
+    :func:`backend.services.disease_wider_search.identify_disease_wider` (injected
+    as ``lookup``) and maps each verified candidate into the domain
+    :class:`WiderSearchCandidate` shape — adding the scope flags the UI needs and
+    carrying the per-candidate ``evidence`` plus the overall ``notes`` context.
     """
 
     lookup: WiderLookupCallable
 
-    async def search(self, query: str) -> tuple[list[WiderSearchCandidate], int]:
+    async def search(self, query: str) -> WiderSearchResult:
         started = time.monotonic()
-        metadata, model_spec = await self.lookup(query)
+        identification = await self.lookup(query)
         elapsed_ms = int((time.monotonic() - started) * 1000)
-        candidates = [self._candidate_from(metadata, model_spec)]
-        return candidates, elapsed_ms
+        judge_model = str(getattr(identification, "judge_model", "") or "")
+        gen_model = str(getattr(identification, "generator_model", "") or "")
+        model_used = judge_model or gen_model or "unavailable"
+        raw_candidates = list(getattr(identification, "candidates", []) or [])
+        candidates = [self._candidate_from(c, model_used) for c in raw_candidates]
+        return WiderSearchResult(
+            candidates=candidates,
+            notes=str(getattr(identification, "notes", "") or ""),
+            elapsed_ms=elapsed_ms,
+            judged=bool(getattr(identification, "judged", False)),
+            model_used=model_used,
+        )
 
     @staticmethod
-    def _candidate_from(metadata: object, model_spec: str) -> WiderSearchCandidate:
-        """Lift the upstream Pydantic model into our domain shape."""
-        # The upstream model is duck-typed here so this module does not
-        # depend on ``backend.services.disease_metadata_lookup`` at import
-        # time — keeping the dependency direction acyclic.
-        canonical_name = str(getattr(metadata, "canonical_name", "") or "")
-        omim = str(getattr(metadata, "omim", "") or "")
-        gene = str(getattr(metadata, "gene", "") or "")
-        inheritance = str(getattr(metadata, "inheritance", "") or "")
-        summary = str(getattr(metadata, "summary", "") or "")
-        category_raw = str(getattr(metadata, "category", "unknown") or "unknown")
+    def _candidate_from(candidate: object, model_used: str) -> WiderSearchCandidate:
+        """Lift one pipeline candidate into our domain shape (duck-typed)."""
+        canonical_name = str(getattr(candidate, "canonical_name", "") or "")
+        omim = str(getattr(candidate, "omim", "") or "")
+        gene = str(getattr(candidate, "gene", "") or "")
+        inheritance = str(getattr(candidate, "inheritance", "") or "")
+        summary = str(getattr(candidate, "summary", "") or "")
+        evidence = str(getattr(candidate, "evidence", "") or "")
+        category_raw = str(getattr(candidate, "category", "unknown") or "unknown")
         category: DiseaseCategory = (
             category_raw  # type: ignore[assignment]
             if category_raw
@@ -167,8 +182,9 @@ class WiderDiseaseSearchService:
             is_in_scope=is_in_scope(category),
             is_hard_blocked=is_hard_blocked(category),
             scope_label=scope_label(category),
-            confidence=float(getattr(metadata, "confidence", 0.7) or 0.7),
-            model_used=model_spec,
+            confidence=float(getattr(candidate, "confidence", 0.5) or 0.5),
+            model_used=model_used,
+            evidence=evidence,
         )
 
 
@@ -176,5 +192,6 @@ __all__ = [
     "DiseaseSuggestionService",
     "WiderDiseaseSearchService",
     "WiderSearchCandidate",
+    "WiderSearchResult",
     "WiderLookupCallable",
 ]

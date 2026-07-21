@@ -69,12 +69,18 @@ export interface WiderSearchCandidate {
   scopeLabel: string;
   confidence: number;
   modelUsed: string;
+  /** Why this disease matches the query — surfaced to the user. */
+  evidence: string;
 }
 
 export interface WiderSearchResponse {
   query: string;
   candidates: WiderSearchCandidate[];
   elapsedMs: number;
+  /** Human-readable context: what was found / corrected / rejected / unidentified. */
+  notes: string;
+  /** True when a second, stronger model verified the candidates. */
+  judged: boolean;
 }
 
 const _SUGGEST_TIMEOUT_MS = 4_000;

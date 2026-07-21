@@ -132,6 +132,20 @@ _SYNTHESIS_AGENTIC = (
     or "openai:gpt-5.5"
 )
 
+# Judge model for the disease "wider search" verification pass. The fast
+# librarian (Gemma) proposes candidate diseases; a stronger model then verifies
+# them so a hallucination — e.g. mapping the gene symbol "PUS3" to the
+# phonetically-similar "pustular psoriasis" — is caught before it reaches a
+# family. Resolved INDEPENDENTLY of SINGLE_LLM_MODE (which otherwise collapses
+# every profile onto the one self-hosted Gemma), because verification is
+# precisely the place a second, different model earns its keep. Defaults to a
+# frontier model when an OpenAI key is present; when neither this nor a key is
+# configured the pipeline degrades to a generator-only result and says so.
+WIDER_SEARCH_JUDGE_MODEL = (
+    (os.environ.get("WIDER_SEARCH_JUDGE_MODEL") or "").strip()
+    or ("openai:gpt-5.4" if (os.environ.get("OPENAI_API_KEY") or "").strip() else None)
+)
+
 # OpenRouter (OpenAI-compatible). Used when model_spec uses `openrouter:` prefix or profile "openrouter".
 _OPENROUTER_SIMPLE = (
     (os.environ.get("MODEL_PROFILE_OPENROUTER_SIMPLE") or "").strip()

@@ -137,6 +137,10 @@ class WiderSearchCandidate(BaseModel):
     scopeLabel: str
     confidence: float = Field(default=0.5, ge=0, le=1)
     modelUsed: str
+    evidence: str = Field(
+        default="",
+        description="Why this disease matches the query — surfaced to the user.",
+    )
 
 
 class WiderSearchResponse(BaseModel):
@@ -147,6 +151,14 @@ class WiderSearchResponse(BaseModel):
     query: str
     candidates: list[WiderSearchCandidate]
     elapsedMs: int = Field(ge=0)
+    notes: str = Field(
+        default="",
+        description="Human-readable context: what was found, corrected, rejected, or why unidentified.",
+    )
+    judged: bool = Field(
+        default=False,
+        description="True when a second, stronger model verified the candidates.",
+    )
 
 
 __all__ = [

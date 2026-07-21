@@ -37,17 +37,17 @@ def provide_disease_suggestion_service(
 
 
 def provide_wider_search_lookup() -> WiderLookupCallable:
-    """Return the Gemma-backed lookup callable used by the wider search.
+    """Return the generator→judge pipeline used by the wider search.
 
     Wrapping the import inside the provider keeps the module's import
     graph clean: :mod:`backend.disease_index.service` does not depend on
-    :mod:`backend.services.disease_metadata_lookup` at import time, so a
+    :mod:`backend.services.disease_wider_search` at import time, so a
     test can override this provider with a stub that never imports the
     real module.
     """
-    from ..services.disease_metadata_lookup import lookup_disease_metadata
+    from ..services.disease_wider_search import identify_disease_wider
 
-    return lookup_disease_metadata
+    return identify_disease_wider
 
 
 def provide_wider_search_service(

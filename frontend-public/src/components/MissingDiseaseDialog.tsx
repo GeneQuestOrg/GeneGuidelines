@@ -25,6 +25,7 @@ import { Button } from "@gene-guidelines/ui";
 import { ApiRequestError } from "../api/client";
 import {
   type WiderSearchCandidate,
+  type WiderSearchResponse,
   widerSearchDisease,
 } from "../api/diseaseIndex";
 import "../styles/missing-disease-dialog.css";
@@ -48,7 +49,7 @@ export function MissingDiseaseDialog({
 }: MissingDiseaseDialogProps) {
   const [query, setQuery] = useState(initialQuery);
   const [busy, setBusy] = useState(false);
-  const [candidates, setCandidates] = useState<readonly WiderSearchCandidate[] | null>(null);
+  const [result, setResult] = useState<WiderSearchResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
@@ -79,10 +80,10 @@ export function MissingDiseaseDialog({
       }
       setBusy(true);
       setError(null);
-      setCandidates(null);
+      setResult(null);
       try {
         const response = await widerSearchDisease(trimmed);
-        setCandidates(response.candidates);
+        setResult(response);
       } catch (e) {
         if (e instanceof ApiRequestError) {
           setError(e.message);
@@ -123,9 +124,10 @@ export function MissingDiseaseDialog({
           <p className="miss-modal__sub">
             Type whatever you have — an English or alternative name, a common
             abbreviation, an OMIM or Orphanet number, or a gene symbol.
-            Gemma 4 will search public sources (OMIM, Orphanet, GeneReviews,
-            PubMed) and try to identify the disease. If it does, we&rsquo;ll
-            launch the research pipeline straight away.
+            Gemma 4 proposes candidates from public sources (OMIM, Orphanet,
+            GeneReviews, PubMed) and a second, stronger model verifies them
+            before we show you the result — so a look-alike guess doesn&rsquo;t
+            slip through.
           </p>
         </div>
 
@@ -160,7 +162,7 @@ export function MissingDiseaseDialog({
             </span>
             <ol>
               <li><b>Gemma 4</b> normalises the input and proposes candidates from OMIM / Orphanet</li>
-              <li><b>Match</b> against alternative names, gene symbols and variants (PubMed MeSH)</li>
+              <li><b>Verify</b> — a second, stronger model checks each candidate and drops look-alike guesses</li>
               <li><b>Confirm</b> — you pick the right candidate from up to three best hits</li>
               <li><b>Run research</b> — your disease enters the standard 4-stage pipeline</li>
             </ol>
@@ -189,11 +191,8 @@ export function MissingDiseaseDialog({
           </div>
         </form>
 
-        {candidates !== null ? (
-          <CandidatesList
-            candidates={candidates}
-            onPick={onPickCandidate}
-          />
+        {result !== null ? (
+          <CandidatesList result={result} onPick={onPickCandidate} />
         ) : null}
       </div>
     </div>
@@ -211,6 +210,13 @@ function Hint({ code, label }: { code: string; label: string }): ReactNode {
 
 /** Renders the candidate cards returned by the wider-search endpoint.
  *
+ * The endpoint runs a fast model to propose candidates and a second, stronger
+ * model to verify them. We surface both: the ``notes`` string (what was found,
+ * corrected, rejected, or why nothing was identified) as a context banner, and
+ * a small badge saying whether the result was independently verified. When no
+ * candidate survives, the honest ``notes`` explanation replaces the cards
+ * rather than a generic "not found".
+ *
  * In-scope candidates show a green "Use this" CTA; out-of-scope ones
  * (infectious / acquired) render with the "Use this" disabled and a
  * scope-explanation banner. ``unknown`` falls back to a soft warning
@@ -218,22 +224,41 @@ function Hint({ code, label }: { code: string; label: string }): ReactNode {
  * the gate server-side.
  */
 function CandidatesList({
-  candidates,
+  result,
   onPick,
 }: {
-  candidates: readonly WiderSearchCandidate[];
+  result: WiderSearchResponse;
   onPick: (candidate: WiderSearchCandidate) => void;
 }): ReactNode {
+  const { candidates, notes, judged } = result;
+
   if (candidates.length === 0) {
     return (
       <div className="miss-modal__results miss-modal__results--empty">
-        <p>No candidate found. Try a different spelling or include the gene.</p>
+        <p>
+          {notes?.trim()
+            ? notes
+            : "We could not confidently identify this. Try a different spelling, include the gene, or start a run with the term as typed."}
+        </p>
       </div>
     );
   }
   return (
     <div className="miss-modal__results">
-      <h3 className="miss-modal__results-title">Candidates</h3>
+      <div className="miss-modal__results-head">
+        <h3 className="miss-modal__results-title">Candidates</h3>
+        <span
+          className={`miss-modal__verify miss-modal__verify--${judged ? "yes" : "no"}`}
+          title={
+            judged
+              ? "A second, stronger model checked these matches."
+              : "Automatic verification was unavailable — double-check before starting a run."
+          }
+        >
+          {judged ? "✓ verified by a second model" : "unverified"}
+        </span>
+      </div>
+      {notes?.trim() ? <p className="miss-modal__notes">{notes}</p> : null}
       {candidates.map((candidate, index) => (
         <CandidateCard
           key={`${candidate.canonicalName}-${index}`}
@@ -297,6 +322,13 @@ function CandidateCard({
         <dt>Confidence</dt>
         <dd>{confidencePct}%</dd>
       </dl>
+
+      {candidate.evidence ? (
+        <p className="miss-card__evidence">
+          <span className="miss-card__evidence-label">Why this match</span>
+          {candidate.evidence}
+        </p>
+      ) : null}
 
       {blocked ? (
         <p className="miss-card__notice">
