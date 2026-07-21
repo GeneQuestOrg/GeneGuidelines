@@ -78,13 +78,18 @@
 }
 .page--home .door {
   position: relative;
+  top: 0;
   display: flex;
   flex-direction: column;
   padding: 26px 26px 24px;
   background: var(--bg-elev);
   border: 1px solid var(--line);
   border-radius: var(--r-lg);
-  transition: border-color 0.14s, transform 0.14s, box-shadow 0.14s;
+  /* Lift on hover via `top` (not `transform`): a transform on this card would
+     become the containing block for the DiseaseAutocomplete's `position: fixed`
+     dropdown (it lives inside the door), throwing the panel off-position. A
+     relative `top` offset gives the identical 2px lift without that trap. */
+  transition: border-color 0.14s, top 0.14s, box-shadow 0.14s;
 }
 .page--home .door--know {
   border-top: 3px solid var(--accent);
@@ -99,7 +104,7 @@
 }
 .page--home .door:hover {
   border-color: var(--ink-4);
-  transform: translateY(-2px);
+  top: -2px;
   box-shadow: 0 14px 34px -22px rgba(0, 0, 0, 0.4);
 }
 .page--home .door__k {
@@ -175,13 +180,6 @@
 /* Match the DiseaseAutocomplete typeahead (left "I know the disease" door). */
 .page--home .door .ac__input {
   font-size: var(--fs-md);
-}
-.page--home .door__hint {
-  color: var(--ink-3);
-  font-size: 12px;
-  line-height: 1.5;
-  margin: 9px 0 0;
-  text-wrap: pretty;
 }
 .page--home .quicklinks {
   display: flex;

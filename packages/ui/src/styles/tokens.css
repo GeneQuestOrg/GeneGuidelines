@@ -27,6 +27,11 @@
 
   --gutter: 20px;
   --content-w: 1240px;
+  /* The ONE narrow column for focused pages (account, invites, run status,
+     error/placeholder). Every such page reads from this token — no per-page
+     ad-hoc caps — so page width stays consistent site-wide. Standard app /
+     browse / content pages use --content-w; there is no third width. */
+  --content-narrow: 640px;
   --header-h: 56px;
 
   --fs-xs: 12px;

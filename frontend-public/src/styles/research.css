@@ -1,12 +1,12 @@
 .page--research {
   padding: 24px 20px 48px;
-  max-width: 640px;
+  max-width: var(--content-narrow);
   margin: 0 auto;
 }
 
 .page--run {
   padding: 0 20px 48px;
-  max-width: 960px;
+  max-width: var(--content-narrow);
   margin: 0 auto;
 }
 

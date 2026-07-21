@@ -140,7 +140,6 @@ export function HomeView({ view, onNav }: HomeViewProps) {
               onMissingClick={() => onNav("/start-research")}
             />
           </div>
-          <p className="door__hint">{copy.searchHint}</p>
           {chips.length > 0 ? (
             <div className="quicklinks">
               {chips.map((d) => (

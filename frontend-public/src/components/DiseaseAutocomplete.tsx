@@ -315,7 +315,11 @@ export function DiseaseAutocomplete({
   );
 }
 
-/** Single dropdown row — name + alias chip + source / scope badges. */
+/** Single dropdown row — name + (only when useful) the matched name variant +
+ * gene / OMIM chips + scope badge. We deliberately do *not* print a
+ * "matched <kind>: …" debug-style label (visual clutter): the highlighted
+ * canonical name, the muted name-variant line, and the highlighted gene chip
+ * already show *why* a row matched. */
 function SuggestionRow({
   suggestion,
   query,
@@ -325,10 +329,16 @@ function SuggestionRow({
 }): ReactNode {
   const primaryGene = suggestion.geneSymbols[0] ?? null;
   const primaryOmim = suggestion.omimCodes[0] ?? null;
-  const aliasMatchesName =
-    suggestion.matchedAlias.kind === "canonical" &&
-    suggestion.matchedAlias.alias.toLowerCase() ===
-      suggestion.canonicalName.toLowerCase();
+  const { kind, alias } = suggestion.matchedAlias;
+  // Surface the term the user typed only when it is a *name* variant (a
+  // localized name or synonym) that differs from the canonical name — the one
+  // case the highlighted canonical name alone would not explain. Gene / OMIM /
+  // Orphanet / ICD matches are already visible as chips, so no subtitle there.
+  const nameVariant =
+    (kind === "locale_name" || kind === "synonym") &&
+    alias.toLowerCase() !== suggestion.canonicalName.toLowerCase()
+      ? alias
+      : null;
 
   return (
     <>
@@ -336,15 +346,14 @@ function SuggestionRow({
         <div className="ac__item-name">
           {highlight(suggestion.canonicalName, query)}
         </div>
-        {!aliasMatchesName ? (
-          <div className="ac__item-alias">
-            matched <em>{suggestion.matchedAlias.kind}</em>:{" "}
-            {highlight(suggestion.matchedAlias.alias, query)}
-          </div>
+        {nameVariant ? (
+          <div className="ac__item-alias">{highlight(nameVariant, query)}</div>
         ) : null}
       </div>
       <div className="ac__item-side">
-        {primaryGene ? <code className="ac__chip">{primaryGene}</code> : null}
+        {primaryGene ? (
+          <code className="ac__chip">{highlight(primaryGene, query)}</code>
+        ) : null}
         {primaryOmim ? (
           <code className="ac__chip ac__chip--dim">OMIM {primaryOmim}</code>
         ) : null}

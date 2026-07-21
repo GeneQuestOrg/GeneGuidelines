@@ -37,7 +37,6 @@ export function buildHomeCopy(t: TFunction): HomeCopy {
     knowTitle: t("knowTitle"),
     knowDesc: t("knowDesc"),
     searchPlaceholder: t("searchPlaceholder"),
-    searchHint: t("searchHint"),
 
     dontKicker: t("dontKicker"),
     dontBadge: t("dontBadge"),

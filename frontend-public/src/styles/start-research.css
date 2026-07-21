@@ -3,9 +3,11 @@
  */
 
 .page--start {
-  padding: 24px 24px 56px;
-  max-width: 1080px;
-  margin: 0 auto;
+  /* No own max-width: the page fills the shared content column
+     (`.app-main` → --content-w) so its edges line up with the nav and
+     footer, exactly like Home / Doctors / About / disease pages. Re-capping
+     here is what made this page look narrower and inset from the chrome. */
+  padding: 24px 0 56px;
 }
 
 .start {

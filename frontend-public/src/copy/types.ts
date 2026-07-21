@@ -32,7 +32,6 @@ export interface HomeCopy {
   knowTitle: string;
   knowDesc: string;
   searchPlaceholder: string;
-  searchHint: string;
 
   /* RIGHT card — "I don't know the diagnosis". */
   dontKicker: string;
