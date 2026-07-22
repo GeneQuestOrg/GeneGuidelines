@@ -1,6 +1,24 @@
 /** Public JSON client: read APIs + optional mutating calls when ops key is set (dev/staging only). */
 
 import { getAccessToken } from "../auth/accessToken";
+import { DEFAULT_LOCALE, readLocaleFromLocation } from "../router/locale";
+
+/**
+ * Append the active content locale (from the URL) to a GET path so the backend
+ * can overlay machine-translated content with per-field English fallback
+ * (INSTALL-1 content translation). English is the canonical space, so the
+ * unprefixed URL sends NO `locale=` param — an EN request stays byte-identical
+ * to before this change. Only a `/pl/` URL adds `?locale=pl`. Centralised here
+ * so every read repository picks it up without threading locale through calls.
+ */
+function withContentLocale(path: string): string {
+  const locale = readLocaleFromLocation();
+  if (locale === DEFAULT_LOCALE) {
+    return path;
+  }
+  const sep = path.includes("?") ? "&" : "?";
+  return `${path}${sep}locale=${encodeURIComponent(locale)}`;
+}
 
 export function getApiBaseUrl(): string {
   const raw = import.meta.env.VITE_API_URL;
@@ -126,7 +144,8 @@ export async function apiGet<T>(
   options?: { timeoutMs?: number },
 ): Promise<T> {
   const base = getApiBaseUrl();
-  const url = `${base}${path.startsWith("/") ? path : `/${path}`}`;
+  const localizedPath = withContentLocale(path);
+  const url = `${base}${localizedPath.startsWith("/") ? localizedPath : `/${localizedPath}`}`;
   const timeoutMs = options?.timeoutMs ?? DEFAULT_GET_TIMEOUT_MS;
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);

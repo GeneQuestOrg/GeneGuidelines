@@ -10,7 +10,12 @@ from fastapi import Depends, HTTPException
 
 from ..account.deps import CurrentUser
 from ..account.models import Role, User
-from .repository import GuidelinesRepo, SqlaGuidelinesRepo
+from .repository import (
+    GuidelinesRepo,
+    GuidelineSynthesisTranslationRepo,
+    SqlaGuidelinesRepo,
+    SqlaGuidelineSynthesisTranslationRepo,
+)
 from .service import GuidelinesService
 
 
@@ -19,11 +24,21 @@ def provide_guidelines_repo() -> GuidelinesRepo:
     return SqlaGuidelinesRepo()
 
 
+def provide_synthesis_translation_repo() -> GuidelineSynthesisTranslationRepo:
+    """Production synthesis-translation sidecar repo (INSTALL-1 PR3 serving)."""
+    return SqlaGuidelineSynthesisTranslationRepo()
+
+
 def provide_guidelines_service(
     repo: GuidelinesRepo = Depends(provide_guidelines_repo),
+    synthesis_translation_repo: GuidelineSynthesisTranslationRepo = Depends(
+        provide_synthesis_translation_repo
+    ),
 ) -> GuidelinesService:
     """Wire the production :class:`GuidelinesService` for this request."""
-    return GuidelinesService(repo=repo)
+    return GuidelinesService(
+        repo=repo, synthesis_translation_repo=synthesis_translation_repo
+    )
 
 
 def require_rating_author(user: CurrentUser) -> User:
@@ -48,6 +63,7 @@ def is_verified_doctor(user: User) -> bool:
 
 __all__ = [
     "provide_guidelines_repo",
+    "provide_synthesis_translation_repo",
     "provide_guidelines_service",
     "require_rating_author",
     "is_verified_doctor",

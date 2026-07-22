@@ -19,6 +19,7 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from ..account.deps import OptionalUser
 from ..account.models import User
+from ..shared.locale import resolve_locale
 from .contracts import (
     SourceDocResponse,
     SuggestionResponse,
@@ -49,9 +50,16 @@ def list_source_documents(slug: str, service: ServiceDep) -> list[SourceDocRespo
     "/diseases/{slug}/guideline-synthesis",
     response_model=SynthesisResponse,
 )
-def get_synthesis(slug: str, service: ServiceDep) -> SynthesisResponse:
-    """The AI synthesis for ``slug``; 404 when no guideline exists (level c)."""
-    synthesis = service.get_synthesis(slug)
+def get_synthesis(
+    slug: str, service: ServiceDep, locale: str = Depends(resolve_locale)
+) -> SynthesisResponse:
+    """The AI synthesis for ``slug``; 404 when no guideline exists (level c).
+
+    A supported ``?locale=`` overlays the translated document when it is fresh
+    (structural/provenance fields always from the English row); otherwise the
+    English synthesis is served unchanged.
+    """
+    synthesis = service.get_synthesis(slug, locale)
     if synthesis is None:
         raise HTTPException(status_code=404, detail="No guideline synthesis")
     return SynthesisResponse.from_domain(synthesis)

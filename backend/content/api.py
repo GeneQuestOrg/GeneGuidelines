@@ -7,11 +7,13 @@ live in :mod:`backend.content.service` and :mod:`backend.content.repository`.
 from __future__ import annotations
 
 import asyncio
+from datetime import UTC
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, Response, UploadFile
 
 from backend.account.deps import PrivateContextUser, require_superadmin
 from backend.shared.cache import cache_response
+from backend.shared.locale import resolve_locale
 
 from .contracts import (
     DiseaseListedPatch,
@@ -38,7 +40,6 @@ from .service import DiseaseService
 from .therapies import TherapyService
 from .trials_service import TrialService
 
-
 _MAX_UPLOAD_BYTES = 30 * 1024 * 1024  # 30 MB; real test-result PDFs (multi-page
 # scans/exports) routinely run 10-25 MB. Text still capped downstream
 # (MAX_INPUT_CHARS) so a large PDF can't blow the model context.
@@ -59,11 +60,17 @@ async def list_diseases(
     request: Request,
     response: Response,
     q: str | None = Query(None, max_length=200, description="Optional search filter"),
+    locale: str = Depends(resolve_locale),
     service: DiseaseService = Depends(provide_disease_service),
 ) -> list[DiseaseResponse]:
-    """List diseases or search by name, gene, slug, or summary."""
+    """List diseases or search by name, gene, slug, or summary.
+
+    A supported ``?locale=`` overlays translated fields (English fallback per
+    field); the cache key includes the query string so each locale is cached
+    independently. An EN request is byte-identical to the pre-translation path.
+    """
     del request, response  # injected for cache_response
-    diseases = await asyncio.to_thread(service.list, q)
+    diseases = await asyncio.to_thread(service.list, q, locale)
     return [DiseaseResponse.from_domain(d) for d in diseases]
 
 
@@ -85,6 +92,7 @@ def list_unlisted_diseases(
 @router.get("/diseases/{slug}", response_model=DiseaseResponse)
 def get_disease(
     slug: str,
+    locale: str = Depends(resolve_locale),
     service: DiseaseService = Depends(provide_disease_service),
 ) -> DiseaseResponse:
     """Single disease by URL slug.
@@ -94,7 +102,7 @@ def get_disease(
     their full result. The public frontend renders a "pending curation" badge
     when ``listed`` is false.
     """
-    disease = service.get(slug)
+    disease = service.get(slug, locale)
     if disease is None:
         raise HTTPException(status_code=404, detail="Disease not found")
     return DiseaseResponse.from_domain(disease)
@@ -149,10 +157,11 @@ def list_trials(
 @router.get("/diseases/{slug}/therapies", response_model=list[TherapyResponse])
 def list_disease_therapies(
     slug: str,
+    locale: str = Depends(resolve_locale),
     service: TherapyService = Depends(provide_therapy_service),
 ) -> list[TherapyResponse]:
     """Therapy lines for ``slug`` — bisphosphonates, denosumab, etc."""
-    therapies = service.list_for_disease(slug)
+    therapies = service.list_for_disease(slug, locale)
     if therapies is None:
         raise HTTPException(status_code=404, detail="Disease not found")
     return [TherapyResponse.from_domain(t) for t in therapies]
@@ -161,10 +170,11 @@ def list_disease_therapies(
 @router.get("/diseases/{slug}/foundations", response_model=list[FoundationResponse])
 def list_disease_foundations(
     slug: str,
+    locale: str = Depends(resolve_locale),
     service: FoundationService = Depends(provide_foundation_service),
 ) -> list[FoundationResponse]:
     """Patient-support foundations and research consortia covering ``slug``."""
-    foundations = service.list_for_disease(slug)
+    foundations = service.list_for_disease(slug, locale)
     if foundations is None:
         raise HTTPException(status_code=404, detail="Disease not found")
     return [FoundationResponse.from_domain(f) for f in foundations]
@@ -289,13 +299,13 @@ def get_research_budget() -> dict[str, object]:
 
         return budget_status()
     except Exception:  # noqa: BLE001 — read-only, must not 500 on a DB hiccup
-        from datetime import datetime, timezone
+        from datetime import datetime
 
         return {
             "limit": 0,
             "spent": 0,
             "remaining": None,
-            "window": datetime.now(timezone.utc).strftime("%Y-%m"),
+            "window": datetime.now(UTC).strftime("%Y-%m"),
             "blocked": False,
         }
 

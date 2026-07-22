@@ -17,12 +17,14 @@ The service enriches two live counts on every response:
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import Callable
+from collections.abc import Callable
+from dataclasses import dataclass, replace
 
+from ..shared.locale import DEFAULT_LOCALE
+from ._translation_overlay import fresh_scalar_text
 from .models import Disease
 from .repository import DiseaseRepo, normalize_slug
-
+from .translations_repository import TranslationRepo
 
 # Type of the live doctor-count callable: ``(disease_slug) -> int``.
 DoctorCountProvider = Callable[[str], int]
@@ -38,9 +40,17 @@ class DiseaseService:
     repo: DiseaseRepo
     doctor_count: DoctorCountProvider
     trial_count: TrialCountProvider
+    # Optional read-side machine-translation sidecar (INSTALL-1 PR3). When
+    # ``None`` — or when the served locale is English — the service behaves
+    # exactly as before and makes no translation-repo calls.
+    translation_repo: TranslationRepo | None = None
 
-    def list(self, query: str | None = None) -> list[Disease]:
-        """Return all diseases, optionally filtered case-insensitively."""
+    def list(self, query: str | None = None, locale: str = DEFAULT_LOCALE) -> list[Disease]:
+        """Return all diseases, optionally filtered case-insensitively.
+
+        For a non-English ``locale`` the translatable ``summary`` field is
+        overlaid per disease when a fresh translation exists (else English).
+        """
         items = self.repo.list_all()
         if query is not None:
             q = query.strip().lower()
@@ -53,21 +63,25 @@ class DiseaseService:
 
             live_doctor_counts = public_doctor_counts_by_slug([d.slug for d in items])
         except Exception:
-            items = [self._with_live_doctor_count(d) for d in items]
-            return [self._with_live_trial_count(d) for d in items]
+            enriched = [
+                self._with_live_trial_count(self._with_live_doctor_count(d))
+                for d in items
+            ]
+            return self._localize_all(enriched, locale)
         try:
             from .trials_repository import trial_counts_by_slug
 
             live_trial_counts = trial_counts_by_slug([d.slug for d in items])
         except Exception:
             live_trial_counts = {}
-        return [
+        enriched = [
             d.with_doctors_count(live_doctor_counts.get(d.slug, d.doctors_count))
             .with_trials_count(live_trial_counts.get(d.slug, d.trials_count))
             for d in items
         ]
+        return self._localize_all(enriched, locale)
 
-    def get(self, slug: str) -> Disease | None:
+    def get(self, slug: str, locale: str = DEFAULT_LOCALE) -> Disease | None:
         normalized = normalize_slug(slug)
         if normalized is None:
             return None
@@ -75,7 +89,8 @@ class DiseaseService:
         if item is None:
             return None
         item = self._with_live_doctor_count(item)
-        return self._with_live_trial_count(item)
+        item = self._with_live_trial_count(item)
+        return self._localize(item, locale)
 
     def list_unlisted(self) -> list[Disease]:
         """Diseases pending catalog approval (RES-1) — admin review queue.
@@ -91,6 +106,27 @@ class DiseaseService:
         if normalized is None:
             return None
         return self.repo.set_listed(normalized, listed)
+
+    def _localize_all(self, diseases: list[Disease], locale: str) -> list[Disease]:
+        """Overlay translations for every disease, or return as-is on the EN path."""
+        if locale == DEFAULT_LOCALE or self.translation_repo is None:
+            return diseases  # English (or no sidecar) → byte-identical, no repo calls
+        return [self._localize(d, locale) for d in diseases]
+
+    def _localize(self, disease: Disease, locale: str) -> Disease:
+        """Overlay the translatable ``summary`` for a non-EN locale (per-field fallback)."""
+        if locale == DEFAULT_LOCALE or self.translation_repo is None:
+            return disease
+        try:
+            translations = self.translation_repo.get_for_entity(
+                "disease", disease.slug, locale
+            )
+        except Exception:
+            return disease  # English is never at risk
+        summary = fresh_scalar_text(translations, "summary", disease.summary)
+        if summary is None:
+            return disease
+        return replace(disease, summary=summary)
 
     def _with_live_doctor_count(self, disease: Disease) -> Disease:
         try:

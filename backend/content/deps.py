@@ -28,6 +28,7 @@ from .private_context import (
 from .repository import DiseaseRepo, SqlaDiseaseRepo
 from .service import DiseaseService, DoctorCountProvider, TrialCountProvider
 from .therapies import SqlaTherapyRepo, TherapyRepo, TherapyService
+from .translations_repository import SqlaTranslationRepo, TranslationRepo
 from .trials_repository import SqlaTrialRepo, TrialRepo
 from .trials_service import TrialService
 
@@ -62,12 +63,23 @@ def provide_trial_count() -> TrialCountProvider:
     return SqlaTrialRepo().count_for_disease
 
 
+def provide_translation_repo() -> TranslationRepo:
+    """Production content-translation sidecar repo (INSTALL-1 PR3 serving)."""
+    return SqlaTranslationRepo()
+
+
 def provide_disease_service(
     repo: DiseaseRepo = Depends(provide_disease_repo),
     doctor_count: DoctorCountProvider = Depends(provide_doctor_count),
     trial_count: TrialCountProvider = Depends(provide_trial_count),
+    translation_repo: TranslationRepo = Depends(provide_translation_repo),
 ) -> DiseaseService:
-    return DiseaseService(repo=repo, doctor_count=doctor_count, trial_count=trial_count)
+    return DiseaseService(
+        repo=repo,
+        doctor_count=doctor_count,
+        trial_count=trial_count,
+        translation_repo=translation_repo,
+    )
 
 
 def provide_trial_repo() -> TrialRepo:
@@ -88,8 +100,13 @@ def provide_therapy_repo() -> TherapyRepo:
 def provide_therapy_service(
     therapy_repo: TherapyRepo = Depends(provide_therapy_repo),
     disease_repo: DiseaseRepo = Depends(provide_disease_repo),
+    translation_repo: TranslationRepo = Depends(provide_translation_repo),
 ) -> TherapyService:
-    return TherapyService(therapy_repo=therapy_repo, disease_repo=disease_repo)
+    return TherapyService(
+        therapy_repo=therapy_repo,
+        disease_repo=disease_repo,
+        translation_repo=translation_repo,
+    )
 
 
 def provide_foundation_repo() -> FoundationRepo:
@@ -99,9 +116,12 @@ def provide_foundation_repo() -> FoundationRepo:
 def provide_foundation_service(
     foundation_repo: FoundationRepo = Depends(provide_foundation_repo),
     disease_repo: DiseaseRepo = Depends(provide_disease_repo),
+    translation_repo: TranslationRepo = Depends(provide_translation_repo),
 ) -> FoundationService:
     return FoundationService(
-        foundation_repo=foundation_repo, disease_repo=disease_repo
+        foundation_repo=foundation_repo,
+        disease_repo=disease_repo,
+        translation_repo=translation_repo,
     )
 
 
@@ -131,6 +151,7 @@ __all__ = [
     "provide_disease_repo",
     "provide_doctor_count",
     "provide_trial_count",
+    "provide_translation_repo",
     "provide_disease_service",
     "provide_trial_repo",
     "provide_trial_service",

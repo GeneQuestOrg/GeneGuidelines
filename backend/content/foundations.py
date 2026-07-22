@@ -8,20 +8,26 @@ junction table in a single round trip.
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass, field
-from typing import Iterable, Mapping, Protocol
+from collections.abc import Iterable, Mapping
+from dataclasses import dataclass, field, replace
+from typing import Protocol
 
 from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.engine import Engine
 
+from ..shared.locale import DEFAULT_LOCALE
 from ..shared.persistence.base_repo import BaseSqlalchemyRepo
 from ..shared.persistence.dialect import nocase_order
 from ..shared.persistence.schema import (
     disease_foundations,
+)
+from ..shared.persistence.schema import (
     foundations as foundations_table,
 )
+from ._translation_overlay import fresh_list_items, fresh_scalar_text
 from .repository import DiseaseRepo, normalize_slug
+from .translations_repository import TranslationRepo
 
 
 @dataclass(frozen=True, slots=True)
@@ -214,17 +220,44 @@ class InMemoryFoundationRepo:
 class FoundationService:
     foundation_repo: FoundationRepo
     disease_repo: DiseaseRepo
+    # Optional read-side machine-translation sidecar (INSTALL-1 PR3); None or the
+    # EN path → no translation-repo calls, behaviour unchanged.
+    translation_repo: TranslationRepo | None = None
 
-    def list_for_disease(self, slug: str) -> list[Foundation] | None:
+    def list_for_disease(
+        self, slug: str, locale: str = DEFAULT_LOCALE
+    ) -> list[Foundation] | None:
         normalized = normalize_slug(slug)
         if normalized is None:
             return None
         if self.disease_repo.get(normalized) is None:
             return None
-        return self.foundation_repo.list_for_disease(normalized)
+        foundations = self.foundation_repo.list_for_disease(normalized)
+        if locale == DEFAULT_LOCALE or self.translation_repo is None:
+            return foundations
+        return [self._localize(f, locale) for f in foundations]
 
     def list_all(self) -> list[Foundation]:
         return self.foundation_repo.list_all()
+
+    def _localize(self, foundation: Foundation, locale: str) -> Foundation:
+        """Overlay translatable ``name`` (scalar) + ``services`` (list); per-field fallback."""
+        repo = self.translation_repo
+        if repo is None:
+            return foundation
+        try:
+            translations = repo.get_for_entity("foundation", str(foundation.id), locale)
+        except Exception:
+            return foundation  # English is never at risk
+        name = fresh_scalar_text(translations, "name", foundation.name)
+        services = fresh_list_items(translations, "services", foundation.services)
+        if name is None and services is None:
+            return foundation
+        return replace(
+            foundation,
+            name=name if name is not None else foundation.name,
+            services=services if services is not None else foundation.services,
+        )
 
 
 __all__ = [

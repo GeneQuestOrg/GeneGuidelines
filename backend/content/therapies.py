@@ -8,16 +8,19 @@ pattern as :mod:`backend.content.repository` and
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import Iterable, Literal, Mapping, Protocol
+from collections.abc import Iterable, Mapping
+from dataclasses import dataclass, replace
+from typing import Literal, Protocol
 
 from sqlalchemy import select
 from sqlalchemy.engine import Engine
 
+from ..shared.locale import DEFAULT_LOCALE
 from ..shared.persistence.base_repo import BaseSqlalchemyRepo
 from ..shared.persistence.schema import therapies as therapies_table
+from ._translation_overlay import fresh_scalar_text
 from .repository import DiseaseRepo, normalize_slug
-
+from .translations_repository import TranslationRepo
 
 TherapyStatus = Literal["consensus", "verified", "pending", "preclinical"]
 
@@ -83,14 +86,41 @@ class InMemoryTherapyRepo:
 class TherapyService:
     therapy_repo: TherapyRepo
     disease_repo: DiseaseRepo
+    # Optional read-side machine-translation sidecar (INSTALL-1 PR3); None or the
+    # EN path → no translation-repo calls, behaviour unchanged.
+    translation_repo: TranslationRepo | None = None
 
-    def list_for_disease(self, slug: str) -> list[Therapy] | None:
+    def list_for_disease(
+        self, slug: str, locale: str = DEFAULT_LOCALE
+    ) -> list[Therapy] | None:
         normalized = normalize_slug(slug)
         if normalized is None:
             return None
         if self.disease_repo.get(normalized) is None:
             return None
-        return self.therapy_repo.list_for_disease(normalized)
+        therapies = self.therapy_repo.list_for_disease(normalized)
+        if locale == DEFAULT_LOCALE or self.translation_repo is None:
+            return therapies
+        return [self._localize(t, locale) for t in therapies]
+
+    def _localize(self, therapy: Therapy, locale: str) -> Therapy:
+        """Overlay the translatable ``name`` / ``note`` (per-field English fallback)."""
+        repo = self.translation_repo
+        if repo is None:
+            return therapy
+        try:
+            translations = repo.get_for_entity("therapy", str(therapy.id), locale)
+        except Exception:
+            return therapy  # English is never at risk
+        name = fresh_scalar_text(translations, "name", therapy.name)
+        note = fresh_scalar_text(translations, "note", therapy.note)
+        if name is None and note is None:
+            return therapy
+        return replace(
+            therapy,
+            name=name if name is not None else therapy.name,
+            note=note if note is not None else therapy.note,
+        )
 
 
 __all__ = [
