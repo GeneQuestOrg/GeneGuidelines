@@ -1,0 +1,22 @@
+{
+  "loading": "Wczytywanie choroby…",
+  "errorLoadTitle": "Nie udało się wczytać choroby",
+  "errorLoadAction": "Wróć na stronę główną",
+  "notFoundTitle": "Nie znaleziono choroby",
+  "notFoundDesc": "Brak wpisu w katalogu wytycznych dla „{{slug}}”. Spróbuj przejrzeć listę chorób.",
+  "notFoundAction": "Przeglądaj choroby",
+  "clinicianCta": "Jesteś lekarzem? Zaloguj się, aby zobaczyć sugestie AI i ścieżkę do literatury.",
+  "signIn": "Zaloguj się",
+  "clinicianPending": "Konto lekarza oczekuje na weryfikację — możesz czytać sugestie AI; ocenianie odblokuje się po weryfikacji.",
+  "notListedBadge": "Jeszcze nie w publicznym katalogu — oczekuje na opracowanie.",
+  "refreshing": "Odświeżanie w toku — {{label}}{{elapsed}}. Pokazujemy ostatnie zapisane wyniki; mogą się wkrótce zmienić.",
+  "researchInProgress": "research w toku",
+  "alertConfirmed": "Potwierdzono powiadomienia e-mail dla {{disease}}. Napiszemy tylko, gdy zmieni się coś istotnego.",
+  "alertUnsubscribed": "Powiadomienia dla {{disease}} zostały wyłączone.",
+  "guidelinesTitle": "Wytyczne",
+  "synthesisSub": "Nie ma jednego dokumentu. Poniżej jest jedna synteza łącząca wszystkie źródła — a pod nią półka z samymi źródłami.",
+  "orientationCtaTitle": "Nowa diagnoza? Zacznij od mapy orientacyjnej.",
+  "orientationCtaSub": "Rzeczy, o które nie wiesz, że trzeba pytać — potwierdzenie diagnozy, lekarze znający {{disease}}, wytyczne, fundacje, badania — w kolejności, w jakiej będą Ci potrzebne.",
+  "myCaseCtaTitle": "Masz dokumentację medyczną? Zobacz, jak Twój przypadek może pomóc.",
+  "myCaseCtaSub": "Prześlij wyniki, aby udostępnić je specjalistom, gdy zechcesz — i przekaż zanonimizowane dane, które przyspieszą badania nad nowymi terapiami dla {{disease}}."
+}

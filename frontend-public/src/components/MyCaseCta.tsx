@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import type { Disease } from "../types";
 import "../styles/my-case.css";
 
@@ -7,6 +8,7 @@ export interface MyCaseCtaProps {
 }
 
 export function MyCaseCta({ disease, onNav }: MyCaseCtaProps) {
+  const { t } = useTranslation("disease");
   const path = `/diseases/${disease.slug}/my-case`;
 
   return (
@@ -34,10 +36,9 @@ export function MyCaseCta({ disease, onNav }: MyCaseCtaProps) {
         </svg>
       </span>
       <div className="mycase-cta__body">
-        <div className="mycase-cta__title">Have medical records? See how your case can help.</div>
+        <div className="mycase-cta__title">{t("myCaseCtaTitle")}</div>
         <div className="mycase-cta__sub">
-          Upload results to share with specialists when you choose — and contribute anonymized facts
-          that speed research on new treatments for <em>{disease.nameShort}</em>.
+          {t("myCaseCtaSub", { disease: disease.nameShort })}
         </div>
       </div>
       <span className="mycase-cta__arrow" aria-hidden>

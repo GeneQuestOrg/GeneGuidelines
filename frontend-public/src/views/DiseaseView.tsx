@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import type { UserLocation } from "../router/types";
 import { useAudienceCopy } from "../copy";
 import { useAccountContext } from "../auth/accountContext";
@@ -37,6 +38,7 @@ function parseAlertFromSearch(): string | undefined {
 }
 
 export function DiseaseView({ slug, role, userLoc, onNav, alert }: DiseaseViewProps) {
+  const { t } = useTranslation("disease");
   const [showSubscribe, setShowSubscribe] = useState(false);
   const [subscriptionStatus, setSubscriptionStatus] = useState<SubscriptionUiStatus>("none");
   const [bannerAlert] = useState<string | undefined>(alert ?? parseAlertFromSearch());
@@ -76,7 +78,7 @@ export function DiseaseView({ slug, role, userLoc, onNav, alert }: DiseaseViewPr
   if (loading) {
     return (
       <section className="page page--disease">
-        <p className="page__lead">Loading disease…</p>
+        <p className="page__lead">{t("loading")}</p>
       </section>
     );
   }
@@ -84,9 +86,9 @@ export function DiseaseView({ slug, role, userLoc, onNav, alert }: DiseaseViewPr
   if (error != null) {
     return (
       <PlaceholderView
-        title="Could not load disease"
+        title={t("errorLoadTitle")}
         description={error}
-        primaryAction={{ label: "Back to home", path: "/" }}
+        primaryAction={{ label: t("errorLoadAction"), path: "/" }}
         onNav={onNav}
       />
     );
@@ -95,9 +97,9 @@ export function DiseaseView({ slug, role, userLoc, onNav, alert }: DiseaseViewPr
   if (disease == null) {
     return (
       <PlaceholderView
-        title="Disease not found"
-        description={`No guideline catalog entry for “${slug}”. Try browsing the disease list.`}
-        primaryAction={{ label: "Browse diseases", path: "/diseases" }}
+        title={t("notFoundTitle")}
+        description={t("notFoundDesc", { slug })}
+        primaryAction={{ label: t("notFoundAction"), path: "/diseases" }}
         onNav={onNav}
       />
     );
@@ -107,25 +109,22 @@ export function DiseaseView({ slug, role, userLoc, onNav, alert }: DiseaseViewPr
     <section className="page page--disease">
       {role === "anon" && signInAvailable ? (
         <aside className="viewer-cta" role="note">
-          <span className="viewer-cta__text">
-            Are you a clinician? Sign in to see AI suggestions and the literature trail.
-          </span>
+          <span className="viewer-cta__text">{t("clinicianCta")}</span>
           <Button variant="primary" size="sm" type="button" onClick={login}>
-            Sign in
+            {t("signIn")}
           </Button>
         </aside>
       ) : null}
       {role === "doctor-unverified" ? (
         <p className="viewer-pending" role="status">
           <span className="viewer-pending__dot" aria-hidden="true" />
-          Clinician account pending verification — you can read AI suggestions; rating
-          unlocks once verified.
+          {t("clinicianPending")}
         </p>
       ) : null}
       {!disease.listed ? (
         <p className="disease-pending-badge" role="status">
           <span className="disease-pending-badge__dot" aria-hidden="true" />
-          Not yet in the public catalog — pending curation.
+          {t("notListedBadge")}
         </p>
       ) : null}
       {reprocessingRun ? (
@@ -134,20 +133,20 @@ export function DiseaseView({ slug, role, userLoc, onNav, alert }: DiseaseViewPr
             className="disease-pending-badge__dot disease-pending-badge__dot--pulse"
             aria-hidden="true"
           />
-          Refreshing now — {reprocessingRun.label || "research in progress"}
-          {reprocessingRun.elapsedSec != null ? ` · ${reprocessingRun.elapsedSec}s` : ""}.
-          Showing the latest saved results; they may change shortly.
+          {t("refreshing", {
+            label: reprocessingRun.label || t("researchInProgress"),
+            elapsed: reprocessingRun.elapsedSec != null ? ` · ${reprocessingRun.elapsedSec}s` : "",
+          })}
         </p>
       ) : null}
       {bannerAlert === "confirmed" ? (
         <p className="d-alert-banner d-alert-banner--ok" role="status">
-          Email alerts confirmed for {disease.nameShort}. We will only email when something
-          substantive changes.
+          {t("alertConfirmed", { disease: disease.nameShort })}
         </p>
       ) : null}
       {bannerAlert === "unsubscribed" ? (
         <p className="d-alert-banner d-alert-banner--muted" role="status">
-          You are unsubscribed from {disease.nameShort} alerts.
+          {t("alertUnsubscribed", { disease: disease.nameShort })}
         </p>
       ) : null}
       <DiseaseHero
@@ -172,8 +171,8 @@ export function DiseaseView({ slug, role, userLoc, onNav, alert }: DiseaseViewPr
       {!isClinician ? <MyCaseCta disease={disease} onNav={onNav} /> : null}
       {sourceDocs.length > 0 ? (
         <Section
-          title="Guidelines"
-          sub="There is no single document. Below is one synthesis combining every source — and under it, a shelf of the sources themselves."
+          title={t("guidelinesTitle")}
+          sub={t("synthesisSub")}
         >
           <SynthesisTeaser
             diseaseName={disease.name}

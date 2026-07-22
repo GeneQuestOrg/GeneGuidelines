@@ -6,10 +6,12 @@ import enCommon from "../locales/en/common.json";
 import enHome from "../locales/en/home.json";
 import enParent from "../locales/en/parent.json";
 import enDoctor from "../locales/en/doctor.json";
+import enDisease from "../locales/en/disease.json";
 import plCommon from "../locales/pl/common.json";
 import plHome from "../locales/pl/home.json";
 import plParent from "../locales/pl/parent.json";
 import plDoctor from "../locales/pl/doctor.json";
+import plDisease from "../locales/pl/disease.json";
 
 /**
  * i18next bootstrap. Design constraints (see plan-i18n-pl-2026-07-16.md):
@@ -24,12 +26,12 @@ import plDoctor from "../locales/pl/doctor.json";
  *  - **English is the default and fallback.**
  */
 
-export const I18N_NAMESPACES = ["common", "home", "parent", "doctor"] as const;
+export const I18N_NAMESPACES = ["common", "home", "parent", "doctor", "disease"] as const;
 
 void i18n.use(initReactI18next).init({
   resources: {
-    en: { common: enCommon, home: enHome, parent: enParent, doctor: enDoctor },
-    pl: { common: plCommon, home: plHome, parent: plParent, doctor: plDoctor },
+    en: { common: enCommon, home: enHome, parent: enParent, doctor: enDoctor, disease: enDisease },
+    pl: { common: plCommon, home: plHome, parent: plParent, doctor: plDoctor, disease: plDisease },
   },
   lng: readLocaleFromLocation(),
   fallbackLng: DEFAULT_LOCALE,

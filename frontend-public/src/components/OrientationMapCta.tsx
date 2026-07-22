@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import type { Disease } from "../types";
 import "../styles/my-case.css";
 
@@ -12,6 +13,7 @@ export interface OrientationMapCtaProps {
  * the map's value is orientation *before* you know what to look for, so it leads.
  */
 export function OrientationMapCta({ disease, onNav }: OrientationMapCtaProps) {
+  const { t } = useTranslation("disease");
   const path = `/diseases/${disease.slug}/map`;
 
   return (
@@ -40,13 +42,9 @@ export function OrientationMapCta({ disease, onNav }: OrientationMapCtaProps) {
         </svg>
       </span>
       <div className="orientation-cta__body">
-        <div className="orientation-cta__title">
-          New to this diagnosis? Start with the orientation map.
-        </div>
+        <div className="orientation-cta__title">{t("orientationCtaTitle")}</div>
         <div className="orientation-cta__sub">
-          The things you don&rsquo;t know to ask about — confirming the diagnosis, doctors who
-          know <em>{disease.nameShort}</em>, guidelines, foundations, trials — in the order
-          you&rsquo;ll need them.
+          {t("orientationCtaSub", { disease: disease.nameShort })}
         </div>
       </div>
       <span className="orientation-cta__arrow" aria-hidden>

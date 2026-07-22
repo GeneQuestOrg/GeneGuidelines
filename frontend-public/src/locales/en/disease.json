@@ -1,0 +1,22 @@
+{
+  "loading": "Loading disease…",
+  "errorLoadTitle": "Could not load disease",
+  "errorLoadAction": "Back to home",
+  "notFoundTitle": "Disease not found",
+  "notFoundDesc": "No guideline catalog entry for “{{slug}}”. Try browsing the disease list.",
+  "notFoundAction": "Browse diseases",
+  "clinicianCta": "Are you a clinician? Sign in to see AI suggestions and the literature trail.",
+  "signIn": "Sign in",
+  "clinicianPending": "Clinician account pending verification — you can read AI suggestions; rating unlocks once verified.",
+  "notListedBadge": "Not yet in the public catalog — pending curation.",
+  "refreshing": "Refreshing now — {{label}}{{elapsed}}. Showing the latest saved results; they may change shortly.",
+  "researchInProgress": "research in progress",
+  "alertConfirmed": "Email alerts confirmed for {{disease}}. We will only email when something substantive changes.",
+  "alertUnsubscribed": "You are unsubscribed from {{disease}} alerts.",
+  "guidelinesTitle": "Guidelines",
+  "synthesisSub": "There is no single document. Below is one synthesis combining every source — and under it, a shelf of the sources themselves.",
+  "orientationCtaTitle": "New to this diagnosis? Start with the orientation map.",
+  "orientationCtaSub": "The things you don't know to ask about — confirming the diagnosis, doctors who know {{disease}}, guidelines, foundations, trials — in the order you'll need them.",
+  "myCaseCtaTitle": "Have medical records? See how your case can help.",
+  "myCaseCtaSub": "Upload results to share with specialists when you choose — and contribute anonymized facts that speed research on new treatments for {{disease}}."
+}
