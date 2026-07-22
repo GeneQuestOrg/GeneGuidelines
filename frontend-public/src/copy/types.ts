@@ -39,9 +39,10 @@ export interface HomeCopy {
   dontTitle: string;
   dontDescLead: string;
   dontDescEmph: string;
-  symptomPlaceholder: string;
-  symptomExamples: readonly HomeExample[];
-  dontCta: string;
+  /* Not-yet-built guided orientation: preview the steps + an inert "coming
+     soon" affordance instead of a live input that pretends to work. */
+  dontSteps: readonly string[];
+  dontComingSoon: string;
 
   /* "Co tu znajdziesz" + honest disclosure. */
   findsTitle: string;

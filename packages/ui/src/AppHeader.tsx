@@ -15,6 +15,8 @@ export interface AppHeaderProps {
   navLinks?: NavLink[];
   children?: ReactNode;
   mobileMenuContent?: ReactNode;
+  /** Optional pill shown next to the brand (e.g. a "Public beta" badge). */
+  brandBadge?: ReactNode;
 }
 
 // Public app uses a history (path) router → real `/` URLs. The admin app still
@@ -36,6 +38,7 @@ export function AppHeader({
   navLinks,
   children,
   mobileMenuContent,
+  brandBadge,
 }: AppHeaderProps) {
   const isAdmin = variant === "admin";
   const links = navLinks ?? (isAdmin ? DEFAULT_ADMIN_LINKS : DEFAULT_PUBLIC_LINKS);
@@ -64,6 +67,7 @@ export function AppHeader({
           <span className="hdr__name">GeneGuidelines</span>
           <span className="hdr__by">{isAdmin ? "/ Admin" : "/ GeneQuest"}</span>
         </a>
+        {brandBadge != null ? brandBadge : null}
         <button
           type="button"
           className="hdr__menu-toggle"

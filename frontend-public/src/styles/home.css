@@ -224,6 +224,54 @@
   margin-top: 16px;
 }
 
+/* Coming-soon "don't know the diagnosis" door: a step preview (what it WILL do)
+   + an inert chip, instead of a live input that would pretend to work. */
+.page--home .steps-mini {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  flex-grow: 1;
+}
+.page--home .steps-mini li {
+  display: flex;
+  gap: 11px;
+  align-items: flex-start;
+  font-size: 13px;
+  color: var(--ink-2);
+  line-height: 1.45;
+}
+.page--home .steps-mini__n {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--bg);
+  border: 1px solid var(--line-2, var(--line));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-3);
+}
+.page--home .door__soon {
+  align-self: flex-start;
+  margin-top: auto;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: oklch(0.45 0.13 75);
+  background: color-mix(in oklch, var(--st-amber) 14%, var(--bg-elev));
+  border: 1px dashed color-mix(in oklch, var(--st-amber) 40%, var(--line));
+  padding: 7px 14px;
+  border-radius: 99px;
+  cursor: default;
+}
+
 /* ── "co tu znajdziesz" ──────────────────────────────────────────────────── */
 .page--home .finds {
   display: grid;

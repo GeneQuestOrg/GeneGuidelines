@@ -38,6 +38,20 @@
 }
 .hdr__name { font-size: var(--fs-lg); }
 .hdr__by { color: var(--ink-3); font-size: var(--fs-sm); font-weight: 400; }
+.hdr__beta {
+  margin-left: 4px;
+  align-self: center;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent-ink);
+  background: var(--accent-soft);
+  border: 1px solid color-mix(in oklch, var(--accent) 25%, var(--line));
+  padding: 2px 7px;
+  border-radius: 99px;
+  white-space: nowrap;
+}
 .hdr__menu-toggle {
   display: none;
   padding: 6px 10px;

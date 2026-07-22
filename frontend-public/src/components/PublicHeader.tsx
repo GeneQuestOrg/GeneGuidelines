@@ -129,6 +129,7 @@ export function PublicHeader({
         variant="public"
         navLinks={buildNavLinks(route, t)}
         mobileMenuContent={mobileMenuActions}
+        brandBadge={<span className="hdr__beta">{t("betaBadge")}</span>}
       >
         <div className="hdr-actions hdr-actions--desktop" ref={menuRef}>
           <LocaleSwitcher locale={locale} onChange={onSetLocale} />

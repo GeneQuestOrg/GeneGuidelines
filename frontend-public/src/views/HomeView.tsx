@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { SearchBar, Button, Section } from "@gene-guidelines/ui";
+import { Button, Section } from "@gene-guidelines/ui";
 import type { AudienceView } from "../router/types";
 import { useAudienceCopy } from "../copy";
 import type { DiseaseSuggestion } from "../api/diseaseIndex";
@@ -59,7 +59,6 @@ const iconChat: ReactNode = (
 );
 
 export function HomeView({ view, onNav }: HomeViewProps) {
-  const [symptomQuery, setSymptomQuery] = useState("");
   const [addQuery, setAddQuery] = useState("");
   const { diseases, loading, error } = useDiseaseCatalog();
   const { runs: activeRuns } = useActiveResearchRuns(3);
@@ -77,15 +76,6 @@ export function HomeView({ view, onNav }: HomeViewProps) {
     } else {
       onNav("/start-research");
     }
-  };
-
-  // RIGHT card — "I don't know the diagnosis". There is no dedicated
-  // disease-agnostic symptom/orientation route yet (the orientation map at
-  // /diseases/:slug/map needs a known disease), so route the symptom/variant
-  // input to the same forgiving catalog search — the closest existing surface.
-  const goSymptom = () => {
-    const q = symptomQuery.trim();
-    onNav(q ? `/diseases?q=${encodeURIComponent(q)}` : "/diseases");
   };
 
   // Feedback bar — commission an AI research run for any disease.
@@ -174,43 +164,20 @@ export function HomeView({ view, onNav }: HomeViewProps) {
             {copy.dontDescLead}
             <b className="door__desc-emph">{copy.dontDescEmph}</b>
           </p>
-          <form
-            className="door__form"
-            onSubmit={(e) => {
-              e.preventDefault();
-              goSymptom();
-            }}
-          >
-            <SearchBar
-              value={symptomQuery}
-              onChange={setSymptomQuery}
-              placeholder={copy.symptomPlaceholder}
-              icon={iconBulb}
-              aria-label={copy.dontTitle}
-            />
-          </form>
-          <div className="quicklinks">
-            {copy.symptomExamples.map((ex) => (
-              <button
-                key={ex.label}
-                type="button"
-                className="ql"
-                onClick={() => setSymptomQuery(ex.hint)}
-              >
-                <b>{ex.label}</b>
-                <span>{ex.hint}</span>
-              </button>
+          {/* Guided orientation is not built yet — preview the steps and show an
+              inert "coming soon" chip rather than a live input that would
+              pretend the feature works. */}
+          <ol className="steps-mini">
+            {copy.dontSteps.map((step, i) => (
+              <li key={step}>
+                <span className="steps-mini__n">{i + 1}</span>
+                {step}
+              </li>
             ))}
-          </div>
-          <Button
-            type="button"
-            variant="primary"
-            size="lg"
-            className="door__cta"
-            onClick={goSymptom}
-          >
-            {copy.dontCta} <span className="arw" aria-hidden>→</span>
-          </Button>
+          </ol>
+          <span className="door__soon" aria-disabled="true">
+            {copy.dontComingSoon}
+          </span>
         </div>
       </div>
 

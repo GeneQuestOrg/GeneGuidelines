@@ -11,16 +11,16 @@
   "searchPlaceholder": "e.g. fibrous dysplasia, dysplazja włóknista, MAS, GNAS…",
 
   "dontKicker": "I don't have a diagnosis",
-  "dontBadge": "Public beta",
+  "dontBadge": "Beta · soon",
   "dontTitle": "I don't know where to start",
-  "dontDescLead": "Only have a symptom or a genetic test result? Type what you have — we'll show possible directions and which specialist to talk to. ",
+  "dontDescLead": "Only a symptom, a genetic test result, or a suspicion? A guided orientation is coming — you'll answer a few questions and we'll point you toward possible directions and which specialist to talk to. ",
   "dontDescEmph": "With citations, not a diagnosis.",
-  "symptomPlaceholder": "e.g. café-au-lait spots  ·  or  GNAS c.601C>T",
-  "symptomExamples": [
-    { "label": "Symptom", "hint": "café-au-lait spots" },
-    { "label": "Variant", "hint": "GNAS c.601C>T" }
+  "dontSteps": [
+    "Describe the symptoms, or paste a variant (e.g. GNAS c.601C>T).",
+    "We narrow it to possible directions — with citations, not a diagnosis.",
+    "We point you to the guidelines and a doctor who knows the topic."
   ],
-  "dontCta": "Start finding your way",
+  "dontComingSoon": "Coming soon",
 
   "findsTitle": "What you'll find here",
   "findsSub": "In one place, for any rare disease — and if yours isn't here yet, you can commission a research run.",

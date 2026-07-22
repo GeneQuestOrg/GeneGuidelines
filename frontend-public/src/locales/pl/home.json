@@ -11,16 +11,16 @@
   "searchPlaceholder": "np. dysplazja włóknista, fibrous dysplasia, MAS, GNAS…",
 
   "dontKicker": "Nie znam diagnozy",
-  "dontBadge": "Publiczna beta",
+  "dontBadge": "Beta · wkrótce",
   "dontTitle": "Nie wiem, od czego zacząć",
-  "dontDescLead": "Masz tylko objaw albo wynik badania genetycznego? Wpisz, co masz — pokażemy możliwe kierunki i z jakim specjalistą porozmawiać. ",
+  "dontDescLead": "Masz tylko objaw, wynik badania genetycznego albo podejrzenie? Prowadzona orientacja jest w drodze — odpowiesz na kilka pytań, a my pokażemy możliwe kierunki i z jakim specjalistą porozmawiać. ",
   "dontDescEmph": "Z cytowaniami, bez diagnozy.",
-  "symptomPlaceholder": "np. plamy café-au-lait  ·  albo  GNAS c.601C>T",
-  "symptomExamples": [
-    { "label": "Objaw", "hint": "plamy café-au-lait" },
-    { "label": "Wariant", "hint": "GNAS c.601C>T" }
+  "dontSteps": [
+    "Opisz objawy lub wklej wariant (np. GNAS c.601C>T).",
+    "Zawężamy do możliwych kierunków — z cytowaniami, bez diagnozy.",
+    "Kierujemy do wytycznych i lekarza, który zna temat."
   ],
-  "dontCta": "Rozpocznij orientację",
+  "dontComingSoon": "Wkrótce",
 
   "findsTitle": "Co tu znajdziesz",
   "findsSub": "W jednym miejscu, dla dowolnej rzadkiej choroby — a jeśli Twojej jeszcze u nas nie ma, możesz ją zlecić do researchu.",

@@ -2,7 +2,6 @@ import type { TFunction } from "i18next";
 import type {
   DiseaseCopy,
   HomeCopy,
-  HomeExample,
   HomeFind,
   ParentOrientationCopy,
   PathwayStep,
@@ -43,9 +42,8 @@ export function buildHomeCopy(t: TFunction): HomeCopy {
     dontTitle: t("dontTitle"),
     dontDescLead: t("dontDescLead"),
     dontDescEmph: t("dontDescEmph"),
-    symptomPlaceholder: t("symptomPlaceholder"),
-    symptomExamples: objectResult<HomeExample[]>(t, "symptomExamples"),
-    dontCta: t("dontCta"),
+    dontSteps: objectResult<string[]>(t, "dontSteps"),
+    dontComingSoon: t("dontComingSoon"),
 
     findsTitle: t("findsTitle"),
     findsSub: t("findsSub"),
