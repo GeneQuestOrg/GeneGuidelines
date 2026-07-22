@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Section } from "@gene-guidelines/ui";
 import { PrivateContextPanel } from "../components/PrivateContextPanel";
 import { MyCaseGate } from "../components/MyCaseGate";
@@ -24,8 +25,9 @@ function MyCaseCrumbs({
   diseaseName: string;
   onNav: (path: string) => void;
 }) {
+  const { t } = useTranslation("my-case");
   return (
-    <nav className="mycase__crumbs" aria-label="Breadcrumb">
+    <nav className="mycase__crumbs" aria-label={t("breadcrumbAriaLabel")}>
       <a
         href="/"
         onClick={(e) => {
@@ -33,7 +35,7 @@ function MyCaseCrumbs({
           onNav("/");
         }}
       >
-        Home
+        {t("breadcrumbHome")}
       </a>
       <span aria-hidden>›</span>
       <a
@@ -46,12 +48,13 @@ function MyCaseCrumbs({
         {diseaseName}
       </a>
       <span aria-hidden>›</span>
-      <span>My case</span>
+      <span>{t("breadcrumbCurrent")}</span>
     </nav>
   );
 }
 
 export function MyCaseView({ slug, onNav }: MyCaseViewProps) {
+  const { t } = useTranslation("my-case");
   const accountCtx = useAccountContext();
   const { disease, loading, error } = useDisease(slug);
   const canUpload = canAccessMyCaseUpload(accountCtx);
@@ -59,7 +62,7 @@ export function MyCaseView({ slug, onNav }: MyCaseViewProps) {
   if (loading || (accountCtx.signInAvailable && accountCtx.loading)) {
     return (
       <section className="page page--mycase">
-        <p className="page__lead">Loading…</p>
+        <p className="page__lead">{t("loading")}</p>
       </section>
     );
   }
@@ -67,9 +70,9 @@ export function MyCaseView({ slug, onNav }: MyCaseViewProps) {
   if (error != null) {
     return (
       <PlaceholderView
-        title="Could not load disease"
+        title={t("errorLoadTitle")}
         description={error}
-        primaryAction={{ label: "Back to home", path: "/" }}
+        primaryAction={{ label: t("errorLoadAction"), path: "/" }}
         onNav={onNav}
       />
     );
@@ -78,9 +81,9 @@ export function MyCaseView({ slug, onNav }: MyCaseViewProps) {
   if (disease == null) {
     return (
       <PlaceholderView
-        title="Disease not found"
-        description={`No catalog entry for “${slug}”.`}
-        primaryAction={{ label: "Browse diseases", path: "/diseases" }}
+        title={t("notFoundTitle")}
+        description={t("notFoundDesc", { slug })}
+        primaryAction={{ label: t("notFoundAction"), path: "/diseases" }}
         onNav={onNav}
       />
     );
@@ -93,17 +96,11 @@ export function MyCaseView({ slug, onNav }: MyCaseViewProps) {
       {canUpload ? (
         <>
           <header className="mycase__header">
-            <h1 className="mycase__title">My case — private zone</h1>
-            <p className="mycase__lead">
-              Upload results to keep them in one private place for your care team. We redact personal
-              identifiers, extract clinical facts in memory, and destroy the original immediately.
-            </p>
+            <h1 className="mycase__title">{t("title")}</h1>
+            <p className="mycase__lead">{t("lead")}</p>
           </header>
 
-          <Section
-            title="Private document upload"
-            sub="Powered by Gemma 4 · in-memory processing · original never stored on disk"
-          >
+          <Section title={t("uploadSectionTitle")} sub={t("uploadSectionSub")}>
             <PrivateContextPanel diseaseSlug={slug} />
           </Section>
         </>

@@ -11,6 +11,13 @@ import enStartResearch from "../locales/en/start-research.json";
 import enTrials from "../locales/en/trials.json";
 import enDoctorsPage from "../locales/en/doctors-page.json";
 import enGuidelines from "../locales/en/guidelines.json";
+import enMyCase from "../locales/en/my-case.json";
+import enDiseaseMap from "../locales/en/disease-map.json";
+import enDoctorProfile from "../locales/en/doctor-profile.json";
+import enDiseaseIndex from "../locales/en/disease-index.json";
+import enAccount from "../locales/en/account.json";
+import enResearchRun from "../locales/en/research-run.json";
+import enMisc from "../locales/en/misc.json";
 import plCommon from "../locales/pl/common.json";
 import plHome from "../locales/pl/home.json";
 import plParent from "../locales/pl/parent.json";
@@ -20,6 +27,13 @@ import plStartResearch from "../locales/pl/start-research.json";
 import plTrials from "../locales/pl/trials.json";
 import plDoctorsPage from "../locales/pl/doctors-page.json";
 import plGuidelines from "../locales/pl/guidelines.json";
+import plMyCase from "../locales/pl/my-case.json";
+import plDiseaseMap from "../locales/pl/disease-map.json";
+import plDoctorProfile from "../locales/pl/doctor-profile.json";
+import plDiseaseIndex from "../locales/pl/disease-index.json";
+import plAccount from "../locales/pl/account.json";
+import plResearchRun from "../locales/pl/research-run.json";
+import plMisc from "../locales/pl/misc.json";
 
 /**
  * i18next bootstrap. Design constraints (see plan-i18n-pl-2026-07-16.md):
@@ -44,6 +58,13 @@ export const I18N_NAMESPACES = [
   "trials",
   "doctors-page",
   "guidelines",
+  "my-case",
+  "disease-map",
+  "doctor-profile",
+  "disease-index",
+  "account",
+  "research-run",
+  "misc",
 ] as const;
 
 void i18n.use(initReactI18next).init({
@@ -58,6 +79,13 @@ void i18n.use(initReactI18next).init({
       trials: enTrials,
       "doctors-page": enDoctorsPage,
       guidelines: enGuidelines,
+      "my-case": enMyCase,
+      "disease-map": enDiseaseMap,
+      "doctor-profile": enDoctorProfile,
+      "disease-index": enDiseaseIndex,
+      account: enAccount,
+      "research-run": enResearchRun,
+      misc: enMisc,
     },
     pl: {
       common: plCommon,
@@ -69,6 +97,13 @@ void i18n.use(initReactI18next).init({
       trials: plTrials,
       "doctors-page": plDoctorsPage,
       guidelines: plGuidelines,
+      "my-case": plMyCase,
+      "disease-map": plDiseaseMap,
+      "doctor-profile": plDoctorProfile,
+      "disease-index": plDiseaseIndex,
+      account: plAccount,
+      "research-run": plResearchRun,
+      misc: plMisc,
     },
   },
   lng: readLocaleFromLocation(),

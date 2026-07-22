@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@gene-guidelines/ui";
 import { ActionDetail } from "../components/flowchart/ActionDetail";
 import { FlowNode } from "../components/flowchart/FlowNode";
@@ -13,13 +14,14 @@ export interface FlowchartViewProps {
 }
 
 export function FlowchartView({ slug, onNav }: FlowchartViewProps) {
+  const { t } = useTranslation("misc");
   const { pathway, loading, error } = useParentPathway(slug);
   const [selected, setSelected] = useState<PathwayActionNode | null>(null);
 
   if (loading) {
     return (
       <div className="page page--flow">
-        <p>Loading your next-steps guide…</p>
+        <p>{t("flowchart.loading")}</p>
       </div>
     );
   }
@@ -27,10 +29,10 @@ export function FlowchartView({ slug, onNav }: FlowchartViewProps) {
   if (error) {
     return (
       <div className="page page--flow">
-        <h2>Could not load pathway</h2>
+        <h2>{t("flowchart.errorTitle")}</h2>
         <p>{error}</p>
         <Button type="button" onClick={() => onNav(`/diseases/${slug}`)}>
-          Back to disease
+          {t("flowchart.backToDisease")}
         </Button>
       </div>
     );
@@ -39,13 +41,10 @@ export function FlowchartView({ slug, onNav }: FlowchartViewProps) {
   if (!pathway?.tree) {
     return (
       <div className="page page--flow page--empty">
-        <h2>Next-steps guide not available yet</h2>
-        <p>
-          A step-by-step guide for families and patients has not been generated for this
-          condition yet.
-        </p>
+        <h2>{t("flowchart.notAvailableTitle")}</h2>
+        <p>{t("flowchart.notAvailableDesc")}</p>
         <Button type="button" onClick={() => onNav(`/diseases/${slug}`)}>
-          Back to disease overview
+          {t("flowchart.backToDiseaseOverview")}
         </Button>
       </div>
     );
@@ -56,16 +55,14 @@ export function FlowchartView({ slug, onNav }: FlowchartViewProps) {
   return (
     <div className="page page--flow">
       <div className="flow__head">
-        <p className="flow__eyebrow">After diagnosis</p>
+        <p className="flow__eyebrow">{t("flowchart.eyebrow")}</p>
         <h1>{tree.title}</h1>
         {tree.subtitle ? <p className="flow__subtitle">{tree.subtitle}</p> : null}
-        <p className="flow__hint">
-          Work through the steps in order. Tap a highlighted action to see who to contact,
-          what to expect, and questions you can ask — you can read them from your phone at the
-          appointment.
-        </p>
+        <p className="flow__hint">{t("flowchart.hint")}</p>
         {pathway.basedOn ? (
-          <p className="flow__hint flow__hint--muted">Based on: {pathway.basedOn}</p>
+          <p className="flow__hint flow__hint--muted">
+            {t("flowchart.basedOn", { basedOn: pathway.basedOn })}
+          </p>
         ) : null}
       </div>
 
@@ -90,12 +87,8 @@ export function FlowchartView({ slug, onNav }: FlowchartViewProps) {
             <ActionDetail action={selected} />
           ) : (
             <div className="flow__detail-empty">
-              <h3>Your next visit</h3>
-              <p>
-                Choose a highlighted action in the steps on the left. We will show who can help,
-                what usually happens, and what to ask — so you do not have to remember
-                everything alone.
-              </p>
+              <h3>{t("flowchart.nextVisitTitle")}</h3>
+              <p>{t("flowchart.nextVisitDesc")}</p>
             </div>
           )}
         </aside>

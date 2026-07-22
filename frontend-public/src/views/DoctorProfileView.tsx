@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Badge, Button, Section } from "@gene-guidelines/ui";
 import type { UserLocation } from "../router/types";
 import { useAccountContext } from "../auth/accountContext";
@@ -26,10 +27,10 @@ import type { AddedVia } from "../types/doctor";
 import { isWorkflowDoctorSource } from "../types/doctor";
 import "../styles/doctors.css";
 
-const PROVENANCE_LABEL: Record<AddedVia, string | null> = {
-  pubmed: "PubMed",
-  parent: "Parent-added",
-  consortium: "Consortium",
+const PROVENANCE_KEY: Record<AddedVia, string | null> = {
+  pubmed: "provenance.pubmed",
+  parent: "provenance.parent",
+  consortium: "provenance.consortium",
   nil: null,
 };
 
@@ -39,8 +40,8 @@ const MIN_REC_CHARS = 20;
 const TOP_PUBLICATIONS = 3;
 
 interface IdentityBadge {
-  readonly label: string;
-  readonly title: string;
+  readonly labelKey: string;
+  readonly titleKey: string;
   readonly ok: boolean;
 }
 
@@ -54,17 +55,15 @@ function identityBadge(
 ): IdentityBadge | null {
   if (confidence === "high") {
     return {
-      label: "Verified identity",
-      title:
-        "Identified by ORCID or a curated match — this profile is one specific person.",
+      labelKey: "identity.verifiedLabel",
+      titleKey: "identity.verifiedTitle",
       ok: true,
     };
   }
   if (confidence === "low") {
     return {
-      label: "Name-matched only",
-      title:
-        "Matched by name from PubMed without an ORCID — distinct people with similar names may be merged, so treat the counts with caution.",
+      labelKey: "identity.nameMatchedLabel",
+      titleKey: "identity.nameMatchedTitle",
       ok: false,
     };
   }
@@ -78,6 +77,7 @@ export interface DoctorProfileViewProps {
 }
 
 export function DoctorProfileView({ slug, userLoc, onNav }: DoctorProfileViewProps) {
+  const { t } = useTranslation("doctor-profile");
   const { doctor, loading, error } = useDoctor(slug);
   const { diseases } = useDiseaseCatalog();
   const { recs: localRecs, addRec } = useLocalParentRecs(slug);
@@ -88,7 +88,7 @@ export function DoctorProfileView({ slug, userLoc, onNav }: DoctorProfileViewPro
   if (loading) {
     return (
       <section className="page page--doctor">
-        <p className="page__loading">Loading profile…</p>
+        <p className="page__loading">{t("loading")}</p>
       </section>
     );
   }
@@ -96,9 +96,9 @@ export function DoctorProfileView({ slug, userLoc, onNav }: DoctorProfileViewPro
   if (error != null) {
     return (
       <PlaceholderView
-        title="Could not load profile"
+        title={t("errorLoadTitle")}
         description={error}
-        primaryAction={{ label: "All specialists", path: "/doctors" }}
+        primaryAction={{ label: t("allSpecialistsAction"), path: "/doctors" }}
         onNav={onNav}
       />
     );
@@ -107,9 +107,9 @@ export function DoctorProfileView({ slug, userLoc, onNav }: DoctorProfileViewPro
   if (doctor == null) {
     return (
       <PlaceholderView
-        title="Specialist not found"
-        description={`No profile for “${slug}”. Browse the directory or pick another disease.`}
-        primaryAction={{ label: "All specialists", path: "/doctors" }}
+        title={t("notFoundTitle")}
+        description={t("notFoundDescription", { slug })}
+        primaryAction={{ label: t("allSpecialistsAction"), path: "/doctors" }}
         onNav={onNav}
       />
     );
@@ -122,7 +122,7 @@ export function DoctorProfileView({ slug, userLoc, onNav }: DoctorProfileViewPro
       : null;
   const roleLabel = pubmedRoleLabel(doctor.pubmedRole);
   const evidence = doctor.evidence;
-  const provenanceLabel = PROVENANCE_LABEL[addedViaOf(doctor)];
+  const provenanceKey = PROVENANCE_KEY[addedViaOf(doctor)];
   const idBadge = identityBadge(doctor.identityConfidence);
 
   const dataRecs = doctor.parentRecs ?? [];
@@ -148,31 +148,30 @@ export function DoctorProfileView({ slug, userLoc, onNav }: DoctorProfileViewPro
               {doctor.specialty?.trim() ? (
                 doctor.specialty
               ) : (
-                <span className="dprofile__spec--unverified">Specialty not verified</span>
+                <span className="dprofile__spec--unverified">{t("specialtyNotVerified")}</span>
               )}
             </div>
             <div className="dprofile__inst">
               {doctor.institution} · {doctorLocation(doctor)}
             </div>
             <div className="dprofile__chips">
-              {provenanceLabel ? (
-                <span className="tag tag--source">{provenanceLabel}</span>
+              {provenanceKey ? (
+                <span className="tag tag--source">{t(provenanceKey)}</span>
               ) : null}
               {idBadge ? (
                 <span
                   className={`tag ${idBadge.ok ? "tag--ok" : "tag--warn"}`}
-                  title={idBadge.title}
+                  title={t(idBadge.titleKey)}
                 >
-                  {idBadge.label}
+                  {t(idBadge.labelKey)}
                 </span>
               ) : null}
               {doctor.reviewStatus === "pending" ? (
-                <span className="tag tag--warn">Pending review</span>
+                <span className="tag tag--warn">{t("pendingReview")}</span>
               ) : null}
               {familyRecCount > 0 ? (
                 <span className="tag tag--ok">
-                  Recommended by {familyRecCount}{" "}
-                  {familyRecCount === 1 ? "family" : "families"}
+                  {t("recommendedByFamilies", { count: familyRecCount })}
                 </span>
               ) : null}
             </div>
@@ -184,56 +183,56 @@ export function DoctorProfileView({ slug, userLoc, onNav }: DoctorProfileViewPro
 
         <div className="dprofile__score-row">
           <div className="dprofile__score">
-            <div className="dprofile__score-label">PubMed score</div>
+            <div className="dprofile__score-label">{t("score.label")}</div>
             <div className="dprofile__score-num">
               {doctor.score}
-              <span>/100</span>
+              <span>{t("score.outOf")}</span>
             </div>
             <div className="dprofile__score-meter" aria-hidden>
               <i style={{ width: `${doctor.score}%` }} />
             </div>
           </div>
           <div className="dprofile__role-tag">
-            <div className="dprofile__score-label">Classification</div>
+            <div className="dprofile__score-label">{t("classification")}</div>
             <span className={`tag tag--role tag--${doctor.pubmedRole} tag--lg`}>{roleLabel}</span>
             {isWorkflowDoctorSource(doctor.source) ? (
-              <Badge variant="ok">Doctor Finder</Badge>
+              <Badge variant="ok">{t("doctorFinderBadge")}</Badge>
             ) : null}
           </div>
         </div>
 
         <div className="dprofile__evidence">
-          <div className="dprofile__label">Evidence</div>
+          <div className="dprofile__label">{t("evidence.title")}</div>
           <div className="ev-grid">
             <div className="ev">
-              <span>First / last author papers</span>
+              <span>{t("evidence.firstOrLastAuthorPapers")}</span>
               <b>{evidence.firstOrLastAuthorPapers}</b>
             </div>
             <div className="ev">
-              <span>Review papers</span>
+              <span>{t("evidence.reviewPapers")}</span>
               <b>{evidence.reviewPapers}</b>
             </div>
             <div className={`ev${evidence.citesRecentGuidelines ? " ev--ok" : " ev--warn"}`}>
-              <span>Cites current guidelines</span>
-              <b>{evidence.citesRecentGuidelines ? "Yes" : "No"}</b>
+              <span>{t("evidence.citesRecentGuidelines")}</span>
+              <b>{evidence.citesRecentGuidelines ? t("evidence.yes") : t("evidence.no")}</b>
             </div>
             <div className={`ev${evidence.activeLast2y ? " ev--ok" : " ev--warn"}`}>
-              <span>Active in last 2 years</span>
-              <b>{evidence.activeLast2y ? "Yes" : "No"}</b>
+              <span>{t("evidence.activeLast2y")}</span>
+              <b>{evidence.activeLast2y ? t("evidence.yes") : t("evidence.no")}</b>
             </div>
             <div className={`ev${evidence.guidelineOrConsensusCoauthor ? " ev--ok" : ""}`}>
-              <span>Guideline / consensus co-author</span>
-              <b>{evidence.guidelineOrConsensusCoauthor ? "Yes" : "—"}</b>
+              <span>{t("evidence.guidelineOrConsensusCoauthor")}</span>
+              <b>{evidence.guidelineOrConsensusCoauthor ? t("evidence.yes") : "—"}</b>
             </div>
             <div className={`ev${dataRecCount > 0 ? " ev--ok" : ""}`}>
-              <span>Recommended by families</span>
+              <span>{t("evidence.recommendedByFamiliesLabel")}</span>
               <b>{dataRecCount}</b>
             </div>
           </div>
         </div>
       </div>
 
-      <Section title="Diseases" sub="Areas of expertise supported by publications.">
+      <Section title={t("diseases.title")} sub={t("diseases.sub")}>
         <div className="dprofile__disease-rows">
           {doctor.diseases.map((diseaseSlug) => {
             const disease = diseases.find((d) => d.slug === diseaseSlug);
@@ -255,15 +254,13 @@ export function DoctorProfileView({ slug, userLoc, onNav }: DoctorProfileViewPro
       </Section>
 
       <Section
-        title="Selected publications"
+        title={t("publications.title")}
         count={publications.length}
-        sub="What this specialist has actually published on these conditions."
+        sub={t("publications.sub")}
         divider
       >
         {publications.length === 0 ? (
-          <p className="d-panel-empty">
-            No indexed publications for this profile in the catalog seed.
-          </p>
+          <p className="d-panel-empty">{t("publications.empty")}</p>
         ) : (
           <>
             <ul className="pubs">
@@ -274,9 +271,9 @@ export function DoctorProfileView({ slug, userLoc, onNav }: DoctorProfileViewPro
                     <div className="pub__title">
                       {pub.title}
                       {pub.meshMajor ? (
-                        <span title="The disease is a major MeSH topic of this paper — it is about the disease, not just mentioning it.">
+                        <span title={t("publications.meshMajorTitle")}>
                           {" "}
-                          <Badge variant="ok">★ MeSH-major</Badge>
+                          <Badge variant="ok">{t("publications.meshMajorBadge")}</Badge>
                         </span>
                       ) : null}
                     </div>
@@ -287,7 +284,7 @@ export function DoctorProfileView({ slug, userLoc, onNav }: DoctorProfileViewPro
                         <>
                           {" · "}
                           <a href={pubmedArticleUrl(pub.pmid)} target="_blank" rel="noreferrer">
-                            PMID {pub.pmid}
+                            {t("publications.pmid", { pmid: pub.pmid })}
                           </a>
                         </>
                       ) : null}
@@ -304,8 +301,8 @@ export function DoctorProfileView({ slug, userLoc, onNav }: DoctorProfileViewPro
                   onClick={() => setShowAllPubs((value) => !value)}
                 >
                   {showAllPubs
-                    ? "Show fewer"
-                    : `Show all ${publications.length} selected publications`}
+                    ? t("publications.showFewer")
+                    : t("publications.showAll", { count: publications.length })}
                 </button>
               ) : null}
               {recordLink ? (
@@ -323,13 +320,13 @@ export function DoctorProfileView({ slug, userLoc, onNav }: DoctorProfileViewPro
         )}
       </Section>
 
-      <Section title="Where they practise" count={venues.length} divider>
+      <Section title={t("venues.title")} count={venues.length} divider>
         <ul className="venues">
           {venues.map(({ practice, km: venueKm, nearest: isNearest }, index) => (
             <li key={`${practice.name}-${index}`} className="venue">
               <div className="venue__head">
                 <span className="venue__name">{practice.name}</span>
-                {isNearest ? <span className="tag tag--ok">Nearest</span> : null}
+                {isNearest ? <span className="tag tag--ok">{t("venues.nearest")}</span> : null}
                 {venueKm != null ? <DistancePill km={venueKm} /> : null}
               </div>
               <div className="venue__type">{practice.type}</div>
@@ -351,13 +348,13 @@ export function DoctorProfileView({ slug, userLoc, onNav }: DoctorProfileViewPro
       </Section>
 
       <Section
-        title="Parent recommendations"
+        title={t("recs.title")}
         count={dataRecs.length + localRecs.length}
-        sub="Family experiences PubMed mining cannot surface."
+        sub={t("recs.sub")}
         divider
       >
         {dataRecs.length + localRecs.length === 0 ? (
-          <p className="d-panel-empty">No family recommendations yet.</p>
+          <p className="d-panel-empty">{t("recs.empty")}</p>
         ) : (
           <ul className="recs">
             {dataRecs.map((rec, index) => (
@@ -374,13 +371,11 @@ export function DoctorProfileView({ slug, userLoc, onNav }: DoctorProfileViewPro
               <li key={`local-${index}`} className="rec rec--local">
                 <p className="rec__text">{rec.text}</p>
                 <div className="rec__meta">
-                  {rec.relation === "carer" ? "carer" : "parent"}
+                  {rec.relation === "carer" ? t("recs.relationCarer") : t("recs.relationParent")}
                   {rec.region ? ` · ${rec.region}` : ""}
                   {rec.date ? ` · ${rec.date}` : ""}
                 </div>
-                <div className="rec__local-note">
-                  Saved on this device — will enter moderation once accounts launch.
-                </div>
+                <div className="rec__local-note">{t("recs.localNote")}</div>
               </li>
             ))}
           </ul>
@@ -388,9 +383,9 @@ export function DoctorProfileView({ slug, userLoc, onNav }: DoctorProfileViewPro
         <AddRecForm doctorSlug={slug} account={account} onAdd={addRec} />
       </Section>
 
-      <Section title="Endorsements" divider>
+      <Section title={t("endorsements.title")} divider>
         {doctor.endorsements.length === 0 ? (
-          <p className="d-panel-empty">No consortium endorsements listed.</p>
+          <p className="d-panel-empty">{t("endorsements.empty")}</p>
         ) : (
           <div className="chip-row">
             {doctor.endorsements.map((label) => (
@@ -403,15 +398,11 @@ export function DoctorProfileView({ slug, userLoc, onNav }: DoctorProfileViewPro
       </Section>
 
       {evidence.runsClinicalTrial ? (
-        <Section
-          title="Related trials"
-          sub="This specialist is involved in clinical-trial research. Below are active trials for this condition on ClinicalTrials.gov — not necessarily this doctor's own."
-          divider
-        >
+        <Section title={t("trials.title")} sub={t("trials.sub")} divider>
           {relatedTrials.loading ? (
-            <p className="d-panel-empty">Loading trials…</p>
+            <p className="d-panel-empty">{t("trials.loading")}</p>
           ) : relatedTrials.error != null ? (
-            <p className="d-panel-empty">Could not load trials: {relatedTrials.error}</p>
+            <p className="d-panel-empty">{t("trials.error", { error: relatedTrials.error })}</p>
           ) : (
             <TrialsList trials={relatedTrials.trials} />
           )}
@@ -420,15 +411,12 @@ export function DoctorProfileView({ slug, userLoc, onNav }: DoctorProfileViewPro
 
       <div className="dprofile__contact">
         <div>
-          <h2>Contact</h2>
-          <p>
-            Request contact through GeneQuest — we protect direct email and include family
-            context in the introduction.
-          </p>
+          <h2>{t("contact.title")}</h2>
+          <p>{t("contact.body")}</p>
           <p className="dprofile__source">
-            Public data source: {doctor.publicSource || "—"}
+            {t("contact.publicSource", { source: doctor.publicSource || "—" })}
             {isWorkflowDoctorSource(doctor.source) && doctor.executionId
-              ? ` · Doctor Finder run ${doctor.executionId}`
+              ? t("contact.doctorFinderRun", { id: doctor.executionId })
               : ""}
           </p>
           {doctor.rodo?.note ? (
@@ -436,7 +424,7 @@ export function DoctorProfileView({ slug, userLoc, onNav }: DoctorProfileViewPro
           ) : null}
         </div>
         <Button type="button" variant="ghost" onClick={() => onNav("/about")}>
-          About GeneQuest & contact
+          {t("contact.cta")}
         </Button>
       </div>
     </section>
@@ -459,6 +447,7 @@ interface AddRecFormProps {
  *   echoed locally and labelled "Awaiting moderation".
  */
 function AddRecForm({ doctorSlug, account, onAdd }: AddRecFormProps) {
+  const { t } = useTranslation("doctor-profile");
   const [text, setText] = useState("");
   const [region, setRegion] = useState("");
   const [relation, setRelation] = useState<LocalRecRelation>("parent");
@@ -481,14 +470,12 @@ function AddRecForm({ doctorSlug, account, onAdd }: AddRecFormProps) {
   if (mode === "sign-in" || mode === "not-allowed") {
     return (
       <div className="rec-form rec-form--signin">
-        <div className="rec-form__title">Add your recommendation</div>
+        <div className="rec-form__title">{t("addRecForm.title")}</div>
         {mode === "not-allowed" ? (
-          <p className="rec-form__disclaimer">
-            Only parents and carers can leave a recommendation.
-          </p>
+          <p className="rec-form__disclaimer">{t("addRecForm.signInOnlyNote")}</p>
         ) : (
           <button type="button" className="link-btn" onClick={account.login}>
-            Sign in to recommend this doctor
+            {t("addRecForm.signInCta")}
           </button>
         )}
       </div>
@@ -520,7 +507,7 @@ function AddRecForm({ doctorSlug, account, onAdd }: AddRecFormProps) {
         const message =
           e instanceof ApiRequestError || e instanceof Error
             ? e.message
-            : "Could not submit — please try again.";
+            : t("addRecForm.genericSubmitError");
         setSubmitError(message);
         setSubmitting(false);
         return;
@@ -538,18 +525,18 @@ function AddRecForm({ doctorSlug, account, onAdd }: AddRecFormProps) {
 
   return (
     <form className="rec-form" onSubmit={(e) => void handleSubmit(e)}>
-      <div className="rec-form__title">Add your recommendation</div>
+      <div className="rec-form__title">{t("addRecForm.title")}</div>
       <textarea
         className="rec-form__textarea"
         value={text}
         onChange={(e) => setText(e.target.value)}
         onBlur={() => setTouched(true)}
-        placeholder={`What was your experience? (at least ${MIN_REC_CHARS} characters)`}
+        placeholder={t("addRecForm.textareaPlaceholder", { min: MIN_REC_CHARS })}
         rows={3}
         required
       />
       {touched && tooShort ? (
-        <p className="rec-form__error">Please write at least {MIN_REC_CHARS} characters.</p>
+        <p className="rec-form__error">{t("addRecForm.tooShortError", { min: MIN_REC_CHARS })}</p>
       ) : null}
       {submitError != null ? (
         <p className="rec-form__error" role="alert">
@@ -562,25 +549,23 @@ function AddRecForm({ doctorSlug, account, onAdd }: AddRecFormProps) {
           type="text"
           value={region}
           onChange={(e) => setRegion(e.target.value)}
-          placeholder="Region (optional)"
+          placeholder={t("addRecForm.regionPlaceholder")}
         />
         <select
           className="rec-form__select"
           value={relation}
           onChange={(e) => setRelation(e.target.value === "carer" ? "carer" : "parent")}
-          aria-label="Your relation"
+          aria-label={t("addRecForm.relationAriaLabel")}
         >
-          <option value="parent">Parent</option>
-          <option value="carer">Carer</option>
+          <option value="parent">{t("addRecForm.relationParentOption")}</option>
+          <option value="carer">{t("addRecForm.relationCarerOption")}</option>
         </select>
         <Button type="submit" variant="ghost" disabled={submitting}>
-          {submitting ? "Submitting…" : "Save recommendation"}
+          {submitting ? t("addRecForm.submitting") : t("addRecForm.submit")}
         </Button>
       </div>
       <p className="rec-form__disclaimer">
-        {writePathLive
-          ? "Submitted for moderation — your entry appears publicly once a reviewer approves it."
-          : "Saved on this device for now. Publication requires moderation once accounts launch."}
+        {writePathLive ? t("addRecForm.disclaimerLive") : t("addRecForm.disclaimerLocal")}
       </p>
     </form>
   );

@@ -1,0 +1,102 @@
+{
+  "loading": "Wczytywanie profilu…",
+  "errorLoadTitle": "Nie udało się wczytać profilu",
+  "notFoundTitle": "Nie znaleziono specjalisty",
+  "notFoundDescription": "Brak profilu dla „{{slug}}”. Przeglądaj katalog albo wybierz inną chorobę.",
+  "allSpecialistsAction": "Wszyscy specjaliści",
+  "specialtyNotVerified": "Specjalizacja niezweryfikowana",
+  "provenance": {
+    "pubmed": "PubMed",
+    "parent": "Dodane przez rodziców",
+    "consortium": "Konsorcjum"
+  },
+  "identity": {
+    "verifiedLabel": "Zweryfikowana tożsamość",
+    "verifiedTitle": "Zidentyfikowano przez ORCID lub potwierdzone dopasowanie — ten profil to jedna konkretna osoba.",
+    "nameMatchedLabel": "Dopasowanie tylko po nazwisku",
+    "nameMatchedTitle": "Dopasowano po nazwisku z PubMed, bez ORCID — różne osoby o podobnych nazwiskach mogły zostać połączone, więc traktuj te liczby z ostrożnością."
+  },
+  "pendingReview": "Oczekuje na weryfikację",
+  "recommendedByFamilies_one": "Polecany przez {{count}} rodzinę",
+  "recommendedByFamilies_few": "Polecany przez {{count}} rodziny",
+  "recommendedByFamilies_many": "Polecany przez {{count}} rodzin",
+  "recommendedByFamilies_other": "Polecany przez {{count}} rodzin",
+  "score": {
+    "label": "Wynik PubMed",
+    "outOf": "/100"
+  },
+  "classification": "Klasyfikacja",
+  "doctorFinderBadge": "Doctor Finder",
+  "evidence": {
+    "title": "Dowody",
+    "firstOrLastAuthorPapers": "Prace jako pierwszy / ostatni autor",
+    "reviewPapers": "Prace przeglądowe",
+    "citesRecentGuidelines": "Cytuje aktualne wytyczne",
+    "activeLast2y": "Aktywny w ostatnich 2 latach",
+    "guidelineOrConsensusCoauthor": "Współautor wytycznych / konsensusu",
+    "recommendedByFamiliesLabel": "Polecany przez rodziny",
+    "yes": "Tak",
+    "no": "Nie"
+  },
+  "diseases": {
+    "title": "Choroby",
+    "sub": "Obszary eksperckie potwierdzone publikacjami."
+  },
+  "publications": {
+    "title": "Wybrane publikacje",
+    "sub": "Co ten specjalista faktycznie opublikował na temat tych schorzeń.",
+    "empty": "Brak zindeksowanych publikacji dla tego profilu w naszym katalogu.",
+    "meshMajorTitle": "Choroba jest głównym tematem MeSH tej publikacji — praca dotyczy choroby, a nie tylko o niej wspomina.",
+    "meshMajorBadge": "★ MeSH-major",
+    "pmid": "PMID {{pmid}}",
+    "showFewer": "Pokaż mniej",
+    "showAll_few": "Pokaż wszystkie {{count}} wybrane publikacje",
+    "showAll_many": "Pokaż wszystkie {{count}} wybranych publikacji",
+    "showAll_other": "Pokaż wszystkie {{count}} wybranych publikacji"
+  },
+  "venues": {
+    "title": "Gdzie przyjmuje",
+    "nearest": "Najbliżej"
+  },
+  "recs": {
+    "title": "Rekomendacje rodziców",
+    "sub": "Doświadczenia rodzin, których nie wychwyci samo przeszukiwanie PubMed.",
+    "empty": "Na razie brak rekomendacji od rodzin.",
+    "relationParent": "rodzic",
+    "relationCarer": "opiekun",
+    "localNote": "Zapisane na tym urządzeniu — trafi do moderacji, gdy uruchomimy konta."
+  },
+  "endorsements": {
+    "title": "Wyróżnienia",
+    "empty": "Brak wyróżnień od konsorcjów."
+  },
+  "trials": {
+    "title": "Powiązane badania kliniczne",
+    "sub": "Ten specjalista bierze udział w badaniach klinicznych. Poniżej aktywne badania nad tym schorzeniem z ClinicalTrials.gov — nie muszą to być bezpośrednio badania tego lekarza.",
+    "loading": "Wczytywanie badań…",
+    "error": "Nie udało się wczytać badań: {{error}}"
+  },
+  "contact": {
+    "title": "Kontakt",
+    "body": "Poproś o kontakt przez GeneQuest — chronimy adresy e-mail i dodajemy kontekst rodziny do przedstawienia.",
+    "publicSource": "Publiczne źródło danych: {{source}}",
+    "doctorFinderRun": " · przebieg Doctor Finder {{id}}",
+    "cta": "O GeneQuest i kontakt"
+  },
+  "addRecForm": {
+    "title": "Dodaj swoją rekomendację",
+    "signInOnlyNote": "Rekomendację może dodać tylko rodzic lub opiekun.",
+    "signInCta": "Zaloguj się, aby zarekomendować tego lekarza",
+    "textareaPlaceholder": "Jakie były Twoje doświadczenia? (co najmniej {{min}} znaków)",
+    "tooShortError": "Napisz co najmniej {{min}} znaków.",
+    "genericSubmitError": "Nie udało się wysłać — spróbuj ponownie.",
+    "regionPlaceholder": "Region (opcjonalnie)",
+    "relationAriaLabel": "Twoja relacja",
+    "relationParentOption": "Rodzic",
+    "relationCarerOption": "Opiekun",
+    "submitting": "Wysyłanie…",
+    "submit": "Zapisz rekomendację",
+    "disclaimerLive": "Wysłano do moderacji — Twój wpis pojawi się publicznie, gdy recenzent go zatwierdzi.",
+    "disclaimerLocal": "Na razie zapisane tylko na tym urządzeniu. Publikacja wymaga moderacji, która zacznie działać po uruchomieniu kont."
+  }
+}

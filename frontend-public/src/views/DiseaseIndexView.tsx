@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Button, Section } from "@gene-guidelines/ui";
 import { DiseaseCard } from "../components/DiseaseCard";
 import { useDiseaseCatalog } from "../hooks/useDiseaseCatalog";
@@ -9,19 +10,18 @@ export interface DiseaseIndexViewProps {
 }
 
 export function DiseaseIndexView({ initialQuery = "", onNav }: DiseaseIndexViewProps) {
+  const { t } = useTranslation("disease-index");
   const { diseases, loading, error } = useDiseaseCatalog(initialQuery);
 
   return (
     <div className="page page--home">
-      <h1 className="page__title">Diseases</h1>
+      <h1 className="page__title">{t("title")}</h1>
       <p className="page__lead">
-        {initialQuery
-          ? `Results for “${initialQuery}”`
-          : "Rare genetic conditions with living, physician-reviewed guidelines."}
+        {initialQuery ? t("resultsFor", { query: initialQuery }) : t("lead")}
       </p>
       <div style={{ marginBottom: "1.25rem" }}>
         <Button type="button" variant="primary" onClick={() => onNav("/start-research")}>
-          + Start research
+          {t("startResearch")}
         </Button>
       </div>
       {error != null ? (
@@ -29,11 +29,11 @@ export function DiseaseIndexView({ initialQuery = "", onNav }: DiseaseIndexViewP
           {error}
         </p>
       ) : null}
-      <Section title="All diseases" count={loading ? undefined : diseases.length}>
+      <Section title={t("sectionTitle")} count={loading ? undefined : diseases.length}>
         {loading ? (
-          <p className="page__lead">Loading catalog…</p>
+          <p className="page__lead">{t("loading")}</p>
         ) : diseases.length === 0 ? (
-          <p className="page__lead">No diseases match your search.</p>
+          <p className="page__lead">{t("empty")}</p>
         ) : (
           <div className="d-grid">
             {diseases.map((d) => (

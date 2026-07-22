@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Button } from "@gene-guidelines/ui";
 import type { Disease } from "../types";
 import type { MyCaseGateVariant } from "../auth/canAccessMyCaseUpload";
@@ -9,21 +10,22 @@ export interface MyCaseGateProps {
   onLogin: () => void;
 }
 
-const PROMISES: readonly string[] = [
-  "Keep discharge summaries and lab results in one private place — ready to share with specialists when you choose",
-  "Gemma 4 strips personal identifiers (names, IDs, exact dates, addresses) before anything is saved",
-  "Only anonymized clinical facts persist — the original is processed in memory and never stored on disk",
-  "Anonymized facts help AI analyze patterns and speed research on new treatments and sharper diagnostics",
-  "You stay in control: facts are private to your account; sharing with verified clinicians is opt-in",
+const PROMISE_KEYS: readonly string[] = [
+  "promise0",
+  "promise1",
+  "promise2",
+  "promise3",
+  "promise4",
 ];
 
 export function MyCaseGate({ disease, variant, onLogin }: MyCaseGateProps) {
+  const { t } = useTranslation("my-case");
   const subtitle =
     variant === "needs-role"
-      ? "Choose the patient / caregiver role to unlock your private upload zone."
+      ? t("gateSubtitleNeedsRole")
       : variant === "wrong-role"
-        ? "My case is for patient and caregiver accounts. Clinician accounts can browse guidelines and suggest doctors elsewhere."
-        : "Upload your results to share them conveniently with specialists. By contributing an anonymized version for AI analysis, you directly support research on new treatments and more precise diagnostics.";
+        ? t("gateSubtitleWrongRole")
+        : t("gateSubtitleSignIn");
 
   return (
     <div className="mycase__gate">
@@ -43,17 +45,17 @@ export function MyCaseGate({ disease, variant, onLogin }: MyCaseGateProps) {
         </svg>
       </div>
 
-      <h1 className="mycase__gate-title">My case — private zone</h1>
+      <h1 className="mycase__gate-title">{t("gateTitle")}</h1>
       <p className="mycase__gate-lede">{subtitle}</p>
 
       {variant === "sign-in" ? (
         <>
           <p className="mycase__gate-intro">
-            For <b>{disease.name}</b>, your records are a rare clinical signal — useful for your care
-            team and for building better evidence for similar families.
+            {t("gateIntroBefore")} <b>{disease.name}</b>
+            {t("gateIntroAfter")}
           </p>
           <ul className="mycase__gate-promises">
-            {PROMISES.map((text, index) => (
+            {PROMISE_KEYS.map((key, index) => (
               <li key={index}>
                 <span className="mycase__chk" aria-hidden>
                   ✓
@@ -61,11 +63,10 @@ export function MyCaseGate({ disease, variant, onLogin }: MyCaseGateProps) {
                 <span>
                   {index === 3 ? (
                     <>
-                      Anonymized facts help AI analyze patterns and speed research on new treatments
-                      and sharper diagnostics for <b>{disease.nameShort}</b>
+                      {t("promise3For")} <b>{disease.nameShort}</b>
                     </>
                   ) : (
-                    text
+                    t(key)
                   )}
                 </span>
               </li>
@@ -73,11 +74,11 @@ export function MyCaseGate({ disease, variant, onLogin }: MyCaseGateProps) {
           </ul>
 
           <div className="mycase__gate-coming">
-            <p className="mycase__gate-coming-label">Coming soon with your account</p>
+            <p className="mycase__gate-coming-label">{t("comingSoonLabel")}</p>
             <ul className="mycase__gate-coming-list">
-              <li>Custom research runs tuned to your mutation and phenotype</li>
-              <li>Trial alerts when a study matches your case</li>
-              <li>Optional sharing with verified clinicians — off by default</li>
+              <li>{t("comingSoon1")}</li>
+              <li>{t("comingSoon2")}</li>
+              <li>{t("comingSoon3")}</li>
             </ul>
           </div>
         </>
@@ -87,26 +88,25 @@ export function MyCaseGate({ disease, variant, onLogin }: MyCaseGateProps) {
         {variant === "sign-in" ? (
           <>
             <Button variant="primary" size="lg" type="button" onClick={onLogin}>
-              Create parent / caregiver account
+              {t("createAccountButton")}
             </Button>
             <Button variant="ghost" size="lg" type="button" onClick={onLogin}>
-              Sign in
+              {t("signInButton")}
             </Button>
           </>
         ) : variant === "needs-role" ? (
           <p className="mycase__gate-hint" role="status">
-            Use the role picker to continue — choose <b>Patient / caregiver</b>.
+            {t("gateHintBefore")} <b>{t("gateHintRole")}</b>
+            {t("gateHintAfter")}
           </p>
         ) : (
           <Button variant="ghost" size="lg" type="button" onClick={onLogin}>
-            Switch account
+            {t("switchAccountButton")}
           </Button>
         )}
       </div>
 
-      <p className="mycase__gate-foot">
-        Guidelines, doctors, and trials on GeneGuidelines stay available without an account.
-      </p>
+      <p className="mycase__gate-foot">{t("gateFooter")}</p>
     </div>
   );
 }

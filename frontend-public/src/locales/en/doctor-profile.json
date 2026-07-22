@@ -1,0 +1,98 @@
+{
+  "loading": "Loading profile…",
+  "errorLoadTitle": "Could not load profile",
+  "notFoundTitle": "Specialist not found",
+  "notFoundDescription": "No profile for “{{slug}}”. Browse the directory or pick another disease.",
+  "allSpecialistsAction": "All specialists",
+  "specialtyNotVerified": "Specialty not verified",
+  "provenance": {
+    "pubmed": "PubMed",
+    "parent": "Parent-added",
+    "consortium": "Consortium"
+  },
+  "identity": {
+    "verifiedLabel": "Verified identity",
+    "verifiedTitle": "Identified by ORCID or a curated match — this profile is one specific person.",
+    "nameMatchedLabel": "Name-matched only",
+    "nameMatchedTitle": "Matched by name from PubMed without an ORCID — distinct people with similar names may be merged, so treat the counts with caution."
+  },
+  "pendingReview": "Pending review",
+  "recommendedByFamilies_one": "Recommended by {{count}} family",
+  "recommendedByFamilies_other": "Recommended by {{count}} families",
+  "score": {
+    "label": "PubMed score",
+    "outOf": "/100"
+  },
+  "classification": "Classification",
+  "doctorFinderBadge": "Doctor Finder",
+  "evidence": {
+    "title": "Evidence",
+    "firstOrLastAuthorPapers": "First / last author papers",
+    "reviewPapers": "Review papers",
+    "citesRecentGuidelines": "Cites current guidelines",
+    "activeLast2y": "Active in last 2 years",
+    "guidelineOrConsensusCoauthor": "Guideline / consensus co-author",
+    "recommendedByFamiliesLabel": "Recommended by families",
+    "yes": "Yes",
+    "no": "No"
+  },
+  "diseases": {
+    "title": "Diseases",
+    "sub": "Areas of expertise supported by publications."
+  },
+  "publications": {
+    "title": "Selected publications",
+    "sub": "What this specialist has actually published on these conditions.",
+    "empty": "No indexed publications for this profile in the catalog seed.",
+    "meshMajorTitle": "The disease is a major MeSH topic of this paper — it is about the disease, not just mentioning it.",
+    "meshMajorBadge": "★ MeSH-major",
+    "pmid": "PMID {{pmid}}",
+    "showFewer": "Show fewer",
+    "showAll": "Show all {{count}} selected publications"
+  },
+  "venues": {
+    "title": "Where they practise",
+    "nearest": "Nearest"
+  },
+  "recs": {
+    "title": "Parent recommendations",
+    "sub": "Family experiences PubMed mining cannot surface.",
+    "empty": "No family recommendations yet.",
+    "relationParent": "parent",
+    "relationCarer": "carer",
+    "localNote": "Saved on this device — will enter moderation once accounts launch."
+  },
+  "endorsements": {
+    "title": "Endorsements",
+    "empty": "No consortium endorsements listed."
+  },
+  "trials": {
+    "title": "Related trials",
+    "sub": "This specialist is involved in clinical-trial research. Below are active trials for this condition on ClinicalTrials.gov — not necessarily this doctor's own.",
+    "loading": "Loading trials…",
+    "error": "Could not load trials: {{error}}"
+  },
+  "contact": {
+    "title": "Contact",
+    "body": "Request contact through GeneQuest — we protect direct email and include family context in the introduction.",
+    "publicSource": "Public data source: {{source}}",
+    "doctorFinderRun": " · Doctor Finder run {{id}}",
+    "cta": "About GeneQuest & contact"
+  },
+  "addRecForm": {
+    "title": "Add your recommendation",
+    "signInOnlyNote": "Only parents and carers can leave a recommendation.",
+    "signInCta": "Sign in to recommend this doctor",
+    "textareaPlaceholder": "What was your experience? (at least {{min}} characters)",
+    "tooShortError": "Please write at least {{min}} characters.",
+    "genericSubmitError": "Could not submit — please try again.",
+    "regionPlaceholder": "Region (optional)",
+    "relationAriaLabel": "Your relation",
+    "relationParentOption": "Parent",
+    "relationCarerOption": "Carer",
+    "submitting": "Submitting…",
+    "submit": "Save recommendation",
+    "disclaimerLive": "Submitted for moderation — your entry appears publicly once a reviewer approves it.",
+    "disclaimerLocal": "Saved on this device for now. Publication requires moderation once accounts launch."
+  }
+}

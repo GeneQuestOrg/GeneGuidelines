@@ -1,0 +1,52 @@
+{
+  "account": {
+    "title": "Twoje konto",
+    "loading": "Wczytywanie Twojego konta…",
+    "signedOutLead": "Zaloguj się, aby zapisywać swoje preferencje, śledzić choroby i (jako lekarz) współtworzyć aktualizacje wytycznych.",
+    "signInCta": "Zaloguj się lub zarejestruj",
+    "backHome": "Wróć na stronę główną",
+    "lead": "Twój profil w GeneGuidelines. Te informacje pochodzą z Twojego konta i są widoczne tylko dla Ciebie.",
+    "profileTitle": "Profil",
+    "labelName": "Imię i nazwisko",
+    "labelEmail": "E-mail",
+    "labelRole": "Rola",
+    "labelStatus": "Status",
+    "labelInstitution": "Instytucja",
+    "labelOrcid": "ORCID",
+    "role": {
+      "parent": "Pacjent / opiekun",
+      "doctor": "Lekarz",
+      "researcher": "Badacz",
+      "superadmin": "Superadmin",
+      "notSet": "Nie ustawiono"
+    },
+    "status": {
+      "verified": "Zweryfikowano",
+      "pending": "Oczekuje na weryfikację",
+      "unverified": "Niezweryfikowano"
+    }
+  },
+  "join": {
+    "loading": "Wczytywanie Twojego zaproszenia…",
+    "notFoundTitle": "Nie znaleziono zaproszenia",
+    "notFoundDefaultMessage": "Nie udało się znaleźć tego zaproszenia.",
+    "goToGeneGuidelines": "Przejdź do GeneGuidelines",
+    "invalidTitle": "To zaproszenie straciło ważność",
+    "expiredMessage": "To zaproszenie wygasło. Poproś osobę, która Cię zaprosiła, o nowy link.",
+    "usedMessage": "To zaproszenie zostało już wykorzystane. Jeśli to nie Ty, poproś o nowy link.",
+    "exploreCta": "Poznaj GeneGuidelines",
+    "inviteTitle": "Zaproszono Cię do GeneGuidelines",
+    "signupClosedMessage": "{{inviter}} zaprosił Cię jako lekarza. Rejestracja nie jest jeszcze otwarta w tym środowisku — zajrzyj do nas wkrótce.",
+    "welcomeTitle": "Jesteś z nami — witaj!",
+    "welcomeMessage": "Twoje konto lekarza jest gotowe. Weryfikacja tożsamości jest w toku — administrator (lub ORCID, jeśli dostępny) potwierdzi ją wkrótce. Możesz już teraz zacząć przeglądać wytyczne.",
+    "viewAccount": "Zobacz Twoje konto",
+    "errorTitle": "Nie udało się dokończyć Twojego zaproszenia",
+    "acceptErrorDefaultMessage": "Nie udało się przyjąć tego zaproszenia.",
+    "errorDefaultMessage": "Coś poszło nie tak podczas przyjmowania tego zaproszenia.",
+    "goToAccount": "Przejdź do Twojego konta",
+    "inviteMessageSuffix": "zaprosił Cię do dołączenia jako lekarz — do przeglądania i współtworzenia żywych wytycznych klinicznych dla rzadkich chorób genetycznych.",
+    "verifyNote": "Konta lekarzy są weryfikowane, zanim mogą publikować. Zostaniesz teraz skonfigurowany jako lekarz; weryfikacja nastąpi później.",
+    "settingUp": "Konfigurowanie Twojego konta lekarza…",
+    "signInCta": "Zaloguj się lub utwórz konto"
+  }
+}

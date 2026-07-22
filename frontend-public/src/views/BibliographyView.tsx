@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import type { AnalyzedPaper, AnalyzedPaperVerdict } from "../types/analyzedPaper";
 import type { ViewRole } from "../auth/resolveRole";
 import { RolePill } from "../components/guidelines/RolePill";
@@ -41,6 +42,7 @@ function BibRow({
   slug: string;
   onNav: (path: string) => void;
 }) {
+  const { t } = useTranslation("misc");
   const verdict = BIB_VERDICT_META[paper.verdict];
   const url = bibliographySourceUrl(paper);
   const prob = changeProbabilityPercent(paper.changeProbability);
@@ -66,7 +68,7 @@ function BibRow({
           {paper.year}
         </div>
         <div className="bib-reason">
-          <span className="bib-reason__lbl">AI verdict</span>
+          <span className="bib-reason__lbl">{t("bibliography.aiVerdictLabel")}</span>
           <p>{paper.reason}</p>
         </div>
         <div className="bib-row__foot">
@@ -80,11 +82,11 @@ function BibRow({
             )}
           </span>
           {prob != null ? (
-            <span className="bib-prob" title="Estimated chance this paper would change the guideline">
+            <span className="bib-prob" title={t("bibliography.changeLikelihoodTooltip")}>
               <span className="bib-prob__bar">
                 <i style={{ width: `${prob}%` }} />
               </span>
-              <b>{prob}%</b> change likelihood
+              <b>{prob}%</b> {t("bibliography.changeLikelihoodSuffix")}
             </span>
           ) : null}
           {paper.suggestionId ? (
@@ -95,7 +97,7 @@ function BibRow({
                 onNav(`/diseases/${slug}/guidelines/pr/${paper.suggestionId}`)
               }
             >
-              Became a suggestion →
+              {t("bibliography.becameSuggestion")}
             </button>
           ) : null}
         </div>
@@ -105,6 +107,7 @@ function BibRow({
 }
 
 export function BibliographyView({ slug, role, onNav }: BibliographyViewProps) {
+  const { t } = useTranslation("misc");
   const { disease, loading: diseaseLoading } = useDisease(slug);
   const { papers, loading, error } = useBibliography(slug);
   const [filter, setFilter] = useState<AnalyzedPaperVerdict | "all">("all");
@@ -120,7 +123,7 @@ export function BibliographyView({ slug, role, onNav }: BibliographyViewProps) {
   // make the evidence trail transparent and raise credibility. No role gate.
 
   if (diseaseLoading) {
-    return <p className="page__loading">Loading…</p>;
+    return <p className="page__loading">{t("bibliography.loading")}</p>;
   }
 
   if (disease == null) {
@@ -128,7 +131,7 @@ export function BibliographyView({ slug, role, onNav }: BibliographyViewProps) {
       <div className="page">
         <div className="gx-empty">
           <div>
-            <b>Disease not found.</b>
+            <b>{t("bibliography.diseaseNotFound")}</b>
           </div>
         </div>
       </div>
@@ -144,14 +147,14 @@ export function BibliographyView({ slug, role, onNav }: BibliographyViewProps) {
             className="btn btn--ghost btn--sm gx-bar__back"
             onClick={() => onNav(`/diseases/${slug}/guidelines`)}
           >
-            ← Back to synthesis
+            {t("bibliography.backToSynthesis")}
           </button>
           <div>
-            <span className="gx-bar__ver">analyzed corpus</span>
-            <h1 className="gx-bar__title">AI-analyzed bibliography</h1>
+            <span className="gx-bar__ver">{t("bibliography.eyebrow")}</span>
+            <h1 className="gx-bar__title">{t("bibliography.title")}</h1>
             <p className="gx-bar__src">
-              {disease.name} — every paper the engine read and scored on the latest run,
-              including what it <b>rejected</b> and why.
+              {t("bibliography.sourceIntroLead", { disease: disease.name })}{" "}
+              <b>{t("bibliography.sourceIntroBold")}</b> {t("bibliography.sourceIntroTail")}
             </p>
           </div>
         </div>
@@ -160,32 +163,29 @@ export function BibliographyView({ slug, role, onNav }: BibliographyViewProps) {
 
       <div className="bib-frame">
         <div>
-          <b>This is an audit log of what the engine read — not a recommendation list.</b>
+          <b>{t("bibliography.auditLogTitle")}</b>
           <p>
-            The value is in the negative paths: you can see <b>why</b> a paper did{" "}
-            <b>not</b> land on the source shelf or become a suggestion. Nothing here is
-            for patient management.
+            {t("bibliography.negativePathLead")} <b>{t("bibliography.negativePathWhy")}</b>{" "}
+            {t("bibliography.negativePathMid")}{" "}
+            <b>{t("bibliography.negativePathNot")}</b> {t("bibliography.negativePathTail")}
           </p>
         </div>
       </div>
 
       {loading ? (
-        <p className="page__loading">Loading analyzed corpus…</p>
+        <p className="page__loading">{t("bibliography.loadingCorpus")}</p>
       ) : error != null ? (
         <div className="gx-empty">
           <div>
-            <b>Could not load bibliography.</b>
+            <b>{t("bibliography.loadErrorTitle")}</b>
             <p>{error}</p>
           </div>
         </div>
       ) : papers.length === 0 ? (
         <div className="gx-empty">
           <div>
-            <b>No analyzed run yet for this disease.</b>
-            <p>
-              Run the source-shelf builder and literature monitor first; the verdict
-              ledger appears here after a pipeline run.
-            </p>
+            <b>{t("bibliography.emptyTitle")}</b>
+            <p>{t("bibliography.emptyDesc")}</p>
           </div>
         </div>
       ) : (
@@ -193,13 +193,13 @@ export function BibliographyView({ slug, role, onNav }: BibliographyViewProps) {
           <div className="bib-funnel">
             <div className="bib-funnel__step">
               <span className="bib-funnel__n">{papers.length}</span>
-              <span className="bib-funnel__l">scored</span>
-              <span className="bib-funnel__d">shelf + monitor runs</span>
+              <span className="bib-funnel__l">{t("bibliography.funnelScoredLabel")}</span>
+              <span className="bib-funnel__d">{t("bibliography.funnelScoredDesc")}</span>
             </div>
             <div className="bib-funnel__step bib-funnel__step--out">
               <span className="bib-funnel__n">{usedCount}</span>
-              <span className="bib-funnel__l">used</span>
-              <span className="bib-funnel__d">on shelf or as a suggestion</span>
+              <span className="bib-funnel__l">{t("bibliography.funnelUsedLabel")}</span>
+              <span className="bib-funnel__d">{t("bibliography.funnelUsedDesc")}</span>
             </div>
           </div>
 
@@ -211,7 +211,7 @@ export function BibliographyView({ slug, role, onNav }: BibliographyViewProps) {
               className={`bib-chip${filter === "all" ? " is-on" : ""}`}
               onClick={() => setFilter("all")}
             >
-              All <b>{counts.all}</b>
+              {t("bibliography.filterAll")} <b>{counts.all}</b>
             </button>
             {BIB_VERDICT_ORDER.map((v) => (
               <button
@@ -243,10 +243,7 @@ export function BibliographyView({ slug, role, onNav }: BibliographyViewProps) {
             </section>
           ))}
 
-          <p className="bib-foot">
-            Refreshed on each shelf-build and literature-monitor run. Verdicts may change
-            when new evidence appears or triage is tuned.
-          </p>
+          <p className="bib-foot">{t("bibliography.footNote")}</p>
         </>
       )}
     </section>

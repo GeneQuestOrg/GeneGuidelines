@@ -17,6 +17,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { useTranslation } from "react-i18next";
 import { Button, Section, Status } from "@gene-guidelines/ui";
 import {
   ApiRequestError,
@@ -99,6 +100,7 @@ export function ResearchRunView({
   queryTag,
   onNav,
 }: ResearchRunViewProps) {
+  const { t } = useTranslation("research-run");
   // startedAtMs is captured once on mount via a lazy initializer — safe
   // to read during render because it is plain state, not a ref.
   const [startedAtMs] = useState<number>(() => Date.now());
@@ -120,7 +122,7 @@ export function ResearchRunView({
   const liveByDisease = executionId === RESEARCH_LIVE_EXECUTION_ID;
 
   const displayName =
-    diseaseName?.trim() || queryTag?.trim() || "Research in progress";
+    diseaseName?.trim() || queryTag?.trim() || t("defaultTitle");
 
   const appendRawLines = useCallback((next: string[]) => {
     const filtered = next.filter((line) => !isTraceTransportError(line));
@@ -147,10 +149,10 @@ export function ResearchRunView({
     appendRawLines([
       JSON.stringify({
         kind: "sys",
-        text: `[SYSTEM] Stage: ${stage}`,
+        text: `[SYSTEM] ${t("stagePrefix", { stage })}`,
       }),
     ]);
-  }, [appendRawLines]);
+  }, [appendRawLines, t]);
 
   // 1-second wall-clock ticker — keeps the "elapsed" string and the
   // sticky-done detection in sync with real time without re-rendering
@@ -191,17 +193,13 @@ export function ResearchRunView({
       } catch (e) {
         if (cancelled) return;
         if (e instanceof ApiRequestError && e.status === 404) {
-          setPollError(
-            "Run not found — it may have expired from server memory. Try starting a new job from Start research.",
-          );
+          setPollError(t("errorRunNotFound"));
         } else if (e instanceof ApiRequestError && e.status === 0) {
-          setPollError(
-            `${e.message} Status below may still update — refresh or wait.`,
-          );
+          setPollError(`${e.message} ${t("errorStatusMayUpdate")}`);
         } else if (e instanceof Error) {
           setPollError(e.message);
         } else {
-          setPollError("Could not load run status.");
+          setPollError(t("errorCouldNotLoadStatus"));
         }
       } finally {
         inFlight = false;
@@ -217,7 +215,7 @@ export function ResearchRunView({
         intervalId = null;
       }
     };
-  }, [executionId, hydrateTraceFromRun, liveByDisease]);
+  }, [executionId, hydrateTraceFromRun, liveByDisease, t]);
 
   // SSE trace from the guideline pipeline. We feed the raw lines into
   // tagTraceMessage / humanizeTraceMessage to build the per-workstream
@@ -531,7 +529,7 @@ export function ResearchRunView({
           ) : null}
           <span className="rrun__sep">·</span>
           <span className="rrun__elapsed">
-            elapsed{" "}
+            {t("elapsedLabel")}{" "}
             <span className="rrun__elapsed-num">
               {formatElapsed(researchElapsedSec)}
             </span>
@@ -552,7 +550,9 @@ export function ResearchRunView({
               <span className="rrun__chip-text">{inheritance}</span>
             ) : null}
             {prevalence ? (
-              <span className="rrun__chip-text">prevalence {prevalence}</span>
+              <span className="rrun__chip-text">
+                {t("prevalenceLabel")} {prevalence}
+              </span>
             ) : null}
           </div>
         ) : null}
@@ -566,7 +566,7 @@ export function ResearchRunView({
 
         {budgetLimited && budget != null ? (
           <p className="rrun__budget" role="status">
-            Pozostały budżet tokenów:{" "}
+            {t("budgetRemainingLabel")}{" "}
             <b>{budget.remaining?.toLocaleString("pl-PL")}</b> /{" "}
             {budget.limit.toLocaleString("pl-PL")} ({budget.window})
           </p>
@@ -574,18 +574,16 @@ export function ResearchRunView({
 
         <p className="rrun__lede">
           {failed ? (
-            <>Research stopped before completion. Details below.</>
+            <>{t("ledeFailed")}</>
           ) : everythingDone ? (
             <>
-              Research complete. <b>{disease?.name ?? displayName}</b> is in
-              the catalogue — guidelines, doctors, trials and foundations
-              are pending specialist verification.
+              {t("ledeDonePrefix")} <b>{disease?.name ?? displayName}</b>{" "}
+              {t("ledeDoneSuffix")}
             </>
           ) : (
             <>
-              Six workstreams are running <b>in parallel</b>. Each writes its
-              results directly to the disease page as they land — you don't
-              need to wait for the long guideline draft to finish.
+              {t("ledeRunningPrefix")} <b>{t("ledeRunningBold")}</b>.{" "}
+              {t("ledeRunningSuffix")}
             </>
           )}
         </p>
@@ -598,7 +596,7 @@ export function ResearchRunView({
 
         {failed && runError ? (
           <div className="run__error-banner" role="alert">
-            <strong>Could not finish</strong>
+            <strong>{t("errorBannerTitle")}</strong>
             <p>{humanizeRunError(runError)}</p>
           </div>
         ) : null}
@@ -609,13 +607,13 @@ export function ResearchRunView({
           </div>
           <div className="rrun__overall-counts">
             <span>
-              <b>{doneCount}</b> done
+              <b>{doneCount}</b> {t("overallDoneLabel")}
             </span>
             <span>
-              <b>{runningCount}</b> running
+              <b>{runningCount}</b> {t("overallRunningLabel")}
             </span>
             <span>
-              <b>{queuedCount}</b> queued
+              <b>{queuedCount}</b> {t("overallQueuedLabel")}
             </span>
             <span className="rrun__overall-pct">{overall}%</span>
           </div>
@@ -630,35 +628,29 @@ export function ResearchRunView({
               onClick={() => onNav(diseasePath)}
             >
               {everythingDone
-                ? `Open ${disease?.nameShort ?? "disease page"} →`
+                ? t("openDiseaseCta", {
+                    name: disease?.nameShort ?? t("diseasePageFallback"),
+                  })
                 : anyResults
-                  ? "See what we have so far →"
-                  : "Waiting for first results…"}
+                  ? t("seeResultsCta")
+                  : t("waitingResultsCta")}
             </Button>
           ) : null}
           {succeeded && guidelinePath ? (
             <Button type="button" onClick={() => onNav(guidelinePath)}>
-              Open guideline draft
+              {t("openGuidelineDraftCta")}
             </Button>
           ) : null}
           <Button type="button" onClick={() => onNav("/start-research")}>
-            Start another run
+            {t("startAnotherRunCta")}
           </Button>
           <Button type="button" onClick={() => onNav("/")}>
-            Home
+            {t("homeCta")}
           </Button>
         </div>
       </header>
 
-      <Section
-        title="What we're collecting"
-        sub={
-          <>
-            Each card is its own pipeline. Results land directly on the
-            disease page — this view is just a status mirror.
-          </>
-        }
-      >
+      <Section title={t("collectingTitle")} sub={t("collectingSub")}>
         <div className="rrun__streams">
           {streams.map((stream) => (
             <StreamCard
@@ -672,10 +664,7 @@ export function ResearchRunView({
         </div>
       </Section>
 
-      <Section
-        title="Live activity"
-        sub="Audit log from the workflow engine — each event tagged with the workstream that emitted it. Newest first."
-      >
+      <Section title={t("liveActivityTitle")} sub={t("liveActivitySub")}>
         {activity.length > 0 ? (
           <div className="rrun__activity">
             {activity.map((entry, index) => (
@@ -696,9 +685,7 @@ export function ResearchRunView({
             ))}
           </div>
         ) : (
-          <div className="rrun__act-empty">
-            Waiting for the workflow engine to report progress…
-          </div>
+          <div className="rrun__act-empty">{t("activityEmpty")}</div>
         )}
       </Section>
 
@@ -709,14 +696,21 @@ export function ResearchRunView({
               ✓
             </div>
             <div className="rrun__done-body">
-              <h3>Research finished in {formatElapsed(researchElapsedSec)}.</h3>
+              <h3>
+                {t("doneBannerTitle", {
+                  elapsed: formatElapsed(researchElapsedSec),
+                })}
+              </h3>
               <p>
-                <b>{disease?.name ?? displayName}</b> is now in the catalogue.
-                Draft guideline, {partial.doctors} doctors, {partial.trials}{" "}
-                trials, {partial.therapies} therapies and{" "}
-                {partial.foundations} foundations are waiting for specialist
-                review — every section is marked <em>pending verification</em>{" "}
-                until a clinician signs off.
+                <b>{disease?.name ?? displayName}</b> {t("doneBannerIntro")}{" "}
+                {t("doctorsCount", { count: partial.doctors })},{" "}
+                {t("trialsCount", { count: partial.trials })},{" "}
+                {t("therapiesCount", { count: partial.therapies })}{" "}
+                {t("doneBannerAnd")}{" "}
+                {t("foundationsCount", { count: partial.foundations })}{" "}
+                {t("doneBannerWaitingClause")}{" "}
+                <em>{t("pendingVerification")}</em>
+                {t("doneBannerSignOffSuffix")}
               </p>
             </div>
             <Button
@@ -724,7 +718,9 @@ export function ResearchRunView({
               type="button"
               onClick={() => onNav(diseasePath)}
             >
-              Open {disease?.nameShort ?? "disease page"} →
+              {t("openDiseaseCta", {
+                name: disease?.nameShort ?? t("diseasePageFallback"),
+              })}
             </Button>
           </div>
         </section>
@@ -732,7 +728,7 @@ export function ResearchRunView({
 
       {rawLines.length > 0 ? (
         <details className="run__technical">
-          <summary>Technical log (for operators)</summary>
+          <summary>{t("technicalLogSummary")}</summary>
           <div className="research__trace">
             <pre>
               {rawLines
@@ -755,6 +751,7 @@ interface StreamCardProps {
 }
 
 function StreamCard({ stream, onOpenDisease }: StreamCardProps) {
+  const { t } = useTranslation("research-run");
   const showCount =
     stream.count != null && stream.key !== "official_guidelines";
   const officialPresent =
@@ -804,7 +801,7 @@ function StreamCard({ stream, onOpenDisease }: StreamCardProps) {
       (stream.count ?? 0) > 0 &&
       onOpenDisease != null ? (
         <button type="button" className="stream__cta" onClick={onOpenDisease}>
-          See on the disease page →
+          {t("seeOnDiseasePageCta")}
         </button>
       ) : null}
     </article>
@@ -812,19 +809,32 @@ function StreamCard({ stream, onOpenDisease }: StreamCardProps) {
 }
 
 function StreamPill({ status }: { status: WorkstreamState["status"] }) {
+  const { t } = useTranslation("research-run");
   if (status === "queued") {
-    return <span className="stream__pill stream__pill--queued">queued</span>;
+    return (
+      <span className="stream__pill stream__pill--queued">
+        {t("pillQueued")}
+      </span>
+    );
   }
   if (status === "done") {
-    return <span className="stream__pill stream__pill--done">✓ done</span>;
+    return (
+      <span className="stream__pill stream__pill--done">
+        {t("pillDone")}
+      </span>
+    );
   }
   if (status === "error") {
-    return <span className="stream__pill stream__pill--error">stopped</span>;
+    return (
+      <span className="stream__pill stream__pill--error">
+        {t("pillError")}
+      </span>
+    );
   }
   return (
     <span className="stream__pill stream__pill--running">
       <span className="stream__pill-dot" />
-      running
+      {t("pillRunning")}
     </span>
   );
 }

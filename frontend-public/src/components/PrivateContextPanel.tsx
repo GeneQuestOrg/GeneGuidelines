@@ -1,4 +1,6 @@
 import { useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import { Badge, Button } from "@gene-guidelines/ui";
 import {
   usePrivateContexts,
@@ -22,9 +24,15 @@ function statusVariant(
   return status === "ready" ? "ok" : "default";
 }
 
-function formatBytes(chars: number): string {
-  if (chars < 1000) return `${chars} chars`;
-  return `${(chars / 1000).toFixed(1)} k chars`;
+const CONTEXT_STATUS_LABEL_KEYS: Record<PrivateContextStatus, string> = {
+  pending: "statusPending",
+  ready: "statusReady",
+  failed: "statusFailed",
+};
+
+function formatBytes(chars: number, t: TFunction): string {
+  if (chars < 1000) return t("charsUnit", { count: chars });
+  return t("kCharsUnit", { count: Number((chars / 1000).toFixed(1)) });
 }
 
 function formatHash(sha256: string): string {
@@ -34,20 +42,20 @@ function formatHash(sha256: string): string {
   return sha256.match(/.{1,4}/g)?.join("·") ?? sha256;
 }
 
-function relativeTime(iso: string): string {
+function relativeTime(iso: string, t: TFunction): string {
   const then = new Date(iso).getTime();
   const now = Date.now();
   const seconds = Math.max(1, Math.floor((now - then) / 1000));
-  if (seconds < 60) return `${seconds} s ago`;
-  if (seconds < 3600) return `${Math.floor(seconds / 60)} min ago`;
-  return `${Math.floor(seconds / 3600)} h ago`;
+  if (seconds < 60) return t("secondsAgo", { count: seconds });
+  if (seconds < 3600) return t("minutesAgo", { count: Math.floor(seconds / 60) });
+  return t("hoursAgo", { count: Math.floor(seconds / 3600) });
 }
 
-const STAGE_LABELS: Record<Exclude<RedactionStage, "idle">, string> = {
-  reading: "Local file read…",
-  redacting: "Gemma 4 stripping personal identifiers…",
-  extracting: "Extracting structured clinical facts…",
-  discarding: "Destroying the original in memory…",
+const STAGE_LABEL_KEYS: Record<Exclude<RedactionStage, "idle">, string> = {
+  reading: "stageReading",
+  redacting: "stageRedacting",
+  extracting: "stageExtracting",
+  discarding: "stageDiscarding",
 };
 
 const STAGE_ORDER: ReadonlyArray<Exclude<RedactionStage, "idle">> = [
@@ -58,6 +66,7 @@ const STAGE_ORDER: ReadonlyArray<Exclude<RedactionStage, "idle">> = [
 ];
 
 function StageProgress({ stage }: { stage: RedactionStage }) {
+  const { t } = useTranslation("my-case");
   if (stage === "idle") return null;
   const activeIndex = STAGE_ORDER.indexOf(stage);
   return (
@@ -67,7 +76,7 @@ function StageProgress({ stage }: { stage: RedactionStage }) {
         <span />
         <span />
       </div>
-      <div className="pc-progress__title">{STAGE_LABELS[stage]}</div>
+      <div className="pc-progress__title">{t(STAGE_LABEL_KEYS[stage])}</div>
       <ol className="pc-progress__steps">
         {STAGE_ORDER.map((s, i) => {
           const cls =
@@ -78,7 +87,7 @@ function StageProgress({ stage }: { stage: RedactionStage }) {
               : "";
           return (
             <li key={s} className={cls}>
-              {STAGE_LABELS[s].replace("…", "")}
+              {t(STAGE_LABEL_KEYS[s]).replace("…", "")}
             </li>
           );
         })}
@@ -87,11 +96,11 @@ function StageProgress({ stage }: { stage: RedactionStage }) {
   );
 }
 
-const QUEUE_STATUS_LABEL: Record<QueueItem["status"], string> = {
-  queued: "Queued",
-  processing: "Processing…",
-  done: "Done",
-  failed: "Failed",
+const QUEUE_STATUS_LABEL_KEYS: Record<QueueItem["status"], string> = {
+  queued: "queueStatusQueued",
+  processing: "queueStatusProcessing",
+  done: "queueStatusDone",
+  failed: "queueStatusFailed",
 };
 
 function BatchQueue({
@@ -101,6 +110,7 @@ function BatchQueue({
   queue: readonly QueueItem[];
   onRetry: (id: string) => void;
 }) {
+  const { t } = useTranslation("my-case");
   if (queue.length === 0) return null;
   const done = queue.filter((q) => q.status === "done").length;
   const failed = queue.filter((q) => q.status === "failed").length;
@@ -109,17 +119,17 @@ function BatchQueue({
     <div className="pc-queue" role="status" aria-live="polite">
       <div className="pc-queue__head">
         <span className="pc-queue__title">
-          Processing {queue.length} document{queue.length === 1 ? "" : "s"}
+          {t("processingDocuments", { count: queue.length })}
         </span>
         <span className="pc-queue__counts">
-          <b>{done}</b> done
+          <b>{done}</b> {t("doneLabel")}
           {failed > 0 ? (
             <>
               {" · "}
-              <b className="pc-queue__failed">{failed}</b> failed
+              <b className="pc-queue__failed">{failed}</b> {t("failedLabel")}
             </>
           ) : null}
-          {pending > 0 ? <> · {pending} left</> : null}
+          {pending > 0 ? <> · {t("leftCount", { count: pending })}</> : null}
         </span>
       </div>
       <ul className="pc-queue__list">
@@ -129,8 +139,8 @@ function BatchQueue({
             <span className="pc-queue__name">{q.filename}</span>
             <span className="pc-queue__status">
               {q.status === "done" && typeof q.facts === "number"
-                ? `${q.facts} facts`
-                : QUEUE_STATUS_LABEL[q.status]}
+                ? t("factsCount", { count: q.facts })
+                : t(QUEUE_STATUS_LABEL_KEYS[q.status])}
             </span>
             {q.status === "failed" && q.error ? (
               <span className="pc-queue__err" title={q.error}>
@@ -143,7 +153,7 @@ function BatchQueue({
                 className="pc-queue__retry"
                 onClick={() => onRetry(q.id)}
               >
-                Retry
+                {t("retryButton")}
               </button>
             ) : null}
           </li>
@@ -154,12 +164,13 @@ function BatchQueue({
 }
 
 function RedactedFactsView({ ctx }: { ctx: PrivateContext }) {
+  const { t } = useTranslation("my-case");
   const r = ctx.redacted;
   return (
     <div className="pc-facts">
       {r.clinical_findings.length > 0 ? (
         <section>
-          <h4>Clinical findings</h4>
+          <h4>{t("findingsHeading")}</h4>
           <ul>
             {r.clinical_findings.map((f, i) => (
               <li key={i}>
@@ -171,7 +182,7 @@ function RedactedFactsView({ ctx }: { ctx: PrivateContext }) {
       ) : null}
       {r.interventions.length > 0 ? (
         <section>
-          <h4>Interventions</h4>
+          <h4>{t("interventionsHeading")}</h4>
           <ul>
             {r.interventions.map((s, i) => (
               <li key={i}>{s}</li>
@@ -181,7 +192,7 @@ function RedactedFactsView({ ctx }: { ctx: PrivateContext }) {
       ) : null}
       {r.mutations.length > 0 ? (
         <section>
-          <h4>Mutations</h4>
+          <h4>{t("mutationsHeading")}</h4>
           <ul>
             {r.mutations.map((s, i) => (
               <li key={i}>
@@ -193,7 +204,7 @@ function RedactedFactsView({ ctx }: { ctx: PrivateContext }) {
       ) : null}
       {r.outcomes.length > 0 ? (
         <section>
-          <h4>Outcomes</h4>
+          <h4>{t("outcomesHeading")}</h4>
           <ul>
             {r.outcomes.map((s, i) => (
               <li key={i}>{s}</li>
@@ -206,11 +217,12 @@ function RedactedFactsView({ ctx }: { ctx: PrivateContext }) {
 }
 
 function DestroyedOriginal({ ctx }: { ctx: PrivateContext }) {
+  const { t } = useTranslation("my-case");
   return (
     <div className="pc-original">
       <div className="pc-original__head">
-        <span className="pc-original__eyebrow">Original document</span>
-        <Badge variant="ok">🛡 Local only</Badge>
+        <span className="pc-original__eyebrow">{t("originalDocEyebrow")}</span>
+        <Badge variant="ok">{t("localOnlyBadge")}</Badge>
       </div>
       <div className="pc-original__icon" aria-hidden>
         <svg
@@ -230,78 +242,74 @@ function DestroyedOriginal({ ctx }: { ctx: PrivateContext }) {
           <path d="M14 11v6" />
         </svg>
       </div>
-      <h3 className="pc-original__title">Original destroyed</h3>
-      <p className="pc-original__sub">
-        The file lived in server memory for the duration of one request handler.
-        It never touched disk, never reached a backup, and is gone now.
-      </p>
+      <h3 className="pc-original__title">{t("originalDestroyedTitle")}</h3>
+      <p className="pc-original__sub">{t("originalDestroyedBody")}</p>
       <dl className="pc-original__meta">
         <div>
-          <dt>Filename</dt>
+          <dt>{t("filenameLabel")}</dt>
           <dd>
             <code>{ctx.originalFilename}</code>
           </dd>
         </div>
         <div>
-          <dt>Size in memory</dt>
-          <dd>{formatBytes(ctx.originalChars)}</dd>
+          <dt>{t("sizeInMemoryLabel")}</dt>
+          <dd>{formatBytes(ctx.originalChars, t)}</dd>
         </div>
         <div>
-          <dt>SHA-256</dt>
+          <dt>{t("sha256Label")}</dt>
           <dd>
             <code className="pc-original__hash">{formatHash(ctx.originalSha256)}</code>
           </dd>
         </div>
         <div>
-          <dt>Status</dt>
+          <dt>{t("statusLabel")}</dt>
           <dd>
-            <span className="pc-original__dot" aria-hidden /> Destroyed {relativeTime(ctx.uploadedAt)}
+            <span className="pc-original__dot" aria-hidden />{" "}
+            {t("destroyedAt", { when: relativeTime(ctx.uploadedAt, t) })}
           </dd>
         </div>
         <div>
-          <dt>Redacted by</dt>
+          <dt>{t("redactedByLabel")}</dt>
           <dd>
             <code>{ctx.modelUsed}</code>
           </dd>
         </div>
       </dl>
-      <p className="pc-original__note">
-        The hash is the only memento. Two uploads of the same document
-        produce the same hash — without anyone needing to know what was inside.
-      </p>
+      <p className="pc-original__note">{t("hashMementoNote")}</p>
     </div>
   );
 }
 
 function AuditBadge({ ctx }: { ctx: PrivateContext }) {
+  const { t } = useTranslation("my-case");
   const b: PiiBreakdown = ctx.piiBreakdown;
   return (
     <aside className="pc-audit" role="status">
       <div className="pc-audit__dot" aria-hidden />
       <div className="pc-audit__body">
         <div className="pc-audit__headline">
-          PII Redaction Success ·{" "}
-          <b>0 personal identifiers</b> reached the synthesis model
+          {t("auditHeadlinePrefix")}{" "}
+          <b>{t("auditHeadlineBold")}</b> {t("auditHeadlineSuffix")}
         </div>
         <div className="pc-audit__meta">
           <span>
-            Names: <b>{b.names}</b>
+            {t("namesLabel")}: <b>{b.names}</b>
           </span>
           <span>
-            Gov IDs: <b>{b.government_ids}</b>
+            {t("govIdsLabel")}: <b>{b.government_ids}</b>
           </span>
           <span>
-            Absolute dates: <b>{b.absolute_dates}</b>
+            {t("absoluteDatesLabel")}: <b>{b.absolute_dates}</b>
           </span>
           <span>
-            Addresses: <b>{b.addresses}</b>
+            {t("addressesLabel")}: <b>{b.addresses}</b>
           </span>
           <span>
-            Contact: <b>{b.document_numbers}</b>
+            {t("contactLabel")}: <b>{b.document_numbers}</b>
           </span>
           <span className="pc-audit__sep">·</span>
           <span>
-            Processed by <code>{ctx.modelUsed}</code> · in-memory only
+            {t("processedByPrefix")} <code>{ctx.modelUsed}</code> {t("processedBySuffix")}
           </span>
         </div>
       </div>
@@ -312,6 +320,7 @@ function AuditBadge({ ctx }: { ctx: PrivateContext }) {
 export function PrivateContextPanel({ diseaseSlug }: PrivateContextPanelProps) {
   const { contexts, uploading, stage, error, lastUpload, queue, uploadBatch, retryItem } =
     usePrivateContexts(diseaseSlug);
+  const { t } = useTranslation("my-case");
   const fileRef = useRef<HTMLInputElement | null>(null);
   const [expandedId, setExpandedId] = useState<number | null>(null);
 
@@ -326,11 +335,9 @@ export function PrivateContextPanel({ diseaseSlug }: PrivateContextPanelProps) {
   return (
     <div className="pc-panel">
       <p className="pc-blurb">
-        Your medical data is treated as a{" "}
-        <strong>deposit for seconds, not for storage</strong>. The document
-        arrives over an encrypted channel, is processed only in the memory of
-        an isolated worker, and the original is destroyed right after the
-        extraction — it never touches disk, and never reaches any backup.
+        {t("blurbPrefix")}{" "}
+        <strong>{t("blurbBold")}</strong>
+        {t("blurbSuffix")}
       </p>
 
       <div className="pc-controls">
@@ -354,12 +361,9 @@ export function PrivateContextPanel({ diseaseSlug }: PrivateContextPanelProps) {
           onClick={handlePick}
           disabled={uploading}
         >
-          {uploading ? "Gemma 4 redacting…" : "Add private context"}
+          {uploading ? t("uploadingButton") : t("addContextButton")}
         </Button>
-        <span className="pc-supported">
-          Supported: .txt · .md · .pdf · .jpg · .png · ≤ 30 MB · scans and
-          photos are read by OCR · add several at once
-        </span>
+        <span className="pc-supported">{t("supportedFormats")}</span>
       </div>
 
       {error != null ? (
@@ -378,14 +382,11 @@ export function PrivateContextPanel({ diseaseSlug }: PrivateContextPanelProps) {
             <DestroyedOriginal ctx={lastUpload} />
             <div className="pc-extracted">
               <div className="pc-extracted__head">
-                <span className="pc-extracted__eyebrow">Extracted clinical facts</span>
-                <Badge>{lastUpload.clinicalFactsExtracted} fields</Badge>
+                <span className="pc-extracted__eyebrow">{t("extractedFactsEyebrow")}</span>
+                <Badge>{t("fieldsCount", { count: lastUpload.clinicalFactsExtracted })}</Badge>
               </div>
               <RedactedFactsView ctx={lastUpload} />
-              <p className="pc-extracted__foot">
-                These facts — and only these facts — are the input to the next
-                AI guideline draft for this disease.
-              </p>
+              <p className="pc-extracted__foot">{t("extractedFoot")}</p>
             </div>
           </section>
           <AuditBadge ctx={lastUpload} />
@@ -394,17 +395,17 @@ export function PrivateContextPanel({ diseaseSlug }: PrivateContextPanelProps) {
 
       {lastUpload != null && lastUpload.status === "failed" ? (
         <p className="pc-error" role="alert">
-          {lastUpload.error ?? "Redaction failed."}
+          {lastUpload.error ?? t("redactionFailed")}
         </p>
       ) : null}
 
       {contexts.length === 0 && !uploading ? (
-        <p className="pc-empty">No private context uploaded yet.</p>
+        <p className="pc-empty">{t("noContextYet")}</p>
       ) : null}
 
       {previousUploads.length > 0 ? (
         <>
-          <h4 className="pc-history-head">Previous uploads</h4>
+          <h4 className="pc-history-head">{t("previousUploadsHeading")}</h4>
           <ul className="pc-list">
             {previousUploads.map((ctx) => {
               const isOpen = expandedId === ctx.id;
@@ -420,12 +421,14 @@ export function PrivateContextPanel({ diseaseSlug }: PrivateContextPanelProps) {
                     aria-expanded={isOpen}
                   >
                     <span className="pc-row__filename">{ctx.originalFilename}</span>
-                    <Badge variant={statusVariant(ctx.status)}>{ctx.status}</Badge>
+                    <Badge variant={statusVariant(ctx.status)}>
+                      {t(CONTEXT_STATUS_LABEL_KEYS[ctx.status])}
+                    </Badge>
                     <span className="pc-row__metric">
-                      <strong>{ctx.piiTokensRemoved}</strong> identifiers stripped
+                      <strong>{ctx.piiTokensRemoved}</strong> {t("identifiersStrippedLabel")}
                     </span>
                     <span className="pc-row__metric">
-                      <strong>{ctx.clinicalFactsExtracted}</strong> facts kept
+                      <strong>{ctx.clinicalFactsExtracted}</strong> {t("factsKeptLabel")}
                     </span>
                     <span className="pc-row__chevron" aria-hidden>
                       {isOpen ? "▾" : "▸"}
@@ -435,7 +438,7 @@ export function PrivateContextPanel({ diseaseSlug }: PrivateContextPanelProps) {
                     <div className="pc-row__body">
                       {ctx.status === "failed" ? (
                         <p className="pc-error" role="alert">
-                          {ctx.error ?? "Redaction failed."}
+                          {ctx.error ?? t("redactionFailed")}
                         </p>
                       ) : (
                         <RedactedFactsView ctx={ctx} />

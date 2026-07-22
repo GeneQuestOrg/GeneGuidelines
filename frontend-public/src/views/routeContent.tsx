@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import type { TFunction } from "i18next";
 import type { AudienceView, Route, UserLocation } from "../router/types";
 import type { ViewRole } from "../auth/resolveRole";
 import { HomeView } from "./HomeView";
@@ -28,6 +29,14 @@ export interface RouteContentProps {
   search: string;
   onNav: (path: string) => void;
   onSignIn: () => void;
+  /**
+   * `routeContent` is called as a plain function from `AppShell`'s render body, not
+   * mounted as JSX — it must not call hooks itself (that would make a hook call
+   * conditional on `route.name`, breaking the rules of hooks). The caller resolves
+   * `t` via `useTranslation("misc")` and threads it in, mirroring the
+   * `buildNavLinks(route, t)` pattern in `components/PublicHeader.tsx`.
+   */
+  t: TFunction;
 }
 
 export function routeContent({
@@ -38,6 +47,7 @@ export function routeContent({
   search,
   onNav,
   onSignIn,
+  t,
 }: RouteContentProps): ReactNode {
   switch (route.name) {
     case "home":
@@ -116,9 +126,9 @@ export function routeContent({
     default:
       return (
         <PlaceholderView
-          title="Page not found"
-          description="This route is not implemented yet. Use the header to navigate home."
-          primaryAction={{ label: "Home", path: "/" }}
+          title={t("route.notFoundTitle")}
+          description={t("route.notFoundDesc")}
+          primaryAction={{ label: t("route.notFoundAction"), path: "/" }}
           onNav={onNav}
         />
       );

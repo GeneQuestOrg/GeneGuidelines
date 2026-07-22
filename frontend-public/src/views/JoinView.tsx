@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useAccountContext } from "../auth/accountContext";
 import {
   clearPendingInviteToken,
@@ -29,6 +30,7 @@ type AcceptState = "idle" | "accepting" | "accepted" | "error";
  * - **valid, signed in** — auto-accepts and shows the verification-pending state.
  */
 export function JoinView({ token, onNav }: JoinViewProps) {
+  const { t } = useTranslation("account");
   const { signInAvailable, isAuthenticated, loading, login, acceptInvite } =
     useAccountContext();
   const [preview, setPreview] = useState<PreviewState>({ status: "loading" });
@@ -54,7 +56,7 @@ export function JoinView({ token, onNav }: JoinViewProps) {
           setPreview({
             status: "error",
             message:
-              e instanceof Error ? e.message : "This invitation could not be found.",
+              e instanceof Error ? e.message : t("join.notFoundDefaultMessage"),
           });
         }
       }
@@ -62,7 +64,7 @@ export function JoinView({ token, onNav }: JoinViewProps) {
     return () => {
       cancelled = true;
     };
-  }, [token]);
+  }, [token, t]);
 
   // Once signed in on a valid invite, redeem the token automatically.
   useEffect(() => {
@@ -92,7 +94,7 @@ export function JoinView({ token, onNav }: JoinViewProps) {
         if (!cancelled) {
           setAccept("error");
           setAcceptError(
-            e instanceof Error ? e.message : "Could not accept this invitation.",
+            e instanceof Error ? e.message : t("join.acceptErrorDefaultMessage"),
           );
         }
       }
@@ -100,7 +102,7 @@ export function JoinView({ token, onNav }: JoinViewProps) {
     return () => {
       cancelled = true;
     };
-  }, [preview, isAuthenticated, accept, acceptInvite, token]);
+  }, [preview, isAuthenticated, accept, acceptInvite, token, t]);
 
   const acceptAndSignIn = () => {
     setPendingInviteToken(token);
@@ -110,7 +112,7 @@ export function JoinView({ token, onNav }: JoinViewProps) {
   if (preview.status === "loading") {
     return (
       <section className="page page--narrow join">
-        <p className="page__loading">Loading your invitation…</p>
+        <p className="page__loading">{t("join.loading")}</p>
       </section>
     );
   }
@@ -118,11 +120,11 @@ export function JoinView({ token, onNav }: JoinViewProps) {
   if (preview.status === "error") {
     return (
       <section className="page page--narrow join">
-        <h1 className="page__title">Invitation not found</h1>
+        <h1 className="page__title">{t("join.notFoundTitle")}</h1>
         <p className="page__lead">{preview.message}</p>
         <p className="page__actions">
           <button type="button" className="btn btn--primary" onClick={() => onNav("/")}>
-            Go to GeneGuidelines
+            {t("join.goToGeneGuidelines")}
           </button>
         </p>
       </section>
@@ -134,15 +136,13 @@ export function JoinView({ token, onNav }: JoinViewProps) {
   if (expired || used) {
     return (
       <section className="page page--narrow join">
-        <h1 className="page__title">This invitation is no longer valid</h1>
+        <h1 className="page__title">{t("join.invalidTitle")}</h1>
         <p className="page__lead">
-          {expired
-            ? "This invitation has expired. Ask the person who invited you to send a new link."
-            : "This invitation has already been used. If that wasn't you, ask for a fresh link."}
+          {expired ? t("join.expiredMessage") : t("join.usedMessage")}
         </p>
         <p className="page__actions">
           <button type="button" className="btn btn--primary" onClick={() => onNav("/")}>
-            Explore GeneGuidelines
+            {t("join.exploreCta")}
           </button>
         </p>
       </section>
@@ -152,10 +152,9 @@ export function JoinView({ token, onNav }: JoinViewProps) {
   if (!signInAvailable) {
     return (
       <section className="page page--narrow join">
-        <h1 className="page__title">You've been invited to GeneGuidelines</h1>
+        <h1 className="page__title">{t("join.inviteTitle")}</h1>
         <p className="page__lead">
-          {inviterDisplay} invited you as a clinician. Sign-up isn't open in this
-          environment yet — please check back soon.
+          {t("join.signupClosedMessage", { inviter: inviterDisplay })}
         </p>
       </section>
     );
@@ -164,18 +163,14 @@ export function JoinView({ token, onNav }: JoinViewProps) {
   if (accept === "accepted") {
     return (
       <section className="page page--narrow join">
-        <h1 className="page__title">You're in — welcome</h1>
-        <p className="page__lead">
-          Your clinician account is set up. Identity verification is pending; an
-          administrator (or ORCID, where available) will confirm it shortly. You can
-          start exploring guidelines now.
-        </p>
+        <h1 className="page__title">{t("join.welcomeTitle")}</h1>
+        <p className="page__lead">{t("join.welcomeMessage")}</p>
         <p className="page__actions">
           <button type="button" className="btn btn--primary" onClick={() => onNav("/")}>
-            Go to GeneGuidelines
+            {t("join.goToGeneGuidelines")}
           </button>
           <button type="button" className="btn btn--ghost" onClick={() => onNav("/account")}>
-            View your account
+            {t("join.viewAccount")}
           </button>
         </p>
       </section>
@@ -185,13 +180,13 @@ export function JoinView({ token, onNav }: JoinViewProps) {
   if (accept === "error") {
     return (
       <section className="page page--narrow join">
-        <h1 className="page__title">We couldn't complete your invitation</h1>
+        <h1 className="page__title">{t("join.errorTitle")}</h1>
         <p className="page__lead" role="alert">
-          {acceptError ?? "Something went wrong accepting this invitation."}
+          {acceptError ?? t("join.errorDefaultMessage")}
         </p>
         <p className="page__actions">
           <button type="button" className="btn btn--primary" onClick={() => onNav("/account")}>
-            Go to your account
+            {t("join.goToAccount")}
           </button>
         </p>
       </section>
@@ -201,17 +196,13 @@ export function JoinView({ token, onNav }: JoinViewProps) {
   // Valid invite. Either signing in (CTA) or already signed in and accepting.
   return (
     <section className="page page--narrow join">
-      <h1 className="page__title">You've been invited to GeneGuidelines</h1>
+      <h1 className="page__title">{t("join.inviteTitle")}</h1>
       <p className="page__lead">
-        <strong>{inviterDisplay}</strong> invited you to join as a clinician — to review
-        and contribute to living clinical guidelines for rare genetic diseases.
+        <strong>{inviterDisplay}</strong> {t("join.inviteMessageSuffix")}
       </p>
-      <p className="join__note">
-        Doctor accounts are verified before they can publish. You'll be set up as a
-        clinician now; verification follows.
-      </p>
+      <p className="join__note">{t("join.verifyNote")}</p>
       {isAuthenticated ? (
-        <p className="page__loading">Setting up your clinician account…</p>
+        <p className="page__loading">{t("join.settingUp")}</p>
       ) : (
         <p className="page__actions">
           <button
@@ -220,7 +211,7 @@ export function JoinView({ token, onNav }: JoinViewProps) {
             onClick={acceptAndSignIn}
             disabled={loading}
           >
-            Sign in or create your account
+            {t("join.signInCta")}
           </button>
         </p>
       )}

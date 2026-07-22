@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { userLocationFromCity } from "./config/cities";
 import { useHistoryRouter } from "./router/useHistoryRouter";
 import i18n from "./i18n";
@@ -49,6 +50,7 @@ export default function App() {
 }
 
 function AppShell() {
+  const { t } = useTranslation("misc");
   const { route, search, navigate, locale, setLocale } = useHistoryRouter();
   /* URL is the source of truth for locale: keep i18next and the document metadata
      in sync with the active URL prefix on every navigation. English is the default
@@ -112,6 +114,7 @@ function AppShell() {
         search,
         onNav: navigate,
         onSignIn: () => setAuthOpen(true),
+        t,
       })
     );
 

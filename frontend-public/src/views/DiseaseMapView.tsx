@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useDisease } from "../hooks/useDisease";
 import { useSourceShelf } from "../hooks/useSourceShelf";
 import { useOfficialGuideline } from "../hooks/useOfficialGuideline";
@@ -21,6 +22,7 @@ export interface DiseaseMapViewProps {
  * so the two can be compared before deciding which becomes the parent default.
  */
 export function DiseaseMapView({ slug, onNav }: DiseaseMapViewProps) {
+  const { t } = useTranslation("disease-map");
   const { disease, loading, error } = useDisease(slug);
   const { docs: sourceDocs } = useSourceShelf(slug);
   const { pointer: officialPointer } = useOfficialGuideline(slug);
@@ -29,7 +31,7 @@ export function DiseaseMapView({ slug, onNav }: DiseaseMapViewProps) {
     return (
       <section className="page">
         <div className="dmap">
-          <p className="dmap-loading">Loading orientation map…</p>
+          <p className="dmap-loading">{t("loading")}</p>
         </div>
       </section>
     );
@@ -38,11 +40,9 @@ export function DiseaseMapView({ slug, onNav }: DiseaseMapViewProps) {
   if (error != null || disease == null) {
     return (
       <PlaceholderView
-        title="Disease not found"
-        description={
-          error ?? `No catalog entry for “${slug}”. Try browsing the disease list.`
-        }
-        primaryAction={{ label: "Browse diseases", path: "/diseases" }}
+        title={t("notFoundTitle")}
+        description={error ?? t("notFoundDesc", { slug })}
+        primaryAction={{ label: t("notFoundAction"), path: "/diseases" }}
         onNav={onNav}
       />
     );
@@ -59,9 +59,9 @@ export function DiseaseMapView({ slug, onNav }: DiseaseMapViewProps) {
   return (
     <section className="page">
       <div className="dmap">
-        <nav className="dmap-crumb" aria-label="breadcrumb">
+        <nav className="dmap-crumb" aria-label={t("crumbAriaLabel")}>
           <a href="/diseases" onClick={go("/diseases")}>
-            Diseases
+            {t("crumbDiseases")}
           </a>
           <span className="dmap-crumb__sep">/</span>
           <span>{disease.name}</span>
@@ -71,38 +71,37 @@ export function DiseaseMapView({ slug, onNav }: DiseaseMapViewProps) {
         <section className="dmap-hero">
           <div className="dmap-eyebrow">
             <span className="dmap-eyebrow__dot" aria-hidden />
-            Freshly diagnosed <span className="dmap-eyebrow__sep">·</span> {disease.name}
+            {t("eyebrow")} <span className="dmap-eyebrow__sep">·</span> {disease.name}
           </div>
           <h1 className="dmap-title">
-            What we wish we&rsquo;d known <em>in the first week</em>.
+            {t("heroTitlePrefix")} <em>{t("heroTitleEm")}</em>.
           </h1>
           <p className="dmap-lede">
-            Right after a diagnosis the hardest part isn&rsquo;t the missing answers — it&rsquo;s{" "}
-            <b>not knowing what to even ask.</b> That you have to see the diagnosis through
-            yourself. That a doctor who knows <em>this</em> disease exists. That guidelines,
-            foundations, and trials exist. Below you&rsquo;re not searching —{" "}
-            <b>you&rsquo;re reading a map of the things nobody told you about.</b>
+            {t("heroLedePart1")}{" "}
+            <b>{t("heroLedeBold1")}</b> {t("heroLedePart2")} <em>{t("heroLedeEm")}</em>{" "}
+            {t("heroLedePart3")}{" "}
+            <b>{t("heroLedeBold2")}</b>
           </p>
 
           <div className="dmap-facts">
             {disease.gene ? (
               <span className="dmap-fact">
-                <span className="dmap-fact__k">Gene</span> <code>{disease.gene}</code>
+                <span className="dmap-fact__k">{t("factGene")}</span> <code>{disease.gene}</code>
               </span>
             ) : null}
             {disease.inheritance ? (
               <span className="dmap-fact">
-                <span className="dmap-fact__k">Inheritance</span> {disease.inheritance}
+                <span className="dmap-fact__k">{t("factInheritance")}</span> {disease.inheritance}
               </span>
             ) : null}
             {disease.prevalenceText ? (
               <span className="dmap-fact">
-                <span className="dmap-fact__k">Prevalence</span> {disease.prevalenceText}
+                <span className="dmap-fact__k">{t("factPrevalence")}</span> {disease.prevalenceText}
               </span>
             ) : null}
             {disease.omim ? (
               <span className="dmap-fact">
-                <span className="dmap-fact__k">OMIM</span> <code>{disease.omim}</code>
+                <span className="dmap-fact__k">{t("factOmim")}</span> <code>{disease.omim}</code>
               </span>
             ) : null}
           </div>
@@ -115,11 +114,10 @@ export function DiseaseMapView({ slug, onNav }: DiseaseMapViewProps) {
               </svg>
             </span>
             <div className="dmap-privacy__b">
-              <b>Have a hospital discharge summary?</b> You can load it privately — facts are
-              extracted locally in your browser, the original never reaches us. Then the map
-              below adapts to <em>your</em> case and mutation.{" "}
+              <b>{t("privacyTitle")}</b> {t("privacyBodyPart1")} <em>{t("privacyBodyEm")}</em>{" "}
+              {t("privacyBodyPart2")}{" "}
               <button type="button" onClick={go(`/diseases/${slug}/my-case`)}>
-                Load privately →
+                {t("privacyCta")}
               </button>
             </div>
           </div>
@@ -129,15 +127,10 @@ export function DiseaseMapView({ slug, onNav }: DiseaseMapViewProps) {
         <section className="dmap-intro">
           <div className="dmap-intro__kicker">
             <span className="dmap-intro__dot" aria-hidden />
-            Orientation map
+            {t("introKicker")}
           </div>
-          <h2 className="dmap-intro__title">
-            Six things you don&rsquo;t know to ask about — in the order you&rsquo;ll need them.
-          </h2>
-          <p className="dmap-intro__sub">
-            This isn&rsquo;t a feature list. It&rsquo;s the path a family walks after a
-            diagnosis — each stop tells you what exists and what to do with it.
-          </p>
+          <h2 className="dmap-intro__title">{t("introTitle")}</h2>
+          <p className="dmap-intro__sub">{t("introSub")}</p>
         </section>
 
         <div className="dmap-steps">
@@ -149,36 +142,28 @@ export function DiseaseMapView({ slug, onNav }: DiseaseMapViewProps) {
             <div className="dmap-step__body">
               <span className="dmap-step__hook">
                 <span className="dmap-step__tri" aria-hidden>◆</span>
-                Nobody tells you the diagnosis is yours to double-check
+                {t("step1Hook")}
               </span>
-              <h3 className="dmap-step__title">
-                First, make sure it&rsquo;s really this disease — and this subtype.
-              </h3>
+              <h3 className="dmap-step__title">{t("step1Title")}</h3>
               <p className="dmap-step__lede">
                 {isFd ? (
                   <>
-                    FD is confirmed <b>genetically</b> (a GNAS mutation) and on imaging —{" "}
-                    <em>not</em> by biopsy alone. The guideline says outright when a biopsy{" "}
-                    <b>is not needed</b>, yet it is sometimes done routinely. Before anyone
-                    proposes treatment, the diagnosis and subtype (mono- vs polyostotic) must
-                    be certain.
+                    {t("step1LedeFdPart1")} <b>{t("step1LedeFdBold1")}</b>{" "}
+                    {t("step1LedeFdPart2")} <em>{t("step1LedeFdEm")}</em>{" "}
+                    {t("step1LedeFdPart3")} <b>{t("step1LedeFdBold2")}</b>
+                    {t("step1LedeFdPart4")}
                   </>
                 ) : (
                   <>
-                    Many rare diseases look like more common ones on a first pass. Before anyone
-                    proposes treatment, the diagnosis and subtype must be confirmed — often{" "}
-                    <b>molecularly</b> and on imaging, not by one test in isolation.
+                    {t("step1LedeGenericPart1")} <b>{t("step1LedeGenericBold")}</b>{" "}
+                    {t("step1LedeGenericPart2")}
                   </>
                 )}
               </p>
               {isFd ? (
                 <div className="dmap-anchor">
-                  <div className="dmap-anchor__lbl">From our journey</div>
-                  <div className="dmap-anchor__q">
-                    &ldquo;In Warsaw our son had a histopathology the guideline didn&rsquo;t
-                    require — and got a wrong diagnosis. Only the CT in Olsztyn and the GNAS test
-                    settled it.&rdquo;
-                  </div>
+                  <div className="dmap-anchor__lbl">{t("anchorLabel")}</div>
+                  <div className="dmap-anchor__q">{t("step1AnchorQuote")}</div>
                 </div>
               ) : null}
               <div className="dmap-actions">
@@ -188,7 +173,7 @@ export function DiseaseMapView({ slug, onNav }: DiseaseMapViewProps) {
                     href={`/diseases/${slug}/guidelines`}
                     onClick={go(`/diseases/${slug}/guidelines`)}
                   >
-                    What to confirm, and in what order
+                    {t("step1CtaConfirm")}
                     <span className="dmap-btn__arr" aria-hidden>→</span>
                   </a>
                 ) : null}
@@ -197,7 +182,7 @@ export function DiseaseMapView({ slug, onNav }: DiseaseMapViewProps) {
                   href={`/diseases/${slug}/my-case`}
                   onClick={go(`/diseases/${slug}/my-case`)}
                 >
-                  Questions for your doctor
+                  {t("step1CtaQuestions")}
                 </a>
               </div>
             </div>
@@ -211,26 +196,17 @@ export function DiseaseMapView({ slug, onNav }: DiseaseMapViewProps) {
             <div className="dmap-step__body">
               <span className="dmap-step__hook">
                 <span className="dmap-step__tri" aria-hidden>◆</span>
-                Not every surgeon or endocrinologist knows this disease
+                {t("step2Hook")}
               </span>
-              <h3 className="dmap-step__title">
-                A handful of doctors truly know {nameShort}. Find them.
-              </h3>
+              <h3 className="dmap-step__title">{t("step2Title", { name: nameShort })}</h3>
               <p className="dmap-step__lede">
-                In a rare disease the most valuable — and hardest to find — person is a doctor
-                who <em>really</em> knows this condition. We show the{" "}
-                <b>level of documented experience</b> (from PubMed: whether they have published
-                on it, co-authored studies, or led them) and family recommendations — sorted by
-                distance from you.
+                {t("step2LedePart1")} <em>{t("step2LedeEm")}</em> {t("step2LedePart2")}{" "}
+                <b>{t("step2LedeBold")}</b> {t("step2LedePart3")}
               </p>
               {isFd ? (
                 <div className="dmap-anchor">
-                  <div className="dmap-anchor__lbl">From our journey</div>
-                  <div className="dmap-anchor__q">
-                    &ldquo;We found the best doctors by word of mouth and by chance at a check-up —
-                    not from a search engine. That&rsquo;s why a parent can add a doctor here, with
-                    a note.&rdquo;
-                  </div>
+                  <div className="dmap-anchor__lbl">{t("anchorLabel")}</div>
+                  <div className="dmap-anchor__q">{t("step2AnchorQuote")}</div>
                 </div>
               ) : null}
               <div className="dmap-actions">
@@ -239,14 +215,14 @@ export function DiseaseMapView({ slug, onNav }: DiseaseMapViewProps) {
                   href={`/doctors?disease=${slug}`}
                   onClick={go(`/doctors?disease=${slug}`)}
                 >
-                  Doctors who know {nameShort} near you
+                  {t("step2CtaFind", { name: nameShort })}
                   {disease.doctorsCount > 0 ? (
                     <span className="dmap-nub">{disease.doctorsCount}</span>
                   ) : null}
                   <span className="dmap-btn__arr" aria-hidden>→</span>
                 </a>
                 <a className="dmap-btn" href="/doctors" onClick={go("/doctors")}>
-                  Recommend a doctor
+                  {t("step2CtaRecommend")}
                 </a>
               </div>
             </div>
@@ -260,28 +236,22 @@ export function DiseaseMapView({ slug, onNav }: DiseaseMapViewProps) {
             <div className="dmap-step__body">
               <span className="dmap-step__hook">
                 <span className="dmap-step__tri" aria-hidden>◆</span>
-                {hasGuideline
-                  ? "Yes — guidance for this disease already exists"
-                  : "Guidance is being assembled for this disease"}
+                {hasGuideline ? t("step3HookExists") : t("step3HookAssembling")}
               </span>
               <h3 className="dmap-step__title">
                 {hasGuideline
-                  ? `Someone already wrote down how to manage ${nameShort}. Read it before your visit.`
-                  : `Read what's known about managing ${nameShort} before your visit.`}
+                  ? t("step3TitleExists", { name: nameShort })
+                  : t("step3TitleAssembling", { name: nameShort })}
               </h3>
               <p className="dmap-step__lede">
-                From the guidelines we pull out <b>concrete, actionable steps</b> — diagnosis,
-                monitoring, red flags, when to seek a second opinion — instead of a wall of text
-                written for a specialist. Every sentence links to its source, and newer
-                &ldquo;to consider&rdquo; recommendations are clearly labelled.
+                {t("step3LedePart1")} <b>{t("step3LedeBold")}</b> {t("step3LedePart2")}
               </p>
               {isFd ? (
                 <div className="dmap-anchor">
-                  <div className="dmap-anchor__lbl">From our journey</div>
+                  <div className="dmap-anchor__lbl">{t("anchorLabel")}</div>
                   <div className="dmap-anchor__q">
-                    &ldquo;The FD guideline said plainly what is <em>not</em> done in a child — and
-                    Munich recommended exactly that. The knowledge existed; it just hadn&rsquo;t
-                    reached us.&rdquo;
+                    {t("step3AnchorQuotePart1")} <em>{t("step3AnchorQuoteEm")}</em>{" "}
+                    {t("step3AnchorQuotePart2")}
                   </div>
                 </div>
               ) : null}
@@ -291,7 +261,7 @@ export function DiseaseMapView({ slug, onNav }: DiseaseMapViewProps) {
                   href={`/diseases/${slug}/guidelines`}
                   onClick={go(`/diseases/${slug}/guidelines`)}
                 >
-                  {hasGuideline ? "Open the guideline — synthesis + sources" : "See what we have so far"}
+                  {hasGuideline ? t("step3CtaOpen") : t("step3CtaSeeFar")}
                   <span className="dmap-btn__arr" aria-hidden>→</span>
                 </a>
               </div>
@@ -306,22 +276,17 @@ export function DiseaseMapView({ slug, onNav }: DiseaseMapViewProps) {
             <div className="dmap-step__body">
               <span className="dmap-step__hook">
                 <span className="dmap-step__tri" aria-hidden>◆</span>
-                Travel to specialists and tests cost money — help exists
+                {t("step4Hook")}
               </span>
-              <h3 className="dmap-step__title">You don&rsquo;t have to fund this journey alone.</h3>
+              <h3 className="dmap-step__title">{t("step4Title")}</h3>
               <p className="dmap-step__lede">
-                International and local foundations offer <b>community, grants, and advocacy</b>.
-                We also show how to start and spread a fundraiser for travel to specialists,
-                visits, and tests — something a freshly-diagnosed family rarely thinks of at the
-                start.
+                {t("step4LedePart1")} <b>{t("step4LedeBold")}</b>
+                {t("step4LedePart2")}
               </p>
               {isFd ? (
                 <div className="dmap-anchor">
-                  <div className="dmap-anchor__lbl">From our journey</div>
-                  <div className="dmap-anchor__q">
-                    &ldquo;The international FDMAS Alliance had been there all along — but we had to
-                    find it ourselves, over months.&rdquo;
-                  </div>
+                  <div className="dmap-anchor__lbl">{t("anchorLabel")}</div>
+                  <div className="dmap-anchor__q">{t("step4AnchorQuote")}</div>
                 </div>
               ) : null}
               <div className="dmap-actions">
@@ -330,7 +295,7 @@ export function DiseaseMapView({ slug, onNav }: DiseaseMapViewProps) {
                   href={`/diseases/${slug}`}
                   onClick={go(`/diseases/${slug}`)}
                 >
-                  Foundations supporting {nameShort}
+                  {t("step4Cta", { name: nameShort })}
                   <span className="dmap-btn__arr" aria-hidden>→</span>
                 </a>
               </div>
@@ -345,16 +310,11 @@ export function DiseaseMapView({ slug, onNav }: DiseaseMapViewProps) {
             <div className="dmap-step__body">
               <span className="dmap-step__hook">
                 <span className="dmap-step__tri" aria-hidden>◆</span>
-                Taking part in a trial can be the best available therapy
+                {t("step5Hook")}
               </span>
-              <h3 className="dmap-step__title">
-                Check whether someone is testing something for your child.
-              </h3>
+              <h3 className="dmap-step__title">{t("step5Title")}</h3>
               <p className="dmap-step__lede">
-                Actively recruiting trials, linked to ClinicalTrials.gov, sorted by distance.
-                When you load your case privately,{" "}
-                <b>we&rsquo;ll alert you when a trial matching your mutation appears</b> — so you
-                don&rsquo;t have to check by hand every week.
+                {t("step5LedePart1")} <b>{t("step5LedeBold")}</b> {t("step5LedePart2")}
               </p>
               <div className="dmap-actions">
                 <a
@@ -362,14 +322,14 @@ export function DiseaseMapView({ slug, onNav }: DiseaseMapViewProps) {
                   href={`/diseases/${slug}`}
                   onClick={go(`/diseases/${slug}`)}
                 >
-                  Clinical trials near you
+                  {t("step5CtaTrials")}
                   {disease.trialsCount > 0 ? (
                     <span className="dmap-nub">{disease.trialsCount}</span>
                   ) : null}
                   <span className="dmap-btn__arr" aria-hidden>→</span>
                 </a>
                 <a className="dmap-btn" href={`/diseases/${slug}`} onClick={go(`/diseases/${slug}`)}>
-                  Promising therapies and their status
+                  {t("step5CtaTherapies")}
                 </a>
               </div>
             </div>
@@ -383,20 +343,16 @@ export function DiseaseMapView({ slug, onNav }: DiseaseMapViewProps) {
             <div className="dmap-step__body">
               <span className="dmap-step__hook">
                 <span className="dmap-step__tri" aria-hidden>◆</span>
-                And if no one knows yet what&rsquo;s wrong?
+                {t("step0Hook")}
               </span>
-              <h3 className="dmap-step__title">Before there&rsquo;s even a diagnosis.</h3>
+              <h3 className="dmap-step__title">{t("step0Title")}</h3>
               <div className="dmap-predx">
-                <span className="dmap-predx__tag">planned module · preliminary orientation</span>
-                <h4 className="dmap-predx__title">A deep, adaptive intake interview</h4>
+                <span className="dmap-predx__tag">{t("step0Tag")}</span>
+                <h4 className="dmap-predx__title">{t("step0PredxTitle")}</h4>
                 <p className="dmap-predx__lede">
-                  Sometimes the problem isn&rsquo;t &ldquo;I have a diagnosis, what now&rdquo; but{" "}
-                  <b>&ldquo;the doctors don&rsquo;t know what&rsquo;s wrong&rdquo;</b>. The
-                  interview works iteratively: it takes a broad first pass, then — depending on
-                  your answers — can search the literature before asking the next question. The
-                  goal is not diagnostic: it&rsquo;s <b>preliminary orientation</b> — which leads
-                  to explore, which specialist to consider, what to ask — written up as a document
-                  to discuss with your doctor.
+                  {t("step0PredxLedePart1")} <b>{t("step0PredxLedeBold1")}</b>
+                  {t("step0PredxLedePart2")} <b>{t("step0PredxLedeBold2")}</b>{" "}
+                  {t("step0PredxLedePart3")}
                 </p>
               </div>
             </div>
@@ -412,18 +368,13 @@ export function DiseaseMapView({ slug, onNav }: DiseaseMapViewProps) {
             </svg>
           </span>
           <div className="dmap-safety__b">
-            <b>Everything here is a starting point for a conversation with your doctor — not a
-            recommendation.</b>{" "}
-            We show official guidelines plainly; &ldquo;to consider&rdquo; recommendations and AI
-            drafts always carry a label, a rationale, and a &ldquo;discuss with your doctor&rdquo;
-            note. Your doctor makes the decisions — we help you know what to ask.
+            <b>{t("safetyBold")}</b> {t("safetyBody")}
           </div>
         </div>
 
         <footer className="dmap-foot">
-          <b>GeneGuidelines</b> — open infrastructure for rare-disease guidelines, maintained by
-          the GeneQuest Foundation. We test every design decision with one question:{" "}
-          <em>would this have helped our son?</em>
+          <b>GeneGuidelines</b> {t("footerPart1")}{" "}
+          <em>{t("footerEm")}</em>
         </footer>
       </div>
     </section>

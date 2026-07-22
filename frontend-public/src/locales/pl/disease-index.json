@@ -1,0 +1,9 @@
+{
+  "title": "Choroby",
+  "resultsFor": "Wyniki dla „{{query}}”",
+  "lead": "Rzadkie choroby genetyczne z żywymi wytycznymi, sprawdzanymi przez lekarzy.",
+  "startResearch": "+ Zleć research",
+  "sectionTitle": "Wszystkie choroby",
+  "loading": "Wczytywanie katalogu…",
+  "empty": "Żadna choroba nie odpowiada Twojemu wyszukiwaniu."
+}

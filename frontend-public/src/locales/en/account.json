@@ -1,0 +1,52 @@
+{
+  "account": {
+    "title": "Your account",
+    "loading": "Loading your account…",
+    "signedOutLead": "Sign in to save preferences, follow diseases, and (for clinicians) contribute guideline updates.",
+    "signInCta": "Sign in or register",
+    "backHome": "Back home",
+    "lead": "Your GeneGuidelines profile. This information comes from your account and is visible only to you.",
+    "profileTitle": "Profile",
+    "labelName": "Name",
+    "labelEmail": "Email",
+    "labelRole": "Role",
+    "labelStatus": "Status",
+    "labelInstitution": "Institution",
+    "labelOrcid": "ORCID",
+    "role": {
+      "parent": "Patient / Family",
+      "doctor": "Doctor",
+      "researcher": "Researcher",
+      "superadmin": "Superadmin",
+      "notSet": "Not set yet"
+    },
+    "status": {
+      "verified": "Verified",
+      "pending": "Pending verification",
+      "unverified": "Unverified"
+    }
+  },
+  "join": {
+    "loading": "Loading your invitation…",
+    "notFoundTitle": "Invitation not found",
+    "notFoundDefaultMessage": "This invitation could not be found.",
+    "goToGeneGuidelines": "Go to GeneGuidelines",
+    "invalidTitle": "This invitation is no longer valid",
+    "expiredMessage": "This invitation has expired. Ask the person who invited you to send a new link.",
+    "usedMessage": "This invitation has already been used. If that wasn't you, ask for a fresh link.",
+    "exploreCta": "Explore GeneGuidelines",
+    "inviteTitle": "You've been invited to GeneGuidelines",
+    "signupClosedMessage": "{{inviter}} invited you as a clinician. Sign-up isn't open in this environment yet — please check back soon.",
+    "welcomeTitle": "You're in — welcome",
+    "welcomeMessage": "Your clinician account is set up. Identity verification is pending; an administrator (or ORCID, where available) will confirm it shortly. You can start exploring guidelines now.",
+    "viewAccount": "View your account",
+    "errorTitle": "We couldn't complete your invitation",
+    "acceptErrorDefaultMessage": "Could not accept this invitation.",
+    "errorDefaultMessage": "Something went wrong accepting this invitation.",
+    "goToAccount": "Go to your account",
+    "inviteMessageSuffix": "invited you to join as a clinician — to review and contribute to living clinical guidelines for rare genetic diseases.",
+    "verifyNote": "Doctor accounts are verified before they can publish. You'll be set up as a clinician now; verification follows.",
+    "settingUp": "Setting up your clinician account…",
+    "signInCta": "Sign in or create your account"
+  }
+}

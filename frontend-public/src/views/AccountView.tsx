@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import { Badge, Button, Section } from "@gene-guidelines/ui";
 import { useAccountContext } from "../auth/accountContext";
 import { isPendingVerification } from "../auth/roleOptions";
@@ -10,18 +12,17 @@ export interface AccountViewProps {
 }
 
 /** Human-friendly labels for each role; falls back to the raw value. */
-const ROLE_LABELS: Record<AccountRole, string> = {
-  parent: "Patient / Family",
-  doctor: "Doctor",
-  researcher: "Researcher",
-  superadmin: "Superadmin",
-};
-
-function roleLabel(role: AccountRole | null): string {
+function roleLabel(role: AccountRole | null, t: TFunction): string {
   if (role == null) {
-    return "Not set yet";
+    return t("account.role.notSet");
   }
-  return ROLE_LABELS[role] ?? role;
+  const roleLabels: Record<AccountRole, string> = {
+    parent: t("account.role.parent"),
+    doctor: t("account.role.doctor"),
+    researcher: t("account.role.researcher"),
+    superadmin: t("account.role.superadmin"),
+  };
+  return roleLabels[role] ?? role;
 }
 
 /** Canonical ORCID URL for a bare identifier (e.g. `0000-0002-1825-0097`). */
@@ -36,14 +37,15 @@ function orcidUrl(orcid: string): string {
  * account menu shows. Handles loading, unconfigured-auth, and signed-out states.
  */
 export function AccountView({ onNav, onSignIn }: AccountViewProps) {
+  const { t } = useTranslation("account");
   const { signInAvailable, loading, isAuthenticated, account, login } =
     useAccountContext();
 
   if (loading) {
     return (
       <section className="page page--narrow">
-        <h1 className="page__title">Your account</h1>
-        <p className="page__loading">Loading your account…</p>
+        <h1 className="page__title">{t("account.title")}</h1>
+        <p className="page__loading">{t("account.loading")}</p>
       </section>
     );
   }
@@ -54,17 +56,14 @@ export function AccountView({ onNav, onSignIn }: AccountViewProps) {
     const startSignIn = signInAvailable ? login : onSignIn;
     return (
       <section className="page page--narrow">
-        <h1 className="page__title">Your account</h1>
-        <p className="page__lead">
-          Sign in to save preferences, follow diseases, and (for clinicians) contribute
-          guideline updates.
-        </p>
+        <h1 className="page__title">{t("account.title")}</h1>
+        <p className="page__lead">{t("account.signedOutLead")}</p>
         <p className="page__actions">
           <Button variant="primary" onClick={startSignIn}>
-            Sign in or register
+            {t("account.signInCta")}
           </Button>
           <Button variant="ghost" onClick={() => onNav("/")}>
-            Back home
+            {t("account.backHome")}
           </Button>
         </p>
       </section>
@@ -75,48 +74,45 @@ export function AccountView({ onNav, onSignIn }: AccountViewProps) {
 
   return (
     <section className="page page--narrow">
-      <h1 className="page__title">Your account</h1>
-      <p className="page__lead">
-        Your GeneGuidelines profile. This information comes from your account and is
-        visible only to you.
-      </p>
+      <h1 className="page__title">{t("account.title")}</h1>
+      <p className="page__lead">{t("account.lead")}</p>
 
-      <Section title="Profile">
+      <Section title={t("account.profileTitle")}>
         <dl className="account-dl">
           {account.displayName ? (
             <>
-              <dt>Name</dt>
+              <dt>{t("account.labelName")}</dt>
               <dd>{account.displayName}</dd>
             </>
           ) : null}
 
-          <dt>Email</dt>
+          <dt>{t("account.labelEmail")}</dt>
           <dd>{account.email}</dd>
 
-          <dt>Role</dt>
-          <dd>{roleLabel(account.role)}</dd>
+          <dt>{t("account.labelRole")}</dt>
+          <dd>{roleLabel(account.role, t)}</dd>
 
-          <dt>Status</dt>
+          <dt>{t("account.labelStatus")}</dt>
           <dd>
             {account.verified ? (
-              <Badge variant="ok">Verified</Badge>
+              <Badge variant="ok">{t("account.status.verified")}</Badge>
             ) : pending ? (
-              <Badge>Pending verification</Badge>
+              <Badge>{t("account.status.pending")}</Badge>
             ) : (
-              <Badge>Unverified</Badge>
+              <Badge>{t("account.status.unverified")}</Badge>
             )}
           </dd>
 
           {account.institution ? (
             <>
-              <dt>Institution</dt>
+              <dt>{t("account.labelInstitution")}</dt>
               <dd>{account.institution}</dd>
             </>
           ) : null}
 
           {account.orcid ? (
             <>
-              <dt>ORCID</dt>
+              <dt>{t("account.labelOrcid")}</dt>
               <dd>
                 <a href={orcidUrl(account.orcid)} target="_blank" rel="noopener noreferrer">
                   {account.orcid}
@@ -129,7 +125,7 @@ export function AccountView({ onNav, onSignIn }: AccountViewProps) {
 
       <p className="page__actions">
         <Button variant="ghost" onClick={() => onNav("/")}>
-          Back home
+          {t("account.backHome")}
         </Button>
       </p>
     </section>
