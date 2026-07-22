@@ -225,6 +225,33 @@ def ensure_content_schema() -> None:
         )
         """
     )
+    # Generic machine-translation sidecar for relational scalar content fields
+    # (INSTALL-1, PR1 scaffolding — nothing reads or writes this yet). One row
+    # per (entity_type, entity_id, field, locale). Mirrors the Core Table in
+    # backend/shared/persistence/schema.py; keep the two in sync.
+    cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS content_translations (
+            id TEXT PRIMARY KEY,
+            entity_type TEXT NOT NULL,
+            entity_id TEXT NOT NULL,
+            field TEXT NOT NULL,
+            locale TEXT NOT NULL,
+            text TEXT NOT NULL,
+            source_hash TEXT NOT NULL,
+            source_model TEXT NOT NULL DEFAULT '',
+            translated_at TEXT NOT NULL,
+            CONSTRAINT uq_content_translations_entity_field_locale
+                UNIQUE (entity_type, entity_id, field, locale)
+        )
+        """
+    )
+    cur.execute(
+        """
+        CREATE INDEX IF NOT EXISTS ix_content_translations_entity_locale
+        ON content_translations (entity_type, entity_id, locale)
+        """
+    )
     conn.commit()
     conn.close()
     ensure_guideline_prompt_column()

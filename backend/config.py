@@ -146,6 +146,30 @@ WIDER_SEARCH_JUDGE_MODEL = (
     or ("openai:gpt-5.4" if (os.environ.get("OPENAI_API_KEY") or "").strip() else None)
 )
 
+# Model used to machine-translate published English content into the target
+# locales (INSTALL-1 content-translation architecture). Resolved INDEPENDENTLY of
+# SINGLE_LLM_MODE exactly like WIDER_SEARCH_JUDGE_MODEL above: translation quality
+# for clinical content is precisely where a frontier model earns its keep, so it
+# must not collapse onto a self-hosted Gemma when SINGLE_LLM_MODE is on. Defaults
+# to a frontier model when an OpenAI key is present; None when neither this nor a
+# key is configured (the translation worker then no-ops and says so). PR1 defines
+# this config only — nothing reads it until the worker lands in a later PR.
+TRANSLATION_MODEL = (
+    (os.environ.get("TRANSLATION_MODEL") or "").strip()
+    or ("openai:gpt-5.4" if (os.environ.get("OPENAI_API_KEY") or "").strip() else None)
+)
+
+# Locales the translation worker produces (comma-separated env override). English
+# is always the authoritative source and never a target, so it is not listed here.
+# Default ["pl"] — Polish families are the first non-English audience (see the
+# i18n plan). Mirrors the GUIDELINES_RAG_ANCHOR_PMIDS comma-list parse above.
+_TRANSLATION_TARGET_LOCALES_RAW = (os.environ.get("TRANSLATION_TARGET_LOCALES") or "").strip()
+TRANSLATION_TARGET_LOCALES: list[str] = (
+    [loc.strip().lower() for loc in _TRANSLATION_TARGET_LOCALES_RAW.split(",") if loc.strip()]
+    if _TRANSLATION_TARGET_LOCALES_RAW
+    else ["pl"]
+)
+
 # OpenRouter (OpenAI-compatible). Used when model_spec uses `openrouter:` prefix or profile "openrouter".
 _OPENROUTER_SIMPLE = (
     (os.environ.get("MODEL_PROFILE_OPENROUTER_SIMPLE") or "").strip()

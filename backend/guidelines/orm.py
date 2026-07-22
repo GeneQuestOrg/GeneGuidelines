@@ -86,6 +86,48 @@ class GuidelineSynthesisRow(Base):
     )
 
 
+class GuidelineSynthesisTranslationRow(Base):
+    """A machine translation of the synthesis document into one non-English locale.
+
+    Row-per-locale sibling of :class:`GuidelineSynthesisRow` (INSTALL-1 content-
+    translation architecture, PR1 scaffolding — nothing reads or writes this yet).
+    The English synthesis stays authoritative in ``guideline_synthesis``; a
+    translation for ``(disease_slug, locale)`` mirrors only the *translatable*
+    document fields (title / based_on / disclaimer / the nested section, what-to-
+    do-now, and red-flag documents). Structural / provenance fields (version,
+    status, epistemic_level, source_ids, has_flowchart …) are NOT copied — a read
+    joins them from the English row so they can never drift per language.
+
+    ``source_hash`` fingerprints the English document this translation was made
+    from; a read compares it to the live English row and falls back to English
+    when they differ (staleness gate). ``source_version`` records the English
+    ``guideline_synthesis.version`` at translation time for human debugging.
+
+    The nested ``sections`` / ``what_to_do_now`` / ``red_flags`` are the same
+    frontend-shaped documents as on the English row (camelCase inside) — read
+    whole, never queried into.
+    """
+
+    __tablename__ = "guideline_synthesis_translations"
+
+    disease_slug: Mapped[str] = mapped_column(Text, primary_key=True)
+    locale: Mapped[str] = mapped_column(Text, primary_key=True)
+    title: Mapped[str] = mapped_column(Text, nullable=False)
+    based_on: Mapped[str] = mapped_column(Text, nullable=False)
+    synth_disclaimer: Mapped[str] = mapped_column(Text, nullable=False)
+    source_hash: Mapped[str] = mapped_column(Text, nullable=False)
+    translated_at: Mapped[str] = mapped_column(Text, nullable=False)
+    sections: Mapped[list] = mapped_column(JSON, nullable=False, default_factory=list)
+    what_to_do_now: Mapped[list | None] = mapped_column(JSON, nullable=True, default=None)
+    red_flags: Mapped[dict | None] = mapped_column(JSON, nullable=True, default=None)
+    source_version: Mapped[str] = mapped_column(
+        Text, nullable=False, server_default="", default=""
+    )
+    source_model: Mapped[str] = mapped_column(
+        Text, nullable=False, server_default="", default=""
+    )
+
+
 class GuidelineSuggestionRow(Base):
     """An AI suggestion hanging beside the synthesis — a delta (GL-3a)."""
 
@@ -177,6 +219,7 @@ __all__ = [
     "Base",
     "SourceDocumentRow",
     "GuidelineSynthesisRow",
+    "GuidelineSynthesisTranslationRow",
     "GuidelineSuggestionRow",
     "GuidelineSynthesisSignalRow",
     "GuidelineSuggestionVoteRow",

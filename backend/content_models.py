@@ -145,7 +145,11 @@ class GuidelineMetaResponse(BaseModel):
 
     diseaseSlug: str
     version: str
-    locale: Literal["en"] = "en"
+    # Widened from Literal["en"] to str for the content-translation architecture
+    # (INSTALL-1). The value is read straight from the DB (always 'en' today), so
+    # this changes no current output — it only stops the type from rejecting a
+    # non-English locale once translated reads land in a later PR.
+    locale: str = "en"
     sectionCount: int = Field(ge=0)
     lastReviewed: str | None = None
 

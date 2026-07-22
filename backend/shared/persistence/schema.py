@@ -342,6 +342,48 @@ private_contexts = Table(
 )
 
 
+# Generic sidecar for machine translations of *relational scalar* content
+# fields (INSTALL-1 content-translation architecture, PR1 scaffolding — nothing
+# reads or writes this yet). One row per (entity, field, locale): the English
+# source stays authoritative in its own column on its own table; a translation
+# lives here keyed by ``entity_type`` (e.g. "disease", "therapy"), ``entity_id``
+# (the source row's id/slug), ``field`` (the source column name), and ``locale``.
+# ``source_hash`` fingerprints the English text this translation was produced
+# from, so a read can detect staleness (hash drift) and fall back to English
+# per-field. Row-shaped documents (the guideline synthesis) get their own
+# row-per-locale sibling table instead — see ``guideline_synthesis_translations``
+# in ``backend/guidelines/orm.py``. No per-language columns anywhere.
+content_translations = Table(
+    "content_translations",
+    metadata,
+    Column("id", Text, primary_key=True),  # uuid4 hex
+    Column("entity_type", Text, nullable=False),
+    Column("entity_id", Text, nullable=False),
+    Column("field", Text, nullable=False),
+    Column("locale", Text, nullable=False),
+    Column("text", Text, nullable=False),
+    # Fingerprint of the English source text at translation time (staleness gate).
+    Column("source_hash", Text, nullable=False),
+    Column("source_model", Text, nullable=False, server_default=""),
+    Column("translated_at", Text, nullable=False),
+    UniqueConstraint(
+        "entity_type",
+        "entity_id",
+        "field",
+        "locale",
+        name="uq_content_translations_entity_field_locale",
+    ),
+)
+
+# Read hot path: resolve every translated field for one entity in one locale.
+Index(
+    "ix_content_translations_entity_locale",
+    content_translations.c.entity_type,
+    content_translations.c.entity_id,
+    content_translations.c.locale,
+)
+
+
 # -- disease_index domain -----------------------------------------------------
 #
 # Global catalogue of every rare disease the platform might suggest in the
@@ -628,6 +670,7 @@ __all__ = [
     "disease_foundations",
     "private_contexts",
     "official_guideline_pointers",
+    "content_translations",
     "disease_index",
     "disease_index_aliases",
     "users",
