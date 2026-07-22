@@ -14,6 +14,9 @@
     "english": "English",
     "polish": "Polski"
   },
+  "machineTranslation": {
+    "note": "Machine translation — English is the source of record."
+  },
   "betaBadge": "Public beta",
   "footer": {
     "brand": "GeneQuest Foundation",

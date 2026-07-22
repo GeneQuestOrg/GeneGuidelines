@@ -1,0 +1,18 @@
+/* Discreet "machine translation" honesty line — see MachineTranslationNote.tsx.
+   Deliberately quieter than .gx-synthnote (no box, no border): a single muted
+   line, not a callout. */
+.mt-note {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 6px 0 0;
+  font-family: var(--font-sans);
+  font-size: var(--fs-xs);
+  color: var(--ink-4);
+  line-height: 1.4;
+}
+
+.mt-note__icon {
+  flex-shrink: 0;
+  opacity: 0.85;
+}

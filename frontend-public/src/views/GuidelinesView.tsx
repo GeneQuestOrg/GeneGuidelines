@@ -10,6 +10,7 @@ import { useSynthSignals } from "../hooks/useSynthSignals";
 import { useGuidelineBaseline } from "../hooks/useGuidelineBaseline";
 import { useSourceShelf } from "../hooks/useSourceShelf";
 import { RolePill } from "../components/guidelines/RolePill";
+import { MachineTranslationNote } from "../components/MachineTranslationNote";
 import { GuidelineParentView } from "./GuidelineParentView";
 import { GuidelineClinicianView } from "./GuidelineClinicianView";
 import { FocusedReviewView } from "./FocusedReviewView";
@@ -165,6 +166,8 @@ export function GuidelinesView({
         </div>
         <RolePill role={role} />
       </header>
+
+      <MachineTranslationNote />
 
       {isClinicianView(role) ? (
         <GuidelineClinicianView

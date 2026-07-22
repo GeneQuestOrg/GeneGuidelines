@@ -7,6 +7,7 @@ import { audienceForRole, isClinicianView, type ViewRole } from "../auth/resolve
 import { Section, Button } from "@gene-guidelines/ui";
 import { DiseaseHero } from "../components/DiseaseHero";
 import { DiseaseSubscribeModal } from "../components/DiseaseSubscribeModal";
+import { MachineTranslationNote } from "../components/MachineTranslationNote";
 import { loadSubscriptionUiStatus } from "../utils/loadSubscriptionUiStatus";
 import { MyCaseCta } from "../components/MyCaseCta";
 import { OrientationMapCta } from "../components/OrientationMapCta";
@@ -167,6 +168,7 @@ export function DiseaseView({ slug, role, userLoc, onNav, alert }: DiseaseViewPr
           onSaved={() => refreshSubscriptionStatus()}
         />
       ) : null}
+      <MachineTranslationNote />
       {!isClinician ? <OrientationMapCta disease={disease} onNav={onNav} /> : null}
       {!isClinician ? <MyCaseCta disease={disease} onNav={onNav} /> : null}
       {sourceDocs.length > 0 ? (

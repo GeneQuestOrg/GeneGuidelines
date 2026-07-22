@@ -14,6 +14,9 @@
     "english": "English",
     "polish": "Polski"
   },
+  "machineTranslation": {
+    "note": "Tłumaczenie maszynowe — źródłem jest wersja angielska."
+  },
   "betaBadge": "Publiczna beta",
   "footer": {
     "brand": "GeneQuest Foundation",
