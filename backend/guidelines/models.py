@@ -55,6 +55,39 @@ class GuidelineSynthesis:
 
 
 @dataclass(frozen=True, slots=True)
+class GuidelineSynthesisTranslation:
+    """A machine translation of the synthesis document into one non-English locale.
+
+    Row-per-locale sibling of :class:`GuidelineSynthesis` (INSTALL-1 content-
+    translation architecture, PR2 write side). Carries only the *translatable*
+    document fields; structural / provenance fields (version, status,
+    epistemic_level, source_ids, has_flowchart, …) are NOT copied — a read joins
+    them from the English row so they can never drift per language. The nested
+    ``sections`` / ``what_to_do_now`` / ``red_flags`` are the same frontend-shaped
+    documents as the English row, with every structural field (section/paragraph
+    ids, ``source``, ``citations``, ``update``, …) preserved verbatim and only the
+    prose translated.
+
+    ``source_hash`` fingerprints the English translatable payload this was made
+    from (staleness gate); ``source_version`` records the English
+    ``guideline_synthesis.version`` at translation time for human debugging.
+    """
+
+    disease_slug: str
+    locale: str
+    title: str
+    based_on: str
+    synth_disclaimer: str
+    sections: list[dict[str, Any]]
+    what_to_do_now: list[dict[str, Any]] | None
+    red_flags: dict[str, Any] | None
+    source_hash: str
+    source_version: str
+    source_model: str
+    translated_at: str
+
+
+@dataclass(frozen=True, slots=True)
 class GuidelineSuggestion:
     """An AI suggestion hanging beside the synthesis — a delta (GL-3a)."""
 
@@ -90,6 +123,7 @@ class SynthSectionSignal:
 __all__ = [
     "SourceDocument",
     "GuidelineSynthesis",
+    "GuidelineSynthesisTranslation",
     "GuidelineSuggestion",
     "SynthSectionSignal",
 ]

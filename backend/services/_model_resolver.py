@@ -128,11 +128,19 @@ async def run_structured_with_ollama_fallback(
     primary_spec: str,
     max_tokens: int,
     timeout_sec: float | None = None,
-) -> tuple[BaseModel, str]:
+    return_usage: bool = False,
+):
     """Run a structured-output agent; on HTTP 429 from the primary, retry on Ollama.
 
     Returns ``(parsed_output, model_spec_actually_used)`` so the caller can log
     which model produced the result.
+
+    When ``return_usage=True`` a third element is appended — a best-effort
+    ``(prompt_tokens, completion_tokens, total_tokens)`` triple extracted from
+    the agent run — so a caller can append a ``token_usage`` ledger row per call
+    (the content-translation worker does this). The default ``False`` keeps the
+    original two-tuple contract for every existing caller
+    (e.g. :mod:`backend.services.disease_wider_search`).
 
     Only HTTP 429 (rate-limit) triggers the fallback. Other failures bubble up
     so callers can record them in ``guideline_run_results``.
@@ -154,9 +162,15 @@ async def run_structured_with_ollama_fallback(
         async with _get_finder_llm_parallel_semaphore():
             return await asyncio.wait_for(ag.run(user_prompt), timeout=effective_timeout)
 
+    def _result(res, spec: str):
+        out = _coerce_output(res, result_type)
+        if return_usage:
+            return out, spec, _extract_usage(res)
+        return out, spec
+
     try:
         res = await _call(primary_spec)
-        return _coerce_output(res, result_type), primary_spec
+        return _result(res, primary_spec)
     except Exception as exc:  # noqa: BLE001 — we narrow the 429 case below
         if not _is_429_error(exc):
             raise
@@ -169,7 +183,17 @@ async def run_structured_with_ollama_fallback(
             fallback_spec,
         )
         res = await _call(fallback_spec)
-        return _coerce_output(res, result_type), fallback_spec
+        return _result(res, fallback_spec)
+
+
+def _extract_usage(res) -> tuple[int, int, int]:
+    """Best-effort ``(prompt, completion, total)`` for a run (0s if unavailable)."""
+    try:
+        from ..research_queue.token_budget import extract_usage
+
+        return extract_usage(res)
+    except Exception:  # noqa: BLE001 — usage extraction must never break a call
+        return (0, 0, 0)
 
 
 def _coerce_output(res, result_type: Type[BaseModel]) -> BaseModel:

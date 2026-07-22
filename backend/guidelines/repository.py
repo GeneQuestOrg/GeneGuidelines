@@ -19,6 +19,7 @@ from ..shared.persistence.engine import get_engine
 from .models import (
     GuidelineSuggestion,
     GuidelineSynthesis,
+    GuidelineSynthesisTranslation,
     SourceDocument,
     SynthSectionSignal,
 )
@@ -27,6 +28,7 @@ from .orm import (
     GuidelineSuggestionVoteRow,
     GuidelineSynthesisRow,
     GuidelineSynthesisSignalRow,
+    GuidelineSynthesisTranslationRow,
     SourceDocumentRow,
 )
 
@@ -94,6 +96,25 @@ def synthesis_from_row(row: GuidelineSynthesisRow) -> GuidelineSynthesis:
         sections=list(row.sections or []),
         what_to_do_now=row.what_to_do_now,
         red_flags=row.red_flags,
+    )
+
+
+def synthesis_translation_from_row(
+    row: GuidelineSynthesisTranslationRow,
+) -> GuidelineSynthesisTranslation:
+    return GuidelineSynthesisTranslation(
+        disease_slug=row.disease_slug,
+        locale=row.locale,
+        title=row.title,
+        based_on=row.based_on,
+        synth_disclaimer=row.synth_disclaimer,
+        sections=list(row.sections or []),
+        what_to_do_now=row.what_to_do_now,
+        red_flags=row.red_flags,
+        source_hash=row.source_hash,
+        source_version=row.source_version,
+        source_model=row.source_model,
+        translated_at=row.translated_at,
     )
 
 
@@ -542,12 +563,100 @@ class InMemoryGuidelinesRepo:
         }
 
 
+# ---------------------------------------------------------------------------
+# Synthesis translation (INSTALL-1 content-translation, PR2 write side).
+# ---------------------------------------------------------------------------
+
+
+class GuidelineSynthesisTranslationRepo(Protocol):
+    """Port — the translation worker's write/read surface for synthesis translations."""
+
+    def get(
+        self, disease_slug: str, locale: str
+    ) -> GuidelineSynthesisTranslation | None: ...
+
+    def upsert(self, translation: GuidelineSynthesisTranslation) -> None:
+        """Insert-or-update on the PK ``(disease_slug, locale)``."""
+        ...
+
+
+class SqlaGuidelineSynthesisTranslationRepo:
+    """Production ORM impl — ``Session`` per operation against the shared engine."""
+
+    def __init__(self, engine: Engine | None = None) -> None:
+        self._engine = engine or get_engine()
+
+    def get(
+        self, disease_slug: str, locale: str
+    ) -> GuidelineSynthesisTranslation | None:
+        with Session(self._engine) as session:
+            row = session.get(
+                GuidelineSynthesisTranslationRow, (disease_slug, locale)
+            )
+            return synthesis_translation_from_row(row) if row is not None else None
+
+    def upsert(self, translation: GuidelineSynthesisTranslation) -> None:
+        t = translation
+        with Session(self._engine) as session, session.begin():
+            row = session.get(
+                GuidelineSynthesisTranslationRow, (t.disease_slug, t.locale)
+            )
+            if row is None:
+                session.add(
+                    GuidelineSynthesisTranslationRow(
+                        disease_slug=t.disease_slug,
+                        locale=t.locale,
+                        title=t.title,
+                        based_on=t.based_on,
+                        synth_disclaimer=t.synth_disclaimer,
+                        source_hash=t.source_hash,
+                        translated_at=t.translated_at,
+                        sections=list(t.sections or []),
+                        what_to_do_now=t.what_to_do_now,
+                        red_flags=t.red_flags,
+                        source_version=t.source_version,
+                        source_model=t.source_model,
+                    )
+                )
+            else:
+                row.title = t.title
+                row.based_on = t.based_on
+                row.synth_disclaimer = t.synth_disclaimer
+                row.source_hash = t.source_hash
+                row.translated_at = t.translated_at
+                row.sections = list(t.sections or [])
+                row.what_to_do_now = t.what_to_do_now
+                row.red_flags = t.red_flags
+                row.source_version = t.source_version
+                row.source_model = t.source_model
+
+
+class InMemoryGuidelineSynthesisTranslationRepo:
+    """Dict-backed fake for the translation worker's unit tests."""
+
+    def __init__(self) -> None:
+        # (disease_slug, locale) -> GuidelineSynthesisTranslation
+        self.translations: dict[tuple[str, str], GuidelineSynthesisTranslation] = {}
+
+    def get(
+        self, disease_slug: str, locale: str
+    ) -> GuidelineSynthesisTranslation | None:
+        return self.translations.get((disease_slug, locale))
+
+    def upsert(self, translation: GuidelineSynthesisTranslation) -> None:
+        self.translations[(translation.disease_slug, translation.locale)] = translation
+
+
 __all__ = [
     "GuidelinesRepo",
     "SqlaGuidelinesRepo",
     "InMemoryGuidelinesRepo",
+    "GuidelineSynthesisTranslationRepo",
+    "SqlaGuidelineSynthesisTranslationRepo",
+    "InMemoryGuidelineSynthesisTranslationRepo",
     "source_document_from_row",
     "synthesis_from_row",
+    "synthesis_translation_from_row",
     "suggestion_from_row",
     "signal_from_row",
 ]
