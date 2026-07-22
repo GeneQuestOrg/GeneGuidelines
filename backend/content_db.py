@@ -1051,12 +1051,31 @@ def finalize_bootstrapped_disease(slug: str) -> dict[str, Any]:
     if listed_flipped:
         set_disease_listed(normalized, True)
 
+    # Same "make it findable" concern as listing: a disease researched on demand
+    # has an Orphanet-sourced disease_index row whose local_slug starts NULL, so
+    # the autocomplete shows it as "research" (hasLocalRecord=false) and would
+    # send the user to re-research it instead of to its finished page. Link that
+    # index row to this catalog record here. Best-effort + lazy import to keep
+    # content_db decoupled from the disease_index package at import time.
+    index_linked = 0
+    try:
+        from .disease_index.repository import SqlaDiseaseIndexRepo
+
+        index_linked = SqlaDiseaseIndexRepo().link_local_slug(
+            local_slug=normalized,
+            omim=str(row.get("omim") or ""),
+            canonical_name=str(row.get("name") or ""),
+        )
+    except Exception:  # noqa: BLE001 — index link is best-effort, never block finalize
+        log.exception("finalize: disease-index local_slug link failed for %s", normalized)
+
     return {
         "slug": normalized,
         "finalized": True,
         "doctors_count": doctors_count,
         "ai_draft_date_stamped": stamped,
         "listed_flipped": listed_flipped,
+        "index_linked": index_linked,
     }
 
 

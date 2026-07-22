@@ -41,7 +41,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Iterable, Iterator, Mapping, Protocol, Sequence
 
-from sqlalchemy import Engine, and_, delete, func, insert, select, update
+from sqlalchemy import Engine, and_, delete, func, insert, or_, select, update
 from sqlalchemy.engine import Connection
 
 from ..shared.persistence.base_repo import BaseSqlalchemyRepo
@@ -102,6 +102,13 @@ class DiseaseIndexRepo(Protocol):
     ) -> None: ...
 
     def count(self) -> int: ...
+
+    def link_local_slug(
+        self, *, local_slug: str, omim: str = "", canonical_name: str = ""
+    ) -> int:
+        """Point the matching (still-unlinked) index entry at a bootstrapped
+        catalog disease. Returns rows updated."""
+        ...
 
 
 # --- Normalisation -----------------------------------------------------------
@@ -360,6 +367,39 @@ class SqlaDiseaseIndexRepo(BaseSqlalchemyRepo):
         stmt = select(func.count()).select_from(disease_index_table)
         with self._conn() as conn:
             return int(conn.execute(stmt).scalar_one())
+
+    def link_local_slug(
+        self, *, local_slug: str, omim: str = "", canonical_name: str = ""
+    ) -> int:
+        """Point the matching index entry at a now-bootstrapped catalog disease.
+
+        Sets ``local_slug`` on the (still-unlinked) index row matching the
+        disease by exact normalised canonical name OR by OMIM code, so the
+        autocomplete shows it as "✓ in catalog" and links to the disease page
+        instead of offering a fresh research run (the ``hasLocalRecord=false``
+        bug for on-demand-researched diseases). Idempotent — only fills a NULL
+        ``local_slug``, never re-points an already-linked entry. Returns the
+        number of rows updated.
+        """
+        di = disease_index_table
+        name_norm = normalize_term(canonical_name) if canonical_name.strip() else ""
+        omim_norm = omim.strip()
+        conds = []
+        if name_norm:
+            conds.append(di.c.canonical_name_norm == name_norm)
+        if omim_norm:
+            # omim_codes_json is a JSON array serialised to text (e.g. ["617051"]);
+            # the surrounding quotes anchor the token so "6170" cannot match "617051".
+            conds.append(di.c.omim_codes_json.like(f'%"{omim_norm}"%'))
+        if not conds:
+            return 0
+        stmt = (
+            update(di)
+            .where(and_(di.c.local_slug.is_(None), or_(*conds)))
+            .values(local_slug=local_slug)
+        )
+        with self._conn() as conn:
+            return int(conn.execute(stmt).rowcount or 0)
 
     # ------------------------------ writes ------------------------------
 
@@ -622,6 +662,25 @@ class InMemoryDiseaseIndexRepo:
 
     def count(self) -> int:
         return len(self._by_id)
+
+    def link_local_slug(
+        self, *, local_slug: str, omim: str = "", canonical_name: str = ""
+    ) -> int:
+        from dataclasses import replace as dc_replace
+
+        name_norm = normalize_term(canonical_name) if canonical_name.strip() else ""
+        omim_norm = omim.strip()
+        updated = 0
+        for row_id, entry in self._by_id.items():
+            if entry.local_slug:
+                continue
+            matches = (name_norm and entry.canonical_name_norm == name_norm) or (
+                omim_norm and omim_norm in entry.omim_codes
+            )
+            if matches:
+                self._by_id[row_id] = dc_replace(entry, local_slug=local_slug)
+                updated += 1
+        return updated
 
 
 # --- Schema bootstrap --------------------------------------------------------
