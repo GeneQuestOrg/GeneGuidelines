@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next";
+
 export interface PaginationProps {
   /** 1-based current page. */
   readonly page: number;
@@ -32,6 +34,7 @@ function pageTokens(page: number, pageCount: number): PageToken[] {
  * presentational control.
  */
 export function Pagination({ page, pageCount, onPage }: PaginationProps) {
+  const { t } = useTranslation("common");
   if (pageCount <= 1) {
     return null;
   }
@@ -39,13 +42,13 @@ export function Pagination({ page, pageCount, onPage }: PaginationProps) {
   const tokens = pageTokens(safePage, pageCount);
 
   return (
-    <nav className="pagination" aria-label="Pagination">
+    <nav className="pagination" aria-label={t("pagination.ariaLabel")}>
       <button
         type="button"
         className="pagination__btn pagination__btn--nav"
         onClick={() => onPage(safePage - 1)}
         disabled={safePage <= 1}
-        aria-label="Previous page"
+        aria-label={t("pagination.previousPage")}
       >
         ‹
       </button>
@@ -61,7 +64,7 @@ export function Pagination({ page, pageCount, onPage }: PaginationProps) {
             className={`pagination__btn${token === safePage ? " is-active" : ""}`}
             onClick={() => onPage(token)}
             aria-current={token === safePage ? "page" : undefined}
-            aria-label={`Page ${token}`}
+            aria-label={t("pagination.page", { n: token })}
           >
             {token}
           </button>
@@ -72,7 +75,7 @@ export function Pagination({ page, pageCount, onPage }: PaginationProps) {
         className="pagination__btn pagination__btn--nav"
         onClick={() => onPage(safePage + 1)}
         disabled={safePage >= pageCount}
-        aria-label="Next page"
+        aria-label={t("pagination.nextPage")}
       >
         ›
       </button>

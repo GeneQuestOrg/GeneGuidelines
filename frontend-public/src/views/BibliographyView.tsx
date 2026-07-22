@@ -24,13 +24,14 @@ export interface BibliographyViewProps {
 }
 
 function BibAccessFlag({ access }: { access: AnalyzedPaper["access"] }) {
+  const { t } = useTranslation("common");
   // OA/paywall detection is deferred (v1): show a chip only when access is known,
   // rather than tagging nearly every row with a meaningless "Unknown".
   if (access === "unknown") {
     return null;
   }
   const meta = BIB_ACCESS_META[access] ?? BIB_ACCESS_META.unknown;
-  return <span className={`bib-access bib-access--${access}`}>{meta.short}</span>;
+  return <span className={`bib-access bib-access--${access}`}>{t(meta.short)}</span>;
 }
 
 function BibRow({
@@ -56,7 +57,7 @@ function BibRow({
           {paper.category ? <span className="bib-row__cat">{paper.category}</span> : null}
           <span className={`bib-verdict bib-verdict--${paper.verdict}`}>
             <span className="bib-verdict__dot" aria-hidden="true" />
-            {verdict.short}
+            {t(`common:${verdict.short}`)}
           </span>
         </div>
         <h3 className="bib-row__title">{paper.title}</h3>
@@ -222,7 +223,7 @@ export function BibliographyView({ slug, role, onNav }: BibliographyViewProps) {
                 className={`bib-chip bib-chip--${v}${filter === v ? " is-on" : ""}`}
                 onClick={() => setFilter(v)}
               >
-                {BIB_VERDICT_META[v].label} <b>{counts[v] ?? 0}</b>
+                {t(`common:${BIB_VERDICT_META[v].label}`)} <b>{counts[v] ?? 0}</b>
               </button>
             ))}
           </div>
@@ -231,9 +232,13 @@ export function BibliographyView({ slug, role, onNav }: BibliographyViewProps) {
             <section key={g.verdict} className="bib-group">
               <header className={`bib-group__head bib-group__head--${g.verdict}`}>
                 <span className="bib-group__dot" aria-hidden="true" />
-                <h2 className="bib-group__title">{BIB_VERDICT_META[g.verdict].label}</h2>
+                <h2 className="bib-group__title">
+                  {t(`common:${BIB_VERDICT_META[g.verdict].label}`)}
+                </h2>
                 <span className="bib-group__count">{g.items.length}</span>
-                <span className="bib-group__hint">{BIB_VERDICT_META[g.verdict].hint}</span>
+                <span className="bib-group__hint">
+                  {t(`common:${BIB_VERDICT_META[g.verdict].hint}`)}
+                </span>
               </header>
               <ul className="bib-list">
                 {g.items.map((paper) => (

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { repositories } from "../repositories";
 import type { Trial } from "../types/trial";
 import { dedupeTrials } from "../utils/dedupeTrials";
@@ -14,6 +15,7 @@ export interface RelatedTrialsState {
  * and deduped by nct. Do NOT call useDiseaseTrials in a loop; this keeps a single hook/effect.
  */
 export function useRelatedTrials(slugs: readonly string[]): RelatedTrialsState {
+  const { t } = useTranslation("common");
   const [trials, setTrials] = useState<readonly Trial[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -36,7 +38,7 @@ export function useRelatedTrials(slugs: readonly string[]): RelatedTrialsState {
         }
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : "Failed to load trials.");
+          setError(err instanceof Error ? err.message : t("errors.failedToLoadTrials"));
           setTrials([]);
         }
       } finally {
@@ -50,7 +52,7 @@ export function useRelatedTrials(slugs: readonly string[]): RelatedTrialsState {
     return () => {
       cancelled = true;
     };
-  }, [slugKey]);
+  }, [slugKey, t]);
 
   return { trials, loading, error };
 }

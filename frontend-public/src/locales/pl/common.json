@@ -50,5 +50,277 @@
     "types": "Typy",
     "lastRevised": "Ostatnia aktualizacja"
   },
-  "loadingCatalog": "Ładowanie katalogu…"
+  "loadingCatalog": "Ładowanie katalogu…",
+  "filterMenu": {
+    "all": "Wszystkie"
+  },
+  "locationMenu": {
+    "label": "Lokalizacja",
+    "yourLocation": "Twoja lokalizacja",
+    "anywhere": "Gdziekolwiek",
+    "noLimit": "Bez limitu",
+    "radius": "Zasięg",
+    "ariaLabel": "Filtr lokalizacji",
+    "hint": "Odległość liczona jest do najbliższej placówki lekarza. „Bez limitu” pokazuje wszystkich, sortując od najbliższych."
+  },
+  "pagination": {
+    "ariaLabel": "Paginacja",
+    "previousPage": "Poprzednia strona",
+    "nextPage": "Następna strona",
+    "page": "Strona {{n}}"
+  },
+  "diseaseCard": {
+    "specialists_one": "{{count}} specjalista",
+    "specialists_few": "{{count}} specjalistów",
+    "specialists_many": "{{count}} specjalistów",
+    "specialists_other": "{{count}} specjalistów",
+    "trials_one": "{{count}} badanie kliniczne",
+    "trials_few": "{{count}} badania kliniczne",
+    "trials_many": "{{count}} badań klinicznych",
+    "trials_other": "{{count}} badań klinicznych"
+  },
+  "distancePill": {
+    "title": "Odległość od wybranej lokalizacji referencyjnej (miasto w ustawieniach)"
+  },
+  "specialistDisclaimer": {
+    "ariaLabel": "Zastrzeżenie katalogu",
+    "title": "Katalog automatyczny",
+    "body": "Wyniki i role PubMed są wyliczane na podstawie metadanych publikacji. Ten wpis nie jest poradą medyczną, rekomendacją ani gwarancją, że lekarz leczy Twoje schorzenie."
+  },
+  "trialsList": {
+    "empty": "Dla tej choroby nie ma jeszcze zarejestrowanych badań klinicznych.",
+    "pi": "Główny badacz",
+    "location": "Lokalizacja",
+    "ages": "Wiek",
+    "enrollment": "Rekrutacja",
+    "enrollmentBoth": "{{enrolled}} / {{target}} zrekrutowanych",
+    "enrollmentPlanned": "{{target}} planowanych",
+    "enrollmentEnrolledOnly": "{{enrolled}} zrekrutowanych",
+    "openOnClinicalTrials": "Otwórz na ClinicalTrials.gov →"
+  },
+  "rolePill": {
+    "guest": "Czytasz jako · gość",
+    "parent": "Czytasz jako · rodzic",
+    "clinician": "Czytasz jako · lekarz",
+    "clinicianUnverified": "Lekarz · niezweryfikowany",
+    "researcher": "Czytasz jako · badacz",
+    "researcherUnverified": "Badacz · niezweryfikowany"
+  },
+  "flowNode": {
+    "urgent": "PILNE",
+    "terminalBranch": "To koniec tej ścieżki — wróć do kolejnego kroku powyżej, kiedy chcesz kontynuować."
+  },
+  "synthesisTeaser": {
+    "tagSources_one": "{{count}} źródło",
+    "tagSources_few": "{{count}} źródła",
+    "tagSources_many": "{{count}} źródeł",
+    "tagSources_other": "{{count}} źródeł",
+    "tagAiDraft": "Szkic AI",
+    "titleSynthesis": "{{disease}} — synteza wytycznych",
+    "titleAiDraft": "{{disease}} — wytyczna zbudowana przez AI",
+    "subSynthesis": "Jedno podsumowanie ze wszystkich źródeł. Każde zdanie pokazuje, z którego dokumentu i fragmentu pochodzi — plus sugestie AI z najnowszej literatury.",
+    "subAiDraft": "Dla tego schorzenia nie istnieje uzgodniona wytyczna. AI złożyła szkic na podstawie literatury — do przeglądu przez ekspertów, nie do prowadzenia pacjenta.",
+    "cta": "Przeczytaj wytyczną →"
+  },
+  "compactSourceShelf": {
+    "label": "Źródła ({{count}}) — kliknij, aby otworzyć oryginał",
+    "newer": "NOWSZE",
+    "seeAll": "Zobacz wszystkie źródła →"
+  },
+  "diseaseTabs": {
+    "sectionsAriaLabel": "Sekcje choroby",
+    "specialistsTitle": "Specjaliści",
+    "seeAllSpecialists": "Zobacz wszystkich specjalistów →",
+    "seeAllTrialsCount": "Zobacz wszystkie badania kliniczne ({{count}}) →",
+    "loadingTrials": "Wczytywanie badań klinicznych…",
+    "noActiveTrials": "Obecnie brak aktywnych badań klinicznych dla tej choroby.",
+    "therapiesTitle": "Terapie",
+    "therapiesNote": "Te opcje pomagają kontrolować objawy i zwolnić postęp choroby — żadna nie odwraca w pełni już powstałych zmian.",
+    "loadingTherapies": "Wczytywanie terapii…",
+    "foundationsTitle": "Fundacje wsparcia",
+    "loadingFoundations": "Wczytywanie fundacji…",
+    "noRelatedEntries": "Nie znaleziono powiązanych wpisów.",
+    "loadingRelated": "Wczytywanie powiązanych chorób…",
+    "doctorsSourceMerged": "Wyselekcjonowane profile połączone z najnowszymi dowodami z Doctor Finder, tam gdzie są dostępne.",
+    "doctorsSourceRanked": "Ranking na podstawie najnowszego przebiegu Doctor Finder.",
+    "loadingSpecialists": "Wczytywanie specjalistów…",
+    "openExpertDirectory": "Otwórz katalog ekspertów dla {{name}}",
+    "seeSpecialistsFor": "Zobacz specjalistów — {{name}}",
+    "browseFullDirectory": "Przeglądaj pełny katalog",
+    "seeTrialsFor": "Zobacz badania kliniczne — {{name}}",
+    "browseAllTrials": "Przeglądaj wszystkie badania kliniczne",
+    "consensusDocumentFor": "Dokument konsensusu dla {{name}} — pełny tekst w czytniku wytycznych."
+  },
+  "officialGuidelineBlock": {
+    "eyebrow": "OFICJALNE WYTYCZNE · PUNKT ODNIESIENIA",
+    "sourceReviewer": "Potwierdzone przez recenzenta",
+    "sourceWorkflow": "Znalezione automatycznie (czeka na weryfikację)",
+    "sourceSeeded": "Wprowadzone wstępnie",
+    "readConsensusPaper": "Przeczytaj dokument konsensusu →",
+    "openOnPubmed": "Otwórz na PubMed",
+    "footBase": "Poniższy, aktualizowany przez AI żywy dokument jest odczytywany względem tej publikacji. Potwierdzono {{date}}",
+    "footBySuffix": " przez {{name}}"
+  },
+  "doctorLabels": {
+    "pubmedRole": {
+      "researchLeader": "Lider badań",
+      "researchParticipant": "Współautor",
+      "caseStudyAuthor": "Opisy przypadków",
+      "unknown": "Nieznana"
+    },
+    "workType": {
+      "guideline": "Współautor wytycznych / konsensusu",
+      "original": "Badania oryginalne",
+      "review": "Prace przeglądowe",
+      "trial": "Prowadzi badanie kliniczne",
+      "caseReport": "Opisy przypadków"
+    },
+    "locationNotListed": "Lokalizacja nieznana"
+  },
+  "doctorsQuery": {
+    "presets": {
+      "onTop": "Kto jest teraz na bieżąco",
+      "surgeonNear": "Chirurg blisko mnie",
+      "consult": "Na konsultację / drugą opinię",
+      "anyoneNear": "Ktokolwiek w okolicy, kto się na tym zna"
+    }
+  },
+  "pubmedUrl": {
+    "orcidRecordLabel": "Pełny wykaz publikacji na ORCID",
+    "searchAuthorLabel": "Wyszukaj tego autora w PubMed"
+  },
+  "bibliography": {
+    "verdict": {
+      "shelf": {
+        "label": "Na półce źródeł",
+        "short": "Półka",
+        "hint": "wybrana jako źródło, na którym oparta jest synteza"
+      },
+      "suggestion": {
+        "label": "Stała się sugestią AI",
+        "short": "Sugestia",
+        "hint": "wygenerowała zmianę do przeglądu przez lekarza"
+      },
+      "rejected": {
+        "label": "Rozważona, odłożona",
+        "short": "Odrzucona",
+        "hint": "przeczytana i świadomie odrzucona — z podanym powodem"
+      },
+      "low": {
+        "label": "Słaby sygnał w triage",
+        "short": "Niski",
+        "hint": "przeszła próg trafności, ale była zbyt słaba, aby na niej działać w tym przebiegu"
+      }
+    },
+    "access": {
+      "oa": { "label": "Otwarty dostęp · pełny tekst", "short": "Otwarty dostęp" },
+      "abstract": { "label": "Tylko streszczenie", "short": "Streszczenie" },
+      "paywall": { "label": "Za paywallem", "short": "Paywall" },
+      "unknown": { "label": "Dostęp nieznany", "short": "Nieznany" }
+    }
+  },
+  "researchWorkstreams": {
+    "labels": {
+      "guideline": "Wytyczna",
+      "doctors": "Lekarze",
+      "trials": "Badania",
+      "therapies": "Terapie",
+      "foundations": "Fundacje",
+      "official_guidelines": "Oficjalne",
+      "system": "System"
+    },
+    "guideline": {
+      "label": "Szkic wytycznych",
+      "sub": "Pobieranie z PubMed → ekstrakcja terapii i diagnostyki → składanie z cytowaniami",
+      "countLabel": "sekcji"
+    },
+    "doctors": {
+      "label": "Lekarze specjaliści",
+      "sub": "Punktacja autorów PubMed · uzupełnianie instytucji i geolokalizacji",
+      "countLabel": "kandydatów"
+    },
+    "trials": {
+      "label": "Badania kliniczne",
+      "sub": "ClinicalTrials.gov · status: rekrutacja",
+      "countLabel": "badań"
+    },
+    "therapies": {
+      "label": "Terapie",
+      "sub": "Standardowe i eksperymentalne · 4-stopniowa skala dowodów",
+      "countLabel": "pozycji"
+    },
+    "foundations": {
+      "label": "Fundacje pacjentów",
+      "sub": "Partnerzy Orphanet i oddolne grupy wsparcia",
+      "countLabel": "organizacji"
+    },
+    "official_guidelines": {
+      "label": "Oficjalna wytyczna",
+      "sub": "Uznana publikacja konsensusu (np. Boyce 2019 dla FD)",
+      "countLabel": "wskaźnik"
+    },
+    "summary": {
+      "queued": "Czekanie, aż worker podejmie to zadanie.",
+      "error": "Zadanie zatrzymało się, zanim się zakończyło.",
+      "guidelineDonePublished": "Szkic opublikowany — czeka na weryfikację specjalisty.",
+      "guidelineDoneNoDraft": "Potok zakończył się bez opublikowania szkicu.",
+      "guidelineRunningMining": "Przeszukiwanie PubMed, ocena dowodów, tworzenie sekcji.",
+      "guidelineRunningStarting": "Rozpoczynanie — łączenie z silnikiem workflow.",
+      "officialDoneLinked": "Połączono z uznaną publikacją konsensusu.",
+      "officialDoneNotFound": "Nie znaleziono wytycznej konsensusu w PubMed.",
+      "officialLookingUp": "Wyszukiwanie uznanego dokumentu wytycznej.",
+      "settling": "Zapisywanie wyników na stronie choroby…",
+      "waitingForResults": "Czekanie na wyniki.",
+      "searchingPublicSources": "Przeszukiwanie publicznych źródeł — wyniki trafiają na stronę choroby na bieżąco.",
+      "doctorsDoneZero": "Zadanie zakończone — nie znaleziono żadnych kandydatów.",
+      "doctorsDoneWithCount_one": "Zadanie zakończone — {{count}} kandydat zapisany na stronie choroby.",
+      "doctorsDoneWithCount_few": "Zadanie zakończone — {{count}} kandydaci zapisani na stronie choroby.",
+      "doctorsDoneWithCount_many": "Zadanie zakończone — {{count}} kandydatów zapisanych na stronie choroby.",
+      "doctorsDoneWithCount_other": "Zadanie zakończone — {{count}} kandydatów zapisanych na stronie choroby.",
+      "doctorsRunningWithCount_one": "{{count}} kandydat jak dotąd · więcej może się jeszcze pojawić.",
+      "doctorsRunningWithCount_few": "{{count}} kandydaci jak dotąd · więcej może się jeszcze pojawić.",
+      "doctorsRunningWithCount_many": "{{count}} kandydatów jak dotąd · więcej może się jeszcze pojawić.",
+      "doctorsRunningWithCount_other": "{{count}} kandydatów jak dotąd · więcej może się jeszcze pojawić.",
+      "trialsDoneZero": "Zadanie zakończone — nie znaleziono żadnych badań.",
+      "trialsDoneWithCount_one": "Zadanie zakończone — {{count}} badanie zapisane na stronie choroby.",
+      "trialsDoneWithCount_few": "Zadanie zakończone — {{count}} badania zapisane na stronie choroby.",
+      "trialsDoneWithCount_many": "Zadanie zakończone — {{count}} badań zapisanych na stronie choroby.",
+      "trialsDoneWithCount_other": "Zadanie zakończone — {{count}} badań zapisanych na stronie choroby.",
+      "trialsRunningWithCount_one": "{{count}} badanie jak dotąd · więcej może się jeszcze pojawić.",
+      "trialsRunningWithCount_few": "{{count}} badania jak dotąd · więcej może się jeszcze pojawić.",
+      "trialsRunningWithCount_many": "{{count}} badań jak dotąd · więcej może się jeszcze pojawić.",
+      "trialsRunningWithCount_other": "{{count}} badań jak dotąd · więcej może się jeszcze pojawić.",
+      "therapiesDoneZero": "Zadanie zakończone — nie znaleziono żadnych pozycji.",
+      "therapiesDoneWithCount_one": "Zadanie zakończone — {{count}} pozycja zapisana na stronie choroby.",
+      "therapiesDoneWithCount_few": "Zadanie zakończone — {{count}} pozycje zapisane na stronie choroby.",
+      "therapiesDoneWithCount_many": "Zadanie zakończone — {{count}} pozycji zapisanych na stronie choroby.",
+      "therapiesDoneWithCount_other": "Zadanie zakończone — {{count}} pozycji zapisanych na stronie choroby.",
+      "therapiesRunningWithCount_one": "{{count}} pozycja jak dotąd · więcej może się jeszcze pojawić.",
+      "therapiesRunningWithCount_few": "{{count}} pozycje jak dotąd · więcej może się jeszcze pojawić.",
+      "therapiesRunningWithCount_many": "{{count}} pozycji jak dotąd · więcej może się jeszcze pojawić.",
+      "therapiesRunningWithCount_other": "{{count}} pozycji jak dotąd · więcej może się jeszcze pojawić.",
+      "foundationsDoneZero": "Zadanie zakończone — nie znaleziono żadnych organizacji.",
+      "foundationsDoneWithCount_one": "Zadanie zakończone — {{count}} organizacja zapisana na stronie choroby.",
+      "foundationsDoneWithCount_few": "Zadanie zakończone — {{count}} organizacje zapisane na stronie choroby.",
+      "foundationsDoneWithCount_many": "Zadanie zakończone — {{count}} organizacji zapisanych na stronie choroby.",
+      "foundationsDoneWithCount_other": "Zadanie zakończone — {{count}} organizacji zapisanych na stronie choroby.",
+      "foundationsRunningWithCount_one": "{{count}} organizacja jak dotąd · więcej może się jeszcze pojawić.",
+      "foundationsRunningWithCount_few": "{{count}} organizacje jak dotąd · więcej może się jeszcze pojawić.",
+      "foundationsRunningWithCount_many": "{{count}} organizacji jak dotąd · więcej może się jeszcze pojawić.",
+      "foundationsRunningWithCount_other": "{{count}} organizacji jak dotąd · więcej może się jeszcze pojawić."
+    }
+  },
+  "queuedRun": {
+    "queuedWithPosition": "Czeka — pozycja {{position}}. Twoje zadanie ruszy, jak tylko zwolni się miejsce.",
+    "queuedNoPosition": "Czeka — Twoje zadanie ruszy, jak tylko zwolni się miejsce.",
+    "tokenBudgetBlocked": "Czeka — budżet tokenów"
+  },
+  "errors": {
+    "couldNotLoadTrials": "Nie udało się wczytać badań klinicznych.",
+    "couldNotLoadSpecialists": "Nie udało się wczytać specjalistów.",
+    "couldNotLoadDiseaseCatalog": "Nie udało się wczytać katalogu chorób.",
+    "couldNotLoadSpecialistProfile": "Nie udało się wczytać profilu specjalisty.",
+    "failedToLoadTrials": "Nie udało się wczytać badań klinicznych.",
+    "failedToLoadBibliography": "Nie udało się wczytać przeanalizowanej bibliografii."
+  }
 }

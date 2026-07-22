@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { formatDistanceKm } from "../utils/geo";
 
 export interface DistancePillProps {
@@ -5,11 +6,9 @@ export interface DistancePillProps {
 }
 
 export function DistancePill({ km }: DistancePillProps) {
+  const { t } = useTranslation("common");
   return (
-    <span
-      className="pill pill--dist"
-      title="Distance from your selected reference location (city in settings)"
-    >
+    <span className="pill pill--dist" title={t("distancePill.title")}>
       {formatDistanceKm(km)}
     </span>
   );

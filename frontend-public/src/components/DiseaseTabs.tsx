@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Button, Section } from "@gene-guidelines/ui";
 import type { Disease } from "../types";
 import type { DiseaseCopy } from "../copy";
@@ -54,6 +55,7 @@ export function DiseaseTabs({
   relatedLoading,
   onNav,
 }: DiseaseTabsProps) {
+  const { t } = useTranslation("common");
   const [tab, setTab] = useState<DiseaseTabId>("overview");
   const slug = disease.slug;
   const { openPrs, loading: prsLoading, error: prsError } = useContentPrs(slug);
@@ -100,7 +102,7 @@ export function DiseaseTabs({
 
   return (
     <>
-      <div className="d-tabs" role="tablist" aria-label="Disease sections">
+      <div className="d-tabs" role="tablist" aria-label={t("diseaseTabs.sectionsAriaLabel")}>
         {TAB_ORDER.map((id) => (
           <button
             key={id}
@@ -120,7 +122,7 @@ export function DiseaseTabs({
           <>
             {previewDoctors.length > 0 ? (
               <Section
-                title="Specialists"
+                title={t("diseaseTabs.specialistsTitle")}
                 sub={copy.doctorsSub(disease.doctorsCount)}
               >
                 <div className="d-doctors-preview">
@@ -140,7 +142,7 @@ export function DiseaseTabs({
                     variant="ghost"
                     onClick={() => onNav(`/doctors?disease=${slug}`)}
                   >
-                    See all specialists →
+                    {t("diseaseTabs.seeAllSpecialists")}
                   </Button>
                 </div>
               </Section>
@@ -150,9 +152,9 @@ export function DiseaseTabs({
               {trialsError != null ? (
                 <p className="d-panel-empty" role="alert">{trialsError}</p>
               ) : trialsLoading ? (
-                <p className="d-panel-empty">Loading trials…</p>
+                <p className="d-panel-empty">{t("diseaseTabs.loadingTrials")}</p>
               ) : trials.length === 0 ? (
-                <p className="d-panel-empty">No active trials matching this disease right now.</p>
+                <p className="d-panel-empty">{t("diseaseTabs.noActiveTrials")}</p>
               ) : (
                 <>
                   <TrialsList trials={previewTrials} />
@@ -162,32 +164,29 @@ export function DiseaseTabs({
                       variant="ghost"
                       onClick={() => onNav(`/trials?disease=${slug}`)}
                     >
-                      See all trials ({trials.length}) →
+                      {t("diseaseTabs.seeAllTrialsCount", { count: trials.length })}
                     </Button>
                   </div>
                 </>
               )}
             </Section>
 
-            <Section title="Therapies" divider>
-              <p className="d-panel-note">
-                These options manage symptoms and slow progression — none of them fully reverses
-                established disease changes.
-              </p>
+            <Section title={t("diseaseTabs.therapiesTitle")} divider>
+              <p className="d-panel-note">{t("diseaseTabs.therapiesNote")}</p>
               {therapiesError != null ? (
                 <p className="d-panel-empty" role="alert">{therapiesError}</p>
               ) : therapiesLoading ? (
-                <p className="d-panel-empty">Loading therapies…</p>
+                <p className="d-panel-empty">{t("diseaseTabs.loadingTherapies")}</p>
               ) : (
                 <TherapiesList therapies={therapies} />
               )}
             </Section>
 
-            <Section title="Supporting foundations" divider>
+            <Section title={t("diseaseTabs.foundationsTitle")} divider>
               {foundationsError != null ? (
                 <p className="d-panel-empty" role="alert">{foundationsError}</p>
               ) : foundationsLoading ? (
-                <p className="d-panel-empty">Loading foundations…</p>
+                <p className="d-panel-empty">{t("diseaseTabs.loadingFoundations")}</p>
               ) : (
                 <FoundationsList foundations={foundations} diseaseName={disease.name} />
               )}
@@ -249,9 +248,9 @@ export function DiseaseTabs({
             {disease.related.length > 0 ? (
               <Section title={copy.relatedTitle} divider>
                 {relatedLoading ? (
-                  <p className="d-panel-empty">Loading related conditions…</p>
+                  <p className="d-panel-empty">{t("diseaseTabs.loadingRelated")}</p>
                 ) : related.length === 0 ? (
-                  <p className="d-panel-empty">No related entries found.</p>
+                  <p className="d-panel-empty">{t("diseaseTabs.noRelatedEntries")}</p>
                 ) : (
                   <div className="d-related">
                     {related.map((d) => (
@@ -270,15 +269,15 @@ export function DiseaseTabs({
             <div className="page__actions">
               <Button variant="primary" type="button" onClick={() => onNav(`/doctors?disease=${slug}`)}>
                 {isClinician
-                  ? `Open expert directory for ${disease.nameShort}`
-                  : `See ${disease.nameShort} specialists`}
+                  ? t("diseaseTabs.openExpertDirectory", { name: disease.nameShort })
+                  : t("diseaseTabs.seeSpecialistsFor", { name: disease.nameShort })}
               </Button>
               <Button type="button" onClick={() => onNav("/doctors")}>
-                Browse full directory
+                {t("diseaseTabs.browseFullDirectory")}
               </Button>
             </div>
             {doctorsLoading ? (
-              <p className="d-panel-empty">Loading specialists…</p>
+              <p className="d-panel-empty">{t("diseaseTabs.loadingSpecialists")}</p>
             ) : null}
             {doctorsError != null ? (
               <p className="d-panel-empty" role="alert">
@@ -290,8 +289,8 @@ export function DiseaseTabs({
                 {isWorkflowDoctorSource(doctorsPayload?.source) ? (
                   <p className="d-doctors-source">
                     {doctorsPayload?.source === "merged"
-                      ? "Curated profiles merged with the latest Doctor Finder evidence where available."
-                      : "Ranked from the latest Doctor Finder run."}
+                      ? t("diseaseTabs.doctorsSourceMerged")
+                      : t("diseaseTabs.doctorsSourceRanked")}
                   </p>
                 ) : null}
                 <div className="d-doctors-preview">
@@ -322,18 +321,18 @@ export function DiseaseTabs({
                 type="button"
                 onClick={() => onNav(`/trials?disease=${slug}`)}
               >
-                See {disease.nameShort} trials
+                {t("diseaseTabs.seeTrialsFor", { name: disease.nameShort })}
               </Button>
               <Button type="button" onClick={() => onNav("/trials")}>
-                Browse all trials
+                {t("diseaseTabs.browseAllTrials")}
               </Button>
             </div>
             {trialsError != null ? (
               <p className="d-panel-empty" role="alert">{trialsError}</p>
             ) : trialsLoading ? (
-              <p className="d-panel-empty">Loading trials…</p>
+              <p className="d-panel-empty">{t("diseaseTabs.loadingTrials")}</p>
             ) : trials.length === 0 ? (
-              <p className="d-panel-empty">No active trials matching this disease right now.</p>
+              <p className="d-panel-empty">{t("diseaseTabs.noActiveTrials")}</p>
             ) : (
               <TrialsList trials={previewTrials} />
             )}
@@ -361,7 +360,7 @@ export function DiseaseTabs({
             ) : null}
             <Section title={copy.officialGuidelineTitle} sub={copy.officialGuidelineSub} divider>
               <p className="d-panel-stat">
-                Consensus document for {disease.name} — full text in the guideline reader.
+                {t("diseaseTabs.consensusDocumentFor", { name: disease.name })}
               </p>
             </Section>
           </Section>

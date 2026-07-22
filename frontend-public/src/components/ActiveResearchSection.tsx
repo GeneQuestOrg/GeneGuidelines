@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Section } from "@gene-guidelines/ui";
 import type { ResearchRun } from "../types/researchRun";
 import { hrefForActiveResearchRun } from "../utils/activeResearchNav";
@@ -34,6 +35,7 @@ export function ActiveResearchSection({
   runs,
   onNav,
 }: ActiveResearchSectionProps) {
+  const { t } = useTranslation("common");
   // Group per disease: one "run research" fans out into several backend runs
   // (guideline + finders), and the home feed must show one card per disease,
   // not a separate tile per worker.
@@ -47,7 +49,8 @@ export function ActiveResearchSection({
         {groups.map((group) => {
           const path = hrefForActiveResearchRun(group.primaryRun);
           const href = `#${path}`;
-          const blockedLabel = blockedBadgeLabel(group.blockedReason);
+          const blockedDescriptor = blockedBadgeLabel(group.blockedReason);
+          const blockedLabel = blockedDescriptor != null ? t(blockedDescriptor.key) : null;
           return (
             <a
               key={group.key}

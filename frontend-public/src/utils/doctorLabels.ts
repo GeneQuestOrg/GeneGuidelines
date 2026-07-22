@@ -23,16 +23,22 @@ export function tierForDisease(doctor: PublicDoctor, diseaseSlug: string): Docto
   return doctor.experienceByDisease?.[diseaseSlug] ?? doctor.pubmedRole;
 }
 
+/**
+ * Returns a bare i18n key (not a display string) — every caller must translate it via
+ * `t(`common:${pubmedRoleLabel(role)}`)` (or `t(pubmedRoleLabel(role))` when already
+ * scoped to the "common" namespace). Kept key-only rather than pre-translated because this
+ * is a plain util with no hook access to `t`.
+ */
 export function pubmedRoleLabel(role: PubmedRole): string {
   switch (role) {
     case "research_leader":
-      return "Led research";
+      return "doctorLabels.pubmedRole.researchLeader";
     case "research_participant":
-      return "Contributed";
+      return "doctorLabels.pubmedRole.researchParticipant";
     case "case_study_author":
-      return "Case studies";
+      return "doctorLabels.pubmedRole.caseStudyAuthor";
     default:
-      return "Unknown";
+      return "doctorLabels.pubmedRole.unknown";
   }
 }
 
@@ -80,18 +86,19 @@ export const WORK_TYPE_ORDER: readonly WorkType[] = [
   "case_report",
 ];
 
-export function workTypeLabel(t: WorkType): string {
-  switch (t) {
+/** Returns a bare i18n key — see {@link pubmedRoleLabel} for the caller-wrapping convention. */
+export function workTypeLabel(workType: WorkType): string {
+  switch (workType) {
     case "guideline":
-      return "Guideline / consensus author";
+      return "doctorLabels.workType.guideline";
     case "original":
-      return "Original research";
+      return "doctorLabels.workType.original";
     case "review":
-      return "Review articles";
+      return "doctorLabels.workType.review";
     case "trial":
-      return "Runs a clinical trial";
+      return "doctorLabels.workType.trial";
     case "case_report":
-      return "Case reports";
+      return "doctorLabels.workType.caseReport";
   }
 }
 
@@ -169,8 +176,21 @@ const US_STATE_ABBREVS = new Set([
  * Honest, clean "where they practise" label. Prefers a real NPPES practice (City, ST) over the
  * noisy PubMed-affiliation guess, and scrubs the classic artifacts: a US state abbrev parsed as a
  * country ("Washington, MD" → "Washington, DC"), and "City, City" duplication ("MD, MD" → "MD").
+ *
+ * Unlike the pure label helpers above, this mixes real place data (never translated — city/country
+ * names) with ONE translatable fallback phrase ("Location not listed"). Blindly returning a key
+ * for every branch and having callers wrap the whole thing in `t()` is unsafe here: calling
+ * `t()` on an arbitrary data string (e.g. "Washington, DC") that happens not to be a real key can
+ * leak the raw `"common:Washington, DC"` argument back onto the page for i18next's missing-key
+ * fallback. So `t` is threaded in as an optional param instead: omitted, this returns the exact
+ * historical English fallback text (keeps existing non-i18n callers/tests working); passed, the
+ * fallback is localized while the real place-data branches are returned untouched.
  */
-export function doctorLocation(doctor: PublicDoctor): string {
+export function doctorLocation(
+  doctor: PublicDoctor,
+  t?: (key: string) => string,
+): string {
+  const notListed = t ? t("common:doctorLabels.locationNotListed") : "Location not listed";
   const nppes = (doctor.practices ?? []).find((p) => p.source === "nppes" && p.city);
   if (nppes) {
     const st = (nppes.state || "").trim().toUpperCase();
@@ -195,5 +215,5 @@ export function doctorLocation(doctor: PublicDoctor): string {
     // The "country" is actually a US state → render "City, ST".
     parts.push(countryUP);
   }
-  return parts.length > 0 ? parts.join(", ") : "Location not listed";
+  return parts.length > 0 ? parts.join(", ") : notListed;
 }

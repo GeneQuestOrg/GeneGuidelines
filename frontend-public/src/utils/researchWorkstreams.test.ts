@@ -92,7 +92,7 @@ describe("researchWorkstreams", () => {
     );
     const foundations = streams.find((s) => s.key === "foundations");
     expect(foundations?.status).toBe("running");
-    expect(foundations?.resultSummary).toMatch(/saving results/i);
+    expect(foundations?.resultSummary.key).toBe("researchWorkstreams.summary.settling");
   });
 
   it("marks done as soon as counts arrive, even inside the settling window", () => {
@@ -126,7 +126,7 @@ describe("researchWorkstreams", () => {
     );
     const trials = streams.find((s) => s.key === "trials");
     expect(trials?.status).toBe("done");
-    expect(trials?.resultSummary).toMatch(/no trials matched/i);
+    expect(trials?.resultSummary.key).toBe("researchWorkstreams.summary.trialsDoneZero");
   });
 
   it("treats the guideline workstream as bound to the agent run flag", () => {
@@ -175,7 +175,7 @@ describe("researchWorkstreams", () => {
     );
     const trials = streams.find((s) => s.key === "trials");
     expect(trials?.status).toBe("done");
-    expect(trials?.resultSummary).toMatch(/no trials matched/i);
+    expect(trials?.resultSummary.key).toBe("researchWorkstreams.summary.trialsDoneZero");
   });
 
   it("keeps finders queued until disease counts have loaded once", () => {

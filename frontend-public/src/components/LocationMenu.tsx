@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import type { UserLocation } from "../router/types";
 import { LocationPicker } from "./LocationPicker";
 
@@ -13,17 +15,12 @@ export interface LocationMenuProps {
   readonly onPickRadius: (km: DistanceMax) => void;
 }
 
-const RADIUS_OPTIONS: readonly { value: DistanceMax; label: string }[] = [
-  { value: 25, label: "25 km" },
-  { value: 100, label: "100 km" },
-  { value: 500, label: "500 km" },
-  { value: 2500, label: "2500 km" },
-  { value: 5000, label: "5000 km" },
-  { value: null, label: "No limit" },
-];
+/** The km values a radius pill can be set to — "No limit" (null) is always last. */
+const RADIUS_VALUES: readonly DistanceMax[] = [25, 100, 500, 2500, 5000, null];
 
-function radiusLabel(maxKm: DistanceMax): string {
-  return maxKm == null ? "No limit" : `${maxKm} km`;
+/** Numbers-with-unit read the same in every locale; only the "no limit" case is translated. */
+function radiusLabel(maxKm: DistanceMax, t: TFunction): string {
+  return maxKm == null ? t("locationMenu.noLimit") : `${maxKm} km`;
 }
 
 /**
@@ -43,6 +40,7 @@ export function LocationMenu({
   onChange,
   onPickRadius,
 }: LocationMenuProps) {
+  const { t } = useTranslation("common");
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement | null>(null);
 
@@ -65,7 +63,7 @@ export function LocationMenu({
   }, [open]);
 
   const active = value != null && maxKm != null;
-  const placeText = value != null ? label ?? "Your location" : "Anywhere";
+  const placeText = value != null ? label ?? t("locationMenu.yourLocation") : t("locationMenu.anywhere");
 
   return (
     <div className="fmenu fmenu--loc" ref={ref}>
@@ -89,39 +87,40 @@ export function LocationMenu({
           <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z" />
           <circle cx="12" cy="10" r="3" />
         </svg>
-        <span className="fmenu__label">Location</span>
+        <span className="fmenu__label">{t("locationMenu.label")}</span>
         <span className="fmenu__value">
-          {placeText} · {radiusLabel(maxKm)}
+          {placeText} · {radiusLabel(maxKm, t)}
         </span>
         <span className={`fmenu__chev${open ? " is-open" : ""}`} aria-hidden="true">
           ▾
         </span>
       </button>
       {open ? (
-        <div className="fmenu__pop fmenu__pop--loc" role="dialog" aria-label="Location filter">
+        <div
+          className="fmenu__pop fmenu__pop--loc"
+          role="dialog"
+          aria-label={t("locationMenu.ariaLabel")}
+        >
           <div className="locm__row">
-            <span className="locm__lbl">Your location</span>
+            <span className="locm__lbl">{t("locationMenu.yourLocation")}</span>
             <LocationPicker value={value} label={label} onChange={onChange} />
           </div>
           <div className="locm__row">
-            <span className="locm__lbl">Radius</span>
+            <span className="locm__lbl">{t("locationMenu.radius")}</span>
             <div className="locm__rads">
-              {RADIUS_OPTIONS.map((r) => (
+              {RADIUS_VALUES.map((km) => (
                 <button
-                  key={String(r.value)}
+                  key={String(km)}
                   type="button"
-                  className={`locm__rad${maxKm === r.value ? " is-sel" : ""}`}
-                  onClick={() => onPickRadius(r.value)}
+                  className={`locm__rad${maxKm === km ? " is-sel" : ""}`}
+                  onClick={() => onPickRadius(km)}
                 >
-                  {r.label}
+                  {radiusLabel(km, t)}
                 </button>
               ))}
             </div>
           </div>
-          <p className="locm__hint">
-            Distance is measured to the doctor&rsquo;s nearest practice. &ldquo;No limit&rdquo;
-            shows everyone, sorted nearest first.
-          </p>
+          <p className="locm__hint">{t("locationMenu.hint")}</p>
         </div>
       ) : null}
     </div>

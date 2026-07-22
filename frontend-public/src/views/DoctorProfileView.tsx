@@ -120,7 +120,7 @@ export function DoctorProfileView({ slug, userLoc, onNav }: DoctorProfileViewPro
     userLoc != null && nearest.lat != null && nearest.lng != null
       ? haversineKm(userLoc, { lat: nearest.lat, lng: nearest.lng })
       : null;
-  const roleLabel = pubmedRoleLabel(doctor.pubmedRole);
+  const roleLabel = t(`common:${pubmedRoleLabel(doctor.pubmedRole)}`);
   const evidence = doctor.evidence;
   const provenanceKey = PROVENANCE_KEY[addedViaOf(doctor)];
   const idBadge = identityBadge(doctor.identityConfidence);
@@ -152,7 +152,7 @@ export function DoctorProfileView({ slug, userLoc, onNav }: DoctorProfileViewPro
               )}
             </div>
             <div className="dprofile__inst">
-              {doctor.institution} · {doctorLocation(doctor)}
+              {doctor.institution} · {doctorLocation(doctor, t)}
             </div>
             <div className="dprofile__chips">
               {provenanceKey ? (
@@ -246,7 +246,9 @@ export function DoctorProfileView({ slug, userLoc, onNav }: DoctorProfileViewPro
                 >
                   {disease?.nameShort ?? diseaseSlug}
                 </button>
-                <span className={`tag tag--role tag--${tier}`}>{pubmedRoleLabel(tier)}</span>
+                <span className={`tag tag--role tag--${tier}`}>
+                  {t(`common:${pubmedRoleLabel(tier)}`)}
+                </span>
               </div>
             );
           })}
@@ -312,7 +314,7 @@ export function DoctorProfileView({ slug, userLoc, onNav }: DoctorProfileViewPro
                   target="_blank"
                   rel="noreferrer"
                 >
-                  {recordLink.label} →
+                  {t(`common:${recordLink.label}`)} →
                 </a>
               ) : null}
             </div>

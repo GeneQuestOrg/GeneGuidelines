@@ -34,11 +34,13 @@ describe("tierForDisease", () => {
 });
 
 describe("pubmedRoleLabel", () => {
-  it("maps each role to a human label and unknown to Unknown", () => {
-    expect(pubmedRoleLabel("research_leader")).toBe("Led research");
-    expect(pubmedRoleLabel("research_participant")).toBe("Contributed");
-    expect(pubmedRoleLabel("case_study_author")).toBe("Case studies");
-    expect(pubmedRoleLabel("unknown")).toBe("Unknown");
+  it("maps each role to its i18n key (callers resolve via t())", () => {
+    expect(pubmedRoleLabel("research_leader")).toBe("doctorLabels.pubmedRole.researchLeader");
+    expect(pubmedRoleLabel("research_participant")).toBe(
+      "doctorLabels.pubmedRole.researchParticipant",
+    );
+    expect(pubmedRoleLabel("case_study_author")).toBe("doctorLabels.pubmedRole.caseStudyAuthor");
+    expect(pubmedRoleLabel("unknown")).toBe("doctorLabels.pubmedRole.unknown");
   });
 });
 

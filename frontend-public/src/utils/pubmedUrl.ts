@@ -20,13 +20,16 @@ export interface PublicationRecordLink {
  * ORCID-identified doctors (slug `orcid:<id>`) get their canonical ORCID works
  * record; everyone else gets a PubMed author-name search (clearly labelled, so
  * the name-disambiguation caveat is implicit).
+ *
+ * `label` is a bare i18n key, not display text — callers must translate it via
+ * `t(`common:${recordLink.label}`)` (or `t(recordLink.label)` when already scoped to "common").
  */
 export function publicationRecordLink(slug: string, name: string): PublicationRecordLink | null {
   const orcidMatch = /^orcid:([0-9x-]{9,})$/i.exec(slug.trim());
   if (orcidMatch) {
     return {
       url: `https://orcid.org/${orcidMatch[1].toUpperCase()}`,
-      label: "Full publication record on ORCID",
+      label: "pubmedUrl.orcidRecordLabel",
     };
   }
   const cleanName = name.replace(/\b(prof|professor|dr|doctor|md|phd|msc|mgr)\.?\s+/gi, "").trim();
@@ -35,6 +38,6 @@ export function publicationRecordLink(slug: string, name: string): PublicationRe
   }
   return {
     url: `${PUBMED_ARTICLE_BASE}/?term=${encodeURIComponent(`${cleanName}[Author]`)}`,
-    label: "Search this author on PubMed",
+    label: "pubmedUrl.searchAuthorLabel",
   };
 }

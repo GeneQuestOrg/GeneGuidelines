@@ -40,11 +40,14 @@ describe("isQueued", () => {
 
 describe("queuedLabel", () => {
   it("includes the position when known", () => {
-    expect(queuedLabel(3)).toContain("position 3");
+    expect(queuedLabel(3)).toEqual({
+      key: "queuedRun.queuedWithPosition",
+      params: { position: 3 },
+    });
   });
 
   it("omits the position when null or non-positive", () => {
-    expect(queuedLabel(null)).not.toContain("position");
-    expect(queuedLabel(0)).not.toContain("position");
+    expect(queuedLabel(null)).toEqual({ key: "queuedRun.queuedNoPosition" });
+    expect(queuedLabel(0)).toEqual({ key: "queuedRun.queuedNoPosition" });
   });
 });

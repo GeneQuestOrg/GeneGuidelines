@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import type { CatalogStats, Disease } from "../types";
 import { repositories } from "../repositories";
 
@@ -12,6 +13,7 @@ export interface DiseaseCatalogState {
 }
 
 export function useDiseaseCatalog(searchQuery = ""): DiseaseCatalogState {
+  const { t } = useTranslation("common");
   const [debouncedQuery, setDebouncedQuery] = useState(searchQuery);
   const [diseases, setDiseases] = useState<readonly Disease[]>([]);
   const [stats, setStats] = useState<CatalogStats | null>(null);
@@ -50,7 +52,7 @@ export function useDiseaseCatalog(searchQuery = ""): DiseaseCatalogState {
       } catch (err) {
         if (!cancelled) {
           setError(
-            err instanceof Error ? err.message : "Could not load disease catalog.",
+            err instanceof Error ? err.message : t("errors.couldNotLoadDiseaseCatalog"),
           );
           if (!hasListRef.current) {
             setDiseases([]);
@@ -68,7 +70,7 @@ export function useDiseaseCatalog(searchQuery = ""): DiseaseCatalogState {
     return () => {
       cancelled = true;
     };
-  }, [debouncedQuery]);
+  }, [debouncedQuery, t]);
 
   return { diseases, stats, loading, error };
 }

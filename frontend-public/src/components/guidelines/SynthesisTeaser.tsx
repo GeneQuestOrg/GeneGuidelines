@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import "./synthesis-teaser.css";
 
 export interface SynthesisTeaserProps {
@@ -20,15 +21,16 @@ export function SynthesisTeaser({
   hasOfficial,
   onOpen,
 }: SynthesisTeaserProps) {
+  const { t } = useTranslation("common");
   const tag = hasOfficial
-    ? `${sourceCount} sources`
-    : "AI-built draft";
+    ? t("synthesisTeaser.tagSources", { count: sourceCount })
+    : t("synthesisTeaser.tagAiDraft");
   const title = hasOfficial
-    ? `${diseaseName} — guideline synthesis`
-    : `${diseaseName} — AI-built guideline`;
+    ? t("synthesisTeaser.titleSynthesis", { disease: diseaseName })
+    : t("synthesisTeaser.titleAiDraft", { disease: diseaseName });
   const sub = hasOfficial
-    ? "One summary across every source. Each sentence shows which document and passage it came from — plus AI suggestions from the latest literature."
-    : "There is no agreed guideline for this condition. AI assembled a draft from the literature — for expert review, not for guiding a patient.";
+    ? t("synthesisTeaser.subSynthesis")
+    : t("synthesisTeaser.subAiDraft");
 
   return (
     <button type="button" className="synthcard" onClick={onOpen}>
@@ -52,9 +54,7 @@ export function SynthesisTeaser({
         <span className="synthcard__title">{title}</span>
         <span className="synthcard__sub">{sub}</span>
       </span>
-      <span className="synthcard__cta">
-        Read the guideline <span aria-hidden>→</span>
-      </span>
+      <span className="synthcard__cta">{t("synthesisTeaser.cta")}</span>
     </button>
   );
 }

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { repositories } from "../repositories";
 import type { Trial } from "../types/trial";
 
@@ -14,6 +15,7 @@ export interface TrialsState {
  * always show the full filtered set without an extra round trip per facet change.
  */
 export function useTrials(): TrialsState {
+  const { t } = useTranslation("common");
   const [trials, setTrials] = useState<readonly Trial[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -32,7 +34,7 @@ export function useTrials(): TrialsState {
         }
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : "Could not load trials.");
+          setError(err instanceof Error ? err.message : t("errors.couldNotLoadTrials"));
           setTrials([]);
         }
       } finally {
@@ -46,7 +48,7 @@ export function useTrials(): TrialsState {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [t]);
 
   return { trials, loading, error };
 }

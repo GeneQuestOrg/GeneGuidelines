@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import type { SourceDoc } from "../../types/sourceDoc";
 import { sourceDocUrl } from "../../types/sourceDoc";
 import "./compact-source-shelf.css";
@@ -30,13 +31,14 @@ function idLabel(doc: SourceDoc): string {
  * grid lives on the guideline reader, reachable via "See all sources".
  */
 export function CompactSourceShelf({ docs, onSeeAll }: CompactSourceShelfProps) {
+  const { t } = useTranslation("common");
   if (docs.length === 0) {
     return null;
   }
   return (
     <div className="srctiles">
       <div className="srctiles__lbl">
-        Sources ({docs.length}) — click to open the original
+        {t("compactSourceShelf.label", { count: docs.length })}
       </div>
       <div className="srctiles__grid">
         {docs.map((doc) => {
@@ -51,7 +53,9 @@ export function CompactSourceShelf({ docs, onSeeAll }: CompactSourceShelfProps) 
             >
               <span className="srctile__top">
                 <span className="srctile__role">{doc.role}</span>
-                {doc.isNew ? <span className="gx-new">NEWER</span> : null}
+                {doc.isNew ? (
+                  <span className="gx-new">{t("compactSourceShelf.newer")}</span>
+                ) : null}
               </span>
               <span className="srctile__title">{doc.title}</span>
               <span className="srctile__foot">
@@ -66,7 +70,7 @@ export function CompactSourceShelf({ docs, onSeeAll }: CompactSourceShelfProps) 
       </div>
       {onSeeAll != null ? (
         <button type="button" className="srctiles__seeall" onClick={onSeeAll}>
-          See all sources →
+          {t("compactSourceShelf.seeAll")}
         </button>
       ) : null}
     </div>

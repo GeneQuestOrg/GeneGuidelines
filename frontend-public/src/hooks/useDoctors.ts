@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import type { PublicDoctor } from "../types/doctor";
 import { repositories } from "../repositories";
 
@@ -9,6 +10,7 @@ export interface DoctorsState {
 }
 
 export function useDoctors(): DoctorsState {
+  const { t } = useTranslation("common");
   const [doctors, setDoctors] = useState<readonly PublicDoctor[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -27,7 +29,7 @@ export function useDoctors(): DoctorsState {
         }
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : "Could not load specialists.");
+          setError(err instanceof Error ? err.message : t("errors.couldNotLoadSpecialists"));
           setDoctors([]);
         }
       } finally {
@@ -41,7 +43,7 @@ export function useDoctors(): DoctorsState {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [t]);
 
   return { doctors, loading, error };
 }

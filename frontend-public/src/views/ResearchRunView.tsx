@@ -299,7 +299,13 @@ export function ResearchRunView({
   // the monthly LLM budget is exhausted. Show a "Czeka — budżet tokenów" badge
   // and, when a limit is configured, a "pozostały budżet tokenów" indicator.
   const budgetBlocked = isTokenBudgetBlocked(run?.blocked_reason);
-  const blockedBadge = blockedBadgeLabel(run?.blocked_reason);
+  const blockedBadgeDescriptor = blockedBadgeLabel(run?.blocked_reason);
+  const blockedBadge =
+    blockedBadgeDescriptor != null ? t(`common:${blockedBadgeDescriptor.key}`) : null;
+  const queuedText = (() => {
+    const q = queuedLabel(queuePosition);
+    return t(`common:${q.key}`, q.params);
+  })();
   const [budget, setBudget] = useState<ResearchBudget | null>(null);
   useEffect(() => {
     let cancelled = false;
@@ -560,7 +566,7 @@ export function ResearchRunView({
         {queued ? (
           <p className="rrun__queued" role="status">
             <span className="rrun__queued-dot" aria-hidden="true" />
-            {budgetBlocked && blockedBadge ? blockedBadge : queuedLabel(queuePosition)}
+            {budgetBlocked && blockedBadge ? blockedBadge : queuedText}
           </p>
         ) : null}
 
@@ -678,7 +684,7 @@ export function ResearchRunView({
                 <span
                   className={`rrun__act-tag rrun__act-tag--${entry.streamKey}`}
                 >
-                  {WORKSTREAM_LABELS[entry.streamKey]}
+                  {t(`common:${WORKSTREAM_LABELS[entry.streamKey]}`)}
                 </span>
                 <span className="rrun__act-msg">{entry.message}</span>
               </div>
@@ -768,8 +774,8 @@ function StreamCard({ stream, onOpenDisease }: StreamCardProps) {
           <StreamIcon streamKey={stream.key} />
         </span>
         <div className="stream__title">
-          <div className="stream__label">{stream.label}</div>
-          <div className="stream__sub">{stream.sub}</div>
+          <div className="stream__label">{t(`common:${stream.label}`)}</div>
+          <div className="stream__sub">{t(`common:${stream.sub}`)}</div>
         </div>
         <StreamPill status={stream.status} />
       </header>
@@ -778,7 +784,7 @@ function StreamCard({ stream, onOpenDisease }: StreamCardProps) {
         {showCount ? (
           <>
             <span className="stream__count">{stream.count}</span>
-            <span className="stream__count-label">{stream.countLabel}</span>
+            <span className="stream__count-label">{t(`common:${stream.countLabel}`)}</span>
           </>
         ) : officialPresent ? (
           <span className="stream__count">1</span>
@@ -795,7 +801,9 @@ function StreamCard({ stream, onOpenDisease }: StreamCardProps) {
         </div>
       ) : null}
 
-      <p className="stream__summary">{stream.resultSummary}</p>
+      <p className="stream__summary">
+        {t(`common:${stream.resultSummary.key}`, stream.resultSummary.params)}
+      </p>
 
       {stream.status === "done" &&
       (stream.count ?? 0) > 0 &&

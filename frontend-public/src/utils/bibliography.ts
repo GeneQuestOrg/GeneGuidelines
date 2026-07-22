@@ -7,40 +7,54 @@ export const BIB_VERDICT_ORDER: readonly AnalyzedPaperVerdict[] = [
   "low",
 ] as const;
 
+/**
+ * `label`/`short`/`hint` are bare i18n keys, not display text — callers must translate them via
+ * `t(`common:${meta.label}`)` (or `t(meta.label)` when already scoped to "common").
+ */
 export const BIB_VERDICT_META: Record<
   AnalyzedPaperVerdict,
   { label: string; short: string; hint: string }
 > = {
   shelf: {
-    label: "On the source shelf",
-    short: "Shelf",
-    hint: "selected as a source the synthesis is built on",
+    label: "bibliography.verdict.shelf.label",
+    short: "bibliography.verdict.shelf.short",
+    hint: "bibliography.verdict.shelf.hint",
   },
   suggestion: {
-    label: "Became an AI suggestion",
-    short: "Suggestion",
-    hint: "produced a delta for clinician review",
+    label: "bibliography.verdict.suggestion.label",
+    short: "bibliography.verdict.suggestion.short",
+    hint: "bibliography.verdict.suggestion.hint",
   },
   rejected: {
-    label: "Considered, set aside",
-    short: "Rejected",
-    hint: "read and consciously rejected — with a reason",
+    label: "bibliography.verdict.rejected.label",
+    short: "bibliography.verdict.rejected.short",
+    hint: "bibliography.verdict.rejected.hint",
   },
   low: {
-    label: "Low triage signal",
-    short: "Low",
-    hint: "passed relevance but too weak to act on this run",
+    label: "bibliography.verdict.low.label",
+    short: "bibliography.verdict.low.short",
+    hint: "bibliography.verdict.low.hint",
   },
 };
 
+/** Same bare-key convention as {@link BIB_VERDICT_META}. */
 export const BIB_ACCESS_META: Record<
   AnalyzedPaperAccess,
   { label: string; short: string }
 > = {
-  oa: { label: "Open access · full text", short: "Open access" },
-  abstract: { label: "Abstract only", short: "Abstract" },
-  paywall: { label: "Behind paywall", short: "Paywall" },
-  unknown: { label: "Access unknown", short: "Unknown" },
+  oa: { label: "bibliography.access.oa.label", short: "bibliography.access.oa.short" },
+  abstract: {
+    label: "bibliography.access.abstract.label",
+    short: "bibliography.access.abstract.short",
+  },
+  paywall: {
+    label: "bibliography.access.paywall.label",
+    short: "bibliography.access.paywall.short",
+  },
+  unknown: {
+    label: "bibliography.access.unknown.label",
+    short: "bibliography.access.unknown.short",
+  },
 };
 
 export function bibliographySourceUrl(paper: AnalyzedPaper): string | null {

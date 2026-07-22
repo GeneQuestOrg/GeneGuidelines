@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import { Badge } from "@gene-guidelines/ui";
 import type { Trial } from "../types/trial";
 import "./trials-list.css";
@@ -20,17 +22,21 @@ function statusLabel(status: string): string {
   return status.replace(/_/g, " ");
 }
 
-function enrollmentLabel(enrolled: number | null, target: number | null): string | null {
+function enrollmentLabel(
+  enrolled: number | null,
+  target: number | null,
+  t: TFunction,
+): string | null {
   if (enrolled == null && target == null) {
     return null;
   }
   if (enrolled != null && target != null) {
-    return `${enrolled} / ${target} enrolled`;
+    return t("trialsList.enrollmentBoth", { enrolled, target });
   }
   if (target != null) {
-    return `${target} planned`;
+    return t("trialsList.enrollmentPlanned", { target });
   }
-  return `${enrolled} enrolled`;
+  return t("trialsList.enrollmentEnrolledOnly", { enrolled });
 }
 
 function clinicalTrialsUrl(nct: string): string {
@@ -38,56 +44,53 @@ function clinicalTrialsUrl(nct: string): string {
 }
 
 export function TrialsList({ trials }: TrialsListProps) {
+  const { t } = useTranslation("common");
   if (trials.length === 0) {
-    return (
-      <p className="trials-list__empty">
-        No registered trials yet for this disease.
-      </p>
-    );
+    return <p className="trials-list__empty">{t("trialsList.empty")}</p>;
   }
 
   return (
     <div className="trials-list">
-      {trials.map((t) => {
-        const enrollment = enrollmentLabel(t.enrolled, t.enrollmentTarget);
+      {trials.map((trial) => {
+        const enrollment = enrollmentLabel(trial.enrolled, trial.enrollmentTarget, t);
         return (
-          <article key={t.nct} className="trial-card">
+          <article key={trial.nct} className="trial-card">
             <div className="trial-card__top">
-              <span className="trial-card__nct">{t.nct}</span>
-              <Badge variant={statusVariant(t.status)}>
-                {statusLabel(t.status)}
+              <span className="trial-card__nct">{trial.nct}</span>
+              <Badge variant={statusVariant(trial.status)}>
+                {statusLabel(trial.status)}
               </Badge>
-              <span className="trial-card__phase">{t.phase}</span>
+              <span className="trial-card__phase">{trial.phase}</span>
             </div>
-            <h3 className="trial-card__title">{t.title}</h3>
-            <p className="trial-card__sponsor">{t.sponsor}</p>
-            {t.eligibilitySummary ? (
-              <p className="trial-card__eligibility">{t.eligibilitySummary}</p>
+            <h3 className="trial-card__title">{trial.title}</h3>
+            <p className="trial-card__sponsor">{trial.sponsor}</p>
+            {trial.eligibilitySummary ? (
+              <p className="trial-card__eligibility">{trial.eligibilitySummary}</p>
             ) : null}
             <dl className="trial-card__facts">
-              {t.principalInvestigator ? (
+              {trial.principalInvestigator ? (
                 <div>
-                  <dt>PI</dt>
-                  <dd>{t.principalInvestigator}</dd>
+                  <dt>{t("trialsList.pi")}</dt>
+                  <dd>{trial.principalInvestigator}</dd>
                 </div>
               ) : null}
-              {t.city || t.country ? (
+              {trial.city || trial.country ? (
                 <div>
-                  <dt>Location</dt>
+                  <dt>{t("trialsList.location")}</dt>
                   <dd>
-                    {[t.city, t.country].filter(Boolean).join(", ")}
+                    {[trial.city, trial.country].filter(Boolean).join(", ")}
                   </dd>
                 </div>
               ) : null}
-              {t.ageRange ? (
+              {trial.ageRange ? (
                 <div>
-                  <dt>Ages</dt>
-                  <dd>{t.ageRange}</dd>
+                  <dt>{t("trialsList.ages")}</dt>
+                  <dd>{trial.ageRange}</dd>
                 </div>
               ) : null}
               {enrollment != null ? (
                 <div>
-                  <dt>Enrollment</dt>
+                  <dt>{t("trialsList.enrollment")}</dt>
                   <dd>{enrollment}</dd>
                 </div>
               ) : null}
@@ -95,18 +98,18 @@ export function TrialsList({ trials }: TrialsListProps) {
             <div className="trial-card__actions">
               <a
                 className="trial-card__cta"
-                href={clinicalTrialsUrl(t.nct)}
+                href={clinicalTrialsUrl(trial.nct)}
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                Open on ClinicalTrials.gov →
+                {t("trialsList.openOnClinicalTrials")}
               </a>
-              {t.contact ? (
+              {trial.contact ? (
                 <a
                   className="trial-card__contact"
-                  href={`mailto:${t.contact}`}
+                  href={`mailto:${trial.contact}`}
                 >
-                  {t.contact}
+                  {trial.contact}
                 </a>
               ) : null}
             </div>

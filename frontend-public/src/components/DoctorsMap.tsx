@@ -57,8 +57,8 @@ function buildPopupHtml(
   d: DoctorWithDistance,
   practice: Practice,
   specialtyNotVerifiedLabel: string,
+  roleLabel: string,
 ): string {
-  const role = pubmedRoleLabel(d.pubmedRole);
   const validatedRole = safeRole(d.pubmedRole);
   const dist = d.km != null ? `<span class="map-popup__dist">${formatDistanceKm(d.km)}</span>` : "";
   const practiceLine = `${esc(practice.name)} · ${esc(practice.type)}`;
@@ -69,7 +69,7 @@ function buildPopupHtml(
       <div class="map-popup__practice">${practiceLine}</div>
       <div class="map-popup__inst">${esc(practice.city)}, ${esc(d.country)}</div>
       <div class="map-popup__foot">
-        <span class="tag tag--role tag--${esc(validatedRole)}">${esc(role)}</span>
+        <span class="tag tag--role tag--${esc(validatedRole)}">${esc(roleLabel)}</span>
         <span class="tag tag--score">PubMed <b>${esc(String(d.score))}</b></span>
         ${dist}
       </div>
@@ -106,9 +106,15 @@ export function DoctorsMap({ doctors, userLoc, onNav }: DoctorsMapProps) {
       // practicePins() already dropped pairs with non-finite coordinates, so these are real numbers.
       const latlng: L.LatLngExpression = [practice.lat as number, practice.lng as number];
       const marker = L.marker(latlng, { icon: roleMarkerIcon(d.pubmedRole) });
-      marker.bindPopup(buildPopupHtml(d, practice, t("map.specialtyNotVerified")), {
-        maxWidth: 240,
-      });
+      marker.bindPopup(
+        buildPopupHtml(
+          d,
+          practice,
+          t("map.specialtyNotVerified"),
+          t(`common:${pubmedRoleLabel(d.pubmedRole)}`),
+        ),
+        { maxWidth: 240 },
+      );
       marker.on("popupopen", () => {
         const btn = marker.getPopup()?.getElement()?.querySelector<HTMLElement>(".map-popup");
         btn?.addEventListener("click", () => {

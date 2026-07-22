@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { repositories } from "../repositories";
 import type { AnalyzedPaper } from "../types/analyzedPaper";
 
@@ -9,6 +10,7 @@ export interface BibliographyState {
 }
 
 export function useBibliography(diseaseSlug: string): BibliographyState {
+  const { t } = useTranslation("common");
   const [papers, setPapers] = useState<readonly AnalyzedPaper[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -24,7 +26,7 @@ export function useBibliography(diseaseSlug: string): BibliographyState {
         }
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : "Failed to load analyzed bibliography.");
+          setError(err instanceof Error ? err.message : t("errors.failedToLoadBibliography"));
           setPapers([]);
         }
       } finally {
@@ -36,7 +38,7 @@ export function useBibliography(diseaseSlug: string): BibliographyState {
     return () => {
       cancelled = true;
     };
-  }, [diseaseSlug]);
+  }, [diseaseSlug, t]);
 
   return { papers, loading, error };
 }

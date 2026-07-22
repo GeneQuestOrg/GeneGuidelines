@@ -1,18 +1,18 @@
+import { useTranslation } from "react-i18next";
+
 /**
  * Short note on specialist profiles: scores come from publication metadata, not clinical vetting.
  */
 export function SpecialistDisclaimer() {
+  const { t } = useTranslation("common");
   return (
     <aside
       className="dprofile__disclaimer"
       role="note"
-      aria-label="Directory disclaimer"
+      aria-label={t("specialistDisclaimer.ariaLabel")}
     >
-      <strong>Automated directory</strong>
-      <p>
-        PubMed scores and roles are derived from publication metadata. This listing is not medical
-        advice, an endorsement, or a guarantee that the clinician treats your condition.
-      </p>
+      <strong>{t("specialistDisclaimer.title")}</strong>
+      <p>{t("specialistDisclaimer.body")}</p>
     </aside>
   );
 }

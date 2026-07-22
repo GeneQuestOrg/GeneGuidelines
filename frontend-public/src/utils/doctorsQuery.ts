@@ -82,6 +82,9 @@ export const DEFAULT_DOCTORS_QUERY: DoctorsQuery = {
  * Ready-made filter bundles that "step into the parent's shoes" — one click composes a sensible
  * set of facets so a family that doesn't know how to filter still lands on the right people.
  * Each preset is a partial query merged onto the current disease/location.
+ *
+ * `label` is a bare i18n key, not display text — callers must translate it via
+ * `t(`common:${preset.label}`)` (or `t(preset.label)` when already scoped to "common").
  */
 export type DoctorPresetId = "on_top" | "surgeon_near" | "consult" | "anyone_near";
 
@@ -94,13 +97,13 @@ export const DOCTOR_PRESETS: readonly {
 }[] = [
   {
     id: "on_top",
-    label: "Who's on top of it now",
+    label: "doctorsQuery.presets.onTop",
     // Core case (son's story): a currently-active expert, not merely a titled one.
     patch: { recency: "active_2y", workTypes: [], role: null, sort: "recency", parentOnly: false },
   },
   {
     id: "surgeon_near",
-    label: "A surgeon near me",
+    label: "doctorsQuery.presets.surgeonNear",
     // Detroit case: a practising surgeon with disease experience, closest first. Only surfaced
     // when the specialty axis has data (data-density gate in the view).
     patch: {
@@ -115,13 +118,13 @@ export const DOCTOR_PRESETS: readonly {
   },
   {
     id: "consult",
-    label: "For a consult / second opinion",
+    label: "doctorsQuery.presets.consult",
     // The "Mara" case: reachable expertise regardless of geography (guideline-level authors).
     patch: { workTypes: ["guideline"], recency: null, maxKm: null, sort: "best", parentOnly: false },
   },
   {
     id: "anyone_near",
-    label: "Anyone near me who knows it",
+    label: "doctorsQuery.presets.anyoneNear",
     // First step for a lost parent: geography first, any disease experience.
     patch: { workTypes: [], recency: null, role: null, sort: "distance", parentOnly: false },
   },

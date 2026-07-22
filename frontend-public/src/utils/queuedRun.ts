@@ -15,12 +15,18 @@ export function isQueued(run: Pick<AgentRunPayloadV1, "done" | "status"> | null)
   return !run.done && run.status === "queued";
 }
 
+/** A translation descriptor — render via `t(`common:${d.key}`, d.params)`. */
+export interface QueuedLabel {
+  readonly key: string;
+  readonly params?: { readonly position: number };
+}
+
 /** Human-readable queue notice; position is shown only when known and positive. */
-export function queuedLabel(position: number | null | undefined): string {
+export function queuedLabel(position: number | null | undefined): QueuedLabel {
   if (position != null && position > 0) {
-    return `Queued — position ${position}. Your run will start as soon as a slot frees up.`;
+    return { key: "queuedRun.queuedWithPosition", params: { position } };
   }
-  return "Queued — your run will start as soon as a slot frees up.";
+  return { key: "queuedRun.queuedNoPosition" };
 }
 
 /** True when a queued run is held back by the monthly token budget. */
@@ -30,12 +36,16 @@ export function isTokenBudgetBlocked(
   return blockedReason === "token_budget";
 }
 
-/** Short badge text for a token-budget-blocked run (Polish, per draft10 copy). */
+/**
+ * Short badge descriptor for a token-budget-blocked run — render via `t(`common:${d.key}`)`.
+ * (Previously hardcoded Polish text regardless of locale; now goes through the same EN/PL
+ * translation path as everything else.)
+ */
 export function blockedBadgeLabel(
   blockedReason: string | null | undefined,
-): string | null {
+): { readonly key: string } | null {
   if (isTokenBudgetBlocked(blockedReason)) {
-    return "Czeka — budżet tokenów";
+    return { key: "queuedRun.tokenBudgetBlocked" };
   }
   return null;
 }

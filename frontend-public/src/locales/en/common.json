@@ -50,5 +50,255 @@
     "types": "Types",
     "lastRevised": "Last revised"
   },
-  "loadingCatalog": "Loading catalog…"
+  "loadingCatalog": "Loading catalog…",
+  "filterMenu": {
+    "all": "All"
+  },
+  "locationMenu": {
+    "label": "Location",
+    "yourLocation": "Your location",
+    "anywhere": "Anywhere",
+    "noLimit": "No limit",
+    "radius": "Radius",
+    "ariaLabel": "Location filter",
+    "hint": "Distance is measured to the doctor’s nearest practice. “No limit” shows everyone, sorted nearest first."
+  },
+  "pagination": {
+    "ariaLabel": "Pagination",
+    "previousPage": "Previous page",
+    "nextPage": "Next page",
+    "page": "Page {{n}}"
+  },
+  "diseaseCard": {
+    "specialists_one": "{{count}} specialist",
+    "specialists_other": "{{count}} specialists",
+    "trials_one": "{{count}} trial",
+    "trials_other": "{{count}} trials"
+  },
+  "distancePill": {
+    "title": "Distance from your selected reference location (city in settings)"
+  },
+  "specialistDisclaimer": {
+    "ariaLabel": "Directory disclaimer",
+    "title": "Automated directory",
+    "body": "PubMed scores and roles are derived from publication metadata. This listing is not medical advice, an endorsement, or a guarantee that the clinician treats your condition."
+  },
+  "trialsList": {
+    "empty": "No registered trials yet for this disease.",
+    "pi": "PI",
+    "location": "Location",
+    "ages": "Ages",
+    "enrollment": "Enrollment",
+    "enrollmentBoth": "{{enrolled}} / {{target}} enrolled",
+    "enrollmentPlanned": "{{target}} planned",
+    "enrollmentEnrolledOnly": "{{enrolled}} enrolled",
+    "openOnClinicalTrials": "Open on ClinicalTrials.gov →"
+  },
+  "rolePill": {
+    "guest": "Reading as · guest",
+    "parent": "Reading as · parent",
+    "clinician": "Reading as · clinician",
+    "clinicianUnverified": "Clinician · unverified",
+    "researcher": "Reading as · researcher",
+    "researcherUnverified": "Researcher · unverified"
+  },
+  "flowNode": {
+    "urgent": "URGENT",
+    "terminalBranch": "Nothing more on this branch — continue with the next step above when you are ready."
+  },
+  "synthesisTeaser": {
+    "tagSources_one": "{{count}} source",
+    "tagSources_other": "{{count}} sources",
+    "tagAiDraft": "AI-built draft",
+    "titleSynthesis": "{{disease}} — guideline synthesis",
+    "titleAiDraft": "{{disease}} — AI-built guideline",
+    "subSynthesis": "One summary across every source. Each sentence shows which document and passage it came from — plus AI suggestions from the latest literature.",
+    "subAiDraft": "There is no agreed guideline for this condition. AI assembled a draft from the literature — for expert review, not for guiding a patient.",
+    "cta": "Read the guideline →"
+  },
+  "compactSourceShelf": {
+    "label": "Sources ({{count}}) — click to open the original",
+    "newer": "NEWER",
+    "seeAll": "See all sources →"
+  },
+  "diseaseTabs": {
+    "sectionsAriaLabel": "Disease sections",
+    "specialistsTitle": "Specialists",
+    "seeAllSpecialists": "See all specialists →",
+    "seeAllTrialsCount": "See all trials ({{count}}) →",
+    "loadingTrials": "Loading trials…",
+    "noActiveTrials": "No active trials matching this disease right now.",
+    "therapiesTitle": "Therapies",
+    "therapiesNote": "These options manage symptoms and slow progression — none of them fully reverses established disease changes.",
+    "loadingTherapies": "Loading therapies…",
+    "foundationsTitle": "Supporting foundations",
+    "loadingFoundations": "Loading foundations…",
+    "noRelatedEntries": "No related entries found.",
+    "loadingRelated": "Loading related conditions…",
+    "doctorsSourceMerged": "Curated profiles merged with the latest Doctor Finder evidence where available.",
+    "doctorsSourceRanked": "Ranked from the latest Doctor Finder run.",
+    "loadingSpecialists": "Loading specialists…",
+    "openExpertDirectory": "Open expert directory for {{name}}",
+    "seeSpecialistsFor": "See {{name}} specialists",
+    "browseFullDirectory": "Browse full directory",
+    "seeTrialsFor": "See {{name}} trials",
+    "browseAllTrials": "Browse all trials",
+    "consensusDocumentFor": "Consensus document for {{name}} — full text in the guideline reader."
+  },
+  "officialGuidelineBlock": {
+    "eyebrow": "OFFICIAL GUIDELINES · GROUND TRUTH",
+    "sourceReviewer": "Reviewer-confirmed",
+    "sourceWorkflow": "Auto-discovered (pending review)",
+    "sourceSeeded": "Seeded",
+    "readConsensusPaper": "Read the consensus paper →",
+    "openOnPubmed": "Open on PubMed",
+    "footBase": "The AI-maintained living document below is read against this paper. Confirmed {{date}}",
+    "footBySuffix": " by {{name}}"
+  },
+  "doctorLabels": {
+    "pubmedRole": {
+      "researchLeader": "Led research",
+      "researchParticipant": "Contributed",
+      "caseStudyAuthor": "Case studies",
+      "unknown": "Unknown"
+    },
+    "workType": {
+      "guideline": "Guideline / consensus author",
+      "original": "Original research",
+      "review": "Review articles",
+      "trial": "Runs a clinical trial",
+      "caseReport": "Case reports"
+    },
+    "locationNotListed": "Location not listed"
+  },
+  "doctorsQuery": {
+    "presets": {
+      "onTop": "Who’s on top of it now",
+      "surgeonNear": "A surgeon near me",
+      "consult": "For a consult / second opinion",
+      "anyoneNear": "Anyone near me who knows it"
+    }
+  },
+  "pubmedUrl": {
+    "orcidRecordLabel": "Full publication record on ORCID",
+    "searchAuthorLabel": "Search this author on PubMed"
+  },
+  "bibliography": {
+    "verdict": {
+      "shelf": {
+        "label": "On the source shelf",
+        "short": "Shelf",
+        "hint": "selected as a source the synthesis is built on"
+      },
+      "suggestion": {
+        "label": "Became an AI suggestion",
+        "short": "Suggestion",
+        "hint": "produced a delta for clinician review"
+      },
+      "rejected": {
+        "label": "Considered, set aside",
+        "short": "Rejected",
+        "hint": "read and consciously rejected — with a reason"
+      },
+      "low": {
+        "label": "Low triage signal",
+        "short": "Low",
+        "hint": "passed relevance but too weak to act on this run"
+      }
+    },
+    "access": {
+      "oa": { "label": "Open access · full text", "short": "Open access" },
+      "abstract": { "label": "Abstract only", "short": "Abstract" },
+      "paywall": { "label": "Behind paywall", "short": "Paywall" },
+      "unknown": { "label": "Access unknown", "short": "Unknown" }
+    }
+  },
+  "researchWorkstreams": {
+    "labels": {
+      "guideline": "Guideline",
+      "doctors": "Doctors",
+      "trials": "Trials",
+      "therapies": "Therapies",
+      "foundations": "Foundations",
+      "official_guidelines": "Official",
+      "system": "System"
+    },
+    "guideline": {
+      "label": "Guideline draft",
+      "sub": "PubMed retrieval → therapy + diagnostic extraction → assembly with citations",
+      "countLabel": "sections"
+    },
+    "doctors": {
+      "label": "Specialist doctors",
+      "sub": "PubMed author scoring · institution + geo enrichment",
+      "countLabel": "candidates"
+    },
+    "trials": {
+      "label": "Clinical trials",
+      "sub": "ClinicalTrials.gov · status: recruiting",
+      "countLabel": "trials"
+    },
+    "therapies": {
+      "label": "Therapies",
+      "sub": "Standard + experimental · 4-state evidence tier",
+      "countLabel": "lines"
+    },
+    "foundations": {
+      "label": "Patient foundations",
+      "sub": "Orphanet partners + grassroots support groups",
+      "countLabel": "orgs"
+    },
+    "official_guidelines": {
+      "label": "Official guideline",
+      "sub": "Recognised consensus paper (e.g. Boyce 2019 for FD)",
+      "countLabel": "pointer"
+    },
+    "summary": {
+      "queued": "Waiting for the worker to pick up this job.",
+      "error": "The job stopped before it could finish.",
+      "guidelineDonePublished": "Draft published — pending specialist verification.",
+      "guidelineDoneNoDraft": "Pipeline finished without publishing a draft.",
+      "guidelineRunningMining": "Mining PubMed, scoring evidence, drafting sections.",
+      "guidelineRunningStarting": "Starting up — connecting to the workflow engine.",
+      "officialDoneLinked": "Linked to the recognised consensus paper.",
+      "officialDoneNotFound": "No consensus guideline found in PubMed.",
+      "officialLookingUp": "Looking up the recognised guideline document.",
+      "settling": "Saving results to the disease page…",
+      "waitingForResults": "Waiting for results.",
+      "searchingPublicSources": "Searching public sources — results land on the disease page as they come in.",
+      "doctorsDoneZero": "Run complete — no candidates matched.",
+      "doctorsDoneWithCount_one": "Run complete — {{count}} candidate stored on the disease page.",
+      "doctorsDoneWithCount_other": "Run complete — {{count}} candidates stored on the disease page.",
+      "doctorsRunningWithCount_one": "{{count}} candidate so far · more may still land.",
+      "doctorsRunningWithCount_other": "{{count}} candidates so far · more may still land.",
+      "trialsDoneZero": "Run complete — no trials matched.",
+      "trialsDoneWithCount_one": "Run complete — {{count}} trial stored on the disease page.",
+      "trialsDoneWithCount_other": "Run complete — {{count}} trials stored on the disease page.",
+      "trialsRunningWithCount_one": "{{count}} trial so far · more may still land.",
+      "trialsRunningWithCount_other": "{{count}} trials so far · more may still land.",
+      "therapiesDoneZero": "Run complete — no lines matched.",
+      "therapiesDoneWithCount_one": "Run complete — {{count}} line stored on the disease page.",
+      "therapiesDoneWithCount_other": "Run complete — {{count}} lines stored on the disease page.",
+      "therapiesRunningWithCount_one": "{{count}} line so far · more may still land.",
+      "therapiesRunningWithCount_other": "{{count}} lines so far · more may still land.",
+      "foundationsDoneZero": "Run complete — no orgs matched.",
+      "foundationsDoneWithCount_one": "Run complete — {{count}} org stored on the disease page.",
+      "foundationsDoneWithCount_other": "Run complete — {{count}} orgs stored on the disease page.",
+      "foundationsRunningWithCount_one": "{{count}} org so far · more may still land.",
+      "foundationsRunningWithCount_other": "{{count}} orgs so far · more may still land."
+    }
+  },
+  "queuedRun": {
+    "queuedWithPosition": "Queued — position {{position}}. Your run will start as soon as a slot frees up.",
+    "queuedNoPosition": "Queued — your run will start as soon as a slot frees up.",
+    "tokenBudgetBlocked": "Waiting — token budget"
+  },
+  "errors": {
+    "couldNotLoadTrials": "Could not load trials.",
+    "couldNotLoadSpecialists": "Could not load specialists.",
+    "couldNotLoadDiseaseCatalog": "Could not load disease catalog.",
+    "couldNotLoadSpecialistProfile": "Could not load specialist profile.",
+    "failedToLoadTrials": "Failed to load trials.",
+    "failedToLoadBibliography": "Failed to load analyzed bibliography."
+  }
 }

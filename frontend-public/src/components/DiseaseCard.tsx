@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Status } from "@gene-guidelines/ui";
 import type { Disease } from "../types";
 
@@ -7,6 +8,7 @@ export interface DiseaseCardProps {
 }
 
 export function DiseaseCard({ disease, onNav }: DiseaseCardProps) {
+  const { t } = useTranslation("common");
   return (
     <a
       href={`/diseases/${disease.slug}`}
@@ -24,29 +26,29 @@ export function DiseaseCard({ disease, onNav }: DiseaseCardProps) {
       <p className="d-card__summary">{disease.summary}</p>
       <dl className="d-card__facts">
         <div>
-          <dt>Gene</dt>
+          <dt>{t("diseaseFacts.gene")}</dt>
           <dd>
             <code>{disease.gene}</code>
           </dd>
         </div>
         <div>
-          <dt>Prevalence</dt>
+          <dt>{t("diseaseFacts.prevalence")}</dt>
           <dd>{disease.prevalenceText}</dd>
         </div>
         <div>
-          <dt>Inheritance</dt>
+          <dt>{t("diseaseFacts.inheritance")}</dt>
           <dd>{disease.inheritance || "—"}</dd>
         </div>
         {disease.types.length > 0 ? (
           <div>
-            <dt>Types</dt>
+            <dt>{t("diseaseFacts.types")}</dt>
             <dd>{disease.types.join(" · ")}</dd>
           </div>
         ) : null}
       </dl>
       <div className="d-card__meta">
-        <span>{disease.doctorsCount} specialists</span>
-        <span>{disease.trialsCount} trials</span>
+        <span>{t("diseaseCard.specialists", { count: disease.doctorsCount })}</span>
+        <span>{t("diseaseCard.trials", { count: disease.trialsCount })}</span>
       </div>
     </a>
   );

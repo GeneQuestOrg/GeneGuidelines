@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   isPathwayActionNode,
   type PathwayActionNode,
@@ -15,6 +16,7 @@ export interface FlowNodeProps {
 }
 
 export function FlowNode({ node, depth, stepNumber, selected, onSelect }: FlowNodeProps) {
+  const { t } = useTranslation("common");
   const [open, setOpen] = useState(stepNumber === 1 || (stepNumber == null && depth < 1));
 
   if (isPathwayActionNode(node)) {
@@ -35,7 +37,9 @@ export function FlowNode({ node, depth, stepNumber, selected, onSelect }: FlowNo
             →
           </span>
           <span className="flow-action__title">{node.title}</span>
-          {node.urgent ? <span className="flow-action__urgent">URGENT</span> : null}
+          {node.urgent ? (
+            <span className="flow-action__urgent">{t("flowNode.urgent")}</span>
+          ) : null}
         </button>
       </div>
     );
@@ -90,15 +94,14 @@ function BranchRow({
   selected: PathwayActionNode | null;
   onSelect: (node: PathwayActionNode) => void;
 }) {
+  const { t } = useTranslation("common");
   return (
     <div className="flow-branch">
       <div className="flow-branch__answer">{branch.answer}</div>
       {branch.next ? (
         <FlowNode node={branch.next} depth={depth + 1} selected={selected} onSelect={onSelect} />
       ) : (
-        <div className="flow-branch__terminal">
-          Nothing more on this branch — continue with the next step above when you are ready.
-        </div>
+        <div className="flow-branch__terminal">{t("flowNode.terminalBranch")}</div>
       )}
     </div>
   );

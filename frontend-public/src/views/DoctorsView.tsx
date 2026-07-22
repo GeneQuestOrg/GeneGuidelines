@@ -227,9 +227,12 @@ export function DoctorsView({ search, onNav }: DoctorsViewProps) {
 
   const roleFilters: readonly { value: string; label: string }[] = [
     { value: ROLE_FILTER_ALL, label: t("roleFilters.all") },
-    { value: "research_leader", label: pubmedRoleLabel("research_leader") },
-    { value: "research_participant", label: pubmedRoleLabel("research_participant") },
-    { value: "case_study_author", label: pubmedRoleLabel("case_study_author") },
+    { value: "research_leader", label: t(`common:${pubmedRoleLabel("research_leader")}`) },
+    {
+      value: "research_participant",
+      label: t(`common:${pubmedRoleLabel("research_participant")}`),
+    },
+    { value: "case_study_author", label: t(`common:${pubmedRoleLabel("case_study_author")}`) },
   ];
 
   const sourceFilters: readonly { value: SourceFilter; label: string }[] = [
@@ -302,7 +305,7 @@ export function DoctorsView({ search, onNav }: DoctorsViewProps) {
                 className="preset-chip"
                 onClick={() => patchQuery(preset.patch)}
               >
-                {preset.label}
+                {t(`common:${preset.label}`)}
               </button>
             ))}
         </div>
@@ -474,7 +477,7 @@ export function DoctorsView({ search, onNav }: DoctorsViewProps) {
                     aria-pressed={active}
                     onClick={() => toggleWorkType(w)}
                   >
-                    {workTypeLabel(w)}
+                    {t(`common:${workTypeLabel(w)}`)}
                   </button>
                 );
               })}

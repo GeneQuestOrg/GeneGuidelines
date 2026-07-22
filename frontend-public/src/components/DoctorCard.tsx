@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { type PublicDoctor, isWorkflowDoctorSource } from "../types/doctor";
 import {
   doctorLocation,
@@ -19,7 +20,8 @@ export interface DoctorCardProps {
 }
 
 export function DoctorCard({ doctor, km, compact = false, onNav }: DoctorCardProps) {
-  const roleLabel = pubmedRoleLabel(doctor.pubmedRole);
+  const { t } = useTranslation("common");
+  const roleLabel = t(pubmedRoleLabel(doctor.pubmedRole));
   const safeRoleClass = VALID_PUBMED_ROLES.has(doctor.pubmedRole) ? doctor.pubmedRole : "unknown";
   // Clinical specialty is a SEPARATE axis from the PubMed research role. Prefer verified NUCC
   // specialties (with a source badge); fall back to the deprecated free-text field; else say
@@ -57,7 +59,7 @@ export function DoctorCard({ doctor, km, compact = false, onNav }: DoctorCardPro
         <div className="doc__spec doc__spec--unverified">Specialty not verified</div>
       )}
       <div className="doc__inst">
-        {doctor.institution} · {doctorLocation(doctor)}
+        {doctor.institution} · {doctorLocation(doctor, t)}
       </div>
       {!compact && reachText ? (
         <div

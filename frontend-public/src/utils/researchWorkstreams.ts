@@ -37,6 +37,10 @@ export type WorkstreamKey =
 
 export type WorkstreamStatus = "queued" | "running" | "done" | "error";
 
+/**
+ * `label`/`sub`/`countLabel` below are bare i18n keys, not display text — callers must translate
+ * them via `t(`common:${key}`)` (or `t(key)` when already scoped to "common").
+ */
 export interface WorkstreamDef {
   readonly key: WorkstreamKey;
   readonly label: string;
@@ -47,10 +51,20 @@ export interface WorkstreamDef {
   readonly flowKeys: readonly string[];
 }
 
+/**
+ * `resultSummary` is a translation descriptor, not display text — callers must render it via
+ * `t(`common:${resultSummary.key}`, resultSummary.params)` (drop the "common:" prefix when
+ * already scoped to that namespace).
+ */
+export interface ResultSummary {
+  readonly key: string;
+  readonly params?: { readonly count: number };
+}
+
 export interface WorkstreamState extends WorkstreamDef {
   readonly status: WorkstreamStatus;
   readonly count: number | null;
-  readonly resultSummary: string;
+  readonly resultSummary: ResultSummary;
   readonly progress: number;
 }
 
@@ -82,45 +96,45 @@ export interface WorkstreamInputs {
 export const WORKSTREAMS: readonly WorkstreamDef[] = [
   {
     key: "guideline",
-    label: "Guideline draft",
-    sub: "PubMed retrieval → therapy + diagnostic extraction → assembly with citations",
-    countLabel: "sections",
+    label: "researchWorkstreams.guideline.label",
+    sub: "researchWorkstreams.guideline.sub",
+    countLabel: "researchWorkstreams.guideline.countLabel",
     primary: true,
     flowKeys: ["pubmed", "guideline"],
   },
   {
     key: "doctors",
-    label: "Specialist doctors",
-    sub: "PubMed author scoring · institution + geo enrichment",
-    countLabel: "candidates",
+    label: "researchWorkstreams.doctors.label",
+    sub: "researchWorkstreams.doctors.sub",
+    countLabel: "researchWorkstreams.doctors.countLabel",
     flowKeys: ["doctor_finder"],
   },
   {
     key: "trials",
-    label: "Clinical trials",
-    sub: "ClinicalTrials.gov · status: recruiting",
-    countLabel: "trials",
+    label: "researchWorkstreams.trials.label",
+    sub: "researchWorkstreams.trials.sub",
+    countLabel: "researchWorkstreams.trials.countLabel",
     flowKeys: ["trials_finder"],
   },
   {
     key: "therapies",
-    label: "Therapies",
-    sub: "Standard + experimental · 4-state evidence tier",
-    countLabel: "lines",
+    label: "researchWorkstreams.therapies.label",
+    sub: "researchWorkstreams.therapies.sub",
+    countLabel: "researchWorkstreams.therapies.countLabel",
     flowKeys: ["therapies_finder"],
   },
   {
     key: "foundations",
-    label: "Patient foundations",
-    sub: "Orphanet partners + grassroots support groups",
-    countLabel: "orgs",
+    label: "researchWorkstreams.foundations.label",
+    sub: "researchWorkstreams.foundations.sub",
+    countLabel: "researchWorkstreams.foundations.countLabel",
     flowKeys: ["foundations_finder"],
   },
   {
     key: "official_guidelines",
-    label: "Official guideline",
-    sub: "Recognised consensus paper (e.g. Boyce 2019 for FD)",
-    countLabel: "pointer",
+    label: "researchWorkstreams.official_guidelines.label",
+    sub: "researchWorkstreams.official_guidelines.sub",
+    countLabel: "researchWorkstreams.official_guidelines.countLabel",
     flowKeys: ["official_guidelines_finder"],
   },
 ];
@@ -203,57 +217,77 @@ function countForKey(
   }
 }
 
+/**
+ * Per-workstream summary key roots for the four "generic finder" streams (doctors/trials/
+ * therapies/foundations) — the only ones whose summary sentence embeds a counted noun, so each
+ * needs its own grammatically-correct translation rather than one generic templated sentence.
+ */
+const FINDER_SUMMARY_ROOT: Partial<Record<WorkstreamKey, string>> = {
+  doctors: "doctors",
+  trials: "trials",
+  therapies: "therapies",
+  foundations: "foundations",
+};
+
 function resultSummary(
   def: WorkstreamDef,
   status: WorkstreamStatus,
   count: number | null,
   inputs: WorkstreamInputs,
-): string {
+): ResultSummary {
   if (status === "queued") {
-    return "Waiting for the worker to pick up this job.";
+    return { key: "researchWorkstreams.summary.queued" };
   }
   if (status === "error") {
-    return "The job stopped before it could finish.";
+    return { key: "researchWorkstreams.summary.error" };
   }
   if (def.key === "guideline") {
     if (status === "done") {
-      return inputs.hasGuidelineDocument
-        ? "Draft published — pending specialist verification."
-        : "Pipeline finished without publishing a draft.";
+      return {
+        key: inputs.hasGuidelineDocument
+          ? "researchWorkstreams.summary.guidelineDonePublished"
+          : "researchWorkstreams.summary.guidelineDoneNoDraft",
+      };
     }
-    return inputs.guidelineTraceSeen
-      ? "Mining PubMed, scoring evidence, drafting sections."
-      : "Starting up — connecting to the workflow engine.";
+    return {
+      key: inputs.guidelineTraceSeen
+        ? "researchWorkstreams.summary.guidelineRunningMining"
+        : "researchWorkstreams.summary.guidelineRunningStarting",
+    };
   }
   if (def.key === "official_guidelines") {
     if (status === "done") {
-      return inputs.hasOfficialGuideline
-        ? "Linked to the recognised consensus paper."
-        : "No consensus guideline found in PubMed.";
+      return {
+        key: inputs.hasOfficialGuideline
+          ? "researchWorkstreams.summary.officialDoneLinked"
+          : "researchWorkstreams.summary.officialDoneNotFound",
+      };
     }
-    return "Looking up the recognised guideline document.";
+    return { key: "researchWorkstreams.summary.officialLookingUp" };
   }
   if (
     status === "running" &&
     isSettlingAfterInactive(def.key, count, inputs)
   ) {
-    return "Saving results to the disease page…";
+    return { key: "researchWorkstreams.summary.settling" };
   }
   if (count == null) {
-    return "Waiting for results.";
+    return { key: "researchWorkstreams.summary.waitingForResults" };
   }
-  const noun = def.countLabel;
+  // Only the four generic finders reach this point (guideline/official_guidelines already
+  // returned above), so `root` is always defined here.
+  const root = FINDER_SUMMARY_ROOT[def.key] ?? def.key;
   if (status === "done") {
     if (count === 0) {
-      return `Run complete — no ${noun} matched.`;
+      return { key: `researchWorkstreams.summary.${root}DoneZero` };
     }
-    return `Run complete — ${count} ${noun} stored on the disease page.`;
+    return { key: `researchWorkstreams.summary.${root}DoneWithCount`, params: { count } };
   }
   // running
   if (count === 0) {
-    return "Searching public sources — results land on the disease page as they come in.";
+    return { key: "researchWorkstreams.summary.searchingPublicSources" };
   }
-  return `${count} ${noun} so far · more may still land.`;
+  return { key: `researchWorkstreams.summary.${root}RunningWithCount`, params: { count } };
 }
 
 function progressForRunningStream(
@@ -415,15 +449,19 @@ export function tagTraceMessage(rawMessage: string): WorkstreamKey | "system" {
   return "system";
 }
 
+/**
+ * Bare i18n keys, not display text — callers must translate via `t(`common:${key}`)` (or
+ * `t(key)` when already scoped to "common").
+ */
 export const WORKSTREAM_LABELS: Record<
   WorkstreamKey | "system",
   string
 > = {
-  guideline: "Guideline",
-  doctors: "Doctors",
-  trials: "Trials",
-  therapies: "Therapies",
-  foundations: "Foundations",
-  official_guidelines: "Official",
-  system: "System",
+  guideline: "researchWorkstreams.labels.guideline",
+  doctors: "researchWorkstreams.labels.doctors",
+  trials: "researchWorkstreams.labels.trials",
+  therapies: "researchWorkstreams.labels.therapies",
+  foundations: "researchWorkstreams.labels.foundations",
+  official_guidelines: "researchWorkstreams.labels.official_guidelines",
+  system: "researchWorkstreams.labels.system",
 };

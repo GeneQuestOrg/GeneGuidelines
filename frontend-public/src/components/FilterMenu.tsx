@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 export interface FilterMenuOption {
   readonly value: string;
@@ -32,6 +33,7 @@ export function FilterMenu({
   onPick,
   neutralValue = ALL_VALUE,
 }: FilterMenuProps) {
+  const { t } = useTranslation("common");
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement | null>(null);
 
@@ -65,7 +67,7 @@ export function FilterMenu({
         aria-expanded={open}
       >
         <span className="fmenu__label">{label}</span>
-        <span className="fmenu__value">{current?.label ?? "All"}</span>
+        <span className="fmenu__value">{current?.label ?? t("filterMenu.all")}</span>
         <span className={`fmenu__chev${open ? " is-open" : ""}`} aria-hidden="true">
           ▾
         </span>

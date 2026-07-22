@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import { Badge } from "@gene-guidelines/ui";
 import type { OfficialGuideline } from "../types/officialGuideline";
 import "./official-guideline-block.css";
@@ -6,14 +8,14 @@ export interface OfficialGuidelineBlockProps {
   pointer: OfficialGuideline;
 }
 
-function sourceLabel(source: OfficialGuideline["source"]): string {
+function sourceLabel(source: OfficialGuideline["source"], t: TFunction): string {
   switch (source) {
     case "reviewer":
-      return "Reviewer-confirmed";
+      return t("officialGuidelineBlock.sourceReviewer");
     case "workflow":
-      return "Auto-discovered (pending review)";
+      return t("officialGuidelineBlock.sourceWorkflow");
     default:
-      return "Seeded";
+      return t("officialGuidelineBlock.sourceSeeded");
   }
 }
 
@@ -22,14 +24,15 @@ function pubmedUrl(pmid: string): string {
 }
 
 export function OfficialGuidelineBlock({ pointer }: OfficialGuidelineBlockProps) {
+  const { t } = useTranslation("common");
   return (
     <article className="ogb">
       <header className="ogb__head">
         <div className="ogb__eyebrow">
           <span className="ogb__dot" aria-hidden />
-          OFFICIAL GUIDELINES · GROUND TRUTH
+          {t("officialGuidelineBlock.eyebrow")}
         </div>
-        <Badge variant="ok">{sourceLabel(pointer.source)}</Badge>
+        <Badge variant="ok">{sourceLabel(pointer.source, t)}</Badge>
       </header>
       <h2 className="ogb__title">{pointer.title}</h2>
       <p className="ogb__meta">
@@ -47,7 +50,7 @@ export function OfficialGuidelineBlock({ pointer }: OfficialGuidelineBlockProps)
             target="_blank"
             rel="noopener noreferrer"
           >
-            Read the consensus paper →
+            {t("officialGuidelineBlock.readConsensusPaper")}
           </a>
         ) : null}
         <a
@@ -56,13 +59,15 @@ export function OfficialGuidelineBlock({ pointer }: OfficialGuidelineBlockProps)
           target="_blank"
           rel="noopener noreferrer"
         >
-          Open on PubMed
+          {t("officialGuidelineBlock.openOnPubmed")}
         </a>
       </div>
       <p className="ogb__foot">
-        The AI-maintained living document below is read against this paper.
-        Confirmed {pointer.confirmedAt}
-        {pointer.confirmedBy ? ` by ${pointer.confirmedBy}` : ""}.
+        {t("officialGuidelineBlock.footBase", { date: pointer.confirmedAt })}
+        {pointer.confirmedBy
+          ? t("officialGuidelineBlock.footBySuffix", { name: pointer.confirmedBy })
+          : ""}
+        .
       </p>
     </article>
   );
