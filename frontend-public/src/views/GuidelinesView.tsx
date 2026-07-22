@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Button } from "@gene-guidelines/ui";
 import type { ViewRole } from "../auth/resolveRole";
 import { isClinicianView, isParentSide } from "../auth/resolveRole";
@@ -43,6 +44,7 @@ export function GuidelinesView({
   role,
   onNav,
 }: GuidelinesViewProps) {
+  const { t } = useTranslation("guidelines");
   const { signInAvailable, login, account } = useAccountContext();
   const { disease, loading: diseaseLoading, error: diseaseError } = useDisease(slug);
   const { synthesis, loading: synthLoading } = useGuidelineSynthesis(slug);
@@ -72,7 +74,7 @@ export function GuidelinesView({
   if (loading) {
     return (
       <section className="page page--gl2">
-        <p className="page__lead">Loading guideline…</p>
+        <p className="page__lead">{t("loading")}</p>
       </section>
     );
   }
@@ -80,9 +82,9 @@ export function GuidelinesView({
   if (diseaseError != null) {
     return (
       <PlaceholderView
-        title="Could not load guideline"
+        title={t("errorTitle")}
         description={diseaseError}
-        primaryAction={{ label: "Disease overview", path: `/diseases/${slug}` }}
+        primaryAction={{ label: t("errorAction"), path: `/diseases/${slug}` }}
         onNav={onNav}
       />
     );
@@ -91,9 +93,9 @@ export function GuidelinesView({
   if (disease == null) {
     return (
       <PlaceholderView
-        title="Disease not found"
-        description={`No guideline catalog entry for “${slug}”.`}
-        primaryAction={{ label: "Browse diseases", path: "/diseases" }}
+        title={t("notFoundTitle")}
+        description={t("notFoundDesc", { slug })}
+        primaryAction={{ label: t("notFoundAction"), path: "/diseases" }}
         onNav={onNav}
       />
     );
@@ -135,12 +137,12 @@ export function GuidelinesView({
   const hasOfficial = hasOfficialSynthesis;
   const parentSide = isParentSide(role);
 
-  const versionLabel = hasOfficial ? synthesis!.version : "no agreed guideline · level (c)";
+  const versionLabel = hasOfficial ? synthesis!.version : t("versionNoGuideline");
   const title = hasOfficial
     ? parentSide
-      ? `${disease.name} — what the guidelines say`
+      ? t("titleWhatGuidelinesSay", { disease: disease.name })
       : synthesis!.title
-    : `${disease.name} — guidelines`;
+    : t("titleGuidelines", { disease: disease.name });
 
   return (
     <section className="page page--gl2">

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@gene-guidelines/ui";
 import type { Disease } from "../types/disease";
 import type { GuidelineSuggestion, SuggestionComment } from "../types/guidelineSuggestion";
@@ -32,6 +33,7 @@ export function FocusedReviewView({
   role,
   onNav,
 }: FocusedReviewViewProps) {
+  const { t } = useTranslation("guidelines");
   const held = role === "doctor-unverified";
   const isAddition = suggestion.kind === "addition";
   const [comments, setComments] = useState<readonly SuggestionComment[]>(
@@ -39,6 +41,7 @@ export function FocusedReviewView({
   );
   const [draft, setDraft] = useState("");
   const [regen, setRegen] = useState(false);
+  const youLabel = t("commentAuthorYou");
 
   const addNote = () => {
     const text = draft.trim();
@@ -47,7 +50,11 @@ export function FocusedReviewView({
     }
     setComments([
       ...comments,
-      { who: "You", tier: role === "researcher" ? "researcher" : "clinician", text },
+      {
+        who: youLabel,
+        tier: role === "researcher" ? t("commentTierResearcher") : t("commentTierClinician"),
+        text,
+      },
     ]);
     setDraft("");
   };
@@ -68,7 +75,7 @@ export function FocusedReviewView({
             <span
               className={`gx-kind ${isAddition ? "gx-kind--add" : "gx-kind--mod"} gx-focus__kind`}
             >
-              {isAddition ? "+ addition" : "± modification"}
+              {isAddition ? t("kindAddition") : t("kindModification")}
             </span>
             <h1 className="gx-bar__title">{suggestion.title}</h1>
           </div>
@@ -83,16 +90,14 @@ export function FocusedReviewView({
             <path d="M12 8h.01M11 12h1v4h1" />
           </svg>
           <span>
-            {isAddition
-              ? "This is a proposed addition to the guideline"
-              : "This is a proposed change to the current guideline"}
-            . Your rating is a <b>signal for the next reviewer</b> — it does not modify the
-            official text.
+            {isAddition ? t("disclaimerAddition") : t("disclaimerModification")}
+            {". "}
+            {t("ratingSignalLead")} <b>{t("ratingSignalBold")}</b> {t("ratingSignalTail")}
           </span>
         </div>
 
         <div className="gx-rationale gx-focus__rationale">
-          <span className="lbl">Why AI proposes this</span>
+          <span className="lbl">{t("rationaleLabel")}</span>
           {suggestion.rationale}
         </div>
         <EvidenceMeter level={suggestion.evidence} />
@@ -102,21 +107,19 @@ export function FocusedReviewView({
             <path d="M3 3v18h18" />
             <path d="m7 14 3-3 3 3 5-5" />
           </svg>
-          {isAddition
-            ? "Placement preview — where this addition lands in the document."
-            : "The change shown as a unified diff against the source document."}
+          {isAddition ? t("placementCaptionAddition") : t("placementCaptionModification")}
         </div>
         <GuidelineContextDiff slug={slug} suggestion={suggestion} />
 
         <div className="gx-focus__evlabel">
-          {isAddition ? "Evidence for the addition" : "Evidence for the change"}
+          {isAddition ? t("evidenceForAddition") : t("evidenceForModification")}
         </div>
         <div className="gx-cits gx-cits--boxed">
           {suggestion.citations.length > 0 ? (
             suggestion.citations.map((pmid) => <CitationRow key={pmid} pmid={pmid} />)
           ) : (
             <div className="gx-citrow">
-              <div className="gx-citrow__t">No citations attached yet.</div>
+              <div className="gx-citrow__t">{t("noCitationsYet")}</div>
             </div>
           )}
         </div>
@@ -129,13 +132,13 @@ export function FocusedReviewView({
                 <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" />
                 <circle cx="12" cy="12" r="2.5" />
               </svg>
-              Visible only to other clinicians and researchers
+              {t("visibleOnlyClinicians")}
             </span>
             <textarea
               className="gx-cmt__box"
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
-              placeholder="Note for the next reviewer…"
+              placeholder={t("notePlaceholder")}
             />
             <div className="gx-cmt__foot">
               <Button
@@ -145,7 +148,7 @@ export function FocusedReviewView({
                 disabled={draft.trim() === ""}
                 onClick={addNote}
               >
-                Add note
+                {t("addNoteButton")}
               </Button>
               {suggestion.regenSeed != null ? (
                 <button
@@ -157,12 +160,10 @@ export function FocusedReviewView({
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <path d="M3 12a9 9 0 0 1 15-6.7L21 8M21 3v5h-5M21 12a9 9 0 0 1-15 6.7L3 16M3 21v-5h5" />
                   </svg>
-                  Regenerate with my note
+                  {t("regenerateButton")}
                 </button>
               ) : null}
-              <span className="gx-cmt__hint">
-                Creates a new, explicitly versioned draft — never a silent overwrite.
-              </span>
+              <span className="gx-cmt__hint">{t("regenerateHint")}</span>
             </div>
           </div>
 
@@ -171,7 +172,7 @@ export function FocusedReviewView({
               {comments.map((c, i) => (
                 <div key={i} className="gx-thread__i">
                   <span className="gx-thread__av" aria-hidden="true">
-                    {c.who === "You" ? "YOU" : "R"}
+                    {c.who === youLabel ? t("commentAuthorYouAbbrev") : t("otherAvatarInitial")}
                   </span>
                   <div className="gx-thread__b">
                     <div className="gx-thread__who">

@@ -1,8 +1,9 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { repositories } from "../../repositories";
 import type { GuidelineSuggestion, SuggestionSignal } from "../../types/guidelineSuggestion";
 import { RatingButtons, type Rating } from "./RatingButtons";
-import { EVID_LABEL } from "./EvidenceMeter";
+import { EVID_LABEL_KEY } from "./EvidenceMeter";
 
 /**
  * Rail triage card (draft10 `SuggestionCard`, .gx-tri). Carries only what's
@@ -17,9 +18,8 @@ export interface SuggestionCardProps {
   onNav: (path: string) => void;
 }
 
-const ratingWord = (n: number) => (n === 1 ? "rating" : "ratings");
-
 export function SuggestionCard({ slug, suggestion, held = false, onNav }: SuggestionCardProps) {
+  const { t } = useTranslation("guidelines");
   // Init from the suggestion. When a refetch changes myVote/signal (e.g. once
   // auth resolves), the parent re-keys this card so it remounts with fresh props
   // (React's reset-on-key idiom) — no setState-in-effect needed.
@@ -51,7 +51,7 @@ export function SuggestionCard({ slug, suggestion, held = false, onNav }: Sugges
 
   const open = () => onNav(`/diseases/${slug}/guidelines/pr/${suggestion.id}`);
   const enterLabel =
-    suggestion.kind === "addition" ? "Content · placement" : "Diff · evidence · discussion";
+    suggestion.kind === "addition" ? t("enterLabelAddition") : t("enterLabelModification");
 
   return (
     <div
@@ -68,14 +68,14 @@ export function SuggestionCard({ slug, suggestion, held = false, onNav }: Sugges
     >
       <div className="gx-tri__meta">
         <span className={`gx-kind ${suggestion.kind === "addition" ? "gx-kind--add" : "gx-kind--mod"}`}>
-          {suggestion.kind === "addition" ? "+ addition" : "± modification"}
+          {suggestion.kind === "addition" ? t("kindAddition") : t("kindModification")}
         </span>
         <span
           className={`gx-tri__evid gx-tri__evid--${suggestion.evidence}`}
-          title={`Evidence strength: ${EVID_LABEL[suggestion.evidence]}`}
+          title={t("evidenceStrengthTitle", { label: t(EVID_LABEL_KEY[suggestion.evidence]) })}
         >
           <span className="gx-tri__dot" aria-hidden="true" />
-          {EVID_LABEL[suggestion.evidence]}
+          {t(EVID_LABEL_KEY[suggestion.evidence])}
         </span>
       </div>
 
@@ -94,9 +94,16 @@ export function SuggestionCard({ slug, suggestion, held = false, onNav }: Sugges
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M7 10v11M2 10h5v11H2zM7 10l4-7a2 2 0 0 1 3 1.5V8h5a2 2 0 0 1 2 2.3l-1.3 8A2 2 0 0 1 16.7 20H7" />
               </svg>
-              <b>{sig.useful}</b> useful · {sig.ratings} {ratingWord(sig.ratings)}
+              <b>{sig.useful}</b>{" "}
+              {t("usefulCountSuffix", {
+                count: sig.ratings,
+                word: t(sig.ratings === 1 ? "ratingSingular" : "ratingPlural"),
+              })}
               {sig.verified > 0 ? (
-                <span className="gx-tri__ver" title={`${sig.verified} from verified specialists`}>
+                <span
+                  className="gx-tri__ver"
+                  title={t("verifiedFromSpecialistsTitle", { count: sig.verified })}
+                >
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <path d="M12 2 4 5v6c0 5 3.4 8.5 8 10 4.6-1.5 8-5 8-10V5z" />
                     <path d="M9 12l2 2 4-4" />
@@ -106,7 +113,7 @@ export function SuggestionCard({ slug, suggestion, held = false, onNav }: Sugges
               ) : null}
             </>
           ) : (
-            <span className="gx-tri__noratings">No ratings — rate it first</span>
+            <span className="gx-tri__noratings">{t("noRatingsRateFirst")}</span>
           )}
         </div>
         <RatingButtons value={vote} onChange={onRate} held={held} />

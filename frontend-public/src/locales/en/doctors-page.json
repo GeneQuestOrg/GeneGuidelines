@@ -1,0 +1,116 @@
+{
+  "title": "Find a specialist",
+  "viewToggle": {
+    "groupLabel": "Switch view",
+    "listOnly": "List only",
+    "listAndMap": "List and map",
+    "mapOnly": "Map only"
+  },
+  "lead": "Factual signals, not our opinion. We don't divide doctors into trusted and the rest — we show what's documented: publications, guideline authorship, recent activity, and what other families report.",
+  "addDoctorCta": {
+    "openModal": "Recommend a doctor we're missing",
+    "signIn": "Sign in to recommend a doctor we're missing"
+  },
+  "presets": {
+    "groupLabel": "Quick filters for families",
+    "hint": "Start here:"
+  },
+  "diseaseFilter": {
+    "placeholder": "Filter by disease — name, gene, OMIM…",
+    "clearAriaLabel": "Clear disease filter"
+  },
+  "filters": {
+    "specialty": "Specialty",
+    "anySpecialty": "Any specialty",
+    "country": "Country",
+    "anyCountry": "Any country",
+    "sort": "Sort",
+    "moreFilters": "More filters",
+    "moreFiltersCount": "More filters ({{count}})",
+    "advancedGroupLabel": "Advanced filters",
+    "diseaseExperience": "Disease experience",
+    "onTheDisease": "On the disease",
+    "source": "Source",
+    "seesPatients": "Sees patients",
+    "seesPatientsTitle": "Show doctors who see patients (experts reachable for a consult are always kept)",
+    "parentOnlyTitle": "Show only doctors recommended by parents",
+    "recommendedByParents": "Recommended by parents ({{count}})",
+    "workTypeGroupLabel": "Type of work on the disease",
+    "workTypeLabel": "Type of work:"
+  },
+  "sortOptions": {
+    "best": "Best match",
+    "distance": "Nearest",
+    "recency": "Most recent",
+    "score": "PubMed score",
+    "name": "Name (A–Z)"
+  },
+  "roleFilters": {
+    "all": "All roles"
+  },
+  "sourceFilters": {
+    "all": "All sources",
+    "pubmed": "PubMed",
+    "parent": "Parent-added",
+    "consortium": "Consortium"
+  },
+  "recencyFilters": {
+    "any": "Any time",
+    "active2y": "On top of it (≤2y)",
+    "active5y": "Recent (≤5y)"
+  },
+  "loadingCatalog": "Loading disease catalog…",
+  "loadingSpecialists": "Loading specialists…",
+  "count": {
+    "specialists_one": "{{count}} specialist",
+    "specialists_other": "{{count}} specialists",
+    "showing": "showing {{from}}–{{to}}"
+  },
+  "empty": {
+    "unknownDiseaseLead": "No specialists are listed for",
+    "unknownDiseaseYet": "yet.",
+    "startResearchRun": "Start a research run",
+    "unknownDiseaseTail": "to build the evidence base for this condition.",
+    "noMatches": "No specialists match the current filters. Try a different role, source, or distance filter."
+  },
+  "provenance": {
+    "lead": "Profiles are built from public sources (PubMed, clinic websites) and family reports. A profile can be withdrawn at any time — write to"
+  },
+  "map": {
+    "ariaLabel": "Specialist map",
+    "legend": {
+      "researchLeader": "Led research",
+      "researchParticipant": "Contributed",
+      "caseStudyAuthor": "Case studies"
+    },
+    "count": "{{pinCount}} on map · {{total}} listed",
+    "note": "OpenStreetMap tiles · markers cluster when zoomed out. Click a pin to open the profile.",
+    "yourLocation": "Your location",
+    "specialtyNotVerified": "Specialty not verified"
+  },
+  "addDoctorModal": {
+    "dialogAriaLabel": "Recommend a doctor",
+    "closeAriaLabel": "Close",
+    "title": "Recommend a doctor we're missing",
+    "sub": "Tell us about a specialist who helped your family. We review every submission before it appears in the public directory.",
+    "nameLabel": "Doctor name *",
+    "specialtyLabel": "Specialty",
+    "institutionLabel": "Institution",
+    "cityLabel": "City",
+    "countryLabel": "Country",
+    "countryPlaceholder": "e.g. PL",
+    "diseaseLabel": "Disease",
+    "clearDiseaseAriaLabel": "Clear disease",
+    "diseasePlaceholder": "Disease — name, gene, OMIM…",
+    "noteLabel": "Why are you recommending them?",
+    "notePlaceholder": "What was your experience?",
+    "submitError": "Could not submit — please try again.",
+    "cancel": "Cancel",
+    "submitting": "Submitting…",
+    "submit": "Submit for review",
+    "submittedTitle": "Submitted for moderation",
+    "submittedBody": "Thank you. A reviewer will check this submission before it appears in the public directory.",
+    "duplicateHint": "This doctor may already be in our directory — the reviewer will merge duplicates so nothing is lost.",
+    "done": "Done"
+  }
+}

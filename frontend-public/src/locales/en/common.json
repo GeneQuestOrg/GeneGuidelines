@@ -42,5 +42,13 @@
       "text": "AI-drafted from cited peer-reviewed sources — read with a clinician; not an official guideline."
     }
   },
+  "diseaseFacts": {
+    "gene": "Gene",
+    "omim": "OMIM",
+    "inheritance": "Inheritance",
+    "prevalence": "Prevalence",
+    "types": "Types",
+    "lastRevised": "Last revised"
+  },
   "loadingCatalog": "Loading catalog…"
 }

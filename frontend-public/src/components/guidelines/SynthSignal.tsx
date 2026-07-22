@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import type { SynthSectionSignal } from "../../types/guidelineSynthesis";
 
 /**
@@ -14,6 +15,7 @@ export interface SynthSignalProps {
 }
 
 export function SynthSignal({ signal, held = false }: SynthSignalProps) {
+  const { t } = useTranslation("guidelines");
   const seed = signal ?? { up: 0, flags: 0, verified: 0 };
   const [vote, setVote] = useState<"up" | "flag" | null>(null);
   const [open, setOpen] = useState(false);
@@ -23,7 +25,7 @@ export function SynthSignal({ signal, held = false }: SynthSignalProps) {
   return (
     <div className="gx-synthsig">
       <div className="gx-synthsig__row">
-        <span className="gx-synthsig__q">Is this summary faithful and safe?</span>
+        <span className="gx-synthsig__q">{t("faithfulSafeQuestion")}</span>
         <button
           type="button"
           className={`gx-up ${vote === "up" ? "on" : ""}`}
@@ -36,7 +38,7 @@ export function SynthSignal({ signal, held = false }: SynthSignalProps) {
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <path d="M7 10v11M2 10h5v11H2zM7 10l4-7a2 2 0 0 1 3 1.5V8h5a2 2 0 0 1 2 2.3l-1.3 8A2 2 0 0 1 16.7 20H7" />
           </svg>
-          Useful
+          {t("usefulThumbButton")}
         </button>
         <button
           type="button"
@@ -51,9 +53,9 @@ export function SynthSignal({ signal, held = false }: SynthSignalProps) {
             <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
             <line x1="4" y1="22" x2="4" y2="15" />
           </svg>
-          Report a problem
+          {t("reportProblemButton")}
         </button>
-        {held ? <span className="gx-held">held · unverified</span> : null}
+        {held ? <span className="gx-held">{t("heldUnverified")}</span> : null}
       </div>
 
       {open && !sent ? (
@@ -62,7 +64,7 @@ export function SynthSignal({ signal, held = false }: SynthSignalProps) {
             className="gx-cmt__box"
             value={note}
             onChange={(e) => setNote(e.target.value)}
-            placeholder="What's wrong? e.g. “lost a warning”, “misleading for a parent”, “inconsistent with Gun 2024”…"
+            placeholder={t("flagNotePlaceholder")}
           />
           <button
             type="button"
@@ -70,31 +72,31 @@ export function SynthSignal({ signal, held = false }: SynthSignalProps) {
             disabled={note.trim() === ""}
             onClick={() => setSent(true)}
           >
-            Send report
+            {t("sendReportButton")}
           </button>
         </div>
       ) : null}
 
       {sent ? (
-        <div className="gx-synthsig__sent">
-          Thanks — your report reaches QA before the next reader.
-        </div>
+        <div className="gx-synthsig__sent">{t("reportSentMessage")}</div>
       ) : null}
 
       <div className="gx-synthsig__agg">
-        <b>{seed.up + (vote === "up" ? 1 : 0)}</b> found this useful
+        <b>{seed.up + (vote === "up" ? 1 : 0)}</b> {t("foundUsefulSuffix")}
         {seed.verified > 0 ? (
           <span className="gx-agg__ver">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <path d="M12 2 4 5v6c0 5 3.4 8.5 8 10 4.6-1.5 8-5 8-10V5z" />
               <path d="M9 12l2 2 4-4" />
             </svg>
-            {seed.verified} verified
+            {t("verifiedCount", { count: seed.verified })}
           </span>
         ) : null}
         {seed.flags > 0 ? (
           <span className="gx-synthsig__flagcount">
-            {seed.flags} open report{seed.flags > 1 ? "s" : ""}
+            {t(seed.flags === 1 ? "openReportSingular" : "openReportPlural", {
+              count: seed.flags,
+            })}
           </span>
         ) : null}
       </div>

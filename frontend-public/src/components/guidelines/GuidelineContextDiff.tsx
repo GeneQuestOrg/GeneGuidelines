@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import type { GuidelineSuggestion } from "../../types/guidelineSuggestion";
 import { pubmedUrl } from "../../utils/guidelineSynthesis";
 
@@ -13,6 +14,7 @@ export interface GuidelineContextDiffProps {
 }
 
 function CitationChips({ pmids }: { pmids: readonly string[] }) {
+  const { t } = useTranslation("guidelines");
   if (pmids.length === 0) {
     return null;
   }
@@ -25,7 +27,7 @@ function CitationChips({ pmids }: { pmids: readonly string[] }) {
           href={pubmedUrl(pmid)}
           target="_blank"
           rel="noopener noreferrer"
-          title={`PMID ${pmid}`}
+          title={t("pmidLabel", { pmid })}
         >
           [{pmid}]
         </a>
@@ -42,13 +44,14 @@ const FILE_ICON = (
 );
 
 export function GuidelineContextDiff({ slug, suggestion }: GuidelineContextDiffProps) {
+  const { t } = useTranslation("guidelines");
   // Modification with a diff → unified diff against the source document.
   if (suggestion.kind === "modification" && suggestion.diff != null) {
     const { file, hunk, lines } = suggestion.diff;
     return (
       <div className="gx-diff">
         <div className="gx-diff__h">
-          <b>{file}</b> · unified diff
+          <b>{file}</b> {t("unifiedDiffSuffix")}
         </div>
         <div className="gx-diff__hunk">{hunk}</div>
         {lines.map((ln, i) => (
@@ -80,7 +83,7 @@ export function GuidelineContextDiff({ slug, suggestion }: GuidelineContextDiffP
       <div className="gd__hunk">
         {suggestion.sectionLabel}
         <span className="gd__hunklbl">
-          {suggestion.kind === "addition" ? "proposed addition" : "proposed content"}
+          {suggestion.kind === "addition" ? t("proposedAddition") : t("proposedContent")}
         </span>
       </div>
       <div className="gd__row gd__row--add">

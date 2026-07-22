@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import type { UserLocation } from "../router/types";
 import type { DiseaseSuggestion } from "../api/diseaseIndex";
 import { attachTrialDistances } from "../api/trials";
@@ -32,35 +33,36 @@ export interface TrialsBrowserViewProps {
 
 const STATUS_FILTER_ALL = "all";
 
-const STATUS_FILTERS: readonly { value: TrialStatusFilter; label: string }[] = [
-  { value: "recruiting", label: "Recruiting" },
-  { value: "active_not_recruiting", label: "Active, not recruiting" },
-  { value: "completed", label: "Completed" },
-  { value: STATUS_FILTER_ALL, label: "Any status" },
-];
-
 const PHASE_FILTER_ALL = "all";
-
-const PHASE_FILTERS: readonly { value: string; label: string }[] = [
-  { value: PHASE_FILTER_ALL, label: "Any phase" },
-  { value: "1", label: "Phase 1" },
-  { value: "2", label: "Phase 2" },
-  { value: "3", label: "Phase 3" },
-  { value: "4", label: "Phase 4" },
-];
-
-const SORT_OPTIONS: readonly { value: string; label: string }[] = [
-  { value: "status", label: "Status" },
-  { value: "nearest", label: "Nearest" },
-  { value: "date", label: "Most recent" },
-];
 
 type ViewMode = "both" | "list" | "map";
 
 export function TrialsBrowserView({ userLoc, search, onNav }: TrialsBrowserViewProps) {
+  const { t } = useTranslation("trials");
   const { trials, loading, error } = useTrials();
   const { diseases, loading: diseasesLoading } = useDiseaseCatalog();
   const [viewMode, setViewMode] = useState<ViewMode>("both");
+
+  const STATUS_FILTERS: readonly { value: TrialStatusFilter; label: string }[] = [
+    { value: "recruiting", label: t("statusOptionRecruiting") },
+    { value: "active_not_recruiting", label: t("statusOptionActiveNotRecruiting") },
+    { value: "completed", label: t("statusOptionCompleted") },
+    { value: STATUS_FILTER_ALL, label: t("statusOptionAny") },
+  ];
+
+  const PHASE_FILTERS: readonly { value: string; label: string }[] = [
+    { value: PHASE_FILTER_ALL, label: t("phaseOptionAny") },
+    { value: "1", label: t("phaseOption1") },
+    { value: "2", label: t("phaseOption2") },
+    { value: "3", label: t("phaseOption3") },
+    { value: "4", label: t("phaseOption4") },
+  ];
+
+  const SORT_OPTIONS: readonly { value: string; label: string }[] = [
+    { value: "status", label: t("sortOptionStatus") },
+    { value: "nearest", label: t("sortOptionNearest") },
+    { value: "date", label: t("sortOptionDate") },
+  ];
   // Picking a non-catalog disease shows an empty state. Such a name has no slug
   // and no rows, so it is transient local state rather than part of the URL query.
   const [unknownDisease, setUnknownDisease] = useState<string | null>(null);
@@ -148,12 +150,12 @@ export function TrialsBrowserView({ userLoc, search, onNav }: TrialsBrowserViewP
     <section className="page page--doctors">
       <header className="page__head">
         <div className="page__head-row">
-          <h1 className="page__title">Clinical trials</h1>
-          <div className="view-toggle" role="group" aria-label="Switch view">
+          <h1 className="page__title">{t("title")}</h1>
+          <div className="view-toggle" role="group" aria-label={t("switchView")}>
             <button
               className={`view-toggle__btn${viewMode === "list" ? " is-active" : ""}`}
               onClick={() => setViewMode("list")}
-              title="List only"
+              title={t("viewListOnly")}
               aria-pressed={viewMode === "list"}
             >
               ☰
@@ -161,7 +163,7 @@ export function TrialsBrowserView({ userLoc, search, onNav }: TrialsBrowserViewP
             <button
               className={`view-toggle__btn${viewMode === "both" ? " is-active" : ""}`}
               onClick={() => setViewMode("both")}
-              title="List and map"
+              title={t("viewListAndMap")}
               aria-pressed={viewMode === "both"}
             >
               ⊞
@@ -169,18 +171,14 @@ export function TrialsBrowserView({ userLoc, search, onNav }: TrialsBrowserViewP
             <button
               className={`view-toggle__btn${viewMode === "map" ? " is-active" : ""}`}
               onClick={() => setViewMode("map")}
-              title="Map only"
+              title={t("viewMapOnly")}
               aria-pressed={viewMode === "map"}
             >
               ⊕
             </button>
           </div>
         </div>
-        <p className="page__lead">
-          Trials we have catalogued for these conditions, with their recruitment status and sites.
-          GeneGuidelines does not run recruitment — every card links to the official
-          ClinicalTrials.gov record for eligibility and contact details.
-        </p>
+        <p className="page__lead">{t("lead")}</p>
       </header>
 
       <div className="dfilters">
@@ -191,7 +189,7 @@ export function TrialsBrowserView({ userLoc, search, onNav }: TrialsBrowserViewP
               type="button"
               className="dchip__x"
               onClick={handleClearDisease}
-              aria-label="Clear disease filter"
+              aria-label={t("clearDiseaseFilter")}
             >
               ×
             </button>
@@ -199,7 +197,7 @@ export function TrialsBrowserView({ userLoc, search, onNav }: TrialsBrowserViewP
         ) : (
           <div className="dfilters__search">
             <DiseaseAutocomplete
-              placeholder="Filter by disease — name, gene, OMIM…"
+              placeholder={t("diseaseSearchPlaceholder")}
               onPick={handlePickDisease}
               onMissingClick={() => onNav("/start-research")}
             />
@@ -215,14 +213,14 @@ export function TrialsBrowserView({ userLoc, search, onNav }: TrialsBrowserViewP
             onPickRadius={(km) => patchQuery({ maxKm: km })}
           />
           <FilterMenu
-            label="Status"
+            label={t("filterStatusLabel")}
             value={query.status}
             neutralValue="recruiting"
             options={STATUS_FILTERS}
             onPick={(v) => patchQuery({ status: v as TrialStatusFilter })}
           />
           <FilterMenu
-            label="Phase"
+            label={t("filterPhaseLabel")}
             value={query.phase ?? PHASE_FILTER_ALL}
             options={PHASE_FILTERS}
             onPick={(v) =>
@@ -230,7 +228,7 @@ export function TrialsBrowserView({ userLoc, search, onNav }: TrialsBrowserViewP
             }
           />
           <FilterMenu
-            label="Sort"
+            label={t("filterSortLabel")}
             value={query.sort}
             neutralValue="status"
             options={SORT_OPTIONS}
@@ -239,8 +237,8 @@ export function TrialsBrowserView({ userLoc, search, onNav }: TrialsBrowserViewP
         </div>
       </div>
 
-      {diseasesLoading ? <p className="page__loading">Loading disease catalog…</p> : null}
-      {loading ? <p className="page__loading">Loading trials…</p> : null}
+      {diseasesLoading ? <p className="page__loading">{t("loadingDiseaseCatalog")}</p> : null}
+      {loading ? <p className="page__loading">{t("loadingTrials")}</p> : null}
       {error != null ? (
         <p className="d-panel-empty" role="alert">
           {error}
@@ -253,33 +251,34 @@ export function TrialsBrowserView({ userLoc, search, onNav }: TrialsBrowserViewP
             <div className="doctors-list">
               {items.length > 0 ? (
                 <p className="doctors-count">
-                  {items.length} trial{items.length === 1 ? "" : "s"}
-                  {pageCount > 1 ? (
-                    <>
-                      {" · showing "}
-                      {pageStart + 1}–{pageStart + visibleItems.length}
-                    </>
-                  ) : null}
+                  {t("resultCount", {
+                    count: items.length,
+                    range:
+                      pageCount > 1
+                        ? t("showingRange", {
+                            start: pageStart + 1,
+                            end: pageStart + visibleItems.length,
+                          })
+                        : "",
+                  })}
                 </p>
               ) : null}
               {items.length > 0 ? <TrialsList trials={visibleItems} /> : null}
               {items.length === 0 ? (
                 unknownDisease != null ? (
                   <p className="d-panel-empty">
-                    No trials are catalogued for <strong>{unknownDisease}</strong> yet.{" "}
-                    <button
+                    {t("emptyUnknownDiseasePrefix")} <strong>{unknownDisease}</strong>
+                    {t("emptyUnknownDiseaseYet")} <button
                       type="button"
                       className="link-btn"
                       onClick={() => onNav("/start-research")}
                     >
-                      Start a research run
-                    </button>{" "}
-                    to build the evidence base for this condition.
+                      {t("startResearchRun")}
+                    </button>
+                    {t("emptyUnknownDiseaseSuffix")}
                   </p>
                 ) : (
-                  <p className="d-panel-empty">
-                    No trials match the current filters. Try a different status, phase, or distance.
-                  </p>
+                  <p className="d-panel-empty">{t("emptyNoMatches")}</p>
                 )
               ) : null}
               <Pagination
@@ -288,10 +287,7 @@ export function TrialsBrowserView({ userLoc, search, onNav }: TrialsBrowserViewP
                 onPage={(p) => patchQuery({ page: p })}
               />
               {items.length > 0 ? (
-                <p className="doctors-provenance">
-                  Trial records are catalogued from ClinicalTrials.gov and may lag the registry.
-                  Always confirm status, eligibility, and contact details on the official record.
-                </p>
+                <p className="doctors-provenance">{t("provenance")}</p>
               ) : null}
             </div>
           ) : null}

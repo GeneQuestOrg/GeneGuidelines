@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import type { GuidelineBaseline } from "../../types/guidelineBaseline";
 import { EvidenceMeter } from "./EvidenceMeter";
 import { CitationRow } from "./CitationRow";
@@ -22,6 +23,7 @@ export function GuidelineBaselineView({
   diseaseName,
   held = false,
 }: GuidelineBaselineViewProps) {
+  const { t } = useTranslation("guidelines");
   return (
     <>
       <div className="gx-baseflag">
@@ -30,10 +32,10 @@ export function GuidelineBaselineView({
           <path d="M12 9v4M12 17h.01" />
         </svg>
         <div>
-          <b>There is no agreed guideline for {diseaseName.toLowerCase()}.</b>
+          <b>{t("baselineNoGuidelineTitle", { disease: diseaseName.toLowerCase() })}</b>
           <p>
-            This is an AI-built <b>baseline for expert review</b> — not a guideline. Experts
-            can author here, not only review. Assembled from {baseline.builtFrom}.
+            {t("baselineDisclaimerPart1")} <b>{t("baselineDisclaimerBold")}</b>{" "}
+            {t("baselineDisclaimerPart2", { builtFrom: baseline.builtFrom })}
           </p>
         </div>
       </div>
@@ -42,7 +44,7 @@ export function GuidelineBaselineView({
         <div className="gx-run__top">
           <span className="gx-run__pulse" aria-hidden="true" />
           <span className="gx-run__t">
-            Evidence workflow <span className="by">· how this draft was built</span>
+            {t("evidenceWorkflowTitle")} <span className="by">{t("evidenceWorkflowSub")}</span>
           </span>
         </div>
         <ol className="gx-run__steps">
@@ -66,7 +68,7 @@ export function GuidelineBaselineView({
             <div key={item.id} className="gx-baseitem">
               <div className="gx-baseitem__text">{item.text}</div>
               <div className="gx-rationale">
-                <span className="lbl">Provenance</span>
+                <span className="lbl">{t("provenanceLabel")}</span>
                 {item.provenance}
               </div>
               <EvidenceMeter level={item.evidence} />

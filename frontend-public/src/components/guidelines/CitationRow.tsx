@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { pubmedUrl } from "../../utils/guidelineSynthesis";
 
 /**
@@ -6,11 +7,12 @@ import { pubmedUrl } from "../../utils/guidelineSynthesis";
  * (GL-4 CITATIONS). For now we link the PMID straight to PubMed.
  */
 export function CitationRow({ pmid }: { pmid: string }) {
+  const { t } = useTranslation("guidelines");
   return (
     <div className="gx-citrow">
       <div className="gx-citrow__t">
-        PubMed reference
-        <div className="gx-citrow__m">Full citation metadata lands with the backend.</div>
+        {t("pubmedReferenceLabel")}
+        <div className="gx-citrow__m">{t("fullCitationNote")}</div>
       </div>
       <div className="gx-citrow__r">
         <a
@@ -19,7 +21,7 @@ export function CitationRow({ pmid }: { pmid: string }) {
           target="_blank"
           rel="noopener noreferrer"
         >
-          PMID {pmid}
+          {t("pmidLabel", { pmid })}
         </a>
       </div>
     </div>

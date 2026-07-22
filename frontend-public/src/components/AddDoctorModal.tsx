@@ -19,6 +19,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@gene-guidelines/ui";
 import { ApiRequestError } from "../api/client";
 import type { DiseaseSuggestion } from "../api/diseaseIndex";
@@ -34,6 +35,7 @@ export interface AddDoctorModalProps {
 }
 
 export function AddDoctorModal({ onClose, initialDiseaseSlug }: AddDoctorModalProps) {
+  const { t } = useTranslation("doctors-page");
   const [name, setName] = useState("");
   const [specialty, setSpecialty] = useState("");
   const [institution, setInstitution] = useState("");
@@ -92,11 +94,11 @@ export function AddDoctorModal({ onClose, initialDiseaseSlug }: AddDoctorModalPr
         const message =
           e instanceof ApiRequestError || e instanceof Error
             ? e.message
-            : "Could not submit — please try again.";
+            : t("addDoctorModal.submitError");
         dispatch({ type: "failure", message });
       }
     },
-    [trimmedName, specialty, institution, city, country, diseaseSlug, note],
+    [trimmedName, specialty, institution, city, country, diseaseSlug, note, t],
   );
 
   return (
@@ -104,7 +106,7 @@ export function AddDoctorModal({ onClose, initialDiseaseSlug }: AddDoctorModalPr
       className="add-doc-modal"
       role="dialog"
       aria-modal="true"
-      aria-label="Recommend a doctor"
+      aria-label={t("addDoctorModal.dialogAriaLabel")}
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) {
           onClose();
@@ -116,7 +118,7 @@ export function AddDoctorModal({ onClose, initialDiseaseSlug }: AddDoctorModalPr
           type="button"
           className="add-doc-modal__close"
           onClick={onClose}
-          aria-label="Close"
+          aria-label={t("addDoctorModal.closeAriaLabel")}
         >
           ×
         </button>
@@ -129,16 +131,13 @@ export function AddDoctorModal({ onClose, initialDiseaseSlug }: AddDoctorModalPr
         ) : (
           <>
             <div className="add-doc-modal__head">
-              <h2 className="add-doc-modal__title">Recommend a doctor we&rsquo;re missing</h2>
-              <p className="add-doc-modal__sub">
-                Tell us about a specialist who helped your family. We review every
-                submission before it appears in the public directory.
-              </p>
+              <h2 className="add-doc-modal__title">{t("addDoctorModal.title")}</h2>
+              <p className="add-doc-modal__sub">{t("addDoctorModal.sub")}</p>
             </div>
 
             <form className="add-doc-form" onSubmit={handleSubmit}>
               <label className="add-doc-form__field">
-                <span className="add-doc-form__label">Doctor name *</span>
+                <span className="add-doc-form__label">{t("addDoctorModal.nameLabel")}</span>
                 <input
                   ref={firstFieldRef}
                   className="add-doc-form__input"
@@ -151,7 +150,7 @@ export function AddDoctorModal({ onClose, initialDiseaseSlug }: AddDoctorModalPr
 
               <div className="add-doc-form__row">
                 <label className="add-doc-form__field">
-                  <span className="add-doc-form__label">Specialty</span>
+                  <span className="add-doc-form__label">{t("addDoctorModal.specialtyLabel")}</span>
                   <input
                     className="add-doc-form__input"
                     type="text"
@@ -160,7 +159,7 @@ export function AddDoctorModal({ onClose, initialDiseaseSlug }: AddDoctorModalPr
                   />
                 </label>
                 <label className="add-doc-form__field">
-                  <span className="add-doc-form__label">Institution</span>
+                  <span className="add-doc-form__label">{t("addDoctorModal.institutionLabel")}</span>
                   <input
                     className="add-doc-form__input"
                     type="text"
@@ -172,7 +171,7 @@ export function AddDoctorModal({ onClose, initialDiseaseSlug }: AddDoctorModalPr
 
               <div className="add-doc-form__row">
                 <label className="add-doc-form__field">
-                  <span className="add-doc-form__label">City</span>
+                  <span className="add-doc-form__label">{t("addDoctorModal.cityLabel")}</span>
                   <input
                     className="add-doc-form__input"
                     type="text"
@@ -181,19 +180,19 @@ export function AddDoctorModal({ onClose, initialDiseaseSlug }: AddDoctorModalPr
                   />
                 </label>
                 <label className="add-doc-form__field">
-                  <span className="add-doc-form__label">Country</span>
+                  <span className="add-doc-form__label">{t("addDoctorModal.countryLabel")}</span>
                   <input
                     className="add-doc-form__input"
                     type="text"
                     value={country}
                     onChange={(e) => setCountry(e.target.value)}
-                    placeholder="e.g. PL"
+                    placeholder={t("addDoctorModal.countryPlaceholder")}
                   />
                 </label>
               </div>
 
               <div className="add-doc-form__field">
-                <span className="add-doc-form__label">Disease</span>
+                <span className="add-doc-form__label">{t("addDoctorModal.diseaseLabel")}</span>
                 {diseaseLabel != null ? (
                   <div className="add-doc-form__picked">
                     <span>{diseaseLabel}</span>
@@ -204,14 +203,14 @@ export function AddDoctorModal({ onClose, initialDiseaseSlug }: AddDoctorModalPr
                         setDiseaseSlug(null);
                         setDiseaseLabel(null);
                       }}
-                      aria-label="Clear disease"
+                      aria-label={t("addDoctorModal.clearDiseaseAriaLabel")}
                     >
                       ×
                     </button>
                   </div>
                 ) : (
                   <DiseaseAutocomplete
-                    placeholder="Disease — name, gene, OMIM…"
+                    placeholder={t("addDoctorModal.diseasePlaceholder")}
                     onPick={handlePickDisease}
                     onMissingClick={() => undefined}
                   />
@@ -219,13 +218,13 @@ export function AddDoctorModal({ onClose, initialDiseaseSlug }: AddDoctorModalPr
               </div>
 
               <label className="add-doc-form__field">
-                <span className="add-doc-form__label">Why are you recommending them?</span>
+                <span className="add-doc-form__label">{t("addDoctorModal.noteLabel")}</span>
                 <textarea
                   className="add-doc-form__textarea"
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
                   rows={3}
-                  placeholder="What was your experience?"
+                  placeholder={t("addDoctorModal.notePlaceholder")}
                 />
               </label>
 
@@ -237,10 +236,12 @@ export function AddDoctorModal({ onClose, initialDiseaseSlug }: AddDoctorModalPr
 
               <div className="add-doc-form__actions">
                 <Button type="button" variant="ghost" onClick={onClose}>
-                  Cancel
+                  {t("addDoctorModal.cancel")}
                 </Button>
                 <Button type="submit" disabled={!canSubmit}>
-                  {state.status === "submitting" ? "Submitting…" : "Submit for review"}
+                  {state.status === "submitting"
+                    ? t("addDoctorModal.submitting")
+                    : t("addDoctorModal.submit")}
                 </Button>
               </div>
             </form>
@@ -258,22 +259,17 @@ function SubmittedPanel({
   possibleDuplicate: boolean;
   onClose: () => void;
 }): ReactNode {
+  const { t } = useTranslation("doctors-page");
   return (
     <div className="add-doc-modal__done">
-      <h2 className="add-doc-modal__title">Submitted for moderation</h2>
-      <p className="add-doc-modal__sub">
-        Thank you. A reviewer will check this submission before it appears in the
-        public directory.
-      </p>
+      <h2 className="add-doc-modal__title">{t("addDoctorModal.submittedTitle")}</h2>
+      <p className="add-doc-modal__sub">{t("addDoctorModal.submittedBody")}</p>
       {possibleDuplicate ? (
-        <p className="add-doc-modal__hint">
-          This doctor may already be in our directory — the reviewer will merge
-          duplicates so nothing is lost.
-        </p>
+        <p className="add-doc-modal__hint">{t("addDoctorModal.duplicateHint")}</p>
       ) : null}
       <div className="add-doc-form__actions">
         <Button type="button" onClick={onClose}>
-          Done
+          {t("addDoctorModal.done")}
         </Button>
       </div>
     </div>

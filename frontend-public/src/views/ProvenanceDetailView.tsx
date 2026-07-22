@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Button } from "@gene-guidelines/ui";
 import type { Disease } from "../types/disease";
 import type { GuidelineSynthesis, SynthesisParagraph } from "../types/guidelineSynthesis";
@@ -45,6 +46,7 @@ export function ProvenanceDetailView({
   role,
   onNav,
 }: ProvenanceDetailViewProps) {
+  const { t } = useTranslation("guidelines");
   const found = findParagraph(synthesis, paraId);
 
   const backToGuideline = (
@@ -71,8 +73,8 @@ export function ProvenanceDetailView({
             <path d="m20 20-3.5-3.5" />
           </svg>
           <div>
-            <b>Claim not found.</b>
-            <p>This statement is no longer in the synthesis.</p>
+            <b>{t("claimNotFoundTitle")}</b>
+            <p>{t("claimNotFoundBody")}</p>
           </div>
         </div>
       </section>
@@ -89,22 +91,18 @@ export function ProvenanceDetailView({
         <div className="gx-bar__left">
           {backToGuideline}
           <div>
-            <span className="gx-bar__ver">Basis · {sectionTitle}</span>
-            <h1 className="gx-bar__title">Where we know this from</h1>
+            <span className="gx-bar__ver">{t("basisSectionLabel", { section: sectionTitle })}</span>
+            <h1 className="gx-bar__title">{t("provenancePageTitle")}</h1>
           </div>
         </div>
         <RolePill role={role} />
       </header>
 
-      <p className="gx-prov__lead">
-        On the left — the claim from the synthesis. On the right — the literature it rests
-        on. Each links to its original on PubMed. (Paraphrased source quotes arrive with the
-        backend.)
-      </p>
+      <p className="gx-prov__lead">{t("provenanceLead")}</p>
 
       <div className="prov">
         <div className="prov__claim">
-          <div className="prov__claimhd">Synthesis claim</div>
+          <div className="prov__claimhd">{t("synthesisClaimLabel")}</div>
           <p className="prov__claimtx">{para.text}</p>
           {para.update != null ? (
             <div className={`prov__upd${para.update.supersedes ? " is-super" : ""}`}>
@@ -121,37 +119,39 @@ export function ProvenanceDetailView({
               target="_blank"
               rel="noopener noreferrer"
             >
-              Base document: {shortDocLabel(docs, srcDoc.id)} ↗
+              {t("baseDocumentLink", { label: shortDocLabel(docs, srcDoc.id) })}
             </a>
           ) : null}
         </div>
 
         <div className="prov__basis">
           <div className="prov__basishd">
-            {citations.length}{" "}
-            {citations.length === 1 ? "basis reference" : "basis references"}
+            {t(
+              citations.length === 1 ? "basisReferenceSingular" : "basisReferencePlural",
+              { count: citations.length },
+            )}
           </div>
           {citations.map((pmid) => (
             <div key={pmid} className="prov__frag">
               <div className="prov__fraghd">
-                <span className="prov__fragsrc">Source reference</span>
+                <span className="prov__fragsrc">{t("sourceReferenceLabel")}</span>
                 <a
                   className="gx-pmid"
                   href={pubmedUrl(pmid)}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  PMID {pmid}
+                  {t("pmidLabel", { pmid })}
                 </a>
               </div>
-              <div className="prov__title">Cited in support of this claim.</div>
+              <div className="prov__title">{t("citedInSupport")}</div>
             </div>
           ))}
           {citations.length === 0 ? (
             <div className="gx-empty">
               <div>
-                <b>No references attached yet.</b>
-                <p>This claim has no literature basis mapped yet.</p>
+                <b>{t("noReferencesTitle")}</b>
+                <p>{t("noReferencesBody")}</p>
               </div>
             </div>
           ) : null}

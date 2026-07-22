@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@gene-guidelines/ui";
 import type { UserLocation } from "../router/types";
 import type { DiseaseSuggestion } from "../api/diseaseIndex";
@@ -43,39 +44,12 @@ export interface DoctorsViewProps {
 
 const ROLE_FILTER_ALL = "all";
 
-const ROLE_FILTERS: readonly { value: string; label: string }[] = [
-  { value: ROLE_FILTER_ALL, label: "All roles" },
-  { value: "research_leader", label: pubmedRoleLabel("research_leader") },
-  { value: "research_participant", label: pubmedRoleLabel("research_participant") },
-  { value: "case_study_author", label: pubmedRoleLabel("case_study_author") },
-];
-
-const SOURCE_FILTERS: readonly { value: SourceFilter; label: string }[] = [
-  { value: "all", label: "All sources" },
-  { value: "pubmed", label: "PubMed" },
-  { value: "parent", label: "Parent-added" },
-  { value: "consortium", label: "Consortium" },
-];
-
-const SORT_OPTIONS: readonly { value: string; label: string }[] = [
-  { value: "best", label: "Best match" },
-  { value: "distance", label: "Nearest" },
-  { value: "recency", label: "Most recent" },
-  { value: "score", label: "PubMed score" },
-  { value: "name", label: "Name (A–Z)" },
-];
-
 const RECENCY_FILTER_ALL = "all";
-
-const RECENCY_FILTERS: readonly { value: string; label: string }[] = [
-  { value: RECENCY_FILTER_ALL, label: "Any time" },
-  { value: "active_2y", label: "On top of it (≤2y)" },
-  { value: "active_5y", label: "Recent (≤5y)" },
-];
 
 type ViewMode = "both" | "list" | "map";
 
 export function DoctorsView({ search, onNav }: DoctorsViewProps) {
+  const { t } = useTranslation("doctors-page");
   const { doctors, loading, error } = useDoctors();
   const { diseases, loading: diseasesLoading } = useDiseaseCatalog();
   const account = useAccountContext();
@@ -251,16 +225,44 @@ export function DoctorsView({ search, onNav }: DoctorsViewProps) {
 
   const ready = !loading && error == null;
 
+  const roleFilters: readonly { value: string; label: string }[] = [
+    { value: ROLE_FILTER_ALL, label: t("roleFilters.all") },
+    { value: "research_leader", label: pubmedRoleLabel("research_leader") },
+    { value: "research_participant", label: pubmedRoleLabel("research_participant") },
+    { value: "case_study_author", label: pubmedRoleLabel("case_study_author") },
+  ];
+
+  const sourceFilters: readonly { value: SourceFilter; label: string }[] = [
+    { value: "all", label: t("sourceFilters.all") },
+    { value: "pubmed", label: t("sourceFilters.pubmed") },
+    { value: "parent", label: t("sourceFilters.parent") },
+    { value: "consortium", label: t("sourceFilters.consortium") },
+  ];
+
+  const sortOptions: readonly { value: string; label: string }[] = [
+    { value: "best", label: t("sortOptions.best") },
+    { value: "distance", label: t("sortOptions.distance") },
+    { value: "recency", label: t("sortOptions.recency") },
+    { value: "score", label: t("sortOptions.score") },
+    { value: "name", label: t("sortOptions.name") },
+  ];
+
+  const recencyFilters: readonly { value: string; label: string }[] = [
+    { value: RECENCY_FILTER_ALL, label: t("recencyFilters.any") },
+    { value: "active_2y", label: t("recencyFilters.active2y") },
+    { value: "active_5y", label: t("recencyFilters.active5y") },
+  ];
+
   return (
     <section className="page page--doctors">
       <header className="page__head">
         <div className="page__head-row">
-          <h1 className="page__title">Find a specialist</h1>
-          <div className="view-toggle" role="group" aria-label="Switch view">
+          <h1 className="page__title">{t("title")}</h1>
+          <div className="view-toggle" role="group" aria-label={t("viewToggle.groupLabel")}>
             <button
               className={`view-toggle__btn${viewMode === "list" ? " is-active" : ""}`}
               onClick={() => setViewMode("list")}
-              title="List only"
+              title={t("viewToggle.listOnly")}
               aria-pressed={viewMode === "list"}
             >
               ☰
@@ -268,7 +270,7 @@ export function DoctorsView({ search, onNav }: DoctorsViewProps) {
             <button
               className={`view-toggle__btn${viewMode === "both" ? " is-active" : ""}`}
               onClick={() => setViewMode("both")}
-              title="List and map"
+              title={t("viewToggle.listAndMap")}
               aria-pressed={viewMode === "both"}
             >
               ⊞
@@ -276,24 +278,20 @@ export function DoctorsView({ search, onNav }: DoctorsViewProps) {
             <button
               className={`view-toggle__btn${viewMode === "map" ? " is-active" : ""}`}
               onClick={() => setViewMode("map")}
-              title="Map only"
+              title={t("viewToggle.mapOnly")}
               aria-pressed={viewMode === "map"}
             >
               ⊕
             </button>
           </div>
         </div>
-        <p className="page__lead">
-          Factual signals, not our opinion. We don&rsquo;t divide doctors into trusted and the
-          rest — we show what&rsquo;s documented: publications, guideline authorship, recent
-          activity, and what other families report.
-        </p>
+        <p className="page__lead">{t("lead")}</p>
         <AddDoctorCta
           account={account}
           onOpen={() => setAddDoctorOpen(true)}
         />
-        <div className="doctors-presets" role="group" aria-label="Quick filters for families">
-          <span className="doctors-presets__hint">Start here:</span>
+        <div className="doctors-presets" role="group" aria-label={t("presets.groupLabel")}>
+          <span className="doctors-presets__hint">{t("presets.hint")}</span>
           {DOCTOR_PRESETS
             // Presets that need clinical data are hidden until the specialty axis has some.
             .filter((preset) => !preset.needsSpecialty || clinical.ready)
@@ -320,7 +318,7 @@ export function DoctorsView({ search, onNav }: DoctorsViewProps) {
                 type="button"
                 className="dchip__x"
                 onClick={handleClearDisease}
-                aria-label="Clear disease filter"
+                aria-label={t("diseaseFilter.clearAriaLabel")}
               >
                 ×
               </button>
@@ -328,7 +326,7 @@ export function DoctorsView({ search, onNav }: DoctorsViewProps) {
           ) : (
             <div className="dfilters__search">
               <DiseaseAutocomplete
-                placeholder="Filter by disease — name, gene, OMIM…"
+                placeholder={t("diseaseFilter.placeholder")}
                 onPick={handlePickDisease}
                 onMissingClick={() => onNav("/start-research")}
               />
@@ -346,10 +344,10 @@ export function DoctorsView({ search, onNav }: DoctorsViewProps) {
           {clinical.ready ? (
             <>
               <FilterMenu
-                label="Specialty"
+                label={t("filters.specialty")}
                 value={query.specialtyGroup ?? "all"}
                 options={[
-                  { value: "all", label: "Any specialty" },
+                  { value: "all", label: t("filters.anySpecialty") },
                   ...clinical.groups.map((g) => ({ value: g, label: g })),
                 ]}
                 onPick={(v) =>
@@ -358,10 +356,10 @@ export function DoctorsView({ search, onNav }: DoctorsViewProps) {
               />
               {clinical.countries.length > 1 ? (
                 <FilterMenu
-                  label="Country"
+                  label={t("filters.country")}
                   value={query.country ?? "all"}
                   options={[
-                    { value: "all", label: "Any country" },
+                    { value: "all", label: t("filters.anyCountry") },
                     ...clinical.countries.map((c) => ({ value: c, label: c })),
                   ]}
                   onPick={(v) => patchQuery({ country: v === "all" ? null : v })}
@@ -371,10 +369,10 @@ export function DoctorsView({ search, onNav }: DoctorsViewProps) {
           ) : null}
 
           <FilterMenu
-            label="Sort"
+            label={t("filters.sort")}
             value={query.sort}
             neutralValue="best"
-            options={SORT_OPTIONS}
+            options={sortOptions}
             onPick={(v) => patchQuery({ sort: v as DoctorsQuery["sort"] })}
           />
 
@@ -387,8 +385,8 @@ export function DoctorsView({ search, onNav }: DoctorsViewProps) {
             onClick={() => setAdvancedOpen((o) => !o)}
           >
             {advancedActiveCount > 0
-              ? `More filters (${advancedActiveCount})`
-              : "More filters"}
+              ? t("filters.moreFiltersCount", { count: advancedActiveCount })
+              : t("filters.moreFilters")}
             <span className={`fmenu__chev${advancedOpen ? " is-open" : ""}`} aria-hidden="true">
               ▾
             </span>
@@ -401,20 +399,20 @@ export function DoctorsView({ search, onNav }: DoctorsViewProps) {
             id="dfilters-advanced"
             className="dfilters__advanced"
             role="group"
-            aria-label="Advanced filters"
+            aria-label={t("filters.advancedGroupLabel")}
           >
             <FilterMenu
-              label="Disease experience"
+              label={t("filters.diseaseExperience")}
               value={query.role ?? ROLE_FILTER_ALL}
-              options={ROLE_FILTERS}
+              options={roleFilters}
               onPick={(v) =>
                 patchQuery({ role: v === ROLE_FILTER_ALL ? null : (v as PubmedRole) })
               }
             />
             <FilterMenu
-              label="On the disease"
+              label={t("filters.onTheDisease")}
               value={query.recency ?? RECENCY_FILTER_ALL}
-              options={RECENCY_FILTERS}
+              options={recencyFilters}
               onPick={(v) =>
                 patchQuery({
                   recency: v === RECENCY_FILTER_ALL ? null : (v as DoctorsQuery["recency"]),
@@ -422,9 +420,9 @@ export function DoctorsView({ search, onNav }: DoctorsViewProps) {
               }
             />
             <FilterMenu
-              label="Source"
+              label={t("filters.source")}
               value={query.source}
-              options={SOURCE_FILTERS}
+              options={sourceFilters}
               onPick={(v) => patchQuery({ source: v as SourceFilter })}
             />
             {clinical.ready ? (
@@ -433,9 +431,9 @@ export function DoctorsView({ search, onNav }: DoctorsViewProps) {
                 className={`toggle-chip${query.seesPatients ? " is-active" : ""}`}
                 aria-pressed={query.seesPatients}
                 onClick={() => patchQuery({ seesPatients: !query.seesPatients })}
-                title="Show doctors who see patients (experts reachable for a consult are always kept)"
+                title={t("filters.seesPatientsTitle")}
               >
-                Sees patients
+                {t("filters.seesPatients")}
               </button>
             ) : null}
             <button
@@ -443,7 +441,7 @@ export function DoctorsView({ search, onNav }: DoctorsViewProps) {
               className={`toggle-chip${query.parentOnly ? " is-active" : ""}`}
               aria-pressed={query.parentOnly}
               onClick={() => patchQuery({ parentOnly: !query.parentOnly })}
-              title="Show only doctors recommended by parents"
+              title={t("filters.parentOnlyTitle")}
             >
               <svg
                 width="13"
@@ -458,14 +456,14 @@ export function DoctorsView({ search, onNav }: DoctorsViewProps) {
               >
                 <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21l7.8-7.5 1-1.1a5.5 5.5 0 0 0 0-7.8z" />
               </svg>
-              Recommended by parents ({recommendedCount})
+              {t("filters.recommendedByParents", { count: recommendedCount })}
             </button>
             <div
               className="dfilters__worktypes"
               role="group"
-              aria-label="Type of work on the disease"
+              aria-label={t("filters.workTypeGroupLabel")}
             >
-              <span className="dfilters__worktypes-label">Type of work:</span>
+              <span className="dfilters__worktypes-label">{t("filters.workTypeLabel")}</span>
               {WORK_TYPE_ORDER.map((w) => {
                 const active = query.workTypes.includes(w);
                 return (
@@ -486,9 +484,9 @@ export function DoctorsView({ search, onNav }: DoctorsViewProps) {
       </div>
 
       {diseasesLoading ? (
-        <p className="page__loading">Loading disease catalog…</p>
+        <p className="page__loading">{t("loadingCatalog")}</p>
       ) : null}
-      {loading ? <p className="page__loading">Loading specialists…</p> : null}
+      {loading ? <p className="page__loading">{t("loadingSpecialists")}</p> : null}
       {error != null ? (
         <p className="d-panel-empty" role="alert">
           {error}
@@ -501,11 +499,14 @@ export function DoctorsView({ search, onNav }: DoctorsViewProps) {
             <div className="doctors-list">
               {items.length > 0 ? (
                 <p className="doctors-count">
-                  {items.length} specialist{items.length === 1 ? "" : "s"}
+                  {t("count.specialists", { count: items.length })}
                   {pageCount > 1 ? (
                     <>
-                      {" · showing "}
-                      {pageStart + 1}–{pageStart + visibleItems.length}
+                      {" · "}
+                      {t("count.showing", {
+                        from: pageStart + 1,
+                        to: pageStart + visibleItems.length,
+                      })}
                     </>
                   ) : null}
                 </p>
@@ -521,21 +522,19 @@ export function DoctorsView({ search, onNav }: DoctorsViewProps) {
               {items.length === 0 ? (
                 unknownDisease != null ? (
                   <p className="d-panel-empty">
-                    No specialists are listed for <strong>{unknownDisease}</strong> yet.{" "}
+                    {t("empty.unknownDiseaseLead")} <strong>{unknownDisease}</strong>{" "}
+                    {t("empty.unknownDiseaseYet")}{" "}
                     <button
                       type="button"
                       className="link-btn"
                       onClick={() => onNav("/start-research")}
                     >
-                      Start a research run
+                      {t("empty.startResearchRun")}
                     </button>{" "}
-                    to build the evidence base for this condition.
+                    {t("empty.unknownDiseaseTail")}
                   </p>
                 ) : (
-                  <p className="d-panel-empty">
-                    No specialists match the current filters. Try a different role, source, or
-                    distance filter.
-                  </p>
+                  <p className="d-panel-empty">{t("empty.noMatches")}</p>
                 )
               ) : null}
               <Pagination
@@ -545,8 +544,7 @@ export function DoctorsView({ search, onNav }: DoctorsViewProps) {
               />
               {items.length > 0 ? (
                 <p className="doctors-provenance">
-                  Profiles are built from public sources (PubMed, clinic websites) and family
-                  reports. A profile can be withdrawn at any time — write to{" "}
+                  {t("provenance.lead")}{" "}
                   <a href="mailto:kontakt@genequest.org">kontakt@genequest.org</a>.
                 </p>
               ) : null}
@@ -584,6 +582,7 @@ function AddDoctorCta({
   account: AccountCtx;
   onOpen: () => void;
 }) {
+  const { t } = useTranslation("doctors-page");
   const mode = addDoctorCtaMode({
     signInAvailable: account.signInAvailable,
     isAuthenticated: account.isAuthenticated,
@@ -593,7 +592,7 @@ function AddDoctorCta({
     return (
       <div className="doctors-add-cta">
         <Button type="button" variant="ghost" onClick={onOpen}>
-          Recommend a doctor we&rsquo;re missing
+          {t("addDoctorCta.openModal")}
         </Button>
       </div>
     );
@@ -602,7 +601,7 @@ function AddDoctorCta({
     return (
       <div className="doctors-add-cta">
         <button type="button" className="link-btn" onClick={account.login}>
-          Sign in to recommend a doctor we&rsquo;re missing
+          {t("addDoctorCta.signIn")}
         </button>
       </div>
     );

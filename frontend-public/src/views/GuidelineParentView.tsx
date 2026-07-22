@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Button } from "@gene-guidelines/ui";
 import type { Disease } from "../types/disease";
 import type { GuidelineSynthesis } from "../types/guidelineSynthesis";
@@ -25,6 +26,7 @@ export interface GuidelineParentViewProps {
 
 /** Anonymous "are you a clinician?" sign-in nudge (ported from draft10 .gx-signin). */
 function AnonSignin({ onSignIn }: { onSignIn: () => void }) {
+  const { t } = useTranslation("guidelines");
   return (
     <div className="gx-signin">
       <svg
@@ -43,14 +45,11 @@ function AnonSignin({ onSignIn }: { onSignIn: () => void }) {
         <circle cx="20" cy="13" r="2" />
       </svg>
       <div className="gx-signin__b">
-        <b>Are you a clinician?</b>
-        <p>
-          Sign in to see AI suggestions hanging beside this guideline, rate their
-          usefulness, and follow the full literature trail (PMID, evidence strength).
-        </p>
+        <b>{t("anonSigninTitle")}</b>
+        <p>{t("anonSigninBody")}</p>
       </div>
       <Button variant="primary" size="sm" type="button" onClick={onSignIn}>
-        Sign in
+        {t("signIn")}
       </Button>
     </div>
   );
@@ -68,9 +67,10 @@ export function GuidelineParentView({
   onSignIn,
   onNav,
 }: GuidelineParentViewProps) {
+  const { t } = useTranslation("guidelines");
   const showSignin = role === "anon" && signInAvailable;
   const readState =
-    baseline?.readState ?? { read: false, note: "No clinician has read this draft yet." };
+    baseline?.readState ?? { read: false, note: t("gateNoReadYet") };
 
   // Level (c): no agreed guideline — the parent is the bridge to a clinician,
   // never the recipient of a raw AI baseline (wizja 02/04). Safety gate only.
@@ -94,20 +94,13 @@ export function GuidelineParentView({
               <path d="M8 10V7a4 4 0 0 1 8 0v3" />
             </svg>
           </div>
-          <h2 className="gx-gate__t">
-            We&apos;ve prepared an early draft — show it to your doctor.
-          </h2>
+          <h2 className="gx-gate__t">{t("gateTitle")}</h2>
           <p className="gx-gate__p">
-            There is no agreed clinical guideline for {disease.name.toLowerCase()} yet. We
-            assembled an early draft from the literature, but it is not a guideline — so we
-            don&apos;t show it as advice. The safest path is to hand it to a doctor, who can
-            review it in our system and tell you what applies to your child.
+            {t("gateBody", { disease: disease.name.toLowerCase() })}
           </p>
           <span className={`gx-gate__read${readState.read ? " read" : ""}`}>
             <span className="d" aria-hidden="true" />
-            {readState.read
-              ? "A clinician has reviewed this draft — still a suggestion, not an approved guideline."
-              : readState.note}
+            {readState.read ? t("gateReadReviewed") : readState.note}
           </span>
           <div className="gx-gate__actions">
             <Button
@@ -115,7 +108,7 @@ export function GuidelineParentView({
               type="button"
               onClick={() => onNav(`/doctors?disease=${disease.slug}`)}
             >
-              Find a specialist
+              {t("gateFindSpecialist")}
             </Button>
           </div>
         </div>
@@ -150,18 +143,15 @@ export function GuidelineParentView({
           </svg>
         </span>
         <div className="gx-send__b">
-          <p className="gx-send__t">Take this to your doctor.</p>
-          <p className="gx-send__s">
-            The condensed guideline plus the original sources — ready to print or send. If a
-            doctor signs in, they also see the AI suggestions and the full literature trail.
-          </p>
+          <p className="gx-send__t">{t("sendDoctorTitle")}</p>
+          <p className="gx-send__s">{t("sendDoctorBody")}</p>
         </div>
         <div className="gx-send__actions">
           <Button variant="primary" size="sm" type="button" disabled>
-            Send to doctor
+            {t("sendDoctorButton")}
           </Button>
           <Button size="sm" type="button" onClick={() => window.print()}>
-            Print
+            {t("printButton")}
           </Button>
         </div>
       </div>
@@ -170,7 +160,7 @@ export function GuidelineParentView({
         <div className="gx-parentguide">
           {doc.whatToDoNow != null ? (
             <>
-              <div className="gx-sec__h gx-sec__h--standalone">What to do now</div>
+              <div className="gx-sec__h gx-sec__h--standalone">{t("whatToDoNowHeading")}</div>
               <ol className="gx-todo">
                 {doc.whatToDoNow.map((step, i) => (
                   <li key={step.lead}>
@@ -183,7 +173,7 @@ export function GuidelineParentView({
               </ol>
               {doc.hasFlowchart ? (
                 <p className="gx-parentguide__hint">
-                  Full decision pathway:{" "}
+                  {t("flowchartHintPrefix")}{" "}
                   <a
                     href={`/diseases/${disease.slug}/flowchart`}
                     onClick={(e) => {
@@ -191,7 +181,7 @@ export function GuidelineParentView({
                       onNav(`/diseases/${disease.slug}/flowchart`);
                     }}
                   >
-                    open the interactive tree →
+                    {t("flowchartHintLink")}
                   </a>
                 </p>
               ) : null}
@@ -217,7 +207,7 @@ export function GuidelineParentView({
               {sec.title}
               <span className="epi epi--official">
                 <span className="epi__d" aria-hidden="true" />
-                From sources
+                {t("fromSourcesBadge")}
               </span>
             </h2>
             {sec.intro != null ? <p className="gx-sec__intro">{sec.intro}</p> : null}
@@ -235,7 +225,7 @@ export function GuidelineParentView({
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
                     </svg>
-                    To discuss with your doctor
+                    {t("discussWithDoctor")}
                   </span>
                   <p>{s.parentText ?? s.summary}</p>
                 </div>
@@ -247,9 +237,7 @@ export function GuidelineParentView({
       <SourceShelf docs={docs} parent />
 
       <p className="gx-parentfoot">
-        Condensed by us from the source documents above · last revised{" "}
-        {doc.lastUpdated.slice(0, 7)}. Author and reviewer names are in the original
-        documents.
+        {t("parentFooter", { date: doc.lastUpdated.slice(0, 7) })}
       </p>
     </>
   );

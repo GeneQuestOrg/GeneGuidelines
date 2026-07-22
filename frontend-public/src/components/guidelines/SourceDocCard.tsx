@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import type { SourceDoc } from "../../types/sourceDoc";
 import { sourceDocUrl } from "../../types/sourceDoc";
 import "./source-shelf.css";
@@ -9,18 +10,19 @@ export interface SourceDocCardProps {
 }
 
 export function SourceDocCard({ doc, parent = false }: SourceDocCardProps) {
+  const { t } = useTranslation("guidelines");
   const url = sourceDocUrl(doc);
   const idLabel = doc.pmid
-    ? `PMID ${doc.pmid}`
+    ? t("pmidLabel", { pmid: doc.pmid })
     : doc.bookshelf
-      ? `NCBI ${doc.bookshelf}`
+      ? t("ncbiIdLabel", { bookshelf: doc.bookshelf })
       : "";
 
   return (
     <article className="srcdoc">
       <div className="srcdoc__head">
         <span className="srcdoc__role">{doc.role}</span>
-        {doc.isNew ? <span className="gx-new">NEWER</span> : null}
+        {doc.isNew ? <span className="gx-new">{t("newBadge")}</span> : null}
       </div>
       <h4 className="srcdoc__title">{doc.title}</h4>
       <div className="srcdoc__meta">
@@ -61,7 +63,7 @@ export function SourceDocCard({ doc, parent = false }: SourceDocCardProps) {
           target="_blank"
           rel="noopener noreferrer"
         >
-          {doc.bookshelf ? "Open on NCBI" : "Original on PubMed"} ↗
+          {doc.bookshelf ? t("openOnNcbi") : t("originalOnPubmed")} ↗
         </a>
         {idLabel ? <code className="srcdoc__id">{idLabel}</code> : null}
       </div>

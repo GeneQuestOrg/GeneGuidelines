@@ -1,4 +1,5 @@
 import { useMemo, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import type { Disease } from "../types/disease";
 import type { GuidelineSynthesis } from "../types/guidelineSynthesis";
 import type { GuidelineSuggestion } from "../types/guidelineSuggestion";
@@ -35,6 +36,7 @@ export interface GuidelineClinicianViewProps {
 
 /** Pending-verification banner — read everything, signal held (ported .gx-unver). */
 function UnverifiedBanner() {
+  const { t } = useTranslation("guidelines");
   return (
     <div className="gx-unver">
       <svg
@@ -52,11 +54,8 @@ function UnverifiedBanner() {
         <path d="M9 12l2 2 4-4" />
       </svg>
       <div>
-        <b>You can read everything — your signal is held for now.</b>
-        <p>
-          Your account is awaiting verification (ORCID + institution). Once verified, your
-          ratings will count toward the weighted signal that other clinicians see.
-        </p>
+        <b>{t("unverifiedBannerTitle")}</b>
+        <p>{t("unverifiedBannerBody")}</p>
       </div>
     </div>
   );
@@ -73,6 +72,7 @@ export function GuidelineClinicianView({
   docs,
   onNav,
 }: GuidelineClinicianViewProps) {
+  const { t } = useTranslation("guidelines");
   const orderedPmids = useMemo(
     () => (synthesis != null ? orderedSynthesisPmids(synthesis) : []),
     [synthesis],
@@ -127,9 +127,9 @@ export function GuidelineClinicianView({
               <path d="m2 17 10 5 10-5M2 12l10 5 10-5" />
             </svg>
             <div>
-              <b>No agreed guideline for {disease.name} yet.</b>
+              <b>{t("noOfficialGuidelineYet", { disease: disease.name })}</b>
               <p>
-                No AI baseline has been assembled for this disease yet. For now,{" "}
+                {t("noBaselinePrefix")}{" "}
                 <a
                   href={`/diseases/${disease.slug}`}
                   onClick={(e) => {
@@ -137,7 +137,7 @@ export function GuidelineClinicianView({
                     onNav(`/diseases/${disease.slug}`);
                   }}
                 >
-                  return to the disease overview
+                  {t("returnToOverviewLink")}
                 </a>
                 .
               </p>
@@ -150,8 +150,9 @@ export function GuidelineClinicianView({
   }
 
   const doc = synthesis!;
-  const suggestionWord =
-    rankedSuggestions.length === 1 ? "AI suggestion" : "AI suggestions";
+  const suggestionWord = t(
+    rankedSuggestions.length === 1 ? "aiSuggestionSingular" : "aiSuggestionPlural",
+  );
 
   return (
     <>
@@ -159,18 +160,18 @@ export function GuidelineClinicianView({
 
       {/* Researcher depth ladder: synthesis ⇄ fully AI-built version (GL-6 stub). */}
       {isResearcher ? (
-        <div className="gx-modetabs" role="tablist" aria-label="Mode">
+        <div className="gx-modetabs" role="tablist" aria-label={t("modeTablistAriaLabel")}>
           <button type="button" role="tab" aria-selected="true" className="on">
-            Synthesis + sources <span>review</span>
+            {t("modeSynthesisLabel")} <span>{t("modeSynthesisTag")}</span>
           </button>
           <button
             type="button"
             role="tab"
             aria-selected="false"
             disabled
-            title="The fully AI-built version lands in a later slice."
+            title={t("modeFullAiTitle")}
           >
-            Full AI version <span>experiment</span>
+            {t("modeFullAiLabel")} <span>{t("modeFullAiTag")}</span>
           </button>
         </div>
       ) : null}
@@ -187,13 +188,15 @@ export function GuidelineClinicianView({
           </span>
           <span className="gx-sugglink__tx">
             <b>
-              {rankedSuggestions.length} {suggestionWord} beyond all the documents
+              {t("suggBeyondDocsBold", {
+                count: rankedSuggestions.length,
+                word: suggestionWord,
+              })}
             </b>{" "}
-            — listed separately, at the end. The synthesis below stays a faithful summary of
-            the sources.
+            {t("suggBeyondDocsTail")}
           </span>
           <span className="gx-sugglink__go">
-            Go to suggestions
+            {t("goToSuggestionsButton")}
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <path d="M12 5v14M19 12l-7 7-7-7" />
             </svg>
@@ -217,7 +220,7 @@ export function GuidelineClinicianView({
                       href={pubmedUrl(pmid)}
                       target="_blank"
                       rel="noopener noreferrer"
-                      title={`PMID ${pmid}`}
+                      title={t("pmidLabel", { pmid })}
                     >
                       [{citationIndex(orderedPmids, pmid)}]
                     </a>
@@ -237,16 +240,14 @@ export function GuidelineClinicianView({
         <div className="gx-suggzone__head">
           <div>
             <div className="gx-suggzone__tag">
-              AI suggestions · {rankedSuggestions.length} · to consider
+              {t("suggzoneTag", { count: rankedSuggestions.length })}
             </div>
-            <h2 className="gx-suggzone__title">AI suggestions — beyond the guideline</h2>
+            <h2 className="gx-suggzone__title">{t("suggzoneTitle")}</h2>
           </div>
         </div>
         <p className="gx-suggzone__lead">
-          This is <b>not part of the synthesis</b>. It is the live layer over the official
-          sources: new pointers from fresher literature, or proposed changes to a specific
-          recommendation — <b>to consider</b>, not to manage a patient from. Your rating is a
-          signal for the next clinician; it does not publish or change the synthesis.
+          {t("suggzoneLeadPart1")} <b>{t("suggzoneLeadBold1")}</b>. {t("suggzoneLeadPart2")}{" "}
+          — <b>{t("suggzoneLeadBold2")}</b>, {t("suggzoneLeadPart3")}
         </p>
         {rankedSuggestions.length === 0 ? (
           <div className="gx-empty">
@@ -255,11 +256,8 @@ export function GuidelineClinicianView({
               <path d="m20 20-3.5-3.5" />
             </svg>
             <div>
-              <b>No AI suggestions right now.</b>
-              <p>
-                The literature monitor runs in the background; candidates from new evidence
-                appear here when they are worth a look.
-              </p>
+              <b>{t("noAiSuggestionsTitle")}</b>
+              <p>{t("noAiSuggestionsBody")}</p>
             </div>
           </div>
         ) : (
@@ -281,18 +279,17 @@ export function GuidelineClinicianView({
           <p>
             {rankedSuggestions.length > 0 ? (
               <>
-                These <b>{rankedSuggestions.length}</b> suggestions are the tip of a much
-                larger analyzed corpus
+                {t("bibTipPrefix")} <b>{rankedSuggestions.length}</b> {t("bibTipSuffix")}
                 {bibliographyPapers.length > 0 ? (
-                  <> — <b>{bibliographyPapers.length}</b> papers scored on the latest run</>
+                  <>
+                    {" "}
+                    — <b>{bibliographyPapers.length}</b> {t("bibTipPapersScored")}
+                  </>
                 ) : null}
-                , including papers the engine rejected and why.
+                {t("bibTipRejectedSuffix")}
               </>
             ) : (
-              <>
-                See every paper the engine considered on the latest run — including
-                rejections with the AI&apos;s one-line reason.
-              </>
+              t("bibNoSuggestions")
             )}
           </p>
           <button
@@ -300,7 +297,7 @@ export function GuidelineClinicianView({
             className="gx-bib-entry__btn"
             onClick={() => onNav(`/diseases/${disease.slug}/bibliography`)}
           >
-            View analyzed bibliography →
+            {t("viewBibliographyButton")}
           </button>
         </div>
       </section>

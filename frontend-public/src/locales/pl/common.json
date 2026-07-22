@@ -42,5 +42,13 @@
       "text": "AI-owy skrót z cytowanych, recenzowanych źródeł — czytaj z lekarzem; nie oficjalna wytyczna."
     }
   },
+  "diseaseFacts": {
+    "gene": "Gen",
+    "omim": "OMIM",
+    "inheritance": "Dziedziczenie",
+    "prevalence": "Częstość występowania",
+    "types": "Typy",
+    "lastRevised": "Ostatnia aktualizacja"
+  },
   "loadingCatalog": "Ładowanie katalogu…"
 }

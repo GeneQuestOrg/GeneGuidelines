@@ -1,4 +1,6 @@
 import { useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import "leaflet.markercluster";
@@ -52,26 +54,27 @@ function statusMarkerIcon(status: string): L.DivIcon {
   });
 }
 
-function buildPopupHtml(t: TrialWithDistance): string {
+function buildPopupHtml(trial: TrialWithDistance, t: TFunction): string {
   const dist =
-    t.km != null ? `<span class="map-popup__dist">${formatDistanceKm(t.km)}</span>` : "";
-  const place = [t.city, t.country].filter(Boolean).map((s) => esc(String(s))).join(", ");
-  const href = clinicalTrialsUrl(t.nct);
+    trial.km != null ? `<span class="map-popup__dist">${formatDistanceKm(trial.km)}</span>` : "";
+  const place = [trial.city, trial.country].filter(Boolean).map((s) => esc(String(s))).join(", ");
+  const href = clinicalTrialsUrl(trial.nct);
   return `
     <div class="map-popup">
-      <div class="map-popup__name">${esc(t.title)}</div>
-      <div class="map-popup__spec">${esc(t.sponsor)}</div>
+      <div class="map-popup__name">${esc(trial.title)}</div>
+      <div class="map-popup__spec">${esc(trial.sponsor)}</div>
       ${place ? `<div class="map-popup__inst">${place}</div>` : ""}
       <div class="map-popup__foot">
-        <span class="tag tag--score">${esc(statusLabel(t.status))}</span>
-        <span class="tag tag--score">${esc(t.phase)}</span>
+        <span class="tag tag--score">${esc(statusLabel(trial.status))}</span>
+        <span class="tag tag--score">${esc(trial.phase)}</span>
         ${dist}
       </div>
-      <a class="trial-card__cta" href="${href}" target="_blank" rel="noopener noreferrer">Open on ClinicalTrials.gov →</a>
+      <a class="trial-card__cta" href="${href}" target="_blank" rel="noopener noreferrer">${esc(t("openOnClinicalTrials"))}</a>
     </div>`;
 }
 
 export function TrialsMap({ trials, userLoc }: TrialsMapProps) {
+  const { t } = useTranslation("trials");
   const hostRef = useRef<HTMLDivElement | null>(null);
   const pinned = trials.filter(trialHasCoords);
 
@@ -96,11 +99,11 @@ export function TrialsMap({ trials, userLoc }: TrialsMapProps) {
     const bounds = L.latLngBounds([] as L.LatLngExpression[]);
     let extended = false;
 
-    for (const t of trials) {
-      if (!trialHasCoords(t)) continue;
-      const latlng: L.LatLngExpression = [t.lat as number, t.lng as number];
-      const marker = L.marker(latlng, { icon: statusMarkerIcon(t.status) });
-      marker.bindPopup(buildPopupHtml(t), { maxWidth: 260 });
+    for (const trial of trials) {
+      if (!trialHasCoords(trial)) continue;
+      const latlng: L.LatLngExpression = [trial.lat as number, trial.lng as number];
+      const marker = L.marker(latlng, { icon: statusMarkerIcon(trial.status) });
+      marker.bindPopup(buildPopupHtml(trial, t), { maxWidth: 260 });
       cluster.addLayer(marker);
       bounds.extend(latlng);
       extended = true;
@@ -115,7 +118,7 @@ export function TrialsMap({ trials, userLoc }: TrialsMapProps) {
         fillColor: cssVar(USER_MARKER_TOKENS.fill.token, USER_MARKER_TOKENS.fill.fallback),
         fillOpacity: 0.9,
       })
-        .bindTooltip("Your location", { direction: "top" })
+        .bindTooltip(t("yourLocation"), { direction: "top" })
         .addTo(map);
       bounds.extend(latlng);
       extended = true;
@@ -129,31 +132,29 @@ export function TrialsMap({ trials, userLoc }: TrialsMapProps) {
     return () => {
       map.remove();
     };
-  }, [trials, userLoc]);
+  }, [trials, userLoc, t]);
 
   return (
-    <aside className="doctors-map" aria-label="Trial site map">
+    <aside className="doctors-map" aria-label={t("mapAriaLabel")}>
       <div className="map-stub">
         <div className="map-stub__head">
           <div className="map-legend">
             <span className="map-legend__dot" style={{ background: statusColor("recruiting") }} />
-            Recruiting
+            {t("statusOptionRecruiting")}
             <span
               className="map-legend__dot"
               style={{ background: statusColor("active_not_recruiting") }}
             />
-            Active
+            {t("legendActive")}
             <span className="map-legend__dot" style={{ background: statusColor("completed") }} />
-            Completed
+            {t("statusOptionCompleted")}
           </div>
           <span className="map-stub__count">
-            {pinned.length} on map · {trials.length} listed
+            {t("mapCount", { pinned: pinned.length, listed: trials.length })}
           </span>
         </div>
         <div ref={hostRef} className="doctors-leaflet" />
-        <p className="map-stub__note">
-          OpenStreetMap tiles · markers cluster when zoomed out. Click a pin for the registry link.
-        </p>
+        <p className="map-stub__note">{t("mapNote")}</p>
       </div>
     </aside>
   );

@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import "leaflet.markercluster";
@@ -52,7 +53,11 @@ function roleMarkerIcon(role: string): L.DivIcon {
   });
 }
 
-function buildPopupHtml(d: DoctorWithDistance, practice: Practice): string {
+function buildPopupHtml(
+  d: DoctorWithDistance,
+  practice: Practice,
+  specialtyNotVerifiedLabel: string,
+): string {
   const role = pubmedRoleLabel(d.pubmedRole);
   const validatedRole = safeRole(d.pubmedRole);
   const dist = d.km != null ? `<span class="map-popup__dist">${formatDistanceKm(d.km)}</span>` : "";
@@ -60,7 +65,7 @@ function buildPopupHtml(d: DoctorWithDistance, practice: Practice): string {
   return `
     <div class="map-popup">
       <div class="map-popup__name">${esc(d.name)}</div>
-      <div class="map-popup__spec">${d.specialty?.trim() ? esc(d.specialty) : "Specialty not verified"}</div>
+      <div class="map-popup__spec">${d.specialty?.trim() ? esc(d.specialty) : esc(specialtyNotVerifiedLabel)}</div>
       <div class="map-popup__practice">${practiceLine}</div>
       <div class="map-popup__inst">${esc(practice.city)}, ${esc(d.country)}</div>
       <div class="map-popup__foot">
@@ -72,6 +77,7 @@ function buildPopupHtml(d: DoctorWithDistance, practice: Practice): string {
 }
 
 export function DoctorsMap({ doctors, userLoc, onNav }: DoctorsMapProps) {
+  const { t } = useTranslation("doctors-page");
   const hostRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -100,7 +106,9 @@ export function DoctorsMap({ doctors, userLoc, onNav }: DoctorsMapProps) {
       // practicePins() already dropped pairs with non-finite coordinates, so these are real numbers.
       const latlng: L.LatLngExpression = [practice.lat as number, practice.lng as number];
       const marker = L.marker(latlng, { icon: roleMarkerIcon(d.pubmedRole) });
-      marker.bindPopup(buildPopupHtml(d, practice), { maxWidth: 240 });
+      marker.bindPopup(buildPopupHtml(d, practice, t("map.specialtyNotVerified")), {
+        maxWidth: 240,
+      });
       marker.on("popupopen", () => {
         const btn = marker.getPopup()?.getElement()?.querySelector<HTMLElement>(".map-popup");
         btn?.addEventListener("click", () => {
@@ -122,7 +130,7 @@ export function DoctorsMap({ doctors, userLoc, onNav }: DoctorsMapProps) {
         fillColor: cssVar(USER_MARKER_TOKENS.fill.token, USER_MARKER_TOKENS.fill.fallback),
         fillOpacity: 0.9,
       })
-        .bindTooltip("Your location", { direction: "top" })
+        .bindTooltip(t("map.yourLocation"), { direction: "top" })
         .addTo(map);
       bounds.extend(latlng);
       extended = true;
@@ -136,30 +144,28 @@ export function DoctorsMap({ doctors, userLoc, onNav }: DoctorsMapProps) {
     return () => {
       map.remove();
     };
-  }, [doctors, onNav, userLoc]);
+  }, [doctors, onNav, userLoc, t]);
 
   const pinCount = practicePins(doctors).length;
 
   return (
-    <aside className="doctors-map" aria-label="Specialist map">
+    <aside className="doctors-map" aria-label={t("map.ariaLabel")}>
       <div className="map-stub">
         <div className="map-stub__head">
           <div className="map-legend">
             <span className="map-legend__dot map-legend__dot--research_leader" />
-            Led research
+            {t("map.legend.researchLeader")}
             <span className="map-legend__dot map-legend__dot--research_participant" />
-            Contributed
+            {t("map.legend.researchParticipant")}
             <span className="map-legend__dot map-legend__dot--case_study_author" />
-            Case studies
+            {t("map.legend.caseStudyAuthor")}
           </div>
           <span className="map-stub__count">
-            {pinCount} on map · {doctors.length} listed
+            {t("map.count", { pinCount, total: doctors.length })}
           </span>
         </div>
         <div ref={hostRef} className="doctors-leaflet" />
-        <p className="map-stub__note">
-          OpenStreetMap tiles · markers cluster when zoomed out. Click a pin to open the profile.
-        </p>
+        <p className="map-stub__note">{t("map.note")}</p>
       </div>
     </aside>
   );

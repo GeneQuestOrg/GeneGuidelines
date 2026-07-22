@@ -25,6 +25,8 @@ import {
   useCallback,
   useState,
 } from "react";
+import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import { Button } from "@gene-guidelines/ui";
 import { ApiRequestError } from "../api/client";
 import {
@@ -41,21 +43,6 @@ import { MissingDiseaseDialog } from "../components/MissingDiseaseDialog";
 import "../styles/research.css";
 import "../styles/start-research.css";
 
-/** Six finder pipelines fan out in parallel from the bootstrap endpoint
- *  (``backend/services/disease_bootstrap.py``). The fast ones write to
- *  the disease page in under a minute; the long-running guideline draft
- *  takes ~9 minutes. The /research/<id> page mirrors this structure. */
-const WORKSTREAM_LIST: ReadonlyArray<{ label: string; sub: string }> = [
-  {
-    label: "Guideline draft (~9 min)",
-    sub: "PubMed mining → therapy + diagnostic extraction → drafted sections with PMID citations",
-  },
-  {
-    label: "Five fast finders (~45 s each, in parallel)",
-    sub: "Doctors · clinical trials · therapies · patient foundations · recognised consensus paper",
-  },
-];
-
 export interface StartResearchViewProps {
   readonly initialDiseaseSlug?: string;
   readonly onNav: (path: string) => void;
@@ -66,6 +53,7 @@ type Picked =
   | { kind: "wider"; candidate: WiderSearchCandidate };
 
 export function StartResearchView({ onNav }: StartResearchViewProps) {
+  const { t } = useTranslation("start-research");
   const [picked, setPicked] = useState<Picked | null>(null);
   const [consent, setConsent] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -110,43 +98,46 @@ export function StartResearchView({ onNav }: StartResearchViewProps) {
       onNav(`/research/${encodeURIComponent(execution_id)}${q}`);
     } catch (e) {
       if (e instanceof ApiRequestError && e.status === 401) {
-        setError(
-          "The server rejected the request (401). Set VITE_GENEGUIDELINES_API_KEY when the backend has its API gate enabled, or run jobs from the operator console.",
-        );
+        setError(t("errorUnauthorized"));
       } else if (e instanceof ApiRequestError && e.status === 409) {
         // Fair-share queue refusal — the anonymous session already has the
         // maximum number of runs in flight. Surface the friendly server text.
-        setError(
-          e.message ||
-            "You already have several runs in the queue — wait for one to finish before starting another.",
-        );
+        setError(e.message || t("errorQueueFull"));
       } else if (e instanceof Error) {
         setError(e.message);
       } else {
-        setError("Could not start the research run.");
+        setError(t("errorGeneric"));
       }
       setBusy(false);
     }
-  }, [busy, consent, onNav, picked]);
+  }, [busy, consent, onNav, picked, t]);
 
-  const submitLabel = pickSubmitLabel(picked, busy);
+  const submitLabel = pickSubmitLabel(picked, busy, t);
   const canSubmit = picked != null && consent && !busy;
+
+  // Six finder pipelines fan out in parallel from the bootstrap endpoint
+  // (``backend/services/disease_bootstrap.py``). The fast ones write to
+  // the disease page in under a minute; the long-running guideline draft
+  // takes ~9 minutes. The /research/<id> page mirrors this structure.
+  const workstreamList: ReadonlyArray<{ label: string; sub: string }> = [
+    {
+      label: t("workstreamGuidelineLabel"),
+      sub: t("workstreamGuidelineSub"),
+    },
+    {
+      label: t("workstreamFindersLabel"),
+      sub: t("workstreamFindersSub"),
+    },
+  ];
 
   return (
     <section className="page page--start">
       <div className="start">
         <div className="start__intro">
-          <h1>Start research for a new disease</h1>
-          <p>
-            One click fans out six parallel workstreams: PubMed mining and
-            the long guideline draft, plus five fast finders that pull
-            specialist doctors, recruiting clinical trials, therapies,
-            patient foundations and the recognised consensus paper. Each
-            workstream writes its results directly to the disease page as
-            it lands — you don't need to wait for the whole run to finish.
-          </p>
+          <h1>{t("title")}</h1>
+          <p>{t("intro")}</p>
           <ol className="start__how">
-            {WORKSTREAM_LIST.map((stage) => (
+            {workstreamList.map((stage) => (
               <li key={stage.label}>
                 <b>{stage.label}</b> · {stage.sub}
               </li>
@@ -154,9 +145,7 @@ export function StartResearchView({ onNav }: StartResearchViewProps) {
           </ol>
           <p className="start__priv">
             <span aria-hidden="true">🔒</span>
-            We don&rsquo;t store patient data — only the disease name and
-            the research criteria. You will receive a public link to the
-            run progress page.
+            {t("privacyNote")}
           </p>
         </div>
 
@@ -169,7 +158,7 @@ export function StartResearchView({ onNav }: StartResearchViewProps) {
         >
           <div className="field">
             <span className="field__label">
-              Find a disease <em>·</em> required
+              {t("findDiseaseLabel")} <em>·</em> {t("requiredLabel")}
             </span>
 
             {picked ? (
@@ -188,11 +177,7 @@ export function StartResearchView({ onNav }: StartResearchViewProps) {
               />
             )}
 
-            <span className="field__hint">
-              Search by canonical name, alternative names, gene symbol,
-              OMIM or Orphanet ID. If the disease is not yet in our
-              catalogue, we will help identify it and launch the research.
-            </span>
+            <span className="field__hint">{t("fieldHint")}</span>
           </div>
 
           <label className="field field--check">
@@ -203,10 +188,8 @@ export function StartResearchView({ onNav }: StartResearchViewProps) {
               required
             />
             <span>
-              I understand the AI output is an <b>AI-generated draft</b> —
-              a source-cited summary that no one has officially verified or
-              signed off — and it does not replace medical advice; I should
-              read it with a clinician.
+              {t("consentPrefix")} <b>{t("consentBold")}</b>{" "}
+              {t("consentSuffix")}
             </span>
           </label>
 
@@ -225,7 +208,7 @@ export function StartResearchView({ onNav }: StartResearchViewProps) {
               {submitLabel}
             </Button>
             <Button type="button" onClick={() => onNav("/")}>
-              Cancel
+              {t("cancel")}
             </Button>
           </div>
 
@@ -241,13 +224,11 @@ export function StartResearchView({ onNav }: StartResearchViewProps) {
               // The route does not exist yet; keep the click harmless
               // until F11 ships. Once the page lands this becomes a
               // straight `onNav("/start-research/by-symptoms")`.
-              setError(
-                "Symptom-based search is coming soon. For now, please type a disease name.",
-              );
+              setError(t("symptomComingSoon"));
             }}
           >
             <span className="symp-link__body">
-              No diagnosis yet? <em>Search a disease by symptoms</em>
+              {t("symptomLinkPrefix")} <em>{t("symptomLinkCta")}</em>
             </span>
             <span className="symp-link__arrow">→</span>
           </a>
@@ -268,13 +249,17 @@ export function StartResearchView({ onNav }: StartResearchViewProps) {
   );
 }
 
-function pickSubmitLabel(picked: Picked | null, busy: boolean): string {
-  if (busy) return "Launching research…";
-  if (picked == null) return "Pick a disease from the list";
+function pickSubmitLabel(
+  picked: Picked | null,
+  busy: boolean,
+  t: TFunction,
+): string {
+  if (busy) return t("submitLaunching");
+  if (picked == null) return t("submitPickDisease");
   if (picked.kind === "indexed" && picked.suggestion.hasLocalRecord) {
-    return "Open guidelines →";
+    return t("submitOpenGuidelines");
   }
-  return "Run research →";
+  return t("submitRunResearch");
 }
 
 /** Slugify a disease name for bootstrap. Mirrors the backend regex
@@ -341,6 +326,7 @@ function PickedCard({
   picked: Picked;
   onClear: () => void;
 }): ReactNode {
+  const { t } = useTranslation("start-research");
   const isIndexed = picked.kind === "indexed";
   const covered = isIndexed && picked.suggestion.hasLocalRecord;
   const canonical = isIndexed
@@ -369,7 +355,7 @@ function PickedCard({
           {gene ? <code>{gene}</code> : null}
           {!isIndexed ? (
             <span className="picked__source">
-              from literature ({picked.candidate.modelUsed})
+              {t("pickedFromLiterature", { model: picked.candidate.modelUsed })}
             </span>
           ) : null}
         </div>
@@ -377,18 +363,18 @@ function PickedCard({
       <div className="picked__side">
         {covered ? (
           <span className="picked__badge picked__badge--ok">
-            ✓ Guidelines available
+            {t("pickedBadgeOk")}
           </span>
         ) : (
           <span className="picked__badge picked__badge--new">
-            Research run will be launched
+            {t("pickedBadgeNew")}
           </span>
         )}
         <button
           type="button"
           className="picked__clear"
           onClick={onClear}
-          aria-label="Clear"
+          aria-label={t("pickedClear")}
         >
           ×
         </button>

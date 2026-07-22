@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import type { SourceDoc } from "../../types/sourceDoc";
 import type { SynthesisParagraph } from "../../types/guidelineSynthesis";
 import { shortDocLabel } from "../../utils/guidelineSynthesis";
@@ -34,6 +35,7 @@ const UPDATE_ICON = (
 );
 
 export function ProvenanceRow({ slug, docs, para, onNav }: ProvenanceRowProps) {
+  const { t } = useTranslation("guidelines");
   if (para.source == null) {
     return null;
   }
@@ -44,7 +46,7 @@ export function ProvenanceRow({ slug, docs, para, onNav }: ProvenanceRowProps) {
       <button
         type="button"
         className="gx-srcmark"
-        title={`Basis: ${label} · ${para.source.loc} — see where this comes from`}
+        title={t("provRowBasisTitle", { label, loc: para.source.loc })}
         onClick={() => onNav(`/diseases/${slug}/guidelines/source/${para.id}`)}
       >
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -57,8 +59,8 @@ export function ProvenanceRow({ slug, docs, para, onNav }: ProvenanceRowProps) {
         <span className={`gx-prov2__upd${para.update.supersedes ? " is-super" : ""}`}>
           {UPDATE_ICON}
           {para.update.supersedes
-            ? `Updates ${shortDocLabel(docs, para.update.supersedes)}`
-            : "Refined"}{" "}
+            ? t("provRowUpdatesLabel", { doc: shortDocLabel(docs, para.update.supersedes) })
+            : t("provRowRefinedLabel")}{" "}
           · {shortDocLabel(docs, para.update.doc)}
         </span>
       ) : null}

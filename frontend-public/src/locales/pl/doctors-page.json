@@ -1,0 +1,118 @@
+{
+  "title": "Znajdź specjalistę",
+  "viewToggle": {
+    "groupLabel": "Przełącz widok",
+    "listOnly": "Tylko lista",
+    "listAndMap": "Lista i mapa",
+    "mapOnly": "Tylko mapa"
+  },
+  "lead": "Fakty, nie nasza opinia. Nie dzielimy lekarzy na zaufanych i resztę — pokazujemy to, co jest udokumentowane: publikacje, współautorstwo wytycznych, aktualną aktywność i to, co zgłaszają inne rodziny.",
+  "addDoctorCta": {
+    "openModal": "Zarekomenduj lekarza, którego nie mamy na liście",
+    "signIn": "Zaloguj się, aby zarekomendować lekarza, którego nie mamy na liście"
+  },
+  "presets": {
+    "groupLabel": "Szybkie filtry dla rodzin",
+    "hint": "Zacznij tutaj:"
+  },
+  "diseaseFilter": {
+    "placeholder": "Filtruj według choroby — nazwa, gen, OMIM…",
+    "clearAriaLabel": "Wyczyść filtr choroby"
+  },
+  "filters": {
+    "specialty": "Specjalizacja",
+    "anySpecialty": "Każda specjalizacja",
+    "country": "Kraj",
+    "anyCountry": "Każdy kraj",
+    "sort": "Sortowanie",
+    "moreFilters": "Więcej filtrów",
+    "moreFiltersCount": "Więcej filtrów ({{count}})",
+    "advancedGroupLabel": "Filtry zaawansowane",
+    "diseaseExperience": "Doświadczenie z chorobą",
+    "onTheDisease": "Aktywność w temacie choroby",
+    "source": "Źródło",
+    "seesPatients": "Przyjmuje pacjentów",
+    "seesPatientsTitle": "Pokaż lekarzy, którzy przyjmują pacjentów (eksperci dostępni na konsultację są zawsze widoczni)",
+    "parentOnlyTitle": "Pokaż tylko lekarzy polecanych przez rodziców",
+    "recommendedByParents": "Polecani przez rodziców ({{count}})",
+    "workTypeGroupLabel": "Rodzaj pracy nad chorobą",
+    "workTypeLabel": "Rodzaj pracy:"
+  },
+  "sortOptions": {
+    "best": "Najlepsze dopasowanie",
+    "distance": "Najbliżej",
+    "recency": "Najnowsza aktywność",
+    "score": "Wynik PubMed",
+    "name": "Nazwisko (A–Z)"
+  },
+  "roleFilters": {
+    "all": "Wszystkie role"
+  },
+  "sourceFilters": {
+    "all": "Wszystkie źródła",
+    "pubmed": "PubMed",
+    "parent": "Dodane przez rodziców",
+    "consortium": "Konsorcjum"
+  },
+  "recencyFilters": {
+    "any": "Kiedykolwiek",
+    "active2y": "Na bieżąco (≤2 lata)",
+    "active5y": "Niedawno (≤5 lat)"
+  },
+  "loadingCatalog": "Wczytywanie katalogu chorób…",
+  "loadingSpecialists": "Wczytywanie specjalistów…",
+  "count": {
+    "specialists_one": "{{count}} specjalista",
+    "specialists_few": "{{count}} specjalistów",
+    "specialists_many": "{{count}} specjalistów",
+    "specialists_other": "{{count}} specjalistów",
+    "showing": "pokazano {{from}}–{{to}}"
+  },
+  "empty": {
+    "unknownDiseaseLead": "Nie znaleźliśmy specjalistów dla",
+    "unknownDiseaseYet": "— jeszcze nie mamy o niej wpisu.",
+    "startResearchRun": "Rozpocznij badanie",
+    "unknownDiseaseTail": "aby zbudować bazę dowodów dla tego schorzenia.",
+    "noMatches": "Żaden specjalista nie odpowiada obecnym filtrom. Spróbuj zmienić rolę, źródło lub zasięg odległości."
+  },
+  "provenance": {
+    "lead": "Profile powstają na podstawie publicznych źródeł (PubMed, strony klinik) oraz zgłoszeń od rodzin. Profil można wycofać w każdej chwili — napisz na"
+  },
+  "map": {
+    "ariaLabel": "Mapa specjalistów",
+    "legend": {
+      "researchLeader": "Prowadził badania",
+      "researchParticipant": "Współautor",
+      "caseStudyAuthor": "Opisy przypadków"
+    },
+    "count": "{{pinCount}} na mapie · {{total}} na liście",
+    "note": "Kafelki OpenStreetMap · znaczniki grupują się po oddaleniu widoku. Kliknij znacznik, aby otworzyć profil.",
+    "yourLocation": "Twoja lokalizacja",
+    "specialtyNotVerified": "Specjalizacja niezweryfikowana"
+  },
+  "addDoctorModal": {
+    "dialogAriaLabel": "Zarekomenduj lekarza",
+    "closeAriaLabel": "Zamknij",
+    "title": "Zarekomenduj lekarza, którego nie mamy na liście",
+    "sub": "Napisz nam o specjaliście, który pomógł Twojej rodzinie. Każde zgłoszenie sprawdzamy, zanim trafi do publicznego katalogu.",
+    "nameLabel": "Imię i nazwisko lekarza *",
+    "specialtyLabel": "Specjalizacja",
+    "institutionLabel": "Instytucja",
+    "cityLabel": "Miasto",
+    "countryLabel": "Kraj",
+    "countryPlaceholder": "np. PL",
+    "diseaseLabel": "Choroba",
+    "clearDiseaseAriaLabel": "Wyczyść chorobę",
+    "diseasePlaceholder": "Choroba — nazwa, gen, OMIM…",
+    "noteLabel": "Dlaczego polecasz tego lekarza?",
+    "notePlaceholder": "Jakie były Twoje doświadczenia?",
+    "submitError": "Nie udało się wysłać — spróbuj ponownie.",
+    "cancel": "Anuluj",
+    "submitting": "Wysyłanie…",
+    "submit": "Wyślij do weryfikacji",
+    "submittedTitle": "Zgłoszenie wysłane do moderacji",
+    "submittedBody": "Dziękujemy. Recenzent sprawdzi to zgłoszenie, zanim trafi do publicznego katalogu.",
+    "duplicateHint": "Ten lekarz może już być w naszym katalogu — recenzent scali duplikaty, więc nic nie zostanie utracone.",
+    "done": "Gotowe"
+  }
+}

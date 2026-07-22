@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import type { RegenSeed } from "../../types/guidelineSuggestion";
 
 /**
@@ -11,6 +12,7 @@ export interface RegenDraftProps {
 }
 
 export function RegenDraft({ seed, onDiscard }: RegenDraftProps) {
+  const { t } = useTranslation("guidelines");
   return (
     <div className="gx-draft">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -19,16 +21,16 @@ export function RegenDraft({ seed, onDiscard }: RegenDraftProps) {
         <path d="M9 15l2 2 4-4" />
       </svg>
       <div>
-        <span className="v">{seed.version}</span> <b>New draft generated.</b>
+        <span className="v">{seed.version}</span> <b>{t("newDraftGenerated")}</b>
         <p>
-          {seed.note} Based on: <em>{seed.basedOn}</em>.
+          {seed.note} {t("basedOnLabel")} <em>{seed.basedOn}</em>.
         </p>
         <div className="gx-draft__actions">
           <button type="button" className="btn btn--sm btn--primary">
-            Review v2
+            {t("reviewV2Button")}
           </button>
           <button type="button" className="btn btn--sm btn--ghost" onClick={onDiscard}>
-            Discard draft
+            {t("discardDraftButton")}
           </button>
         </div>
       </div>

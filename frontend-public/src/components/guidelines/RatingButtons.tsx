@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next";
+
 /**
  * 3-state rating control for an AI suggestion (draft10 `RatingButtons`,
  * .gx-rate / .gx-sig). useful / not useful / incorrect. This is a SIGNAL for
@@ -18,39 +20,40 @@ export interface RatingButtonsProps {
 }
 
 export function RatingButtons({ value, onChange, held = false }: RatingButtonsProps) {
+  const { t } = useTranslation("guidelines");
   const pick = (v: Rating) => onChange(value === v ? null : v);
   return (
-    <div className="gx-rate" role="group" aria-label="Rate this suggestion">
+    <div className="gx-rate" role="group" aria-label={t("rateThisSuggestionAria")}>
       <div className="gx-rate__seg">
         <button
           type="button"
           className="gx-sig gx-sig--useful"
           aria-pressed={value === "useful"}
-          aria-label="Mark as useful"
+          aria-label={t("markUsefulAria")}
           onClick={() => pick("useful")}
         >
-          Useful
+          {t("ratingUsefulLabel")}
         </button>
         <button
           type="button"
           className="gx-sig gx-sig--not"
           aria-pressed={value === "not"}
-          aria-label="Mark as not useful"
+          aria-label={t("markNotUsefulAria")}
           onClick={() => pick("not")}
         >
-          Not useful
+          {t("ratingNotUsefulLabel")}
         </button>
         <button
           type="button"
           className="gx-sig gx-sig--wrong"
           aria-pressed={value === "wrong"}
-          aria-label="Mark as incorrect"
+          aria-label={t("markIncorrectAria")}
           onClick={() => pick("wrong")}
         >
-          Incorrect
+          {t("ratingIncorrectLabel")}
         </button>
       </div>
-      {held ? <span className="gx-held">held · unverified</span> : null}
+      {held ? <span className="gx-held">{t("heldUnverified")}</span> : null}
     </div>
   );
 }

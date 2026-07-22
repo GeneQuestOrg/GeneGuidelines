@@ -50,32 +50,32 @@ export function DiseaseHero({
       <p className="d-hero__summary">{disease.summary}</p>
       <dl className="d-hero__facts">
         <div>
-          <dt>Gene</dt>
+          <dt>{t("diseaseFacts.gene")}</dt>
           <dd>
             <code>{disease.gene}</code>
           </dd>
         </div>
         <div>
-          <dt>OMIM</dt>
+          <dt>{t("diseaseFacts.omim")}</dt>
           <dd>
             <code>{disease.omim}</code>
           </dd>
         </div>
         <div>
-          <dt>Inheritance</dt>
+          <dt>{t("diseaseFacts.inheritance")}</dt>
           <dd>{disease.inheritance}</dd>
         </div>
         <div>
-          <dt>Prevalence</dt>
+          <dt>{t("diseaseFacts.prevalence")}</dt>
           <dd>{disease.prevalenceText}</dd>
         </div>
         <div>
-          <dt>Types</dt>
+          <dt>{t("diseaseFacts.types")}</dt>
           <dd>{disease.types.join(" · ")}</dd>
         </div>
         {(disease.statusDate ?? disease.aiDraftDate) != null ? (
           <div>
-            <dt>Last revised</dt>
+            <dt>{t("diseaseFacts.lastRevised")}</dt>
             <dd>{disease.statusDate ?? disease.aiDraftDate}</dd>
           </div>
         ) : null}

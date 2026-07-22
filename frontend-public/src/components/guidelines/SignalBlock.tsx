@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { RatingButtons, type Rating } from "./RatingButtons";
 import type { SuggestionSignal } from "../../types/guidelineSuggestion";
 
@@ -14,14 +15,15 @@ export interface SignalBlockProps {
 }
 
 export function SignalBlock({ sig, held = false }: SignalBlockProps) {
+  const { t } = useTranslation("guidelines");
   const [vote, setVote] = useState<Rating | null>(null);
   const total = sig.useful + sig.not + sig.wrong || 1;
-  const ratingWord = sig.ratings === 1 ? "rating" : "ratings";
+  const ratingWord = t(sig.ratings === 1 ? "ratingSingular" : "ratingPlural");
 
   return (
     <div className="gx-signal">
       <div className="gx-signal__row">
-        <span className="gx-signal__q">Your rating:</span>
+        <span className="gx-signal__q">{t("yourRatingLabel")}</span>
         <RatingButtons value={vote} onChange={setVote} held={held} />
       </div>
       <div className="gx-agg">
@@ -34,8 +36,8 @@ export function SignalBlock({ sig, held = false }: SignalBlockProps) {
             </span>
             <span>
               <b>{sig.ratings}</b> {ratingWord}
-              {sig.useful ? ` · ${sig.useful} useful` : ""}
-              {sig.wrong ? ` · ${sig.wrong} incorrect` : ""}
+              {sig.useful ? ` ${t("usefulInline", { count: sig.useful })}` : ""}
+              {sig.wrong ? ` ${t("incorrectInline", { count: sig.wrong })}` : ""}
             </span>
             {sig.verified > 0 ? (
               <span className="gx-agg__ver">
@@ -43,12 +45,12 @@ export function SignalBlock({ sig, held = false }: SignalBlockProps) {
                   <path d="M12 2 4 5v6c0 5 3.4 8.5 8 10 4.6-1.5 8-5 8-10V5z" />
                   <path d="M9 12l2 2 4-4" />
                 </svg>
-                incl. {sig.verified} from verified specialists
+                {t("verifiedInline", { count: sig.verified })}
               </span>
             ) : null}
           </>
         ) : (
-          <span>No ratings yet — be the first to leave a signal.</span>
+          <span>{t("noRatingsYet")}</span>
         )}
       </div>
     </div>
