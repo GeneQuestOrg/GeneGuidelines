@@ -25,6 +25,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { useTranslation } from "react-i18next";
 import {
   type DiseaseSuggestion,
   suggestDiseases,
@@ -51,6 +52,7 @@ export function DiseaseAutocomplete({
   onMissingClick,
   autoFocus = false,
 }: DiseaseAutocompleteProps) {
+  const { t } = useTranslation("common");
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
   const [hover, setHover] = useState(0);
@@ -132,7 +134,7 @@ export function DiseaseAutocomplete({
         if (cancelled) return;
         setResults([]);
         setError(
-          e instanceof Error ? e.message : "Search failed — please retry.",
+          e instanceof Error ? e.message : t("diseaseAutocomplete.searchFailed"),
         );
       } finally {
         if (!cancelled) setLoading(false);
@@ -142,7 +144,7 @@ export function DiseaseAutocomplete({
       cancelled = true;
       window.clearTimeout(timer);
     };
-  }, [trimmedQuery, isQueryTooShort]);
+  }, [trimmedQuery, isQueryTooShort, t]);
 
   // Auto-focus the input when the parent mounts the component.
   useEffect(() => {
@@ -220,7 +222,7 @@ export function DiseaseAutocomplete({
           }}
           onFocus={() => setOpen(true)}
           onKeyDown={handleKey}
-          placeholder={placeholder ?? "Type a disease name, gene, OMIM or Orphanet ID…"}
+          placeholder={placeholder ?? t("diseaseAutocomplete.placeholder")}
           disabled={disabled}
           autoComplete="off"
           aria-autocomplete="list"
@@ -236,7 +238,7 @@ export function DiseaseAutocomplete({
               setResults([]);
               inputRef.current?.focus();
             }}
-            aria-label="Clear"
+            aria-label={t("diseaseAutocomplete.clear")}
           >
             ×
           </button>
@@ -246,7 +248,7 @@ export function DiseaseAutocomplete({
       {showPanel ? (
         <div ref={panelRef} className="ac__panel" role="listbox">
           {loading && displayResults.length === 0 ? (
-            <div className="ac__loading">Searching…</div>
+            <div className="ac__loading">{t("diseaseAutocomplete.searching")}</div>
           ) : null}
 
           {displayResults.length > 0 ? (
@@ -275,12 +277,9 @@ export function DiseaseAutocomplete({
           {!loading && displayResults.length === 0 ? (
             <div className="ac__empty">
               <div className="ac__empty-head">
-                We could not find &ldquo;{trimmedQuery}&rdquo; in our catalogue.
+                {t("diseaseAutocomplete.notFound", { query: trimmedQuery })}
               </div>
-              <p>
-                It might be listed under a different name, mistyped, or simply
-                not yet in our index. Let us help you identify it.
-              </p>
+              <p>{t("diseaseAutocomplete.notFoundHelp")}</p>
               <button
                 type="button"
                 className="ac__missing-btn"
@@ -289,7 +288,7 @@ export function DiseaseAutocomplete({
                   onMissingClick(trimmedQuery);
                 }}
               >
-                Help us find this disease →
+                {t("diseaseAutocomplete.helpFindCta")}
               </button>
             </div>
           ) : null}
@@ -303,7 +302,7 @@ export function DiseaseAutocomplete({
                 onMissingClick(trimmedQuery);
               }}
             >
-              <span>Not on the list? We&rsquo;ll help find your disease</span>
+              <span>{t("diseaseAutocomplete.missingFooterLabel")}</span>
               <span className="ac__missing-arrow">→</span>
             </button>
           ) : null}
@@ -327,6 +326,7 @@ function SuggestionRow({
   suggestion: DiseaseSuggestion;
   query: string;
 }): ReactNode {
+  const { t } = useTranslation("common");
   const primaryGene = suggestion.geneSymbols[0] ?? null;
   const primaryOmim = suggestion.omimCodes[0] ?? null;
   const { kind, alias } = suggestion.matchedAlias;
@@ -358,9 +358,11 @@ function SuggestionRow({
           <code className="ac__chip ac__chip--dim">OMIM {primaryOmim}</code>
         ) : null}
         {suggestion.hasLocalRecord ? (
-          <span className="ac__badge ac__badge--ok">✓ in catalog</span>
+          <span className="ac__badge ac__badge--ok">
+            {t("diseaseAutocomplete.badgeInCatalog")}
+          </span>
         ) : (
-          <span className="ac__badge">research</span>
+          <span className="ac__badge">{t("diseaseAutocomplete.badgeResearch")}</span>
         )}
       </div>
     </>

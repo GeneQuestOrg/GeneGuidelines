@@ -21,6 +21,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@gene-guidelines/ui";
 import { ApiRequestError } from "../api/client";
 import {
@@ -47,6 +48,7 @@ export function MissingDiseaseDialog({
   onClose,
   onPickCandidate,
 }: MissingDiseaseDialogProps) {
+  const { t } = useTranslation("common");
   const [query, setQuery] = useState(initialQuery);
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<WiderSearchResponse | null>(null);
@@ -75,7 +77,7 @@ export function MissingDiseaseDialog({
       event.preventDefault();
       const trimmed = query.trim();
       if (trimmed.length < 2) {
-        setError("Type at least two characters before searching.");
+        setError(t("missingDiseaseDialog.errorTooShort"));
         return;
       }
       setBusy(true);
@@ -90,13 +92,13 @@ export function MissingDiseaseDialog({
         } else if (e instanceof Error) {
           setError(e.message);
         } else {
-          setError("Wider search failed — please retry in a moment.");
+          setError(t("missingDiseaseDialog.errorSearchFailed"));
         }
       } finally {
         setBusy(false);
       }
     },
-    [query],
+    [query, t],
   );
 
   return (
@@ -112,59 +114,64 @@ export function MissingDiseaseDialog({
           type="button"
           className="miss-modal__close"
           onClick={onClose}
-          aria-label="Close"
+          aria-label={t("missingDiseaseDialog.closeAriaLabel")}
         >
           ×
         </button>
 
         <div className="miss-modal__head">
           <h2 id="miss-modal-title" className="miss-modal__title">
-            Help us find your disease
+            {t("missingDiseaseDialog.title")}
           </h2>
-          <p className="miss-modal__sub">
-            Type whatever you have — an English or alternative name, a common
-            abbreviation, an OMIM or Orphanet number, or a gene symbol.
-            Gemma 4 proposes candidates from public sources (OMIM, Orphanet,
-            GeneReviews, PubMed) and a second, stronger model verifies them
-            before we show you the result — so a look-alike guess doesn&rsquo;t
-            slip through.
-          </p>
+          <p className="miss-modal__sub">{t("missingDiseaseDialog.subtitle")}</p>
         </div>
 
         <form className="miss-modal__form" onSubmit={submit}>
           <label className="miss-modal__field">
-            <span className="miss-modal__label">Disease, gene or identifier</span>
+            <span className="miss-modal__label">
+              {t("missingDiseaseDialog.fieldLabel")}
+            </span>
             <input
               ref={inputRef}
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="e.g. Bardet-Biedl · BBS10 · OMIM 209900 · ORPHA 110"
+              placeholder={t("missingDiseaseDialog.fieldPlaceholder")}
               disabled={busy}
               required
             />
             <span className="miss-modal__hint">
-              One field for everything. You can type several leads separated
-              by commas — the AI will combine them.
+              {t("missingDiseaseDialog.fieldHint")}
             </span>
           </label>
 
           <div className="miss-modal__hints">
-            <Hint code="OMIM" label="6-digit number from omim.org" />
-            <Hint code="ORPHA" label="number from orphanet.org" />
-            <Hint code="GENE" label="HGNC symbol, e.g. FBN1, ATP7B" />
-            <Hint code="NAME" label="English or alternative; abbreviation; eponym" />
+            <Hint code="OMIM" label={t("missingDiseaseDialog.hintOmim")} />
+            <Hint code="ORPHA" label={t("missingDiseaseDialog.hintOrpha")} />
+            <Hint code="GENE" label={t("missingDiseaseDialog.hintGene")} />
+            <Hint code="NAME" label={t("missingDiseaseDialog.hintName")} />
           </div>
 
           <div className="miss-modal__pipeline">
             <span className="miss-modal__pipe-label">
-              What happens after you click &ldquo;Search the literature&rdquo;:
+              {t("missingDiseaseDialog.pipelineLabel")}
             </span>
             <ol>
-              <li><b>Gemma 4</b> normalises the input and proposes candidates from OMIM / Orphanet</li>
-              <li><b>Verify</b> — a second, stronger model checks each candidate and drops look-alike guesses</li>
-              <li><b>Confirm</b> — you pick the right candidate from up to three best hits</li>
-              <li><b>Run research</b> — your disease enters the standard 4-stage pipeline</li>
+              <li>
+                <b>Gemma 4</b> {t("missingDiseaseDialog.pipelineStep1")}
+              </li>
+              <li>
+                <b>{t("missingDiseaseDialog.pipelineStep2Lead")}</b> —{" "}
+                {t("missingDiseaseDialog.pipelineStep2")}
+              </li>
+              <li>
+                <b>{t("missingDiseaseDialog.pipelineStep3Lead")}</b> —{" "}
+                {t("missingDiseaseDialog.pipelineStep3")}
+              </li>
+              <li>
+                <b>{t("missingDiseaseDialog.pipelineStep4Lead")}</b> —{" "}
+                {t("missingDiseaseDialog.pipelineStep4")}
+              </li>
             </ol>
           </div>
 
@@ -180,13 +187,15 @@ export function MissingDiseaseDialog({
               type="submit"
               disabled={!query.trim() || busy}
             >
-              {busy ? "Searching public sources…" : "Search the literature →"}
+              {busy
+                ? t("missingDiseaseDialog.searching")
+                : t("missingDiseaseDialog.searchCta")}
             </Button>
             <Button type="button" onClick={onClose}>
-              Cancel
+              {t("missingDiseaseDialog.cancel")}
             </Button>
             <span className="miss-modal__cost">
-              ~5–30 sec · no cost to the user
+              {t("missingDiseaseDialog.costNote")}
             </span>
           </div>
         </form>
@@ -230,15 +239,14 @@ function CandidatesList({
   result: WiderSearchResponse;
   onPick: (candidate: WiderSearchCandidate) => void;
 }): ReactNode {
+  const { t } = useTranslation("common");
   const { candidates, notes, judged } = result;
 
   if (candidates.length === 0) {
     return (
       <div className="miss-modal__results miss-modal__results--empty">
         <p>
-          {notes?.trim()
-            ? notes
-            : "We could not confidently identify this. Try a different spelling, include the gene, or start a run with the term as typed."}
+          {notes?.trim() ? notes : t("missingDiseaseDialog.notFoundFallback")}
         </p>
       </div>
     );
@@ -246,16 +254,20 @@ function CandidatesList({
   return (
     <div className="miss-modal__results">
       <div className="miss-modal__results-head">
-        <h3 className="miss-modal__results-title">Candidates</h3>
+        <h3 className="miss-modal__results-title">
+          {t("missingDiseaseDialog.resultsTitle")}
+        </h3>
         <span
           className={`miss-modal__verify miss-modal__verify--${judged ? "yes" : "no"}`}
           title={
             judged
-              ? "A second, stronger model checked these matches."
-              : "Automatic verification was unavailable — double-check before starting a run."
+              ? t("missingDiseaseDialog.verifiedTitle")
+              : t("missingDiseaseDialog.unverifiedTitle")
           }
         >
-          {judged ? "✓ verified by a second model" : "unverified"}
+          {judged
+            ? t("missingDiseaseDialog.verifiedBadge")
+            : t("missingDiseaseDialog.unverifiedBadge")}
         </span>
       </div>
       {notes?.trim() ? <p className="miss-modal__notes">{notes}</p> : null}
@@ -277,6 +289,7 @@ function CandidateCard({
   candidate: WiderSearchCandidate;
   onPick: (candidate: WiderSearchCandidate) => void;
 }): ReactNode {
+  const { t } = useTranslation("common");
   const blocked = candidate.isHardBlocked;
   const inScope = candidate.isInScope;
   const confidencePct = Math.round(candidate.confidence * 100);
@@ -299,7 +312,7 @@ function CandidateCard({
       <dl className="miss-card__meta">
         {candidate.omim ? (
           <>
-            <dt>OMIM</dt>
+            <dt>{t("diseaseFacts.omim")}</dt>
             <dd>
               <code>{candidate.omim}</code>
             </dd>
@@ -307,7 +320,7 @@ function CandidateCard({
         ) : null}
         {candidate.gene ? (
           <>
-            <dt>Gene</dt>
+            <dt>{t("diseaseFacts.gene")}</dt>
             <dd>
               <code>{candidate.gene}</code>
             </dd>
@@ -315,26 +328,26 @@ function CandidateCard({
         ) : null}
         {candidate.inheritance ? (
           <>
-            <dt>Inheritance</dt>
+            <dt>{t("diseaseFacts.inheritance")}</dt>
             <dd>{candidate.inheritance}</dd>
           </>
         ) : null}
-        <dt>Confidence</dt>
+        <dt>{t("missingDiseaseDialog.confidenceLabel")}</dt>
         <dd>{confidencePct}%</dd>
       </dl>
 
       {candidate.evidence ? (
         <p className="miss-card__evidence">
-          <span className="miss-card__evidence-label">Why this match</span>
+          <span className="miss-card__evidence-label">
+            {t("missingDiseaseDialog.whyThisMatch")}
+          </span>
           {candidate.evidence}
         </p>
       ) : null}
 
       {blocked ? (
         <p className="miss-card__notice">
-          GeneGuidelines focuses on rare <em>genetic</em> diseases. This
-          looks like an {candidate.category} disease, so we cannot launch
-          the research pipeline here. Please consult a relevant registry.
+          {t("missingDiseaseDialog.blockedNotice", { category: candidate.category })}
         </p>
       ) : null}
 
@@ -345,7 +358,9 @@ function CandidateCard({
           disabled={blocked}
           onClick={() => onPick(candidate)}
         >
-          {blocked ? "Out of scope" : "Use this disease →"}
+          {blocked
+            ? t("missingDiseaseDialog.outOfScopeCta")
+            : t("missingDiseaseDialog.useThisCta")}
         </Button>
       </div>
     </div>

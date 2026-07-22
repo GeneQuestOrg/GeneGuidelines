@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import "../styles/disease-page.css";
 
 export interface QuestionsForDoctorProps {
@@ -11,6 +12,7 @@ export interface QuestionsForDoctorProps {
  * so a family can paste it into notes or a message.
  */
 export function QuestionsForDoctor({ questions }: QuestionsForDoctorProps) {
+  const { t } = useTranslation("common");
   const [copied, setCopied] = useState(false);
 
   const copyAll = () => {
@@ -32,7 +34,7 @@ export function QuestionsForDoctor({ questions }: QuestionsForDoctorProps) {
         ))}
       </ul>
       <button type="button" className="qfd__copy" onClick={copyAll}>
-        {copied ? "Copied ✓" : "Copy all"}
+        {copied ? t("questionsForDoctor.copied") : t("questionsForDoctor.copyAll")}
       </button>
     </div>
   );

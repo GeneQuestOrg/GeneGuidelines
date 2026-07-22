@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Status } from "@gene-guidelines/ui";
 import type { ContentPrSummary } from "../types";
 
@@ -16,8 +17,9 @@ export function DiseaseOpenPrList({
   diseaseSlug,
   onNav,
 }: DiseaseOpenPrListProps) {
+  const { t } = useTranslation("common");
   if (loading) {
-    return <p className="d-open-prs__empty">Loading proposed updates…</p>;
+    return <p className="d-open-prs__empty">{t("diseaseOpenPrList.loading")}</p>;
   }
 
   if (error != null) {

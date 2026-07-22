@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import type { Disease } from "../types";
 
 export interface DiseaseSelectProps {
@@ -14,6 +15,7 @@ export function DiseaseSelect({
   onChange,
   id = "doctors-disease",
 }: DiseaseSelectProps) {
+  const { t } = useTranslation("common");
   const sorted = useMemo(
     () => [...diseases].sort((a, b) => a.name.localeCompare(b.name)),
     [diseases],
@@ -21,7 +23,7 @@ export function DiseaseSelect({
 
   return (
     <div className="filters__field">
-      <label htmlFor={id}>Select disease</label>
+      <label htmlFor={id}>{t("diseaseSelect.label")}</label>
       <select
         id={id}
         className="filters__select"
@@ -30,7 +32,7 @@ export function DiseaseSelect({
         disabled={sorted.length === 0}
       >
         {sorted.length === 0 ? (
-          <option value="">Loading diseases…</option>
+          <option value="">{t("diseaseSelect.loading")}</option>
         ) : (
           sorted.map((disease) => (
             <option key={disease.slug} value={disease.slug}>

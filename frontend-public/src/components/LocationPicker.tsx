@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import type { UserLocation } from "../router/types";
 import { searchGeo, type GeoResult } from "../api/geo";
 
@@ -11,6 +12,7 @@ export interface LocationPickerProps {
 const DEBOUNCE_MS = 350;
 
 export function LocationPicker({ value, label, onChange }: LocationPickerProps) {
+  const { t } = useTranslation("common");
   const [query, setQuery] = useState("");
   const [suggestions, setSuggestions] = useState<GeoResult[]>([]);
   const [open, setOpen] = useState(false);
@@ -48,7 +50,7 @@ export function LocationPicker({ value, label, onChange }: LocationPickerProps) 
         if (err instanceof DOMException && err.name === "AbortError") return;
         setSuggestions([]);
         setOpen(false);
-        setGeoError("Location search failed. Please try again.");
+        setGeoError(t("locationPicker.errorSearchFailed"));
       }
     }, DEBOUNCE_MS);
   }
@@ -74,7 +76,7 @@ export function LocationPicker({ value, label, onChange }: LocationPickerProps) 
 
   function handleGeolocate() {
     if (!navigator.geolocation) {
-      setGeoError("Geolocation not supported by your browser.");
+      setGeoError(t("locationPicker.errorNotSupported"));
       return;
     }
     setGeoLoading(true);
@@ -82,11 +84,14 @@ export function LocationPicker({ value, label, onChange }: LocationPickerProps) 
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         setGeoLoading(false);
-        onChange({ lat: pos.coords.latitude, lng: pos.coords.longitude }, "Your location");
+        onChange(
+          { lat: pos.coords.latitude, lng: pos.coords.longitude },
+          t("locationMenu.yourLocation"),
+        );
       },
       () => {
         setGeoLoading(false);
-        setGeoError("Location access denied or unavailable.");
+        setGeoError(t("locationPicker.errorDenied"));
       },
       { timeout: 8000 },
     );
@@ -109,7 +114,7 @@ export function LocationPicker({ value, label, onChange }: LocationPickerProps) 
             type="button"
             className="loc-picker__clear"
             onClick={handleClear}
-            aria-label="Clear location"
+            aria-label={t("locationPicker.clearAriaLabel")}
           >
             ✕
           </button>
@@ -120,11 +125,11 @@ export function LocationPicker({ value, label, onChange }: LocationPickerProps) 
             <input
               type="text"
               className="loc-picker__input filters__select"
-              placeholder="City or country…"
+              placeholder={t("locationPicker.placeholder")}
               value={query}
               onChange={(e) => handleQueryChange(e.target.value)}
               onFocus={() => suggestions.length > 0 && setOpen(true)}
-              aria-label="Search location"
+              aria-label={t("locationPicker.searchAriaLabel")}
               aria-autocomplete="list"
               aria-expanded={open}
             />
@@ -152,8 +157,8 @@ export function LocationPicker({ value, label, onChange }: LocationPickerProps) 
             className="loc-picker__geo-btn"
             onClick={handleGeolocate}
             disabled={geoLoading}
-            title="Detect my location"
-            aria-label="Detect my location"
+            title={t("locationPicker.detectAriaLabel")}
+            aria-label={t("locationPicker.detectAriaLabel")}
           >
             {geoLoading ? (
               "…"

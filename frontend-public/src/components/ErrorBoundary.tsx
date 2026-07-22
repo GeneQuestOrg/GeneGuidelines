@@ -1,7 +1,8 @@
 import { Component, type ErrorInfo, type ReactNode } from "react";
+import { withTranslation, type WithTranslation } from "react-i18next";
 import { Button } from "@gene-guidelines/ui";
 
-interface ErrorBoundaryProps {
+interface ErrorBoundaryProps extends WithTranslation {
   readonly children: ReactNode;
 }
 
@@ -10,7 +11,9 @@ interface ErrorBoundaryState {
   message: string;
 }
 
-export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+// Class component (React error boundaries have no hooks-based equivalent), so
+// i18n is wired via the `withTranslation` HOC rather than `useTranslation`.
+class ErrorBoundaryBase extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false, message: "" };
@@ -27,14 +30,12 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   }
 
   render(): ReactNode {
+    const { t } = this.props;
     if (this.state.hasError) {
       return (
         <div className="page page--narrow" role="alert">
-          <h1 className="page__title">Something went wrong</h1>
-          <p className="page__lead">
-            The page hit an unexpected error. Reload the app or return home. If this keeps
-            happening, note the time and what you clicked.
-          </p>
+          <h1 className="page__title">{t("errorBoundary.title")}</h1>
+          <p className="page__lead">{t("errorBoundary.body")}</p>
           {import.meta.env.DEV ? (
             <pre className="page__lead" style={{ fontSize: "12px", whiteSpace: "pre-wrap" }}>
               {this.state.message}
@@ -42,10 +43,10 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
           ) : null}
           <div className="page__actions">
             <Button type="button" variant="primary" onClick={() => window.location.reload()}>
-              Reload
+              {t("errorBoundary.reload")}
             </Button>
             <Button type="button" variant="ghost" as="a" href="/">
-              Home
+              {t("errorBoundary.home")}
             </Button>
           </div>
         </div>
@@ -54,3 +55,5 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     return this.props.children;
   }
 }
+
+export const ErrorBoundary = withTranslation("common")(ErrorBoundaryBase);

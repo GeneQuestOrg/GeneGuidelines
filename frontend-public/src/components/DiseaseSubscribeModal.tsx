@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@gene-guidelines/ui";
 import {
   subscribeToDiseaseAlerts,
@@ -30,6 +31,7 @@ export function DiseaseSubscribeModal({
   onClose,
   onSaved,
 }: DiseaseSubscribeModalProps) {
+  const { t } = useTranslation("common");
   const storedEmail = readStoredSubscriptionEmail(disease.slug);
   const [email, setEmail] = useState(storedEmail ?? "");
   const [prefs, setPrefs] = useState<AlertPrefsPayload>(DEFAULT_PREFS);
@@ -48,11 +50,11 @@ export function DiseaseSubscribeModal({
     event.preventDefault();
     const trimmed = email.trim();
     if (trimmed === "") {
-      setError("Email is required — we send a confirmation link before any alerts.");
+      setError(t("subscribeModal.errorEmailRequired"));
       return;
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
-      setError("Enter a valid email address.");
+      setError(t("subscribeModal.errorEmailInvalid"));
       return;
     }
     setError(null);
@@ -69,7 +71,7 @@ export function DiseaseSubscribeModal({
       setSaved(true);
       onSaved();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not save subscription.");
+      setError(err instanceof Error ? err.message : t("subscribeModal.errorSaveFailed"));
     } finally {
       setSubmitting(false);
     }
@@ -84,7 +86,12 @@ export function DiseaseSubscribeModal({
   return (
     <div className="dsub-modal" role="dialog" aria-modal="true" onClick={onClose}>
       <div className="dsub-modal__sheet" onClick={(e) => e.stopPropagation()}>
-        <button type="button" className="dsub-modal__close" onClick={onClose} aria-label="Close">
+        <button
+          type="button"
+          className="dsub-modal__close"
+          onClick={onClose}
+          aria-label={t("subscribeModal.closeAriaLabel")}
+        >
           ×
         </button>
         <div className="dsub-modal__head">
@@ -92,10 +99,11 @@ export function DiseaseSubscribeModal({
             🔔
           </span>
           <div>
-            <h2 className="dsub-modal__title">Alerts · {disease.nameShort}</h2>
+            <h2 className="dsub-modal__title">
+              {t("subscribeModal.title", { short: disease.nameShort })}
+            </h2>
             <p className="dsub-modal__sub">
-              Email when something material changes for {disease.name}. No marketing — substantive
-              updates only. You must confirm via a link in your inbox before we send anything.
+              {t("subscribeModal.subtitle", { name: disease.name })}
             </p>
           </div>
         </div>
@@ -104,32 +112,32 @@ export function DiseaseSubscribeModal({
             <p>{message}</p>
             {devConfirmUrl != null ? (
               <p className="dsub-modal__dev-link">
-                Dev confirmation:{" "}
+                {t("subscribeModal.devConfirmLabel")}{" "}
                 <a href={devConfirmUrl} target="_blank" rel="noreferrer">
-                  open link
+                  {t("subscribeModal.devConfirmLink")}
                 </a>
               </p>
             ) : null}
             <Button type="button" variant="primary" onClick={onClose}>
-              Done
+              {t("subscribeModal.done")}
             </Button>
           </div>
         ) : (
           <form className="dsub-modal__form" onSubmit={(e) => void save(e)}>
             <label className="dsub-modal__field">
-              <span className="dsub-modal__label">Email</span>
+              <span className="dsub-modal__label">{t("subscribeModal.emailLabel")}</span>
               <input
                 type="email"
                 required
                 autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
+                placeholder={t("subscribeModal.emailPlaceholder")}
                 disabled={submitting}
               />
             </label>
             <fieldset className="dsub-modal__prefs">
-              <legend>What to notify you about</legend>
+              <legend>{t("subscribeModal.prefsLegend")}</legend>
               <label className="dsub-modal__pref">
                 <input
                   type="checkbox"
@@ -138,8 +146,8 @@ export function DiseaseSubscribeModal({
                   disabled={submitting}
                 />
                 <div>
-                  <b>Guideline updates</b>
-                  <span>When the living guideline layer changes in a meaningful way.</span>
+                  <b>{t("subscribeModal.prefGuidelinesTitle")}</b>
+                  <span>{t("subscribeModal.prefGuidelinesBody")}</span>
                 </div>
               </label>
               <label className="dsub-modal__pref">
@@ -150,8 +158,8 @@ export function DiseaseSubscribeModal({
                   disabled={submitting}
                 />
                 <div>
-                  <b>New recruiting trials nearby</b>
-                  <span>Trials recruiting within your chosen radius.</span>
+                  <b>{t("subscribeModal.prefTrialsTitle")}</b>
+                  <span>{t("subscribeModal.prefTrialsBody")}</span>
                 </div>
               </label>
               <label className="dsub-modal__pref">
@@ -162,8 +170,8 @@ export function DiseaseSubscribeModal({
                   disabled={submitting}
                 />
                 <div>
-                  <b>Therapy status changes</b>
-                  <span>When a promising therapy advances (e.g. preclinical → phase 1).</span>
+                  <b>{t("subscribeModal.prefTherapiesTitle")}</b>
+                  <span>{t("subscribeModal.prefTherapiesBody")}</span>
                 </div>
               </label>
               <label className="dsub-modal__pref">
@@ -174,14 +182,14 @@ export function DiseaseSubscribeModal({
                   disabled={submitting}
                 />
                 <div>
-                  <b>New specialists nearby</b>
-                  <span>When a relevant expert appears within your radius.</span>
+                  <b>{t("subscribeModal.prefDoctorsTitle")}</b>
+                  <span>{t("subscribeModal.prefDoctorsBody")}</span>
                 </div>
               </label>
             </fieldset>
             {prefs.trials || prefs.doctors ? (
               <label className="dsub-modal__field">
-                <span className="dsub-modal__label">Radius</span>
+                <span className="dsub-modal__label">{t("subscribeModal.radiusLabel")}</span>
                 <input
                   type="range"
                   min={50}
@@ -192,7 +200,7 @@ export function DiseaseSubscribeModal({
                   disabled={submitting}
                 />
                 <span className="dsub-modal__hint">
-                  <b>{radiusKm} km</b> from your location
+                  <b>{radiusKm} km</b> {t("subscribeModal.radiusHintSuffix")}
                 </span>
               </label>
             ) : null}
@@ -204,11 +212,11 @@ export function DiseaseSubscribeModal({
             <div className="dsub-modal__actions">
               {storedEmail != null ? (
                 <Button type="button" variant="ghost" onClick={unsubscribe} disabled={submitting}>
-                  Clear saved email
+                  {t("subscribeModal.clearSavedEmail")}
                 </Button>
               ) : null}
               <Button type="submit" variant="primary" disabled={submitting}>
-                {submitting ? "Sending…" : "Save — confirm by email"}
+                {submitting ? t("subscribeModal.sending") : t("subscribeModal.save")}
               </Button>
             </div>
           </form>
