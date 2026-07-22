@@ -50,6 +50,16 @@
     "types": "Typy",
     "lastRevised": "Ostatnia aktualizacja"
   },
+  "therapies": {
+    "statusConsensus": "Konsensus",
+    "statusVerified": "Zweryfikowana",
+    "statusPending": "Oczekująca",
+    "statusPreclinical": "Przedkliniczna",
+    "empty": "Nie odnotowano jeszcze żadnych linii terapii dla tej choroby."
+  },
+  "doctorCard": {
+    "specialtyNotVerified": "Specjalizacja niezweryfikowana"
+  },
   "loadingCatalog": "Ładowanie katalogu…",
   "filterMenu": {
     "all": "Wszystkie"

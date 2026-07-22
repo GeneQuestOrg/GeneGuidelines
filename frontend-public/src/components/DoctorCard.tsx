@@ -56,7 +56,7 @@ export function DoctorCard({ doctor, km, compact = false, onNav }: DoctorCardPro
           ) : null}
         </div>
       ) : (
-        <div className="doc__spec doc__spec--unverified">Specialty not verified</div>
+        <div className="doc__spec doc__spec--unverified">{t("doctorCard.specialtyNotVerified")}</div>
       )}
       <div className="doc__inst">
         {doctor.institution} · {doctorLocation(doctor, t)}

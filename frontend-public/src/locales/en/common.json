@@ -50,6 +50,16 @@
     "types": "Types",
     "lastRevised": "Last revised"
   },
+  "therapies": {
+    "statusConsensus": "Consensus",
+    "statusVerified": "Verified",
+    "statusPending": "Pending",
+    "statusPreclinical": "Preclinical",
+    "empty": "No therapy lines recorded for this disease yet."
+  },
+  "doctorCard": {
+    "specialtyNotVerified": "Specialty not verified"
+  },
   "loadingCatalog": "Loading catalog…",
   "filterMenu": {
     "all": "All"

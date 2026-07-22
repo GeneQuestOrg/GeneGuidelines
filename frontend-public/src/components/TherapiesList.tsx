@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import type { Therapy, TherapyStatus } from "../types/therapy";
 import "./therapies-list.css";
 
@@ -5,30 +6,35 @@ export interface TherapiesListProps {
   therapies: readonly Therapy[];
 }
 
-const STATUS_LABEL: Record<TherapyStatus, string> = {
-  consensus: "Consensus",
-  verified: "Verified",
-  pending: "Pending",
-  preclinical: "Preclinical",
+// Maps the evidence-tier status to a "common" i18n key (resolved at render).
+// Therapy `consensus`/`verified` are evidence tiers (literature-backed), NOT a
+// platform sign-off — distinct from the disease Status component's framing.
+const STATUS_KEY: Record<TherapyStatus, string> = {
+  consensus: "therapies.statusConsensus",
+  verified: "therapies.statusVerified",
+  pending: "therapies.statusPending",
+  preclinical: "therapies.statusPreclinical",
 };
 
 export function TherapiesList({ therapies }: TherapiesListProps) {
+  const { t } = useTranslation("common");
   if (therapies.length === 0) {
-    return (
-      <p className="therapies-list__empty">
-        No therapy lines recorded for this disease yet.
-      </p>
-    );
+    return <p className="therapies-list__empty">{t("therapies.empty")}</p>;
   }
   return (
     <ul className="therapies-list">
-      {therapies.map((t) => (
-        <li key={t.name} className={`therapy-row therapy-row--${t.status}`}>
+      {therapies.map((therapy) => (
+        <li
+          key={therapy.name}
+          className={`therapy-row therapy-row--${therapy.status}`}
+        >
           <div className="therapy-row__head">
-            <span className="therapy-row__name">{t.name}</span>
-            <span className="therapy-row__status">{STATUS_LABEL[t.status]}</span>
+            {/* therapy.name / therapy.note are AI-generated content → translated
+                at research time (content pipeline), not here. */}
+            <span className="therapy-row__name">{therapy.name}</span>
+            <span className="therapy-row__status">{t(STATUS_KEY[therapy.status])}</span>
           </div>
-          {t.note ? <p className="therapy-row__note">{t.note}</p> : null}
+          {therapy.note ? <p className="therapy-row__note">{therapy.note}</p> : null}
         </li>
       ))}
     </ul>
