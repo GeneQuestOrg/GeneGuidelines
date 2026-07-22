@@ -134,6 +134,37 @@ def patch_disease(
     return DiseaseResponse.from_domain(disease)
 
 
+@router.post(
+    "/admin/diseases/{slug}/translate",
+    dependencies=[Depends(require_superadmin)],
+)
+async def translate_disease(
+    slug: str,
+    locale: str | None = Query(
+        None,
+        description=(
+            "Optional single target locale (e.g. 'de'). Omit to translate into "
+            "every configured TRANSLATION_TARGET_LOCALES."
+        ),
+    ),
+) -> dict:
+    """Re-run machine translation for one disease on demand (superadmin, ADR 004).
+
+    Thin wrapper over the PR2 worker
+    (:func:`backend.services.content_translation.translate_disease_content`): it
+    is idempotent + per-field ``source_hash``-staleness-guarded, so a re-run only
+    re-translates fields whose English changed and returns the worker's summary
+    dict (status / model / per-locale results / counts) verbatim. English stays
+    authoritative — an unknown disease or missing model yields a ``skipped``
+    summary, never an error.
+    """
+    from backend.config import TRANSLATION_TARGET_LOCALES
+    from backend.services.content_translation import translate_disease_content
+
+    locales = [locale] if locale else list(TRANSLATION_TARGET_LOCALES)
+    return await translate_disease_content(slug, locales)
+
+
 @router.get("/diseases/{slug}/trials", response_model=list[TrialResponse])
 def list_disease_trials(
     slug: str,
