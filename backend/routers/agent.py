@@ -344,6 +344,78 @@ async def _maybe_start_synthesis_after_shelf(execution_id: str, store: dict[str,
         log.exception("chain-synthesis: failed to start synthesis for %s", disease_slug)
 
 
+async def _maybe_translate_after_synthesis(execution_id: str, store: dict[str, Any]) -> None:
+    """Machine-translate a disease's content once its authoritative EN synthesis lands.
+
+    Sibling of :func:`_maybe_start_synthesis_after_shelf`: another post-flow seam
+    fired from the ``execute_agent_async`` finally-block. The guideline-synthesis
+    writer run passes through that same block with ``flow_key == "guideline_synthesis"``,
+    so this hook fires immediately after the English synthesis is (re)published —
+    exactly the "translation is a post-publish background step" trigger of
+    ADR 004 §3. It hands the disease slug to the PR2 worker
+    (:func:`backend.services.content_translation.translate_disease_content`), which
+    (re)builds the target-locale rows. Because the worker is idempotent and
+    per-field ``source_hash``-staleness-guarded, re-runs are cheap and any finder
+    field (therapies / foundations) that finished after synthesis self-heals on the
+    next synthesis-triggered pass — so we deliberately do NOT hook every finder.
+
+    Fires ONLY when every guard holds:
+      * the finished flow is ``guideline_synthesis``;
+      * the run did not error;
+      * at least one target locale is configured (a cheap early skip);
+      * a disease_slug is resolvable from the run context (resolved the same way
+        the sibling hook does, from ``disease_initial``).
+
+    Fully failure-isolated: any error — including a raising worker — is logged and
+    swallowed so a translation hiccup never breaks the synthesis run or the rest of
+    the finally-block, and it stays independent of the sibling synthesis hook (the
+    two are mutually exclusive by ``flow_key`` and each isolates its own failures).
+    When ``TRANSLATION_MODEL`` is unset the worker itself no-ops gracefully.
+    """
+    if str(store.get("flow_key") or "") != "guideline_synthesis":
+        return
+    if store.get("error"):
+        log.info(
+            "translate-after-synthesis: skip %s — synthesis run errored (%s)",
+            execution_id, store.get("error"),
+        )
+        return
+
+    # Cheap skip before any import / worker work: nothing to translate into.
+    from ..config import TRANSLATION_TARGET_LOCALES
+
+    if not TRANSLATION_TARGET_LOCALES:
+        return
+
+    initial = store.get("disease_initial")
+    initial = initial if isinstance(initial, dict) else {}
+    disease_slug = str(initial.get("disease_slug") or "").strip().lower()
+    if not disease_slug:
+        log.info(
+            "translate-after-synthesis: skip %s — no disease_slug in synthesis run context",
+            execution_id,
+        )
+        return
+
+    try:
+        from ..services.content_translation import translate_disease_content
+
+        await translate_disease_content(
+            disease_slug,
+            TRANSLATION_TARGET_LOCALES,
+            execution_id=execution_id,
+        )
+        log.info(
+            "translate-after-synthesis: ran content translation for %s after synthesis %s (locales=%s)",
+            disease_slug, execution_id, list(TRANSLATION_TARGET_LOCALES),
+        )
+    except Exception:  # noqa: BLE001 — a translation failure must not break the synthesis run
+        log.exception(
+            "translate-after-synthesis: failed to translate %s after synthesis %s",
+            disease_slug, execution_id,
+        )
+
+
 async def execute_agent_async(
     execution_id: str,
     ticket_id: int,
@@ -390,6 +462,11 @@ async def execute_agent_async(
         # synthesis run task. Failure-isolated inside the hook — a synthesis
         # hiccup must not break the shelf run or the rest of the bootstrap.
         await _maybe_start_synthesis_after_shelf(execution_id, store)
+        # Machine-translate the disease's content right after its EN synthesis
+        # lands. Awaited for the same reason; each hook fully isolates its own
+        # failures and the two are mutually exclusive by flow_key, so one can
+        # never break the other or the run-status response path.
+        await _maybe_translate_after_synthesis(execution_id, store)
 
 
 async def _execute_agent_async_body(
