@@ -13,12 +13,12 @@
   "dontKicker": "I don't have a diagnosis",
   "dontBadge": "Beta · soon",
   "dontTitle": "I don't know where to start",
-  "dontDescLead": "Only a symptom, a genetic test result, or a suspicion? A guided orientation is coming — you'll answer a few questions and we'll point you toward possible directions and which specialist to talk to. ",
-  "dontDescEmph": "With citations, not a diagnosis.",
+  "dontDescLead": "Only a symptom, a genetic test result, or a suspicion? A guided orientation is coming — answer a few questions and the tool will suggest diagnostic directions to discuss with your doctor. ",
+  "dontDescEmph": "Suggestions, not a diagnosis.",
   "dontSteps": [
     "Describe the symptoms, or paste a variant (e.g. GNAS c.601C>T).",
-    "We narrow it to possible directions — with citations, not a diagnosis.",
-    "We point you to the guidelines and a doctor who knows the topic."
+    "The tool suggests diagnostic directions worth considering — with citations.",
+    "You take them to your doctor, to discuss and decide together."
   ],
   "dontComingSoon": "Coming soon",
 

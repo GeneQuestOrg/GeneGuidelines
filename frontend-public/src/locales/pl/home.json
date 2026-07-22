@@ -13,12 +13,12 @@
   "dontKicker": "Nie znam diagnozy",
   "dontBadge": "Beta · wkrótce",
   "dontTitle": "Nie wiem, od czego zacząć",
-  "dontDescLead": "Masz tylko objaw, wynik badania genetycznego albo podejrzenie? Prowadzona orientacja jest w drodze — odpowiesz na kilka pytań, a my pokażemy możliwe kierunki i z jakim specjalistą porozmawiać. ",
-  "dontDescEmph": "Z cytowaniami, bez diagnozy.",
+  "dontDescLead": "Masz tylko objaw, wynik badania genetycznego albo podejrzenie? Prowadzona orientacja jest w drodze — odpowiesz na kilka pytań, a narzędzie podpowie kierunki diagnostyki do omówienia z lekarzem. ",
+  "dontDescEmph": "Podpowiedzi, nie diagnoza.",
   "dontSteps": [
     "Opisz objawy lub wklej wariant (np. GNAS c.601C>T).",
-    "Zawężamy do możliwych kierunków — z cytowaniami, bez diagnozy.",
-    "Kierujemy do wytycznych i lekarza, który zna temat."
+    "Narzędzie podpowie kierunki diagnostyki warte rozważenia — z cytowaniami.",
+    "Zabierasz je do lekarza, żeby omówić i zdecydować razem."
   ],
   "dontComingSoon": "Wkrótce",
 
