@@ -23,6 +23,7 @@
   "symptomLinkPrefix": "Nie masz jeszcze diagnozy?",
   "symptomLinkCta": "Szukaj choroby po symptomach",
   "symptomComingSoon": "Szukanie po symptomach pojawi się wkrótce. Na razie wpisz nazwę choroby.",
+  "symptomBeta": "beta · wkrótce",
   "pickedFromLiterature": "z literatury ({{model}})",
   "pickedBadgeOk": "✓ Wytyczne dostępne",
   "pickedBadgeNew": "Zostanie zlecony research",

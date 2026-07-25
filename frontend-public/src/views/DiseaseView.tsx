@@ -22,6 +22,7 @@ import { useRelatedDiseases } from "../hooks/useRelatedDiseases";
 import { useActiveResearchRuns } from "../hooks/useActiveResearchRuns";
 import type { SubscriptionUiStatus } from "../utils/diseaseSubscriptionStorage";
 import { PlaceholderView } from "./PlaceholderView";
+import { DiseaseStubView } from "./DiseaseStubView";
 import "../styles/disease-page.css";
 import "../styles/my-case.css";
 
@@ -96,12 +97,23 @@ export function DiseaseView({ slug, role, userLoc, onNav, alert }: DiseaseViewPr
   }
 
   if (disease == null) {
+    // No content record for this slug yet. It may still be a real rare disease
+    // in the Tier-1 index that simply hasn't been researched — resolve a
+    // client-side STUB (facts + skeleton + "Run research"). Genuinely unknown
+    // slugs fall through to the not-found placeholder.
     return (
-      <PlaceholderView
-        title={t("notFoundTitle")}
-        description={t("notFoundDesc", { slug })}
-        primaryAction={{ label: t("notFoundAction"), path: "/diseases" }}
+      <DiseaseStubView
+        key={slug}
+        slug={slug}
         onNav={onNav}
+        notFound={
+          <PlaceholderView
+            title={t("notFoundTitle")}
+            description={t("notFoundDesc", { slug })}
+            primaryAction={{ label: t("notFoundAction"), path: "/diseases" }}
+            onNav={onNav}
+          />
+        }
       />
     );
   }

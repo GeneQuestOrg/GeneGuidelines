@@ -1,0 +1,210 @@
+{
+  "hero": {
+    "eyebrow": "Dlaczego to zbudowaliśmy",
+    "eyebrowSub": "8 min czytania · korzystaj z odnośników do sekcji, aby przeskakiwać między nimi",
+    "leadText1": "PubMed indeksuje rzędu ",
+    "leadNum": "10 000",
+    "leadText2": " nowych artykułów o chorobach rzadkich rocznie — codziennie przybywają dziesiątki.",
+    "leadLine2": "Większość z tych chorób śledzi garstka naukowców na całym świecie — rzadko jest to lekarz, do którego rodzina faktycznie ma dostęp.",
+    "leadLine3": "GeneGuidelines istnieje po to, by ten strumień wiedzy dało się wykorzystać w miejscu opieki.",
+    "tldr": "Żywe wytyczne kliniczne dla każdej choroby rzadkiej — każde twierdzenie z odnośnikiem do PMID, każda zmiana zaproponowana przez AI sprawdzona i oceniona przez klinicystę. Otwarte źródło. Za darmo, bez reklam, bez konta."
+  },
+  "toc": {
+    "heading": "Na tej stronie",
+    "top": "Dlaczego to zbudowaliśmy",
+    "origins": "Geneza",
+    "scale": "Skala",
+    "specialist": "Dlaczego specjalista to za mało",
+    "families": "Dla rodzin",
+    "clinicians": "Dla klinicystów",
+    "disease-page": "Jedna strona na chorobę",
+    "how": "Jak to działa",
+    "privacy": "Prywatność",
+    "not": "Czym to nie jest",
+    "limitations": "Ograniczenia",
+    "about": "Kto za tym stoi"
+  },
+  "origins": {
+    "heading": "Słowo o genezie",
+    "paragraphs": [
+      "Projekt zaczął się od dwóch odrębnych porażek tego samego rodzaju.",
+      "Szybko rosnąca zmiana kostna w obrębie szkieletu czaszkowo-twarzowego dziecka, wykryta przypadkowo podczas rutynowej kontroli stomatologicznej, została poddana biopsji i odczytana jako młodzieńczy beleczkowy włókniak kostniejący (juvenile trabecular ossifying fibroma) — rozpoznanie, którego standardem postępowania jest rozległa operacja. Histopatolożka pracowała starannie i w diagnostyce różnicowej uwzględniła dysplazję włóknistą; zleciła badanie MDM2 FISH, aby wykluczyć kostniakomięsaka o niskim stopniu złośliwości. Sekwencjonowania GNAS — badania, które według aktualnego piśmiennictwa odróżnia JTOF od właściwego rozpoznania — nie było wśród wykonanych. Rodzina zleciła je prywatnie. Rozpoznanie się zmieniło.",
+      "Na tym powinno się skończyć. Nie skończyło się. Doświadczony chirurg czaszkowo-twarzowy za granicą, poinformowany o skorygowanym rozpoznaniu, wciąż proponował wyłyżeczkowanie zmiany — zabieg, przed którym międzynarodowy konsensus w sprawie dysplazji włóknistej u dzieci wyraźnie przestrzega w razie braku bólu lub upośledzenia funkcji. Dwaj inni chirurdzy również rozważali wycięcie podczas pierwszej wizyty i zmienili swoje zalecenie na drugiej. Tylko jeden specjalista — odnaleziony przez rodzinę dzięki ręcznemu przeszukaniu PubMed w poszukiwaniu krajowych autorów piszących o tej chorobie — znał konsensus od samego początku.",
+      "Żaden z tych lekarzy nie był niekompetentny. Histopatolożka pracowała starannie; chirurg za granicą ma w swojej dziedzinie dorobek światowej klasy. Nikt nie jest w stanie trzymać w pamięci roboczej szczegółów każdej choroby rzadkiej i nie ma powodu, by tego oczekiwać. Skorygowany plan pojawił się tylko dlatego, że rodzina miała środki, znajomość języka i kontakty, by szukać dalej po każdej autorytatywnej odpowiedzi, którą otrzymywała — oraz dzięki życzliwości kilku uważnych osób napotkanych po drodze.",
+      "To nie jest problem pojedynczych błędów. To systemowy problem skali. Dobry wynik nie powinien zależeć od takiego szczęścia."
+    ]
+  },
+  "scale": {
+    "heading": "Skala problemu",
+    "stats": {
+      "people": {
+        "num": "~300 mln",
+        "text1": "Ludzi na całym świecie żyjących w danym momencie z chorobą rzadką. Około ",
+        "pct1": "80%",
+        "text2": " ma podłoże genetyczne; spośród nich mniej więcej ",
+        "pct2": "70%",
+        "text3": " ujawnia się w dzieciństwie.",
+        "cite1": "Nguengang Wakap et al., Eur J Hum Genet 2020",
+        "cite2": "Lancet Global Health, 2024"
+      },
+      "described": {
+        "num": "~7000",
+        "label": "Chorób rzadkich opisanych w OMIM i Orphanet. Większość ma mniej niż 100 publikacji rocznie."
+      },
+      "pubs": {
+        "num": "~1,5 mln",
+        "text1": "Nowych publikacji indeksowanych przez PubMed każdego roku",
+        "cite": "NLM, FY2023",
+        "text2": "Codziennie dziesiątki z nich dotyczą chorób rzadkich — rzędu dziesięciu tysięcy rocznie, rozproszonych na tysiące odrębnych jednostek chorobowych."
+      },
+      "lag": {
+        "num": "~9 lat",
+        "text1": "Mediana opóźnienia między pojawieniem się nowych dowodów a ich włączeniem do formalnych wytycznych klinicznych.",
+        "citePrefix": "Berg et al., Surgery 2025, ",
+        "citeLink": "PMID 39592333"
+      },
+      "diagnosis": {
+        "num": "~4,8 roku",
+        "text1": "Średni czas od wystąpienia objawów do trafnego rozpoznania choroby rzadkiej.",
+        "citeLink": "Lancet Global Health, 2024"
+      }
+    },
+    "closing": "Jasno wybrzmiało to na polskiej konferencji poświęconej chorobom rzadkim w 2026 roku: żaden lekarz rodzinny nie jest w stanie być na bieżąco z każdą chorobą rzadką, którą może napotkać. Piśmiennictwo na to nie pozwala — a większość specjalistów ma ten sam problem już przy sąsiedniej chorobie."
+  },
+  "specialist": {
+    "heading": "Dlaczego „specjalista” to za mało",
+    "families": {
+      "heading": "Dla rodzin",
+      "p1Lead": "Usłyszenie ",
+      "p1Em": "„skierujemy Cię do chirurga szczękowo-twarzowego”",
+      "p1Rest": " to dobre skierowanie. Ale chirurg szczękowo-twarzowy z dorobkiem światowej klasy w chirurgii ortognatycznej niekoniecznie widział dziecko z dysplazją włóknistą. Te dwie kompetencje leżą na różnych osiach — a znalezienie kogoś z praktycznym doświadczeniem w konkretnej chorobie wymaga zwykle więcej wysiłku, niż daje pojedyncze skierowanie. Doświadczenie kliniczne w chorobie rzadkiej jest skupione w wąskim gronie ośrodków, a ich odnalezienie wymaga aktywnego działania.",
+      "p2": "Nie chodzi tu o brak zaufania do lekarzy. Chodzi o realizm. Piętnastominutowa wizyta, napięty grafik, kilkadziesiąt niepowiązanych ze sobą pacjentów jednego dnia — to warunki, w jakich naprawdę uprawia się medycynę. W chorobie rzadkiej nikt nie będzie śledził konkretnego przypadku Twojego dziecka tak uważnie jak Ty. To nie zarzut wobec żadnego lekarza; to arytmetyka tej pracy i powód, dla którego rodzina musi brać w niej czynny udział.",
+      "p3Text1": "Każda strona choroby w GeneGuidelines jest zbudowana do tej roli: ",
+      "p3Bold": "lista kontrolna do rozmowy w gabinecie",
+      "p3Text2": " — jakie badania już wykonano, co powinno nastąpić dalej, na jakie sygnały ostrzegawcze zwracać uwagę, które ośrodki specjalistyczne są aktywne. Ty ją przynosisz; decyzja pozostaje w rękach Twojego lekarza.",
+      "p4": "Swojemu lekarzowi rodzinnemu możesz pomóc na dwa konkretne sposoby:",
+      "step1Lead": "Przynieś mu materiały.",
+      "step1Body": " Każdy dział choroby zawiera krótki, wyselekcjonowany zestaw recenzowanych artykułów dla lekarza podstawowej opieki — gotowy do wydruku lub wysłania mailem. Około 30 minut czytania.",
+      "step2Lead": "Albo wskaż mu dokument wytycznych.",
+      "step2Body1": " Każda choroba ma ",
+      "step2Em": "żywe wytyczne",
+      "step2Body2": " — sporządzone przez AI, w pełni ocytowane streszczenie oficjalnych wytycznych i piśmiennictwa, które klinicyści mogą oceniać i oznaczać; nikt nie zatwierdza go oficjalnie. Ten sam tekst, który przeczytałby ekspert w Lejdzie czy Rzymie."
+    },
+    "clinicians": {
+      "heading": "Dla klinicystów",
+      "p1": "Specjalizacja kliniczna nie skaluje się liniowo wraz z liczbą rozpoznawanych chorób. Szczegóły rzadkiej jednostki chorobowej wymagają często setek opublikowanych przypadków, których lektura zajęłaby tygodnie — niezależnie od stażu. To nie problem kompetencji, lecz rozłożenia uwagi.",
+      "p2": "GeneGuidelines jest zbudowane z myślą o obu stronach tej asymetrii:",
+      "bullet1Lead": "Jeśli przyjmujesz pacjenta z chorobą rzadko obecną w Twojej praktyce",
+      "bullet1Body": " — otwórz dokument wytycznych dla tej jednostki. Aktualny stan wiedzy klinicznej, odnośniki do oryginalnych publikacji, pochodzenie każdego zalecenia (kto je zatwierdził i kiedy).",
+      "bullet2Lead": "Jeśli jesteś specjalistą w danej chorobie",
+      "bullet2Body1": " — możesz dołączyć jako recenzent. Obserwator AI analizuje nowe publikacje i na bieżąco proponuje aktualizacje; każdą oceniasz jako ",
+      "bullet2Em": "przydatna / nieprzydatna",
+      "bullet2Body2": " i możesz zostawić notatkę — kilka minut pracy. Twój sygnał, ważony Twoim zweryfikowanym doświadczeniem, ustala pozycję sugestii dla kolejnego klinicysty, który ją przeczyta."
+    }
+  },
+  "diseasePage": {
+    "heading": "Jedna strona na chorobę — więcej niż wytyczne",
+    "intro": "Każda choroba w katalogu prezentowana jest w jednym układzie:",
+    "item1Pre": "",
+    "item1Bold": "Żywe wytyczne",
+    "item1Body": " — zakotwiczone w akapitach, każde twierdzenie poparte PMID, każda zmiana podpisana.",
+    "item2Pre": "",
+    "item2Bold": "Ścieżka decyzyjna",
+    "item2Body": " dla rodziny — objaw → badanie → specjalista → kolejny krok, przedstawiona jako schemat blokowy zamiast ściany tekstu.",
+    "item3Pre": "",
+    "item3Bold": "Katalog specjalistów",
+    "item3Body": " — uszeregowany według dorobku publikacyjnego, świeżości cytowań oraz tego, czy lekarz powołuje się na aktualny konsensus we własnych najnowszych pracach.",
+    "item4Bold": "Aktywne badania kliniczne",
+    "item4Body": " — faza, lokalizacja, status rekrutacji, kontakt.",
+    "item5Bold": "Linie terapeutyczne",
+    "item5Body": " — oznaczone poziomem dowodów (konsensus / zweryfikowane / oczekujące / przedkliniczne).",
+    "item6Bold": "Fundacje pacjenckie",
+    "item6Body": " wspierające daną chorobę, tam gdzie istnieją. Zaangażowana fundacja potrafi realnie pomóc rodzinie w diagnozie — a takich organizacji nie jest łatwo znaleźć spoza społeczności. Katalog pokazuje to, co istnieje, nawet gdy nad chorobą pracuje tylko jedna organizacja na świecie.",
+    "item7Pre": "",
+    "item7Bold": "Prywatny panel kontekstu przypadku",
+    "item7Body1": " — wklej wypis lub wynik badania histopatologicznego i otrzymaj indywidualny research dla ",
+    "item7Em": "Twojego",
+    "item7Body2": " przypadku. Gemma 4 najpierw usuwa identyfikatory w infrastrukturze operatora, więc żadne dane osobowe nie opuszczają budynku.",
+    "closing": "Katalog rozwija się na żądanie. Zaczął się od dysplazji włóknistej, zespołu McCune'a–Albrighta i zespołu Noonan; każdy odwiedzający może zgłosić nową chorobę przez publiczny formularz, co uruchamia równolegle sześć procesów AI dla tej choroby."
+  },
+  "how": {
+    "heading": "Jak to działa",
+    "p1": "To nie kolejny medyczny chatbot. Platforma opiera się na powtarzalnych, weryfikowalnych procesach, w których każde zalecenie jest zakotwiczone w PMID, a każdą zmianę podpisuje klinicysta.",
+    "p2Text1": "Działa na modelu ",
+    "p2Bold": "Gemma 4",
+    "p2Text2": ", modelu otwartym. Siła nie tkwi w większym modelu — tkwi w inżynierii promptów opartej na prawdziwych ścieżkach diagnostycznych (takich jak ta powyżej) oraz w systemie, który wyostrza się z każdą oceną klinicysty i każdym zanonimizowanym przypadkiem rodziny, jaki napotka. W planach jest dostrajanie (fine-tuning) osobno dla każdej choroby na tym gromadzącym się sygnale.",
+    "p3Text1": "Dwie warstwy działają równolegle. ",
+    "p3Bold1": "Oficjalny konsensus",
+    "p3Text2": " — tam, gdzie istnieje (np. Boyce et al. 2019 dla FD/MAS) — jest prawdą podstawową. Obok niego ",
+    "p3Bold2": "żywa warstwa",
+    "p3Text3": " ewoluuje wraz z nowymi publikacjami, proponując ukierunkowane aktualizacje, które specjaliści oceniają, tak by najbardziej przydatne trafiały na wierzch.",
+    "step1Title": "Obserwator.",
+    "step1Body": "Rutynowo przeszukuje PubMed, osobno dla każdej choroby. Klasyfikuje typ publikacji — opis przypadku, praca oryginalna, przegląd, konsensus.",
+    "step2Title": "Ewaluator.",
+    "step2Body": "Ocenia, czy nowe dowody są wystarczająco mocne, by zmienić istniejące zalecenie. Większość publikacji nie uzasadnia aktualizacji i system ma prawo to stwierdzić.",
+    "step3Title": "Propozycja.",
+    "step3Body": "Jeśli zmiana jest uzasadniona, AI ją proponuje — jako różnicę względem konkretnego akapitu, z odnośnikami, uzasadnieniem i oceną siły dowodów.",
+    "step4Title": "Sygnał klinicysty.",
+    "step4Body1": "Klinicyści oceniają propozycję jako ",
+    "step4Em": "przydatna / nieprzydatna",
+    "step4Body2": " i mogą zostawić notatkę. To sygnał dla kolejnego klinicysty, który ją przeczyta — „dwóch z trzech uznało to za przydatne” — ważony zweryfikowanym doświadczeniem recenzenta.",
+    "step5Title": "Ranking i eksponowanie.",
+    "step5Body": "Sugestie zyskują lub tracą na pozycji wskutek tego ważonego sygnału. Ta o niskim ryzyku i dobrze udokumentowana może trafić do rodzin jako „warte omówienia z lekarzem”; sprawy o większej stawce pozostają w widoku eksperckim."
+  },
+  "privacy": {
+    "heading": "Prywatność to własność architektury, a nie polityka",
+    "p1Text1": "Panel kontekstu przypadku przyjmuje dowolny tekst — wypis, wynik biopsji. Tekst jest wczytywany do pamięci pojedynczego procesu obsługującego żądanie, hashowany (SHA-256) na potrzeby deduplikacji i przekazywany do modelu redakcji — ",
+    "p1Bold": "Gemma 4",
+    "p1Text2": ", otwartego modelu, który może działać w całości na własnym sprzęcie operatora — uruchamianego w infrastrukturze operatora. Dalej przepływa wyłącznie ustrukturyzowany ładunek — fakty bez identyfikatorów. Surowe bajty są jawnie odrzucane: nie są zapisywane na dysk ani obecne w żadnej kopii zapasowej.",
+    "p2": "Interfejs pokazuje podział na kategorie tego, co usunięto (nazwiska, numery urzędowe, dokładne daty, adresy, dane kontaktowe), zanim wykona się jakikolwiek kolejny krok. Zero identyfikatorów osobowych dociera do modelu syntezy — nie jako obietnica, lecz jako własność przepływu danych."
+  },
+  "not": {
+    "heading": "Czym to nie jest",
+    "diagnosticTitle": "To nie narzędzie diagnostyczne",
+    "diagnosticBody": "Nie wprowadzasz tu objawów ani wyników badań. System działa na poziomie wytycznych dla już rozpoznanej choroby.",
+    "chatbotTitle": "To nie chatbot wyszukujący",
+    "chatbotBody": "Każde zalecenie jest zakotwiczone w PMID. Każda zmiana zaproponowana przez AI jest sprawdzana i oceniana przez klinicystów, zanim cokolwiek zaważy. Model syntezy pracuje na zindeksowanym korpusie budowanym akapit po akapicie — nigdy na dowolnych promptach zadanych na stercie artykułów.",
+    "consultationTitle": "To nie zamiennik konsultacji",
+    "consultationBody": "Materiały tutaj wnoszą wkład do dyskusji klinicznej, a nie do indywidualnych zaleceń. Każda decyzja terapeutyczna należy do lekarza prowadzącego.",
+    "commercialTitle": "To nie produkt komercyjny",
+    "commercialBody1": "Zbudowane przez GeneQuest Foundation (KRS 0001211461). Otwarte źródło — zobacz ",
+    "commercialLink": "github.com/GeneQuestOrg/GeneGuidelines",
+    "commercialBody2": ". Bez reklam, bez paywalla, bez płatnego API."
+  },
+  "limitations": {
+    "heading": "Czego nie wiemy i czego nie robimy",
+    "items": [
+      {
+        "lead": "Pokrycie chorób jest częściowe.",
+        "body": " Nowa jednostka chorobowa potrzebuje dokumentu wyjściowego i najlepiej co najmniej jednego recenzenta-specjalisty, zanim jej wytyczne się ustabilizują. Proces uruchamiany na żądanie tworzy pierwszą wersję roboczą; długi ogon walidacji trwa dłużej."
+      },
+      {
+        "lead": "Katalog lekarzy jest budowany na podstawie PubMed.",
+        "body": " Aktywność publikacyjna to niezła miara zaangażowania naukowego — ale nie pełny obraz kompetencji klinicznych. Świetny praktyk, który nie publikuje, może zostać pominięty. Prosimy zgłaszać braki."
+      },
+      {
+        "lead": "Propozycje AI bywają zbyt optymistyczne.",
+        "body": " Każda wersja robocza jest filtrowana przez recenzenta przed publikacją, ale subtelne błędy wciąż mogą się prześlizgnąć. Każdy zatwierdzony akapit można w dowolnej chwili zakwestionować."
+      },
+      {
+        "lead": "Tłumaczenia są nierówne.",
+        "body": " Część piśmiennictwa istnieje tylko po angielsku; niektóre dokumenty są obecnie dostępne w jednym języku. Wielojęzyczność to powolna, wciąż trwająca praca."
+      }
+    ]
+  },
+  "who": {
+    "heading": "Kto za tym stoi",
+    "p1Bold": "GeneQuest Foundation",
+    "p1Body": " — polska organizacja non-profit skupiona na infrastrukturze wiedzy o rzadkich chorobach genetycznych. KRS 0001211461. Punkt wyjścia: dysplazja włóknista, z rozszerzaniem na kolejne jednostki na żądanie.",
+    "p2": "Dwóch specjalistów zajmujących się dysplazją włóknistą i zespołem McCune'a–Albrighta zgodziło się być wśród pierwszych, którzy przetestują platformę — jeden na Uniwersytecie Sapienza w Rzymie, drugi w UCSF. Jeden z nich zaoferował również, że doradzi w kwestii pułapek, jakie widział w klinicznych zastosowaniach AI gdzie indziej. Stąd budujemy w stronę szerszej sieci recenzentów. W miarę rozrastania się katalogu poszczególni recenzenci będą z podziękowaniem wskazywani na dokumentach, które recenzują."
+  },
+  "cta": {
+    "heading": "Dokąd dalej",
+    "diseaseLabel": "Zacznij od swojej choroby",
+    "diseaseSub": "Wytyczne, lekarze, badania kliniczne, ścieżka decyzyjna.",
+    "doctorsLabel": "Znajdź lekarza obeznanego z chorobą",
+    "doctorsSub": "Globalny katalog, filtrowany według odległości oraz tego, czy lekarz powołuje się na aktualny konsensus.",
+    "researchLabel": "Twojej choroby jeszcze tu nie ma?",
+    "researchSub": "Uruchom proces AI — pierwsze wyniki po około dziesięciu minutach."
+  }
+}

@@ -38,6 +38,7 @@ import {
   type WiderSearchCandidate,
 } from "../api/diseaseIndex";
 import { DEFAULT_GUIDELINE_PROFILE } from "../api/guidelineRun";
+import { slugifyDisease } from "../utils/slugifyDisease";
 import { DiseaseAutocomplete } from "../components/DiseaseAutocomplete";
 import { MissingDiseaseDialog } from "../components/MissingDiseaseDialog";
 import "../styles/research.css";
@@ -55,7 +56,7 @@ type Picked =
 export function StartResearchView({ onNav }: StartResearchViewProps) {
   const { t } = useTranslation("start-research");
   const [picked, setPicked] = useState<Picked | null>(null);
-  const [consent, setConsent] = useState(false);
+  const [consent, setConsent] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [missingDialog, setMissingDialog] = useState<
@@ -212,26 +213,16 @@ export function StartResearchView({ onNav }: StartResearchViewProps) {
             </Button>
           </div>
 
-          {/* Lightweight pointer to the symptom-based search (future
-              feature, see master-plan §7a F11). Kept visually separate
-              with a divider so its diagnostic-research framing does not
-              bleed into the disease-name flow above. */}
-          <a
-            href="/start-research/by-symptoms"
-            className="symp-link"
-            onClick={(event) => {
-              event.preventDefault();
-              // The route does not exist yet; keep the click harmless
-              // until F11 ships. Once the page lands this becomes a
-              // straight `onNav("/start-research/by-symptoms")`.
-              setError(t("symptomComingSoon"));
-            }}
-          >
+          {/* Symptom-based search is a future feature (master-plan §7a F11).
+              Render an inert, muted preview with a "beta / coming soon" chip —
+              never a link that errors on click — until the route ships. Once
+              it lands this becomes a real onNav("/start-research/by-symptoms"). */}
+          <div className="symp-link symp-link--soon" aria-disabled="true">
             <span className="symp-link__body">
               {t("symptomLinkPrefix")} <em>{t("symptomLinkCta")}</em>
             </span>
-            <span className="symp-link__arrow">→</span>
-          </a>
+            <span className="symp-link__chip">{t("symptomBeta")}</span>
+          </div>
         </form>
       </div>
 
@@ -262,27 +253,6 @@ function pickSubmitLabel(
   return t("submitRunResearch");
 }
 
-/** Slugify a disease name for bootstrap. Mirrors the backend regex
- * ``^[a-z0-9][a-z0-9_-]*$`` and the 2–64 char window declared in
- * :class:`BootstrapDiseaseBody`. NFKD-strips diacritics so European
- * spellings ("McCune–Albright") round-trip safely. */
-function slugifyForBootstrap(name: string): string {
-  const ascii = name
-    .normalize("NFKD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase();
-  const slug = ascii
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+/, "")
-    .replace(/-+$/, "")
-    .slice(0, 64);
-  // Backend requires the first char to be alphanumeric. If the cleaned
-  // string somehow starts with nothing valid, fall back to a stable
-  // marker so the API rejects with a clean 400 rather than silently
-  // erroring.
-  return /^[a-z0-9]/.test(slug) ? slug : "disease";
-}
-
 function bootstrapBodyFromPicked(picked: Picked): BootstrapDiseaseRequest {
   const isIndexed = picked.kind === "indexed";
   const name = isIndexed
@@ -291,7 +261,7 @@ function bootstrapBodyFromPicked(picked: Picked): BootstrapDiseaseRequest {
   const slug =
     isIndexed && picked.suggestion.localSlug
       ? picked.suggestion.localSlug
-      : slugifyForBootstrap(name);
+      : slugifyDisease(name);
 
   const omim = isIndexed
     ? picked.suggestion.omimCodes[0] ?? ""

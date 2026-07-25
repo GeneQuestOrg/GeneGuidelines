@@ -1,0 +1,292 @@
+/* Stub disease page — a not-yet-researched disease resolved 100% client-side
+ * from the Tier-1 index (see views/DiseaseStubView.tsx). Ported from
+ * drafty-ui/draft14 "Widok choroby - stub (bez research).html". Reuses the
+ * real app's tokens and .d-hero* / .section* classes; the classes below are
+ * the stub-only additions (skeleton preview, external sources, sticky CTA).
+ */
+
+/* The sticky bottom CTA is position:fixed, so the page needs bottom room so it
+   never covers the last section. Scoped to the stub page only. */
+.page--stub {
+  padding-bottom: 120px;
+}
+
+/* Epistemic-status chip — "not yet researched" variant. Base .epi / .epi__d
+   live in guideline-synthesis.css; redefined minimally here so the stub hero
+   renders the chip without pulling in the whole synthesis stylesheet. */
+.epi {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 9px 3px 7px;
+  border-radius: 99px;
+  font-family: var(--font-sans);
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  border: 1px solid var(--line);
+  background: var(--bg-elev);
+  white-space: nowrap;
+}
+.epi__d {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.epi--stub {
+  color: var(--ink-3);
+  border-color: var(--line);
+}
+.epi--stub .epi__d {
+  background: var(--ink-4);
+}
+
+/* "What will appear" — section subhead. */
+.stub-lead {
+  color: var(--ink-2);
+  max-width: 62ch;
+  margin: 4px 0 0;
+}
+
+/* Skeleton preview cards for the sections that will fill in. */
+.skel-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+}
+.skelcard {
+  position: relative;
+  border: 1px dashed var(--line-2);
+  background: color-mix(in oklch, var(--bg-elev) 70%, transparent);
+  border-radius: var(--r-md);
+  padding: 16px;
+  overflow: hidden;
+}
+.skelcard--wide {
+  grid-column: 1 / -1;
+}
+.skelcard__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.skelcard__ic {
+  width: 30px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 7px;
+  background: var(--bg-soft);
+  color: var(--ink-3);
+  flex-shrink: 0;
+}
+.skelcard__name {
+  font-weight: 600;
+  font-size: var(--fs-md);
+  color: var(--ink-2);
+}
+.skelcard__badge {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ink-4);
+  background: var(--bg-soft);
+  padding: 3px 8px;
+  border-radius: 999px;
+}
+.skelcard__sub {
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+  margin: -6px 0 12px 40px;
+}
+.skel-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.skel-line {
+  height: 9px;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    var(--bg-soft) 0%,
+    color-mix(in oklch, var(--line) 60%, var(--bg-soft)) 40%,
+    var(--bg-soft) 80%
+  );
+  background-size: 220% 100%;
+  animation: skelSweep 1.8s linear infinite;
+}
+.skel-line.w90 {
+  width: 90%;
+}
+.skel-line.w70 {
+  width: 70%;
+}
+.skel-line.w55 {
+  width: 55%;
+}
+.skel-line.w40 {
+  width: 40%;
+}
+@keyframes skelSweep {
+  0% {
+    background-position: 120% 0;
+  }
+  100% {
+    background-position: -120% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skel-line {
+    animation: none;
+  }
+}
+
+/* External sources — real content before AI runs (against thin-content). */
+.extsrc {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px;
+}
+.extsrc a {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--bg-elev);
+  text-decoration: none;
+}
+.extsrc a:hover {
+  border-color: var(--accent);
+}
+.extsrc__src {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ink-3);
+}
+.extsrc__title {
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  color: var(--ink);
+}
+.extsrc__id {
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+}
+
+/* Sticky conversion bar with inline consent. */
+.stub-cta {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 40;
+  background: color-mix(in oklch, var(--bg-elev) 94%, transparent);
+  backdrop-filter: saturate(140%) blur(10px);
+  border-top: 1px solid var(--line);
+}
+.stub-cta__inner {
+  max-width: var(--content-w);
+  margin: 0 auto;
+  padding: 14px var(--gutter);
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+.stub-cta__error {
+  max-width: var(--content-w);
+  margin: 0 auto;
+  padding: 10px var(--gutter) 0;
+}
+.stub-cta__consent {
+  display: flex;
+  gap: 9px;
+  align-items: flex-start;
+  font-size: var(--fs-xs);
+  color: var(--ink-2);
+  line-height: 1.45;
+  max-width: 60ch;
+  cursor: pointer;
+}
+.stub-cta__consent input {
+  margin-top: 2px;
+  accent-color: var(--accent);
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+}
+.stub-cta__consent b {
+  color: var(--ink);
+}
+.stub-cta__act {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+.stub-cta__eta {
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+  font-family: var(--font-mono);
+}
+.stub-cta__running {
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+  font-family: var(--font-mono);
+}
+.stub-cta .btn--primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.stub-cta .btn--primary:hover {
+  background: color-mix(in oklch, var(--accent) 86%, black);
+}
+
+/* Light placeholder while the Tier-1 lookup resolves. */
+.stub-loading {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 32px 28px;
+  margin-top: 8px;
+}
+.stub-loading__line {
+  height: 12px;
+  border-radius: 999px;
+  background: var(--bg-soft);
+}
+.stub-loading__line.w40 {
+  width: 40%;
+}
+.stub-loading__line.w70 {
+  width: 70%;
+}
+.stub-loading__line.w90 {
+  width: 90%;
+}
+
+@media (max-width: 720px) {
+  .skel-grid {
+    grid-template-columns: 1fr;
+  }
+  .stub-cta__inner {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .stub-cta__act {
+    margin-left: 0;
+    width: 100%;
+    justify-content: space-between;
+  }
+}

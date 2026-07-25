@@ -259,3 +259,26 @@
   color: var(--accent-teal, var(--accent-ink));
   font-weight: 600;
 }
+
+/* Inert "coming soon" variant — clearly non-clickable, no hover affordance. */
+.symp-link--soon {
+  cursor: default;
+  opacity: 0.7;
+}
+
+.symp-link--soon:hover {
+  background: transparent;
+  border-color: var(--line);
+}
+
+.symp-link__chip {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+  color: var(--ink-3);
+  background: var(--bg-soft);
+  border-radius: 999px;
+  padding: 3px 8px;
+  white-space: nowrap;
+}

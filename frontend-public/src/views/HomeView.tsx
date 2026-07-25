@@ -5,6 +5,7 @@ import { Button, Section } from "@gene-guidelines/ui";
 import type { AudienceView } from "../router/types";
 import { useAudienceCopy } from "../copy";
 import type { DiseaseSuggestion } from "../api/diseaseIndex";
+import { slugifyDisease } from "../utils/slugifyDisease";
 import { ActiveResearchSection } from "../components/ActiveResearchSection";
 import { DiseaseAutocomplete } from "../components/DiseaseAutocomplete";
 import { DiseaseCard } from "../components/DiseaseCard";
@@ -67,15 +68,16 @@ export function HomeView({ view, onNav }: HomeViewProps) {
 
   // LEFT card — "I know the disease": forgiving multilingual typeahead over the
   // rare-disease index (same DiseaseAutocomplete used on /start-research).
-  // Picking a hit that already has a catalog page jumps straight there;
-  // an in-index-but-not-yet-bootstrapped hit (or a "not on the list" click)
-  // hands off to the research entry, keeping the homepage lightweight.
+  // Every pick now lands on the canonical /diseases/<slug> page: a researched
+  // disease shows its full page, a not-yet-researched one shows the client-side
+  // STUB (real index facts + skeleton + "Run research" CTA). The stub reverse-
+  // resolves the same deterministic slug the index pick produced.
   const goPickedDisease = (suggestion: DiseaseSuggestion) => {
-    if (suggestion.hasLocalRecord && suggestion.localSlug) {
-      onNav(`/diseases/${encodeURIComponent(suggestion.localSlug)}`);
-    } else {
-      onNav("/start-research");
-    }
+    const slug =
+      suggestion.hasLocalRecord && suggestion.localSlug
+        ? suggestion.localSlug
+        : slugifyDisease(suggestion.canonicalName);
+    onNav(`/diseases/${encodeURIComponent(slug)}`);
   };
 
   // Feedback bar — commission an AI research run for any disease.

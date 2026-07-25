@@ -1,0 +1,210 @@
+{
+  "hero": {
+    "eyebrow": "Why we built this",
+    "eyebrowSub": "8 min read · use the section links to jump around",
+    "leadText1": "PubMed indexes on the order of ",
+    "leadNum": "10,000",
+    "leadText2": " new articles on rare diseases every year — tens added every day.",
+    "leadLine2": "Most of those diseases are tracked by a handful of researchers worldwide — rarely the doctor a family actually has access to.",
+    "leadLine3": "GeneGuidelines exists to make that flow of knowledge usable at the point of care.",
+    "tldr": "A living clinical guideline per rare disease — every claim cited to a PMID, every AI-proposed change reviewed and rated by a clinician. Open source. Free, no ads, no account required."
+  },
+  "toc": {
+    "heading": "On this page",
+    "top": "Why we built this",
+    "origins": "Origins",
+    "scale": "Scale",
+    "specialist": "Why a specialist isn't enough",
+    "families": "For families",
+    "clinicians": "For clinicians",
+    "disease-page": "One page per disease",
+    "how": "How it works",
+    "privacy": "Privacy",
+    "not": "What this is not",
+    "limitations": "Limitations",
+    "about": "Who is behind this"
+  },
+  "origins": {
+    "heading": "A note on origins",
+    "paragraphs": [
+      "The project began with two separate failures of the same kind.",
+      "A rapidly growing bone lesion in a child's craniofacial skeleton, found incidentally during a routine dental check-up, was biopsied and read as juvenile trabecular ossifying fibroma — a diagnosis whose standard of care is extensive surgery. The histopathologist worked carefully and listed fibrous dysplasia in the differential; she ordered MDM2 FISH to rule out a low-grade osteosarcoma. GNAS sequencing — the test that distinguishes JTOF from the actual diagnosis per current literature — was not among those run. The family ordered it privately. The diagnosis changed.",
+      "That should have ended it. It did not. A senior craniofacial surgeon abroad, informed of the corrected diagnosis, still proposed to curette the lesion — a procedure the international consensus on fibrous dysplasia in children explicitly advises against in the absence of pain or functional compromise. Two other surgeons also considered excision on the first visit and revised their recommendation on the second. Only one specialist — found by the family through a manual PubMed search for domestic authors writing on the disease — read the consensus from the start.",
+      "None of these doctors were incompetent. The histopathologist worked with care; the surgeon abroad has a world-class record in his field. No one can hold the specifics of every rare disease in working memory, and there is no reason they should. The corrected plan arrived only because the family had the resources, the language, and the contacts to keep looking after every authoritative answer it received — and the kindness of a few people along the way who were paying attention.",
+      "This is not a problem of individual errors. It is a systemic problem of scale. A good outcome should not rest on this kind of luck."
+    ]
+  },
+  "scale": {
+    "heading": "Scale of the problem",
+    "stats": {
+      "people": {
+        "num": "~300 M",
+        "text1": "People worldwide living with a rare disease at any given time. About ",
+        "pct1": "80%",
+        "text2": " have a genetic cause; of those, roughly ",
+        "pct2": "70%",
+        "text3": " present in childhood.",
+        "cite1": "Nguengang Wakap et al., Eur J Hum Genet 2020",
+        "cite2": "Lancet Global Health, 2024"
+      },
+      "described": {
+        "num": "~7,000",
+        "label": "Rare diseases described in OMIM and Orphanet. Most have fewer than 100 publications per year."
+      },
+      "pubs": {
+        "num": "~1.5 M",
+        "text1": "New publications indexed by PubMed every year",
+        "cite": "NLM, FY2023",
+        "text2": "Tens of those are on rare diseases each day — on the order of ten thousand a year, spread across thousands of distinct entities."
+      },
+      "lag": {
+        "num": "~9 years",
+        "text1": "Median lag from new evidence to its incorporation into a formal clinical guideline.",
+        "citePrefix": "Berg et al., Surgery 2025, ",
+        "citeLink": "PMID 39592333"
+      },
+      "diagnosis": {
+        "num": "~4.8 years",
+        "text1": "Average time from symptom onset to an accurate diagnosis of a rare disease.",
+        "citeLink": "Lancet Global Health, 2024"
+      }
+    },
+    "closing": "The point was made plainly at a Polish rare-disease conference in 2026: no family doctor can stay current on every rare disease they might encounter. The literature does not allow it — and most specialists have the same problem one disease over."
+  },
+  "specialist": {
+    "heading": "Why \"a specialist\" is not enough",
+    "families": {
+      "heading": "For families",
+      "p1Lead": "Hearing ",
+      "p1Em": "\"we'll refer you to a maxillofacial surgeon\"",
+      "p1Rest": " is a good referral. But a maxillofacial surgeon with a world-class record in orthognathic surgery has not necessarily seen a child with fibrous dysplasia. The two competencies sit on different axes — and finding someone with hands-on experience in the specific disease usually takes more effort than a single referral provides. Clinical experience in a rare disease is concentrated in a narrow set of centres, and locating them takes active work.",
+      "p2": "None of this is about distrust of doctors. It is about realism. A 15-minute appointment, a packed schedule, dozens of unrelated patients in a single day — these are the conditions under which medicine actually happens. In a rare disease, no one will follow your child's specific case as closely as you will. That is not a criticism of any doctor; it is the arithmetic of the job, and the reason the family has to take an active part.",
+      "p3Text1": "Each disease page on GeneGuidelines is built for that role: a ",
+      "p3Bold": "checklist for the conversation in the consulting room",
+      "p3Text2": " — what tests have been done, what should come next, what red flags to watch for, which specialist centres are active. You bring it; your doctor stays in charge of the decision.",
+      "p4": "You can help your family doctor in two concrete ways:",
+      "step1Lead": "Bring them materials.",
+      "step1Body": " Each disease section includes a short, curated set of peer-reviewed articles for the primary-care doctor — ready to print or email. A 30-minute read.",
+      "step2Lead": "Or point them at the guideline document.",
+      "step2Body1": " Each disease has a ",
+      "step2Em": "living guideline",
+      "step2Body2": " — an AI-drafted, fully-cited summary of the official guidelines and the literature that clinicians can rate and flag; nobody officially signs off on it. The same text an expert in Leiden or Rome would read."
+    },
+    "clinicians": {
+      "heading": "For clinicians",
+      "p1": "Clinical specialisation does not scale linearly with the number of diagnosed diseases. The specifics of a rare entity often need hundreds of published cases that would take weeks to read, regardless of seniority. This is not a competence problem — it is an attention-distribution problem.",
+      "p2": "GeneGuidelines is built for both sides of that asymmetry:",
+      "bullet1Lead": "If you are seeing a patient with a disease rarely present in your practice",
+      "bullet1Body": " — open the guideline document for that entity. Current state of clinical knowledge, citations to original publications, provenance for every recommendation (who approved it and when).",
+      "bullet2Lead": "If you are a specialist in a given disease",
+      "bullet2Body1": " — you can join as a reviewer. The AI Watcher analyses new publications and proposes updates on a rolling basis; you rate each one ",
+      "bullet2Em": "useful / not useful",
+      "bullet2Body2": " and can leave a note — a few minutes' work. Your signal, weighted by your verified experience, ranks the suggestion for the next clinician who reads it."
+    }
+  },
+  "diseasePage": {
+    "heading": "One page per disease — more than guidelines",
+    "intro": "Each disease in the catalogue surfaces in a single layout:",
+    "item1Pre": "A ",
+    "item1Bold": "living guideline",
+    "item1Body": " — paragraph-anchored, every claim backed by a PMID, every change signed.",
+    "item2Pre": "A ",
+    "item2Bold": "decision pathway",
+    "item2Body": " for the family — symptom → test → specialist → next step, rendered as a flowchart rather than a wall of text.",
+    "item3Pre": "A ",
+    "item3Bold": "specialist directory",
+    "item3Body": " — ranked by publication record, citation recency, and whether the doctor cites the current consensus in their own recent work.",
+    "item4Bold": "Active clinical trials",
+    "item4Body": " — phase, location, enrollment status, contact.",
+    "item5Bold": "Therapy lines",
+    "item5Body": " — labelled by evidence tier (consensus / verified / pending / preclinical).",
+    "item6Bold": "Patient foundations",
+    "item6Body": " supporting that disease, where they exist. An engaged foundation can carry real weight for a family in diagnosis — and these are not easy to find from outside the community. The catalogue surfaces what exists, even when only one organisation worldwide works on a disease.",
+    "item7Pre": "A ",
+    "item7Bold": "private case-context panel",
+    "item7Body1": " — paste a discharge summary or pathology report and get custom research for ",
+    "item7Em": "your",
+    "item7Body2": " case. Gemma 4 strips the identifiers on the operator's infrastructure first, so nothing personal leaves the building.",
+    "closing": "The catalogue is demand-driven. It started with fibrous dysplasia, McCune–Albright syndrome, and Noonan syndrome; any visitor can request a new disease through a public form, which fans out six AI workflows in parallel for that disease."
+  },
+  "how": {
+    "heading": "How it works",
+    "p1": "This is not another medical chatbot. The platform is built on reproducible, reviewable workflows where every recommendation is anchored to a PMID and every change is signed by a clinician.",
+    "p2Text1": "It runs on ",
+    "p2Bold": "Gemma 4",
+    "p2Text2": ", an open model. The strength is not a bigger model — it is prompt engineering grounded in real diagnostic journeys (like the one above), and a system that sharpens with every clinician rating and anonymised family case it sees. Per-disease fine-tuning on that accumulating signal is on the roadmap.",
+    "p3Text1": "Two layers run side by side. ",
+    "p3Bold1": "Official consensus",
+    "p3Text2": " — where one exists (e.g. Boyce et al. 2019 for FD/MAS) — is the ground truth. Alongside it, a ",
+    "p3Bold2": "living layer",
+    "p3Text3": " evolves with new publications, proposing targeted updates that specialists rate, so the most useful ones rise to the top.",
+    "step1Title": "Watcher.",
+    "step1Body": "Scans PubMed routinely, per disease. Categorises publication type — case report, original research, review, consensus.",
+    "step2Title": "Evaluator.",
+    "step2Body": "Decides whether the new evidence is strong enough to modify an existing recommendation. Most publications do not warrant an update, and the system is allowed to say so.",
+    "step3Title": "Proposal.",
+    "step3Body": "If a change is warranted, the AI proposes one — a diff against a specific paragraph, with citations, rationale, and an evidence-strength score.",
+    "step4Title": "Clinician signal.",
+    "step4Body1": "Clinicians rate the proposal ",
+    "step4Em": "useful / not useful",
+    "step4Body2": " and can leave a note. It is a signal for the next clinician who reads it — \"two of three found this useful\" — weighted by the reviewer's verified experience.",
+    "step5Title": "Ranking & surfacing.",
+    "step5Body": "Suggestions rise or fall by that weighted signal. A low-risk, well-supported one can surface to families as \"worth discussing with your doctor\"; higher-stakes items stay in the expert view."
+  },
+  "privacy": {
+    "heading": "Privacy is an architectural property, not a policy",
+    "p1Text1": "The case-context panel accepts free text — a discharge summary, a biopsy report. The text is read into a single request handler's memory, hashed (SHA-256) for deduplication, and passed to a redaction model — ",
+    "p1Bold": "Gemma 4",
+    "p1Text2": ", an open model that can run entirely on the operator's own hardware — running on the operator's infrastructure. Only a structured payload — facts without identifiers — flows downstream. The raw bytes are discarded explicitly: not written to disk, not present in any backup.",
+    "p2": "The UI shows a categorical breakdown of what was stripped (names, government IDs, absolute dates, addresses, contact details) before any further step runs. Zero personal identifiers reach the synthesis model — not as a promise, as a property of the data flow."
+  },
+  "not": {
+    "heading": "What this is not",
+    "diagnosticTitle": "Not a diagnostic tool",
+    "diagnosticBody": "You do not enter symptoms or test results here. The system operates at the level of guidelines for an already-diagnosed disease.",
+    "chatbotTitle": "Not a retrieval chatbot",
+    "chatbotBody": "Every recommendation is anchored to a PMID. Every AI-proposed change is reviewed and rated by clinicians before it carries any weight. The synthesis model works against an indexed corpus assembled paragraph by paragraph — never against free-form prompts over a pile of papers.",
+    "consultationTitle": "Not a substitute for consultation",
+    "consultationBody": "Material here contributes to clinical discussion, not to individual recommendations. Every therapeutic decision belongs to the attending physician.",
+    "commercialTitle": "Not a commercial product",
+    "commercialBody1": "Built by the GeneQuest Foundation (KRS 0001211461). Open source — see ",
+    "commercialLink": "github.com/GeneQuestOrg/GeneGuidelines",
+    "commercialBody2": ". No ads, no paywall, no monetised API."
+  },
+  "limitations": {
+    "heading": "What we don't know and don't do",
+    "items": [
+      {
+        "lead": "Disease coverage is partial.",
+        "body": " A new entity needs a baseline document and, ideally, at least one specialist reviewer before its guideline stabilises. The demand-driven pipeline produces a first draft; the long tail of validation takes longer."
+      },
+      {
+        "lead": "The doctor directory is built from PubMed.",
+        "body": " Publication activity is a decent proxy for scientific engagement — not a complete picture of clinical competence. An excellent practitioner who does not publish may be missed. Please report gaps."
+      },
+      {
+        "lead": "AI proposals can be over-optimistic.",
+        "body": " Every draft is filtered by a reviewer before publication, but subtle errors may still slip through. Any approved paragraph can be challenged at any time."
+      },
+      {
+        "lead": "Translations are uneven.",
+        "body": " Some literature is English-only; some documents currently exist in a single language. Multilingual coverage is a slow, ongoing piece of work."
+      }
+    ]
+  },
+  "who": {
+    "heading": "Who is behind this",
+    "p1Bold": "GeneQuest Foundation",
+    "p1Body": " — a Polish non-profit focused on knowledge infrastructure for rare genetic diseases. KRS 0001211461. Starting point: fibrous dysplasia, expanding to other entities on demand.",
+    "p2": "Two specialists working on fibrous dysplasia and McCune–Albright syndrome have agreed to be among the first to test the platform — one at Sapienza University of Rome, one at UCSF. One of them has also offered to advise on pitfalls he has seen in clinical AI applications elsewhere. From there, we are building toward a wider reviewer network. Individual reviewers will be acknowledged on the documents they review as the catalogue grows."
+  },
+  "cta": {
+    "heading": "Where to go next",
+    "diseaseLabel": "Start with your disease",
+    "diseaseSub": "Guidelines, doctors, trials, decision pathway.",
+    "doctorsLabel": "Find a doctor familiar with the disease",
+    "doctorsSub": "Global directory, filterable by distance and by whether the doctor cites the current consensus.",
+    "researchLabel": "Your disease isn't here yet?",
+    "researchSub": "Run the AI pipeline — first results in about ten minutes."
+  }
+}
