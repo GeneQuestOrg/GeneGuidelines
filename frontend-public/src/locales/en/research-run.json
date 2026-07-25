@@ -15,6 +15,8 @@
   "ledeRunningSuffix": "Each writes its results directly to the disease page as they land — you don't need to wait for the long guideline draft to finish.",
   "errorBannerTitle": "Could not finish",
   "overallDoneLabel": "done",
+  "runStatusDoneLabel": "Complete",
+  "runStatusDoneText": "Research run finished — results are ready below.",
   "overallRunningLabel": "running",
   "overallQueuedLabel": "queued",
   "openDiseaseCta": "Open {{name}} →",

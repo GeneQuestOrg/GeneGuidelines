@@ -19,8 +19,8 @@ interface StatusMeta {
 const STATUS_META: Record<StatusValue, StatusMeta> = {
   pending: { label: "Source-backed", dot: "var(--st-slate)", text: "AI-drafted from cited peer-reviewed sources — read with a clinician; not an official guideline." },
   "under-review": { label: "Under review", dot: "var(--st-amber)", text: "Submitted for review, awaiting decision" },
-  verified: { label: "Verified", dot: "var(--st-green)", text: "Approved by a specialist" },
-  consensus: { label: "Consensus", dot: "var(--st-blue)", text: "Approved by ≥2 specialists" },
+  verified: { label: "Clinician-rated", dot: "var(--st-green)", text: "Rated helpful by a clinician — a signal for the next reader, not an official sign-off." },
+  consensus: { label: "Clinician-rated (2+)", dot: "var(--st-blue)", text: "Rated helpful by 2+ clinicians — a signal for the next reader, not an official sign-off." },
   superseded: { label: "Superseded", dot: "var(--st-orange)", text: "A newer version exists" },
   rejected: { label: "Rejected", dot: "var(--st-slate)", text: "Rejected by reviewer" },
   live: { label: "Live", dot: "var(--st-green)", text: "Running", pulse: true },

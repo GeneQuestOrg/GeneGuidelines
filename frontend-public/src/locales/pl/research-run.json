@@ -15,6 +15,8 @@
   "ledeRunningSuffix": "Każdy strumień zapisuje wyniki bezpośrednio na stronie choroby, gdy tylko są gotowe — nie musisz czekać, aż skończy się długi szkic wytycznych.",
   "errorBannerTitle": "Nie udało się zakończyć",
   "overallDoneLabel": "zakończone",
+  "runStatusDoneLabel": "Zakończony",
+  "runStatusDoneText": "Research zakończony — wyniki są gotowe poniżej.",
   "overallRunningLabel": "w trakcie",
   "overallQueuedLabel": "w kolejce",
   "openDiseaseCta": "Otwórz {{name}} →",

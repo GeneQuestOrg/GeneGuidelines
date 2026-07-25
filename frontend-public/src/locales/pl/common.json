@@ -55,8 +55,8 @@
     "lastRevised": "Ostatnia aktualizacja"
   },
   "therapies": {
-    "statusConsensus": "Konsensus",
-    "statusVerified": "Zweryfikowana",
+    "statusConsensus": "Zalecenie konsensusu",
+    "statusVerified": "Ugruntowana",
     "statusPending": "Oczekująca",
     "statusPreclinical": "Przedkliniczna",
     "empty": "Nie odnotowano jeszcze żadnych linii terapii dla tej choroby."

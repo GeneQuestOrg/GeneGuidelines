@@ -522,6 +522,14 @@ export function ResearchRunView({
   const inheritance = disease?.inheritance?.trim();
   const prevalence = disease?.prevalenceText?.trim();
 
+  // The green "verified" pill is reused here purely as the run-complete indicator —
+  // it is NOT a clinician signal, so override the shared label/text (which now speaks
+  // to clinician ratings) to describe the run state honestly.
+  const runStatusOverride =
+    everythingDone && !failed
+      ? { label: t("runStatusDoneLabel"), text: t("runStatusDoneText") }
+      : {};
+
   return (
     <div className="page page--run">
       <header className="rrun__hero">
@@ -529,6 +537,7 @@ export function ResearchRunView({
           <Status
             status={failed ? "pending" : everythingDone ? "verified" : "live"}
             compact
+            {...runStatusOverride}
           />
           {!liveByDisease ? (
             <code className="rrun__id">{formatRunDisplayId(executionId)}</code>

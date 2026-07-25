@@ -55,8 +55,8 @@
     "lastRevised": "Last revised"
   },
   "therapies": {
-    "statusConsensus": "Consensus",
-    "statusVerified": "Verified",
+    "statusConsensus": "Consensus recommendation",
+    "statusVerified": "Established",
     "statusPending": "Pending",
     "statusPreclinical": "Preclinical",
     "empty": "No therapy lines recorded for this disease yet."

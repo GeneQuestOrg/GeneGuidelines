@@ -32,8 +32,11 @@ function provenanceLabel(para: GuidelineParagraph): string {
   if (change.type === "pending") {
     return `AI draft · ${change.by ?? ""} · ${change.date}`.trim();
   }
-  const prefix = change.type === "consensus" ? "Consensus" : "Verified";
-  return `${prefix} by ${change.by ?? "panel"} · ${change.date}`;
+  // A clinician signal is a rating for the next reader, never an official sign-off
+  // (wizja 04-silnik-wiedzy: "V1 = sygnał, nie publikacja"). Describe the signal —
+  // and drop the fabricated reviewer attribution — instead of claiming approval.
+  const raters = change.type === "consensus" ? "2+ clinicians" : "a clinician";
+  return `Rated helpful by ${raters} · ${change.date}`;
 }
 
 export function GuidelineParagraphBlock({
