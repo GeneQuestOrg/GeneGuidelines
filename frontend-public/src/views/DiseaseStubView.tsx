@@ -370,7 +370,8 @@ export function DiseaseStubView({ slug, onNav, notFound }: DiseaseStubViewProps)
           <span aria-hidden="true">ℹ️</span>
           <p>
             <b>{t("noticeTitle")}</b> {t("noticeBody")}
-            <em>{t("noticeDraftEm")}</em>.
+            <em>{t("noticeDraftEm")}</em>
+            {t("noticeTail")}
           </p>
         </div>
       </div>
