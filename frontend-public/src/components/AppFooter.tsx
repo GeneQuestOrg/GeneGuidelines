@@ -45,6 +45,13 @@ export function AppFooter({ onNav }: AppFooterProps) {
         >
           {t("footer.feedback")}
         </button>
+        <a
+          href="https://github.com/GeneQuestOrg/GeneGuidelines"
+          target="_blank"
+          rel="noopener"
+        >
+          {t("footer.github")}
+        </a>
       </nav>
       {showFeedback ? <FeedbackModal onClose={() => setShowFeedback(false)} /> : null}
     </footer>

@@ -587,6 +587,20 @@ export function ResearchRunView({
           </p>
         ) : null}
 
+        {budgetBlocked ? (
+          <div className="rrun__budget-panel" role="status">
+            <p className="rrun__budget-panel-body">{t("budgetPausedMessage")}</p>
+            <a
+              className="rrun__budget-panel-cta"
+              href={t("budgetPausedCtaHref")}
+              target="_blank"
+              rel="noopener"
+            >
+              {t("budgetPausedCtaLabel")}
+            </a>
+          </div>
+        ) : null}
+
         <p className="rrun__lede">
           {failed ? (
             <>{t("ledeFailed")}</>

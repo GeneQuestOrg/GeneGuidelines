@@ -405,6 +405,38 @@
   color: var(--ink-3);
 }
 
+/* Honest paused-research budget panel: only rendered when the run is
+   blocked on the monthly token budget (budgetBlocked). Calm amber tint —
+   matches the queued/blocked badge — never implies failure or that
+   payment is required; the run resumes automatically once funds land. */
+.rrun__budget-panel {
+  margin: 0 0 18px;
+  padding: 14px 16px;
+  background: color-mix(in oklch, var(--st-amber) 10%, var(--bg-elev));
+  border: 1px solid color-mix(in oklch, var(--st-amber) 30%, var(--line));
+  border-radius: var(--r-lg);
+}
+
+.rrun__budget-panel-body {
+  margin: 0 0 10px;
+  color: var(--ink-2);
+  font-size: var(--fs-sm, 0.9rem);
+  line-height: 1.5;
+}
+
+.rrun__budget-panel-cta {
+  display: inline-flex;
+  align-items: center;
+  font-size: var(--fs-sm, 0.9rem);
+  font-weight: 600;
+  color: var(--st-amber);
+  text-decoration: none;
+}
+
+.rrun__budget-panel-cta:hover {
+  text-decoration: underline;
+}
+
 @keyframes rrun-queued-pulse {
   0%,
   100% {
