@@ -1,4 +1,6 @@
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { FeedbackModal } from "./FeedbackModal";
 import "./app-footer.css";
 
 export interface AppFooterProps {
@@ -7,6 +9,7 @@ export interface AppFooterProps {
 
 export function AppFooter({ onNav }: AppFooterProps) {
   const { t } = useTranslation("common");
+  const [showFeedback, setShowFeedback] = useState(false);
   const link = (path: string, label: string) => (
     <a
       href={path}
@@ -35,7 +38,15 @@ export function AppFooter({ onNav }: AppFooterProps) {
         {link("/start-research", t("footer.startResearch"))}
         {link("/about", t("footer.about"))}
         {link("/account", t("footer.account"))}
+        <button
+          type="button"
+          className="site-footer__feedback-btn"
+          onClick={() => setShowFeedback(true)}
+        >
+          {t("footer.feedback")}
+        </button>
       </nav>
+      {showFeedback ? <FeedbackModal onClose={() => setShowFeedback(false)} /> : null}
     </footer>
   );
 }

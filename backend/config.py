@@ -575,3 +575,13 @@ RESEND_API_KEY = (os.environ.get("RESEND_API_KEY") or "").strip()
 EMAIL_FROM = (os.environ.get("EMAIL_FROM") or "GeneGuidelines <alerts@genequest.org>").strip()
 PUBLIC_APP_URL = (os.environ.get("PUBLIC_APP_URL") or "http://localhost:5173").strip().rstrip("/")
 API_PUBLIC_URL = (os.environ.get("API_PUBLIC_URL") or "http://localhost:8000").strip().rstrip("/")
+
+# -- Feedback channel (POST /api/feedback) -----------------------------------
+# Where the anonymous "tell us what you think" box emails the founder. Reuses
+# RESEND_API_KEY / EMAIL_FROM above. `kontakt@genequest.org` is the address
+# already published everywhere else (README, About page, doctor directory) as
+# the foundation's general contact — NOT verified specifically for this
+# feature. Darek should confirm it (or set FEEDBACK_TO explicitly) before
+# relying on this in production.
+#   FEEDBACK_TO=kontakt@genequest.org
+FEEDBACK_TO = (os.environ.get("FEEDBACK_TO") or "kontakt@genequest.org").strip()

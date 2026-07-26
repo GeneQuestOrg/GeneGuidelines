@@ -1,0 +1,126 @@
+.fb-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 4vh 4vw;
+  z-index: 50;
+  overflow-y: auto;
+}
+
+.fb-modal__sheet {
+  position: relative;
+  background: var(--bg-elev);
+  border-radius: var(--r-lg, 12px);
+  box-shadow: 0 24px 64px rgba(15, 23, 42, 0.18);
+  max-width: 480px;
+  width: 100%;
+  padding: 28px 28px 24px;
+}
+
+.fb-modal__close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 50%;
+  background: var(--bg-soft);
+  color: var(--ink-2);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.fb-modal__head {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 18px;
+  padding-right: 28px;
+}
+
+.fb-modal__icon {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.fb-modal__title {
+  margin: 0 0 6px;
+  font-size: 1.25rem;
+}
+
+.fb-modal__sub {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.fb-modal__form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.fb-modal__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fb-modal__label {
+  font-size: var(--fs-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-3);
+}
+
+.fb-modal__field textarea,
+.fb-modal__field input[type="email"] {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 11px 14px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--line);
+  font: inherit;
+  background: var(--bg-elev);
+  color: var(--ink);
+}
+
+.fb-modal__field textarea {
+  resize: vertical;
+  min-height: 110px;
+  line-height: 1.5;
+}
+
+.fb-modal__error {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: var(--r-sm);
+  background: rgba(220, 38, 38, 0.08);
+  color: var(--st-red);
+  font-size: 0.85rem;
+}
+
+.fb-modal__actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.fb-modal__success {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.fb-modal__success p {
+  margin: 0;
+  color: var(--ink-2);
+  line-height: 1.5;
+}

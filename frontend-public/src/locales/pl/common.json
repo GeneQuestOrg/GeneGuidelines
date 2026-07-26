@@ -28,7 +28,8 @@
     "home": "Strona główna",
     "startResearch": "Zleć research",
     "about": "O projekcie",
-    "account": "Twoje konto"
+    "account": "Twoje konto",
+    "feedback": "Prześlij opinię"
   },
   "disclaimer": {
     "doctor": {
@@ -404,6 +405,22 @@
     "clearSavedEmail": "Usuń zapisany e-mail",
     "sending": "Wysyłanie…",
     "save": "Zapisz — potwierdź e-mailem"
+  },
+  "feedbackModal": {
+    "closeAriaLabel": "Zamknij",
+    "title": "Powiedz nam, co myślisz",
+    "subtitle": "Zgłoszenia błędów, brakujące dane, niejasne sformułowania, pomysły — każdą wiadomość czyta prawdziwa osoba. Nie możemy obiecać odpowiedzi, ale czytamy wszystko.",
+    "messageLabel": "Twoja wiadomość",
+    "messagePlaceholder": "Co masz na myśli?",
+    "emailLabel": "E-mail (opcjonalnie — żebyśmy mogli odpowiedzieć)",
+    "emailPlaceholder": "you@example.com",
+    "errorTooShort": "Napisz trochę więcej — przynajmniej 20 znaków.",
+    "errorEmailInvalid": "Podaj prawidłowy adres e-mail albo zostaw pole puste.",
+    "errorSendFailed": "Nie udało się wysłać opinii — spróbuj ponownie za chwilę.",
+    "sending": "Wysyłanie…",
+    "send": "Wyślij",
+    "successMessage": "Dziękujemy — czytamy każdą wiadomość.",
+    "done": "Gotowe"
   },
   "locationPicker": {
     "clearAriaLabel": "Wyczyść lokalizację",

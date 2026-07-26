@@ -38,6 +38,17 @@
   color: var(--ink);
 }
 
+.site-footer__feedback-btn {
+  all: unset;
+  color: var(--ink-2);
+  cursor: pointer;
+  font: inherit;
+}
+
+.site-footer__feedback-btn:hover {
+  color: var(--ink);
+}
+
 @media (max-width: 640px) {
   .site-footer {
     grid-template-columns: 1fr;

@@ -160,7 +160,7 @@ from backend.doctor_contributions.api import router as doctor_contributions_rout
 from backend.guidelines.api import router as guidelines_router  # noqa: E402
 from backend.guidelines.bibliography.api import router as bibliography_router  # noqa: E402
 from backend.subscriptions.api import router as subscriptions_router  # noqa: E402
-from backend.routers import content, doctor_finder, geo, pipeline  # noqa: E402
+from backend.routers import content, doctor_finder, feedback, geo, pipeline  # noqa: E402
 
 # The new content module owns GET /api/diseases and GET /api/diseases/{slug};
 # the legacy `content` router below still serves the other content endpoints
@@ -188,6 +188,7 @@ app.include_router(disease_index_router, prefix="/api/disease-index", tags=["dis
 app.include_router(doctor_finder.router, prefix="/api/doctor-finder", tags=["doctor_finder"])
 app.include_router(pipeline.router, prefix="/api/pipeline", tags=["pipeline"])
 app.include_router(geo.router, prefix="/api")
+app.include_router(feedback.router, prefix="/api")
 
 
 @app.get("/api-info")

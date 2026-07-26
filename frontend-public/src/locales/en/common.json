@@ -28,7 +28,8 @@
     "home": "Home",
     "startResearch": "Start research",
     "about": "About the project",
-    "account": "Your account"
+    "account": "Your account",
+    "feedback": "Feedback"
   },
   "disclaimer": {
     "doctor": {
@@ -382,6 +383,22 @@
     "clearSavedEmail": "Clear saved email",
     "sending": "Sending…",
     "save": "Save — confirm by email"
+  },
+  "feedbackModal": {
+    "closeAriaLabel": "Close",
+    "title": "Tell us what you think",
+    "subtitle": "Bug reports, missing data, confusing wording, ideas — a real person reads every note. We can't promise a reply, but we do read all of it.",
+    "messageLabel": "Your message",
+    "messagePlaceholder": "What's on your mind?",
+    "emailLabel": "Email (optional — so we can reply)",
+    "emailPlaceholder": "you@example.com",
+    "errorTooShort": "A few more words would help — at least 20 characters.",
+    "errorEmailInvalid": "Enter a valid email address, or leave it blank.",
+    "errorSendFailed": "Could not send your feedback — please try again in a moment.",
+    "sending": "Sending…",
+    "send": "Send",
+    "successMessage": "Thanks — we read every note.",
+    "done": "Done"
   },
   "locationPicker": {
     "clearAriaLabel": "Clear location",
