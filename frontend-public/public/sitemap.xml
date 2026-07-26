@@ -1,8 +1,193 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
     <loc>https://geneguidelines.genequest.org/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geneguidelines.genequest.org/" />
+    <xhtml:link rel="alternate" hreflang="pl" href="https://geneguidelines.genequest.org/pl" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://geneguidelines.genequest.org/" />
+    <lastmod>2026-07-26</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://geneguidelines.genequest.org/pl</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geneguidelines.genequest.org/" />
+    <xhtml:link rel="alternate" hreflang="pl" href="https://geneguidelines.genequest.org/pl" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://geneguidelines.genequest.org/" />
+    <lastmod>2026-07-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+
+  <url>
+    <loc>https://geneguidelines.genequest.org/diseases</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geneguidelines.genequest.org/diseases" />
+    <xhtml:link rel="alternate" hreflang="pl" href="https://geneguidelines.genequest.org/pl/diseases" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://geneguidelines.genequest.org/diseases" />
+    <lastmod>2026-07-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://geneguidelines.genequest.org/pl/diseases</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geneguidelines.genequest.org/diseases" />
+    <xhtml:link rel="alternate" hreflang="pl" href="https://geneguidelines.genequest.org/pl/diseases" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://geneguidelines.genequest.org/diseases" />
+    <lastmod>2026-07-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://geneguidelines.genequest.org/diseases/fd</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geneguidelines.genequest.org/diseases/fd" />
+    <xhtml:link rel="alternate" hreflang="pl" href="https://geneguidelines.genequest.org/pl/diseases/fd" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://geneguidelines.genequest.org/diseases/fd" />
+    <lastmod>2026-07-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://geneguidelines.genequest.org/pl/diseases/fd</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geneguidelines.genequest.org/diseases/fd" />
+    <xhtml:link rel="alternate" hreflang="pl" href="https://geneguidelines.genequest.org/pl/diseases/fd" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://geneguidelines.genequest.org/diseases/fd" />
+    <lastmod>2026-07-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://geneguidelines.genequest.org/diseases/mas</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geneguidelines.genequest.org/diseases/mas" />
+    <xhtml:link rel="alternate" hreflang="pl" href="https://geneguidelines.genequest.org/pl/diseases/mas" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://geneguidelines.genequest.org/diseases/mas" />
+    <lastmod>2026-07-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://geneguidelines.genequest.org/pl/diseases/mas</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geneguidelines.genequest.org/diseases/mas" />
+    <xhtml:link rel="alternate" hreflang="pl" href="https://geneguidelines.genequest.org/pl/diseases/mas" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://geneguidelines.genequest.org/diseases/mas" />
+    <lastmod>2026-07-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://geneguidelines.genequest.org/diseases/noonan</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geneguidelines.genequest.org/diseases/noonan" />
+    <xhtml:link rel="alternate" hreflang="pl" href="https://geneguidelines.genequest.org/pl/diseases/noonan" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://geneguidelines.genequest.org/diseases/noonan" />
+    <lastmod>2026-07-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://geneguidelines.genequest.org/pl/diseases/noonan</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geneguidelines.genequest.org/diseases/noonan" />
+    <xhtml:link rel="alternate" hreflang="pl" href="https://geneguidelines.genequest.org/pl/diseases/noonan" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://geneguidelines.genequest.org/diseases/noonan" />
+    <lastmod>2026-07-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://geneguidelines.genequest.org/diseases/fop</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geneguidelines.genequest.org/diseases/fop" />
+    <xhtml:link rel="alternate" hreflang="pl" href="https://geneguidelines.genequest.org/pl/diseases/fop" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://geneguidelines.genequest.org/diseases/fop" />
+    <lastmod>2026-07-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://geneguidelines.genequest.org/pl/diseases/fop</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geneguidelines.genequest.org/diseases/fop" />
+    <xhtml:link rel="alternate" hreflang="pl" href="https://geneguidelines.genequest.org/pl/diseases/fop" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://geneguidelines.genequest.org/diseases/fop" />
+    <lastmod>2026-07-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://geneguidelines.genequest.org/diseases/stargardt-disease</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geneguidelines.genequest.org/diseases/stargardt-disease" />
+    <xhtml:link rel="alternate" hreflang="pl" href="https://geneguidelines.genequest.org/pl/diseases/stargardt-disease" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://geneguidelines.genequest.org/diseases/stargardt-disease" />
+    <lastmod>2026-07-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://geneguidelines.genequest.org/pl/diseases/stargardt-disease</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geneguidelines.genequest.org/diseases/stargardt-disease" />
+    <xhtml:link rel="alternate" hreflang="pl" href="https://geneguidelines.genequest.org/pl/diseases/stargardt-disease" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://geneguidelines.genequest.org/diseases/stargardt-disease" />
+    <lastmod>2026-07-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://geneguidelines.genequest.org/diseases/severe-growth-deficiency-strabismus-extensive-dermal-melanocytos</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geneguidelines.genequest.org/diseases/severe-growth-deficiency-strabismus-extensive-dermal-melanocytos" />
+    <xhtml:link rel="alternate" hreflang="pl" href="https://geneguidelines.genequest.org/pl/diseases/severe-growth-deficiency-strabismus-extensive-dermal-melanocytos" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://geneguidelines.genequest.org/diseases/severe-growth-deficiency-strabismus-extensive-dermal-melanocytos" />
+    <lastmod>2026-07-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://geneguidelines.genequest.org/pl/diseases/severe-growth-deficiency-strabismus-extensive-dermal-melanocytos</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geneguidelines.genequest.org/diseases/severe-growth-deficiency-strabismus-extensive-dermal-melanocytos" />
+    <xhtml:link rel="alternate" hreflang="pl" href="https://geneguidelines.genequest.org/pl/diseases/severe-growth-deficiency-strabismus-extensive-dermal-melanocytos" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://geneguidelines.genequest.org/diseases/severe-growth-deficiency-strabismus-extensive-dermal-melanocytos" />
+    <lastmod>2026-07-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://geneguidelines.genequest.org/doctors</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geneguidelines.genequest.org/doctors" />
+    <xhtml:link rel="alternate" hreflang="pl" href="https://geneguidelines.genequest.org/pl/doctors" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://geneguidelines.genequest.org/doctors" />
+    <lastmod>2026-07-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://geneguidelines.genequest.org/pl/doctors</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geneguidelines.genequest.org/doctors" />
+    <xhtml:link rel="alternate" hreflang="pl" href="https://geneguidelines.genequest.org/pl/doctors" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://geneguidelines.genequest.org/doctors" />
+    <lastmod>2026-07-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <url>
+    <loc>https://geneguidelines.genequest.org/about</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geneguidelines.genequest.org/about" />
+    <xhtml:link rel="alternate" hreflang="pl" href="https://geneguidelines.genequest.org/pl/about" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://geneguidelines.genequest.org/about" />
+    <lastmod>2026-07-26</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://geneguidelines.genequest.org/pl/about</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geneguidelines.genequest.org/about" />
+    <xhtml:link rel="alternate" hreflang="pl" href="https://geneguidelines.genequest.org/pl/about" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://geneguidelines.genequest.org/about" />
+    <lastmod>2026-07-26</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
   </url>
 </urlset>
