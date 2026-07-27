@@ -214,18 +214,15 @@ export function DiseaseTabs({
               </Section>
             ) : null}
 
-            {/* The full "What to do now" and "Questions for the doctor" now live on the Guidelines
-                page (What to do now + Red flags already render there). The disease page keeps only
-                the safety-critical Red flags — "when to seek a second opinion". */}
-            <Section title={copy.redFlagsTitle} divider>
-              <aside className="path__redflags">
-                <ul>
-                  {copy.redFlags.map((flag) => (
-                    <li key={flag.text}>{flag.text}</li>
-                  ))}
-                </ul>
-              </aside>
-            </Section>
+            {/* Medical-safety: the static, hand-seeded "Red flags — when to seek a
+                second opinion" block (copy.redFlags) is deliberately NOT rendered on the
+                disease surface. Those warnings assert clinical claims with no citation and
+                were never fact-checked — one wrongly implied genetic confirmation is
+                mandatory, the same over-reach dropped from the guideline synthesis. The
+                disease/guideline surface shows only hard, source-grounded data (the source
+                shelf, synthesis, doctors, trials, therapies). The parent.json `redFlags` /
+                `redFlagsTitle` keys are intentionally kept (just unrendered) so a derived,
+                source-grounded projection can be restored later without a reseed. */}
 
             {/* "Updates in review" = AI-proposed guideline changes awaiting expert review — a
                 clinician/researcher concept, hidden from the parent view to avoid confusion. */}
