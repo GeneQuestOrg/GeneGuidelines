@@ -6,6 +6,7 @@ import type { GuidelineSuggestion } from "../types/guidelineSuggestion";
 import type { GuidelineBaseline } from "../types/guidelineBaseline";
 import type { SourceDoc } from "../types/sourceDoc";
 import type { ViewRole } from "../auth/resolveRole";
+import { ShareWithDoctorActions } from "../components/ShareWithDoctorActions";
 import { SourceShelf } from "../components/guidelines/SourceShelf";
 import { SynthDisclaimer } from "../components/guidelines/SynthDisclaimer";
 
@@ -147,9 +148,7 @@ export function GuidelineParentView({
           <p className="gx-send__s">{t("sendDoctorBody")}</p>
         </div>
         <div className="gx-send__actions">
-          <Button variant="primary" size="sm" type="button" disabled>
-            {t("sendDoctorButton")}
-          </Button>
+          <ShareWithDoctorActions diseaseName={disease.name} />
           <Button size="sm" type="button" onClick={() => window.print()}>
             {t("printButton")}
           </Button>
