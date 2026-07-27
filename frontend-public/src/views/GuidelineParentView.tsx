@@ -156,49 +156,12 @@ export function GuidelineParentView({
         </div>
       </div>
 
-      {doc.whatToDoNow != null || doc.redFlags != null ? (
-        <div className="gx-parentguide">
-          {doc.whatToDoNow != null ? (
-            <>
-              <div className="gx-sec__h gx-sec__h--standalone">{t("whatToDoNowHeading")}</div>
-              <ol className="gx-todo">
-                {doc.whatToDoNow.map((step, i) => (
-                  <li key={step.lead}>
-                    <span className="gx-todo__n">{String(i + 1).padStart(2, "0")}</span>
-                    <span>
-                      <b>{step.lead}</b> {step.body}
-                    </span>
-                  </li>
-                ))}
-              </ol>
-              {doc.hasFlowchart ? (
-                <p className="gx-parentguide__hint">
-                  {t("flowchartHintPrefix")}{" "}
-                  <a
-                    href={`/diseases/${disease.slug}/flowchart`}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      onNav(`/diseases/${disease.slug}/flowchart`);
-                    }}
-                  >
-                    {t("flowchartHintLink")}
-                  </a>
-                </p>
-              ) : null}
-            </>
-          ) : null}
-          {doc.redFlags != null ? (
-            <div className="gx-redflags">
-              <h4>{doc.redFlags.title}</h4>
-              <ul>
-                {doc.redFlags.items.map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
-        </div>
-      ) : null}
+      {/* Medical-safety: the hand-seeded parent layer (whatToDoNow / redFlags)
+          is scrapped from the guideline surface — citation-less, never
+          fact-checked, and it carried a factually false claim. The backend no
+          longer serves those fields; the whole section (heading included) is
+          dropped rather than rendered as an empty shell. A derived,
+          source-grounded "what to do now" projection may return later. */}
 
       <article className="gx-doc">
         {doc.sections.map((sec) => (

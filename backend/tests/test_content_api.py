@@ -133,6 +133,19 @@ def test_guideline_document_missing_404(client: TestClient) -> None:
     )
 
 
+def test_therapies_serve_only_unverified_labels(client: TestClient) -> None:
+    # Medical-safety serve gate: the therapy surface has no provenance, so every
+    # served row is demoted to the neutral honest "unverified" label. The API
+    # must NEVER return "verified"/"consensus" (false authority) for FD therapies.
+    resp = client.get("/api/diseases/fd/therapies")
+    assert resp.status_code == 200
+    rows = resp.json()
+    assert len(rows) >= 1
+    assert {r["status"] for r in rows} == {"unverified"}
+    # Names/notes still flow through unchanged — only the tier label is gated.
+    assert all(r["name"] for r in rows)
+
+
 def test_disease_doctors_fd_seed(client: TestClient) -> None:
     resp = client.get("/api/diseases/fd/doctors")
     assert resp.status_code == 200

@@ -57,6 +57,7 @@
     "lastRevised": "Ostatnia aktualizacja"
   },
   "therapies": {
+    "statusUnverified": "szkic AI — niezweryfikowane",
     "statusConsensus": "Zalecenie konsensusu",
     "statusVerified": "Ugruntowana",
     "statusPending": "Oczekująca",

@@ -133,17 +133,30 @@ class TrialResponse(BaseModel):
 
 
 class TherapyResponse(BaseModel):
-    """Public therapy row — small card on the disease detail view."""
+    """Public therapy row — small card on the disease detail view.
+
+    Medical-safety gate (deterministic, provenance-presence only): the therapy
+    surface carries NO provenance — there is no citation/source column and the
+    seed (``content_therapies_seed.json``) has none — so no row can honestly be
+    shown as evidence-backed. Every served row is therefore demoted to the
+    neutral ``"unverified"`` label ("AI draft — unverified"). We NEVER serve
+    "verified" / "consensus" for a row nothing backs. The stored evidence-tier
+    ``status`` (consensus/verified/pending/preclinical) is left intact in the DB
+    (reversible), so a later per-row, source-derived tier can replace this once
+    the surface gains provenance.
+    """
 
     model_config = ConfigDict(extra="forbid")
 
     name: str
-    status: Literal["consensus", "verified", "pending", "preclinical"]
+    status: Literal["unverified"]
     note: str
 
     @classmethod
     def from_domain(cls, therapy: Therapy) -> "TherapyResponse":
-        return cls(name=therapy.name, status=therapy.status, note=therapy.note)
+        # The surface has no provenance to justify any evidence tier, so every
+        # row serves the honest unverified label. No model, no lookup.
+        return cls(name=therapy.name, status="unverified", note=therapy.note)
 
 
 class FoundationResponse(BaseModel):

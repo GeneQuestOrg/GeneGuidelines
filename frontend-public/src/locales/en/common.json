@@ -57,6 +57,7 @@
     "lastRevised": "Last revised"
   },
   "therapies": {
+    "statusUnverified": "AI draft — unverified",
     "statusConsensus": "Consensus recommendation",
     "statusVerified": "Established",
     "statusPending": "Pending",

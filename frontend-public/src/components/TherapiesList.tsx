@@ -6,10 +6,12 @@ export interface TherapiesListProps {
   therapies: readonly Therapy[];
 }
 
-// Maps the evidence-tier status to a "common" i18n key (resolved at render).
-// Therapy `consensus`/`verified` are evidence tiers (literature-backed), NOT a
-// platform sign-off — distinct from the disease Status component's framing.
+// Maps the status to a "common" i18n key (resolved at render). Medical-safety:
+// the therapy surface has no provenance, so the backend serves every row as
+// `unverified` → the honest "AI draft — unverified" label. The evidence-tier
+// keys remain for reversibility, but the live API no longer sends them.
 const STATUS_KEY: Record<TherapyStatus, string> = {
+  unverified: "therapies.statusUnverified",
   consensus: "therapies.statusConsensus",
   verified: "therapies.statusVerified",
   pending: "therapies.statusPending",

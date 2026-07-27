@@ -21,6 +21,12 @@
   border-radius: var(--r-md);
 }
 
+/* Medical-safety: the served, honest default for every row (no provenance on
+   the surface). Neutral grey — deliberately NOT the green/authority hues below. */
+.therapy-row--unverified {
+  border-left-color: var(--line);
+}
+
 .therapy-row--consensus {
   border-left-color: oklch(0.55 0.13 155);
 }

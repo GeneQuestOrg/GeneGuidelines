@@ -13,7 +13,8 @@ from sqlalchemy import create_engine
 
 import backend.guidelines.orm  # noqa: F401 — registers tables on the shared metadata
 from backend.guidelines.api import router as guidelines_router
-from backend.guidelines.contracts import SourceDocResponse
+from backend.guidelines.contracts import SourceDocResponse, SynthesisResponse
+from backend.guidelines.models import GuidelineSynthesis
 from backend.guidelines.deps import provide_guidelines_service
 from backend.guidelines.repository import (
     InMemoryGuidelinesRepo,
@@ -107,6 +108,46 @@ def test_source_doc_response_is_camelcase(seeded_repo: SqlaGuidelinesRepo) -> No
     assert "is_new" not in payload  # snake_case must not leak
 
 
+# ── medical-safety serve gate (contract level) ─────────────────────────────
+
+
+def _synthesis_with(status: str) -> GuidelineSynthesis:
+    return GuidelineSynthesis(
+        disease_slug="fd",
+        kind="synthesis",
+        title="t",
+        version="v",
+        last_updated="2026-07",
+        based_on="b",
+        synth_disclaimer="d",
+        status=status,
+        epistemic_level="a",
+        has_flowchart=True,
+        source_ids=["31196103"],
+        sections=[{"id": "diagnosis", "title": "1. Diagnosis", "paragraphs": []}],
+        what_to_do_now=[{"lead": "x", "body": "y"}],
+        red_flags={"title": "z", "items": ["a"]},
+    )
+
+
+def test_synthesis_response_drops_parent_layer_and_demotes_authority() -> None:
+    # Domain object carries the hand-seeded parent layer + an authority label;
+    # the served contract must drop the parent layer and downgrade "consensus".
+    payload = SynthesisResponse.from_domain(_synthesis_with("consensus")).model_dump()
+    assert "whatToDoNow" not in payload
+    assert "redFlags" not in payload
+    assert payload["status"] == "draft"  # unbacked "consensus" → honest "draft"
+    assert len(payload["sections"]) == 1  # grounded synthesis still served
+
+
+def test_synthesis_response_passes_through_honest_states() -> None:
+    # "draft"/"pending" are honest states the engine emits — never rewritten.
+    assert SynthesisResponse.from_domain(_synthesis_with("draft")).status == "draft"
+    assert SynthesisResponse.from_domain(_synthesis_with("pending")).status == "pending"
+    # "verified" is also unbacked authority on this surface → demoted.
+    assert SynthesisResponse.from_domain(_synthesis_with("verified")).status == "draft"
+
+
 # ── service slug-normalisation ─────────────────────────────────────────────
 
 
@@ -145,6 +186,14 @@ def test_api_endpoints(seeded_repo: SqlaGuidelinesRepo) -> None:
     assert syn.status_code == 200
     body = syn.json()
     assert body["slug"] == "fd" and body["synthDisclaimer"] and len(body["sections"]) == 5
+    # Medical-safety serve gate: the hand-seeded, citation-less parent layer is
+    # NOT served (dropped, not nulled), and the unbacked authority label
+    # "consensus" is downgraded to the honest unreviewed "draft" (never
+    # approved/verified/official). The seed/columns stay intact (asserted in
+    # test_fd_shelf_synthesis_suggestions_signals at the repository level).
+    assert "whatToDoNow" not in body
+    assert "redFlags" not in body
+    assert body["status"] == "draft"
 
     sug = client.get("/api/diseases/fd/guideline-suggestions")
     assert sug.status_code == 200 and len(sug.json()) == 3

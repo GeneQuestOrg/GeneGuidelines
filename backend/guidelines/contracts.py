@@ -26,6 +26,31 @@ def _year(value: str) -> int | str:
     return int(value) if value.isdigit() else value
 
 
+# ── medical-safety serve gate (deterministic, provenance-presence only) ──────
+#
+# Authority-claiming synthesis statuses that nothing in the pipeline actually
+# backs. There is no fact-check writeback and no reviewer sign-off wired to the
+# served row: the ``gfc-check`` verdict lands only in the run log and never
+# returns to the synthesis (see pakiet-walidacyjny-fd/04-pomiar-czulosci-gfc).
+# The FD/MAS rows carry a hand-seeded ``"consensus"`` / ``"verified"`` literal,
+# which would imply an approval that never happened. So at the serve boundary we
+# downgrade those to the honest, engine-emitted unreviewed state ``"draft"`` — a
+# source-backed AI summary, NOT an official/approved/verified guideline. "draft"
+# is intentionally NOT "pending" (which is the level-(c) "no synthesis yet"
+# sentinel the frontend gate keys on), so the synthesis still renders. No model.
+_UNBACKED_AUTHORITY_STATUS = frozenset({"consensus", "verified"})
+_HONEST_UNREVIEWED_STATUS = "draft"
+
+
+def _served_status(status: str) -> str:
+    """Demote unbacked authority labels; pass through honest states unchanged."""
+    return (
+        _HONEST_UNREVIEWED_STATUS
+        if status in _UNBACKED_AUTHORITY_STATUS
+        else status
+    )
+
+
 class SourceDocResponse(BaseModel):
     """A shelf document (frontend ``SourceDoc``)."""
 
@@ -65,7 +90,15 @@ class SourceDocResponse(BaseModel):
 
 
 class SynthesisResponse(BaseModel):
-    """The synthesis document (frontend ``GuidelineSynthesis``)."""
+    """The synthesis document (frontend ``GuidelineSynthesis``).
+
+    Medical-safety gate: the hand-seeded parent layer (``whatToDoNow`` /
+    ``redFlags``) is NOT served. It is citation-less, bypasses the fact-check
+    entirely, and carried a factually false claim; the founder scrapped it from
+    the guideline surface. The columns and seed rows stay intact (reversible) —
+    only serving is gated, so a derived, source-grounded "what to do now"
+    projection can return later. ``status`` is demoted by :func:`_served_status`.
+    """
 
     model_config = ConfigDict(extra="forbid")
 
@@ -79,8 +112,6 @@ class SynthesisResponse(BaseModel):
     synthDisclaimer: str
     status: str
     hasFlowchart: bool
-    whatToDoNow: list[dict[str, Any]] | None = None
-    redFlags: dict[str, Any] | None = None
     sections: list[dict[str, Any]]
 
     @classmethod
@@ -94,10 +125,8 @@ class SynthesisResponse(BaseModel):
             sourceIds=list(s.source_ids),
             basedOn=s.based_on,
             synthDisclaimer=s.synth_disclaimer,
-            status=s.status,
+            status=_served_status(s.status),
             hasFlowchart=s.has_flowchart,
-            whatToDoNow=s.what_to_do_now,
-            redFlags=s.red_flags,
             sections=s.sections,
         )
 
