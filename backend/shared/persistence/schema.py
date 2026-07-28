@@ -224,6 +224,11 @@ therapies = Table(
     Column("status", Text, nullable=False),
     Column("note", Text, nullable=False, server_default=""),
     Column("sort_order", Integer, nullable=False, server_default="100"),
+    # Provenance: JSON array of PubMed IDs backing this therapy line, populated
+    # by the therapies_finder during research. Presence of >=1 PMID is what lets
+    # the serve boundary show a row as honestly "source-backed" instead of the
+    # neutral "unverified" default (see backend/content/contracts.py).
+    Column("pmids_json", Text, nullable=False, server_default="[]"),
     CheckConstraint(
         "status IN ('consensus','verified','pending','preclinical')",
         name="therapy_status_enum",
