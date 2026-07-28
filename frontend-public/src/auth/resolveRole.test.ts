@@ -32,7 +32,8 @@ describe("resolveRole", () => {
     expect(resolveRole(acct(null), "auto", true)).toBe("parent");
     expect(resolveRole(acct("doctor", true), "auto", true)).toBe("doctor");
     expect(resolveRole(acct("doctor", false), "auto", true)).toBe("doctor-unverified");
-    expect(resolveRole(acct("researcher"), "auto", true)).toBe("researcher");
+    expect(resolveRole(acct("researcher", true), "auto", true)).toBe("researcher");
+    expect(resolveRole(acct("researcher", false), "auto", true)).toBe("researcher-unverified");
     expect(resolveRole(acct("superadmin"), "auto", true)).toBe("researcher");
   });
 
@@ -53,13 +54,19 @@ describe("resolveRole", () => {
 describe("role helpers", () => {
   it("isClinicianView / isParentSide partition the roles", () => {
     expect(isClinicianView("doctor")).toBe(true);
-    expect(isClinicianView("doctor-unverified")).toBe(true);
     expect(isClinicianView("researcher")).toBe(true);
+    // Unverified doctors/researchers stay on the parent projection until
+    // verified — they are not clinician views.
+    expect(isClinicianView("doctor-unverified")).toBe(false);
+    expect(isClinicianView("researcher-unverified")).toBe(false);
     expect(isClinicianView("parent")).toBe(false);
     expect(isClinicianView("anon")).toBe(false);
     expect(isParentSide("anon")).toBe(true);
     expect(isParentSide("parent")).toBe(true);
+    expect(isParentSide("doctor-unverified")).toBe(true);
+    expect(isParentSide("researcher-unverified")).toBe(true);
     expect(isParentSide("doctor")).toBe(false);
+    expect(isParentSide("researcher")).toBe(false);
   });
 
   it("canRate only for verified clinicians", () => {
@@ -74,8 +81,11 @@ describe("role helpers", () => {
     expect(audienceForRole("anon")).toBe("parent");
     expect(audienceForRole("parent")).toBe("parent");
     expect(audienceForRole("doctor")).toBe("doctor");
-    expect(audienceForRole("doctor-unverified")).toBe("doctor");
     expect(audienceForRole("researcher")).toBe("doctor");
+    // Unverified doctors/researchers are not clinician views, so they collapse
+    // to the parent audience, same as anon/parent.
+    expect(audienceForRole("doctor-unverified")).toBe("parent");
+    expect(audienceForRole("researcher-unverified")).toBe("parent");
   });
 
   it("isPreviewRole validates persisted tweak values", () => {
