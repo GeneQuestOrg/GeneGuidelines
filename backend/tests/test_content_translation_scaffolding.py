@@ -151,14 +151,14 @@ def test_migration_upgrade_downgrade_upgrade_roundtrip(
         # Stamp at the prior head so `upgrade head` runs ONLY the new revision.
         command.stamp(cfg, prior_head)
 
-        command.upgrade(cfg, "head")
+        command.upgrade(cfg, new_head)
         assert set(_NEW_TABLES) <= table_names()
 
         command.downgrade(cfg, "-1")
         after_down = table_names()
         assert not (set(_NEW_TABLES) & after_down)
 
-        command.upgrade(cfg, "head")
+        command.upgrade(cfg, new_head)
         assert set(_NEW_TABLES) <= table_names()
 
         # Landed on the expected revision.

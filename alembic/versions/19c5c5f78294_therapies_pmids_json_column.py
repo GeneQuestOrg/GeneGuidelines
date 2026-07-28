@@ -33,8 +33,25 @@ branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 
+def _therapies_columns() -> set[str]:
+    insp = sa.inspect(op.get_bind())
+    if "therapies" not in insp.get_table_names():
+        return set()  # table absent: created by content_db.ensure_content_schema, not alembic
+    return {c["name"] for c in insp.get_columns("therapies")}
+
+
 def upgrade() -> None:
-    """Upgrade schema."""
+    """Upgrade schema.
+
+    ``therapies`` is created by ``content_db.ensure_content_schema`` (raw
+    psycopg), not by alembic, so a pure-alembic chain (offline SQLite, the
+    migration-roundtrip test) has no such table. Guard the ADD so the migration
+    is a no-op where the table is absent, and idempotent where the column
+    already exists.
+    """
+    cols = _therapies_columns()
+    if not cols or "pmids_json" in cols:
+        return
     op.add_column(
         "therapies",
         sa.Column(
@@ -47,5 +64,8 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    """Downgrade schema."""
+    """Downgrade schema (guarded symmetrically)."""
+    cols = _therapies_columns()
+    if "pmids_json" not in cols:
+        return
     op.drop_column("therapies", "pmids_json")
