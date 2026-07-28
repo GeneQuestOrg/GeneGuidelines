@@ -58,10 +58,17 @@
   },
   "therapies": {
     "statusUnverified": "szkic AI — niezweryfikowane",
+    "statusSourced": "szkic AI — poparty źródłami",
     "statusConsensus": "Zalecenie konsensusu",
     "statusVerified": "Ugruntowana",
     "statusPending": "Oczekująca",
     "statusPreclinical": "Przedkliniczna",
+    "sourcesShow_one": "Pokaż {{count}} źródło PubMed",
+    "sourcesShow_few": "Pokaż {{count}} źródła PubMed",
+    "sourcesShow_many": "Pokaż {{count}} źródeł PubMed",
+    "sourcesShow_other": "Pokaż {{count}} źródeł PubMed",
+    "sourcesHide": "Ukryj źródła",
+    "pmidLabel": "PMID {{pmid}}",
     "empty": "Nie odnotowano jeszcze żadnych linii terapii dla tej choroby."
   },
   "doctorCard": {

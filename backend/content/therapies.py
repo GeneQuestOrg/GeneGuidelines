@@ -8,6 +8,7 @@ pattern as :mod:`backend.content.repository` and
 
 from __future__ import annotations
 
+import json
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, replace
 from typing import Literal, Protocol
@@ -33,9 +34,18 @@ class Therapy:
     status: TherapyStatus
     note: str
     sort_order: int
+    # PubMed IDs backing this therapy line (provenance). Empty tuple = no
+    # source on file yet; the serve boundary uses presence to decide whether a
+    # row is honestly "source-backed" or the neutral "unverified" default.
+    pmids: tuple[str, ...] = ()
 
 
 def therapy_from_row(row: Mapping[str, object]) -> Therapy:
+    raw_pmids = row.get("pmids_json") or "[]"
+    try:
+        pmids = tuple(str(p) for p in json.loads(raw_pmids))  # type: ignore[arg-type]
+    except (ValueError, TypeError):
+        pmids = ()
     return Therapy(
         id=int(row["id"]),  # type: ignore[arg-type]
         disease_slug=str(row["disease_slug"]),
@@ -43,6 +53,7 @@ def therapy_from_row(row: Mapping[str, object]) -> Therapy:
         status=str(row["status"]),  # type: ignore[arg-type]
         note=str(row.get("note") or ""),
         sort_order=int(row.get("sort_order") or 0),  # type: ignore[arg-type]
+        pmids=pmids,
     )
 
 

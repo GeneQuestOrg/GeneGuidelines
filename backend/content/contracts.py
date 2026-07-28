@@ -135,28 +135,41 @@ class TrialResponse(BaseModel):
 class TherapyResponse(BaseModel):
     """Public therapy row — small card on the disease detail view.
 
-    Medical-safety gate (deterministic, provenance-presence only): the therapy
-    surface carries NO provenance — there is no citation/source column and the
-    seed (``content_therapies_seed.json``) has none — so no row can honestly be
-    shown as evidence-backed. Every served row is therefore demoted to the
-    neutral ``"unverified"`` label ("AI draft — unverified"). We NEVER serve
-    "verified" / "consensus" for a row nothing backs. The stored evidence-tier
-    ``status`` (consensus/verified/pending/preclinical) is left intact in the DB
-    (reversible), so a later per-row, source-derived tier can replace this once
-    the surface gains provenance.
+    Medical-safety gate (deterministic, provenance-presence only). The served
+    ``status`` is derived from PMID-presence, never from the stored evidence
+    tier and never from an LLM:
+
+    * a row with >=1 source PMID now carries provenance, so it serves the honest
+      grounded label ``"sourced"`` ("AI draft — source-backed") together with
+      its ``pmids`` so the frontend can link out to PubMed;
+    * a row with no PMID keeps the neutral ``"unverified"`` label
+      ("AI draft — unverified").
+
+    We still NEVER serve "verified" / "consensus" / "approved" — the grounded
+    label only asserts that the row cites at least one source, not that any
+    human signed off. The stored evidence-tier ``status``
+    (consensus/verified/pending/preclinical) is left intact in the DB and is
+    deliberately not surfaced here; presence of a citation is the only signal we
+    trust at the serve boundary. This extends (does not replace) the earlier
+    demotion: rows still start "unverified" and only earn "sourced" once the
+    therapies_finder populates ``pmids``.
     """
 
     model_config = ConfigDict(extra="forbid")
 
     name: str
-    status: Literal["unverified"]
+    status: Literal["unverified", "sourced"]
     note: str
+    pmids: list[str] = Field(default_factory=list)
 
     @classmethod
     def from_domain(cls, therapy: Therapy) -> "TherapyResponse":
-        # The surface has no provenance to justify any evidence tier, so every
-        # row serves the honest unverified label. No model, no lookup.
-        return cls(name=therapy.name, status="unverified", note=therapy.note)
+        # Deterministic, provenance-presence only: a row with >=1 source PMID is
+        # honestly grounded ("source-backed"); a row with none stays
+        # "unverified". No model, no lookup, no stored-tier passthrough.
+        pmids = list(therapy.pmids)
+        status = "sourced" if pmids else "unverified"
+        return cls(name=therapy.name, status=status, note=therapy.note, pmids=pmids)
 
 
 class FoundationResponse(BaseModel):

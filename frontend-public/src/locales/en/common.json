@@ -58,10 +58,15 @@
   },
   "therapies": {
     "statusUnverified": "AI draft — unverified",
+    "statusSourced": "AI draft — source-backed",
     "statusConsensus": "Consensus recommendation",
     "statusVerified": "Established",
     "statusPending": "Pending",
     "statusPreclinical": "Preclinical",
+    "sourcesShow_one": "View {{count}} PubMed source",
+    "sourcesShow_other": "View {{count}} PubMed sources",
+    "sourcesHide": "Hide sources",
+    "pmidLabel": "PMID {{pmid}}",
     "empty": "No therapy lines recorded for this disease yet."
   },
   "doctorCard": {

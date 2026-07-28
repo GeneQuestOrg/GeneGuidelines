@@ -133,17 +133,48 @@ def test_guideline_document_missing_404(client: TestClient) -> None:
     )
 
 
-def test_therapies_serve_only_unverified_labels(client: TestClient) -> None:
-    # Medical-safety serve gate: the therapy surface has no provenance, so every
-    # served row is demoted to the neutral honest "unverified" label. The API
-    # must NEVER return "verified"/"consensus" (false authority) for FD therapies.
+def test_therapies_serve_status_derived_from_pmids(client: TestClient) -> None:
+    # Medical-safety serve gate: the served status is derived deterministically
+    # from PMID-presence — never the stored evidence tier, never an LLM. Every
+    # row is either the neutral "unverified" (no source on file) or the grounded
+    # "sourced" (>=1 PMID). The API must NEVER return "verified"/"consensus"
+    # (false authority). FD seed rows have no PMIDs yet, so they serve
+    # "unverified" until the therapies_finder populates them.
     resp = client.get("/api/diseases/fd/therapies")
     assert resp.status_code == 200
     rows = resp.json()
     assert len(rows) >= 1
-    assert {r["status"] for r in rows} == {"unverified"}
+    assert {r["status"] for r in rows} <= {"unverified", "sourced"}
+    for r in rows:
+        assert isinstance(r.get("pmids"), list)
+        # Deterministic derivation: sourced iff the row carries >=1 PMID.
+        assert r["status"] == ("sourced" if r["pmids"] else "unverified")
     # Names/notes still flow through unchanged — only the tier label is gated.
     assert all(r["name"] for r in rows)
+
+
+def test_therapy_response_derives_status_from_pmids() -> None:
+    # Pure unit test of the reconciliation derivation (no DB, no client).
+    from backend.content.contracts import TherapyResponse
+    from backend.content.therapies import Therapy
+
+    sourced = Therapy(
+        id=1, disease_slug="fd", name="Denosumab", status="verified",
+        note="x", sort_order=10, pmids=("22422767", "31196103"),
+    )
+    r = TherapyResponse.from_domain(sourced)
+    assert r.status == "sourced"
+    assert r.pmids == ["22422767", "31196103"]
+
+    unbacked = Therapy(
+        id=2, disease_slug="fd", name="Observation", status="consensus",
+        note="y", sort_order=20, pmids=(),
+    )
+    r2 = TherapyResponse.from_domain(unbacked)
+    assert r2.status == "unverified"
+    assert r2.pmids == []
+    # The stored evidence tier is never leaked as a served authority label.
+    assert r2.status not in {"verified", "consensus", "pending", "preclinical"}
 
 
 def test_disease_doctors_fd_seed(client: TestClient) -> None:

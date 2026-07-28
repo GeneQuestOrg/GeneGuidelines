@@ -179,7 +179,8 @@ def ensure_content_schema() -> None:
             name TEXT NOT NULL,
             status TEXT NOT NULL CHECK (status IN ('consensus','verified','pending','preclinical')),
             note TEXT NOT NULL DEFAULT '',
-            sort_order INTEGER NOT NULL DEFAULT 100
+            sort_order INTEGER NOT NULL DEFAULT 100,
+            pmids_json TEXT NOT NULL DEFAULT '[]'
         )
         """
     )
