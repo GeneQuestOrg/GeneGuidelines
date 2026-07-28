@@ -1,5 +1,5 @@
 import type { ComponentPropsWithoutRef, ElementType, ReactNode } from "react";
-import { safeBrandHref } from "../safeBrandHref";
+import { safeAnchorHref } from "../safeAnchorHref";
 import "./button.css";
 
 type ButtonSize = "sm" | "md" | "lg";
@@ -51,7 +51,7 @@ export function Button<E extends ElementType = "button">({
     return (
       <a
         className={cls}
-        href={safeBrandHref(href, LINK_FALLBACK_HREF)}
+        href={safeAnchorHref(href, LINK_FALLBACK_HREF)}
         {...linkRest}
       >
         {children}
