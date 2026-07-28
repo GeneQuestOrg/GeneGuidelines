@@ -54,4 +54,22 @@ describe("Button", () => {
     );
     expect(screen.getByRole("link", { name: "Diseases" })).toHaveAttribute("href", "#/diseases");
   });
+
+  it("keeps share links (mailto / external https) when rendered as anchor", () => {
+    const mailto = "mailto:?subject=Noonan&body=https://x.test/d/noonan";
+    render(
+      <Button as="a" href={mailto}>
+        Email
+      </Button>,
+    );
+    expect(screen.getByRole("link", { name: "Email" })).toHaveAttribute("href", mailto);
+
+    const whatsapp = "https://wa.me/?text=Noonan";
+    render(
+      <Button as="a" href={whatsapp}>
+        WhatsApp
+      </Button>,
+    );
+    expect(screen.getByRole("link", { name: "WhatsApp" })).toHaveAttribute("href", whatsapp);
+  });
 });

@@ -156,6 +156,12 @@
   gap: 6px;
   flex-shrink: 0;
   flex-wrap: wrap;
+  align-items: center;
+}
+.gx-send__share {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
 }
 @media (max-width: 640px) {
   .gx-send {
@@ -599,4 +605,75 @@
 }
 .gx-modetabs button.on span {
   color: color-mix(in oklch, var(--bg-elev) 70%, var(--ink));
+}
+
+/* Print: clean white page with guideline content only. */
+@media print {
+  html,
+  body,
+  .app-shell,
+  .app-main,
+  .page--gl2 {
+    background: #fff !important;
+  }
+
+  .gx-send,
+  .gx-signin,
+  .gx-gate,
+  .srcdoc,
+  .gx-synthnote,
+  .gx-discuss,
+  .gx-redflags,
+  .gx-todo,
+  .gx-sec,
+  .gx-doc,
+  .srcshelf {
+    background: #fff !important;
+    box-shadow: none !important;
+  }
+
+  .gx-send,
+  .gx-signin,
+  .gx-gate {
+    border-color: #ddd !important;
+  }
+
+  .hdr,
+  .site-footer,
+  .jb,
+  .gx-bar,
+  .gx-role,
+  .gx-signin,
+  .gx-send,
+  .gx-gate__actions,
+  .gx-modetabs,
+  .gx-suggzone,
+  .gx-sugglink,
+  .gx-unver,
+  .gx-parentguide__hint,
+  .dev-link {
+    display: none !important;
+  }
+
+  .gx-doc,
+  .srcshelf,
+  .gx-parentfoot {
+    max-width: 100%;
+  }
+
+  .gx-sec {
+    break-inside: avoid;
+  }
+
+  .srcdoc {
+    break-inside: avoid;
+    border: 1px solid #ddd;
+  }
+
+  a[href^="http"]::after {
+    content: " (" attr(href) ")";
+    font-size: 9pt;
+    color: #555;
+    word-break: break-all;
+  }
 }
