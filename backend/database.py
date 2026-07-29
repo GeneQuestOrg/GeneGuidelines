@@ -197,6 +197,7 @@ def init_db():
     _sync_parent_pathway_synth_prompt_from_disk()
     _sync_parent_pathway_plan_prompt_from_disk()
     _ensure_guideline_bibliography_tail_nodes()
+    _ensure_guideline_synthesis_quote_nodes()
     _sync_guideline_shelf_classify_prompt_from_spec()
     try:
         from .content_db import (
