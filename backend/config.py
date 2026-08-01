@@ -503,10 +503,19 @@ _DFG_NOM_INT = (os.environ.get("DOCTOR_FINDER_GEO_NOMINATIM_MIN_INTERVAL_SEC") o
 DOCTOR_FINDER_GEO_NOMINATIM_MIN_INTERVAL_SEC = float(_DFG_NOM_INT) if _DFG_NOM_INT else 1.1
 DOCTOR_FINDER_GEO_NOMINATIM_MIN_INTERVAL_SEC = max(1.0, min(5.0, DOCTOR_FINDER_GEO_NOMINATIM_MIN_INTERVAL_SEC))
 
+# Shipped retrieval breadth. Kept as named constants (not inline literals) so tests can
+# assert what we ship without reading through a developer's local .env override.
+PUBMED_RETRIEVAL_MIN_PMIDS_PER_DOMAIN_DEFAULT = 50
+PUBMED_RETRIEVAL_TARGET_PMIDS_DEFAULT = 800
+
 PUBMED_RETRIEVAL_MIN_PMIDS_PER_DOMAIN = int(
-    (os.environ.get("PUBMED_RETRIEVAL_MIN_PMIDS_PER_DOMAIN") or "").strip() or 50
+    (os.environ.get("PUBMED_RETRIEVAL_MIN_PMIDS_PER_DOMAIN") or "").strip()
+    or PUBMED_RETRIEVAL_MIN_PMIDS_PER_DOMAIN_DEFAULT
 )
-PUBMED_RETRIEVAL_TARGET_PMIDS = int((os.environ.get("PUBMED_RETRIEVAL_TARGET_PMIDS") or "").strip() or 800)
+PUBMED_RETRIEVAL_TARGET_PMIDS = int(
+    (os.environ.get("PUBMED_RETRIEVAL_TARGET_PMIDS") or "").strip()
+    or PUBMED_RETRIEVAL_TARGET_PMIDS_DEFAULT
+)
 # pm-1: deterministic multi-domain PubMed orchestration (default). Runs every clinical
 # query variant + high-recall backfill; uses disease aliases when present. Set to 0 only
 # to restore the legacy agentic pm-1 step (not recommended — skips domains, TPM failures).

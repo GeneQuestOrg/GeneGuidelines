@@ -77,20 +77,24 @@ class PubmedFlowAgenticTests(unittest.IsolatedAsyncioTestCase):
         nodes["pm-4-overview"]["output_schema"] = '{"fields":[{"name":"disease_name","type":"string","required":true},{"name":"section_html","type":"string","required":true},{"name":"key_updates","type":"string","required":true}]}'
         nodes["pm-4-references"]["output_schema"] = '{"fields":[{"name":"section_html","type":"string","required":true},{"name":"references","type":"string","required":true},{"name":"disclaimer_html","type":"string","required":true}]}'
 
+        # One pm-1 payload, served on both retrieval paths. pm-1 runs deterministically
+        # by default (PUBMED_PM1_DETERMINISTIC_RETRIEVAL), which calls run_pm1_retrieval
+        # directly and never reaches the agent runner — unpatched, that path issues a
+        # live PubMed query and the assertions below then depend on the network.
+        pm1_payload = {
+            "query_text": "fibrous dysplasia",
+            "fallback_used": fallback_used,
+            "total_found_estimate": 117,
+            "total_requested": 117,
+            "total_analyzed": 117,
+            "total_with_abstract": 110,
+            "articles": [{"pmid": "123", "title": "A", "abstract": "x"}],
+            "evidence_cards": [{"pmid": "123", "topic_bucket": "treatment"}],
+        }
+
         async def _fake_single_node_async(*args, **kwargs):
             store = kwargs["store"]
-            store["output"] = json.dumps(
-                {
-                    "query_text": "fibrous dysplasia",
-                    "fallback_used": fallback_used,
-                    "total_found_estimate": 117,
-                    "total_requested": 117,
-                    "total_analyzed": 117,
-                    "total_with_abstract": 110,
-                    "articles": [{"pmid": "123", "title": "A", "abstract": "x"}],
-                    "evidence_cards": [{"pmid": "123", "topic_bucket": "treatment"}],
-                }
-            )
+            store["output"] = json.dumps(pm1_payload)
 
         async def _fake_simple_runner(**kwargs):
             node_id = kwargs.get("node_id")
@@ -117,6 +121,7 @@ class PubmedFlowAgenticTests(unittest.IsolatedAsyncioTestCase):
             patch("backend.engine.flow_engine.db.get_flow_node", side_effect=lambda *_args: nodes[_args[1]]),
             patch("backend.engine.flow_engine.db.get_tool_catalog_for_scope", return_value=[]),
             patch("backend.engine.flow_engine.db.get_tools_with_execution_mode", return_value=[]),
+            patch("backend.flows.pubmed.retrieval.run_pm1_retrieval", return_value=pm1_payload),
             patch("backend.agents.runner.run_single_node_async", new=AsyncMock(side_effect=_fake_single_node_async)),
             patch("backend.agents.simple_runner.run_llm_simple_async", new=AsyncMock(side_effect=_fake_simple_runner)),
         ):

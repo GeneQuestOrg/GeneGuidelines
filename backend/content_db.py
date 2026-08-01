@@ -257,6 +257,7 @@ def ensure_content_schema() -> None:
     conn.close()
     ensure_guideline_prompt_column()
     ensure_listed_column()
+    ensure_therapies_pmids_column()
     ensure_care_pathway_draft_columns()
     ensure_official_guideline_pointers_schema()
     ensure_foundations_source_column()
@@ -354,6 +355,23 @@ def ensure_guideline_prompt_column() -> None:
     conn.close()
     if column_added:
         sync_guideline_prompts_from_seed()
+
+
+def ensure_therapies_pmids_column() -> None:
+    """Add therapies.pmids_json for databases created before per-therapy sources.
+
+    ``CREATE TABLE IF NOT EXISTS`` above declares the column, but that is a no-op on
+    an existing table, so any database seeded before the column existed keeps the old
+    shape and every therapy read fails with UndefinedColumn. The alembic chain adds it
+    too; this keeps environments that predate (or drift from) that chain self-healing,
+    matching how the other content columns are handled here.
+    """
+    conn = get_connection()
+    cur = conn.cursor()
+    if "pmids_json" not in table_columns(conn, "therapies"):
+        cur.execute("ALTER TABLE therapies ADD COLUMN pmids_json TEXT NOT NULL DEFAULT '[]'")
+        conn.commit()
+    conn.close()
 
 
 def ensure_listed_column() -> None:

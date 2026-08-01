@@ -329,12 +329,18 @@ class GeneticsFilterAndConfigTests(unittest.TestCase):
         self.assertNotIn("gene OR genetic", high_tier)
 
     def test_config_defaults_are_updated(self) -> None:
+        """The shipped retrieval breadth, independent of any local .env override.
+
+        ``backend.config`` calls ``load_dotenv`` at import, so asserting the resolved
+        values here would fail on any machine that tunes these knobs (and pass in CI
+        only because CI has no .env). Assert the defaults themselves.
+        """
         from backend.config import (
-            PUBMED_RETRIEVAL_MIN_PMIDS_PER_DOMAIN,
-            PUBMED_RETRIEVAL_TARGET_PMIDS,
+            PUBMED_RETRIEVAL_MIN_PMIDS_PER_DOMAIN_DEFAULT,
+            PUBMED_RETRIEVAL_TARGET_PMIDS_DEFAULT,
         )
-        self.assertEqual(PUBMED_RETRIEVAL_MIN_PMIDS_PER_DOMAIN, 50)
-        self.assertEqual(PUBMED_RETRIEVAL_TARGET_PMIDS, 800)
+        self.assertEqual(PUBMED_RETRIEVAL_MIN_PMIDS_PER_DOMAIN_DEFAULT, 50)
+        self.assertEqual(PUBMED_RETRIEVAL_TARGET_PMIDS_DEFAULT, 800)
 
 class RelevanceOrderingTests(unittest.TestCase):
     """Tests for stable relevance-based sorting of retrieved articles."""
