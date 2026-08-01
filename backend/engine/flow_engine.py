@@ -41,6 +41,13 @@ from ..executors.decision_executor import DecisionExecutor
 from ..flows.parent_pathway.submit_guard import parent_pathway_synth_missing_draft_error
 
 
+# Executors whose ``ok: False`` must stop the flow instead of letting later nodes
+# run on missing input. ``guideline_shelf_load`` is here because a synthesis with an
+# empty shelf is the model writing from memory — the one thing this product must
+# never publish (the section prompts simply get an empty shelf and improvise).
+_HARD_FAIL_ON_NOT_OK = ("parent_pathway_load", "guideline_shelf_load")
+
+
 def _doctor_finder_executor_hard_error(flow_key: str, node_id: str, payload: Any) -> str | None:
     """If a doctor_finder executor returns ok=false, the pipeline must stop with a clear error.
 
@@ -821,7 +828,7 @@ async def run_flow_step_by_step_async(
                 )
             )
             store["node_outputs"][node_id] = result.data
-            if node_type == "parent_pathway_load" and not result.data.get("ok"):
+            if node_type in _HARD_FAIL_ON_NOT_OK and not result.data.get("ok"):
                 store["error"] = str(result.data.get("error") or f"Node {node_id} failed.")
                 emit_fn(event_queue, {"kind": "sys", "text": f"[SYSTEM] {store['error']}"})
                 break
@@ -1780,7 +1787,7 @@ async def run_flow_fork_parallel_async(
                 emit_fn(event_queue, {"kind": "sys", "text": f"[SYSTEM] {hard_err}"})
                 local_store["node_outputs"][nid] = result.data
                 return {"node_id": nid, "node_out": result.data, "error": hard_err, "candidate": {}}
-            if node_type == "parent_pathway_load" and not result.data.get("ok"):
+            if node_type in _HARD_FAIL_ON_NOT_OK and not result.data.get("ok"):
                 err = str(result.data.get("error") or f"Node {nid} failed.")
                 emit_fn(event_queue, {"kind": "sys", "text": f"[SYSTEM] {err}"})
                 local_store["node_outputs"][nid] = result.data

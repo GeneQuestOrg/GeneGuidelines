@@ -64,6 +64,21 @@ class GuidelineSynthesisWriterExecutor(NodeExecutor):
         shelf_docs = shelf.get("shelf_docs") or []
         source_ids = [str(d.get("docId")) for d in shelf_docs if isinstance(d, dict) and d.get("docId")]
 
+        # A synthesis with no shelf is not a synthesis — it is the model writing from
+        # its own memory, which is exactly what this product must never serve. Refuse
+        # the write rather than publish an unsourced "Synthesis · 0 sources" document.
+        if not source_ids:
+            log.warning("guideline_synthesis_writer: refusing to write %s — empty source shelf", slug)
+            return NodeOutput(
+                data={
+                    "ok": False,
+                    "error": (
+                        f"No source documents on the shelf for '{slug}' — refusing to write an "
+                        "unsourced synthesis. Build the shelf first."
+                    ),
+                }
+            )
+
         # Feature 4: grounded per-claim paraphrases produced by the gs-quotes node,
         # indexed by (section_id, paragraph_id). Absent on older flows → no quotes.
         quotes_by_para = _collect_quotes(context.get("gs-quotes"))
