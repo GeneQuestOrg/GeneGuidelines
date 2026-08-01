@@ -199,6 +199,33 @@ def test_list_doctors_catalog(client: TestClient) -> None:
     assert "dowgierd" in slugs
 
 
+def test_doctor_list_omits_publications_but_profile_keeps_them(client: TestClient) -> None:
+    """The directory is megabytes; per-clinician paper lists belong to the profile.
+
+    ``publications`` is a third of the payload and only the profile view reads it,
+    so the list drops it and ``/api/doctors/{slug}`` still serves it.
+    """
+    rows = client.get("/api/doctors").json()
+    assert rows
+    assert all("publications" not in row for row in rows)
+
+    profile = client.get(f"/api/doctors/{rows[0]['slug']}").json()
+    assert "publications" in profile
+
+
+def test_doctor_list_pages_with_limit_and_offset(client: TestClient) -> None:
+    everything = client.get("/api/doctors").json()
+    assert len(everything) >= 3
+
+    first_two = client.get("/api/doctors?limit=2").json()
+    assert [row["slug"] for row in first_two] == [row["slug"] for row in everything[:2]]
+
+    skipped = client.get("/api/doctors?limit=2&offset=1").json()
+    assert [row["slug"] for row in skipped] == [row["slug"] for row in everything[1:3]]
+
+    assert client.get("/api/doctors?limit=0").status_code == 422
+
+
 def test_get_doctor_by_slug(client: TestClient) -> None:
     resp = client.get("/api/doctors/dowgierd")
     assert resp.status_code == 200

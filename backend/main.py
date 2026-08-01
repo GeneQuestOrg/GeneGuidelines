@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 
 from backend.config import CORS_ORIGINS
 from backend.database import init_db, run_seed_if_empty
@@ -70,6 +71,11 @@ app = FastAPI(
     version="0.1.0",
     lifespan=lifespan,
 )
+
+# The public directory response is megabytes of JSON (one row per clinician) and it
+# grows with every research run. Uncompressed it is the heaviest thing a parent on a
+# phone downloads, so compress anything non-trivial before it leaves the app.
+app.add_middleware(GZipMiddleware, minimum_size=1024)
 
 app.add_middleware(
     CORSMiddleware,

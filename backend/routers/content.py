@@ -154,10 +154,30 @@ async def get_disease_doctors(slug: str):
     return DiseaseDoctorsResponse.model_validate(payload)
 
 
-@router.get("/doctors", response_model=list[PublicDoctorResponse])
-async def get_all_doctors():
-    """Full specialist directory (seed catalog)."""
+@router.get(
+    "/doctors",
+    response_model=list[PublicDoctorResponse],
+    # ``publications`` is a per-clinician paper list read only by the profile view,
+    # which fetches its own row from /doctors/{slug}. It is a third of the directory
+    # payload, so the list ships without it.
+    response_model_exclude={"__all__": {"publications"}},
+)
+async def get_all_doctors(
+    limit: int | None = Query(
+        None, ge=1, le=20000, description="Max rows to return (default: the whole directory)"
+    ),
+    offset: int = Query(0, ge=0, description="Rows to skip — pair with limit to page"),
+):
+    """Specialist directory, newest research included.
+
+    Returns the whole directory by default (the search page filters client-side);
+    ``limit``/``offset`` are there for callers that want to page instead.
+    """
     rows = await _run_sync(list_all_doctors)
+    if offset:
+        rows = rows[offset:]
+    if limit is not None:
+        rows = rows[:limit]
     return [PublicDoctorResponse.model_validate(r) for r in rows]
 
 

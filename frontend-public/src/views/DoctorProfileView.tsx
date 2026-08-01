@@ -130,7 +130,7 @@ export function DoctorProfileView({ slug, userLoc, onNav }: DoctorProfileViewPro
   const familyRecCount = dataRecs.length + localRecs.length;
   const venues = practiceList(doctor, userLoc);
 
-  const publications = doctor.publications;
+  const publications = doctor.publications ?? [];
   const visiblePublications = showAllPubs
     ? publications
     : publications.slice(0, TOP_PUBLICATIONS);

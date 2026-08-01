@@ -118,7 +118,9 @@ export interface PublicDoctor {
   readonly pubmedRole: PubmedRole;
   readonly score: number;
   readonly evidence: DoctorEvidence;
-  readonly publications: readonly DoctorPublication[];
+  /** Papers behind the profile. Omitted from the directory list response (weight);
+   *  present on `/api/doctors/{slug}`, which is what the profile view fetches. */
+  readonly publications?: readonly DoctorPublication[];
   readonly bio: string;
   readonly publicSource: string;
   readonly endorsements: readonly string[];
