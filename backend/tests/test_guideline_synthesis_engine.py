@@ -162,9 +162,17 @@ def test_section_output_rejects_non_pmid_citation() -> None:
         )
 
 
-def test_section_output_requires_at_least_one_paragraph() -> None:
-    with pytest.raises(ValidationError):
-        GuidelineSectionOutput(id="x", title="x", intro="x", paragraphs=[])
+def test_section_output_allows_an_empty_section() -> None:
+    """An empty section is a valid answer — it used to be a validation error.
+
+    Requiring a paragraph meant a section the shelf did not cover could only come back
+    padded with material from elsewhere in the guideline. The writer turns the empty
+    result into a labelled gap.
+    """
+    section = GuidelineSectionOutput(id="x", title="x", intro="", paragraphs=[], no_basis=True)
+
+    assert section.paragraphs == []
+    assert section.no_basis is True
 
 
 # ── shelf_load executor ────────────────────────────────────────────────────
@@ -225,14 +233,14 @@ def test_synthesis_writer_assembles_and_upserts(repo: SqlaGuidelinesRepo) -> Non
         "sections": [
             {"id": "diagnosis", "title": "1. Diagnosis"},
             {"id": "therapy", "title": "3. Therapy"},
-            {"id": "monitoring", "title": "5. Monitoring"},  # no node output → skipped
+            {"id": "monitoring", "title": "5. Monitoring"},  # no node output → kept, flagged
         ],
     }
     ex = GuidelineSynthesisWriterExecutor(repo=repo)
     out = asyncio.run(ex.execute(NodeInput(node_config={}, context=context, initial_data=initial)))
 
     assert out.data["ok"] is True
-    assert out.data["sectionCount"] == 2  # monitoring skipped (no output)
+    assert out.data["sectionCount"] == 3  # monitoring kept as an honest gap, not dropped
     assert out.data["sourceCount"] == 2
 
     syn = repo.get_synthesis("fd")
@@ -240,7 +248,10 @@ def test_synthesis_writer_assembles_and_upserts(repo: SqlaGuidelinesRepo) -> Non
     assert syn.epistemic_level == "a"
     assert syn.status == "draft"
     assert syn.source_ids == ["boyce2019", "gun2024"]
-    assert [s["id"] for s in syn.sections] == ["diagnosis", "therapy"]
+    assert [s["id"] for s in syn.sections] == ["diagnosis", "therapy", "monitoring"]
+    # A section with nothing behind it says so instead of disappearing (or padding).
+    assert syn.sections[2]["noSource"] is True
+    assert syn.sections[2]["paragraphs"] == []
     # Title comes from the spec (stable), not the LLM's section title.
     assert syn.sections[0]["title"] == "1. Diagnosis"
     assert syn.sections[0]["paragraphs"][0]["source"]["doc"] == "boyce2019"

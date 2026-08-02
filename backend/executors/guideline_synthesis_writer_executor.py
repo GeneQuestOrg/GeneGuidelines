@@ -16,7 +16,9 @@ model. Content faithfulness/accuracy is the job of the prompts + critic backbone
 from __future__ import annotations
 
 import logging
+import re
 from datetime import datetime, timezone
+from difflib import SequenceMatcher
 
 from ..agents.schemas import SOURCE_QUOTE_MAX_CHARS
 from ..contracts.guidelines_v1 import EPISTEMIC_LEVEL_SYNTHESIS
@@ -84,7 +86,9 @@ class GuidelineSynthesisWriterExecutor(NodeExecutor):
         quotes_by_para = _collect_quotes(context.get("gs-quotes"))
 
         sections = self._collect_sections(context, section_specs, quotes_by_para)
-        if not sections:
+        # Sections with no shelf basis are kept (labelled), so "did anything get written"
+        # has to be asked of the paragraphs, not the section list.
+        if not any(section["paragraphs"] for section in sections):
             return NodeOutput(
                 data={"ok": False, "error": "no section nodes produced paragraphs; nothing to write."}
             )
@@ -124,26 +128,49 @@ class GuidelineSynthesisWriterExecutor(NodeExecutor):
     def _collect_sections(
         self, context: dict, section_specs: list[dict], quotes_by_para: dict[tuple[str, str], list[dict]]
     ) -> list[dict]:
-        """Assemble sections in spec order from ``gs-sec-<id>`` node outputs."""
+        """Assemble sections in spec order from ``gs-sec-<id>`` node outputs.
+
+        A section the shelf cannot support is kept and marked ``noSource`` rather than
+        dropped: the reader is told the literature is missing instead of being handed
+        padding, and a silently absent section would read as "nothing to say here".
+
+        Section nodes run in parallel and never see each other's output, so a prompt
+        cannot stop two of them drawing the same passage out of the same document. The
+        cross-section duplicate filter below is the only place that can.
+        """
         sections: list[dict] = []
+        seen_texts: list[str] = []
         for spec in section_specs:
             sid = spec["id"]
-            out = context.get(f"gs-sec-{sid}")
-            if not isinstance(out, dict):
-                log.info("guideline_synthesis_writer: section %s missing from context — skipping", sid)
-                continue
-            paragraphs = _clean_paragraphs(out.get("paragraphs"), sid, quotes_by_para)
-            if not paragraphs:
-                log.info("guideline_synthesis_writer: section %s has no valid paragraphs — skipping", sid)
-                continue
-            sections.append(
-                {
-                    "id": sid,
-                    "title": spec.get("title") or sid,
-                    "intro": str(out.get("intro") or "").strip(),
-                    "paragraphs": paragraphs,
-                }
+            out = context.get(f"gs-sec-{sid}") if isinstance(context.get(f"gs-sec-{sid}"), dict) else None
+            paragraphs = (
+                _clean_paragraphs(out.get("paragraphs"), sid, quotes_by_para) if out is not None else []
             )
+
+            kept: list[dict] = []
+            for para in paragraphs:
+                fingerprint = _text_fingerprint(para["text"])
+                if any(_near_duplicate(fingerprint, other) for other in seen_texts):
+                    log.info(
+                        "guideline_synthesis_writer: dropping %s/%s — restates an earlier section",
+                        sid,
+                        para["id"],
+                    )
+                    continue
+                seen_texts.append(fingerprint)
+                kept.append(para)
+
+            section = {
+                "id": sid,
+                "title": spec.get("title") or sid,
+                "intro": str(out.get("intro") or "").strip() if out is not None else "",
+                "paragraphs": kept,
+            }
+            if not kept:
+                log.info("guideline_synthesis_writer: section %s has no shelf basis", sid)
+                section["noSource"] = True
+                section["intro"] = ""
+            sections.append(section)
         return sections
 
 
@@ -158,6 +185,30 @@ def _normalize_section_specs(raw) -> list[dict]:
         elif isinstance(item, str) and item.strip():
             specs.append({"id": item.strip(), "title": ""})
     return specs
+
+
+# Above this sequence similarity two paragraphs in different sections are the same
+# passage rewritten, not two related claims. Calibrated on the live syntheses: the
+# highest cross-section similarity in a sound document was 0.38 (fd 0.37, stargardt
+# 0.38, mas 0.35, noonan 0.33, fop 0.31), while the known duplicate — osteogenesis
+# imperfecta's diagnosis/p2 restated as histopathology/p2 — scored 0.60. The gap is
+# wide, and the cost of being wrong is deleting a sourced clinical claim, so the cut
+# sits well above every healthy value. This catches near-verbatim repetition only;
+# material reworded more heavily still gets through.
+_DUPLICATE_RATIO = 0.55
+_DUPLICATE_MIN_CHARS = 120
+
+
+def _text_fingerprint(text: str) -> str:
+    """Lowercased, punctuation-free form used for cross-section comparison."""
+    return re.sub(r"\s+", " ", re.sub(r"[^a-z0-9 ]", " ", text.lower())).strip()
+
+
+def _near_duplicate(candidate: str, earlier: str) -> bool:
+    """True when ``candidate`` is an earlier section's paragraph, rewritten."""
+    if len(candidate) < _DUPLICATE_MIN_CHARS or len(earlier) < _DUPLICATE_MIN_CHARS:
+        return False
+    return SequenceMatcher(None, candidate, earlier).ratio() >= _DUPLICATE_RATIO
 
 
 def _clean_paragraphs(

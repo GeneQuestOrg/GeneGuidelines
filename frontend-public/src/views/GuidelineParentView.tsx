@@ -7,6 +7,7 @@ import type { GuidelineBaseline } from "../types/guidelineBaseline";
 import type { SourceDoc } from "../types/sourceDoc";
 import type { ViewRole } from "../auth/resolveRole";
 import { ShareWithDoctorActions } from "../components/ShareWithDoctorActions";
+import { SectionNoSource } from "../components/guidelines/SectionNoSource";
 import { SourceShelf } from "../components/guidelines/SourceShelf";
 import { SynthDisclaimer } from "../components/guidelines/SynthDisclaimer";
 
@@ -167,11 +168,15 @@ export function GuidelineParentView({
           <section key={sec.id} className="gx-sec">
             <h2 className="gx-sec__h">
               {sec.title}
-              <span className="epi epi--official">
-                <span className="epi__d" aria-hidden="true" />
-                {t("fromSourcesBadge")}
-              </span>
+              {/* "From sources" would be a lie on a section with no shelf basis. */}
+              {sec.noSource ? null : (
+                <span className="epi epi--official">
+                  <span className="epi__d" aria-hidden="true" />
+                  {t("fromSourcesBadge")}
+                </span>
+              )}
             </h2>
+            {sec.noSource ? <SectionNoSource /> : null}
             {sec.intro != null ? <p className="gx-sec__intro">{sec.intro}</p> : null}
             {/* Condensed projection: the first two paragraphs of each section. */}
             {sec.paragraphs.slice(0, 2).map((p) => (

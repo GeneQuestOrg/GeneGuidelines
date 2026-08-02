@@ -225,10 +225,23 @@ class GuidelineSectionOutput(BaseModel):
     id: str = Field(default="", description="Section slug (the writer overrides this from the flow's section spec)")
     title: str = Field(default="", description="Human section title (the writer overrides this from the section spec)")
     intro: str = Field(default="", description="One-sentence lead framing the section")
+    # Deliberately NOT min_length=1. Requiring a paragraph left the model no way to say
+    # "the shelf holds nothing on this topic", so it padded the section with material
+    # recycled from another one (observed: stargardt "Indications for surgery", a disease
+    # with no surgical treatment at all). An empty list is now a valid, honest answer.
     paragraphs: list[GuidelineParagraph] = Field(
-        ...,
-        min_length=1,
-        description="2–6 provenance-bearing paragraphs synthesised strictly from the shelf",
+        default_factory=list,
+        description=(
+            "2–6 provenance-bearing paragraphs synthesised strictly from the shelf, or an "
+            "empty list when no shelf document addresses this section"
+        ),
+    )
+    no_basis: bool = Field(
+        default=False,
+        description=(
+            "True when the shelf contains nothing addressing this section — return it with "
+            "an empty paragraphs list instead of restating another section's material"
+        ),
     )
 
 

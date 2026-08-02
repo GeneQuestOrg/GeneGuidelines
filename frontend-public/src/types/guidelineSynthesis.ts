@@ -83,6 +83,11 @@ export interface SynthesisSection {
   readonly title: string;
   readonly intro?: string;
   readonly paragraphs: readonly SynthesisParagraph[];
+  /** No document on the shelf covers this section. The heading stays, with an honest
+   *  note in place of the text — some diseases have no literature for a section at all
+   *  (e.g. surgery in a condition treated without it), and padding it would be worse
+   *  than saying so. Older synthesis rows omit the flag. */
+  readonly noSource?: boolean;
 }
 
 /** One actionable "what to do now" step (parent projection). */

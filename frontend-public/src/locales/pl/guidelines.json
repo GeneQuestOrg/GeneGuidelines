@@ -34,6 +34,8 @@
   "flowchartHintPrefix": "Pełna ścieżka decyzyjna:",
   "flowchartHintLink": "otwórz interaktywne drzewo →",
   "fromSourcesBadge": "Ze źródeł",
+  "sectionNoSourceBadge": "Brak źródła",
+  "sectionNoSourceNote": "Żaden dokument na półce źródeł tej choroby nie dotyczy tej sekcji. Wolimy napisać to wprost, niż wypełnić miejsce treścią zaczerpniętą z innej części wytycznych.",
   "discussWithDoctor": "Do przedyskutowania z lekarzem",
   "parentFooter": "Skrócone przez nas na podstawie dokumentów źródłowych powyżej · ostatnia aktualizacja {{date}}. Nazwiska autorów i recenzentów są w oryginalnych dokumentach.",
 

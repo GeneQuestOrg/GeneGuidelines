@@ -8,6 +8,7 @@ import type { GuidelineBaseline } from "../types/guidelineBaseline";
 import type { SourceDoc } from "../types/sourceDoc";
 import type { ViewRole } from "../auth/resolveRole";
 import type { SynthSignalMap } from "../hooks/useSynthSignals";
+import { SectionNoSource } from "../components/guidelines/SectionNoSource";
 import { SourceShelf } from "../components/guidelines/SourceShelf";
 import { SynthDisclaimer } from "../components/guidelines/SynthDisclaimer";
 import { ProvenanceRow } from "../components/guidelines/ProvenanceRow";
@@ -208,6 +209,7 @@ export function GuidelineClinicianView({
         {doc.sections.map((sec) => (
           <section key={sec.id} className="gx-sec">
             <h2 className="gx-sec__h">{sec.title}</h2>
+            {sec.noSource ? <SectionNoSource /> : null}
             {sec.intro != null ? <p className="gx-sec__intro">{sec.intro}</p> : null}
             {sec.paragraphs.map((p) => (
               <div key={p.id} className="gx-para">

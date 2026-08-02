@@ -34,6 +34,8 @@
   "flowchartHintPrefix": "Full decision pathway:",
   "flowchartHintLink": "open the interactive tree →",
   "fromSourcesBadge": "From sources",
+  "sectionNoSourceBadge": "No source yet",
+  "sectionNoSourceNote": "No document on this disease's source shelf addresses this section. We would rather say so than fill the space with text drawn from elsewhere in the guideline.",
   "discussWithDoctor": "To discuss with your doctor",
   "parentFooter": "Condensed by us from the source documents above · last revised {{date}}. Author and reviewer names are in the original documents.",
 

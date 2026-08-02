@@ -766,6 +766,44 @@ def _ensure_guideline_synthesis_quote_nodes() -> None:
     conn.close()
 
 
+def _sync_guideline_synthesis_section_prompts_from_spec() -> None:
+    """Refresh the gs-sec-* prompts so a section with no shelf basis can return nothing.
+
+    The spec loader leaves an already-seeded flow alone, so an existing deployment keeps
+    whatever prompt it was created with. Without this sync the section nodes never learn
+    that an empty ``paragraphs`` list is allowed, and they keep padding sections the shelf
+    does not cover. Only rewrites rows whose prompt actually differs.
+    """
+    spec = _load_guideline_spec("guideline_synthesis")
+    if not spec:
+        return
+    now = datetime.now().isoformat()
+    conn = get_connection()
+    cur = conn.cursor()
+    for node in spec.get("nodes") or []:
+        if not isinstance(node, dict):
+            continue
+        node_id = str(node.get("node_id") or "")
+        if not node_id.startswith("gs-sec-"):
+            continue
+        prompt = str(node.get("prompt") or "")
+        if not prompt or "no_basis" not in prompt:
+            continue
+        cur.execute(
+            "SELECT prompt FROM flow_definitions WHERE flow_key = %s AND node_id = %s",
+            ("guideline_synthesis", node_id),
+        )
+        row = cur.fetchone()
+        if row is None or str(row.get("prompt") or "") == prompt:
+            continue
+        cur.execute(
+            "UPDATE flow_definitions SET prompt = %s, updated_at = %s WHERE flow_key = %s AND node_id = %s",
+            (prompt, now, "guideline_synthesis", node_id),
+        )
+    conn.commit()
+    conn.close()
+
+
 def _sync_guideline_shelf_classify_prompt_from_spec() -> None:
     """Refresh gsb-classify prompt so shelf runs emit ``considered`` negative paths."""
     spec = _load_guideline_spec("guideline_shelf_build")
