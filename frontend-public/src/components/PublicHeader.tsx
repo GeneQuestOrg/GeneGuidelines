@@ -8,6 +8,7 @@ import type { Locale } from "../router/locale";
 import { useAccountContext } from "../auth/accountContext";
 import { AccountMenu } from "../auth/AccountMenu";
 import { LocaleSwitcher } from "./LocaleSwitcher";
+import { BetaNotice } from "./BetaNotice";
 import "./public-header.css";
 
 export interface PublicHeaderProps {
@@ -129,7 +130,7 @@ export function PublicHeader({
         variant="public"
         navLinks={buildNavLinks(route, t)}
         mobileMenuContent={mobileMenuActions}
-        brandBadge={<span className="hdr__beta">{t("betaBadge")}</span>}
+        brandBadge={<BetaNotice />}
       >
         <div className="hdr-actions hdr-actions--desktop" ref={menuRef}>
           <LocaleSwitcher locale={locale} onChange={onSetLocale} />

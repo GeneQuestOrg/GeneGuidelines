@@ -18,6 +18,14 @@
     "note": "Machine translation — English is the source of record."
   },
   "betaBadge": "Public beta",
+  "betaNotice": {
+    "pillTitle": "What \u201cpublic beta\u201d means here",
+    "title": "This is a public beta",
+    "body": "The guidelines are AI-drafted from cited sources and nobody has formally signed them off. We are still collecting feedback on what reads wrong, what is missing, and what is confusing.",
+    "feedbackCta": "Tell us what you think",
+    "supportCta": "Support the project",
+    "supportNote": "GeneQuest is a non-profit. Researching one disease costs real compute \u2014 when the budget runs out, the queue waits for a top-up."
+  },
   "footer": {
     "brand": "GeneQuest Foundation",
     "desc": "Living guidelines for rare genetic diseases — an AI-drafted, source-cited summary of official guidelines and the literature, refreshed on demand. Not an official guideline; clinicians can rate and flag it.",

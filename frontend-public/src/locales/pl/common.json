@@ -18,6 +18,14 @@
     "note": "Tłumaczenie maszynowe — źródłem jest wersja angielska."
   },
   "betaBadge": "Publiczna beta",
+  "betaNotice": {
+    "pillTitle": "Co tu znaczy \u201epubliczna beta\u201d",
+    "title": "To jest publiczna beta",
+    "body": "Wytyczne tworzy AI na podstawie cytowanych \u017ar\u00f3de\u0142 i nikt ich formalnie nie zatwierdzi\u0142. Wci\u0105\u017c zbieramy uwagi: co brzmi \u017ale, czego brakuje, co jest niejasne.",
+    "feedbackCta": "Powiedz nam, co my\u015blisz",
+    "supportCta": "Wesprzyj projekt",
+    "supportNote": "GeneQuest to fundacja non-profit. Opracowanie jednej choroby kosztuje realne obliczenia \u2014 gdy bud\u017cet si\u0119 ko\u0144czy, kolejka czeka na do\u0142adowanie."
+  },
   "footer": {
     "brand": "GeneQuest Foundation",
     "desc": "Żywe wytyczne dla rzadkich chorób genetycznych — AI-owy skrót oficjalnych wytycznych i literatury, ze źródłami, odświeżany na żądanie. Nie oficjalna wytyczna; lekarze mogą go oceniać i zgłaszać uwagi.",
