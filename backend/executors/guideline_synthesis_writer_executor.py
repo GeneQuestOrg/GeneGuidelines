@@ -187,15 +187,14 @@ def _normalize_section_specs(raw) -> list[dict]:
     return specs
 
 
-# Above this sequence similarity two paragraphs in different sections are the same
-# passage rewritten, not two related claims. Calibrated on the live syntheses: the
-# highest cross-section similarity in a sound document was 0.38 (fd 0.37, stargardt
-# 0.38, mas 0.35, noonan 0.33, fop 0.31), while the known duplicate — osteogenesis
-# imperfecta's diagnosis/p2 restated as histopathology/p2 — scored 0.60. The gap is
-# wide, and the cost of being wrong is deleting a sourced clinical claim, so the cut
-# sits well above every healthy value. This catches near-verbatim repetition only;
-# material reworded more heavily still gets through.
-_DUPLICATE_RATIO = 0.55
+# Above this similarity two paragraphs in different sections are the same passage
+# rewritten, not two related claims. Calibrated on the live syntheses: the highest
+# cross-section similarity in a sound document was 0.40 (fd 0.39, oi 0.40, fop 0.40,
+# stargardt 0.38, mas 0.35, noonan 0.33), while real duplicates scored 0.58 and 0.60.
+# The cut sits between the two clusters with room on both sides, because the cost of
+# a false positive is deleting a sourced clinical claim. Near-verbatim repetition
+# only; material reworded more heavily still gets through.
+_DUPLICATE_RATIO = 0.50
 _DUPLICATE_MIN_CHARS = 120
 
 
@@ -205,10 +204,20 @@ def _text_fingerprint(text: str) -> str:
 
 
 def _near_duplicate(candidate: str, earlier: str) -> bool:
-    """True when ``candidate`` is an earlier section's paragraph, rewritten."""
+    """True when ``candidate`` is an earlier section's paragraph, rewritten.
+
+    Compared both ways round because ``SequenceMatcher.ratio`` is not symmetric — it
+    anchors on the second sequence, so swapping the arguments can move the score a long
+    way. One live pair scored 0.58 in one direction and 0.34 in the other, and the
+    writer happened to call it in the low direction, so a duplicate sailed through while
+    an audit of the same document flagged it. Whichever order the paragraphs arrive in
+    must give the same verdict.
+    """
     if len(candidate) < _DUPLICATE_MIN_CHARS or len(earlier) < _DUPLICATE_MIN_CHARS:
         return False
-    return SequenceMatcher(None, candidate, earlier).ratio() >= _DUPLICATE_RATIO
+    forward = SequenceMatcher(None, candidate, earlier).ratio()
+    backward = SequenceMatcher(None, earlier, candidate).ratio()
+    return max(forward, backward) >= _DUPLICATE_RATIO
 
 
 def _clean_paragraphs(

@@ -182,3 +182,44 @@ def test_section_prompts_sync_from_spec_on_existing_databases() -> None:
     assert {k: again[k].get("prompt") for k in section_nodes} == {
         k: v.get("prompt") for k, v in section_nodes.items()
     }
+
+
+def test_duplicate_filter_is_order_independent() -> None:
+    """A real pair that slipped through: 0.58 one way, 0.34 the other.
+
+    ``SequenceMatcher.ratio`` anchors on its second argument, so the verdict used to
+    depend on which section happened to be written first.
+    """
+    diagnosis = _text_fingerprint(
+        "Diagnosis is primarily based on the identification of the characteristic clinical "
+        "triad consisting of severe growth deficiency, strabismus, and extensive dermal "
+        "melanocytosis, often accompanied by intellectual disability."
+    )
+    histopathology = _text_fingerprint(
+        "The clinical presentation of the syndrome is characterized by a combination of "
+        "severe growth deficiency, strabismus, intellectual disability, and extensive "
+        "dermal melanocytosis."
+    )
+
+    assert _near_duplicate(histopathology, diagnosis) is True
+    assert _near_duplicate(diagnosis, histopathology) is True
+
+
+def test_related_paragraphs_from_a_sound_document_survive_the_tighter_cut() -> None:
+    """Guards the recalibrated 0.50 threshold against the healthy end of the corpus.
+
+    The most similar cross-section pair in a sound live synthesis measured 0.40.
+    """
+    imaging = _text_fingerprint(
+        "Imaging has a central role in positive diagnosis, differential diagnosis and "
+        "follow-up, and a standardized radiologic approach is recommended so typical bone "
+        "lesions are recognised consistently across centres."
+    )
+    surgery = _text_fingerprint(
+        "Surgery is indicated primarily to correct skeletal deformity and to address lesions "
+        "prone to fracture; it is not the first-line answer to bone pain alone, which is "
+        "managed medically before any operative plan is considered."
+    )
+
+    assert _near_duplicate(surgery, imaging) is False
+    assert _near_duplicate(imaging, surgery) is False
