@@ -225,23 +225,18 @@ class GuidelineSectionOutput(BaseModel):
     id: str = Field(default="", description="Section slug (the writer overrides this from the flow's section spec)")
     title: str = Field(default="", description="Human section title (the writer overrides this from the section spec)")
     intro: str = Field(default="", description="One-sentence lead framing the section")
-    # Deliberately NOT min_length=1. Requiring a paragraph left the model no way to say
-    # "the shelf holds nothing on this topic", so it padded the section with material
-    # recycled from another one (observed: stargardt "Indications for surgery", a disease
-    # with no surgical treatment at all). An empty list is now a valid, honest answer.
+    # min_length=1 is load-bearing on the deployed model. Dropping it (to let a section
+    # report "the shelf holds nothing on this topic" instead of padding) made
+    # gemma-4-31B return an empty list for EVERY section — five empty sections, the
+    # writer refusing, and production unable to persist any synthesis. The same schema
+    # and prompt behaved correctly on gpt-5.5, which is what made it easy to miss.
+    # The honest-gap path therefore cannot be model-driven here; it is decided by the
+    # writer (see ``noSource`` in guideline_synthesis_writer_executor). Do not relax
+    # this constraint without re-verifying against the model production actually runs.
     paragraphs: list[GuidelineParagraph] = Field(
-        default_factory=list,
-        description=(
-            "2–6 provenance-bearing paragraphs synthesised strictly from the shelf, or an "
-            "empty list when no shelf document addresses this section"
-        ),
-    )
-    no_basis: bool = Field(
-        default=False,
-        description=(
-            "True when the shelf contains nothing addressing this section — return it with "
-            "an empty paragraphs list instead of restating another section's material"
-        ),
+        ...,
+        min_length=1,
+        description="2–6 provenance-bearing paragraphs synthesised strictly from the shelf",
     )
 
 

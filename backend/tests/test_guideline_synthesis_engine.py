@@ -162,17 +162,15 @@ def test_section_output_rejects_non_pmid_citation() -> None:
         )
 
 
-def test_section_output_allows_an_empty_section() -> None:
-    """An empty section is a valid answer — it used to be a validation error.
+def test_section_output_requires_at_least_one_paragraph() -> None:
+    """Load-bearing on the deployed model — see the comment on the field.
 
-    Requiring a paragraph meant a section the shelf did not cover could only come back
-    padded with material from elsewhere in the guideline. The writer turns the empty
-    result into a labelled gap.
+    Relaxing this so a section could report "nothing on the shelf for this" made
+    gemma-4-31B return an empty list for every section and production stopped being
+    able to write a synthesis at all. Honest gaps are decided by the writer instead.
     """
-    section = GuidelineSectionOutput(id="x", title="x", intro="", paragraphs=[], no_basis=True)
-
-    assert section.paragraphs == []
-    assert section.no_basis is True
+    with pytest.raises(ValidationError):
+        GuidelineSectionOutput(id="x", title="x", intro="x", paragraphs=[])
 
 
 # ── shelf_load executor ────────────────────────────────────────────────────

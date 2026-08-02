@@ -14,7 +14,6 @@ from __future__ import annotations
 import asyncio
 from pathlib import Path
 
-from backend.agents.schemas import GuidelineSectionOutput
 from backend.executors.base import NodeInput
 from backend.executors.guideline_synthesis_writer_executor import (
     GuidelineSynthesisWriterExecutor,
@@ -46,7 +45,7 @@ def test_section_without_shelf_basis_is_kept_and_flagged() -> None:
     sections = _sections(
         {
             "gs-sec-diagnosis": {"paragraphs": [_para("p1", "Diagnosis rests on imaging and the GNAS finding.")]},
-            "gs-sec-surgery": {"paragraphs": [], "no_basis": True},
+            "gs-sec-surgery": {"paragraphs": []},
         }
     )
 
@@ -129,18 +128,6 @@ def test_duplicate_filter_ignores_short_fragments() -> None:
     """Short boilerplate lines are not evidence of recycling."""
     short = _text_fingerprint("Care is multidisciplinary.")
     assert _near_duplicate(short, short) is False
-
-
-def test_section_schema_accepts_an_empty_paragraph_list() -> None:
-    """The schema itself must permit "nothing here" — this was the root cause.
-
-    ``paragraphs`` used to be ``min_length=1``, so the model was structurally unable
-    to report an empty section and padded instead.
-    """
-    section = GuidelineSectionOutput.model_validate({"paragraphs": [], "no_basis": True})
-
-    assert section.paragraphs == []
-    assert section.no_basis is True
 
 
 def test_writer_refuses_when_every_section_is_empty() -> None:
