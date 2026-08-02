@@ -767,12 +767,17 @@ def _ensure_guideline_synthesis_quote_nodes() -> None:
 
 
 def _sync_guideline_synthesis_section_prompts_from_spec() -> None:
-    """Refresh the gs-sec-* prompts so a section with no shelf basis can return nothing.
+    """Keep the gs-sec-* prompts equal to the bundled spec on every start.
 
-    The spec loader leaves an already-seeded flow alone, so an existing deployment keeps
-    whatever prompt it was created with. Without this sync the section nodes never learn
-    that an empty ``paragraphs`` list is allowed, and they keep padding sections the shelf
-    does not cover. Only rewrites rows whose prompt actually differs.
+    The spec loader leaves an already-seeded flow alone, so without this the prompt a
+    live database runs is whatever it was seeded with, and editing the JSON changes
+    nothing in production. The sync is unconditional (any difference is rewritten)
+    rather than keyed to some marker string in the prompt: a marker-based guard cannot
+    roll a prompt *back*, which is precisely what was needed when a stricter wording
+    turned out to break the model actually deployed. Section prompts are therefore
+    owned by the spec in git, not by the database row.
+
+    Only rewrites rows whose prompt actually differs, so restarts are no-ops.
     """
     spec = _load_guideline_spec("guideline_synthesis")
     if not spec:
@@ -787,7 +792,7 @@ def _sync_guideline_synthesis_section_prompts_from_spec() -> None:
         if not node_id.startswith("gs-sec-"):
             continue
         prompt = str(node.get("prompt") or "")
-        if not prompt or "no_basis" not in prompt:
+        if not prompt:
             continue
         cur.execute(
             "SELECT prompt FROM flow_definitions WHERE flow_key = %s AND node_id = %s",

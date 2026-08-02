@@ -45,7 +45,15 @@ from ..flows.parent_pathway.submit_guard import parent_pathway_synth_missing_dra
 # run on missing input. ``guideline_shelf_load`` is here because a synthesis with an
 # empty shelf is the model writing from memory — the one thing this product must
 # never publish (the section prompts simply get an empty shelf and improvise).
-_HARD_FAIL_ON_NOT_OK = ("parent_pathway_load", "guideline_shelf_load")
+# ``guideline_synthesis_writer`` is here because it is the terminal node: when it
+# refuses, nothing is persisted, yet the run used to reach ``end`` and report success.
+# A prompt change once left every section empty and three "successful" runs in a row
+# quietly wrote nothing at all — the stale document on the page was the only clue.
+_HARD_FAIL_ON_NOT_OK = (
+    "parent_pathway_load",
+    "guideline_shelf_load",
+    "guideline_synthesis_writer",
+)
 
 
 def _doctor_finder_executor_hard_error(flow_key: str, node_id: str, payload: Any) -> str | None:

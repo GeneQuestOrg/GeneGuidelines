@@ -12,6 +12,7 @@ keep that from turning into filler:
 from __future__ import annotations
 
 import asyncio
+from pathlib import Path
 
 from backend.agents.schemas import GuidelineSectionOutput
 from backend.executors.base import NodeInput
@@ -178,8 +179,15 @@ def test_section_prompts_sync_from_spec_on_existing_databases() -> None:
     if not section_nodes:
         return  # flow not seeded in this test DB
 
+    import json as _json
+
+    spec_path = Path(__file__).resolve().parents[1] / "flows" / "specs" / "guideline_synthesis.json"
+    spec = {
+        n["node_id"]: n.get("prompt") or ""
+        for n in _json.loads(spec_path.read_text(encoding="utf-8"))["nodes"]
+    }
     for nid, node in section_nodes.items():
-        assert "no_basis" in str(node.get("prompt") or ""), nid
+        assert str(node.get("prompt") or "") == spec[nid], nid
 
     # Idempotent: a second pass changes nothing.
     _sync_guideline_synthesis_section_prompts_from_spec()
