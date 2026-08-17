@@ -7,7 +7,7 @@
     "leadText2": " new articles on rare diseases every year — tens added every day.",
     "leadLine2": "Most of those diseases are tracked by a handful of researchers worldwide — rarely the doctor a family actually has access to.",
     "leadLine3": "GeneGuidelines exists to make that flow of knowledge usable at the point of care.",
-    "tldr": "A living clinical guideline per rare disease — every claim cited to a PMID, every AI-proposed change reviewed and rated by a clinician. Open source. Free, no ads, no account required."
+    "tldr": "A living clinical guideline per rare disease — AI-drafted from the published literature, every claim cited to a PMID you can open and check yourself. Take it to your next appointment; clinicians can flag anything that looks wrong. Open source. Free, no ads, no account required."
   },
   "toc": {
     "heading": "On this page",
@@ -95,11 +95,11 @@
       "p1": "Clinical specialisation does not scale linearly with the number of diagnosed diseases. The specifics of a rare entity often need hundreds of published cases that would take weeks to read, regardless of seniority. This is not a competence problem — it is an attention-distribution problem.",
       "p2": "GeneGuidelines is built for both sides of that asymmetry:",
       "bullet1Lead": "If you are seeing a patient with a disease rarely present in your practice",
-      "bullet1Body": " — open the guideline document for that entity. Current state of clinical knowledge, citations to original publications, provenance for every recommendation (who approved it and when).",
+      "bullet1Body": " — open the guideline document for that entity. Current state of clinical knowledge, citations to the original publications, and for any claim a \"Where we know this from\" view: which source it rests on and what that passage says.",
       "bullet2Lead": "If you are a specialist in a given disease",
-      "bullet2Body1": " — you can join as a reviewer. The AI Watcher analyses new publications and proposes updates on a rolling basis; you rate each one ",
+      "bullet2Body1": " — the AI Watcher reads new publications and proposes updates on a rolling basis, each one a cited diff against a specific paragraph. You rate each one ",
       "bullet2Em": "useful / not useful",
-      "bullet2Body2": " and can leave a note — a few minutes' work. Your signal, weighted by your verified experience, ranks the suggestion for the next clinician who reads it."
+      "bullet2Body2": " and can leave a note — a few minutes of reading. Your rating, weighted by your verified experience, ranks that suggestion for the next clinician who opens the page: it ranks it, it does not merge it into the guideline text. Clinician accounts are still opened by hand — write to us and we will set one up."
     }
   },
   "diseasePage": {
@@ -107,17 +107,17 @@
     "intro": "Each disease in the catalogue surfaces in a single layout:",
     "item1Pre": "A ",
     "item1Bold": "living guideline",
-    "item1Body": " — paragraph-anchored, every claim backed by a PMID, every change signed.",
+    "item1Body": " — paragraph-anchored, with a PMID behind every claim. Open \"Where we know this from\" on a claim and you get the backing passage in plain words — our paraphrase, never a verbatim quote — plus the abstract on PubMed. Every change to the text is kept as a dated, cited diff.",
     "item2Pre": "A ",
     "item2Bold": "decision pathway",
-    "item2Body": " for the family — symptom → test → specialist → next step, rendered as a flowchart rather than a wall of text.",
+    "item2Body": " for the family — symptom → test → specialist → next step, as a flowchart rather than a wall of text. Still being built: no disease page shows a pathway yet.",
     "item3Pre": "A ",
     "item3Bold": "specialist directory",
     "item3Body": " — ranked by publication record, citation recency, and whether the doctor cites the current consensus in their own recent work.",
     "item4Bold": "Active clinical trials",
     "item4Body": " — phase, location, enrollment status, contact.",
     "item5Bold": "Therapy lines",
-    "item5Body": " — labelled by evidence tier (consensus / verified / pending / preclinical).",
+    "item5Body": " — each row shows whether it cites anything: \"AI draft — source-backed\" when it carries PMIDs you can open, \"AI draft — unverified\" when it has none.",
     "item6Bold": "Patient foundations",
     "item6Body": " supporting that disease, where they exist. An engaged foundation can carry real weight for a family in diagnosis — and these are not easy to find from outside the community. The catalogue surfaces what exists, even when only one organisation worldwide works on a disease.",
     "item7Pre": "A ",
@@ -129,7 +129,7 @@
   },
   "how": {
     "heading": "How it works",
-    "p1": "This is not another medical chatbot. The platform is built on reproducible, reviewable workflows where every recommendation is anchored to a PMID and every change is signed by a clinician.",
+    "p1": "This is not another medical chatbot. The platform runs on reproducible, reviewable workflows: every recommendation is anchored to a PMID, and every change is kept as a dated diff against a named paragraph — so you can see what changed, when, and which paper moved it. Clinicians can rate any of those changes.",
     "p2Text1": "It runs on ",
     "p2Bold": "Gemma 4",
     "p2Text2": ", an open model. The strength is not a bigger model — it is prompt engineering grounded in real diagnostic journeys (like the one above), and a system that sharpens with every clinician rating and anonymised family case it sees. Per-disease fine-tuning on that accumulating signal is on the roadmap.",
@@ -156,14 +156,14 @@
     "p1Text1": "The case-context panel accepts free text — a discharge summary, a biopsy report. The text is read into a single request handler's memory, hashed (SHA-256) for deduplication, and passed to a redaction model — ",
     "p1Bold": "Gemma 4",
     "p1Text2": ", an open model that can run entirely on the operator's own hardware — running on the operator's infrastructure. Only a structured payload — facts without identifiers — flows downstream. The raw bytes are discarded explicitly: not written to disk, not present in any backup.",
-    "p2": "The UI shows a categorical breakdown of what was stripped (names, government IDs, absolute dates, addresses, contact details) before any further step runs. Zero personal identifiers reach the synthesis model — not as a promise, as a property of the data flow."
+    "p2": "Before any further step runs, the UI shows what was stripped, by category — names, government IDs, absolute dates, addresses, contact details. Your raw document never reaches the synthesis model: that is a property of the data flow, not a promise. What travels onward is the list of facts the redaction model extracted; we check the shape of that list, not every string in it — which is why the breakdown is there for you to read first."
   },
   "not": {
     "heading": "What this is not",
     "diagnosticTitle": "Not a diagnostic tool",
     "diagnosticBody": "You do not enter symptoms or test results here. The system operates at the level of guidelines for an already-diagnosed disease.",
     "chatbotTitle": "Not a retrieval chatbot",
-    "chatbotBody": "Every recommendation is anchored to a PMID. Every AI-proposed change is reviewed and rated by clinicians before it carries any weight. The synthesis model works against an indexed corpus assembled paragraph by paragraph — never against free-form prompts over a pile of papers.",
+    "chatbotBody": "Every recommendation is anchored to a PMID, and the synthesis model works against an indexed corpus assembled paragraph by paragraph — never against free-form prompts over a pile of papers. Each proposed change arrives as a diff against a named paragraph, with its citations, so you can see what moved and why. It is still an AI draft: nobody officially signs off on it. Clinicians rate and flag suggestions, which ranks them for the next reader but does not merge them into the guideline text.",
     "consultationTitle": "Not a substitute for consultation",
     "consultationBody": "Material here contributes to clinical discussion, not to individual recommendations. Every therapeutic decision belongs to the attending physician.",
     "commercialTitle": "Not a commercial product",
@@ -184,7 +184,7 @@
       },
       {
         "lead": "AI proposals can be over-optimistic.",
-        "body": " Every draft is filtered by a reviewer before publication, but subtle errors may still slip through. Any approved paragraph can be challenged at any time."
+        "body": " A draft goes live with its citations attached and nobody reviews it first, so errors can reach the page. That is what the citations are for: open the PMID and read what the claim rests on. Clinicians can flag anything that looks wrong, and any paragraph can be challenged at any time."
       },
       {
         "lead": "Translations are uneven.",
@@ -201,7 +201,7 @@
   "cta": {
     "heading": "Where to go next",
     "diseaseLabel": "Start with your disease",
-    "diseaseSub": "Guidelines, doctors, trials, decision pathway.",
+    "diseaseSub": "Guidelines, doctors, trials, therapies.",
     "doctorsLabel": "Find a doctor familiar with the disease",
     "doctorsSub": "Global directory, filterable by distance and by whether the doctor cites the current consensus.",
     "researchLabel": "Your disease isn't here yet?",

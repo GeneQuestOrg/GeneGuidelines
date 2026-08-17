@@ -7,7 +7,7 @@
     "leadText2": " nowych artykułów o chorobach rzadkich rocznie — codziennie przybywają dziesiątki.",
     "leadLine2": "Większość z tych chorób śledzi garstka naukowców na całym świecie — rzadko jest to lekarz, do którego rodzina faktycznie ma dostęp.",
     "leadLine3": "GeneGuidelines istnieje po to, by ten strumień wiedzy dało się wykorzystać w miejscu opieki.",
-    "tldr": "Żywe wytyczne kliniczne dla każdej choroby rzadkiej — każde twierdzenie z odnośnikiem do PMID, każda zmiana zaproponowana przez AI sprawdzona i oceniona przez klinicystę. Otwarte źródło. Za darmo, bez reklam, bez konta."
+    "tldr": "Żywe wytyczne kliniczne dla każdej choroby rzadkiej — sporządzane przez AI na podstawie piśmiennictwa, każde twierdzenie z odnośnikiem do PMID, który możesz otworzyć i sprawdzić. Weź je na następną wizytę; klinicyści mogą oznaczyć to, co wygląda na błąd. Otwarte źródło. Za darmo, bez reklam, bez konta."
   },
   "toc": {
     "heading": "Na tej stronie",
@@ -95,11 +95,11 @@
       "p1": "Specjalizacja kliniczna nie skaluje się liniowo wraz z liczbą rozpoznawanych chorób. Szczegóły rzadkiej jednostki chorobowej wymagają często setek opublikowanych przypadków, których lektura zajęłaby tygodnie — niezależnie od stażu. To nie problem kompetencji, lecz rozłożenia uwagi.",
       "p2": "GeneGuidelines jest zbudowane z myślą o obu stronach tej asymetrii:",
       "bullet1Lead": "Jeśli przyjmujesz pacjenta z chorobą rzadko obecną w Twojej praktyce",
-      "bullet1Body": " — otwórz dokument wytycznych dla tej jednostki. Aktualny stan wiedzy klinicznej, odnośniki do oryginalnych publikacji, pochodzenie każdego zalecenia (kto je zatwierdził i kiedy).",
+      "bullet1Body": " — otwórz dokument wytycznych dla tej jednostki. Aktualny stan wiedzy klinicznej, odnośniki do oryginalnych publikacji, a przy każdym twierdzeniu widok „Skąd to wiemy”: na jakim źródle się opiera i co dokładnie mówi ten fragment.",
       "bullet2Lead": "Jeśli jesteś specjalistą w danej chorobie",
-      "bullet2Body1": " — możesz dołączyć jako recenzent. Obserwator AI analizuje nowe publikacje i na bieżąco proponuje aktualizacje; każdą oceniasz jako ",
+      "bullet2Body1": " — Obserwator AI czyta nowe publikacje i na bieżąco proponuje aktualizacje, każdą jako ocytowaną różnicę względem konkretnego akapitu. Każdą oceniasz jako ",
       "bullet2Em": "przydatna / nieprzydatna",
-      "bullet2Body2": " i możesz zostawić notatkę — kilka minut pracy. Twój sygnał, ważony Twoim zweryfikowanym doświadczeniem, ustala pozycję sugestii dla kolejnego klinicysty, który ją przeczyta."
+      "bullet2Body2": " i możesz zostawić notatkę — kilka minut czytania. Twoja ocena, ważona Twoim zweryfikowanym doświadczeniem, ustala pozycję tej sugestii dla kolejnego klinicysty, który otworzy stronę: ustala jej pozycję, a nie wprowadza jej do tekstu wytycznych. Konta klinicystów wciąż zakładamy ręcznie — napisz do nas, a je utworzymy."
     }
   },
   "diseasePage": {
@@ -107,17 +107,17 @@
     "intro": "Każda choroba w katalogu prezentowana jest w jednym układzie:",
     "item1Pre": "",
     "item1Bold": "Żywe wytyczne",
-    "item1Body": " — zakotwiczone w akapitach, każde twierdzenie poparte PMID, każda zmiana podpisana.",
+    "item1Body": " — zakotwiczone w akapitach, z PMID przy każdym twierdzeniu. Otwórz przy twierdzeniu widok „Skąd to wiemy” i zobaczysz fragment będący jego podstawą, opisany zwykłymi słowami — to nasza parafraza, nigdy dosłowny cytat — a przy nim abstrakt w PubMed. Każda zmiana tekstu zostaje zachowana jako datowana, ocytowana różnica.",
     "item2Pre": "",
     "item2Bold": "Ścieżka decyzyjna",
-    "item2Body": " dla rodziny — objaw → badanie → specjalista → kolejny krok, przedstawiona jako schemat blokowy zamiast ściany tekstu.",
+    "item2Body": " dla rodziny — objaw → badanie → specjalista → kolejny krok, jako schemat blokowy zamiast ściany tekstu. Wciąż w budowie: żadna strona choroby nie pokazuje jeszcze takiej ścieżki.",
     "item3Pre": "",
     "item3Bold": "Katalog specjalistów",
     "item3Body": " — uszeregowany według dorobku publikacyjnego, świeżości cytowań oraz tego, czy lekarz powołuje się na aktualny konsensus we własnych najnowszych pracach.",
     "item4Bold": "Aktywne badania kliniczne",
     "item4Body": " — faza, lokalizacja, status rekrutacji, kontakt.",
     "item5Bold": "Linie terapeutyczne",
-    "item5Body": " — oznaczone poziomem dowodów (konsensus / zweryfikowane / oczekujące / przedkliniczne).",
+    "item5Body": " — przy każdym wierszu widać, czy powołuje się na źródła: „szkic AI — poparty źródłami”, gdy ma PMID-y, które możesz otworzyć, i „szkic AI — niezweryfikowane”, gdy ich nie ma.",
     "item6Bold": "Fundacje pacjenckie",
     "item6Body": " wspierające daną chorobę, tam gdzie istnieją. Zaangażowana fundacja potrafi realnie pomóc rodzinie w diagnozie — a takich organizacji nie jest łatwo znaleźć spoza społeczności. Katalog pokazuje to, co istnieje, nawet gdy nad chorobą pracuje tylko jedna organizacja na świecie.",
     "item7Pre": "",
@@ -129,7 +129,7 @@
   },
   "how": {
     "heading": "Jak to działa",
-    "p1": "To nie kolejny medyczny chatbot. Platforma opiera się na powtarzalnych, weryfikowalnych procesach, w których każde zalecenie jest zakotwiczone w PMID, a każdą zmianę podpisuje klinicysta.",
+    "p1": "To nie kolejny medyczny chatbot. Platforma opiera się na powtarzalnych, weryfikowalnych procesach: każde zalecenie jest zakotwiczone w PMID, a każda zmiana zostaje zachowana jako datowana różnica względem wskazanego akapitu — widać więc, co się zmieniło, kiedy i która praca to zmieniła. Klinicyści mogą ocenić każdą z tych zmian.",
     "p2Text1": "Działa na modelu ",
     "p2Bold": "Gemma 4",
     "p2Text2": ", modelu otwartym. Siła nie tkwi w większym modelu — tkwi w inżynierii promptów opartej na prawdziwych ścieżkach diagnostycznych (takich jak ta powyżej) oraz w systemie, który wyostrza się z każdą oceną klinicysty i każdym zanonimizowanym przypadkiem rodziny, jaki napotka. W planach jest dostrajanie (fine-tuning) osobno dla każdej choroby na tym gromadzącym się sygnale.",
@@ -156,14 +156,14 @@
     "p1Text1": "Panel kontekstu przypadku przyjmuje dowolny tekst — wypis, wynik biopsji. Tekst jest wczytywany do pamięci pojedynczego procesu obsługującego żądanie, hashowany (SHA-256) na potrzeby deduplikacji i przekazywany do modelu redakcji — ",
     "p1Bold": "Gemma 4",
     "p1Text2": ", otwartego modelu, który może działać w całości na własnym sprzęcie operatora — uruchamianego w infrastrukturze operatora. Dalej przepływa wyłącznie ustrukturyzowany ładunek — fakty bez identyfikatorów. Surowe bajty są jawnie odrzucane: nie są zapisywane na dysk ani obecne w żadnej kopii zapasowej.",
-    "p2": "Interfejs pokazuje podział na kategorie tego, co usunięto (nazwiska, numery urzędowe, dokładne daty, adresy, dane kontaktowe), zanim wykona się jakikolwiek kolejny krok. Zero identyfikatorów osobowych dociera do modelu syntezy — nie jako obietnica, lecz jako własność przepływu danych."
+    "p2": "Zanim wykona się jakikolwiek kolejny krok, interfejs pokazuje, co zostało usunięte, w podziale na kategorie — nazwiska, numery urzędowe, dokładne daty, adresy, dane kontaktowe. Twój surowy dokument nigdy nie dociera do modelu syntezy: to własność przepływu danych, a nie obietnica. Dalej płynie lista faktów wyodrębnionych przez model redakcji; sprawdzamy kształt tej listy, a nie każdy zapis w niej — i właśnie dlatego pokazujemy to podsumowanie do przejrzenia, zanim pójdziesz dalej."
   },
   "not": {
     "heading": "Czym to nie jest",
     "diagnosticTitle": "To nie narzędzie diagnostyczne",
     "diagnosticBody": "Nie wprowadzasz tu objawów ani wyników badań. System działa na poziomie wytycznych dla już rozpoznanej choroby.",
     "chatbotTitle": "To nie chatbot wyszukujący",
-    "chatbotBody": "Każde zalecenie jest zakotwiczone w PMID. Każda zmiana zaproponowana przez AI jest sprawdzana i oceniana przez klinicystów, zanim cokolwiek zaważy. Model syntezy pracuje na zindeksowanym korpusie budowanym akapit po akapicie — nigdy na dowolnych promptach zadanych na stercie artykułów.",
+    "chatbotBody": "Każde zalecenie jest zakotwiczone w PMID, a model syntezy pracuje na zindeksowanym korpusie budowanym akapit po akapicie — nigdy na dowolnych promptach zadanych na stercie artykułów. Każda proponowana zmiana trafia na stronę jako różnica względem wskazanego akapitu, wraz z odnośnikami, więc widać, co się zmieniło i dlaczego. To wciąż szkic AI: nikt nie zatwierdza go oficjalnie. Klinicyści oceniają i oznaczają sugestie, co ustala ich kolejność dla następnego czytającego, ale nie wprowadza ich do tekstu wytycznych.",
     "consultationTitle": "To nie zamiennik konsultacji",
     "consultationBody": "Materiały tutaj wnoszą wkład do dyskusji klinicznej, a nie do indywidualnych zaleceń. Każda decyzja terapeutyczna należy do lekarza prowadzącego.",
     "commercialTitle": "To nie produkt komercyjny",
@@ -184,7 +184,7 @@
       },
       {
         "lead": "Propozycje AI bywają zbyt optymistyczne.",
-        "body": " Każda wersja robocza jest filtrowana przez recenzenta przed publikacją, ale subtelne błędy wciąż mogą się prześlizgnąć. Każdy zatwierdzony akapit można w dowolnej chwili zakwestionować."
+        "body": " Wersja robocza trafia na stronę wraz z odnośnikami i nikt jej wcześniej nie recenzuje, więc błędy mogą się na niej znaleźć. Po to są właśnie te odnośniki: otwórz PMID i przeczytaj, na czym opiera się dane twierdzenie. Klinicyści mogą oznaczyć to, co wygląda na błąd, a każdy akapit można w dowolnej chwili zakwestionować."
       },
       {
         "lead": "Tłumaczenia są nierówne.",
@@ -201,7 +201,7 @@
   "cta": {
     "heading": "Dokąd dalej",
     "diseaseLabel": "Zacznij od swojej choroby",
-    "diseaseSub": "Wytyczne, lekarze, badania kliniczne, ścieżka decyzyjna.",
+    "diseaseSub": "Wytyczne, lekarze, badania kliniczne, terapie.",
     "doctorsLabel": "Znajdź lekarza obeznanego z chorobą",
     "doctorsSub": "Globalny katalog, filtrowany według odległości oraz tego, czy lekarz powołuje się na aktualny konsensus.",
     "researchLabel": "Twojej choroby jeszcze tu nie ma?",
