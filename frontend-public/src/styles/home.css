@@ -72,19 +72,60 @@
   font-size: 14px;
 }
 
-/* ── the gate ────────────────────────────────────────────────────────────── */
-.page--home .doors {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  margin: 34px 0 12px;
+/* ── search bar (ported from drafty-ui/draft11 .intro__bar / .intro__meta) ──── */
+.page--home .intro__bar {
+  display: flex;
+  gap: 10px;
+  align-items: stretch;
+  margin: 30px 0 0;
 }
-/* One entrance, not one half of a pair: give the search card the full width and
-   cap the measure so the copy inside stays readable rather than stretching. */
-.page--home .doors--single {
-  grid-template-columns: minmax(0, 720px);
-  justify-content: center;
+/* The autocomplete owns its own input chrome; it just needs to take the room. */
+.page--home .intro__bar .ac {
+  flex: 1 1 auto;
+  min-width: 0;
 }
+.page--home .intro__startbtn {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 18px;
+  white-space: nowrap;
+  font-family: var(--font-sans);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--ink-2);
+  text-decoration: none;
+  border-radius: var(--r-md);
+}
+.page--home .intro__startbtn:hover {
+  color: var(--ink-1);
+}
+.page--home .intro__meta {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  padding-top: 12px;
+  font-family: var(--font-sans);
+  font-size: var(--fs-sm);
+  color: var(--ink-3);
+}
+.page--home .intro__meta b {
+  color: var(--ink-1);
+  font-weight: 600;
+  font-family: var(--font-mono);
+  font-feature-settings: "tnum";
+}
+@media (max-width: 560px) {
+  .page--home .intro__bar {
+    flex-direction: column;
+  }
+  .page--home .intro__startbtn {
+    padding: 10px 0;
+  }
+  .page--home .intro__meta {
+    gap: 14px;
+  }
+}
+
 .page--home .door {
   position: relative;
   top: 0;

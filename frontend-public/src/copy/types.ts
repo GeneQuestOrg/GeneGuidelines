@@ -27,22 +27,15 @@ export interface HomeCopy {
   /** Hero mission link → /about ("Why we built this →"). */
   whyLink: string;
 
-  /* LEFT card — "I know the disease". */
-  knowKicker: string;
-  knowTitle: string;
-  knowDesc: string;
+  /* Search bar — the page's one control, plus the counters under it. The two
+     explanatory cards this replaced are gone: one described the field it sat on
+     top of, the other previewed a symptom-led orientation that does not exist. */
   searchPlaceholder: string;
-
-  /* RIGHT card — "I don't know the diagnosis". */
-  dontKicker: string;
-  dontBadge: string;
-  dontTitle: string;
-  dontDescLead: string;
-  dontDescEmph: string;
-  /* Not-yet-built guided orientation: preview the steps + an inert "coming
-     soon" affordance instead of a live input that pretends to work. */
-  dontSteps: readonly string[];
-  dontComingSoon: string;
+  newDiseaseAction: string;
+  metaDiseases: string;
+  metaDoctors: string;
+  metaTrials: string;
+  metaSuggestions: string;
 
   /* "Co tu znajdziesz" + honest disclosure. */
   findsTitle: string;

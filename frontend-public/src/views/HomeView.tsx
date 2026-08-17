@@ -20,12 +20,6 @@ export interface HomeViewProps {
 }
 
 /* ── inline icons (match draft13 v2) ─────────────────────────────────────── */
-const iconSearch: ReactNode = (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-    <circle cx="11" cy="11" r="7" />
-    <line x1="21" y1="21" x2="16.5" y2="16.5" strokeLinecap="round" />
-  </svg>
-);
 const findIcons: ReactNode[] = [
   <svg key="doc" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
     <path d="M6 9V3h12v6" />
@@ -53,7 +47,7 @@ const iconChat: ReactNode = (
 );
 
 export function HomeView({ view, onNav }: HomeViewProps) {
-  const { diseases, loading, error } = useDiseaseCatalog();
+  const { diseases, stats, loading, error } = useDiseaseCatalog();
   const { runs: activeRuns } = useActiveResearchRuns(3);
   const { t } = useTranslation("common");
   const copy = useAudienceCopy(view).home;
@@ -75,7 +69,6 @@ export function HomeView({ view, onNav }: HomeViewProps) {
   // Feedback bar — commission an AI research run for any disease.
   const goResearch = () => onNav("/start-research");
 
-  const chips = diseases.slice(0, 3);
 
   return (
     <div className="page page--home">
@@ -105,51 +98,45 @@ export function HomeView({ view, onNav }: HomeViewProps) {
         </p>
       </div>
 
-      {/* ── ONE GATE ──
-          A single search field, deliberately. The second door used to advertise a
-          symptom-led orientation that is not built ("Beta · soon"), which spent half
-          the hero on nothing and contradicted the About page's "not a diagnostic
-          tool" positioning. The field below already resolves a disease name, an
-          alias, a Polish name or a gene symbol (suggest matches on kind="gene"), so
-          one gate covers what a visitor actually arrives with. */}
-      <div className="doors doors--single">
-        <div className="door door--know">
-          <div className="door__k">
-            <span className="door__ic" aria-hidden>
-              {iconSearch}
-            </span>
-            {copy.knowKicker}
-          </div>
-          <h2 className="door__title">{copy.knowTitle}</h2>
-          <p className="door__desc">{copy.knowDesc}</p>
-          <div className="door__form">
-            <DiseaseAutocomplete
-              placeholder={copy.searchPlaceholder}
-              onPick={goPickedDisease}
-              onMissingClick={() => onNav("/start-research")}
-            />
-          </div>
-          {chips.length > 0 ? (
-            <div className="quicklinks">
-              {chips.map((d) => (
-                <a
-                  key={d.slug}
-                  className="ql"
-                  href={`/diseases/${d.slug}`}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    onNav(`/diseases/${d.slug}`);
-                  }}
-                >
-                  <b>{d.name}</b>
-                  <code>{d.gene}</code>
-                </a>
-              ))}
-            </div>
-          ) : null}
-        </div>
-
+      {/* ── SEARCH BAR ──
+          A bare bar, not a card. Ported from drafty-ui/draft11 (.intro__bar +
+          .intro__meta): the field, one action beside it, and the counters that say
+          how much is actually in here. The card wrapper around this used to carry a
+          kicker, a heading and a paragraph explaining the field — visual noise in
+          front of the one control the page exists for. */}
+      <div className="intro__bar">
+        <DiseaseAutocomplete
+          placeholder={copy.searchPlaceholder}
+          onPick={goPickedDisease}
+          onMissingClick={goResearch}
+        />
+        <a
+          href="/start-research"
+          className="intro__startbtn"
+          onClick={(e) => {
+            e.preventDefault();
+            goResearch();
+          }}
+        >
+          {copy.newDiseaseAction}
+        </a>
       </div>
+      {stats != null ? (
+        <div className="intro__meta">
+          <span>
+            <b>{stats.diseaseCount}</b> {copy.metaDiseases}
+          </span>
+          <span>
+            <b>{stats.doctorCount}</b> {copy.metaDoctors}
+          </span>
+          <span>
+            <b>{stats.recruitingTrialCount}</b> {copy.metaTrials}
+          </span>
+          <span>
+            <b>{stats.openPrCount}</b> {copy.metaSuggestions}
+          </span>
+        </div>
+      ) : null}
 
       {/* ── CO TU ZNAJDZIESZ ── */}
       <Section title={copy.findsTitle} sub={copy.findsSub} divider>

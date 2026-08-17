@@ -4,11 +4,12 @@
   "titleEmphasis": "Getting it to you in time is the hard part.",
   "subtitle": "What's known about a rare disease — guidelines in plain language and with sources, doctors who've actually seen it, and clinical trials — gathered in one place, so it reaches you and your doctor while it can still change what happens next.",
   "whyLink": "Why we built this",
-
-  "knowKicker": "Search",
-  "knowTitle": "Start with the disease, a gene, or whatever you were told",
-  "knowDesc": "A name in Polish or English, an abbreviation, or a gene symbol — GNAS, ABCA4. You land on the disease page: what is known with sources, doctors who have actually seen it, recruiting trials, and foundations.",
   "searchPlaceholder": "e.g. fibrous dysplasia, dysplazja włóknista, MAS, GNAS…",
+  "newDiseaseAction": "+ New disease",
+  "metaDiseases": "diseases",
+  "metaDoctors": "doctors",
+  "metaTrials": "active trials",
+  "metaSuggestions": "AI suggestions",
 
   "findsTitle": "What you'll find here",
   "findsSub": "In one place, for any rare disease — and if yours isn't here yet, you can commission a research run.",

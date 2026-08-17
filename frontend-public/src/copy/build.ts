@@ -32,18 +32,12 @@ export function buildHomeCopy(t: TFunction): HomeCopy {
     subtitle: t("subtitle"),
     whyLink: t("whyLink"),
 
-    knowKicker: t("knowKicker"),
-    knowTitle: t("knowTitle"),
-    knowDesc: t("knowDesc"),
     searchPlaceholder: t("searchPlaceholder"),
-
-    dontKicker: t("dontKicker"),
-    dontBadge: t("dontBadge"),
-    dontTitle: t("dontTitle"),
-    dontDescLead: t("dontDescLead"),
-    dontDescEmph: t("dontDescEmph"),
-    dontSteps: objectResult<string[]>(t, "dontSteps"),
-    dontComingSoon: t("dontComingSoon"),
+    newDiseaseAction: t("newDiseaseAction"),
+    metaDiseases: t("metaDiseases"),
+    metaDoctors: t("metaDoctors"),
+    metaTrials: t("metaTrials"),
+    metaSuggestions: t("metaSuggestions"),
 
     findsTitle: t("findsTitle"),
     findsSub: t("findsSub"),
