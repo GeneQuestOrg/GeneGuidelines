@@ -720,7 +720,17 @@ class BootstrapDiseaseBody(BaseModel):
         return out
 
 
-@router.post("/bootstrap-disease", dependencies=[Depends(require_api_key_if_set)])
+# Deliberately NOT behind ``require_api_key_if_set``. This is the one pipeline
+# entry point a visitor is meant to reach: "your disease isn't here yet? run the
+# pipeline" is the public promise, and the production bundle never ships the API
+# key (ADR-001 — it would be readable in the JS). Gating this endpoint would take
+# the feature offline for everyone while protecting nothing an attacker could not
+# already reach. What bounds abuse here instead: the fair-share queue's anonymous
+# session cap, the monthly token budget (a drained budget queues rather than
+# spends), and unlisted-until-approve on the created disease. If this endpoint
+# starts getting hammered, add a per-IP limiter like the one in routers/feedback.py
+# — do not re-add the key gate without shipping a key to the public bundle first.
+@router.post("/bootstrap-disease")
 async def bootstrap_disease(
     body: BootstrapDiseaseBody,
     user: OptionalUser = None,
