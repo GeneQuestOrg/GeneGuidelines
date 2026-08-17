@@ -18,8 +18,6 @@ import os
 
 os.environ.setdefault("AGENT_NO_MCP", "1")
 
-from backend.main import app  # noqa: E402 — import after the MCP opt-out
-
 # Dependencies that *refuse* an unauthenticated caller. ``get_optional_user`` is
 # deliberately absent: it reads a token when one is present and shrugs otherwise, so
 # counting it as a guard would let a wide-open endpoint pass this test — which is
@@ -79,6 +77,12 @@ def _auth_dependencies_of(route: object) -> set[str]:
 
 
 def _mutating_api_routes() -> list[tuple[str, object]]:
+    # Imported here, not at module scope. At collection time the app may not have
+    # finished registering its routers, and an empty route table makes the guard
+    # test below pass while checking nothing — which is how this file first went
+    # green locally and red in CI.
+    from backend.main import app
+
     out: list[tuple[str, object]] = []
     for route in app.routes:
         path = getattr(route, "path", "")
@@ -89,7 +93,22 @@ def _mutating_api_routes() -> list[tuple[str, object]]:
     return out
 
 
+# The app has ~45 mutating /api routes. A far smaller number means the route table
+# did not load, and every assertion here would be vacuous.
+_MIN_EXPECTED_MUTATING_ROUTES = 20
+
+
+def _assert_route_table_loaded(routes: list[tuple[str, object]]) -> None:
+    assert len(routes) >= _MIN_EXPECTED_MUTATING_ROUTES, (
+        f"only {len(routes)} mutating /api routes visible, expected at least "
+        f"{_MIN_EXPECTED_MUTATING_ROUTES} — the app did not finish registering its "
+        f"routers, so this test would pass without checking anything. "
+        f"Sample: {sorted(k for k, _ in routes)[:8]}"
+    )
+
+
 def test_every_mutating_route_is_guarded_or_declared_public() -> None:
+    _assert_route_table_loaded(_mutating_api_routes())
     unguarded = {
         key
         for key, route in _mutating_api_routes()
@@ -105,6 +124,7 @@ def test_every_mutating_route_is_guarded_or_declared_public() -> None:
 
 def test_public_mutations_list_has_no_dead_entries() -> None:
     """A route that gained a guard (or moved) should leave this list."""
+    _assert_route_table_loaded(_mutating_api_routes())
     live = {key for key, _ in _mutating_api_routes()}
     stale = {
         key
