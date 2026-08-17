@@ -49,7 +49,7 @@ const iconChat: ReactNode = (
 export function HomeView({ view, onNav }: HomeViewProps) {
   const { diseases, stats, loading, error } = useDiseaseCatalog();
   const { runs: activeRuns } = useActiveResearchRuns(3);
-  const { t } = useTranslation("common");
+  const { t, i18n } = useTranslation("common");
   const copy = useAudienceCopy(view).home;
 
   // LEFT card — "I know the disease": forgiving multilingual typeahead over the
@@ -124,16 +124,16 @@ export function HomeView({ view, onNav }: HomeViewProps) {
       {stats != null ? (
         <div className="intro__meta">
           <span>
-            <b>{stats.diseaseCount}</b> {copy.metaDiseases}
+            <b>{stats.diseaseCount.toLocaleString(i18n.language)}</b> {copy.metaDiseases}
           </span>
           <span>
-            <b>{stats.doctorCount}</b> {copy.metaDoctors}
+            <b>{stats.doctorCount.toLocaleString(i18n.language)}</b> {copy.metaDoctors}
           </span>
           <span>
-            <b>{stats.recruitingTrialCount}</b> {copy.metaTrials}
+            <b>{stats.recruitingTrialCount.toLocaleString(i18n.language)}</b> {copy.metaTrials}
           </span>
           <span>
-            <b>{stats.openPrCount}</b> {copy.metaSuggestions}
+            <b>{stats.openPrCount.toLocaleString(i18n.language)}</b> {copy.metaSuggestions}
           </span>
         </div>
       ) : null}
