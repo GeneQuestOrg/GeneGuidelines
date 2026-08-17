@@ -213,16 +213,6 @@ export function StartResearchView({ onNav }: StartResearchViewProps) {
             </Button>
           </div>
 
-          {/* Symptom-based search is a future feature (master-plan §7a F11).
-              Render an inert, muted preview with a "beta / coming soon" chip —
-              never a link that errors on click — until the route ships. Once
-              it lands this becomes a real onNav("/start-research/by-symptoms"). */}
-          <div className="symp-link symp-link--soon" aria-disabled="true">
-            <span className="symp-link__body">
-              {t("symptomLinkPrefix")} <em>{t("symptomLinkCta")}</em>
-            </span>
-            <span className="symp-link__chip">{t("symptomBeta")}</span>
-          </div>
         </form>
       </div>
 

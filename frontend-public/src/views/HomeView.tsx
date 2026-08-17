@@ -1,4 +1,3 @@
-import { useState } from "react";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Button, Section } from "@gene-guidelines/ui";
@@ -25,12 +24,6 @@ const iconSearch: ReactNode = (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
     <circle cx="11" cy="11" r="7" />
     <line x1="21" y1="21" x2="16.5" y2="16.5" strokeLinecap="round" />
-  </svg>
-);
-const iconBulb: ReactNode = (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7">
-    <path d="M12 3a7 7 0 0 0-4 12.7V18h8v-2.3A7 7 0 0 0 12 3z" strokeLinejoin="round" />
-    <line x1="9" y1="21" x2="15" y2="21" strokeLinecap="round" />
   </svg>
 );
 const findIcons: ReactNode[] = [
@@ -60,7 +53,6 @@ const iconChat: ReactNode = (
 );
 
 export function HomeView({ view, onNav }: HomeViewProps) {
-  const [addQuery, setAddQuery] = useState("");
   const { diseases, loading, error } = useDiseaseCatalog();
   const { runs: activeRuns } = useActiveResearchRuns(3);
   const { t } = useTranslation("common");
@@ -113,9 +105,14 @@ export function HomeView({ view, onNav }: HomeViewProps) {
         </p>
       </div>
 
-      {/* ── TWO DOORS ── */}
-      <div className="doors">
-        {/* LEFT — know the disease */}
+      {/* ── ONE GATE ──
+          A single search field, deliberately. The second door used to advertise a
+          symptom-led orientation that is not built ("Beta · soon"), which spent half
+          the hero on nothing and contradicted the About page's "not a diagnostic
+          tool" positioning. The field below already resolves a disease name, an
+          alias, a Polish name or a gene symbol (suggest matches on kind="gene"), so
+          one gate covers what a visitor actually arrives with. */}
+      <div className="doors doors--single">
         <div className="door door--know">
           <div className="door__k">
             <span className="door__ic" aria-hidden>
@@ -152,35 +149,6 @@ export function HomeView({ view, onNav }: HomeViewProps) {
           ) : null}
         </div>
 
-        {/* RIGHT — don't know the diagnosis */}
-        <div className="door door--dont">
-          <div className="door__k">
-            <span className="door__ic" aria-hidden>
-              {iconBulb}
-            </span>
-            {copy.dontKicker}
-            <span className="badge-soon">{copy.dontBadge}</span>
-          </div>
-          <h2 className="door__title">{copy.dontTitle}</h2>
-          <p className="door__desc">
-            {copy.dontDescLead}
-            <b className="door__desc-emph">{copy.dontDescEmph}</b>
-          </p>
-          {/* Guided orientation is not built yet — preview the steps and show an
-              inert "coming soon" chip rather than a live input that would
-              pretend the feature works. */}
-          <ol className="steps-mini">
-            {copy.dontSteps.map((step, i) => (
-              <li key={step}>
-                <span className="steps-mini__n">{i + 1}</span>
-                {step}
-              </li>
-            ))}
-          </ol>
-          <span className="door__soon" aria-disabled="true">
-            {copy.dontComingSoon}
-          </span>
-        </div>
       </div>
 
       {/* ── CO TU ZNAJDZIESZ ── */}
@@ -239,23 +207,14 @@ export function HomeView({ view, onNav }: HomeViewProps) {
           <div className="fb__t">{copy.addTitle}</div>
           <div className="fb__s">{copy.addSub}</div>
         </div>
-        <form
-          className="fb__form"
-          onSubmit={(e) => {
-            e.preventDefault();
-            goResearch();
-          }}
-        >
-          <input
-            value={addQuery}
-            onChange={(e) => setAddQuery(e.target.value)}
-            placeholder={copy.addPlaceholder}
-            aria-label={copy.addTitle}
-          />
-          <Button type="submit" variant="primary">
+        {/* A button, not a second field. The input here discarded what was typed
+            (goResearch() ignored its value), so anyone who filled it in landed on
+            an empty form on /start-research — where the real field lives. */}
+        <div className="fb__form">
+          <Button type="button" variant="primary" onClick={goResearch}>
             {copy.addCta}
           </Button>
-        </form>
+        </div>
       </div>
     </div>
   );

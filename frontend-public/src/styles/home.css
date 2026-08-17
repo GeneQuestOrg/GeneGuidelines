@@ -72,12 +72,18 @@
   font-size: 14px;
 }
 
-/* ── two doors ───────────────────────────────────────────────────────────── */
+/* ── the gate ────────────────────────────────────────────────────────────── */
 .page--home .doors {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px;
   margin: 34px 0 12px;
+}
+/* One entrance, not one half of a pair: give the search card the full width and
+   cap the measure so the copy inside stays readable rather than stretching. */
+.page--home .doors--single {
+  grid-template-columns: minmax(0, 720px);
+  justify-content: center;
 }
 .page--home .door {
   position: relative;

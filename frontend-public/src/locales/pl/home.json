@@ -5,22 +5,10 @@
   "subtitle": "To, co wiadomo o rzadkiej chorobie — wytyczne prostym językiem i ze źródłami, lekarze, którzy naprawdę ją widzieli, i badania kliniczne — zebrane w jednym miejscu, żeby ta wiedza dotarła do Ciebie i Twojego lekarza, kiedy jeszcze może coś zmienić.",
   "whyLink": "Dlaczego to robimy",
 
-  "knowKicker": "Znam chorobę",
-  "knowTitle": "Wiem, czego szukam",
-  "knowDesc": "Przejdź prosto na stronę choroby — mapa „co robić” krok po kroku (co sprawdzić, jakich lekarzy szukać, o co zapytać na wizycie), a obok wytyczne, badania i fundacje.",
+  "knowKicker": "Szukaj",
+  "knowTitle": "Zacznij od choroby, genu albo tego, co Ci powiedziano",
+  "knowDesc": "Nazwa po polsku lub angielsku, skrót albo symbol genu — GNAS, ABCA4. Trafiasz na stronę choroby: co wiadomo i z jakich źródeł, lekarze, którzy ją realnie widzieli, rekrutujące badania i fundacje.",
   "searchPlaceholder": "np. dysplazja włóknista, fibrous dysplasia, MAS, GNAS…",
-
-  "dontKicker": "Nie znam diagnozy",
-  "dontBadge": "Beta · wkrótce",
-  "dontTitle": "Nie wiem, od czego zacząć",
-  "dontDescLead": "Masz tylko objaw, wynik badania genetycznego albo podejrzenie? Prowadzona orientacja jest w drodze — odpowiesz na kilka pytań, a narzędzie podpowie kierunki diagnostyki do omówienia z lekarzem. ",
-  "dontDescEmph": "Podpowiedzi, nie diagnoza.",
-  "dontSteps": [
-    "Opisz objawy lub wklej wariant (np. GNAS c.601C>T).",
-    "Narzędzie podpowie kierunki diagnostyki warte rozważenia — z cytowaniami.",
-    "Zabierasz je do lekarza, żeby omówić i zdecydować razem."
-  ],
-  "dontComingSoon": "Wkrótce",
 
   "findsTitle": "Co tu znajdziesz",
   "findsSub": "W jednym miejscu, dla dowolnej rzadkiej choroby — a jeśli Twojej jeszcze u nas nie ma, możesz ją zlecić do researchu.",
@@ -54,6 +42,5 @@
 
   "addTitle": "Nie ma Twojej choroby? Możesz ją dodać.",
   "addSub": "Zleć research AI dla dowolnej rzadkiej choroby — jeśli nie ma jej w bazie, pipeline przeszuka PubMed i internet i ją doda. Brakuje jakiejś informacji albo funkcji? Też napisz.",
-  "addPlaceholder": "np. zespół Retta…",
-  "addCta": "Zleć research"
+  "addCta": "Zleć research AI"
 }

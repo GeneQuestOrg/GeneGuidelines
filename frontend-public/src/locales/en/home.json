@@ -5,22 +5,10 @@
   "subtitle": "What's known about a rare disease — guidelines in plain language and with sources, doctors who've actually seen it, and clinical trials — gathered in one place, so it reaches you and your doctor while it can still change what happens next.",
   "whyLink": "Why we built this",
 
-  "knowKicker": "I know the disease",
-  "knowTitle": "I know what I'm looking for",
-  "knowDesc": "Go straight to the disease page — a step-by-step \"what to do\" map (what to check, which doctors to look for, what to ask at the visit), with guidelines, trials, and foundations alongside.",
+  "knowKicker": "Search",
+  "knowTitle": "Start with the disease, a gene, or whatever you were told",
+  "knowDesc": "A name in Polish or English, an abbreviation, or a gene symbol — GNAS, ABCA4. You land on the disease page: what is known with sources, doctors who have actually seen it, recruiting trials, and foundations.",
   "searchPlaceholder": "e.g. fibrous dysplasia, dysplazja włóknista, MAS, GNAS…",
-
-  "dontKicker": "I don't have a diagnosis",
-  "dontBadge": "Beta · soon",
-  "dontTitle": "I don't know where to start",
-  "dontDescLead": "Only a symptom, a genetic test result, or a suspicion? A guided orientation is coming — answer a few questions and the tool will suggest diagnostic directions to discuss with your doctor. ",
-  "dontDescEmph": "Suggestions, not a diagnosis.",
-  "dontSteps": [
-    "Describe the symptoms, or paste a variant (e.g. GNAS c.601C>T).",
-    "The tool suggests diagnostic directions worth considering — with citations.",
-    "You take them to your doctor, to discuss and decide together."
-  ],
-  "dontComingSoon": "Coming soon",
 
   "findsTitle": "What you'll find here",
   "findsSub": "In one place, for any rare disease — and if yours isn't here yet, you can commission a research run.",
@@ -54,6 +42,5 @@
 
   "addTitle": "Your disease isn't here? You can add it.",
   "addSub": "Commission an AI research run for any rare disease — if it isn't in the database, the pipeline searches PubMed and the web and adds it. Missing some information or a feature? Tell us too.",
-  "addPlaceholder": "e.g. Rett syndrome…",
-  "addCta": "Run research"
+  "addCta": "Run AI research"
 }
