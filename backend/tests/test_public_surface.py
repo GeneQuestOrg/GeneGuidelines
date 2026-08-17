@@ -99,11 +99,19 @@ _MIN_EXPECTED_MUTATING_ROUTES = 20
 
 
 def _assert_route_table_loaded(routes: list[tuple[str, object]]) -> None:
-    assert len(routes) >= _MIN_EXPECTED_MUTATING_ROUTES, (
+    if len(routes) >= _MIN_EXPECTED_MUTATING_ROUTES:
+        return
+    from backend.main import app
+
+    all_paths = sorted({getattr(r, "path", "?") for r in app.routes})
+    raise AssertionError(
         f"only {len(routes)} mutating /api routes visible, expected at least "
-        f"{_MIN_EXPECTED_MUTATING_ROUTES} — the app did not finish registering its "
-        f"routers, so this test would pass without checking anything. "
-        f"Sample: {sorted(k for k, _ in routes)[:8]}"
+        f"{_MIN_EXPECTED_MUTATING_ROUTES} — this test would pass without checking "
+        f"anything.\n"
+        f"  app.routes total: {len(app.routes)}\n"
+        f"  app module: {app.__module__ if hasattr(app, '__module__') else '?'} "
+        f"id={id(app)}\n"
+        f"  first 25 paths: {all_paths[:25]}"
     )
 
 
