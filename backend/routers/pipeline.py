@@ -5,10 +5,11 @@ import asyncio
 import uuid
 from typing import Literal, Self
 
-from fastapi import APIRouter, Depends, Header, HTTPException
+from fastapi import APIRouter, Depends, Header, HTTPException, Request
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 from .. import database as db
+from ..shared.rate_limit import check_rate_limit
 from ..account.deps import OptionalUser, require_superadmin
 from ..auth import require_api_key_if_set
 from ..config import DEFAULT_MODEL_PROFILE, MODEL_PROFILES
@@ -732,6 +733,7 @@ class BootstrapDiseaseBody(BaseModel):
 # — do not re-add the key gate without shipping a key to the public bundle first.
 @router.post("/bootstrap-disease")
 async def bootstrap_disease(
+    request: Request,
     body: BootstrapDiseaseBody,
     user: OptionalUser = None,
     x_anon_session: str | None = Header(default=None, alias="X-Anon-Session"),
@@ -750,6 +752,20 @@ async def bootstrap_disease(
     (NOT 429). Returns the pre-allocated guideline ``execution_id`` the
     frontend polls, plus the current ``queue_position``.
     """
+    # Each accepted request fans out roughly 400k tokens of research. The queue's
+    # anonymous-session cap bounds concurrency, but X-Anon-Session is client-set, so
+    # it does not bound how many runs one caller can start. This does.
+    check_rate_limit(
+        request,
+        bucket="bootstrap-disease",
+        max_calls=5,
+        window_sec=3600.0,
+        detail=(
+            "You have started several research runs in the last hour. They are "
+            "queued and will finish — please give them time before adding more."
+        ),
+    )
+
     slug = body.slug.strip()
     if not slug:
         raise HTTPException(status_code=400, detail="slug is required")

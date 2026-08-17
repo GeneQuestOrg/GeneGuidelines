@@ -10,11 +10,11 @@ from fastapi.testclient import TestClient
 @pytest.fixture(autouse=True)
 def reset_rate_limiter():
     """Clear in-process rate-limit state between tests (TestClient requests share IP)."""
-    import backend.routers.feedback as feedback_module
+    from backend.shared.rate_limit import reset_for_tests
 
-    feedback_module._ip_timestamps.clear()
+    reset_for_tests()
     yield
-    feedback_module._ip_timestamps.clear()
+    reset_for_tests()
 
 
 @pytest.fixture

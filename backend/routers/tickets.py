@@ -75,7 +75,12 @@ async def get_ticket(id: int):
     return resp
 
 
-@router.post("", response_model=TicketResponse, status_code=201)
+@router.post(
+    "",
+    response_model=TicketResponse,
+    status_code=201,
+    dependencies=[Depends(require_superadmin)],
+)
 async def create_ticket(body: TicketCreate):
     """Create a new ticket."""
     new_id = await _run(lambda: db.create_ticket(
@@ -88,7 +93,11 @@ async def create_ticket(body: TicketCreate):
     return TicketResponse(**t)
 
 
-@router.put("/{id}", response_model=TicketResponse)
+@router.put(
+    "/{id}",
+    response_model=TicketResponse,
+    dependencies=[Depends(require_superadmin)],
+)
 async def update_ticket(id: int, body: TicketUpdate):
     """Update ticket (status, summary, other fields optional)."""
     t = await _run(lambda: db.get_ticket_by_id(id))
@@ -104,7 +113,7 @@ async def update_ticket(id: int, body: TicketUpdate):
     return TicketResponse(**t)
 
 
-@router.delete("/{id}", status_code=204)
+@router.delete("/{id}", status_code=204, dependencies=[Depends(require_superadmin)])
 async def delete_ticket(id: int):
     """Delete ticket."""
     ok = await _run(lambda: db.delete_ticket(id))
@@ -123,7 +132,7 @@ async def list_comments(id: int):
     return [CommentResponse(**r) for r in rows]
 
 
-@router.post("/{id}/comments", response_model=CommentResponse, status_code=201)
+@router.post("/{id}/comments", response_model=CommentResponse, status_code=201, dependencies=[Depends(require_superadmin)])
 async def add_comment(id: int, body: CommentCreate):
     """Add a comment to ticket."""
     t = await _run(lambda: db.get_ticket_by_id(id))

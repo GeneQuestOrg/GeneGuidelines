@@ -18,7 +18,8 @@ from __future__ import annotations
 import asyncio
 import time
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import Request, APIRouter, Depends, HTTPException, Query
+from ..shared.rate_limit import check_rate_limit
 
 from .contracts import (
     DiseaseSuggestionResponse,
@@ -75,19 +76,25 @@ async def suggest_diseases(
 
 @router.post("/wider-search", response_model=WiderSearchResponse)
 async def wider_search(
+    request: Request,
     body: WiderSearchRequest,
     service: WiderDiseaseSearchService = Depends(provide_wider_search_service),
 ) -> WiderSearchResponse:
     """Tier 2 — Gemma-backed lookup for diseases not yet in the local index.
 
-    This endpoint is rate-limited indirectly: the underlying Gemma call is
-    behind the same per-IP bootstrap rate limiter as
-    ``POST /api/pipeline/lookup-disease-metadata`` once the upstream
-    integration is wired in. For now the rate limiting lives in the
-    underlying :func:`backend.services.disease_metadata_lookup.lookup_disease_metadata`
-    consumers; we deliberately do not duplicate the limit here so a single
-    knob keeps governing AI spend.
+    Open on purpose: this is the search box, and a visitor without an account must
+    be able to type a symptom or a misspelling. Each call costs one LLM round trip,
+    so it carries its own per-client limit. (An earlier version of this docstring
+    claimed the limit lived upstream "once the upstream integration is wired in" —
+    it did not exist.)
     """
+    check_rate_limit(
+        request,
+        bucket="wider-search",
+        max_calls=30,
+        window_sec=3600.0,
+        detail="Too many searches from this connection — please try again shortly.",
+    )
     try:
         result = await service.search(body.query.strip())
     except Exception as exc:  # noqa: BLE001 — the upstream is best-effort

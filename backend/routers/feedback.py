@@ -10,7 +10,6 @@ from __future__ import annotations
 
 import logging
 import time
-from collections import defaultdict
 from datetime import datetime, timezone
 
 import httpx
@@ -18,28 +17,11 @@ from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field, field_validator
 
 from ..config import EMAIL_FROM, FEEDBACK_TO, RESEND_API_KEY
+from ..shared.rate_limit import check_rate_limit
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["feedback"])
-
-# Simple in-process per-IP cap (mirrors backend/routers/geo.py) — enough for a
-# solo-founder anon contact box; not meant to survive a process restart or a
-# multi-instance deploy. Revisit if this ever needs to be durable.
-_RATE_WINDOW_SEC = 3600.0
-_RATE_MAX = 5
-_ip_timestamps: dict[str, list[float]] = defaultdict(list)
-
-
-def _check_rate_limit(ip: str) -> None:
-    now = time.monotonic()
-    window_start = now - _RATE_WINDOW_SEC
-    ts = _ip_timestamps[ip]
-    ts[:] = [t for t in ts if t > window_start]
-    if len(ts) >= _RATE_MAX:
-        raise HTTPException(status_code=429, detail="Too many submissions — please try again later.")
-    ts.append(now)
-
 
 class FeedbackRequest(BaseModel):
     message: str = Field(..., min_length=20, max_length=4000)
@@ -143,8 +125,13 @@ def send_feedback_email(
 @router.post("/feedback", response_model=FeedbackResponse, status_code=201)
 def submit_feedback(body: FeedbackRequest, request: Request) -> FeedbackResponse:
     """Accept an anonymous feedback note and email it to the founder."""
-    client_ip = request.client.host if request.client else "unknown"
-    _check_rate_limit(client_ip)
+    check_rate_limit(
+        request,
+        bucket="feedback",
+        max_calls=5,
+        window_sec=3600.0,
+        detail="Too many submissions — please try again later.",
+    )
 
     sent = send_feedback_email(message=body.message, email=body.email, context=body.context)
     if not sent and RESEND_API_KEY:
