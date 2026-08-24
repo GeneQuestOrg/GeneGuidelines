@@ -1,4 +1,10 @@
-"""My case private-context API — parent auth gate."""
+"""My case private-context API — feature flag and parent auth gate.
+
+The feature ships OFF (``config.MY_CASE_ENABLED``), so most of this module turns
+it back on: what is under test is the authorisation model, which has to keep
+working for the day the feature returns. The flag itself is covered by
+``test_private_context_endpoints_404_when_the_feature_is_off``.
+"""
 
 from __future__ import annotations
 
@@ -87,7 +93,14 @@ def _make_token(
 
 
 @pytest.fixture
-def make_client(verifier: _StubVerifier, user_repo: InMemoryUserRepo):
+def my_case_on(monkeypatch: pytest.MonkeyPatch):
+    from backend import config
+
+    monkeypatch.setattr(config, "MY_CASE_ENABLED", True)
+
+
+@pytest.fixture
+def make_client(verifier: _StubVerifier, user_repo: InMemoryUserRepo, my_case_on: None):
     disease_repo = InMemoryDiseaseRepo(
         [
             Disease(
@@ -184,3 +197,32 @@ def test_private_context_list_200_for_parent(make_client, signing_key) -> None:
     r = client.get("/api/diseases/fd/private-contexts", headers=_auth(token))
     assert r.status_code == 200
     assert r.json() == []
+
+
+def test_private_context_endpoints_404_when_the_feature_is_off(
+    verifier: _StubVerifier, user_repo: InMemoryUserRepo, signing_key
+) -> None:
+    """With the flag off the endpoints look absent, even to an authorised parent.
+
+    404 and not 403: a disabled feature is not a permission problem. Built here
+    without the ``make_client`` fixture precisely because that one enables it.
+    """
+    from backend.main import app
+
+    token = _make_token(signing_key, sub="auth0|parent", email="parent@example.com")
+    service = AccountService(repo=user_repo, superadmin_emails=parse_superadmin_emails(""))
+    app.dependency_overrides[provide_verifier] = lambda: verifier
+    app.dependency_overrides[provide_user_repo] = lambda: user_repo
+    app.dependency_overrides[provide_account_service] = lambda: service
+    try:
+        with TestClient(app) as client:
+            assert client.get(
+                "/api/diseases/fd/private-contexts", headers=_auth(token)
+            ).status_code == 404
+            assert client.post(
+                "/api/diseases/fd/private-context",
+                headers=_auth(token),
+                files={"file": ("note.txt", b"text", "text/plain")},
+            ).status_code == 404
+    finally:
+        app.dependency_overrides.clear()

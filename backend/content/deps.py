@@ -8,7 +8,7 @@ Tests substitute their own providers via ``app.dependency_overrides``.
 
 from __future__ import annotations
 
-from fastapi import Depends
+from fastapi import Depends, HTTPException
 
 from .foundations import (
     FoundationRepo,
@@ -140,6 +140,18 @@ def provide_private_context_repo() -> PrivateContextRepo:
     return SqlaPrivateContextRepo()
 
 
+def require_my_case_enabled() -> None:
+    """404 the private-upload endpoints while the feature is off.
+
+    404 rather than 403: a disabled feature should look absent, not forbidden.
+    Read through the module (not `from ... import`) so tests can flip it.
+    """
+    from .. import config
+
+    if not config.MY_CASE_ENABLED:
+        raise HTTPException(status_code=404, detail="Not found")
+
+
 def provide_private_context_service(
     repo: PrivateContextRepo = Depends(provide_private_context_repo),
     disease_repo: DiseaseRepo = Depends(provide_disease_repo),
@@ -161,6 +173,7 @@ __all__ = [
     "provide_foundation_service",
     "provide_private_context_repo",
     "provide_private_context_service",
+    "require_my_case_enabled",
     "provide_official_guideline_repo",
     "provide_official_guideline_service",
 ]

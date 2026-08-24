@@ -1,14 +1,6 @@
-> [!IMPORTANT]
-> **Kaggle reviewers.** There are two useful versions of GeneGuidelines:
->
-> - **Current product** — active post-submission development: [public demo](https://geneguidelines.genequest.org) · [`production`](https://github.com/GeneQuestOrg/GeneGuidelines/tree/production)
-> - **Frozen Kaggle submission** — exact deadline snapshot from **18 May 2026**: [tag `kaggle-submission-2026-05-18`](https://github.com/GeneQuestOrg/GeneGuidelines/tree/kaggle-submission-2026-05-18) · [public demo](https://kaggle-geneguidelines.genequest.org) · [admin demo](https://kaggle-admin-geneguidelines.genequest.org)
->
-> If you are judging deadline compliance, use the frozen snapshot. If you want to see where the project is going, use the current product.
-
 # GeneGuidelines
 
-**Living clinical guidelines for rare genetic diseases** — generated and kept current by a controlled AI workflow over PubMed evidence. Every claim is anchored to a PubMed ID; every AI-proposed update is rated by clinicians as *useful / not useful*, a lightweight signal that ranks suggestions by how useful specialists find them.
+**Living clinical guidelines for rare genetic diseases** — generated and kept current by a controlled AI workflow over PubMed evidence. Claims taken from a paper carry its PubMed ID, and where the source shelf has nothing for a section the page says so rather than filling the gap. Clinicians can rate an AI-proposed update *useful / not useful* — a lightweight signal that ranks suggestions for the next reader. Nobody signs anything off: this is an AI draft over cited sources, not an approved guideline.
 
 Not a chatbot over a pile of papers. Not a static PDF that goes stale in months. A **living, audit-trailed layer** that turns *"the knowledge existed but never reached the doctor making the decision"* into a page a parent can print and bring to the visit — and that, for the first time, keeps a rare-disease guideline moving between the rare consensus updates that take [**~9 years**](https://pubmed.ncbi.nlm.nih.gov/39592333/) to land.
 
@@ -24,7 +16,7 @@ The reason this works is that the same engine serves three people at once, and e
 
 - **A parent, just handed a diagnosis,** gets a map of what they didn't know to ask — the stage-by-stage pathway, red flags, ready-made questions for the visit, and a geo-ranked directory of doctors who have *actually treated this disease*. They can run AI research on their own child's specific question, and contribute that case back — de-identified — to widen the picture for everyone.
 - **A first-contact or "in-between" clinician** — the endocrinologist or orthopaedist who meets this entity once a year and decides outside their core — gets the official guideline plus the AI's proposed updates, and rates each one *useful / not useful* in a couple of minutes.
-- **A specialist or consortium** gets a running, cited diff since the last consensus — *"N new papers, 3 may change a recommendation, here's the provenance"* — ready material for the next guideline version, plus de-identified real-world cases they won't find on PubMed.
+- **A specialist or consortium** gets a running, cited diff since the last consensus — *"N new papers, 3 may change a recommendation, here's the provenance"* — ready material for the next guideline version.
 
 Every recommendation carries an explicit epistemic level, so no one confuses consensus with a suggestion — **that is the safety model**:
 
@@ -62,7 +54,7 @@ The numbers behind it: PubMed indexes **~30 new rare-disease publications per da
 A **controlled AI workflow engine**, end-to-end:
 
 1. **Reads PubMed on a rolling basis.** A two-tier pipeline (Gemma 4 for triage + extraction, a heavier model for synthesis) turns raw abstracts into a structured corpus of evidence anchored to PMIDs. The monitor runs as densely as we want; expert review follows real demand.
-2. **Proposes guideline updates for clinician review.** Each proposal carries the diff, the citations, the AI's rationale, and an evidence-quality score. Most papers warrant no change, and the system is allowed to say so. When one does, clinicians rate it *useful / not useful* — a fast signal feeding a weighted ranking where a verified specialist's vote counts for more, so the strongest suggestions rise to the top, alongside the consensus rather than overwriting it.
+2. **Proposes guideline updates for clinician review.** Each proposal carries the diff, the citations, the AI's rationale, and an evidence-quality score. Most papers warrant no change, and the system is allowed to say so. When one does, clinicians can rate it *useful / not useful* — a fast signal feeding a weighted ranking where a verified specialist's vote counts for more, so the strongest suggestions rise to the top, alongside the consensus rather than overwriting it.
 3. **Surfaces a whole disease in one page:** the living guideline, a decision pathway a parent can navigate, a specialist directory ranked by published evidence, active trials, therapy lines by evidence tier, and supporting foundations.
 
 The workflow itself is a living artefact: clinician feedback — the signal plus structured notes — feeds the next iteration, and we adjust the prompts, evidence tiers, and gates so it converges on how a rare-disease consortium actually works, not on how a solo engineer guessed. The target shape is the way Javaid, Boyce, Appelman-Dijkstra et al. drafted the [2019 FD/MAS international consensus](https://link.springer.com/article/10.1186/s13023-019-1102-9) — structured rounds of evidence review, explicit evidence tiers, named votes. Full versioning with named approvals is a longer-horizon stage, for if and when a consortium adopts the platform.

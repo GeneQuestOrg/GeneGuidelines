@@ -594,3 +594,17 @@ API_PUBLIC_URL = (os.environ.get("API_PUBLIC_URL") or "http://localhost:8000").s
 # relying on this in production.
 #   FEEDBACK_TO=kontakt@genequest.org
 FEEDBACK_TO = (os.environ.get("FEEDBACK_TO") or "kontakt@genequest.org").strip()
+
+# -- "My case" private uploads -----------------------------------------------
+# OFF, and deliberately a constant rather than an env var: it is a decision about
+# what the product is, not per-environment configuration, so it belongs in a
+# reviewed diff instead of a container app's settings blade. The feature was
+# built for the Gemma hackathon demo; with judging over it falls outside the
+# product's scope (doctors, guidelines, PubMed findings, trials, foundations,
+# therapies), and its privacy story does not hold for real use while the
+# de-identification call leaves the EU (LLM_BASE_URL is SiliconFlow).
+#
+# The endpoints and their tests stay. Turn this on together with an EU-hosted
+# redaction model and the matching switch in
+# frontend-public/src/config/features.ts — not before.
+MY_CASE_ENABLED = False

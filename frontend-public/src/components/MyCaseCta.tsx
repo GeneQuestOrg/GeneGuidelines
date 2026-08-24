@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 import type { Disease } from "../types";
+import { MY_CASE_ENABLED } from "../config/features";
 import "../styles/my-case.css";
 
 export interface MyCaseCtaProps {
@@ -10,6 +11,10 @@ export interface MyCaseCtaProps {
 export function MyCaseCta({ disease, onNav }: MyCaseCtaProps) {
   const { t } = useTranslation("disease");
   const path = `/diseases/${disease.slug}/my-case`;
+
+  if (!MY_CASE_ENABLED) {
+    return null;
+  }
 
   return (
     <a

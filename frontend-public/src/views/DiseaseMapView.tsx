@@ -3,6 +3,7 @@ import { useDisease } from "../hooks/useDisease";
 import { useSourceShelf } from "../hooks/useSourceShelf";
 import { useOfficialGuideline } from "../hooks/useOfficialGuideline";
 import { PlaceholderView } from "./PlaceholderView";
+import { MY_CASE_ENABLED } from "../config/features";
 import "../styles/disease-map.css";
 
 export interface DiseaseMapViewProps {
@@ -106,6 +107,9 @@ export function DiseaseMapView({ slug, onNav }: DiseaseMapViewProps) {
             ) : null}
           </div>
 
+          {/* "Have a discharge summary?" — hidden while uploads are off
+              (config/features.ts): the invitation has nowhere to lead. */}
+          {MY_CASE_ENABLED ? (
           <div className="dmap-privacy">
             <span className="dmap-privacy__ic" aria-hidden>
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
@@ -121,6 +125,7 @@ export function DiseaseMapView({ slug, onNav }: DiseaseMapViewProps) {
               </button>
             </div>
           </div>
+          ) : null}
         </section>
 
         {/* MAP INTRO */}
@@ -177,13 +182,15 @@ export function DiseaseMapView({ slug, onNav }: DiseaseMapViewProps) {
                     <span className="dmap-btn__arr" aria-hidden>→</span>
                   </a>
                 ) : null}
-                <a
-                  className="dmap-btn"
-                  href={`/diseases/${slug}/my-case`}
-                  onClick={go(`/diseases/${slug}/my-case`)}
-                >
-                  {t("step1CtaQuestions")}
-                </a>
+                {MY_CASE_ENABLED ? (
+                  <a
+                    className="dmap-btn"
+                    href={`/diseases/${slug}/my-case`}
+                    onClick={go(`/diseases/${slug}/my-case`)}
+                  >
+                    {t("step1CtaQuestions")}
+                  </a>
+                ) : null}
               </div>
             </div>
           </article>

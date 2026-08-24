@@ -29,6 +29,7 @@ from .deps import (
     provide_foundation_service,
     provide_official_guideline_service,
     provide_private_context_service,
+    require_my_case_enabled,
     provide_therapy_service,
     provide_trial_service,
 )
@@ -222,6 +223,7 @@ def list_foundations(
 @router.post(
     "/diseases/{slug}/private-context",
     response_model=PrivateContextResponse,
+    dependencies=[Depends(require_my_case_enabled)],
 )
 async def upload_private_context(
     slug: str,
@@ -262,6 +264,7 @@ async def upload_private_context(
 @router.get(
     "/diseases/{slug}/private-contexts",
     response_model=list[PrivateContextResponse],
+    dependencies=[Depends(require_my_case_enabled)],
 )
 def list_private_contexts(
     slug: str,

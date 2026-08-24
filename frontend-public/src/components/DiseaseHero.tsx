@@ -3,6 +3,7 @@ import { Button, Status } from "@gene-guidelines/ui";
 import type { Disease } from "../types";
 import type { DiseaseCopy } from "../copy";
 import type { SubscriptionUiStatus } from "../utils/diseaseSubscriptionStorage";
+import { MY_CASE_ENABLED } from "../config/features";
 import "../styles/disease-page.css";
 
 export interface DiseaseHeroProps {
@@ -97,13 +98,21 @@ export function DiseaseHero({
           >
             {copy.guidelinesCta}
           </Button>
-        ) : (
+        ) : MY_CASE_ENABLED ? (
           <Button
             variant="primary"
             type="button"
             onClick={() => onNav(`/diseases/${slug}/my-case`)}
           >
             {copy.myCaseCta}
+          </Button>
+        ) : (
+          <Button
+            variant="primary"
+            type="button"
+            onClick={() => onNav(`/diseases/${slug}/guidelines`)}
+          >
+            {copy.guidelinesCta}
           </Button>
         )}
         <Button

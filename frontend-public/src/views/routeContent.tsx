@@ -18,6 +18,7 @@ import { JoinView } from "./JoinView";
 import { ResearchRunView } from "./ResearchRunView";
 import { StartResearchView } from "./StartResearchView";
 import { MyCaseView } from "./MyCaseView";
+import { MY_CASE_ENABLED } from "../config/features";
 import { TrialsBrowserView } from "./TrialsBrowserView";
 
 export interface RouteContentProps {
@@ -63,6 +64,18 @@ export function routeContent({
         />
       );
     case "myCase":
+      // Feature off (see config/features.ts). The route still parses so an old
+      // link resolves to not-found instead of a blank screen.
+      if (!MY_CASE_ENABLED) {
+        return (
+          <PlaceholderView
+            title={t("route.notFoundTitle")}
+            description={t("route.notFoundDesc")}
+            primaryAction={{ label: t("route.notFoundAction"), path: "/" }}
+            onNav={onNav}
+          />
+        );
+      }
       return <MyCaseView slug={route.slug} onNav={onNav} />;
     case "diseaseMap":
       return <DiseaseMapView slug={route.slug} onNav={onNav} />;
