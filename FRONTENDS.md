@@ -41,7 +41,7 @@ For static hosting without a dev server proxy, build with `VITE_API_URL=https://
 ## Security (deploy)
 
 - **Public:** never set `VITE_GENEGUIDELINES_API_KEY` in the production build — Vite exposes every `VITE_*` value in the JS bundle. The public app should call the backend over open routes only.
-- **Admin must not be on a public URL** until real user auth ships. For deploy (including the Kaggle demo):
+- **Admin must not be on a public URL** until real user auth ships. For deploy:
   1. Set `GENEGUIDELINES_API_KEY` in the backend `.env` to enable the API-key check in `backend/auth.py`.
   2. Deploy the admin build to a non-guessable hostname (e.g. `admin-<random>.geneguidelines.example`) and **do not link it from the public site**.
   3. Add a basic-auth or IP-allowlist gate at the edge (Cloudflare Access, Render password protect, nginx auth_basic) for double cover.

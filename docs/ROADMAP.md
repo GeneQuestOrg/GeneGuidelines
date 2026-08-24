@@ -1,5 +1,15 @@
 # Engineering roadmap — executive summary
 
+> [!WARNING]
+> **Stale as of 2026-08-24 — read as history, not as a plan.** This was written
+> before launch and its Phase 1/2 framing ("48h before Kaggle", "1–2 weeks after
+> submission") is over: the hackathon is judged, storage moved from SQLite to
+> PostgreSQL with alembic, Auth0 accounts and the service layer shipped, and the
+> test count is 1012, not 328. The god-module and layering analysis is still
+> broadly accurate and worth reading. Needs a rewrite against the current
+> codebase.
+
+
 What is already in place, what is debt scheduled for cleanup, and how the codebase is meant to evolve from the current Kaggle-submission state to a stable open-source workflow engine plus knowledge-base platform. The detailed analysis (~3000 lines, code snippets, mermaid diagrams) lives in [`ENGINEERING_VISION.md`](ENGINEERING_VISION.md); this document is the short version for first-time readers.
 
 ---

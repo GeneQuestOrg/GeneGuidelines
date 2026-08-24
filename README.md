@@ -4,7 +4,7 @@
 
 Not a chatbot over a pile of papers. Not a static PDF that goes stale in months. A **living, audit-trailed layer** that turns *"the knowledge existed but never reached the doctor making the decision"* into a page a parent can print and bring to the visit — and that, for the first time, keeps a rare-disease guideline moving between the rare consensus updates that take [**~9 years**](https://pubmed.ncbi.nlm.nih.gov/39592333/) to land.
 
-Powered by **Gemma 4** · 3 disease entities · PMID-grounded · `CC-BY 4.0`
+Powered by **Gemma 4** · 7 disease entities · PMID-grounded · `CC-BY 4.0`
 
 ```bash
 docker compose up --build      # → http://localhost:5173
@@ -14,14 +14,14 @@ docker compose up --build      # → http://localhost:5173
 
 The reason this works is that the same engine serves three people at once, and each one *gives* something the others need:
 
-- **A parent, just handed a diagnosis,** gets a map of what they didn't know to ask — the stage-by-stage pathway, red flags, ready-made questions for the visit, and a geo-ranked directory of doctors who have *actually treated this disease*. They can run AI research on their own child's specific question, and contribute that case back — de-identified — to widen the picture for everyone.
+- **A parent, just handed a diagnosis,** gets a map of what they didn't know to ask — the stage-by-stage pathway, red flags, ready-made questions for the visit, and a geo-ranked directory of doctors who have *actually treated this disease*. If their disease is not in the catalogue yet, they can start the AI research for it themselves.
 - **A first-contact or "in-between" clinician** — the endocrinologist or orthopaedist who meets this entity once a year and decides outside their core — gets the official guideline plus the AI's proposed updates, and rates each one *useful / not useful* in a couple of minutes.
 - **A specialist or consortium** gets a running, cited diff since the last consensus — *"N new papers, 3 may change a recommendation, here's the provenance"* — ready material for the next guideline version.
 
 Every recommendation carries an explicit epistemic level, so no one confuses consensus with a suggestion — **that is the safety model**:
 
 - **(a) An official guideline exists** → we render it as ground truth (e.g. Boyce et al. 2019 for FD/MAS).
-- **(b) Newer or overlooked papers add something** → the AI flags it as *to consider*, for experts first; it surfaces to a family only when several clinicians vouch for it, or when it's low-risk and high-benefit.
+- **(b) Newer or overlooked papers add something** → the AI flags it as *to consider*, and it stays in the expert view. Every suggestion is written with `gate="expert"` and nothing promotes itself to the family view — promotion is meant to follow clinician signal, and until that step is built, level-(b) content simply does not reach a parent.
 - **(c) No guideline exists at all** → the AI assembles a first baseline for an expert to author from. For an ultra-rare entity where Orphanet has nothing, this is the part that exists nowhere else.
 
 ## Contents
@@ -59,13 +59,11 @@ A **controlled AI workflow engine**, end-to-end:
 
 The workflow itself is a living artefact: clinician feedback — the signal plus structured notes — feeds the next iteration, and we adjust the prompts, evidence tiers, and gates so it converges on how a rare-disease consortium actually works, not on how a solo engineer guessed. The target shape is the way Javaid, Boyce, Appelman-Dijkstra et al. drafted the [2019 FD/MAS international consensus](https://link.springer.com/article/10.1186/s13023-019-1102-9) — structured rounds of evidence review, explicit evidence tiers, named votes. Full versioning with named approvals is a longer-horizon stage, for if and when a consortium adopts the platform.
 
-The corpus that feeds those reviews isn't only PubMed: parents can attach the discharge summary or histopathology report that never made it into the literature, and that private context informs the next update for their child's condition — case material that would otherwise sit in a folder waiting to become a case report nobody had time to write.
-
 See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the full engine walkthrough.
 
 ## Why every clinician signal counts twice
 
-The path to AI that genuinely helps rare-disease patients runs through **trusted human reasoning at scale**: clinicians making concrete decisions over concrete evidence, with the chain of inference preserved. Every AI proposal a clinician rates or annotates — and every PMID-grounded justification the AI produced alongside it — becomes a structured record of expert clinical reasoning, tied to a named clinician, captured with full provenance from day one.
+The path to AI that genuinely helps rare-disease patients runs through **trusted human reasoning at scale**: clinicians making concrete decisions over concrete evidence, with the chain of inference preserved. Every AI proposal a clinician rates — and every PMID-grounded justification the AI produced alongside it — becomes a structured record of expert clinical reasoning, tied to that clinician's account, captured with full provenance from day one. (Nobody has rated anything yet: the loop is built and waiting for its first clinicians.)
 
 We intend that record (the **audit corpus**) to feed the training and alignment of future medical models, openly and with contributors credited. Because provenance and attribution are built in — no anonymous mass-aggregation — the corpus can be released later without retroactive data-hygiene work. Every signal counts twice: once for the patient on the page, once for the model that learns from the trace.
 
@@ -73,7 +71,7 @@ We intend that record (the **audit corpus**) to feed the training and alignment 
 
 Three properties of the Gemma 4 family decide the architecture, not the marketing:
 
-1. **Edge-deployable.** The E4B variant runs on a clinician's laptop or a hospital server. A discharge summary uploaded by a parent is parsed, PII-stripped, and turned into a structured `RedactedFacts` JSON **without the raw text ever leaving the operator's infrastructure** — the cloud synthesis model only ever sees de-identified facts. That is not a policy promise; it is a property of the data flow.
+1. **Edge-deployable.** The E4B variant runs on a clinician's laptop or a hospital server, which is what makes a private-document path possible at all: parse and PII-strip locally into a structured `RedactedFacts` JSON, and let the synthesis model see only de-identified facts. We built that path and then **switched it off** (`MY_CASE_ENABLED`), because this deployment runs Gemma 4 at a hosted provider outside the EU — so the property the design depends on did not hold in production. It comes back when the redaction model runs in the EU, and not before.
 2. **Cost profile that fits a foundation.** A real living-guideline workflow triages thousands of documents a month per disease. Running Gemma 4 on the operator's own hardware (or a flat-rate endpoint) keeps that volume affordable, which keeps the evidence horizon long — a token-priced API would force exactly the triage shortcuts the architecture is built to avoid.
 3. **Function-calling + structured output.** Every Gemma 4 call returns a Pydantic-validated payload — `RedactedFacts`, `ClinicalFinding`, the per-paragraph diff schemas. The model is held to a contract on every step, so downstream rules rely on field types, not on prompt vibes.
 
@@ -91,7 +89,9 @@ Two ways to run — pick whichever fits what you have installed.
 
 ```bash
 cp backend/.env.example .env
-# edit .env: OPENROUTER_API_KEY=... and MODEL_PROFILE=openrouter (or production/test)
+# edit .env: pick a MODEL_PROFILE and give it a key, e.g.
+#   MODEL_PROFILE=openrouter + OPENROUTER_API_KEY=...
+#   MODEL_PROFILE=ollama     + a local Gemma on :11434 (no key, no cloud)
 docker compose up --build
 # public  → http://localhost:5173
 # admin   → http://localhost:5174
@@ -114,7 +114,7 @@ Two surfaces over one backend:
 - **`frontend-public`** (`:5173`) — patients, families, clinicians: living guidelines, diagnostic pathways, specialist directory.
 - **`frontend-admin`** (`:5174`) — operators: visual workflow editor, live run traces, MCP tool governance, review queue.
 
-Backed by one **FastAPI + Pydantic AI + MCP + SQLAlchemy 2.0 Core + PostgreSQL** service (`DB_URL`, psycopg). React 18 + Vite + TypeScript + React Flow on the frontend. Server-Sent Events for live run traces. Default **`MODEL_PROFILE=vllm`** (SiliconFlow Gemma 4); cloud profiles (`openai` / `deepseek` / `openrouter`) also supported.
+Backed by one **FastAPI + Pydantic AI + MCP + SQLAlchemy 2.0 (ORM + Core) + PostgreSQL** service (`DB_URL`, psycopg). React 18 + Vite + TypeScript + React Flow on the frontend. Server-Sent Events for live run traces. Production runs **`MODEL_PROFILE=vllm`** (Gemma 4 at a hosted OpenAI-compatible endpoint — SiliconFlow). The other profiles are `production` (the code's own fallback), `test`, `openrouter`, `synthesis` and `ollama` — the last one points at a local Gemma, which is how the model swap gets tested.
 
 ```
 ┌────────────────────┐        SSE / REST         ┌──────────────────────┐
@@ -133,11 +133,11 @@ Backed by one **FastAPI + Pydantic AI + MCP + SQLAlchemy 2.0 Core + PostgreSQL**
                                                   └──────────────────┘
 ```
 
-Flows are **data**, not Python files: a graph of typed nodes the engine walks step by step. Inside an *agentic* node the AI has full freedom; *between* nodes the engine is in charge, deterministically, along graph edges. Gates are deterministic, not LLM-mediated, and every recommendation is traceable to a published source. Full overview in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md); the patterns we want every new component to follow are in [`docs/ENGINEERING_VISION.md`](docs/ENGINEERING_VISION.md).
+Flows are **data**, not Python files: a graph of typed nodes the engine walks step by step. Inside an *agentic* node the AI has full freedom; *between* nodes the engine is in charge, deterministically, along graph edges. Gates are deterministic, not LLM-mediated, and a claim taken from a paper is traceable to it by PMID — with sections that have no source on the shelf saying so instead. Full overview in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md); the patterns we want every new component to follow are in [`docs/ENGINEERING_VISION.md`](docs/ENGINEERING_VISION.md).
 
 ## Quality
 
-- **671** backend + content-service tests pass
+- **1012** backend + content-service tests pass
 - **TypeScript strict** + ESLint clean across all four workspaces (`@gene-guidelines/ui`, `@gene-guidelines/ops`, `frontend-public`, `frontend-admin`)
 - **Vitest + RTL** on the public site; **Playwright** smoke test for the critical user flow
 - **Ruff + mypy + pre-commit** configured (gentle gate today, full enforcement after the Phase 2 refactor)
@@ -148,14 +148,15 @@ make ship       # the gate that must be green before a release tag
 
 ## What's next
 
-The Kaggle submission ships the engine, the FD living guideline with PMID provenance, the doctor / trial / therapy / foundation modules, the private-context upload with Gemma 4 PII redaction, the workflow editor, and the live "active research" projection. The next layer is concrete and short:
+Shipping today: the engine, seven disease entities with PMID-grounded synthesis and per-claim source paraphrases, the doctor / trial / therapy / foundation modules, the official-guideline pointer, disease alerts with double opt-in, the workflow editor, and the live "active research" projection. Since the first release the scope has narrowed on purpose — doctors, guidelines, what the AI finds in PubMed, trials, foundations, therapies — and the private-document upload is switched off (see *Why Gemma 4*).
 
-- **Official guideline pointer per disease.** Every disease page surfaces a "ground truth" block alongside the living document: the international consensus paper, with title, authors, journal, PMID, and a source link. For fibrous dysplasia that is the FD/MAS international best-practice consensus, 2019 ([Orphanet J Rare Dis, PMID 31196103](https://link.springer.com/article/10.1186/s13023-019-1102-9)); for MAS and Noonan a small "find-the-consensus" workflow queries PubMed for the recognised paper and promotes it once a reviewer confirms it.
-- **Three parent pathways per disease, not one.** Splitting the single `care_pathways` row into three flowcharts a parent navigates independently — *Confirming the diagnosis and its subtype*, *Long-term monitoring*, and *On treatment / after surgery* — via a `care_pathways.kind` enum (`diagnosis | monitoring | post_treatment`).
-- **Reviewer accounts with verification.** A clinician submits an ORCID + institutional affiliation, an admin approves, and the verified reviewer's *useful / not useful* signal then carries more weight in the ranking. Richer collaboration — paragraph-level edits, explicit "experts disagree, here is why" threads, full versioning — comes later, and only where a consortium actually takes it up.
-- **Subscriptions for families.** A parent attaches a private context and opts in to a notification when a new trial matches the extracted facts, when a proposal changes the recommendation for the documented mutation, or when a new specialist is added in their region. The schema is straightforward; the care goes into the policy work (cadence, opt-out, language, who owns the email channel).
+What is genuinely still open:
 
-The order above is the order we ship them in; see [`docs/ROADMAP.md`](docs/ROADMAP.md) for the engineering plan.
+- **Three parent pathways per disease, not one.** The column exists (`care_pathways.kind`: `diagnosis | monitoring | post_treatment`); the content does not. A parent should navigate *Confirming the diagnosis and its subtype*, *Long-term monitoring* and *On treatment / after surgery* separately, instead of one flowchart that mixes all three.
+- **Richer clinician collaboration.** Verified-clinician accounts and the weighted *useful / not useful* signal are in. Paragraph-level edits, explicit "experts disagree, here is why" threads and full versioning are not — and they only get built where a consortium actually takes the platform up.
+- **Coverage that a family can rely on.** Seven entities is a demonstration, not a service. Widening it is a question of research budget per disease, not of engine work.
+
+See [`docs/ROADMAP.md`](docs/ROADMAP.md) for the engineering plan.
 
 ## Get involved
 
@@ -166,7 +167,7 @@ GeneGuidelines is open source (CC-BY 4.0) and built by a non-profit — every ki
 - **Researchers** — pilot the platform on a disease you work on, and help shape the engine for your own questions. [Reach out](mailto:kontakt@genequest.org).
 - **Foundations & sponsors** — help us widen disease coverage and the specialist directory. We're a registered non-profit (KRS 0001211461); [let's talk](mailto:kontakt@genequest.org).
 
-Disease not in the catalogue yet? Anyone can request one from the [live site](https://geneguidelines.genequest.org) — it fans out the AI workflows for that entity, with first results in about ten minutes.
+Disease not in the catalogue yet? Anyone can request one from the [live site](https://geneguidelines.genequest.org) — it fans out the AI workflows for that entity and the page fills in as each one lands.
 
 ## Documentation
 
