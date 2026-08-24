@@ -19,7 +19,7 @@
   "factPrevalence": "Prevalence",
   "factOmim": "OMIM",
   "privacyTitle": "Have a hospital discharge summary?",
-  "privacyBodyPart1": "You can load it privately — facts are extracted locally in your browser, the original never reaches us. Then the map below adapts to",
+  "privacyBodyPart1": "You can load it — the file goes to our server, where a model pulls out the clinical facts and strips names, dates and identifiers. We store only those facts, never the document itself. Then the map below adapts to",
   "privacyBodyEm": "your",
   "privacyBodyPart2": "case and mutation.",
   "privacyCta": "Load privately →",

@@ -16,6 +16,9 @@ const PROMISE_KEYS: readonly string[] = [
   "promise2",
   "promise3",
   "promise4",
+  // Where the de-identification model actually runs. A parent deciding whether to
+  // upload a discharge summary needs this before signing in, not after.
+  "promise5",
 ];
 
 export function MyCaseGate({ disease, variant, onLogin }: MyCaseGateProps) {

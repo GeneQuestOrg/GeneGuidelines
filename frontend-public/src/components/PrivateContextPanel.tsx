@@ -324,7 +324,14 @@ export function PrivateContextPanel({ diseaseSlug }: PrivateContextPanelProps) {
   const fileRef = useRef<HTMLInputElement | null>(null);
   const [expandedId, setExpandedId] = useState<number | null>(null);
 
-  const handlePick = () => fileRef.current?.click();
+  // Consent is per visit, not remembered: it gates one session's uploads, and a
+  // stored "yes" from weeks ago is not consent to today's transfer.
+  const [consented, setConsented] = useState(false);
+
+  const handlePick = () => {
+    if (!consented) return;
+    fileRef.current?.click();
+  };
 
   // The "previous uploads" list excludes the most-recent one (it is already
   // rendered up top in the split-view).
@@ -339,6 +346,15 @@ export function PrivateContextPanel({ diseaseSlug }: PrivateContextPanelProps) {
         <strong>{t("blurbBold")}</strong>
         {t("blurbSuffix")}
       </p>
+
+      <label className="pc-consent">
+        <input
+          type="checkbox"
+          checked={consented}
+          onChange={(e) => setConsented(e.target.checked)}
+        />
+        <span>{t("consentLabel")}</span>
+      </label>
 
       <div className="pc-controls">
         <input
@@ -359,7 +375,7 @@ export function PrivateContextPanel({ diseaseSlug }: PrivateContextPanelProps) {
           type="button"
           variant="primary"
           onClick={handlePick}
-          disabled={uploading}
+          disabled={uploading || !consented}
         >
           {uploading ? t("uploadingButton") : t("addContextButton")}
         </Button>

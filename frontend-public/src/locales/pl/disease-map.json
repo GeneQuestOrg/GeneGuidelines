@@ -19,7 +19,7 @@
   "factPrevalence": "Częstość występowania",
   "factOmim": "OMIM",
   "privacyTitle": "Masz wypis ze szpitala?",
-  "privacyBodyPart1": "Możesz go wczytać prywatnie — fakty są wyciągane lokalnie w Twojej przeglądarce, oryginał nigdy do nas nie trafia. Wtedy mapa poniżej dopasuje się do",
+  "privacyBodyPart1": "Możesz go wczytać — plik trafia na nasz serwer, gdzie model wyciąga z niego fakty kliniczne i usuwa nazwiska, daty i identyfikatory. Zapisujemy tylko te fakty, nigdy samego dokumentu. Wtedy mapa poniżej dopasuje się do",
   "privacyBodyEm": "Twojego",
   "privacyBodyPart2": "przypadku i mutacji.",
   "privacyCta": "Wczytaj prywatnie →",
