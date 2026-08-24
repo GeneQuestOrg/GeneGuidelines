@@ -37,7 +37,6 @@ export function buildHomeCopy(t: TFunction): HomeCopy {
     metaDiseases: t("metaDiseases"),
     metaDoctors: t("metaDoctors"),
     metaTrials: t("metaTrials"),
-    metaSuggestions: t("metaSuggestions"),
 
     findsTitle: t("findsTitle"),
     findsSub: t("findsSub"),

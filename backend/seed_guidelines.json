@@ -530,11 +530,11 @@
         "gate": "expert",
         "parentText": "Newer 2025 reviews suggest the bone-strengthening drug denosumab can meaningfully reduce FD pain for many people, but it is a specialist-only option that needs careful counseling and a clear plan for stopping it safely — worth asking your specialist about.",
         "signal": {
-          "useful": 2,
+          "useful": 0,
           "not": 0,
           "wrong": 0,
-          "ratings": 2,
-          "verified": 1
+          "ratings": 0,
+          "verified": 0
         },
         "comments": []
       },
@@ -554,11 +554,11 @@
         "gate": "expert",
         "parentText": "If denosumab is used, recent evidence says blood calcium and phosphate should be checked on a planned schedule during treatment and especially after stopping, because levels can rebound — a question to raise with the treating specialist.",
         "signal": {
-          "useful": 1,
+          "useful": 0,
           "not": 0,
           "wrong": 0,
-          "ratings": 1,
-          "verified": 1
+          "ratings": 0,
+          "verified": 0
         },
         "comments": []
       },
@@ -579,54 +579,15 @@
         "gate": "expert",
         "parentText": "When denosumab is tried, it helps to track concrete measures over time — pain scores, painkiller use, bone blood markers, and scans — so the specialist can judge whether to continue or stop. Worth asking how response will be measured.",
         "signal": {
-          "useful": 1,
+          "useful": 0,
           "not": 0,
           "wrong": 0,
-          "ratings": 1,
+          "ratings": 0,
           "verified": 0
         },
         "comments": []
       }
-    ],
-    "signals": {
-      "diagnosis": {
-        "up": 7,
-        "flags": 0,
-        "verified": 3
-      },
-      "histopathology": {
-        "up": 5,
-        "flags": 1,
-        "verified": 2,
-        "flagNotes": [
-          {
-            "who": "Verified reviewer",
-            "text": "Add that a negative blood GNAS does NOT rule out FD — a first-contact reader could misread it."
-          }
-        ]
-      },
-      "therapy": {
-        "up": 6,
-        "flags": 1,
-        "verified": 3,
-        "flagNotes": [
-          {
-            "who": "Verified reviewer",
-            "text": "The denosumab summary is faithful to Gun 2024, but state more clearly that a specialist leads it — not the family doctor."
-          }
-        ]
-      },
-      "surgery": {
-        "up": 8,
-        "flags": 0,
-        "verified": 4
-      },
-      "monitoring": {
-        "up": 4,
-        "flags": 0,
-        "verified": 2
-      }
-    }
+    ]
   },
   "mas": {
     "sourceDocuments": [
@@ -709,11 +670,11 @@
         ],
         "gate": "expert",
         "signal": {
-          "useful": 1,
+          "useful": 0,
           "not": 0,
           "wrong": 0,
-          "ratings": 1,
-          "verified": 1
+          "ratings": 0,
+          "verified": 0
         },
         "comments": [],
         "diff": {
@@ -733,13 +694,6 @@
           ]
         }
       }
-    ],
-    "signals": {
-      "overview": {
-        "up": 2,
-        "flags": 0,
-        "verified": 1
-      }
-    }
+    ]
   }
 }

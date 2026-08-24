@@ -35,7 +35,6 @@ export interface HomeCopy {
   metaDiseases: string;
   metaDoctors: string;
   metaTrials: string;
-  metaSuggestions: string;
 
   /* "Co tu znajdziesz" + honest disclosure. */
   findsTitle: string;

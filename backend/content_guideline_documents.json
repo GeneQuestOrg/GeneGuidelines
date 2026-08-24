@@ -19,12 +19,7 @@
             "citations": [
               "31196103",
               "25719192"
-            ],
-            "lastChange": {
-              "type": "verified",
-              "by": "specialist network",
-              "date": "2025-08-12"
-            }
+            ]
           },
           {
             "id": "dx-imaging-2",
@@ -32,12 +27,7 @@
             "citations": [
               "31196103",
               "30176400"
-            ],
-            "lastChange": {
-              "type": "verified",
-              "by": "specialist network",
-              "date": "2024-11-03"
-            }
+            ]
           },
           {
             "id": "dx-imaging-3",
@@ -46,12 +36,6 @@
               "2188311",
               "31196103"
             ],
-            "lastChange": {
-              "type": "verified",
-              "by": "specialist network",
-              "date": "2026-05-02",
-              "prId": "PR-140"
-            },
             "highlight": true
           }
         ]
@@ -66,24 +50,14 @@
             "text": "Classic histology shows irregular trabeculae of woven bone in a fibrous stroma. The pattern may overlap with juvenile trabecular ossifying fibroma, especially in children.",
             "citations": [
               "25719192"
-            ],
-            "lastChange": {
-              "type": "verified",
-              "by": "specialist network",
-              "date": "2025-08-12"
-            }
+            ]
           },
           {
             "id": "hp-2",
             "text": "Molecular testing for somatic GNAS (commonly R201H or R201C in exon 8) is pathognomonic when positive. A negative blood test does not exclude mosaic disease — repeat from affected tissue if clinical suspicion remains high.",
             "citations": [
               "25719192"
-            ],
-            "lastChange": {
-              "type": "consensus",
-              "by": "specialist network",
-              "date": "2025-08-12"
-            }
+            ]
           }
         ]
       },
@@ -99,24 +73,14 @@
               "31196103",
               "39766409",
               "12065933"
-            ],
-            "lastChange": {
-              "type": "verified",
-              "by": "specialist network",
-              "date": "2025-12-04"
-            }
+            ]
           },
           {
             "id": "tx-bisphos",
             "text": "IV bisphosphonates (pamidronate or zoledronate per weight-based protocols) are considered for pain refractory to NSAIDs, with calcium and vitamin D supplementation and renal monitoring.",
             "citations": [
               "31196103"
-            ],
-            "lastChange": {
-              "type": "verified",
-              "by": "specialist network",
-              "date": "2025-12-04"
-            }
+            ]
           },
           {
             "id": "tx-denosumab-1",
@@ -128,27 +92,6 @@
               "type": "superseded",
               "by": "PR-142",
               "date": "2026-05-08"
-            },
-            "prInDiff": {
-              "prId": "PR-142",
-              "removed": true
-            }
-          },
-          {
-            "id": "tx-denosumab-2",
-            "text": "Denosumab 60 mg subcutaneously every 4 weeks for six induction doses, then every 12 weeks if CTX remains below 0.3 ng/mL. Monitor calcium and 25-OH vitamin D weekly during induction, then monthly during maintenance.",
-            "citations": [
-              "34964677",
-              "36755645"
-            ],
-            "lastChange": {
-              "type": "pending",
-              "by": "PR-142",
-              "date": "2026-05-08"
-            },
-            "prInDiff": {
-              "prId": "PR-142",
-              "added": true
             }
           },
           {
@@ -156,24 +99,14 @@
             "text": "After denosumab discontinuation, rebound hypercalcemia is a risk — plan a taper and consider transition to bisphosphonates for 6–12 months.",
             "citations": [
               "34964677"
-            ],
-            "lastChange": {
-              "type": "verified",
-              "by": "specialist network",
-              "date": "2026-02-18"
-            }
+            ]
           },
           {
             "id": "tx-burosumab",
             "text": "Burosumab is reserved for FGF23-mediated hypophosphatemia (phosphate <0.8 mmol/L with elevated FGF23). Titrate per weight with phosphate monitoring every two weeks during dose adjustment.",
             "citations": [
               "37184453"
-            ],
-            "lastChange": {
-              "type": "verified",
-              "by": "specialist network",
-              "date": "2024-09-22"
-            }
+            ]
           }
         ]
       },
@@ -188,12 +121,7 @@
             "citations": [
               "31196103",
               "39766409"
-            ],
-            "lastChange": {
-              "type": "consensus",
-              "by": "specialist network",
-              "date": "2025-12-04"
-            }
+            ]
           },
           {
             "id": "sx-yes",
@@ -201,12 +129,7 @@
             "citations": [
               "30176400",
               "31196103"
-            ],
-            "lastChange": {
-              "type": "verified",
-              "by": "specialist network",
-              "date": "2025-08-12"
-            }
+            ]
           },
           {
             "id": "sx-optic",
@@ -214,12 +137,7 @@
             "citations": [
               "37184453",
               "30176400"
-            ],
-            "lastChange": {
-              "type": "verified",
-              "by": "specialist network",
-              "date": "2026-03-11"
-            }
+            ]
           }
         ]
       },
@@ -233,12 +151,7 @@
             "text": "Clinical review every 6 months in children and annually in stable adults, including pain scores, function, growth parameters, and endocrine symptoms when MAS overlap is possible.",
             "citations": [
               "31196103"
-            ],
-            "lastChange": {
-              "type": "verified",
-              "by": "specialist network",
-              "date": "2025-05-20"
-            }
+            ]
           },
           {
             "id": "mon-2",
@@ -246,12 +159,7 @@
             "citations": [
               "31196103",
               "36755645"
-            ],
-            "lastChange": {
-              "type": "verified",
-              "by": "specialist network",
-              "date": "2025-05-20"
-            }
+            ]
           },
           {
             "id": "mon-3",
@@ -293,27 +201,6 @@
               "type": "superseded",
               "by": "PR-139",
               "date": "2026-05-01"
-            },
-            "prInDiff": {
-              "prId": "PR-139",
-              "removed": true
-            }
-          },
-          {
-            "id": "endo-tanner-1",
-            "text": "Tanner staging every 6 months in MAS girls aged 2–7 (peak window for GnRH-independent precocious puberty).",
-            "citations": [
-              "37239810",
-              "31673695"
-            ],
-            "lastChange": {
-              "type": "pending",
-              "by": "PR-139",
-              "date": "2026-05-01"
-            },
-            "prInDiff": {
-              "prId": "PR-139",
-              "added": true
             }
           }
         ]
@@ -340,12 +227,7 @@
             "citations": [
               "39928417",
               "11992261"
-            ],
-            "lastChange": {
-              "type": "verified",
-              "by": "specialist network",
-              "date": "2025-11-20"
-            }
+            ]
           }
         ]
       }

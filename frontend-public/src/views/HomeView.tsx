@@ -132,9 +132,6 @@ export function HomeView({ view, onNav }: HomeViewProps) {
           <span>
             <b>{stats.recruitingTrialCount.toLocaleString(i18n.language)}</b> {copy.metaTrials}
           </span>
-          <span>
-            <b>{stats.openPrCount.toLocaleString(i18n.language)}</b> {copy.metaSuggestions}
-          </span>
         </div>
       ) : null}
 

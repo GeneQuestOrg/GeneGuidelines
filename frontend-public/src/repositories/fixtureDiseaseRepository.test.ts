@@ -26,7 +26,9 @@ describe("fixtureDiseaseRepository", () => {
   it("returns catalog stats", async () => {
     const stats = await fixtureDiseaseRepository.getCatalogStats();
     expect(stats.diseaseCount).toBeGreaterThan(0);
-    expect(stats.openPrCount).toBeGreaterThan(0);
+    // Zero by design: the PR fixtures were AI-authored change requests shown as
+    // "under review" by a specialist network that does not exist (see data/prs.ts).
+    expect(stats.openPrCount).toBe(0);
   });
 });
 

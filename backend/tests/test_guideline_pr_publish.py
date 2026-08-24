@@ -1,81 +1,187 @@
-"""Unit tests for guideline PR publish merge."""
-from __future__ import annotations
+"""Unit tests for the guideline PR publish merge.
 
-import json
-from pathlib import Path
+These used to run against the seeded FD/MAS/Noonan documents and the
+``content_pr_para_maps.json`` entries for PR-138/139/142. Those were AI-authored
+change requests shipped as production content — including a paediatric denosumab
+dosing schedule marked "verified by specialist network" — and were deleted, so
+the merge is exercised here against synthetic documents instead. That is also the
+better test: the three replace modes are what we care about, not the wording of
+one seeded paragraph.
+"""
+from __future__ import annotations
 
 import pytest
 
 from backend.guideline_pr_publish import (
     GuidelinePrPublishError,
+    apply_pr_to_guideline_document,
     publish_pr_to_stored_document,
 )
 
-
-@pytest.fixture
-def fd_document() -> dict:
-    path = Path(__file__).resolve().parents[1] / "content_guideline_documents.json"
-    data = json.loads(path.read_text(encoding="utf-8"))
-    return data["fd"]
+_REVIEWER = "Dr. Test"
 
 
-def test_publish_pr_142_replaces_denosumab_paragraphs(fd_document: dict) -> None:
-    published = publish_pr_to_stored_document(
-        fd_document,
-        pr_id="PR-142",
-        reviewer="Dr. Test",
+def _document(section_id: str, paragraphs: list[dict]) -> dict:
+    return {"sections": [{"id": "other", "paragraphs": []}, {"id": section_id, "paragraphs": paragraphs}]}
+
+
+def _section(document: dict, section_id: str) -> dict:
+    return next(s for s in document["sections"] if s["id"] == section_id)
+
+
+def test_replace_drops_removed_and_finalizes_added() -> None:
+    """``replace``: the paragraph the PR removes goes, the one it adds is kept."""
+    document = _document(
+        "therapy",
+        [
+            {"id": "tx-keep", "text": "unchanged"},
+            {"id": "tx-old", "text": "superseded", "prInDiff": {"prId": "PR-1", "removed": True}},
+            {"id": "tx-new", "text": "replacement", "prInDiff": {"prId": "PR-1", "added": True}},
+        ],
     )
-    therapy = next(s for s in published["sections"] if s["id"] == "therapy")
-    ids = [p["id"] for p in therapy["paragraphs"]]
-    assert "tx-denosumab-1" not in ids
-    assert "tx-denosumab-2" in ids
-    para = next(p for p in therapy["paragraphs"] if p["id"] == "tx-denosumab-2")
-    assert para.get("prInDiff") is None
-    assert para["lastChange"]["type"] == "verified"
+
+    published = apply_pr_to_guideline_document(
+        document,
+        para_map={"targetSection": "therapy", "replaceMode": "replace", "targetParaIds": ["tx-new"]},
+        pr_id="PR-1",
+        reviewer=_REVIEWER,
+    )
+
+    paragraphs = _section(published, "therapy")["paragraphs"]
+    assert [p["id"] for p in paragraphs] == ["tx-keep", "tx-new"]
+    added = paragraphs[1]
+    assert added.get("prInDiff") is None  # no longer "in a diff" once published
+    assert added["lastChange"] == {
+        "type": "verified",
+        "by": _REVIEWER,
+        "date": added["lastChange"]["date"],
+        "prId": "PR-1",
+    }
+    # The source document is untouched — callers persist the returned copy.
+    assert len(_section(document, "therapy")["paragraphs"]) == 3
 
 
-def test_publish_missing_paragraph_map_raises(fd_document: dict) -> None:
-    with pytest.raises(GuidelinePrPublishError, match="paragraphMap"):
-        publish_pr_to_stored_document(
-            fd_document,
-            pr_id="PR-999",
-            reviewer="Dr. Test",
+def test_insert_after_adds_the_new_paragraph_behind_its_anchor() -> None:
+    document = _document("cardiology", [{"id": "card-1", "text": "first"}, {"id": "card-2", "text": "second"}])
+
+    published = apply_pr_to_guideline_document(
+        document,
+        para_map={
+            "targetSection": "cardiology",
+            "replaceMode": "insert-after",
+            "insertAfter": "card-1",
+            "addedParagraph": {"id": "card-echo", "text": "echo follow-up"},
+        },
+        pr_id="PR-2",
+        reviewer=_REVIEWER,
+    )
+
+    paragraphs = _section(published, "cardiology")["paragraphs"]
+    assert [p["id"] for p in paragraphs] == ["card-1", "card-echo", "card-2"]
+    assert paragraphs[1]["lastChange"]["prId"] == "PR-2"
+
+
+def test_insert_after_is_idempotent_when_the_paragraph_is_already_there() -> None:
+    """Re-publishing must not duplicate the added paragraph."""
+    document = _document(
+        "cardiology",
+        [{"id": "card-1", "text": "first"}, {"id": "card-echo", "text": "echo follow-up"}],
+    )
+
+    published = apply_pr_to_guideline_document(
+        document,
+        para_map={
+            "targetSection": "cardiology",
+            "replaceMode": "insert-after",
+            "insertAfter": "card-1",
+            "addedParagraph": {"id": "card-echo", "text": "echo follow-up"},
+        },
+        pr_id="PR-2",
+        reviewer=_REVIEWER,
+    )
+
+    paragraphs = _section(published, "cardiology")["paragraphs"]
+    assert [p["id"] for p in paragraphs] == ["card-1", "card-echo"]
+    assert paragraphs[1]["lastChange"]["prId"] == "PR-2"
+
+
+def test_already_applied_only_stamps_the_targeted_paragraphs() -> None:
+    document = _document(
+        "endocrine",
+        [{"id": "endo-1", "text": "targeted"}, {"id": "endo-2", "text": "untouched"}],
+    )
+
+    published = apply_pr_to_guideline_document(
+        document,
+        para_map={
+            "targetSection": "endocrine",
+            "replaceMode": "already-applied",
+            "targetParaIds": ["endo-1"],
+        },
+        pr_id="PR-3",
+        reviewer=_REVIEWER,
+    )
+
+    paragraphs = _section(published, "endocrine")["paragraphs"]
+    assert paragraphs[0]["lastChange"]["prId"] == "PR-3"
+    assert "lastChange" not in paragraphs[1]
+
+
+@pytest.mark.parametrize(
+    ("para_map", "match"),
+    [
+        ({}, "paragraphMap"),
+        ({"replaceMode": "replace", "targetParaIds": ["x"]}, "targetSection"),
+        ({"targetSection": "nope", "replaceMode": "replace", "targetParaIds": ["x"]}, "not found"),
+        (
+            {
+                "targetSection": "therapy",
+                "replaceMode": "insert-after",
+                "addedParagraph": {"id": "new"},
+            },
+            "insertAfter",
+        ),
+        (
+            {
+                "targetSection": "therapy",
+                "replaceMode": "insert-after",
+                "insertAfter": "missing-anchor",
+                "addedParagraph": {"id": "new"},
+            },
+            "anchor paragraph",
+        ),
+    ],
+)
+def test_bad_paragraph_maps_refuse_to_publish(para_map: dict, match: str) -> None:
+    """A half-specified map must fail loudly rather than silently reshape a guideline."""
+    document = _document("therapy", [{"id": "tx-1", "text": "text"}])
+
+    with pytest.raises(GuidelinePrPublishError, match=match):
+        apply_pr_to_guideline_document(
+            document, para_map=para_map, pr_id="PR-4", reviewer=_REVIEWER
         )
 
 
-@pytest.fixture
-def mas_document() -> dict:
-    path = Path(__file__).resolve().parents[1] / "content_guideline_documents.json"
-    data = json.loads(path.read_text(encoding="utf-8"))
-    return data["mas"]
-
-
-@pytest.fixture
-def noonan_document() -> dict:
-    path = Path(__file__).resolve().parents[1] / "content_guideline_documents.json"
-    data = json.loads(path.read_text(encoding="utf-8"))
-    return data["noonan"]
-
-
-def test_publish_pr_139_replaces_tanner_paragraph(mas_document: dict) -> None:
-    published = publish_pr_to_stored_document(
-        mas_document,
-        pr_id="PR-139",
-        reviewer="Dr. Test",
+def test_replace_refuses_to_empty_a_section() -> None:
+    document = _document(
+        "therapy",
+        [{"id": "tx-only", "text": "gone", "prInDiff": {"prId": "PR-5", "removed": True}}],
     )
-    endocrine = next(s for s in published["sections"] if s["id"] == "endocrine")
-    ids = [p["id"] for p in endocrine["paragraphs"]]
-    assert "endo-tanner-old" not in ids
-    assert "endo-tanner-1" in ids
-    para = next(p for p in endocrine["paragraphs"] if p["id"] == "endo-tanner-1")
-    assert para["lastChange"]["type"] == "verified"
+
+    with pytest.raises(GuidelinePrPublishError, match="remove all paragraphs"):
+        apply_pr_to_guideline_document(
+            document,
+            para_map={"targetSection": "therapy", "replaceMode": "replace", "targetParaIds": []},
+            pr_id="PR-5",
+            reviewer=_REVIEWER,
+        )
 
 
-def test_publish_pr_138_inserts_echo_followup(noonan_document: dict) -> None:
-    published = publish_pr_to_stored_document(
-        noonan_document,
-        pr_id="PR-138",
-        reviewer="Dr. Test",
-    )
-    cardiology = next(s for s in published["sections"] if s["id"] == "cardiology")
-    assert any(p["id"] == "card-echo-followup" for p in cardiology["paragraphs"])
+def test_publish_from_store_raises_when_the_pr_has_no_paragraph_map() -> None:
+    """The file-backed wrapper: no map on disk means no publish (nothing is seeded)."""
+    with pytest.raises(GuidelinePrPublishError, match="paragraphMap"):
+        publish_pr_to_stored_document(
+            _document("therapy", [{"id": "tx-1", "text": "text"}]),
+            pr_id="PR-999",
+            reviewer=_REVIEWER,
+        )

@@ -14,7 +14,7 @@ from sqlalchemy import create_engine
 import backend.guidelines.orm  # noqa: F401 — registers tables on the shared metadata
 from backend.guidelines.api import router as guidelines_router
 from backend.guidelines.contracts import SourceDocResponse, SynthesisResponse
-from backend.guidelines.models import GuidelineSynthesis
+from backend.guidelines.models import GuidelineSynthesis, SynthSectionSignal
 from backend.guidelines.deps import provide_guidelines_service
 from backend.guidelines.repository import (
     InMemoryGuidelinesRepo,
@@ -66,16 +66,18 @@ def test_fd_shelf_synthesis_suggestions_signals(seeded_repo: SqlaGuidelinesRepo)
 
     suggestions = seeded_repo.list_suggestions("fd")
     assert {s.id for s in suggestions} == {"sg-41858142", "sg-41858142-2", "sg-41790192"}
-    # Backfill: every suggestion has a parent-readable line and a non-empty signal.
+    # Every suggestion has a parent-readable line and a signal that starts at zero:
+    # a seeded rating count is a fabricated endorsement (see guidelines/seed.py).
     for s in suggestions:
         assert s.parent_text
-        assert s.signal and s.signal.get("ratings", 0) >= 1
+        assert s.signal is not None and s.signal.get("ratings", 0) == 0
     # Real 2026-evidence citations survive the merge.
     assert "41858142" in next(s for s in suggestions if s.id == "sg-41858142").citations
 
-    signals = seeded_repo.get_synthesis_signals("fd")
-    assert set(signals) == {"diagnosis", "histopathology", "therapy", "surgery", "monitoring"}
-    assert signals["histopathology"].flags == 1
+    # No seeded section signals, by design. Production served "7 clinicians found
+    # this useful" and a flag note signed "Verified reviewer" while no clinician had
+    # ever voted on anything; signals may only come from real votes.
+    assert seeded_repo.get_synthesis_signals("fd") == {}
 
 
 def test_mas_present_and_unknown_empty(seeded_repo: SqlaGuidelinesRepo) -> None:
@@ -198,6 +200,13 @@ def test_api_endpoints(seeded_repo: SqlaGuidelinesRepo) -> None:
     sug = client.get("/api/diseases/fd/guideline-suggestions")
     assert sug.status_code == 200 and len(sug.json()) == 3
 
+    # Nothing is seeded, so the shape is checked against an injected signal — the
+    # endpoint contract still matters once real votes land.
+    mem.signals["fd"] = {
+        "histopathology": SynthSectionSignal(
+            section_id="histopathology", up=2, flags=1, verified=1, flag_notes=None
+        )
+    }
     sig = client.get("/api/diseases/fd/synthesis-signals")
     assert sig.status_code == 200 and sig.json()["histopathology"]["flags"] == 1
 

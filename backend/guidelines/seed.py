@@ -31,8 +31,11 @@ def seed_guidelines(repo: SqlaGuidelinesRepo, payload: dict) -> None:
             repo.upsert_synthesis(slug, synthesis)
         for order, suggestion in enumerate(disease.get("suggestions", [])):
             repo.insert_suggestion(slug, suggestion, order)
-        for section_id, signal in disease.get("signals", {}).items():
-            repo.upsert_synthesis_signal(slug, section_id, signal)
+        # Signals are deliberately NOT seeded. A signal is a count of real clinicians
+        # who rated a section useful, and a seeded one is a fabricated endorsement:
+        # production served "7 found this useful" and a flag note signed "Verified
+        # reviewer" for fibrous dysplasia while no clinician had ever voted on
+        # anything. Any "signals" block left in the payload is ignored.
 
 
 def seed_guidelines_if_empty(repo: SqlaGuidelinesRepo | None = None) -> bool:
