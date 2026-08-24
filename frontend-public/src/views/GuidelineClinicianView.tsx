@@ -231,7 +231,12 @@ export function GuidelineClinicianView({
                 <ProvenanceRow slug={disease.slug} docs={docs} para={p} onNav={onNav} />
               </div>
             ))}
-            <SynthSignal signal={signals[sec.id]} held={held} />
+            <SynthSignal
+              signal={signals[sec.id]}
+              held={held}
+              diseaseSlug={disease.slug}
+              sectionTitle={sec.title}
+            />
           </section>
         ))}
 
