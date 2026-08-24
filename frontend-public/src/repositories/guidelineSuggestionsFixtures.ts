@@ -24,14 +24,8 @@ const FD_SUGGESTIONS: readonly GuidelineSuggestion[] = [
     gate: "promoted",
     parentText:
       "Newer work suggests that if imaging shows optic-canal involvement — even without symptoms — a periodic OCT (a light-based scan, no radiation) plus a visual-field test can catch a problem early.",
-    signal: { useful: 3, not: 1, wrong: 0, ratings: 4, verified: 2 },
-    comments: [
-      {
-        who: "Verified reviewer",
-        tier: "led the research",
-        text: "Sensible and low risk. I'd anchor the 6-month interval to the NIH cohort rather than the 2024 review — the natural-history data there is stronger.",
-      },
-    ],
+    signal: { useful: 0, not: 0, wrong: 0, ratings: 0, verified: 0 },
+    comments: [],
   },
   {
     id: "sg-deno",
@@ -47,19 +41,8 @@ const FD_SUGGESTIONS: readonly GuidelineSuggestion[] = [
     evidence: "strong",
     citations: ["38010041", "31196103"],
     gate: "expert",
-    signal: { useful: 5, not: 0, wrong: 1, ratings: 6, verified: 3 },
-    comments: [
-      {
-        who: "Verified reviewer",
-        tier: "led the research",
-        text: "Right direction and consistent with the 2024 consensus. Weekly calcium during induction is non-negotiable — keep it bold. One reviewer flagged the maintenance interval as too long for under-10s; worth a sub-note.",
-      },
-      {
-        who: "Verified reviewer",
-        tier: "co-authored research",
-        text: "Flagging the maintenance interval — in our under-10 cohort at q12w, CTX rebounded in 2/9. I'd qualify it by age.",
-      },
-    ],
+    signal: { useful: 0, not: 0, wrong: 0, ratings: 0, verified: 0 },
+    comments: [],
     diff: {
       file: "guidelines/fd.md · §3 Therapy",
       hunk: "@@ -142,4 +142,8 @@ Denosumab",
@@ -94,7 +77,7 @@ const FD_SUGGESTIONS: readonly GuidelineSuggestion[] = [
     gate: "promoted",
     parentText:
       "If a blood test for the GNAS gene comes back negative but doctors still suspect FD, a more sensitive lab test (ddPCR from the affected tissue) can help confirm it — worth asking about.",
-    signal: { useful: 2, not: 0, wrong: 0, ratings: 2, verified: 1 },
+    signal: { useful: 0, not: 0, wrong: 0, ratings: 0, verified: 0 },
     comments: [],
   },
 ];
@@ -113,7 +96,7 @@ const MAS_SUGGESTIONS: readonly GuidelineSuggestion[] = [
     evidence: "moderate",
     citations: ["31196103"],
     gate: "expert",
-    signal: { useful: 1, not: 0, wrong: 0, ratings: 1, verified: 1 },
+    signal: { useful: 0, not: 0, wrong: 0, ratings: 0, verified: 0 },
     comments: [],
     diff: {
       file: "guidelines/mas.md · §1 Screening",
