@@ -212,10 +212,6 @@ export function DoctorProfileView({ slug, userLoc, onNav }: DoctorProfileViewPro
               <span>{t("evidence.reviewPapers")}</span>
               <b>{evidence.reviewPapers}</b>
             </div>
-            <div className={`ev${evidence.citesRecentGuidelines ? " ev--ok" : " ev--warn"}`}>
-              <span>{t("evidence.citesRecentGuidelines")}</span>
-              <b>{evidence.citesRecentGuidelines ? t("evidence.yes") : t("evidence.no")}</b>
-            </div>
             <div className={`ev${evidence.activeLast2y ? " ev--ok" : " ev--warn"}`}>
               <span>{t("evidence.activeLast2y")}</span>
               <b>{evidence.activeLast2y ? t("evidence.yes") : t("evidence.no")}</b>

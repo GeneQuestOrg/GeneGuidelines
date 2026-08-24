@@ -207,6 +207,10 @@ async def run_async(context: dict, *, now: Optional[date] = None) -> dict:
 
         flags = AuthorFlags(
             guideline_author=author.get("guideline_count", 0) >= 1,
+            # Never computed: it would need the citation list of every paper,
+            # which PubMed's E-utilities do not return. Stays False for every
+            # doctor, so the UI must not render it either way — a "No" here
+            # reads as a checked negative about a named clinician.
             cites_current_guidelines=False,
             active_last_2y=active,
             runs_clinical_trial=ct,

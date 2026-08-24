@@ -90,10 +90,11 @@ export function DoctorCard({ doctor, km, compact = false, onNav }: DoctorCardPro
                 <i style={{ width: `${doctor.score}%` }} />
               </span>
             </span>
+            {/* No "Cites guidelines" badge: the pipeline hardcodes that flag to
+                false (flows/doctor_finder/role_classifier.py), so it only ever
+                appeared on the six hand-written fixture doctors. */}
             {doctor.evidence.guidelineOrConsensusCoauthor ? (
               <span className="tag tag--ok">Guideline author</span>
-            ) : doctor.evidence.citesRecentGuidelines ? (
-              <span className="tag tag--ok">Cites guidelines</span>
             ) : null}
             {doctor.evidence.activeLast2y ? (
               <span className="tag tag--ok">Active</span>

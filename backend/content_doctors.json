@@ -16,7 +16,7 @@
       "evidence": {
         "firstOrLastAuthorPapers": 0,
         "reviewPapers": 0,
-        "citesRecentGuidelines": true,
+        "citesRecentGuidelines": false,
         "activeLast2y": true,
         "guidelineOrConsensusCoauthor": false
       },
@@ -76,7 +76,7 @@
       "evidence": {
         "firstOrLastAuthorPapers": 2,
         "reviewPapers": 0,
-        "citesRecentGuidelines": true,
+        "citesRecentGuidelines": false,
         "activeLast2y": true,
         "guidelineOrConsensusCoauthor": false
       },
@@ -112,7 +112,7 @@
       "evidence": {
         "firstOrLastAuthorPapers": 28,
         "reviewPapers": 7,
-        "citesRecentGuidelines": true,
+        "citesRecentGuidelines": false,
         "activeLast2y": true,
         "guidelineOrConsensusCoauthor": true
       },
@@ -155,7 +155,7 @@
       "evidence": {
         "firstOrLastAuthorPapers": 22,
         "reviewPapers": 5,
-        "citesRecentGuidelines": true,
+        "citesRecentGuidelines": false,
         "activeLast2y": true,
         "guidelineOrConsensusCoauthor": true
       },
@@ -191,7 +191,7 @@
       "evidence": {
         "firstOrLastAuthorPapers": 19,
         "reviewPapers": 4,
-        "citesRecentGuidelines": true,
+        "citesRecentGuidelines": false,
         "activeLast2y": true,
         "guidelineOrConsensusCoauthor": true
       },
