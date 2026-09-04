@@ -183,7 +183,9 @@ def test_fetch_fulltext_by_pmid_skips_documents_without_open_access(
     monkeypatch.setattr(
         pmc_fulltext,
         "fetch_fulltext_sections",
-        lambda pmid, pmcid: [("Diagnosis", "Clinically diagnosable in most cases without biopsy.")],
+        lambda pmid, pmcid, api_key=None: [
+            ("Diagnosis", "Clinically diagnosable in most cases without biopsy.")
+        ],
     )
 
     out = pmc_fulltext.fetch_fulltext_by_pmid(["31196103", "40186713"], char_budget=10_000)

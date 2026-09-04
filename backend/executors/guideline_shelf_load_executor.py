@@ -19,10 +19,15 @@ from ..config import NCBI_API_KEY
 from ..tools.pmc_fulltext import pmc_url
 from .base import NodeExecutor, NodeInput, NodeOutput
 
-# Per-document character budget for open-access full text. Five documents at 40k
-# chars ≈ 50k tokens, comfortably inside LLM_PROMPT_TOKEN_CAP (200k default) with
-# room for the prompt and the model's own reply. Raise only alongside that cap.
-_FULLTEXT_CHARS_PER_DOC = 40_000
+# Per-document character budget for open-access full text.
+#
+# Measured on the FD shelf: the whole shelf at full length is ~79k chars ≈ 20k
+# tokens, i.e. 10% of LLM_PROMPT_TOKEN_CAP (200k). The old 40k cap was set from a
+# guess and was throwing away 36% of the consensus document for no reason. 120k
+# per document keeps every realistic guideline whole while still bounding a
+# pathological outlier, and a five-document shelf at that ceiling would still be
+# ~150k tokens — inside the cap, though the cap is the real backstop, not this.
+_FULLTEXT_CHARS_PER_DOC = 120_000
 
 log = logging.getLogger(__name__)
 

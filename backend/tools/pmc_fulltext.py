@@ -120,17 +120,52 @@ def _flatten_section(sec: ET.Element, inherited: str = "") -> list[tuple[str, st
     return out
 
 
-def fetch_fulltext_sections(pmid: str, pmcid: str) -> list[tuple[str, str]]:
-    """Section-tagged paragraphs of an open-access article. [] when unavailable."""
-    url = f"{_EUROPE_PMC}/{pmcid}/fullTextXML"
-    try:
-        with httpx.Client(timeout=_TIMEOUT, follow_redirects=True) as client:
-            resp = client.get(url)
+def _fetch_xml(pmcid: str, api_key: str | None = None) -> str:
+    """Article XML from Europe PMC, falling back to NCBI efetch.
+
+    The two sources do not carry the same articles. Europe PMC 404s on records it
+    has not ingested into its open-access subset — including PMC11087144, the 2023
+    craniofacial FD review, which NCBI serves in full (77 kB with a <body>). Before
+    this fallback existed that paper contributed nothing but its abstract, which is
+    why every synthesised paragraph but one came from the consensus document.
+
+    Returns "" when neither source has a body to give (some PMC deposits really are
+    abstract-only — PMC7127130 is one).
+    """
+    attempts = [
+        (f"{_EUROPE_PMC}/{pmcid}/fullTextXML", None),
+        (
+            "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi",
+            {"db": "pmc", "id": pmcid.removeprefix("PMC"), "rettype": "xml", "retmode": "xml"}
+            | ({"api_key": api_key} if api_key else {}),
+        ),
+    ]
+    for url, params in attempts:
+        try:
+            with httpx.Client(timeout=_TIMEOUT, follow_redirects=True) as client:
+                resp = client.get(url, params=params)
             if resp.status_code != 200 or not resp.text.lstrip().startswith("<"):
-                return []
-            root = ET.fromstring(resp.text)
+                continue
+            if "<body" not in resp.text:
+                continue  # abstract-only deposit; try the next source
+            return resp.text
+        except Exception as exc:  # noqa: BLE001
+            log.info("pmc_fulltext: %s failed for %s: %s", url, pmcid, exc)
+    return ""
+
+
+def fetch_fulltext_sections(
+    pmid: str, pmcid: str, api_key: str | None = None
+) -> list[tuple[str, str]]:
+    """Section-tagged paragraphs of an open-access article. [] when unavailable."""
+    xml = _fetch_xml(pmcid, api_key=api_key)
+    if not xml:
+        log.info("pmc_fulltext: no full text for %s (%s)", pmid, pmcid)
+        return []
+    try:
+        root = ET.fromstring(xml)
     except Exception as exc:  # noqa: BLE001
-        log.info("pmc_fulltext: no full text for %s (%s): %s", pmid, pmcid, exc)
+        log.info("pmc_fulltext: unparseable XML for %s (%s): %s", pmid, pmcid, exc)
         return []
 
     body = root.find(".//body")
@@ -181,7 +216,7 @@ def fetch_fulltext_by_pmid(
     pmcid_by_pmid = _pmid_to_pmcid(pmids, api_key=api_key)
     out: dict[str, str] = {}
     for pmid, pmcid in pmcid_by_pmid.items():
-        sections = fetch_fulltext_sections(pmid, pmcid)
+        sections = fetch_fulltext_sections(pmid, pmcid, api_key=api_key)
         if not sections:
             continue
         rendered = render_for_prompt(sections, char_budget)
