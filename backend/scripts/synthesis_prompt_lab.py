@@ -39,10 +39,21 @@ _SPEC = pathlib.Path(__file__).resolve().parents[1] / "flows" / "specs" / "guide
 # not a generic quality rubric.
 _PROBES: dict[str, list[str]] = {
     "biopsy not routinely needed": ["not routinely", "only necessary", "reserved for"],
-    "whole-body imaging / extent": ["whole body", "whole-body", "extent of"],
     "scintigraphy named": ["scintigraph", "99mtc", "spect", "naf pet", "nuclear medicine"],
     "histology limits / false negatives": ["false negative", "repeated", "fresh-frozen", "fresh or"],
     "genetic testing guidance": ["genetic testing", "gnas", "sequencing"],
+}
+
+# Probes that need two things present at once. The whole-body-imaging probe used to
+# match on "extent of", which the model satisfies with "used to identify the full
+# extent of skeletal disease" — the modality without the recommendation. What makes
+# that line worth bringing to a doctor is its SCOPE: for every patient over five. So
+# require both the modality and the scope.
+_PAIRED_PROBES: dict[str, tuple[list[str], list[str]]] = {
+    "whole-body imaging FOR ALL ≥5y": (
+        ["whole body", "whole-body", "scintigraph", "nuclear medicine", "spect"],
+        ["5 years", "age 5", "aged 5", "over 5", "all patients"],
+    ),
 }
 
 
@@ -166,8 +177,18 @@ def _v_tail_checklist(base: str) -> str:
     )
 
 
+def _v_more_paragraphs(base: str) -> str:
+    """Option (c): give each section more room, so recommendations stop competing."""
+    return base.replace(
+        "- Write one short orienting sentence, then 2-5 paragraphs.",
+        "- Write one short orienting sentence, then 4-8 paragraphs.",
+        1,
+    )
+
+
 VARIANTS = {
     "current": _v_current,
+    "more-paragraphs": _v_more_paragraphs,
     "tail-checklist": _v_tail_checklist,
     "cover-shelf": _v_cover_the_shelf,
     "named-tests": _v_named_investigations,
@@ -214,11 +235,18 @@ def score(result: dict) -> dict:
     paras = result.get("paragraphs") or []
     text = " ".join(p.get("text", "") for p in paras).lower()
     docs = {(p.get("source") or {}).get("doc") for p in paras}
+    probes = {k: any(t in text for t in terms) for k, terms in _PROBES.items()}
+    probes.update(
+        {
+            k: any(a in text for a in left) and any(b in text for b in right)
+            for k, (left, right) in _PAIRED_PROBES.items()
+        }
+    )
     return {
         "paragraphs": len(paras),
         "chars": len(text),
         "docs_used": sorted(d for d in docs if d),
-        "probes": {k: any(t in text for t in terms) for k, terms in _PROBES.items()},
+        "probes": probes,
     }
 
 
