@@ -60,7 +60,6 @@ class SourceDocResponse(BaseModel):
     role: str
     pmid: str | None = None
     bookshelf: str | None = None
-    pmcid: str | None = None
     title: str
     authors: str
     journal: str
@@ -78,7 +77,6 @@ class SourceDocResponse(BaseModel):
             role=d.role,
             pmid=d.pmid,
             bookshelf=d.bookshelf,
-            pmcid=d.pmcid,
             title=d.title,
             authors=d.authors,
             journal=d.journal,

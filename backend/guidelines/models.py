@@ -29,7 +29,6 @@ class SourceDocument:
     covers: list[str]
     pmid: str | None
     bookshelf: str | None
-    pmcid: str | None
     free_full_text: bool
     is_new: bool
     updates_note: str | None
