@@ -43,6 +43,9 @@ class SourceDocumentRow(Base):
     sort_order: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     pmid: Mapped[str | None] = mapped_column(Text, nullable=True, default=None)
     bookshelf: Mapped[str | None] = mapped_column(Text, nullable=True, default=None)
+    # PMC id of the open-access deposit, when there is one. Lets the shelf link
+    # straight to the readable full text instead of to an abstract page.
+    pmcid: Mapped[str | None] = mapped_column(Text, nullable=True, default=None)
     free_full_text: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     is_new: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     updates_note: Mapped[str | None] = mapped_column(Text, nullable=True, default=None)
