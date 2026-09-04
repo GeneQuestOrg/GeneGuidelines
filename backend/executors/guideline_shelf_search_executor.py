@@ -34,7 +34,13 @@ _RETMAX_PER_QUERY = 25
 # validated by scripts/validate_shelf_fd.py). Abstracts are trimmed to keep the
 # prompt small. The vllm/Gemma effective prompt cap is ~60k tokens; budget is
 # bounded by the CANDIDATE COUNT, not by truncating abstracts (medical tool).
-_PUBMED_CANDIDATE_CAP = 30
+# Raised from 30 once the query set grew to five. Round-robin interleaving spreads
+# each query's hits across the merged list, so with five queries a rank-9 hit lands
+# near merged position 45 — under the old cap the craniofacial guidelines were found
+# and then dropped again. Measured cost: ~950 chars per candidate, so 50 candidates
+# is ~12k tokens, well under any effective prompt cap. Verified: at cap 50 all five
+# documents on the curated FD shelf survive retrieval; at cap 40, two do not.
+_PUBMED_CANDIDATE_CAP = 50
 _MAX_BOOKS = 8
 
 
@@ -182,10 +188,26 @@ def _collect_shelf_candidates(disease_name: str, gene: str | None = None) -> lis
     gene_sym = _normalize_gene(gene)
     name_ta = f'"{disease_name}"[Title/Abstract]'
     disease_block = f'({name_ta} OR "{gene_sym}"[Title/Abstract])' if gene_sym else name_ta
+    # The first three cast a wide net and sort by relevance. That net has a measured
+    # hole: for FD it ranked "Clinical guidelines for the management of craniofacial
+    # fibrous dysplasia" 59th and "Fibrous dysplasia in children and its management"
+    # 51st, so neither ever reached the classify step and production's shelf silently
+    # lost both — the two documents closest to a child with craniofacial disease.
+    #
+    # The last two close it on the observation that a guideline-shaped document
+    # announces itself in its TITLE. Title-scoped queries return few results and rank
+    # the right ones near the top: the guideline query returns 13 hits for FD with the
+    # 2012 craniofacial guidelines at rank 9, and the paediatric one returns 17 with
+    # the 2024 children's review at rank 4. Cheaper and sharper than fetching more
+    # results per query.
     queries = [
         f'{disease_block} AND (consensus OR guideline OR "best practice")',
         f'{disease_block} AND Review[ptyp] AND 2018:2026[dp]',
         f'{disease_block} AND (management OR therapy OR treatment) AND Review[ptyp]',
+        f'{disease_block} AND (guideline*[Title] OR consensus[Title] OR "best practice"[Title]'
+        f' OR recommendation*[Title])',
+        f'{disease_block} AND management[Title] AND (child*[Title] OR paediatric[Title]'
+        f' OR pediatric[Title])',
     ]
     per_query: list[list[str]] = []
     for term in queries:
