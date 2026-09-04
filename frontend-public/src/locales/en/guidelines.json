@@ -120,6 +120,7 @@
   "sourceShelfLeadDefault": "There is rarely a single “guideline.” This is a curated set of real documents; the synthesis summarizes them together, and every claim links to its source.",
 
   "newBadge": "NEWER",
+  "fullTextOnPmc": "Full text (PMC)",
   "openOnNcbi": "Open on NCBI",
   "originalOnPubmed": "Original on PubMed",
   "ncbiIdLabel": "NCBI {{bookshelf}}",

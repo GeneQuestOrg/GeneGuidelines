@@ -15,7 +15,14 @@ from __future__ import annotations
 import asyncio
 import logging
 
+from ..config import NCBI_API_KEY
+from ..tools.pmc_fulltext import pmc_url
 from .base import NodeExecutor, NodeInput, NodeOutput
+
+# Per-document character budget for open-access full text. Five documents at 40k
+# chars ≈ 50k tokens, comfortably inside LLM_PROMPT_TOKEN_CAP (200k default) with
+# room for the prompt and the model's own reply. Raise only alongside that cap.
+_FULLTEXT_CHARS_PER_DOC = 40_000
 
 log = logging.getLogger(__name__)
 
@@ -71,20 +78,31 @@ class GuidelineShelfLoadExecutor(NodeExecutor):
 
         pmids = [str(d.pmid).strip() for d in docs if str(getattr(d, "pmid", "") or "").strip()]
         abstract_by_pmid = await self._fetch_abstracts(pmids)
+        fulltext_by_pmid, pmcid_by_pmid = await self._fetch_fulltexts(pmids)
 
         shelf_docs = []
         for d in docs:
             pmid = str(getattr(d, "pmid", "") or "").strip() or None
+            key = pmid or ""
+            fulltext = fulltext_by_pmid.get(key, "")
+            pmcid = pmcid_by_pmid.get(key)
             shelf_docs.append(
                 {
                     "docId": d.doc_id,
                     "role": d.role,
                     "pmid": pmid,
+                    "pmcid": pmcid,
+                    "fullTextUrl": pmc_url(pmcid) if pmcid else None,
                     "bookshelf": getattr(d, "bookshelf", None),
                     "title": d.title,
                     "scope": d.scope,
                     "covers": list(getattr(d, "covers", []) or []),
-                    "abstract": abstract_by_pmid.get(pmid or "", ""),
+                    "abstract": abstract_by_pmid.get(key, ""),
+                    # The section-tagged open-access body when we have it, so the
+                    # section prompts can quote actual recommendations instead of
+                    # paraphrasing an abstract. Empty string = abstract only.
+                    "fullText": fulltext,
+                    "textSource": "full-text" if fulltext else "abstract",
                 }
             )
 
@@ -95,8 +113,44 @@ class GuidelineShelfLoadExecutor(NodeExecutor):
                 "shelf_docs": shelf_docs,
                 "shelf_pmids": pmids,
                 "abstracts_fetched": sum(1 for v in abstract_by_pmid.values() if v),
+                "fulltexts_fetched": sum(1 for v in fulltext_by_pmid.values() if v),
             }
         )
+
+    async def _fetch_fulltexts(
+        self, pmids: list[str]
+    ) -> tuple[dict[str, str], dict[str, str]]:
+        """(PMID → prompt-ready full text, PMID → PMCID). Soft-fails to ({}, {}).
+
+        Only open-access articles have a body to fetch; the rest keep serving their
+        abstract, which is what every synthesis ran on before this. The per-article
+        character budget keeps a five-document shelf inside LLM_PROMPT_TOKEN_CAP
+        even when every document resolves.
+        """
+        if not pmids:
+            return {}, {}
+        from ..tools.pmc_fulltext import _pmid_to_pmcid, fetch_fulltext_by_pmid
+
+        loop = asyncio.get_event_loop()
+        try:
+            fulltexts = await loop.run_in_executor(
+                None,
+                lambda: fetch_fulltext_by_pmid(
+                    pmids, char_budget=_FULLTEXT_CHARS_PER_DOC, api_key=NCBI_API_KEY or None
+                ),
+            )
+            pmcids = await loop.run_in_executor(
+                None, lambda: _pmid_to_pmcid(pmids, api_key=NCBI_API_KEY or None)
+            )
+        except Exception as exc:  # noqa: BLE001 — an upgrade, never a dependency
+            log.warning("guideline_shelf_load: full-text fetch failed: %s", exc)
+            return {}, {}
+        log.info(
+            "guideline_shelf_load: full text for %d/%d shelf documents",
+            sum(1 for v in fulltexts.values() if v),
+            len(pmids),
+        )
+        return fulltexts, pmcids
 
     async def _fetch_abstracts(self, pmids: list[str]) -> dict[str, str]:
         """PMID → abstract map via PubMed esummary/efetch. Soft-fails to {}."""

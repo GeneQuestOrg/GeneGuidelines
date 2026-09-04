@@ -120,6 +120,7 @@
   "sourceShelfLeadDefault": "Rzadko istnieją jedne „wytyczne”. To wyselekcjonowany zestaw prawdziwych dokumentów; synteza podsumowuje je razem, a każde stwierdzenie odsyła do swojego źródła.",
 
   "newBadge": "NOWSZE",
+  "fullTextOnPmc": "Pełny tekst (PMC)",
   "openOnNcbi": "Otwórz w NCBI",
   "originalOnPubmed": "Oryginał w PubMed",
   "ncbiIdLabel": "NCBI {{bookshelf}}",

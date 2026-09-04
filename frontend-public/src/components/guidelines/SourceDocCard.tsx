@@ -63,7 +63,12 @@ export function SourceDocCard({ doc, parent = false }: SourceDocCardProps) {
           target="_blank"
           rel="noopener noreferrer"
         >
-          {doc.bookshelf ? t("openOnNcbi") : t("originalOnPubmed")} ↗
+          {doc.pmcid
+            ? t("fullTextOnPmc")
+            : doc.bookshelf
+              ? t("openOnNcbi")
+              : t("originalOnPubmed")}{" "}
+          ↗
         </a>
         {idLabel ? <code className="srcdoc__id">{idLabel}</code> : null}
       </div>
