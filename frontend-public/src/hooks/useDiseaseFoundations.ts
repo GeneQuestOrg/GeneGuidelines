@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { repositories } from "../repositories";
+import { useContentLocale } from "./useContentLocale";
 import type { Foundation } from "../types/foundation";
 
 export interface DiseaseFoundationsState {
@@ -14,6 +15,9 @@ export function useDiseaseFoundations(
   const [foundations, setFoundations] = useState<readonly Foundation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Re-fetch when the language changes; see useContentLocale.
+  const contentLocale = useContentLocale();
 
   useEffect(() => {
     let cancelled = false;
@@ -47,7 +51,7 @@ export function useDiseaseFoundations(
     return () => {
       cancelled = true;
     };
-  }, [diseaseSlug]);
+  }, [diseaseSlug, contentLocale]);
 
   return { foundations, loading, error };
 }

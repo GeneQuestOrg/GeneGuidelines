@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { repositories } from "../repositories";
+import { useContentLocale } from "./useContentLocale";
 import type { AnalyzedPaper } from "../types/analyzedPaper";
 
 export interface BibliographyState {
@@ -14,6 +15,9 @@ export function useBibliography(diseaseSlug: string): BibliographyState {
   const [papers, setPapers] = useState<readonly AnalyzedPaper[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Re-fetch when the language changes; see useContentLocale.
+  const contentLocale = useContentLocale();
 
   useEffect(() => {
     let cancelled = false;
@@ -38,7 +42,7 @@ export function useBibliography(diseaseSlug: string): BibliographyState {
     return () => {
       cancelled = true;
     };
-  }, [diseaseSlug, t]);
+  }, [diseaseSlug, t, contentLocale]);
 
   return { papers, loading, error };
 }

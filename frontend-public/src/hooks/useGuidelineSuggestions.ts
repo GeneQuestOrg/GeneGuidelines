@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { repositories } from "../repositories";
+import { useContentLocale } from "./useContentLocale";
 import type { GuidelineSuggestion } from "../types/guidelineSuggestion";
 
 export interface GuidelineSuggestionsState {
@@ -21,6 +22,9 @@ export function useGuidelineSuggestions(
   const [suggestions, setSuggestions] = useState<readonly GuidelineSuggestion[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Re-fetch when the language changes; see useContentLocale.
+  const contentLocale = useContentLocale();
 
   useEffect(() => {
     let cancelled = false;
@@ -47,7 +51,7 @@ export function useGuidelineSuggestions(
     return () => {
       cancelled = true;
     };
-  }, [diseaseSlug, authKey]);
+  }, [diseaseSlug, authKey, contentLocale]);
 
   return { suggestions, loading, error };
 }

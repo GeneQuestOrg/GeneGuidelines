@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { ContentPrSummary } from "../types";
 import { isOpenPrStatus } from "../utils/guidelineDiff";
 import { repositories } from "../repositories";
+import { useContentLocale } from "./useContentLocale";
 
 export interface ContentPrsState {
   prs: readonly ContentPrSummary[];
@@ -14,6 +15,9 @@ export function useContentPrs(diseaseSlug: string): ContentPrsState {
   const [prs, setPrs] = useState<readonly ContentPrSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Re-fetch when the language changes; see useContentLocale.
+  const contentLocale = useContentLocale();
 
   useEffect(() => {
     let cancelled = false;
@@ -43,7 +47,7 @@ export function useContentPrs(diseaseSlug: string): ContentPrsState {
     return () => {
       cancelled = true;
     };
-  }, [diseaseSlug]);
+  }, [diseaseSlug, contentLocale]);
 
   const openPrs = prs.filter((pr) => isOpenPrStatus(pr.status));
 

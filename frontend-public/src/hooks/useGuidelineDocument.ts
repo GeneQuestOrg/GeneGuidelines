@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { GuidelineDocument } from "../types/guidelineDocument";
 import { repositories } from "../repositories";
+import { useContentLocale } from "./useContentLocale";
 
 export interface GuidelineDocumentState {
   document: GuidelineDocument | null;
@@ -12,6 +13,9 @@ export function useGuidelineDocument(slug: string): GuidelineDocumentState {
   const [document, setDocument] = useState<GuidelineDocument | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Re-fetch when the language changes; see useContentLocale.
+  const contentLocale = useContentLocale();
 
   useEffect(() => {
     let cancelled = false;
@@ -43,7 +47,7 @@ export function useGuidelineDocument(slug: string): GuidelineDocumentState {
     return () => {
       cancelled = true;
     };
-  }, [slug]);
+  }, [slug, contentLocale]);
 
   return { document, loading, error };
 }

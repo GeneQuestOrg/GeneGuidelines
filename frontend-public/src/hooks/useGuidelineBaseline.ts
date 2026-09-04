@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { repositories } from "../repositories";
+import { useContentLocale } from "./useContentLocale";
 import type { GuidelineBaseline } from "../types/guidelineBaseline";
 
 export interface GuidelineBaselineState {
@@ -21,6 +22,9 @@ export function useGuidelineBaseline(
   const [baseline, setBaseline] = useState<GuidelineBaseline | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Re-fetch when the language changes; see useContentLocale.
+  const contentLocale = useContentLocale();
 
   useEffect(() => {
     // Disabled (an official guideline exists): skip the fetch. No setState here
@@ -52,7 +56,7 @@ export function useGuidelineBaseline(
     return () => {
       cancelled = true;
     };
-  }, [diseaseSlug, enabled]);
+  }, [diseaseSlug, enabled, contentLocale]);
 
   if (!enabled) {
     return { baseline: null, loading: false, error: null };

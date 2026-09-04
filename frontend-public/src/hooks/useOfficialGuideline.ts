@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { repositories } from "../repositories";
+import { useContentLocale } from "./useContentLocale";
 import type { OfficialGuideline } from "../types/officialGuideline";
 
 export interface OfficialGuidelineState {
@@ -12,6 +13,9 @@ export function useOfficialGuideline(diseaseSlug: string): OfficialGuidelineStat
   const [pointer, setPointer] = useState<OfficialGuideline | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Re-fetch when the language changes; see useContentLocale.
+  const contentLocale = useContentLocale();
 
   useEffect(() => {
     let cancelled = false;
@@ -42,7 +46,7 @@ export function useOfficialGuideline(diseaseSlug: string): OfficialGuidelineStat
     return () => {
       cancelled = true;
     };
-  }, [diseaseSlug]);
+  }, [diseaseSlug, contentLocale]);
 
   return { pointer, loading, error };
 }

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { repositories } from "../repositories";
+import { useContentLocale } from "./useContentLocale";
 import type { SynthSectionSignal } from "../types/guidelineSynthesis";
 
 export type SynthSignalMap = Readonly<Record<string, SynthSectionSignal>>;
@@ -14,6 +15,9 @@ export function useSynthSignals(diseaseSlug: string): SynthSignalsState {
   const [signals, setSignals] = useState<SynthSignalMap>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Re-fetch when the language changes; see useContentLocale.
+  const contentLocale = useContentLocale();
 
   useEffect(() => {
     let cancelled = false;
@@ -40,7 +44,7 @@ export function useSynthSignals(diseaseSlug: string): SynthSignalsState {
     return () => {
       cancelled = true;
     };
-  }, [diseaseSlug]);
+  }, [diseaseSlug, contentLocale]);
 
   return { signals, loading, error };
 }

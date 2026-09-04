@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { CatalogStats, Disease } from "../types";
 import { repositories } from "../repositories";
+import { useContentLocale } from "./useContentLocale";
 
 const _DEBOUNCE_MS = 300;
 
@@ -21,10 +22,13 @@ export function useDiseaseCatalog(searchQuery = ""): DiseaseCatalogState {
   const [error, setError] = useState<string | null>(null);
   const hasListRef = useRef(false);
 
+  // Re-fetch when the language changes; see useContentLocale.
+  const contentLocale = useContentLocale();
+
   useEffect(() => {
     const timer = window.setTimeout(() => setDebouncedQuery(searchQuery), _DEBOUNCE_MS);
     return () => window.clearTimeout(timer);
-  }, [searchQuery]);
+  }, [searchQuery, contentLocale]);
 
   useEffect(() => {
     let cancelled = false;

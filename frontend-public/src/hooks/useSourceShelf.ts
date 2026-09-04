@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { repositories } from "../repositories";
+import { useContentLocale } from "./useContentLocale";
 import type { SourceDoc } from "../types/sourceDoc";
 
 export interface SourceShelfState {
@@ -12,6 +13,9 @@ export function useSourceShelf(diseaseSlug: string): SourceShelfState {
   const [docs, setDocs] = useState<readonly SourceDoc[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Re-fetch when the language changes; see useContentLocale.
+  const contentLocale = useContentLocale();
 
   useEffect(() => {
     let cancelled = false;
@@ -38,7 +42,7 @@ export function useSourceShelf(diseaseSlug: string): SourceShelfState {
     return () => {
       cancelled = true;
     };
-  }, [diseaseSlug]);
+  }, [diseaseSlug, contentLocale]);
 
   return { docs, loading, error };
 }

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { repositories } from "../repositories";
+import { useContentLocale } from "./useContentLocale";
 import type { GuidelineSynthesis } from "../types/guidelineSynthesis";
 
 export interface GuidelineSynthesisState {
@@ -12,6 +13,9 @@ export function useGuidelineSynthesis(diseaseSlug: string): GuidelineSynthesisSt
   const [synthesis, setSynthesis] = useState<GuidelineSynthesis | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Re-fetch when the language changes; see useContentLocale.
+  const contentLocale = useContentLocale();
 
   useEffect(() => {
     let cancelled = false;
@@ -38,7 +42,7 @@ export function useGuidelineSynthesis(diseaseSlug: string): GuidelineSynthesisSt
     return () => {
       cancelled = true;
     };
-  }, [diseaseSlug]);
+  }, [diseaseSlug, contentLocale]);
 
   return { synthesis, loading, error };
 }

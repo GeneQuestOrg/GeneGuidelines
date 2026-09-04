@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { repositories } from "../repositories";
+import { useContentLocale } from "./useContentLocale";
 import type { Trial } from "../types/trial";
 
 export interface DiseaseTrialsState {
@@ -12,6 +13,9 @@ export function useDiseaseTrials(diseaseSlug: string): DiseaseTrialsState {
   const [trials, setTrials] = useState<readonly Trial[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Re-fetch when the language changes; see useContentLocale.
+  const contentLocale = useContentLocale();
 
   useEffect(() => {
     let cancelled = false;
@@ -41,7 +45,7 @@ export function useDiseaseTrials(diseaseSlug: string): DiseaseTrialsState {
     return () => {
       cancelled = true;
     };
-  }, [diseaseSlug]);
+  }, [diseaseSlug, contentLocale]);
 
   return { trials, loading, error };
 }

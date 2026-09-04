@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { parsePath } from "./parsePath";
 import { splitLocale, withLocalePrefix, type Locale } from "./locale";
+import { emitLocationChanged } from "./locationEvent";
 import type { Route } from "./types";
 
 interface RouterLocation {
@@ -109,6 +110,9 @@ export function useHistoryRouter(): HistoryRouter {
       window.history.pushState(null, "", next);
     }
     setLoc({ pathname: fullPathname, search });
+    // pushState fires no native event; tell listeners outside the router (content
+    // hooks watching the locale prefix) that the URL moved.
+    emitLocationChanged();
     window.scrollTo(0, 0);
   }, []);
 
