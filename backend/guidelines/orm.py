@@ -55,6 +55,33 @@ class SourceDocumentRow(Base):
     )
 
 
+class GuidelineShelfConsideredRow(Base):
+    """A candidate the shelf classifier looked at and left OFF, with its reason.
+
+    The classifier has always produced these — the prompt asks for them explicitly —
+    and nothing ever stored them, so every rejection was invisible. That is how the
+    shelf silently lost the paediatric review, the 2012 craniofacial guidelines and
+    the 2023 NIH craniofacial review on separate runs: a human only noticed by
+    reading the synthesis afterwards and wondering what happened.
+
+    One row per (disease, candidate) for the most recent run; the writer replaces the
+    disease's set each time, so this is a snapshot of the last decision, not a log.
+    """
+
+    __tablename__ = "guideline_shelf_considered"
+
+    disease_slug: Mapped[str] = mapped_column(Text, primary_key=True)
+    doc_id: Mapped[str] = mapped_column(Text, primary_key=True)
+    title: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    reason: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    category: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    considered_at: Mapped[str] = mapped_column(Text, nullable=False, default="")
+
+    __table_args__ = (
+        Index("ix_guideline_shelf_considered_disease_slug", "disease_slug"),
+    )
+
+
 class GuidelineSynthesisRow(Base):
     """The ONE AI synthesis over a disease's shelf (GL-2). One row per disease.
 

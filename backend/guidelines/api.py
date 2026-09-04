@@ -115,6 +115,17 @@ def rate_suggestion(
     return SuggestionVoteResult(signal=result.signal, myVote=result.my_vote)
 
 
+@router.get("/diseases/{slug}/shelf-considered")
+def list_shelf_considered(slug: str, service: ServiceDep) -> list[dict]:
+    """Candidates the shelf classifier looked at and left off, with reasons.
+
+    The negative path, which the vision asks for and which nothing used to record:
+    without it a rebuild could quietly drop a good document and the only symptom was
+    a worse synthesis weeks later.
+    """
+    return service.list_shelf_considered(slug)
+
+
 @router.get(
     "/diseases/{slug}/synthesis-signals",
     response_model=dict[str, SynthSignalResponse],

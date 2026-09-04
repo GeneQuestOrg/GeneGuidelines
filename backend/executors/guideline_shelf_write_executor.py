@@ -91,6 +91,7 @@ class GuidelineShelfWriteExecutor(NodeExecutor):
             return NodeOutput(data={"ok": False, "error": "disease_slug missing in flow context."})
 
         classified = _find_classified_docs(context)
+        considered = _find_considered(context)
         if not classified:
             return NodeOutput(data={"ok": False, "error": "no classified shelf docs in context."})
 
@@ -141,13 +142,110 @@ class GuidelineShelfWriteExecutor(NodeExecutor):
         loop = asyncio.get_event_loop()
         await loop.run_in_executor(None, _enrich_docs_from_pubmed, docs)
 
+        # A rebuild must not silently lose a document. See _merge_with_existing.
         try:
-            self._get_repo().replace_source_documents(slug, docs)
+            repo = self._get_repo()
+            docs, kept_ids = _merge_with_existing(repo, slug, docs, considered)
+            repo.replace_source_documents(slug, docs)
+            # Store why each rejected candidate was rejected. Best-effort: the audit
+            # snapshot is valuable, but never worth failing a shelf write over.
+            try:
+                repo.replace_considered(slug, [c for c in considered if isinstance(c, dict)])
+            except Exception as exc:  # noqa: BLE001
+                log.warning("guideline_shelf_write: considered snapshot failed: %s", exc)
         except Exception as exc:  # noqa: BLE001 — a write failure must fail the node
             log.warning("guideline_shelf_write: replace failed for %s: %s", slug, exc)
             return NodeOutput(data={"ok": False, "error": f"shelf write failed: {exc}"})
 
-        return NodeOutput(data={"ok": True, "slug": slug, "docCount": len(docs), "kinds": kinds})
+        return NodeOutput(
+            data={
+                "ok": True,
+                "slug": slug,
+                "docCount": len(docs),
+                "kinds": kinds,
+                "keptFromPreviousShelf": sorted(kept_ids),
+            }
+        )
+
+
+# Reasons that justify dropping a document that a previous run (or a human) had
+# already put on the shelf. Anything else — "narrow", "other", or no reason at all —
+# is not enough, and the document stays.
+_JUSTIFIED_REMOVAL = {"superseded", "duplicate", "off-topic"}
+
+
+def _merge_with_existing(
+    repo, slug: str, docs: list[dict], considered: object
+) -> tuple[list[dict], set[str]]:
+    """Carry forward shelf documents this run did not re-select without a reason.
+
+    The rebuild is a full replace driven by one stochastic classification, and it
+    has silently dropped good documents twice: once the paediatric review and the
+    2012 craniofacial guidelines, once the 2023 NIH craniofacial review. Nobody
+    noticed until a human read the resulting synthesis.
+
+    So removal now needs a stated, specific reason. A document already on the shelf
+    is carried forward unless this run's ``considered`` list names it with a
+    category in :data:`_JUSTIFIED_REMOVAL`. The classifier keeps full authority to
+    supersede and de-duplicate; it just cannot drop something by forgetting it.
+
+    Best-effort: if the previous shelf cannot be read, the run proceeds as a plain
+    replace rather than failing.
+    """
+    try:
+        existing = repo.list_source_documents(slug)
+    except Exception as exc:  # noqa: BLE001 — never block a rebuild on this
+        log.warning("guideline_shelf_write: could not read the existing shelf: %s", exc)
+        return docs, set()
+
+    new_ids = {str(d.get("id")) for d in docs}
+    dropped_reason: dict[str, str] = {}
+    for item in considered or []:
+        if not isinstance(item, dict):
+            continue
+        ident = str(item.get("pmid") or item.get("bookshelf") or "").strip()
+        if ident:
+            dropped_reason[ident] = str(item.get("category") or "").strip().lower()
+
+    kept: set[str] = set()
+    for d in existing:
+        doc_id = str(d.doc_id)
+        if doc_id in new_ids:
+            continue
+        if dropped_reason.get(doc_id) in _JUSTIFIED_REMOVAL:
+            log.info(
+                "guideline_shelf_write: %s dropped from %s shelf (%s)",
+                doc_id,
+                slug,
+                dropped_reason[doc_id],
+            )
+            continue
+        kept.add(doc_id)
+        docs.append(
+            {
+                "id": doc_id,
+                "role": d.role,
+                "title": d.title,
+                "authors": d.authors,
+                "journal": d.journal,
+                "year": d.year,
+                "scope": d.scope,
+                "covers": list(d.covers or []),
+                "pmid": d.pmid,
+                "bookshelf": d.bookshelf,
+                "freeFullText": d.free_full_text,
+                "isNew": False,
+                "updatesNote": d.updates_note,
+            }
+        )
+    if kept:
+        log.info(
+            "guideline_shelf_write: carried %d document(s) forward on the %s shelf: %s",
+            len(kept),
+            slug,
+            ", ".join(sorted(kept)),
+        )
+    return docs, kept
 
 
 def _enrich_docs_from_pubmed(docs: list[dict]) -> None:
@@ -179,6 +277,17 @@ def _enrich_docs_from_pubmed(docs: list[dict]) -> None:
             d["year"] = str(year)
         if not d.get("journal"):
             d["journal"] = _clean_journal(str(m.get("journal") or ""))
+
+
+def _find_considered(context: dict) -> list:
+    """The classify node's rejected candidates, with the reason each was left off."""
+    primary = context.get("gsb-classify")
+    if isinstance(primary, dict) and isinstance(primary.get("considered"), list):
+        return primary["considered"]
+    for out in context.values():
+        if isinstance(out, dict) and isinstance(out.get("considered"), list):
+            return out["considered"]
+    return []
 
 
 def _find_classified_docs(context: dict) -> list:

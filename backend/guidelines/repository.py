@@ -292,6 +292,58 @@ class SqlaGuidelinesRepo:
                     )
                 )
 
+    def replace_considered(self, disease_slug: str, items: list[dict]) -> None:
+        """Snapshot this run's rejected candidates, replacing the previous set.
+
+        Kept deliberately simple: the value is "why is this NOT on the shelf right
+        now", which only the latest decision can answer. Never raises into a flow —
+        losing the audit snapshot must not fail a shelf rebuild.
+        """
+        from .orm import GuidelineShelfConsideredRow
+
+        now = _now_iso()
+        with Session(self._engine) as session, session.begin():
+            session.query(GuidelineShelfConsideredRow).filter(
+                GuidelineShelfConsideredRow.disease_slug == disease_slug
+            ).delete()
+            seen: set[str] = set()
+            for item in items:
+                doc_id = str(item.get("pmid") or item.get("bookshelf") or "").strip()
+                if not doc_id or doc_id in seen:
+                    continue
+                seen.add(doc_id)
+                session.add(
+                    GuidelineShelfConsideredRow(
+                        disease_slug=disease_slug,
+                        doc_id=doc_id,
+                        title=str(item.get("title") or "").strip(),
+                        reason=str(item.get("reason") or "").strip(),
+                        category=str(item.get("category") or "").strip().lower(),
+                        considered_at=now,
+                    )
+                )
+
+    def list_considered(self, disease_slug: str) -> list[dict]:
+        """The candidates left off this disease's shelf, with reasons."""
+        from .orm import GuidelineShelfConsideredRow
+
+        with Session(self._engine) as session:
+            rows = session.scalars(
+                select(GuidelineShelfConsideredRow)
+                .where(GuidelineShelfConsideredRow.disease_slug == disease_slug)
+                .order_by(GuidelineShelfConsideredRow.doc_id)
+            ).all()
+        return [
+            {
+                "docId": r.doc_id,
+                "title": r.title,
+                "reason": r.reason,
+                "category": r.category,
+                "consideredAt": r.considered_at,
+            }
+            for r in rows
+        ]
+
     def upsert_synthesis(self, disease_slug: str, syn: dict) -> None:
         """Insert-or-replace the single synthesis row for ``disease_slug``.
 

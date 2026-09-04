@@ -119,6 +119,17 @@ class GuidelinesService:
             return {}
         return self.repo.get_synthesis_signals(normalized)
 
+    def list_shelf_considered(self, slug: str) -> list[dict]:
+        """Rejected shelf candidates with reasons; empty when the disease is unknown."""
+        normalized = normalize_slug(slug)
+        if normalized is None:
+            return []
+        try:
+            return self.repo.list_considered(normalized)
+        except AttributeError:
+            # In-memory repo used by some tests has no audit store.
+            return []
+
     # -- suggestion-rating write loop (SIG-1) -------------------------------
 
     def user_suggestion_votes(self, slug: str, user_id: str) -> dict[str, str]:
