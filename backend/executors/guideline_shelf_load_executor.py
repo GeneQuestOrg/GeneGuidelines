@@ -16,18 +16,29 @@ import asyncio
 import logging
 
 from ..config import NCBI_API_KEY
-from ..tools.pmc_fulltext import pmc_url
+from ..config import LLM_PROMPT_TOKEN_CAP
+from ..tools.pmc_fulltext import fit_shelf_to_budget, pmc_url
 from .base import NodeExecutor, NodeInput, NodeOutput
 
-# Per-document character budget for open-access full text.
+# How much of the shelf's full text a prompt may carry.
 #
-# Measured on the FD shelf: the whole shelf at full length is ~79k chars ≈ 20k
-# tokens, i.e. 10% of LLM_PROMPT_TOKEN_CAP (200k). The old 40k cap was set from a
-# guess and was throwing away 36% of the consensus document for no reason. 120k
-# per document keeps every realistic guideline whole while still bounding a
-# pathological outlier, and a five-document shelf at that ceiling would still be
-# ~150k tokens — inside the cap, though the cap is the real backstop, not this.
-_FULLTEXT_CHARS_PER_DOC = 120_000
+# Derived from the real limit rather than guessed. An earlier fixed 40k-per-document
+# cap was discarding 36% of the FD consensus for no reason at all — the whole FD
+# shelf at full length is ~79k chars ≈ 20k tokens, about 10% of
+# LLM_PROMPT_TOKEN_CAP. Nothing should be cut while there is room, so we budget the
+# shelf as a whole against the cap and only trim when a shelf genuinely does not
+# fit (see fit_shelf_to_budget, which then cuts the largest documents first).
+#
+# _RESERVE_TOKENS holds back room for the prompt scaffolding, the section
+# instructions and the model's own reply; ~4 chars per token is the usual rough
+# conversion and is deliberately conservative here.
+_RESERVE_TOKENS = 30_000
+_CHARS_PER_TOKEN = 4
+
+
+def _shelf_char_budget() -> int:
+    usable = max(LLM_PROMPT_TOKEN_CAP - _RESERVE_TOKENS, 10_000)
+    return usable * _CHARS_PER_TOKEN
 
 log = logging.getLogger(__name__)
 
@@ -138,12 +149,19 @@ class GuidelineShelfLoadExecutor(NodeExecutor):
 
         loop = asyncio.get_event_loop()
         try:
-            fulltexts = await loop.run_in_executor(
+            raw = await loop.run_in_executor(
                 None,
-                lambda: fetch_fulltext_by_pmid(
-                    pmids, char_budget=_FULLTEXT_CHARS_PER_DOC, api_key=NCBI_API_KEY or None
-                ),
+                lambda: fetch_fulltext_by_pmid(pmids, api_key=NCBI_API_KEY or None),
             )
+            budget = _shelf_char_budget()
+            fulltexts = fit_shelf_to_budget(raw, budget)
+            dropped = sum(len(v) for v in raw.values()) - sum(len(v) for v in fulltexts.values())
+            if dropped:
+                log.warning(
+                    "guideline_shelf_load: shelf exceeded the %d-char budget; trimmed %d chars",
+                    budget,
+                    dropped,
+                )
             pmcids = await loop.run_in_executor(
                 None, lambda: _pmid_to_pmcid(pmids, api_key=NCBI_API_KEY or None)
             )

@@ -211,3 +211,60 @@ def test_pmc_url_points_at_the_reader() -> None:
 def test_jats_fixture_is_valid_xml() -> None:
     """Guards the fixture itself, so a broken fixture cannot fake a passing suite."""
     assert ET.fromstring(_JATS).find(".//body") is not None
+
+
+# --- shelf-level budgeting -------------------------------------------------
+# A fixed per-document cap threw away 36% of the FD consensus while the shelf as a
+# whole used ~10% of the token budget. These pin the replacement: cut nothing while
+# there is room, and when there isn't, cut the big documents rather than the small
+# ones.
+
+
+def test_fit_shelf_trims_nothing_when_the_shelf_fits() -> None:
+    shelf = {"a": "x" * 1000, "b": "y" * 2000}
+
+    assert pmc_fulltext.fit_shelf_to_budget(shelf, 100_000) == shelf
+
+
+def test_fit_shelf_cuts_the_largest_document_not_the_smallest() -> None:
+    """Water-filling: a small paper keeps every sentence when a big one overflows."""
+    shelf = {"small": "s" * 1_000, "huge": "h" * 100_000}
+
+    out = pmc_fulltext.fit_shelf_to_budget(shelf, 20_000)
+
+    assert out["small"] == shelf["small"]  # untouched
+    assert len(out["huge"]) < len(shelf["huge"])
+    assert sum(len(v) for v in out.values()) <= 20_000
+
+
+def test_fit_shelf_spreads_the_cut_when_everything_is_oversized() -> None:
+    shelf = {"a": "a" * 60_000, "b": "b" * 60_000}
+
+    out = pmc_fulltext.fit_shelf_to_budget(shelf, 40_000)
+
+    assert sum(len(v) for v in out.values()) <= 40_000
+    # Neither document is starved to make room for the other.
+    assert all(len(v) > 15_000 for v in out.values())
+
+
+def test_fit_shelf_cuts_at_a_paragraph_boundary() -> None:
+    shelf = {"a": "\n".join("para " + "x" * 100 for _ in range(50))}
+
+    out = pmc_fulltext.fit_shelf_to_budget(shelf, 2_000)
+
+    assert not out["a"].endswith("x" * 5) or "\n" in out["a"]
+    assert len(out["a"]) <= 2_000
+
+
+def test_fit_shelf_handles_an_empty_shelf() -> None:
+    assert pmc_fulltext.fit_shelf_to_budget({}, 1_000) == {}
+
+
+def test_shelf_budget_is_derived_from_the_token_cap() -> None:
+    """The budget must follow LLM_PROMPT_TOKEN_CAP, not a magic constant."""
+    from backend.executors import guideline_shelf_load_executor as loader
+
+    budget = loader._shelf_char_budget()
+
+    assert budget > 100_000  # a real guideline shelf must fit whole
+    assert budget < loader.LLM_PROMPT_TOKEN_CAP * loader._CHARS_PER_TOKEN

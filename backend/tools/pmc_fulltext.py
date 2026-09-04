@@ -205,13 +205,15 @@ def render_for_prompt(sections: list[tuple[str, str]], char_budget: int) -> str:
 
 
 def fetch_fulltext_by_pmid(
-    pmids: list[str], *, char_budget: int, api_key: str | None = None
+    pmids: list[str], *, char_budget: int | None = None, api_key: str | None = None
 ) -> dict[str, str]:
     """PMID → prompt-ready full text, for the articles that have one.
 
     Absent keys mean "no open-access full text" and the caller should fall back to
-    the abstract. ``char_budget`` is per article, so the shelf as a whole stays
-    inside LLM_PROMPT_TOKEN_CAP.
+    the abstract. ``char_budget`` caps each article; pass ``None`` for no per-article
+    cap and let the caller fit the shelf as a whole (see ``fit_shelf_to_budget``),
+    which is what we do — a fixed per-article number throws away text we have room
+    for.
     """
     pmcid_by_pmid = _pmid_to_pmcid(pmids, api_key=api_key)
     out: dict[str, str] = {}
@@ -219,9 +221,42 @@ def fetch_fulltext_by_pmid(
         sections = fetch_fulltext_sections(pmid, pmcid, api_key=api_key)
         if not sections:
             continue
-        rendered = render_for_prompt(sections, char_budget)
+        rendered = render_for_prompt(sections, char_budget or 10_000_000)
         if rendered:
             out[pmid] = rendered
+    return out
+
+
+def fit_shelf_to_budget(texts: dict[str, str], total_budget: int) -> dict[str, str]:
+    """Trim a shelf to ``total_budget`` characters, cutting as little as possible.
+
+    Nothing is trimmed while the shelf fits — which for every disease measured so
+    far it does, by a wide margin. When it does not, the cut lands on the largest
+    documents first (water-filling): every document keeps its full text until it
+    exceeds the fair share, so trimming one 400 kB outlier never costs a 15 kB
+    paediatric review a single sentence.
+
+    Trimming happens at a paragraph boundary because the texts arrive already
+    rendered by :func:`render_for_prompt`; we re-cut on the last newline so a
+    document never ends mid-sentence.
+    """
+    total = sum(len(t) for t in texts.values())
+    if total <= total_budget or not texts:
+        return dict(texts)
+
+    # Water-filling: raise a per-document ceiling until the totals fit.
+    remaining = total_budget
+    out: dict[str, str] = {}
+    for pmid, text in sorted(texts.items(), key=lambda kv: len(kv[1])):
+        share = remaining // (len(texts) - len(out))
+        if len(text) <= share:
+            out[pmid] = text
+            remaining -= len(text)
+            continue
+        cut = text[:share]
+        nl = cut.rfind("\n")
+        out[pmid] = cut[:nl] if nl > share // 2 else cut
+        remaining -= len(out[pmid])
     return out
 
 
@@ -231,6 +266,7 @@ def pmc_url(pmcid: str) -> str:
 
 __all__ = [
     "fetch_fulltext_by_pmid",
+    "fit_shelf_to_budget",
     "fetch_fulltext_sections",
     "render_for_prompt",
     "pmc_url",
