@@ -17,6 +17,12 @@ itsdangerous>=2.1
 # on an unpinned install). Bump deliberately after checking backend/agents/agent.py
 # still imports cleanly.
 pydantic-ai[openai,mcp]==1.97.0
+# Pin the transitive `mcp` too — pinning pydantic-ai alone is not enough. `mcp` 2.0
+# dropped `RequestContext` from `mcp.shared.context`, which pydantic-ai 1.97.0
+# imports, so a fresh CI install resolved mcp 2.1.1 and every test module that
+# touches the agent failed at import while local venvs on 1.27.1 stayed green.
+# 1.27.1 is the version the suite is actually verified against.
+mcp==1.27.1
 python-dotenv
 psycopg[binary]
 simpleeval
