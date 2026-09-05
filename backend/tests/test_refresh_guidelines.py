@@ -72,3 +72,32 @@ def test_a_trigger_without_an_execution_id_fails_loudly(
     monkeypatch.setattr(rg, "_request", lambda url, key, method="GET": {"detail": "nope"})
 
     assert rg._run_flow("https://x", "k", "fd", "guideline-shelf", "shelf") is False
+
+
+def test_the_paths_the_script_calls_are_routes_the_app_actually_serves() -> None:
+    """A wrong prefix here fails as 405, not 404, which reads like a bug in the app.
+
+    The trigger endpoints sit behind the pipeline router's prefix and the read
+    endpoints do not. Reading the `@router.post` decorator alone misses that — the
+    prefix is applied at include_router — and the un-prefixed path still matches the
+    SPA catch-all, so the script got "Method Not Allowed" against a URL that simply
+    does not exist. Checked against the app's route table rather than a copy of it.
+    """
+    from backend.main import app
+
+    routes = {
+        (getattr(r, "path", None), method)
+        for r in app.routes
+        for method in (getattr(r, "methods", None) or set())
+    }
+
+    expected = [
+        (rg._TRIGGER_PATH.replace("{flow}", "guideline-synthesis"), "POST"),
+        (rg._TRIGGER_PATH.replace("{flow}", "guideline-shelf"), "POST"),
+        (rg._STATUS_PATH, "GET"),
+        (rg._SYNTHESIS_PATH, "GET"),
+        (rg._CATALOG_PATH, "GET"),
+    ]
+    missing = [pair for pair in expected if pair not in routes]
+
+    assert not missing, f"the script calls URLs the app does not serve: {missing}"

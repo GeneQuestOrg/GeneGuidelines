@@ -30,6 +30,16 @@ import urllib.error
 import urllib.request
 
 _DEFAULT_BASE = "https://geneguidelines.genequest.org"
+
+# The trigger endpoints live under the pipeline router's prefix, the read endpoints do
+# not. Reading the @router.post decorator alone gets this wrong — the prefix is applied
+# at include_router — and the symptom is a 405 rather than a 404, because the SPA
+# catch-all answers the un-prefixed path. Kept as templates so a test can check them
+# against the app's real routes.
+_TRIGGER_PATH = "/api/pipeline/diseases/{slug}/{flow}/run"
+_STATUS_PATH = "/api/agent/run/{execution_id}"
+_SYNTHESIS_PATH = "/api/diseases/{slug}/guideline-synthesis"
+_CATALOG_PATH = "/api/diseases"
 # A synthesis over a full shelf on a frontier model is minutes, not seconds.
 _POLL_TIMEOUT_SEC = 3600
 _POLL_EVERY_SEC = 15
@@ -51,7 +61,7 @@ def _request(url: str, key: str, method: str = "GET") -> dict:
 def _synthesis_size(base: str, slug: str) -> tuple[int, int]:
     """(characters of section text, number of sections) — the honest before/after."""
     try:
-        data = _request(f"{base}/api/diseases/{slug}/guideline-synthesis", key="")
+        data = _request(base + _SYNTHESIS_PATH.format(slug=slug), key="")
     except SystemExit:
         return (0, 0)
     sections = data.get("sections") or []
@@ -67,7 +77,7 @@ def _wait(base: str, execution_id: str, label: str) -> bool:
     deadline = time.time() + _POLL_TIMEOUT_SEC
     while time.time() < deadline:
         time.sleep(_POLL_EVERY_SEC)
-        run = _request(f"{base}/api/agent/run/{execution_id}", key="")
+        run = _request(base + _STATUS_PATH.format(execution_id=execution_id), key="")
         if run.get("error"):
             print(f"    {label}: FAILED — {str(run['error'])[:200]}")
             return False
@@ -79,7 +89,9 @@ def _wait(base: str, execution_id: str, label: str) -> bool:
 
 
 def _run_flow(base: str, key: str, slug: str, endpoint: str, label: str) -> bool:
-    started = _request(f"{base}/api/diseases/{slug}/{endpoint}/run", key, method="POST")
+    started = _request(
+        base + _TRIGGER_PATH.format(slug=slug, flow=endpoint), key, method="POST"
+    )
     execution_id = str(started.get("execution_id") or started.get("executionId") or "")
     if not execution_id:
         print(f"    {label}: no execution_id in response: {str(started)[:200]}")
@@ -101,7 +113,7 @@ def main() -> int:
         print("GENEGUIDELINES_API_KEY is not set — the run endpoints require it.", file=sys.stderr)
         return 2
 
-    catalog = _request(f"{args.base}/api/diseases", key="")
+    catalog = _request(args.base + _CATALOG_PATH, key="")
     items = catalog if isinstance(catalog, list) else (catalog.get("diseases") or [])
     slugs = [str(d.get("slug")) for d in items if d.get("slug")]
     if args.only:
