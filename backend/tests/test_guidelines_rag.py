@@ -6,7 +6,7 @@ import unittest
 from unittest.mock import MagicMock, patch
 
 from backend.executors.base import NodeInput
-from backend.executors.guidelines_rag_executor import GuidelinesRagExecutor, _resolve_anchor_pmids
+from backend.executors.guidelines.guidelines_rag_executor import GuidelinesRagExecutor, _resolve_anchor_pmids
 from backend.flows.pubmed.guidelines_rag import DEFAULT_ANCHOR_PMIDS, build_consensus_context
 
 
@@ -80,7 +80,7 @@ class TestGuidelinesRagExecutor(unittest.IsolatedAsyncioTestCase):
         async def fake_run_in_executor(_exc, fn):
             return mock_return
 
-        with patch("backend.executors.guidelines_rag_executor.asyncio.get_event_loop") as mock_loop:
+        with patch("backend.executors.guidelines.guidelines_rag_executor.asyncio.get_event_loop") as mock_loop:
             mock_event_loop = MagicMock()
             mock_loop.return_value = mock_event_loop
             mock_event_loop.run_in_executor = fake_run_in_executor
@@ -98,7 +98,7 @@ class TestGuidelinesRagExecutor(unittest.IsolatedAsyncioTestCase):
         async def failing_run_in_executor(_exc, fn):
             raise RuntimeError("Network error")
 
-        with patch("backend.executors.guidelines_rag_executor.asyncio.get_event_loop") as mock_loop:
+        with patch("backend.executors.guidelines.guidelines_rag_executor.asyncio.get_event_loop") as mock_loop:
             mock_event_loop = MagicMock()
             mock_loop.return_value = mock_event_loop
             mock_event_loop.run_in_executor = failing_run_in_executor

@@ -16,10 +16,10 @@ import asyncio
 import logging
 import os
 
-from ..config import NCBI_API_KEY
-from ..config import LLM_PROMPT_TOKEN_CAP
-from ..tools.pmc_fulltext import fit_shelf_to_budget, pmc_url
-from .base import NodeExecutor, NodeInput, NodeOutput
+from ...config import NCBI_API_KEY
+from ...config import LLM_PROMPT_TOKEN_CAP
+from ...tools.pmc_fulltext import fit_shelf_to_budget, pmc_url
+from ..base import NodeExecutor, NodeInput, NodeOutput
 
 # How much of the shelf's full text a prompt may carry.
 #
@@ -46,7 +46,7 @@ def _shelf_char_budget() -> int:
     FD shelf grow to ~62.5k tokens of source text alone, i.e. over the real limit,
     with five section prompts each carrying it.
     """
-    from .. import config as _cfg
+    from ... import config as _cfg
 
     profile = (os.environ.get("MODEL_PROFILE") or "").strip().lower()
     cap = (
@@ -75,7 +75,7 @@ class GuidelineShelfLoadExecutor(NodeExecutor):
     def _get_repo(self):
         if self._repo is not None:
             return self._repo
-        from ..guidelines.repository import SqlaGuidelinesRepo
+        from ...guidelines.repository import SqlaGuidelinesRepo
 
         return SqlaGuidelinesRepo()
 
@@ -162,7 +162,7 @@ class GuidelineShelfLoadExecutor(NodeExecutor):
         """
         if not pmids:
             return {}, {}
-        from ..tools.pmc_fulltext import _pmid_to_pmcid, fetch_fulltext_by_pmid
+        from ...tools.pmc_fulltext import _pmid_to_pmcid, fetch_fulltext_by_pmid
 
         loop = asyncio.get_event_loop()
         try:
@@ -197,7 +197,7 @@ class GuidelineShelfLoadExecutor(NodeExecutor):
         if not pmids:
             return {}
         # Imported lazily so tests can monkeypatch the non-MCP impl.
-        from ..tools.pubmed_runtime import fetch_article_details_impl
+        from ...tools.pubmed_runtime import fetch_article_details_impl
 
         loop = asyncio.get_event_loop()
         try:

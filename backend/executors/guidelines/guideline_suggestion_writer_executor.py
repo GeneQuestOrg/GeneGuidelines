@@ -13,7 +13,7 @@ from __future__ import annotations
 import logging
 import re
 
-from .base import NodeExecutor, NodeInput, NodeOutput
+from ..base import NodeExecutor, NodeInput, NodeOutput
 
 log = logging.getLogger(__name__)
 
@@ -31,7 +31,7 @@ class GuidelineSuggestionWriterExecutor(NodeExecutor):
     def _get_repo(self):
         if self._repo is not None:
             return self._repo
-        from ..guidelines.repository import SqlaGuidelinesRepo
+        from ...guidelines.repository import SqlaGuidelinesRepo
 
         return SqlaGuidelinesRepo()
 

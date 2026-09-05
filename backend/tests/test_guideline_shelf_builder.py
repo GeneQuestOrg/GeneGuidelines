@@ -22,8 +22,8 @@ import backend.guidelines.orm  # noqa: F401 — registers tables on the shared m
 from backend.agents.schemas import PRESET_OUTPUT_SCHEMAS, GuidelineShelfDoc, GuidelineShelfOutput
 from backend.executors import EXECUTOR_REGISTRY
 from backend.executors.base import NodeInput
-from backend.executors.guideline_shelf_search_executor import GuidelineShelfSearchExecutor
-from backend.executors.guideline_shelf_write_executor import GuidelineShelfWriteExecutor
+from backend.executors.guidelines.guideline_shelf_search_executor import GuidelineShelfSearchExecutor
+from backend.executors.guidelines.guideline_shelf_write_executor import GuidelineShelfWriteExecutor
 from backend.guidelines.repository import SqlaGuidelinesRepo
 from backend.shared.persistence.schema import metadata
 
@@ -92,7 +92,7 @@ def test_shelf_search_returns_candidates(monkeypatch) -> None:
         {"bookshelf": "NBK274564", "title": "Fibrous Dysplasia / MAS", "authors": "Boyce", "journal": "GeneReviews", "year": "continuously updated", "abstract": ""},
     ]
     monkeypatch.setattr(
-        "backend.executors.guideline_shelf_search_executor._collect_shelf_candidates",
+        "backend.executors.guidelines.guideline_shelf_search_executor._collect_shelf_candidates",
         lambda name, gene=None: fake,
     )
     ex = GuidelineShelfSearchExecutor()
@@ -108,7 +108,7 @@ def test_shelf_search_returns_candidates(monkeypatch) -> None:
 
 def test_collect_shelf_candidates_ors_gene_into_pubmed_and_books(monkeypatch) -> None:
     """Gene is OR'd into every PubMed query (Title/Abstract) and adds Bookshelf queries."""
-    from backend.executors import guideline_shelf_search_executor as se
+    from backend.executors.guidelines import guideline_shelf_search_executor as se
 
     calls: list[tuple[str, str]] = []
     monkeypatch.setattr(se, "_esearch_ids", lambda db, term, retmax: calls.append((db, term)) or [])
@@ -128,7 +128,7 @@ def test_collect_shelf_candidates_ors_gene_into_pubmed_and_books(monkeypatch) ->
 
 
 def test_collect_shelf_candidates_omits_gene_when_absent_or_short(monkeypatch) -> None:
-    from backend.executors import guideline_shelf_search_executor as se
+    from backend.executors.guidelines import guideline_shelf_search_executor as se
 
     for gene in (None, "", "X"):  # absent / empty / too-short (<3 chars)
         calls: list[tuple[str, str]] = []
@@ -143,7 +143,7 @@ def test_collect_shelf_candidates_omits_gene_when_absent_or_short(monkeypatch) -
 
 def test_shelf_search_resolves_gene_from_disease_row(monkeypatch) -> None:
     """Executor resolves the causative gene from the disease_slug row and threads it in."""
-    from backend.executors import guideline_shelf_search_executor as se
+    from backend.executors.guidelines import guideline_shelf_search_executor as se
 
     captured: dict[str, object] = {}
 
@@ -169,7 +169,7 @@ def test_shelf_search_resolves_gene_from_disease_row(monkeypatch) -> None:
 
 
 def test_shelf_search_explicit_gene_wins_over_row(monkeypatch) -> None:
-    from backend.executors import guideline_shelf_search_executor as se
+    from backend.executors.guidelines import guideline_shelf_search_executor as se
 
     captured: dict[str, object] = {}
     monkeypatch.setattr(
@@ -264,7 +264,7 @@ def test_shelf_write_no_docs_is_error(repo: SqlaGuidelinesRepo) -> None:
 
 def test_shelf_executors_registered() -> None:
     from backend.executors import EXECUTOR_REGISTRY
-    from backend.executors.guideline_bibliography_write_executor import GuidelineBibliographyWriteExecutor
+    from backend.executors.guidelines.guideline_bibliography_write_executor import GuidelineBibliographyWriteExecutor
 
     assert EXECUTOR_REGISTRY["guideline_shelf_search"] is GuidelineShelfSearchExecutor
     assert EXECUTOR_REGISTRY["guideline_shelf_write"] is GuidelineShelfWriteExecutor
@@ -297,7 +297,7 @@ def test_shelf_flow_spec_valid_and_connected() -> None:
 def test_enrich_docs_from_pubmed_backfills_blank_author_year(monkeypatch) -> None:
     """The write step must backfill blank authors/year/journal from PubMed by
     PMID — the classify node drops that metadata, which rendered "· n/a"."""
-    from backend.executors import guideline_shelf_write_executor as wex
+    from backend.executors.guidelines import guideline_shelf_write_executor as wex
 
     docs = [
         {"pmid": "33653979", "authors": "", "year": "n/a", "journal": "", "title": "A"},
@@ -331,7 +331,7 @@ def test_enrich_docs_from_pubmed_backfills_blank_author_year(monkeypatch) -> Non
 
 def test_enrich_docs_from_pubmed_soft_fails(monkeypatch) -> None:
     """A PubMed error must not raise — docs keep their existing (blank) values."""
-    from backend.executors import guideline_shelf_write_executor as wex
+    from backend.executors.guidelines import guideline_shelf_write_executor as wex
 
     def _boom(_pmids):
         raise RuntimeError("network down")

@@ -21,7 +21,7 @@ import backend.guidelines.orm  # noqa: F401 — registers tables on the shared m
 from backend.agents.schemas import PRESET_OUTPUT_SCHEMAS, GuidelineFactCheckOutput
 from backend.executors import EXECUTOR_REGISTRY
 from backend.executors.base import NodeInput
-from backend.executors.guideline_factcheck_load_executor import GuidelineFactcheckLoadExecutor
+from backend.executors.guidelines.guideline_factcheck_load_executor import GuidelineFactcheckLoadExecutor
 from backend.guidelines.repository import SqlaGuidelinesRepo
 from backend.shared.persistence.schema import metadata
 

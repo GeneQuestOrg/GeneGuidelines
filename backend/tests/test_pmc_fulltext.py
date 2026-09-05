@@ -262,7 +262,7 @@ def test_fit_shelf_handles_an_empty_shelf() -> None:
 
 def test_shelf_budget_is_derived_from_the_token_cap() -> None:
     """The budget must follow LLM_PROMPT_TOKEN_CAP, not a magic constant."""
-    from backend.executors import guideline_shelf_load_executor as loader
+    from backend.executors.guidelines import guideline_shelf_load_executor as loader
 
     budget = loader._shelf_char_budget()
 

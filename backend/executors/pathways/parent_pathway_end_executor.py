@@ -1,7 +1,7 @@
 """Finalize parent pathway flow output from saved chart."""
 from __future__ import annotations
 
-from .base import NodeExecutor, NodeInput, NodeOutput
+from ..base import NodeExecutor, NodeInput, NodeOutput
 
 
 class ParentPathwayEndExecutor(NodeExecutor):

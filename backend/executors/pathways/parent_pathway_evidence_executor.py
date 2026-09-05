@@ -1,7 +1,7 @@
 """Optional targeted PubMed excerpts for parent pathway flow."""
 from __future__ import annotations
 
-from .base import NodeExecutor, NodeInput, NodeOutput
+from ..base import NodeExecutor, NodeInput, NodeOutput
 
 
 class ParentPathwayEvidenceExecutor(NodeExecutor):

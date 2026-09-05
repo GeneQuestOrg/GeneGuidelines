@@ -5,7 +5,7 @@ import asyncio
 import pytest
 
 from backend.executors.base import NodeInput
-from backend.executors.doctor_finder_step_executor import (
+from backend.executors.doctors.doctor_finder_step_executor import (
     DoctorFinderStepExecutor,
     _pipeline_base_from_node_outputs,
 )

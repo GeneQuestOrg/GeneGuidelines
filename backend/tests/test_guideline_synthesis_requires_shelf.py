@@ -14,7 +14,7 @@ from __future__ import annotations
 import asyncio
 
 from backend.executors.base import NodeInput
-from backend.executors.guideline_synthesis_writer_executor import (
+from backend.executors.guidelines.guideline_synthesis_writer_executor import (
     GuidelineSynthesisWriterExecutor,
 )
 

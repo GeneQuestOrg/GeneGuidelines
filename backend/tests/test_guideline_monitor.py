@@ -25,8 +25,8 @@ from backend.agents.schemas import (
 )
 from backend.executors import EXECUTOR_REGISTRY
 from backend.executors.base import NodeInput
-from backend.executors.guideline_monitor_search_executor import GuidelineMonitorSearchExecutor
-from backend.executors.guideline_suggestion_writer_executor import GuidelineSuggestionWriterExecutor
+from backend.executors.guidelines.guideline_monitor_search_executor import GuidelineMonitorSearchExecutor
+from backend.executors.guidelines.guideline_suggestion_writer_executor import GuidelineSuggestionWriterExecutor
 from backend.guidelines.repository import SqlaGuidelinesRepo
 from backend.shared.persistence.schema import metadata
 
@@ -91,7 +91,7 @@ def test_monitor_search_loads_guidance_and_excludes_shelf(repo, monkeypatch) -> 
         return [{"pmid": "39999999", "title": "New denosumab schedule", "abstract": "a", "year": "2025"}]
 
     monkeypatch.setattr(
-        "backend.executors.guideline_monitor_search_executor._recent_candidates", _fake_recent
+        "backend.executors.guidelines.guideline_monitor_search_executor._recent_candidates", _fake_recent
     )
     ex = GuidelineMonitorSearchExecutor(repo=repo)
     out = asyncio.run(

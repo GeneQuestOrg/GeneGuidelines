@@ -37,7 +37,7 @@ def test_shelf_search_keeps_the_title_scoped_queries() -> None:
     the two documents closest to a child with craniofacial disease. Title-scoped
     queries return few results and rank the right ones near the top.
     """
-    from backend.executors import guideline_shelf_search_executor as ex
+    from backend.executors.guidelines import guideline_shelf_search_executor as ex
 
     source = pathlib.Path(ex.__file__).read_text()
 
@@ -53,7 +53,7 @@ def test_candidate_cap_is_high_enough_for_five_interleaved_queries() -> None:
     At the old cap of 30 (and even at 40) the craniofacial guidelines were retrieved
     and then dropped again before the classifier ever saw them.
     """
-    from backend.executors.guideline_shelf_search_executor import _PUBMED_CANDIDATE_CAP
+    from backend.executors.guidelines.guideline_shelf_search_executor import _PUBMED_CANDIDATE_CAP
 
     assert _PUBMED_CANDIDATE_CAP >= 50
 
@@ -190,7 +190,7 @@ def test_no_fixed_per_document_character_cap_survives() -> None:
     """A fixed cap discarded 36% of the FD consensus while the shelf used ~10% of the
     context. The budget must be derived from LLM_PROMPT_TOKEN_CAP.
     """
-    from backend.executors import guideline_shelf_load_executor as loader
+    from backend.executors.guidelines import guideline_shelf_load_executor as loader
 
     assert not hasattr(loader, "_FULLTEXT_CHARS_PER_DOC")
     # Big enough for a real guideline shelf, and derived rather than magic.
@@ -206,7 +206,7 @@ def test_shelf_budget_follows_the_profile_that_is_actually_running(
     source text — over the vllm limit — with five section prompts each carrying it.
     """
     from backend import config
-    from backend.executors import guideline_shelf_load_executor as loader
+    from backend.executors.guidelines import guideline_shelf_load_executor as loader
 
     # SINGLE_LLM_MODE also forces the tighter budget, so pin it off to isolate the
     # profile itself. This dev machine runs with it on, which is why an earlier

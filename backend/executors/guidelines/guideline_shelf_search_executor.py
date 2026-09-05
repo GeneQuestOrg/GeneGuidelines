@@ -18,10 +18,10 @@ import os
 import urllib.parse
 import urllib.request
 
-from .base import NodeExecutor, NodeInput, NodeOutput
+from ..base import NodeExecutor, NodeInput, NodeOutput
 
 try:
-    from ..flows.doctor_finder.pubmed_relevance import _normalize_gene
+    from ...flows.doctor_finder.pubmed_relevance import _normalize_gene
 except ImportError:  # pragma: no cover - flat-layout import shim
     from flows.doctor_finder.pubmed_relevance import _normalize_gene  # type: ignore[no-redef]
 
@@ -69,7 +69,7 @@ class GuidelineShelfSearchExecutor(NodeExecutor):
             slug = str(initial.get("disease_slug") or "").strip()
             if slug:
                 try:
-                    from ..content_db import get_disease_gene
+                    from ...content_db import get_disease_gene
                 except ImportError:  # pragma: no cover - flat-layout import shim
                     from content_db import get_disease_gene  # type: ignore[no-redef]
                 gene = get_disease_gene(slug)
@@ -183,7 +183,7 @@ def _collect_shelf_candidates(disease_name: str, gene: str | None = None) -> lis
     (PubMed has no ``[Gene]`` search field). The consensus / review / management AND-filters
     are kept, so recall stays bounded. Empty / too-short gene → name-only (graceful).
     """
-    from ..tools.pubmed_runtime import fetch_article_details_impl
+    from ...tools.pubmed_runtime import fetch_article_details_impl
 
     gene_sym = _normalize_gene(gene)
     name_ta = f'"{disease_name}"[Title/Abstract]'

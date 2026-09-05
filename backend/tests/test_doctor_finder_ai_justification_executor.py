@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 
 from backend.executors.base import FlowRuntimeBundle, NodeInput
-from backend.executors.doctor_finder_ai_justification_executor import DoctorFinderAiJustificationExecutor
+from backend.executors.doctors.doctor_finder_ai_justification_executor import DoctorFinderAiJustificationExecutor
 
 
 def test_skip_ai_passes_doctor_report_from_df6() -> None:

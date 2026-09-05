@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from .base import FlowRuntimeBundle, NodeExecutor, NodeInput, NodeOutput
+from ..base import FlowRuntimeBundle, NodeExecutor, NodeInput, NodeOutput
 
 log = logging.getLogger(__name__)
 
@@ -18,7 +18,7 @@ class PubmedAuthorsFetchExecutor(NodeExecutor):
         return "pubmed_authors_fetch"
 
     async def execute(self, input: NodeInput) -> NodeOutput:
-        from ..tools.pubmed_runtime import search_articles_impl, fetch_authors_with_affiliations_impl
+        from ...tools.pubmed_runtime import search_articles_impl, fetch_authors_with_affiliations_impl
 
         initial = input.initial_data or {}
         disease_name = str(initial.get("disease_name") or "").strip()
@@ -27,7 +27,7 @@ class PubmedAuthorsFetchExecutor(NodeExecutor):
         # ultra-rare diseases the NAME finds ~0 papers; the gene surfaces the real experts.
         gene = str(initial.get("gene") or "").strip()
         try:
-            from ..config import DOCTOR_FINDER_MAX_PMIDS
+            from ...config import DOCTOR_FINDER_MAX_PMIDS
         except ImportError:  # pragma: no cover - flat-layout import shim
             from config import DOCTOR_FINDER_MAX_PMIDS  # type: ignore[no-redef]
         # `max_results` is the per-esearch-PAGE size; `max_pmids` is the TOTAL budget
@@ -43,7 +43,7 @@ class PubmedAuthorsFetchExecutor(NodeExecutor):
         if not disease_name:
             return NodeOutput(data={"ok": False, "error": "disease_name is required in initial_context"})
 
-        from ..flows.doctor_finder.pubmed_relevance import (
+        from ...flows.doctor_finder.pubmed_relevance import (
             build_doctor_finder_pubmed_query,
             filter_articles_by_disease_text,
         )
@@ -126,7 +126,7 @@ class PubmedAuthorsFetchExecutor(NodeExecutor):
 
         # Grade each kept article's disease-evidence strength (MeSH major topic, title,
         # type) so the author scorer can weight by per-paper relevance, not raw counts.
-        from ..flows.doctor_finder.paper_scoring import annotate_articles_with_evidence
+        from ...flows.doctor_finder.paper_scoring import annotate_articles_with_evidence
 
         mesh_major = annotate_articles_with_evidence(
             articles, disease_name=disease_name, aliases=aliases, gene=gene

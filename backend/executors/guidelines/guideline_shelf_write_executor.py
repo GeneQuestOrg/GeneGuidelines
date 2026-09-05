@@ -14,7 +14,7 @@ import asyncio
 import logging
 import re
 
-from .base import NodeExecutor, NodeInput, NodeOutput
+from ..base import NodeExecutor, NodeInput, NodeOutput
 
 log = logging.getLogger(__name__)
 
@@ -79,7 +79,7 @@ class GuidelineShelfWriteExecutor(NodeExecutor):
     def _get_repo(self):
         if self._repo is not None:
             return self._repo
-        from ..guidelines.repository import SqlaGuidelinesRepo
+        from ...guidelines.repository import SqlaGuidelinesRepo
 
         return SqlaGuidelinesRepo()
 
@@ -260,7 +260,7 @@ def _enrich_docs_from_pubmed(docs: list[dict]) -> None:
     if not pmids:
         return
     try:
-        from ..services.official_guidelines_finder import _pubmed_metadata
+        from ...services.official_guidelines_finder import _pubmed_metadata
 
         meta = {str(m.get("pmid")): m for m in _pubmed_metadata(pmids)}
     except Exception as exc:  # noqa: BLE001 — enrichment is best-effort

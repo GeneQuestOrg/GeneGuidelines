@@ -16,7 +16,7 @@ from sqlalchemy import create_engine
 
 import backend.guidelines.bibliography.orm  # noqa: F401 — registers the table on shared metadata
 from backend.agents.schemas import GuidelineShelfOutput
-from backend.executors.guideline_bibliography_write_executor import (
+from backend.executors.guidelines.guideline_bibliography_write_executor import (
     GuidelineBibliographyWriteExecutor,
     _detect_step,
     _ledger_from_monitor,

@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import logging
 
-from .base import NodeExecutor, NodeInput, NodeOutput
+from ..base import NodeExecutor, NodeInput, NodeOutput
 
 log = logging.getLogger(__name__)
 
@@ -39,7 +39,7 @@ class GuidelineBibliographyWriteExecutor(NodeExecutor):
     def _get_repo(self):
         if self._repo is not None:
             return self._repo
-        from ..guidelines.bibliography.repository import SqlaBibliographyRepo
+        from ...guidelines.bibliography.repository import SqlaBibliographyRepo
 
         return SqlaBibliographyRepo()
 

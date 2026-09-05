@@ -4,8 +4,8 @@ from __future__ import annotations
 import asyncio
 
 from backend.executors.base import NodeInput
-from backend.executors.parent_pathway_end_executor import ParentPathwayEndExecutor
-from backend.executors.parent_pathway_load_executor import ParentPathwayLoadExecutor
+from backend.executors.pathways.parent_pathway_end_executor import ParentPathwayEndExecutor
+from backend.executors.pathways.parent_pathway_load_executor import ParentPathwayLoadExecutor
 
 
 def test_parent_pathway_load_missing_slug() -> None:

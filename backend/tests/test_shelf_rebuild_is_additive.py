@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from backend.executors.guideline_shelf_write_executor import _merge_with_existing
+from backend.executors.guidelines.guideline_shelf_write_executor import _merge_with_existing
 
 
 @dataclass

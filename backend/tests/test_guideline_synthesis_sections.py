@@ -15,7 +15,7 @@ import asyncio
 from pathlib import Path
 
 from backend.executors.base import NodeInput
-from backend.executors.guideline_synthesis_writer_executor import (
+from backend.executors.guidelines.guideline_synthesis_writer_executor import (
     GuidelineSynthesisWriterExecutor,
     _near_duplicate,
     _text_fingerprint,

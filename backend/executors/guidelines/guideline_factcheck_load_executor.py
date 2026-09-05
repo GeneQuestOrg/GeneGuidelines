@@ -12,7 +12,7 @@ from __future__ import annotations
 import asyncio
 import logging
 
-from .base import NodeExecutor, NodeInput, NodeOutput
+from ..base import NodeExecutor, NodeInput, NodeOutput
 
 log = logging.getLogger(__name__)
 
@@ -29,7 +29,7 @@ class GuidelineFactcheckLoadExecutor(NodeExecutor):
     def _get_repo(self):
         if self._repo is not None:
             return self._repo
-        from ..guidelines.repository import SqlaGuidelinesRepo
+        from ...guidelines.repository import SqlaGuidelinesRepo
 
         return SqlaGuidelinesRepo()
 
@@ -101,7 +101,7 @@ class GuidelineFactcheckLoadExecutor(NodeExecutor):
     async def _fetch_abstracts(self, pmids: list[str]) -> dict[str, str]:
         if not pmids:
             return {}
-        from ..tools.pubmed_runtime import fetch_article_details_impl
+        from ...tools.pubmed_runtime import fetch_article_details_impl
 
         loop = asyncio.get_event_loop()
         try:

@@ -6,7 +6,7 @@ import json
 import logging
 from typing import Any
 
-from .base import NodeExecutor, NodeInput, NodeOutput
+from ..base import NodeExecutor, NodeInput, NodeOutput
 
 log = logging.getLogger(__name__)
 

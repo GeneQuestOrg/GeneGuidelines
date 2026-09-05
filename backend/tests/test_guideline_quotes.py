@@ -35,10 +35,10 @@ from backend.agents.schemas import (
 )
 from backend.executors import EXECUTOR_REGISTRY
 from backend.executors.base import NodeInput
-from backend.executors.guideline_quote_extract_load_executor import (
+from backend.executors.guidelines.guideline_quote_extract_load_executor import (
     GuidelineQuoteExtractLoadExecutor,
 )
-from backend.executors.guideline_synthesis_writer_executor import (
+from backend.executors.guidelines.guideline_synthesis_writer_executor import (
     GuidelineSynthesisWriterExecutor,
     _collect_quotes,
     _gate_quotes,

@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 
 from backend.executors.base import FlowRuntimeBundle, NodeInput
-from backend.executors.pubmed_authors_fetch_executor import PubmedAuthorsFetchExecutor
+from backend.executors.doctors.pubmed_authors_fetch_executor import PubmedAuthorsFetchExecutor
 
 
 def test_pubmed_fetch_paginates_full_set_with_max_results_as_page_size(monkeypatch) -> None:

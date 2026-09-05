@@ -17,7 +17,7 @@ import os
 import urllib.parse
 import urllib.request
 
-from .base import NodeExecutor, NodeInput, NodeOutput
+from ..base import NodeExecutor, NodeInput, NodeOutput
 
 log = logging.getLogger(__name__)
 
@@ -39,7 +39,7 @@ class GuidelineMonitorSearchExecutor(NodeExecutor):
     def _get_repo(self):
         if self._repo is not None:
             return self._repo
-        from ..guidelines.repository import SqlaGuidelinesRepo
+        from ...guidelines.repository import SqlaGuidelinesRepo
 
         return SqlaGuidelinesRepo()
 
@@ -137,7 +137,7 @@ def _recent_candidates(disease_name: str, exclude_pmids: set[str]) -> list[dict]
     primary work (e.g. a single-cell / mechanism paper) is in the net, not just
     reviews. The triage step decides which actually matter.
     """
-    from ..tools.pubmed_runtime import fetch_article_details_impl
+    from ...tools.pubmed_runtime import fetch_article_details_impl
 
     year_to = _dt.date.today().year
     year_from = year_to - _RECENT_YEARS

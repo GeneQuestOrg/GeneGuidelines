@@ -4,7 +4,7 @@ import asyncio
 import logging
 from typing import Any, Awaitable, Callable
 
-from .base import NodeExecutor, NodeInput, NodeOutput
+from ..base import NodeExecutor, NodeInput, NodeOutput
 
 log = logging.getLogger(__name__)
 
@@ -33,7 +33,7 @@ class DoctorFinderStepExecutor(NodeExecutor):
         return "doctor_finder_step"
 
     async def execute(self, input: NodeInput) -> NodeOutput:
-        from ..flows.doctor_finder import (
+        from ...flows.doctor_finder import (
             affiliation_georesolve,
             affiliation_parser,
             author_aggregator,

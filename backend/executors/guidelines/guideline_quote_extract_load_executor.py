@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import logging
 
-from .base import NodeExecutor, NodeInput, NodeOutput
+from ..base import NodeExecutor, NodeInput, NodeOutput
 
 log = logging.getLogger(__name__)
 
