@@ -151,3 +151,80 @@ def test_direct_prefix_routes_around_pydantic_ai() -> None:
     from backend.agents.simple_runner import resolve_model_spec_for_node
 
     assert resolve_model_spec_for_node({"model_name": "direct:gpt-6-astra"}) == "direct:gpt-6-astra"
+
+
+class _Sec(BaseModel):
+    text: str
+
+
+class _Out(BaseModel):
+    sections: list[_Sec]
+
+
+def _call_direct(monkeypatch, *, raises: Exception | None = None, key: str = "sk-test"):
+    """Drive _run_direct_openai with the network stubbed out."""
+    import asyncio
+    from queue import Queue
+
+    from backend.agents import openai_direct, simple_runner
+
+    def _stub(**kwargs):
+        if raises:
+            raise raises
+        _stub.seen = kwargs
+        return {"sections": [{"text": "ok"}]}
+
+    monkeypatch.setattr(openai_direct, "call_structured", _stub)
+    monkeypatch.setenv("OPENAI_API_KEY", key)
+    store: dict = {}
+    result = asyncio.run(
+        simple_runner._run_direct_openai(
+            model="gpt-6-astra",
+            system_prompt="s",
+            user_prompt="u",
+            result_type=_Out,
+            max_tokens=300,
+            store=store,
+            event_queue=Queue(),
+            node_id="gs-sec-diagnosis",
+            emit_fn=lambda *_: None,
+            poison_store_on_failure=True,
+            sse_kind="llm",
+        )
+    )
+    return result, store, getattr(_stub, "seen", None)
+
+
+def test_the_direct_path_runs_end_to_end(monkeypatch) -> None:
+    """Exercises the function body, which no import check can do.
+
+    The FD re-synthesis died three times inside this one function: an import of a
+    name backend.config does not define, then a leftover reference to that same name
+    in the call itself, then a module logger that was never declared. Every one was a
+    NameError raised only when the branch actually ran — on production, mid-run, with
+    no content written and nothing red in CI.
+    """
+    result, store, seen = _call_direct(monkeypatch)
+
+    assert store.get("error") is None
+    assert result == {"sections": [{"text": "ok"}]}
+    assert seen["api_key"] == "sk-test", "the key must reach the client"
+    assert seen["max_completion_tokens"] >= 16_000, "reasoning models need headroom"
+
+
+def test_a_failing_call_reports_through_the_store_not_a_second_exception(
+    monkeypatch,
+) -> None:
+    """The except branch is where the undeclared logger hid — it only runs on failure,
+    so a broken error path turns a recoverable failure into a NameError."""
+    result, store, _ = _call_direct(monkeypatch, raises=RuntimeError("upstream 500"))
+
+    assert result == {}
+    assert "upstream 500" in str(store.get("error"))
+
+
+def test_a_missing_key_fails_closed_with_a_readable_message(monkeypatch) -> None:
+    result, store, _ = _call_direct(monkeypatch, key="")
+
+    assert result == {}
+    assert "OPENAI_API_KEY" in str(store.get("error"))

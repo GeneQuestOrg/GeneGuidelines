@@ -4,10 +4,14 @@ LLM Call (Simple): one model call, no MCP, structured output (Pydantic), retry u
 from __future__ import annotations
 
 import asyncio
+import logging
+import os
 import time
 from contextvars import ContextVar
 from queue import Queue
 from typing import Any, Type
+
+log = logging.getLogger(__name__)
 
 from pydantic import BaseModel
 
@@ -505,10 +509,15 @@ async def _run_direct_openai(
     or {} with store['error'] set — so a caller cannot tell which path ran except by
     the model spec it asked for.
     """
-    from ..config import OPENAI_API_KEY
     from .openai_direct import call_structured
 
-    if not OPENAI_API_KEY:
+    # Read the environment directly: backend.config never exposes this as a module
+    # attribute, it only reads os.environ inline where it needs it. Importing a name
+    # that does not exist raised ImportError at call time, which the engine reported
+    # as a failed run with no synthesis written.
+    api_key = (os.environ.get("OPENAI_API_KEY") or "").strip()
+
+    if not api_key:
         msg = f"Node {node_id}: direct:{model} needs OPENAI_API_KEY"
         if poison_store_on_failure:
             store["error"] = msg
@@ -525,7 +534,7 @@ async def _run_direct_openai(
                 prompt=user_prompt,
                 system_prompt=system_prompt,
                 result_type=result_type,
-                api_key=OPENAI_API_KEY,
+                api_key=api_key,
                 # Reasoning models spend part of this budget thinking, so the visible
                 # answer needs headroom above the node's nominal limit.
                 max_completion_tokens=max(max_tokens * 4, 16_000),
