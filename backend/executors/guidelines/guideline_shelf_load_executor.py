@@ -37,23 +37,59 @@ _RESERVE_TOKENS = 12_000
 _CHARS_PER_TOKEN = 4
 
 
+def _sections_run_on_a_direct_model() -> bool:
+    """Do the section nodes that will read this shelf run on the direct frontier path?
+
+    The shelf is loaded by one node and consumed by another. Both live in
+    ``guideline_synthesis``, so the consumer's model is knowable rather than assumed,
+    and it is the consumer's context window that bounds the shelf — not the ambient
+    profile the shelf-loader happens to run under.
+
+    Reads the live flow definition, not the spec file, because the row is what the
+    engine executes.
+    """
+    try:
+        from ...database import get_flow_definition_nodes
+
+        models = {
+            str(n.get("model_name") or "").strip().lower()
+            for n in get_flow_definition_nodes("guideline_synthesis")
+            if str(n.get("node_id") or "").startswith("gs-sec-")
+        }
+    except Exception:  # noqa: BLE001 - budget must never be the thing that fails a run
+        return False
+    return bool(models) and all(m.startswith("direct:") for m in models)
+
+
 def _shelf_char_budget() -> int:
     """Characters of shelf full text one section prompt may carry.
 
-    Must follow the cap that applies to the ACTIVE profile. Production runs
-    MODEL_PROFILE=vllm, which has its own tighter budget
-    (LLM_PROMPT_TOKEN_CAP_VLLM, 60k) — reading the 200k general cap instead let the
-    FD shelf grow to ~62.5k tokens of source text alone, i.e. over the real limit,
-    with five section prompts each carrying it.
+    The cap follows whichever model actually reads the shelf.
+
+    When the sections run on the deployed small model, the ACTIVE profile decides.
+    Production runs MODEL_PROFILE=vllm, whose budget is tighter
+    (LLM_PROMPT_TOKEN_CAP_VLLM, 60k); reading the 200k general cap instead once let
+    the FD shelf grow past the real limit, five section prompts each carrying it.
+
+    When the sections run on the direct frontier path, that tighter cap is simply the
+    wrong number — and an expensive one. Measured on the FD shelf: 250,114 characters
+    of open-access full text against a 192,000-character budget, so 23% was cut, and
+    because the trim is water-filling it fell hardest on the largest document, which
+    was the 2019 best-practice consensus — the one paper least acceptable to lose.
+    Trimming a clinical source to fit a window the reader does not have is not a
+    saving, it is silent data loss in medical content.
     """
     from ... import config as _cfg
 
-    profile = (os.environ.get("MODEL_PROFILE") or "").strip().lower()
-    cap = (
-        _cfg.LLM_PROMPT_TOKEN_CAP_VLLM
-        if profile in {"vllm", "ollama"} or _cfg.SINGLE_LLM_MODE
-        else _cfg.LLM_PROMPT_TOKEN_CAP
-    )
+    if _sections_run_on_a_direct_model():
+        cap = _cfg.LLM_PROMPT_TOKEN_CAP
+    else:
+        profile = (os.environ.get("MODEL_PROFILE") or "").strip().lower()
+        cap = (
+            _cfg.LLM_PROMPT_TOKEN_CAP_VLLM
+            if profile in {"vllm", "ollama"} or _cfg.SINGLE_LLM_MODE
+            else _cfg.LLM_PROMPT_TOKEN_CAP
+        )
     usable = max(cap - _RESERVE_TOKENS, 10_000)
     return usable * _CHARS_PER_TOKEN
 

@@ -212,6 +212,9 @@ def test_shelf_budget_follows_the_profile_that_is_actually_running(
     # profile itself. This dev machine runs with it on, which is why an earlier
     # version of this test passed for the wrong reason.
     monkeypatch.setattr(config, "SINGLE_LLM_MODE", False)
+    # The profile only decides when the sections run on the deployed small model;
+    # pin that here so this test keeps testing the branch it names.
+    monkeypatch.setattr(loader, "_sections_run_on_a_direct_model", lambda: False)
     monkeypatch.setenv("MODEL_PROFILE", "vllm")
     vllm_budget = loader._shelf_char_budget()
     monkeypatch.setenv("MODEL_PROFILE", "production")
@@ -223,3 +226,67 @@ def test_shelf_budget_follows_the_profile_that_is_actually_running(
     # And SINGLE_LLM_MODE alone is enough to trigger it, whatever the profile says.
     monkeypatch.setattr(config, "SINGLE_LLM_MODE", True)
     assert loader._shelf_char_budget() == vllm_budget
+
+
+def test_shelf_budget_follows_the_model_that_reads_the_shelf(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A frontier reader must not be handed a shelf trimmed for gemma's window.
+
+    Measured on the live FD shelf: 250,114 characters of open-access full text
+    against the 192,000-character vllm budget. 23% was cut — and the trim is
+    water-filling, so the biggest document lost the most, which was the 2019
+    best-practice consensus. The sections had already been pointed at
+    ``direct:gpt-6-astra`` by then; only the budget had not noticed.
+    """
+    from backend import config
+    from backend.executors.guidelines import guideline_shelf_load_executor as loader
+
+    monkeypatch.setenv("MODEL_PROFILE", "vllm")
+    monkeypatch.setattr(config, "SINGLE_LLM_MODE", True)
+
+    monkeypatch.setattr(loader, "_sections_run_on_a_direct_model", lambda: False)
+    small = loader._shelf_char_budget()
+    monkeypatch.setattr(loader, "_sections_run_on_a_direct_model", lambda: True)
+    frontier = loader._shelf_char_budget()
+
+    assert frontier > small, "the direct path must not inherit the vllm budget"
+    # The whole measured FD shelf has to fit, with room for the prompt on top.
+    assert frontier > 250_114, "the FD shelf would still be trimmed"
+
+
+def test_a_mixed_or_unreadable_flow_keeps_the_conservative_budget(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Only an all-direct flow earns the large budget.
+
+    If one section still runs on the small model, that section is the binding
+    constraint — handing it a 750k-character shelf would overflow its window, which
+    is the original failure in the opposite direction. And a database that cannot be
+    read must degrade to the safe number, never the generous one.
+    """
+    from backend.executors.guidelines import guideline_shelf_load_executor as loader
+
+    def _nodes(mixed: bool):
+        return [
+            {"node_id": "gs-sec-diagnosis", "model_name": "direct:gpt-6-astra"},
+            {
+                "node_id": "gs-sec-therapy",
+                "model_name": "vllm:google/gemma-4-31B-it" if mixed else "direct:gpt-6-astra",
+            },
+            {"node_id": "gs-write", "model_name": None},  # not a section, ignored
+        ]
+
+    import backend.database as db
+
+    monkeypatch.setattr(db, "get_flow_definition_nodes", lambda key: _nodes(mixed=True))
+    assert loader._sections_run_on_a_direct_model() is False
+
+    monkeypatch.setattr(db, "get_flow_definition_nodes", lambda key: _nodes(mixed=False))
+    assert loader._sections_run_on_a_direct_model() is True
+
+    def _boom(key):
+        raise RuntimeError("db down")
+
+    monkeypatch.setattr(db, "get_flow_definition_nodes", _boom)
+    assert loader._sections_run_on_a_direct_model() is False
