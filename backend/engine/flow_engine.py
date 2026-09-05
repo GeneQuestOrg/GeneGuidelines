@@ -49,6 +49,23 @@ from ..flows.parent_pathway.submit_guard import parent_pathway_synth_missing_dra
 # refuses, nothing is persisted, yet the run used to reach ``end`` and report success.
 # A prompt change once left every section empty and three "successful" runs in a row
 # quietly wrote nothing at all — the stale document on the page was the only clue.
+# Node types the engine will run. Derived from EXECUTOR_REGISTRY rather than listed
+# by hand: this gate used to be a literal tuple repeated in the file, and a node type
+# missing from it was skipped SILENTLY — no error, no failed run, just a node that
+# quietly did nothing. That is how Feature 4 (per-claim source paraphrases) shipped
+# inert to production and stayed that way until a human read the page.
+#
+# The few entries below are control-flow types the engine implements itself, so they
+# have no executor to register.
+_ENGINE_NATIVE_NODE_TYPES = frozenset({"loop", "http_request", "action", "end"})
+
+
+def _supported_node_types() -> frozenset[str]:
+    from ..executors import EXECUTOR_REGISTRY
+
+    return frozenset(EXECUTOR_REGISTRY) | _ENGINE_NATIVE_NODE_TYPES
+
+
 _HARD_FAIL_ON_NOT_OK = (
     "parent_pathway_load",
     "guideline_shelf_load",
@@ -544,42 +561,19 @@ async def run_flow_step_by_step_async(
         if not node:
             continue
         node_type = (node.get("node_type") or "").strip().lower()
-        if node_type not in (
-            "prompt",
-            "loop",
-            "decision",
-            "code",
-            "http_request",
-            "guidelines_rag",
-            "pmid_verify",
-            "pmid_scrub",
-            "evaluation_check",
-            "guideline_bibliography_write",
-            "guideline_factcheck_load",
-            "guideline_monitor_search",
-            "guideline_quote_extract_load",
-            "guideline_shelf_load",
-            "guideline_shelf_search",
-            "guideline_shelf_write",
-            "guideline_suggestion_writer",
-            "guideline_synthesis_writer",
-            "pubmed_authors_fetch",
-            "doctor_finder_step",
-            "doctor_finder_ai_justification",
-            "parent_pathway_load",
-            "parent_pathway_evidence",
-            "parent_pathway_end",
-            "action",
-            "end",
-            "merge",
-        ):
+        if node_type not in _supported_node_types():
             emit_fn(
                 event_queue,
                 {
                     "kind": "sys",
-                    "text": f"[SYSTEM] Node {node_id} ({node_type}): skipping (supported: prompt/loop/decision/code/http_request/guidelines_rag/pmid_verify/pmid_scrub/evaluation_check/guideline_bibliography_write/guideline_factcheck_load/guideline_monitor_search/guideline_quote_extract_load/guideline_shelf_load/guideline_shelf_search/guideline_shelf_write/guideline_suggestion_writer/guideline_synthesis_writer/pubmed_authors_fetch/doctor_finder_step/doctor_finder_ai_justification/parent_pathway_load/parent_pathway_evidence/parent_pathway_end/action/end/merge).",
+                    "text": (
+                        f"[SYSTEM] Node {node_id} ({node_type}): skipping — no executor "
+                        f"registered. Supported: {', '.join(sorted(_supported_node_types()))}."
+                    ),
                 },
             )
+            store["node_outputs"][node_id] = {}
+            continue
             # Keep dependency graph stable (e.g. merge waiting for predecessors).
             store["node_outputs"][node_id] = {}
             continue
@@ -1538,40 +1532,12 @@ async def run_flow_fork_parallel_async(
         )
 
         node_type = (node.get("node_type") or "").strip().lower()
-        if node_type not in (
-            "prompt",
-            "loop",
-            "decision",
-            "code",
-            "http_request",
-            "guidelines_rag",
-            "pmid_verify",
-            "pmid_scrub",
-            "evaluation_check",
-            "guideline_bibliography_write",
-            "guideline_factcheck_load",
-            "guideline_monitor_search",
-            "guideline_quote_extract_load",
-            "guideline_shelf_load",
-            "guideline_shelf_search",
-            "guideline_shelf_write",
-            "guideline_suggestion_writer",
-            "guideline_synthesis_writer",
-            "pubmed_authors_fetch",
-            "doctor_finder_step",
-            "doctor_finder_ai_justification",
-            "parent_pathway_load",
-            "parent_pathway_evidence",
-            "parent_pathway_end",
-            "action",
-            "end",
-            "merge",
-        ):
+        if node_type not in _supported_node_types():
             emit_fn(
                 event_queue,
                 {
                     "kind": "sys",
-                    "text": f"[SYSTEM] Node {nid} ({node_type}): skipping.",
+                    "text": f"[SYSTEM] Node {nid} ({node_type}): skipping — no executor registered.",
                 },
             )
             local_store["node_outputs"][nid] = {}
