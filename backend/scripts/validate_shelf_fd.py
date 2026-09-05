@@ -30,7 +30,7 @@ _FD_EXPECTED = {
 
 
 def validate(disease_name: str, expected: dict[str, str]) -> bool:
-    from backend.executors.guideline_shelf_search_executor import _collect_shelf_candidates
+    from backend.executors.guidelines.guideline_shelf_search_executor import _collect_shelf_candidates
 
     print(f"== shelf-builder search recall: {disease_name!r} ==")
     candidates = _collect_shelf_candidates(disease_name)
@@ -54,7 +54,7 @@ def main() -> int:
     if len(sys.argv) > 1:
         # Ad-hoc: validate an arbitrary disease's recall (no expected set → just list).
         name = sys.argv[1]
-        from backend.executors.guideline_shelf_search_executor import _collect_shelf_candidates
+        from backend.executors.guidelines.guideline_shelf_search_executor import _collect_shelf_candidates
 
         cands = _collect_shelf_candidates(name)
         print(f"== {name!r}: {len(cands)} candidates ==")

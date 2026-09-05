@@ -43,7 +43,7 @@ _EXPECTED = {
 def candidates(disease: str = "Fibrous Dysplasia", gene: str = "GNAS", refresh: bool = False):
     if _CACHE.exists() and not refresh:
         return json.loads(_CACHE.read_text())
-    from backend.executors.guideline_shelf_search_executor import (  # noqa: PLC0415
+    from backend.executors.guidelines.guideline_shelf_search_executor import (  # noqa: PLC0415
         _collect_shelf_candidates,
     )
 

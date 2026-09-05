@@ -15,7 +15,7 @@ _FD_SHELF_PMIDS = {"31196103", "38010041", "36849642"}
 
 
 def main() -> int:
-    from backend.executors.guideline_monitor_search_executor import _recent_candidates
+    from backend.executors.guidelines.guideline_monitor_search_executor import _recent_candidates
 
     print("== monitor retrieval (recent, beyond shelf): 'Fibrous Dysplasia' ==")
     cands = _recent_candidates("Fibrous Dysplasia", _FD_SHELF_PMIDS)

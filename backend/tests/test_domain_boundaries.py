@@ -92,3 +92,39 @@ def test_domain_modules_are_not_left_behind_at_the_top_level() -> None:
     )
 
     assert not stray, f"these belong in a domain package: {stray}"
+
+
+def test_every_reference_to_an_executor_module_still_resolves() -> None:
+    """Function-level imports survive a package move only if someone remembers them.
+
+    Moving the executors into domain packages broke four call sites that no test
+    touched, because they import *inside* a function body — `guidelines_rag` in both
+    engine paths and three validation scripts. Nothing goes red until the branch is
+    actually taken, which for the engine means a live run of that node type.
+
+    So the check is static: every `backend.executors.X` / `..executors.X` path
+    written anywhere in the tree must correspond to a module that exists.
+    """
+    root = pathlib.Path(__file__).resolve().parents[2]
+    skip = {".git", "node_modules", "__pycache__", ".pytest_cache", "dist", ".venv"}
+
+    missing: dict[str, set[str]] = {}
+    for path in root.rglob("*.py"):
+        if skip & set(path.parts):
+            continue
+        try:
+            tree = ast.parse(path.read_text())
+        except (SyntaxError, UnicodeDecodeError):
+            continue
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.ImportFrom) or not node.module:
+                continue
+            module = node.module
+            if "executors." not in module:
+                continue
+            tail = module.split("executors.", 1)[1]
+            target = _EXECUTORS.joinpath(*tail.split("."))
+            if not (target.with_suffix(".py").exists() or (target / "__init__.py").exists()):
+                missing.setdefault(str(path.relative_to(root)), set()).add(module)
+
+    assert not missing, f"these import executor modules that do not exist: {missing}"

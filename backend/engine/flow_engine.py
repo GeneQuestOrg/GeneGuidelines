@@ -724,7 +724,7 @@ async def run_flow_step_by_step_async(
             continue
 
         if node_type == "guidelines_rag":
-            from ..executors.guidelines_rag_executor import GuidelinesRagExecutor
+            from ..executors.guidelines.guidelines_rag_executor import GuidelinesRagExecutor
             emit_fn(
                 event_queue,
                 {"kind": "sys", "text": f"[SYSTEM] Node {node_id} ({node.get('label', node_id)}), Guidelines RAG..."},
@@ -1669,7 +1669,7 @@ async def run_flow_fork_parallel_async(
 
         # RAG
         if node_type == "guidelines_rag":
-            from ..executors.guidelines_rag_executor import GuidelinesRagExecutor
+            from ..executors.guidelines.guidelines_rag_executor import GuidelinesRagExecutor
             emit_fn(event_queue, {"kind": "sys", "text": f"[SYSTEM] Node {nid} ({node.get('label', nid)}), Guidelines RAG..."})
             executor = GuidelinesRagExecutor()
             result = await executor.execute(

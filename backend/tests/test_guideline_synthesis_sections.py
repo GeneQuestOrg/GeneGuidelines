@@ -223,3 +223,59 @@ def test_related_paragraphs_from_a_sound_document_survive_the_tighter_cut() -> N
 
     assert _near_duplicate(surgery, imaging) is False
     assert _near_duplicate(imaging, surgery) is False
+
+
+def test_section_model_choice_syncs_from_spec_too(monkeypatch) -> None:
+    """Pointing the spec at a frontier model must actually reach the database row.
+
+    This is the defect the FD re-run hit: the spec said ``direct:gpt-6-astra`` for
+    every section, the sync only carried ``prompt`` across, and production kept
+    running gemma from its seeded row. Nothing failed — the logs were clean, the run
+    completed, the synthesis was just written by the wrong model. A drift that
+    produces a plausible answer is the expensive kind, so it is asserted here rather
+    than left to a reviewer noticing the model_spec field in a log line.
+    """
+    import json as _json
+
+    from backend import database_flow_ensures as dfe
+
+    spec_path = Path(__file__).resolve().parents[1] / "flows" / "specs" / "guideline_synthesis.json"
+    spec_nodes = {
+        n["node_id"]: n
+        for n in _json.loads(spec_path.read_text(encoding="utf-8"))["nodes"]
+        if str(n.get("node_id", "")).startswith("gs-sec-")
+    }
+    assert spec_nodes, "the spec has no section nodes to sync"
+
+    updates: dict[str, str | None] = {}
+
+    class _Cursor:
+        def __init__(self) -> None:
+            self._last: tuple = ()
+
+        def execute(self, sql: str, params: tuple = ()) -> None:
+            self._last = (sql, params)
+            if sql.lstrip().upper().startswith("UPDATE"):
+                # (prompt, model_name, now, flow_key, node_id)
+                updates[params[4]] = params[1]
+
+        def fetchone(self) -> dict:
+            # A live row as production had it: seeded prompt, seeded model.
+            return {"prompt": "stale prompt", "model_name": "vllm:google/gemma-4-31B-it"}
+
+    class _Conn:
+        def cursor(self) -> _Cursor:
+            return _Cursor()
+
+        def commit(self) -> None: ...
+
+        def close(self) -> None: ...
+
+    monkeypatch.setattr(dfe, "get_connection", lambda: _Conn())
+    dfe._sync_guideline_synthesis_section_prompts_from_spec()
+
+    for node_id, node in spec_nodes.items():
+        assert node_id in updates, f"{node_id} was never updated"
+        assert updates[node_id] == (node.get("model_name") or None), (
+            f"{node_id}: database would keep the old model instead of the spec's"
+        )

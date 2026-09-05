@@ -767,7 +767,7 @@ def _ensure_guideline_synthesis_quote_nodes() -> None:
 
 
 def _sync_guideline_synthesis_section_prompts_from_spec() -> None:
-    """Keep the gs-sec-* prompts equal to the bundled spec on every start.
+    """Keep the gs-sec-* prompts AND model choice equal to the bundled spec on every start.
 
     The spec loader leaves an already-seeded flow alone, so without this the prompt a
     live database runs is whatever it was seeded with, and editing the JSON changes
@@ -777,7 +777,12 @@ def _sync_guideline_synthesis_section_prompts_from_spec() -> None:
     turned out to break the model actually deployed. Section prompts are therefore
     owned by the spec in git, not by the database row.
 
-    Only rewrites rows whose prompt actually differs, so restarts are no-ops.
+    ``model_name`` is synced for the same reason and it is not a detail: pointing the
+    section nodes at a frontier model in the spec did nothing on production, because
+    the seeded rows still said gemma and the engine reads the row. The symptom was a
+    run that looked healthy in every log line while quietly using the old model.
+
+    Only rewrites rows that actually differ, so restarts are no-ops.
     """
     spec = _load_guideline_spec("guideline_synthesis")
     if not spec:
@@ -794,16 +799,22 @@ def _sync_guideline_synthesis_section_prompts_from_spec() -> None:
         prompt = str(node.get("prompt") or "")
         if not prompt:
             continue
+        model_name = str(node.get("model_name") or "") or None
         cur.execute(
-            "SELECT prompt FROM flow_definitions WHERE flow_key = %s AND node_id = %s",
+            "SELECT prompt, model_name FROM flow_definitions WHERE flow_key = %s AND node_id = %s",
             ("guideline_synthesis", node_id),
         )
         row = cur.fetchone()
-        if row is None or str(row.get("prompt") or "") == prompt:
+        if row is None:
+            continue
+        live_prompt = str(row.get("prompt") or "")
+        live_model = str(row.get("model_name") or "") or None
+        if live_prompt == prompt and live_model == model_name:
             continue
         cur.execute(
-            "UPDATE flow_definitions SET prompt = %s, updated_at = %s WHERE flow_key = %s AND node_id = %s",
-            (prompt, now, "guideline_synthesis", node_id),
+            "UPDATE flow_definitions SET prompt = %s, model_name = %s, updated_at = %s "
+            "WHERE flow_key = %s AND node_id = %s",
+            (prompt, model_name, now, "guideline_synthesis", node_id),
         )
     conn.commit()
     conn.close()
