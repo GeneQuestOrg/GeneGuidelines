@@ -57,8 +57,13 @@ _PAIRED_PROBES: dict[str, tuple[list[str], list[str]]] = {
 }
 
 
-def load_shelf(slug: str = "fd", refresh: bool = False) -> list[dict]:
-    """The real shelf documents with full text, cached on disk."""
+def load_shelf(slug: str = "fd", refresh: bool = False, from_prod: bool = False) -> list[dict]:
+    """The real shelf documents with full text, cached on disk.
+
+    ``from_prod`` reads the live shelf instead of this machine's database. They drift
+    — production rebuilds change the shelf — and measuring against a stale local copy
+    would answer a question nobody asked.
+    """
     if _CACHE.exists() and not refresh:
         return json.loads(_CACHE.read_text())
 
@@ -70,8 +75,32 @@ def load_shelf(slug: str = "fd", refresh: bool = False) -> list[dict]:
     )
     from backend.tools.pubmed_runtime import fetch_article_details_impl  # noqa: PLC0415
 
-    repo = provide_guidelines_repo()
-    docs = repo.list_source_documents(slug)
+    if from_prod:
+        import urllib.request  # noqa: PLC0415
+
+        raw = json.load(
+            urllib.request.urlopen(
+                f"https://geneguidelines.genequest.org/api/diseases/{slug}/source-documents"
+            )
+        )
+        docs = [
+            type(
+                "D",
+                (),
+                {
+                    "doc_id": str(x["id"]),
+                    "pmid": x.get("pmid"),
+                    "role": x.get("role", ""),
+                    "title": x.get("title", ""),
+                    "scope": x.get("scope", ""),
+                    "covers": x.get("covers", []),
+                },
+            )()
+            for x in raw
+        ]
+    else:
+        repo = provide_guidelines_repo()
+        docs = repo.list_source_documents(slug)
     pmids = [d.pmid for d in docs if d.pmid]
     abstracts = {
         str(a.get("pmid")): a.get("abstract") or ""
@@ -203,23 +232,45 @@ def render(prompt: str, shelf: list[dict], disease: str) -> str:
     ).replace("{{ context.initial.disease_name }}", disease)
 
 
-def run_once(prompt: str) -> dict:
-    """One call through the same runner and schema the flow uses."""
+def run_once(prompt: str, model: str | None = None) -> dict:
+    """One call through the same runner and schema the flow uses.
+
+    ``model`` accepts a fully-qualified spec ("openai:gpt-6-astra"), which is how a
+    node overrides the active profile — so what is measured here is exactly what
+    setting model_name on the node would run.
+    """
     import asyncio  # noqa: PLC0415
 
     from backend.agents.schemas import GuidelineSectionOutput  # noqa: PLC0415
+
     from backend.agents.simple_runner import (  # noqa: PLC0415
         resolve_model_spec_for_node,
         run_llm_simple_async,
     )
 
     node = {"node_id": "gs-sec-lab", "node_type": "prompt"}
+    spec = model or resolve_model_spec_for_node(node)
+
+    # Reasoning models reject `max_tokens`, which pydantic-ai 1.97.0 sends, so they
+    # come back empty through the normal runner. Route them to the direct path.
+    if spec.startswith("direct:"):
+        from dotenv import dotenv_values  # noqa: PLC0415
+
+        from backend.agents.openai_direct import call_structured  # noqa: PLC0415
+
+        return call_structured(
+            model=spec.split(":", 1)[1],
+            prompt=prompt,
+            result_type=GuidelineSectionOutput,
+            api_key=dotenv_values(".env")["OPENAI_API_KEY"],
+            max_completion_tokens=32_000,
+        )
     return asyncio.run(
         run_llm_simple_async(
             system_prompt="",
             user_prompt=prompt,
             result_type=GuidelineSectionOutput,
-            model_spec=resolve_model_spec_for_node(node),
+            model_spec=spec,
             max_tokens=8000,
             max_retry=1,
             store={},
@@ -256,6 +307,8 @@ def main() -> int:
     ap.add_argument("--variant", default="current", choices=sorted(VARIANTS))
     ap.add_argument("--disease", default="Fibrous Dysplasia")
     ap.add_argument("--refresh-shelf", action="store_true")
+    ap.add_argument("--model", default=None, help='e.g. direct:gpt-6-astra')
+    ap.add_argument("--from-prod", action="store_true", help="use the live shelf")
     ap.add_argument("--list", action="store_true")
     args = ap.parse_args()
 
@@ -263,7 +316,7 @@ def main() -> int:
         print("warianty:", ", ".join(sorted(VARIANTS)))
         return 0
 
-    shelf = load_shelf(refresh=args.refresh_shelf)
+    shelf = load_shelf(refresh=args.refresh_shelf, from_prod=args.from_prod)
     print(f"półka: {len(shelf)} dokumentów", file=sys.stderr)
     for d in shelf:
         n = len(d["fullText"]) or len(d["abstract"])
@@ -273,11 +326,11 @@ def main() -> int:
     print(f"\nprompt: {len(prompt)} znaków ≈ {len(prompt)//4} tokenów", file=sys.stderr)
 
     t0 = time.time()
-    result = run_once(prompt)
+    result = run_once(prompt, args.model)
     took = time.time() - t0
 
     s = score(result)
-    print(f"\n=== {args.section} / {args.variant} ({took:.0f}s)")
+    print(f"\n=== {args.section} / {args.variant} / {args.model or 'profil'} ({took:.0f}s)")
     print(f"akapitów: {s['paragraphs']} | znaków: {s['chars']} | źródła: {s['docs_used']}")
     for k, v in s["probes"].items():
         print(f"  [{'TAK' if v else '  -'}] {k}")

@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 
 from ..config import NCBI_API_KEY
 from ..config import LLM_PROMPT_TOKEN_CAP
@@ -32,12 +33,28 @@ from .base import NodeExecutor, NodeInput, NodeOutput
 # _RESERVE_TOKENS holds back room for the prompt scaffolding, the section
 # instructions and the model's own reply; ~4 chars per token is the usual rough
 # conversion and is deliberately conservative here.
-_RESERVE_TOKENS = 30_000
+_RESERVE_TOKENS = 12_000
 _CHARS_PER_TOKEN = 4
 
 
 def _shelf_char_budget() -> int:
-    usable = max(LLM_PROMPT_TOKEN_CAP - _RESERVE_TOKENS, 10_000)
+    """Characters of shelf full text one section prompt may carry.
+
+    Must follow the cap that applies to the ACTIVE profile. Production runs
+    MODEL_PROFILE=vllm, which has its own tighter budget
+    (LLM_PROMPT_TOKEN_CAP_VLLM, 60k) — reading the 200k general cap instead let the
+    FD shelf grow to ~62.5k tokens of source text alone, i.e. over the real limit,
+    with five section prompts each carrying it.
+    """
+    from .. import config as _cfg
+
+    profile = (os.environ.get("MODEL_PROFILE") or "").strip().lower()
+    cap = (
+        _cfg.LLM_PROMPT_TOKEN_CAP_VLLM
+        if profile in {"vllm", "ollama"} or _cfg.SINGLE_LLM_MODE
+        else _cfg.LLM_PROMPT_TOKEN_CAP
+    )
+    usable = max(cap - _RESERVE_TOKENS, 10_000)
     return usable * _CHARS_PER_TOKEN
 
 log = logging.getLogger(__name__)

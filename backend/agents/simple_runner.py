@@ -250,6 +250,27 @@ async def run_llm_simple_async(
     poison_store_on_failure=False: do not set store['error'] (e.g. agentic step close path).
     sse_kind: 'kind' field used for emitted SSE events (defaults to 'llm_simple').
     """
+    # `direct:<model>` bypasses pydantic-ai for OpenAI reasoning models. They reject
+    # `max_tokens` in favour of `max_completion_tokens`, which pydantic-ai 1.97.0 does
+    # not send, so the call returns empty content and the node silently produces
+    # nothing. pydantic-ai is pinned (mcp 2.0 broke the version above it), so this is
+    # the seam that lets the synthesis use a frontier model without disturbing the
+    # agent stack every other flow depends on. See backend/agents/openai_direct.py.
+    if model_spec.startswith("direct:"):
+        return await _run_direct_openai(
+            model=model_spec.split(":", 1)[1],
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
+            result_type=result_type,
+            max_tokens=max_tokens,
+            store=store,
+            event_queue=event_queue,
+            node_id=node_id,
+            emit_fn=emit_fn,
+            poison_store_on_failure=poison_store_on_failure,
+            sse_kind=sse_kind,
+        )
+
     attempt = 0
     extra = ""
     last_err: str | None = None
@@ -462,3 +483,74 @@ async def run_llm_simple_async(
             {"kind": "sys", "text": f"[SYSTEM] {msg} (flow step continued without full step_close)."},
         )
     return {}
+
+
+async def _run_direct_openai(
+    *,
+    model: str,
+    system_prompt: str,
+    user_prompt: str,
+    result_type: Type[BaseModel],
+    max_tokens: int,
+    store: dict,
+    event_queue: Queue | None,
+    node_id: str,
+    emit_fn: Any,
+    poison_store_on_failure: bool,
+    sse_kind: str,
+) -> dict[str, Any]:
+    """One structured call straight to OpenAI, off the event loop.
+
+    Kept to the same contract as the pydantic-ai path — returns the validated dict,
+    or {} with store['error'] set — so a caller cannot tell which path ran except by
+    the model spec it asked for.
+    """
+    from ..config import OPENAI_API_KEY
+    from .openai_direct import call_structured
+
+    if not OPENAI_API_KEY:
+        msg = f"Node {node_id}: direct:{model} needs OPENAI_API_KEY"
+        if poison_store_on_failure:
+            store["error"] = msg
+        emit_fn(event_queue, {"kind": "sys", "text": f"[SYSTEM] {msg}"})
+        return {}
+
+    emit_fn(event_queue, {"kind": sse_kind, "text": f"[{node_id}] {model} (direct)"})
+    loop = asyncio.get_event_loop()
+    try:
+        raw = await loop.run_in_executor(
+            None,
+            lambda: call_structured(
+                model=model,
+                prompt=user_prompt,
+                system_prompt=system_prompt,
+                result_type=result_type,
+                api_key=OPENAI_API_KEY,
+                # Reasoning models spend part of this budget thinking, so the visible
+                # answer needs headroom above the node's nominal limit.
+                max_completion_tokens=max(max_tokens * 4, 16_000),
+            ),
+        )
+    except Exception as exc:  # noqa: BLE001 — surfaced through the same channel as any node failure
+        msg = f"Node {node_id}: direct:{model} failed: {exc}"
+        log.warning("%s", msg)
+        if poison_store_on_failure:
+            store["error"] = msg
+        emit_fn(event_queue, {"kind": "sys", "text": f"[SYSTEM] {msg}"})
+        return {}
+
+    raw.pop("_usage", None)
+    if not raw:
+        msg = f"Node {node_id}: direct:{model} returned no content"
+        if poison_store_on_failure:
+            store["error"] = msg
+        emit_fn(event_queue, {"kind": "sys", "text": f"[SYSTEM] {msg}"})
+        return {}
+    try:
+        return result_type.model_validate(raw).model_dump()
+    except Exception as exc:  # noqa: BLE001
+        msg = f"Node {node_id}: direct:{model} output failed validation: {exc}"
+        if poison_store_on_failure:
+            store["error"] = msg
+        emit_fn(event_queue, {"kind": "sys", "text": f"[SYSTEM] {msg}"})
+        return {}
