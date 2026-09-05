@@ -96,7 +96,9 @@ def _run_flow(base: str, key: str, slug: str, endpoint: str, label: str) -> bool
     if not execution_id:
         print(f"    {label}: no execution_id in response: {str(started)[:200]}")
         return False
-    print(f"    {label}: started {execution_id[:8]}")
+    # The full id, not a prefix: /api/agent/run/{id} needs the whole thing, and when a
+    # run misbehaves that URL is the only way to see why.
+    print(f"    {label}: started {execution_id}")
     return _wait(base, execution_id, label)
 
 
