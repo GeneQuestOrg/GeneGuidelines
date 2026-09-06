@@ -82,6 +82,8 @@
   "noReferencesBody": "To stwierdzenie nie ma jeszcze przypisanej podstawy w literaturze.",
 
   "noOfficialGuidelineYet": "Jeszcze nie ma uzgodnionych wytycznych dla {{disease}}.",
+  "gateNoSourcesTitle": "Nie mamy jeszcze wytycznych dla tej choroby.",
+  "gateNoSourcesBody": "Nie ma uzgodnionych wytycznych klinicznych dla {{disease}}, a piśmiennictwo, które udało nam się zebrać, nie wystarcza, żeby cokolwiek rzetelnie z niego zbudować. Wolimy powiedzieć to wprost, niż pokazać Ci ogólniki. Poniżej znajdziesz źródła, które mamy — i lekarzy zajmujących się tą chorobą.",
   "noBaselinePrefix": "Dla tej choroby jeszcze nie zbudowano szkicu AI. Na razie",
   "returnToOverviewLink": "wróć do przeglądu choroby",
   "unverifiedBannerTitle": "Możesz czytać wszystko — Twój sygnał jest na razie wstrzymany.",

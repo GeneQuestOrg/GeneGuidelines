@@ -82,6 +82,8 @@
   "noReferencesBody": "This claim has no literature basis mapped yet.",
 
   "noOfficialGuidelineYet": "No agreed guideline for {{disease}} yet.",
+  "gateNoSourcesTitle": "We don't have a guideline for this disease yet.",
+  "gateNoSourcesBody": "There is no agreed clinical guideline for {{disease}}, and the literature we could gather is not enough to build anything honest from. We would rather tell you that plainly than show you generalities. Below are the sources we do have — and the doctors who work on this disease.",
   "noBaselinePrefix": "No AI baseline has been assembled for this disease yet. For now,",
   "returnToOverviewLink": "return to the disease overview",
   "unverifiedBannerTitle": "You can read everything — your signal is held for now.",

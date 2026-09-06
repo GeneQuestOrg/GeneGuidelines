@@ -54,6 +54,10 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run typecheck -w frontend-public
+      # The frontend suite includes medical-honesty guards on what the family-facing
+      # pages may claim (DiseaseTabs.safety, GuidelineParentView.safety). They were
+      # written to gate deploys and were not running here at all.
+      - run: npm run test -w frontend-public
       - run: npm run typecheck -w @gene-guidelines/ops
 
       - uses: actions/setup-python@v5

@@ -76,6 +76,12 @@ export function GuidelineParentView({
 
   // Level (c): no agreed guideline — the parent is the bridge to a clinician,
   // never the recipient of a raw AI baseline (wizja 02/04). Safety gate only.
+  //
+  // With no baseline either, there is no draft to promise. Saying "we've prepared an
+  // early draft" when none exists is the same overclaiming the evidence gate exists
+  // to prevent, just moved one screen along. `baseline` is settled by here — the
+  // parent view waits on baselineLoading — so null means genuinely absent.
+  const noDraft = baseline == null;
   if (!hasOfficial) {
     return (
       <>
@@ -96,14 +102,20 @@ export function GuidelineParentView({
               <path d="M8 10V7a4 4 0 0 1 8 0v3" />
             </svg>
           </div>
-          <h2 className="gx-gate__t">{t("gateTitle")}</h2>
+          <h2 className="gx-gate__t">
+            {noDraft ? t("gateNoSourcesTitle") : t("gateTitle")}
+          </h2>
           <p className="gx-gate__p">
-            {t("gateBody", { disease: disease.name.toLowerCase() })}
+            {noDraft
+              ? t("gateNoSourcesBody", { disease: disease.name.toLowerCase() })
+              : t("gateBody", { disease: disease.name.toLowerCase() })}
           </p>
-          <span className={`gx-gate__read${readState.read ? " read" : ""}`}>
-            <span className="d" aria-hidden="true" />
-            {readState.read ? t("gateReadReviewed") : readState.note}
-          </span>
+          {noDraft ? null : (
+            <span className={`gx-gate__read${readState.read ? " read" : ""}`}>
+              <span className="d" aria-hidden="true" />
+              {readState.read ? t("gateReadReviewed") : readState.note}
+            </span>
+          )}
           <div className="gx-gate__actions">
             <Button
               variant="primary"
