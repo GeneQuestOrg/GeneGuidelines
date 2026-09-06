@@ -273,7 +273,7 @@ def test_synthesis_writer_drops_paragraph_without_source(repo: SqlaGuidelinesRep
         "id": "diagnosis",
         "intro": "x",
         "paragraphs": [
-            {"id": "ok", "text": "kept", "source": {"doc": "boyce2019"}},
+            {"id": "ok", "text": "kept", "source": {"doc": "boyce2019", "loc": "§ Diagnosis"}},
             {"id": "bad", "text": "dropped", "source": {}},  # no doc → dropped
         ],
     }

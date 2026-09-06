@@ -7,9 +7,11 @@ fine (the frontend api-repo treats 404/empty uniformly: shelf/suggestions ->
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, replace
 
 from ..content.repository import normalize_slug
+from .evidence import grounded_paragraph_count, is_grounded
 from ..shared.locale import DEFAULT_LOCALE
 from .models import (
     GuidelineSuggestion,
@@ -22,6 +24,9 @@ from .repository import (
     GuidelinesRepo,
     GuidelineSynthesisTranslationRepo,
 )
+
+
+log = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True, slots=True)
@@ -55,6 +60,19 @@ class GuidelinesService:
             return None
         synthesis = self.repo.get_synthesis(normalized)
         if synthesis is None:
+            return None
+        if not is_grounded(synthesis.sections):
+            # Withhold rather than publish padding. The caller turns this into the
+            # same "no agreed guideline" state a never-synthesised disease gets,
+            # which is the truthful answer: we have nothing to say about this
+            # disease that came from a source. Logged because a disease silently
+            # dropping off the guideline layer is something we need to see.
+            log.warning(
+                "guidelines: withholding ungrounded synthesis for %s "
+                "(%d paragraphs anchored in a source)",
+                normalized,
+                grounded_paragraph_count(synthesis.sections),
+            )
             return None
         if locale == DEFAULT_LOCALE or self.synthesis_translation_repo is None:
             return synthesis  # English (or no sidecar) → serve exactly as today

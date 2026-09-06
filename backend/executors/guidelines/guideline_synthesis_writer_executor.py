@@ -22,6 +22,7 @@ from difflib import SequenceMatcher
 
 from ...agents.schemas import SOURCE_QUOTE_MAX_CHARS
 from ...contracts.guidelines_v1 import EPISTEMIC_LEVEL_SYNTHESIS
+from ...guidelines.evidence import is_grounded
 from ..base import NodeExecutor, NodeInput, NodeOutput
 
 log = logging.getLogger(__name__)
@@ -91,6 +92,22 @@ class GuidelineSynthesisWriterExecutor(NodeExecutor):
         if not any(section["paragraphs"] for section in sections):
             return NodeOutput(
                 data={"ok": False, "error": "no section nodes produced paragraphs; nothing to write."}
+            )
+        # Paragraphs that cite nothing were not written from the shelf. The template
+        # fills either way — five sections asked for, five sections returned — so
+        # without this the run "succeeds" and publishes prose that is true of almost
+        # any syndrome and specific to none. Refusing leaves the disease on the
+        # no-agreed-guideline layer, which is the honest place for it.
+        if not is_grounded(sections):
+            log.warning("guideline_synthesis_writer: refusing ungrounded synthesis for %s", slug)
+            return NodeOutput(
+                data={
+                    "ok": False,
+                    "error": (
+                        "sections cite no source documents; the shelf gave the model "
+                        "nothing readable to write from."
+                    ),
+                }
             )
 
         synthesis = {
