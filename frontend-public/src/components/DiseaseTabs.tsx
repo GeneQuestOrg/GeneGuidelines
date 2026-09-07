@@ -5,6 +5,7 @@ import type { Disease } from "../types";
 import type { DiseaseCopy } from "../copy";
 import type { UserLocation } from "../router/types";
 import { DiseaseCard } from "./DiseaseCard";
+import { SpecialistDisclaimer } from "./SpecialistDisclaimer";
 import { DoctorCard } from "./DoctorCard";
 import { DiseaseOpenPrList } from "./DiseaseOpenPrList";
 import { FoundationsList } from "./FoundationsList";
@@ -125,6 +126,7 @@ export function DiseaseTabs({
                 title={t("diseaseTabs.specialistsTitle")}
                 sub={copy.doctorsSub(disease.doctorsCount)}
               >
+                <SpecialistDisclaimer />
                 <div className="d-doctors-preview">
                   {previewDoctors.slice(0, 3).map((doctor) => (
                     <DoctorCard

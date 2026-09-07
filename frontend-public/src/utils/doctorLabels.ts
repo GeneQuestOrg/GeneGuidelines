@@ -217,3 +217,35 @@ export function doctorLocation(
   }
   return parts.length > 0 ? parts.join(", ") : notListed;
 }
+
+/**
+ * How much publication evidence stands behind a listing: "1 paper · middle author · 2017".
+ *
+ * The per-disease heading reads "Specialists". For a doctor whose whole record is one
+ * case report they co-signed in the middle of an author list, that word claims more
+ * than the data holds — and the data was already in the payload, just never rendered.
+ * Showing the weight next to the name lets a family judge it instead of trusting a
+ * heading. Returns "" when there is nothing measured to show, so nothing is implied.
+ */
+export function doctorEvidenceLine(
+  doctor: { readonly publications?: readonly { readonly year: number | null; readonly position: string }[] },
+  t: (key: string, opts?: Record<string, unknown>) => string,
+): string {
+  const publications = doctor.publications ?? [];
+  if (publications.length === 0) return "";
+
+  const parts = [t("doctorCard.paperCount", { count: publications.length })];
+
+  // Author position is only meaningful when it is the same story throughout; a mixed
+  // record is summarised by its strongest position, which is what ranking uses too.
+  const positions = new Set(publications.map((p) => p.position));
+  const best = positions.has("first") ? "first" : positions.has("last") ? "last" : "middle";
+  const positionKey = `doctorCard.authorPosition.${best}`;
+  const positionLabel = t(positionKey);
+  if (positionLabel !== positionKey) parts.push(positionLabel);
+
+  const years = publications.map((p) => p.year).filter((y): y is number => typeof y === "number");
+  if (years.length > 0) parts.push(String(Math.max(...years)));
+
+  return parts.join(" · ");
+}

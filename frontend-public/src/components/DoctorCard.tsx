@@ -9,6 +9,7 @@ import {
   specialtySourceBadge,
   verifiedSpecialties,
   VALID_PUBMED_ROLES,
+  doctorEvidenceLine,
 } from "../utils/doctorLabels";
 import { DistancePill } from "./DistancePill";
 
@@ -29,6 +30,11 @@ export function DoctorCard({ doctor, km, compact = false, onNav }: DoctorCardPro
   const specialties = verifiedSpecialties(doctor);
   const primarySpecialty = specialties[0];
   const specialtyText = primarySpecialty?.labelEn ?? doctor.specialty?.trim();
+  // How much publication evidence sits behind this listing. The heading above the
+  // list says "Specialists", which for someone who co-signed a single 2017 case
+  // report claims far more than the record holds — and the weight was already in the
+  // payload, just never shown. A reader can now weigh the name against it.
+  const evidenceLine = doctorEvidenceLine(doctor, t);
   const reachText = reachabilityLabel(doctor.reachability ?? "unknown");
   const recencyBand = recencyBandOf(doctor);
   const href = `/doctor/${doctor.slug}`;
@@ -61,6 +67,7 @@ export function DoctorCard({ doctor, km, compact = false, onNav }: DoctorCardPro
       <div className="doc__inst">
         {doctor.institution} · {doctorLocation(doctor, t)}
       </div>
+      {evidenceLine ? <div className="doc__evidence">{evidenceLine}</div> : null}
       {!compact && reachText ? (
         <div
           className={`doc__reach doc__reach--${doctor.reachability}`}

@@ -78,6 +78,13 @@
     "empty": "No therapy lines recorded for this disease yet."
   },
   "doctorCard": {
+    "paperCount_one": "{{count}} paper on this disease",
+    "paperCount_other": "{{count}} papers on this disease",
+    "authorPosition": {
+      "first": "first author",
+      "last": "last author",
+      "middle": "middle author"
+    },
     "specialtyNotVerified": "Specialty not verified"
   },
   "loadingCatalog": "Loading catalog…",

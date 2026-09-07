@@ -80,6 +80,15 @@
     "empty": "Nie odnotowano jeszcze żadnych linii terapii dla tej choroby."
   },
   "doctorCard": {
+    "paperCount_one": "{{count}} praca o tej chorobie",
+    "paperCount_few": "{{count}} prace o tej chorobie",
+    "paperCount_many": "{{count}} prac o tej chorobie",
+    "paperCount_other": "{{count}} prac o tej chorobie",
+    "authorPosition": {
+      "first": "pierwszy autor",
+      "last": "ostatni autor",
+      "middle": "autor środkowy"
+    },
     "specialtyNotVerified": "Specjalizacja niezweryfikowana"
   },
   "loadingCatalog": "Ładowanie katalogu…",

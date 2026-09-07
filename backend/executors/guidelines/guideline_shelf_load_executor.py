@@ -146,14 +146,24 @@ class GuidelineShelfLoadExecutor(NodeExecutor):
             )
 
         pmids = [str(d.pmid).strip() for d in docs if str(getattr(d, "pmid", "") or "").strip()]
+        # Bookshelf chapters have no PMID that leads to text, so they are fetched by
+        # accession and share the shelf budget with everything else — a GeneReviews
+        # chapter runs to ~100k characters and would otherwise crowd the journals out.
+        accessions = [
+            str(getattr(d, "bookshelf", "") or "").strip()
+            for d in docs
+            if str(getattr(d, "bookshelf", "") or "").strip()
+            and not str(getattr(d, "pmid", "") or "").strip()
+        ]
         abstract_by_pmid = await self._fetch_abstracts(pmids)
-        fulltext_by_pmid, pmcid_by_pmid = await self._fetch_fulltexts(pmids)
+        fulltext_by_key, pmcid_by_pmid = await self._fetch_fulltexts(pmids, accessions)
 
         shelf_docs = []
         for d in docs:
             pmid = str(getattr(d, "pmid", "") or "").strip() or None
-            key = pmid or ""
-            fulltext = fulltext_by_pmid.get(key, "")
+            accession = str(getattr(d, "bookshelf", "") or "").strip() or None
+            key = pmid or accession or ""
+            fulltext = fulltext_by_key.get(key, "")
             pmcid = pmcid_by_pmid.get(key)
             shelf_docs.append(
                 {
@@ -182,30 +192,39 @@ class GuidelineShelfLoadExecutor(NodeExecutor):
                 "shelf_docs": shelf_docs,
                 "shelf_pmids": pmids,
                 "abstracts_fetched": sum(1 for v in abstract_by_pmid.values() if v),
-                "fulltexts_fetched": sum(1 for v in fulltext_by_pmid.values() if v),
+                "fulltexts_fetched": sum(1 for v in fulltext_by_key.values() if v),
             }
         )
 
     async def _fetch_fulltexts(
-        self, pmids: list[str]
+        self, pmids: list[str], accessions: list[str] | None = None
     ) -> tuple[dict[str, str], dict[str, str]]:
-        """(PMID → prompt-ready full text, PMID → PMCID). Soft-fails to ({}, {}).
+        """(key → prompt-ready full text, PMID → PMCID). Soft-fails to ({}, {}).
+
+        The key is a PMID for journal articles and a Bookshelf accession for
+        GeneReviews chapters, which have no PMID that resolves to text.
 
         Only open-access articles have a body to fetch; the rest keep serving their
-        abstract, which is what every synthesis ran on before this. The per-article
-        character budget keeps a five-document shelf inside LLM_PROMPT_TOKEN_CAP
-        even when every document resolves.
+        abstract, which is what every synthesis ran on before this. One character
+        budget covers every source together, so trimming stays fair across them
+        rather than letting whichever kind was fetched last take the whole window.
         """
-        if not pmids:
+        accessions = accessions or []
+        if not pmids and not accessions:
             return {}, {}
         from ...tools.pmc_fulltext import _pmid_to_pmcid, fetch_fulltext_by_pmid
 
         loop = asyncio.get_event_loop()
         try:
-            raw = await loop.run_in_executor(
-                None,
-                lambda: fetch_fulltext_by_pmid(pmids, api_key=NCBI_API_KEY or None),
+            raw = (
+                await loop.run_in_executor(
+                    None,
+                    lambda: fetch_fulltext_by_pmid(pmids, api_key=NCBI_API_KEY or None),
+                )
+                if pmids
+                else {}
             )
+            raw.update(await self._fetch_bookshelf(accessions))
             budget = _shelf_char_budget()
             fulltexts = fit_shelf_to_budget(raw, budget)
             dropped = sum(len(v) for v in raw.values()) - sum(len(v) for v in fulltexts.values())
@@ -215,8 +234,12 @@ class GuidelineShelfLoadExecutor(NodeExecutor):
                     budget,
                     dropped,
                 )
-            pmcids = await loop.run_in_executor(
-                None, lambda: _pmid_to_pmcid(pmids, api_key=NCBI_API_KEY or None)
+            pmcids = (
+                await loop.run_in_executor(
+                    None, lambda: _pmid_to_pmcid(pmids, api_key=NCBI_API_KEY or None)
+                )
+                if pmids
+                else {}
             )
         except Exception as exc:  # noqa: BLE001 — an upgrade, never a dependency
             log.warning("guideline_shelf_load: full-text fetch failed: %s", exc)
@@ -224,9 +247,32 @@ class GuidelineShelfLoadExecutor(NodeExecutor):
         log.info(
             "guideline_shelf_load: full text for %d/%d shelf documents",
             sum(1 for v in fulltexts.values() if v),
-            len(pmids),
+            len(pmids) + len(accessions),
         )
         return fulltexts, pmcids
+
+    async def _fetch_bookshelf(self, accessions: list[str]) -> dict[str, str]:
+        """accession → prompt-ready chapter text. Soft-fails per chapter."""
+        if not accessions:
+            return {}
+        from ...tools.bookshelf_fulltext import fetch_chapter_sections
+        from ...tools.pmc_fulltext import render_for_prompt
+
+        loop = asyncio.get_event_loop()
+        out: dict[str, str] = {}
+        for accession in accessions:
+            try:
+                sections = await loop.run_in_executor(
+                    None, lambda a=accession: fetch_chapter_sections(a)
+                )
+            except Exception as exc:  # noqa: BLE001 — one bad chapter is not a failed run
+                log.warning("guideline_shelf_load: bookshelf %s failed: %s", accession, exc)
+                continue
+            if sections:
+                # Rendered by the same function as PMC bodies so the prompt sees one
+                # shape, and trimmed later by the same shelf-wide budget.
+                out[accession] = render_for_prompt(sections, 10_000_000)
+        return out
 
     async def _fetch_abstracts(self, pmids: list[str]) -> dict[str, str]:
         """PMID → abstract map via PubMed esummary/efetch. Soft-fails to {}."""

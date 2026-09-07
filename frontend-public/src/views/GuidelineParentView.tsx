@@ -1,10 +1,11 @@
+import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@gene-guidelines/ui";
 import type { Disease } from "../types/disease";
 import type { GuidelineSynthesis } from "../types/guidelineSynthesis";
 import type { GuidelineSuggestion } from "../types/guidelineSuggestion";
 import type { GuidelineBaseline } from "../types/guidelineBaseline";
-import type { SourceDoc } from "../types/sourceDoc";
+import { type SourceDoc, sourceDocUrl } from "../types/sourceDoc";
 import type { ViewRole } from "../auth/resolveRole";
 import { ShareWithDoctorActions } from "../components/ShareWithDoctorActions";
 import { SectionNoSource } from "../components/guidelines/SectionNoSource";
@@ -71,6 +72,14 @@ export function GuidelineParentView({
 }: GuidelineParentViewProps) {
   const { t } = useTranslation("guidelines");
   const showSignin = role === "anon" && signInAvailable;
+  // Every paragraph is anchored in a shelf document (ADR 005), so a family can be
+  // shown where each statement came from — the same trail a clinician gets, at the
+  // density a parent can use. Keyed on the shelf document rather than the PMID so a
+  // GeneReviews chapter, which has no PMID, links out just like a journal article.
+  const sourceByDocId = useMemo(
+    () => new Map(docs.map((doc, index) => [doc.id, { doc, number: index + 1 }])),
+    [docs],
+  );
   const readState =
     baseline?.readState ?? { read: false, note: t("gateNoReadYet") };
 
@@ -191,11 +200,27 @@ export function GuidelineParentView({
             {sec.noSource ? <SectionNoSource /> : null}
             {sec.intro != null ? <p className="gx-sec__intro">{sec.intro}</p> : null}
             {/* Condensed projection: the first two paragraphs of each section. */}
-            {sec.paragraphs.slice(0, 2).map((p) => (
-              <div key={p.id} className="gx-para">
-                <p>{p.text}</p>
-              </div>
-            ))}
+            {sec.paragraphs.slice(0, 2).map((p) => {
+              const cited = p.source?.doc ? sourceByDocId.get(p.source.doc) : undefined;
+              return (
+                <div key={p.id} className="gx-para">
+                  <p>
+                    {p.text}
+                    {cited ? (
+                      <a
+                        className="gx-cit"
+                        href={sourceDocUrl(cited.doc)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title={cited.doc.title}
+                      >
+                        [{cited.number}]
+                      </a>
+                    ) : null}
+                  </p>
+                </div>
+              );
+            })}
             {promoted
               .filter((s) => s.targetSection === sec.id)
               .map((s) => (
