@@ -117,7 +117,16 @@ export interface PublicDoctor {
   readonly diseases: readonly string[];
   readonly pubmedRole: PubmedRole;
   readonly score: number;
-  readonly evidence: DoctorEvidence;
+  /**
+   * Publication metrics, ONLY when they were actually measured.
+   *
+   * Optional because "we did not measure this" is a real state and used to be
+   * unsayable: seeded records carried invented figures (one real scientist was shown
+   * as having 19 first/last-author papers, a number nobody counted) and the profile
+   * rendered them as fact. Zero would have been just as false, so absence has to be
+   * representable — a doctor with no measured record now shows nothing there.
+   */
+  readonly evidence?: DoctorEvidence;
   /** Papers behind the profile. Omitted from the directory list response (weight);
    *  present on `/api/doctors/{slug}`, which is what the profile view fetches. */
   readonly publications?: readonly DoctorPublication[];

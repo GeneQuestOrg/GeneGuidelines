@@ -67,7 +67,18 @@ export function DoctorCard({ doctor, km, compact = false, onNav }: DoctorCardPro
       <div className="doc__inst">
         {doctor.institution} · {doctorLocation(doctor, t)}
       </div>
-      {evidenceLine ? <div className="doc__evidence">{evidenceLine}</div> : null}
+      {/* What kind of contact this doctor has had with the disease. Nobody is cut
+          from the list for having only co-signed a case report — that person may
+          still be the nearest one who has seen it — but the reader gets to see the
+          calibre next to the name instead of inferring it from the "Specialists"
+          heading. Shown in compact mode too: the per-disease list is exactly where
+          the choice gets made, and it was the one place hiding this. */}
+      {evidenceLine || roleLabel ? (
+        <div className="doc__evidence">
+          <span className={`tag tag--role tag--${safeRoleClass}`}>{roleLabel}</span>
+          {evidenceLine ? <span className="doc__evidence-detail">{evidenceLine}</span> : null}
+        </div>
+      ) : null}
       {!compact && reachText ? (
         <div
           className={`doc__reach doc__reach--${doctor.reachability}`}
@@ -100,10 +111,10 @@ export function DoctorCard({ doctor, km, compact = false, onNav }: DoctorCardPro
             {/* No "Cites guidelines" badge: the pipeline hardcodes that flag to
                 false (flows/doctor_finder/role_classifier.py), so it only ever
                 appeared on the six hand-written fixture doctors. */}
-            {doctor.evidence.guidelineOrConsensusCoauthor ? (
+            {doctor.evidence?.guidelineOrConsensusCoauthor ? (
               <span className="tag tag--ok">Guideline author</span>
             ) : null}
-            {doctor.evidence.activeLast2y ? (
+            {doctor.evidence?.activeLast2y ? (
               <span className="tag tag--ok">Active</span>
             ) : null}
             {isWorkflowDoctorSource(doctor.source) ? (

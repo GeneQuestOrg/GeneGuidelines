@@ -126,7 +126,7 @@ export function DoctorProfileView({ slug, userLoc, onNav }: DoctorProfileViewPro
   const idBadge = identityBadge(doctor.identityConfidence);
 
   const dataRecs = doctor.parentRecs ?? [];
-  const dataRecCount = evidence.parentRecCount ?? dataRecs.length;
+  const dataRecCount = evidence?.parentRecCount ?? dataRecs.length;
   const familyRecCount = dataRecs.length + localRecs.length;
   const venues = practiceList(doctor, userLoc);
 
@@ -201,6 +201,9 @@ export function DoctorProfileView({ slug, userLoc, onNav }: DoctorProfileViewPro
           </div>
         </div>
 
+        {/* Only shown when the numbers were measured. Rendering a block of zeros for
+            a doctor nobody counted states a finding where there is none. */}
+        {evidence ? (
         <div className="dprofile__evidence">
           <div className="dprofile__label">{t("evidence.title")}</div>
           <div className="ev-grid">
@@ -226,6 +229,7 @@ export function DoctorProfileView({ slug, userLoc, onNav }: DoctorProfileViewPro
             </div>
           </div>
         </div>
+        ) : null}
       </div>
 
       <Section title={t("diseases.title")} sub={t("diseases.sub")}>
@@ -395,7 +399,7 @@ export function DoctorProfileView({ slug, userLoc, onNav }: DoctorProfileViewPro
         )}
       </Section>
 
-      {evidence.runsClinicalTrial ? (
+      {evidence?.runsClinicalTrial ? (
         <Section title={t("trials.title")} sub={t("trials.sub")} divider>
           {relatedTrials.loading ? (
             <p className="d-panel-empty">{t("trials.loading")}</p>

@@ -106,10 +106,10 @@ export function workTypeLabel(workType: WorkType): string {
 export function workTypesOf(doctor: PublicDoctor): Set<WorkType> {
   const out = new Set<WorkType>();
   const ev = doctor.evidence;
-  if (ev.guidelineOrConsensusCoauthor) out.add("guideline");
-  if (ev.firstOrLastAuthorPapers > 0) out.add("original");
-  if (ev.reviewPapers > 0) out.add("review");
-  if (ev.runsClinicalTrial) out.add("trial");
+  if (ev?.guidelineOrConsensusCoauthor) out.add("guideline");
+  if ((ev?.firstOrLastAuthorPapers ?? 0) > 0) out.add("original");
+  if ((ev?.reviewPapers ?? 0) > 0) out.add("review");
+  if (ev?.runsClinicalTrial) out.add("trial");
   if (doctor.pubmedRole === "case_study_author") out.add("case_report");
   return out;
 }

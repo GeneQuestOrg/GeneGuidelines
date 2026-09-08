@@ -186,7 +186,12 @@ def test_disease_doctors_fd_seed(client: TestClient) -> None:
     assert len(body["doctors"]) >= 1
     first = body["doctors"][0]
     assert first["slug"]
-    assert first["evidence"]["firstOrLastAuthorPapers"] >= 0
+    # evidence is optional: it is present only when somebody measured it. Seeded
+    # records used to carry invented figures about real, named scientists, so absence
+    # is now the honest answer for a doctor nobody counted — but a block that IS
+    # there still has to hold sane numbers.
+    if first["evidence"] is not None:
+        assert first["evidence"]["firstOrLastAuthorPapers"] >= 0
 
 
 def test_list_doctors_catalog(client: TestClient) -> None:

@@ -78,3 +78,40 @@ def test_the_known_fabrications_have_not_come_back() -> None:
 
     for pmid in ("37001122", "34964677", "25719192", "32119988"):
         assert pmid not in seeded, f"PMID {pmid} was a verified fabrication; it is back"
+
+
+def test_no_seeded_record_carries_unmeasured_evidence_metrics() -> None:
+    """Invented figures about real people are the same defect as invented citations.
+
+    The seeded records used to declare things like firstOrLastAuthorPapers: 19 and
+    reviewPapers: 4 for a named scientist — numbers nobody counted, rendered on the
+    profile under "First / last author papers" as measured fact. Zeroing them would
+    have been just as false, so the field is optional now and a hand-written record
+    simply omits it. Measured evidence still arrives from the doctor-finder pipeline,
+    which counts what it actually saw.
+    """
+    data = json.loads(_SEED.read_text(encoding="utf-8"))
+    rows = data.get("doctors", data) if isinstance(data, dict) else data
+
+    with_evidence = [str(doc.get("slug", "?")) for doc in rows if "evidence" in doc]
+
+    assert not with_evidence, (
+        f"these seeded records claim measured evidence: {with_evidence}. "
+        "Seed data is hand-written, so the numbers cannot have been measured — "
+        "omit the block and let the pipeline supply it."
+    )
+
+
+def test_an_unmeasured_doctor_gets_no_evidence_block_rather_than_zeros() -> None:
+    """Zeros are a finding; absence is the truth when nobody counted.
+
+    The merge used to synthesise a full block from two empty inputs, so stripping the
+    invented numbers out of the seed would have quietly reintroduced them as
+    "First / last author papers: 0" on every hand-written profile.
+    """
+    from backend.doctor_catalog import _merge_evidence_dicts
+
+    assert _merge_evidence_dicts({}, {}) is None
+
+    measured = _merge_evidence_dicts({}, {"firstOrLastAuthorPapers": 7})
+    assert measured is not None and measured["firstOrLastAuthorPapers"] == 7

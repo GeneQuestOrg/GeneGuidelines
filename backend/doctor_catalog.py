@@ -284,8 +284,20 @@ def _pick_pubmed_role(a: str, b: str) -> str:
     return ra if _ROLE_PRECEDENCE.get(ra, 9) <= _ROLE_PRECEDENCE.get(rb, 9) else rb
 
 
-def _merge_evidence_dicts(seed_ev: dict[str, Any], finder_ev: dict[str, Any]) -> dict[str, Any]:
+def _merge_evidence_dicts(
+    seed_ev: dict[str, Any], finder_ev: dict[str, Any]
+) -> dict[str, Any] | None:
+    """Measured publication metrics, or None when neither side measured anything.
+
+    Returning zeros for an unmeasured doctor is the same false claim as inventing a
+    number: the profile renders "First / last author papers: 0" as a finding, when
+    the truth is that nobody counted. Seeded records carry no evidence at all now, so
+    without this the merge would manufacture that block of zeros for every one of
+    them.
+    """
     a, b = seed_ev or {}, finder_ev or {}
+    if not a and not b:
+        return None
     return {
         "firstOrLastAuthorPapers": max(int(a.get("firstOrLastAuthorPapers") or 0), int(b.get("firstOrLastAuthorPapers") or 0)),
         "reviewPapers": max(int(a.get("reviewPapers") or 0), int(b.get("reviewPapers") or 0)),

@@ -13,13 +13,6 @@
       "diseases": ["fd", "mas"],
       "pubmedRole": "research_leader",
       "score": 78,
-      "evidence": {
-        "firstOrLastAuthorPapers": 0,
-        "reviewPapers": 0,
-        "citesRecentGuidelines": false,
-        "activeLast2y": true,
-        "guidelineOrConsensusCoauthor": false
-      },
       "bio": "National consultant in oral and maxillofacial surgery with long experience in pediatric craniofacial fibrous dysplasia. Prefers conservative management until skeletal maturity.",
       "publicSource": "krzysztofdowgierd.pl, WSSD",
       "endorsements": ["FDMAS Alliance"],
@@ -73,13 +66,6 @@
       "diseases": ["fd"],
       "pubmedRole": "research_participant",
       "score": 38,
-      "evidence": {
-        "firstOrLastAuthorPapers": 2,
-        "reviewPapers": 0,
-        "citesRecentGuidelines": false,
-        "activeLast2y": true,
-        "guidelineOrConsensusCoauthor": false
-      },
       "bio": "Maxillofacial surgeon focusing on orthognathic surgery and implantology in patients with craniofacial bone lesions.",
       "publicSource": "implantclinicallecou.pl",
       "endorsements": [],
@@ -100,13 +86,6 @@
       "diseases": ["fd", "mas"],
       "pubmedRole": "research_leader",
       "score": 96,
-      "evidence": {
-        "firstOrLastAuthorPapers": 28,
-        "reviewPapers": 7,
-        "citesRecentGuidelines": false,
-        "activeLast2y": true,
-        "guidelineOrConsensusCoauthor": true
-      },
       "publications": [
         {
           "pmid": "31196103",
@@ -136,13 +115,6 @@
       "diseases": ["fd", "mas"],
       "pubmedRole": "research_leader",
       "score": 91,
-      "evidence": {
-        "firstOrLastAuthorPapers": 22,
-        "reviewPapers": 5,
-        "citesRecentGuidelines": false,
-        "activeLast2y": true,
-        "guidelineOrConsensusCoauthor": true
-      },
       "bio": "Leading authority on FD/MAS histopathology and GNAS mosaicism. Co-author of international FD/MAS guidelines.",
       "publicSource": "uniroma1.it",
       "endorsements": ["International FD/MAS Consortium"],
@@ -163,13 +135,6 @@
       "diseases": ["fd", "mas"],
       "pubmedRole": "research_leader",
       "score": 89,
-      "evidence": {
-        "firstOrLastAuthorPapers": 19,
-        "reviewPapers": 4,
-        "citesRecentGuidelines": false,
-        "activeLast2y": true,
-        "guidelineOrConsensusCoauthor": true
-      },
       "bio": "Director of the FD/MAS clinic at UCSF. Expert in GNAS signaling and translational models.",
       "publicSource": "ucsf.edu",
       "endorsements": ["FDMAS Alliance"],
@@ -190,13 +155,6 @@
       "diseases": ["fd"],
       "pubmedRole": "case_study_author",
       "score": 14,
-      "evidence": {
-        "firstOrLastAuthorPapers": 0,
-        "reviewPapers": 0,
-        "citesRecentGuidelines": false,
-        "activeLast2y": false,
-        "guidelineOrConsensusCoauthor": false
-      },
       "bio": "Nearest competent oral surgery contact in the Lubusz region for initial consultation and referral coordination.",
       "publicSource": "Regional registry",
       "endorsements": [],

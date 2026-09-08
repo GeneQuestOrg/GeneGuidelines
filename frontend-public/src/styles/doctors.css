@@ -181,6 +181,22 @@
   font-family: var(--font-mono);
 }
 
+/* Calibre of a doctor's contact with the disease, shown on the listing itself.
+   Wraps, because "Opisy przypadków · 1 praca o tej chorobie · autor środkowy · 2017"
+   is longer than a card is wide on a phone. */
+.doc__evidence {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.doc__evidence-detail {
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+}
+
 .doc__meta {
   display: flex;
   gap: 6px;

@@ -273,7 +273,12 @@ class PublicDoctorResponse(BaseModel):
         "unknown",
     ]
     score: int = Field(ge=0, le=100)
-    evidence: DoctorEvidenceResponse
+    # Optional because "nobody measured this" is a real state. Seeded records used to
+    # carry invented figures — one real scientist was published as having 19
+    # first/last-author papers, a number no one counted — and the profile rendered
+    # them as measured fact. Zero would have been equally false, so absence has to be
+    # representable rather than approximated.
+    evidence: DoctorEvidenceResponse | None = None
     publications: list[DoctorPublicationResponse] = Field(default_factory=list)
     bio: str = ""
     publicSource: str = ""
@@ -321,7 +326,8 @@ class PublicDoctorResponse(BaseModel):
                 )
             ]
         # Keep the sixth evidence signal in sync with the recommendations themselves.
-        self.evidence.parentRecCount = len(self.parentRecs)
+        if self.evidence is not None:
+            self.evidence.parentRecCount = len(self.parentRecs)
         # Derive recency from publications when a producer didn't set it explicitly. Central =
         # MeSH-major (paper is about the disease), so it reflects disease focus, not any activity.
         years = [p.year for p in self.publications if p.year is not None]
