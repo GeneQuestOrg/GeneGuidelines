@@ -1,0 +1,89 @@
+"""The schema comes up with the code, or the process dies trying.
+
+Migrations were applied by hand and it cost production twice in one day: once when
+code shipped reading a column whose migration nobody had run, and once when a feature
+had to be built around the schema instead of with it because running one felt too
+risky to bundle into a deploy.
+
+That is structural. Deploying code and migrating the database are one release, and
+splitting them across a pipeline and a human guarantees they drift.
+"""
+
+from __future__ import annotations
+
+import pytest
+
+from backend import migrations_runner
+
+
+def test_no_database_url_is_a_skip_not_a_crash(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Tests, tooling and one-off scripts import the app without a database."""
+    monkeypatch.setattr("backend.config.DB_URL", "")
+
+    assert migrations_runner.upgrade_to_head() is None
+
+
+def test_a_failing_migration_is_not_swallowed(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The whole point. An app that boots against a half-applied schema serves
+    confident wrong answers; a dead process is a visible broken deploy."""
+    import alembic.command
+
+    monkeypatch.setattr("backend.config.DB_URL", "postgresql://x/y")
+    monkeypatch.setattr(migrations_runner, "_ROOT", migrations_runner._ROOT)
+
+    def _boom(*args, **kwargs):
+        raise RuntimeError("migration exploded")
+
+    monkeypatch.setattr(alembic.command, "upgrade", _boom)
+
+    with pytest.raises(Exception):
+        migrations_runner.upgrade_to_head("postgresql://user:pass@127.0.0.1:1/nope")
+
+
+def test_the_lock_key_is_stable() -> None:
+    """Two processes only serialise if they agree on the number; changing it silently
+    disables the guard rather than failing."""
+    assert migrations_runner._LOCK_KEY == 0x6D6967726174696F & 0x7FFFFFFFFFFFFFFF
+
+
+def test_startup_runs_migrations_before_anything_touches_the_schema() -> None:
+    """Ordering is the whole safety property: seeds and the app must not see a schema
+    that has not been upgraded yet."""
+    import pathlib
+
+    main = (pathlib.Path(__file__).resolve().parents[1] / "main.py").read_text()
+
+    upgrade_at = main.find("upgrade_to_head")
+    init_at = main.find("init_db)")
+    assert upgrade_at != -1, "start-up no longer runs migrations"
+    assert upgrade_at < init_at, "migrations must run before init_db and the seeds"
+
+
+def test_migrations_are_not_best_effort() -> None:
+    """A try/except around this would restore exactly the failure it prevents."""
+    import pathlib
+    import re
+
+    main = (pathlib.Path(__file__).resolve().parents[1] / "main.py").read_text()
+    window = main[main.find("upgrade_to_head") - 400 : main.find("upgrade_to_head") + 200]
+
+    assert not re.search(r"try:\s*\n[^\n]*upgrade_to_head", window)
+
+
+def test_running_migrations_does_not_silence_the_application_log() -> None:
+    """The bug this file's own failures uncovered.
+
+    logging.config.fileConfig defaults to disable_existing_loggers=True. That was
+    harmless while alembic only ever ran from a CLI; now that migrations run inside
+    the application process at start-up it would silence every logger the app had
+    already configured — including the run log the engine writes its trace to. The
+    symptom in the suite was two unrelated logging tests failing; the symptom in
+    production would have been a silent engine.
+    """
+    import pathlib
+
+    env = (pathlib.Path(__file__).resolve().parents[2] / "alembic" / "env.py").read_text()
+
+    assert "disable_existing_loggers=False" in env, (
+        "alembic's fileConfig will silence the application's own loggers"
+    )

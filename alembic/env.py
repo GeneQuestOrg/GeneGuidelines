@@ -39,7 +39,11 @@ import backend.guidelines.orm  # noqa: E402,F401
 config = context.config
 
 if config.config_file_name is not None:
-    fileConfig(config.config_file_name)
+    # disable_existing_loggers=False is load-bearing. Migrations now run inside the
+    # application process at start-up, and fileConfig's default would silence every
+    # logger the app had already configured — including the run log the engine writes
+    # its trace to. Harmless while alembic only ever ran from a CLI; not harmless now.
+    fileConfig(config.config_file_name, disable_existing_loggers=False)
 
 target_metadata = content_metadata
 

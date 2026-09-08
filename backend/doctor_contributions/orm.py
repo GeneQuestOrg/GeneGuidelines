@@ -60,6 +60,10 @@ class DoctorSubmissionRow(Base):
     country: Mapped[str] = mapped_column(Text, nullable=False, default="")
     disease_slug: Mapped[str] = mapped_column(Text, nullable=False, default="")
     note: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    # The two questions a family can answer and no registry can: what this clinician
+    # got right, and how they were reached. See migration d3a71f5c2e88.
+    what_helped: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    how_found: Mapped[str] = mapped_column(Text, nullable=False, default="")
     # 1 when the generated slug collides with an existing catalogue/seed slug —
     # an advisory flag for the admin, never a hard block (PLAN).
     possible_duplicate: Mapped[int] = mapped_column(
@@ -107,6 +111,10 @@ class ParentRecRow(Base):
         Text, ForeignKey("users.id"), nullable=False
     )
     text: Mapped[str] = mapped_column(Text, nullable=False)
+    # The two questions a family can answer and no registry can: what this clinician
+    # got right, and how they were reached. See migration d3a71f5c2e88.
+    what_helped: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    how_found: Mapped[str] = mapped_column(Text, nullable=False, default="")
     region: Mapped[str | None] = mapped_column(Text, nullable=True, default=None)
     relation: Mapped[str] = mapped_column(Text, nullable=False, default="parent")
     review_status: Mapped[str] = mapped_column(

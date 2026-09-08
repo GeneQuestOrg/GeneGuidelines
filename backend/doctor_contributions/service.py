@@ -61,6 +61,8 @@ class ContributionsService:
         country: str = "",
         disease_slug: str = "",
         note: str = "",
+        what_helped: str = "",
+        how_found: str = "",
         rodo_contact_email: str | None = None,
     ) -> DoctorSubmission:
         clean_name = (name or "").strip()
@@ -78,6 +80,8 @@ class ContributionsService:
             country=(country or "").strip(),
             disease_slug=(disease_slug or "").strip().lower(),
             note=(note or "").strip(),
+            what_helped=(what_helped or "").strip(),
+            how_found=(how_found or "").strip(),
             possible_duplicate=self._slug_collides(slug),
             review_status=ReviewStatus.PENDING,
             rodo_status="pending",
@@ -95,6 +99,8 @@ class ContributionsService:
         doctor_slug: str,
         submitted_by: str,
         text: str,
+        what_helped: str = "",
+        how_found: str = "",
         region: str | None = None,
         relation: str | None = None,
     ) -> ParentRec:
@@ -112,6 +118,8 @@ class ContributionsService:
             doctor_slug=clean_slug,
             submitted_by=submitted_by,
             text=clean_text,
+            what_helped=(what_helped or "").strip(),
+            how_found=(how_found or "").strip(),
             region=_clean(region),
             relation=RecRelation.from_str(relation),
             review_status=ReviewStatus.PENDING,

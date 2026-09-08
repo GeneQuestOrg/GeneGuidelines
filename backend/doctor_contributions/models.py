@@ -78,6 +78,10 @@ class DoctorSubmission:
     reviewed_by: str | None
     reviewed_at: str | None
 
+    # The two questions a family can answer and no registry can. Defaulted so a
+    # row written before they existed still constructs.
+    what_helped: str = ""
+    how_found: str = ""
 
 @dataclass(frozen=True, slots=True)
 class ParentRec:
@@ -94,6 +98,10 @@ class ParentRec:
     reviewed_by: str | None
     reviewed_at: str | None
 
+    # The two questions a family can answer and no registry can. Defaulted so a
+    # row written before they existed still constructs.
+    what_helped: str = ""
+    how_found: str = ""
 
 __all__ = [
     "SubmissionId",
