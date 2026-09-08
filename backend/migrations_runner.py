@@ -1,22 +1,27 @@
-"""Bring the database schema up to head on start-up.
+"""Bring the database schema up to head — on demand, not at start-up.
 
-Migrations here were applied by hand, and that cost production twice in one day:
-once when code shipped reading a column whose migration nobody had run yet, and once
-when a feature had to be built around the schema rather than with it because running
-one felt too risky to bundle into a deploy.
+Written to close a real gap: migrations here are applied by hand, and that cost
+production twice in one day. Once when code shipped reading a column whose migration
+nobody had run, and once when a feature had to be built around the schema instead of
+with it, because bundling a migration into a deploy felt riskier than it should have.
 
-The gap is structural, not a discipline problem. Deploying code and migrating the
-database are one act — a release — and splitting them across a pipeline and a human
-guarantees they drift.
+Running it from the application's start-up was the obvious fix and it does not work,
+for a reason worth writing down rather than rediscovering. The schema here has TWO
+owners: alembic migrations, and imperative `CREATE TABLE IF NOT EXISTS` in
+`content_db`/`database`. They never met while migrations were run by hand against an
+already-stamped database. From start-up they do, and they disagree — the baseline
+migration dies on `catalog_stats`, which the imperative path already created, while
+stamping the baseline to skip it then dies on `private_contexts`, which the imperative
+path never creates. The two owners produce different, partially overlapping schemas,
+so neither replaying nor stamping is truthful.
 
-Safe to do at start-up here specifically because the app runs at maxReplicas: 1, so
-there is no second instance to race. A Postgres advisory lock is taken anyway, since
-"we only ever run one replica" is the kind of assumption that changes quietly in a
-portal six months from now.
+Unifying that ownership is the actual fix and it is its own piece of work. Until then
+this runs deliberately:
 
-Fails loudly. A migration that half-applies and then lets the app serve traffic is
-the exact failure this exists to prevent: the process should die and the deploy should
-be visibly broken, not quietly wrong about what the database contains.
+    python3 -m backend.migrations_runner
+
+Failures are not swallowed. A half-applied schema that still serves traffic is the
+exact failure this exists to prevent.
 """
 
 from __future__ import annotations
@@ -29,6 +34,20 @@ log = logging.getLogger(__name__)
 _ROOT = pathlib.Path(__file__).resolve().parent.parent
 # Chosen once, arbitrary, must stay stable: two processes agree to serialise on it.
 _LOCK_KEY = 0x6D6967726174696F & 0x7FFFFFFFFFFFFFFF
+# The revision whose tables the imperative creation path also produces.
+_BASELINE_REVISION = "dd31c5539990"
+# Present iff something already built the schema — either alembic or the imperative path.
+_PROBE_TABLE = "catalog_stats"
+
+
+def _has_application_tables(connection) -> bool:
+    from sqlalchemy import text
+
+    return bool(
+        connection.execute(
+            text("SELECT to_regclass(:name)"), {"name": _PROBE_TABLE}
+        ).scalar()
+    )
 
 
 def _psycopg3(url: str) -> str:
@@ -85,6 +104,18 @@ def upgrade_to_head(db_url: str | None = None) -> str | None:
             connection.execute(text("SELECT pg_advisory_lock(:key)"), {"key": _LOCK_KEY})
             try:
                 before = MigrationContext.configure(connection).get_current_revision()
+                if before is None and _has_application_tables(connection):
+                    # Schema here has two owners: alembic, and imperative
+                    # `CREATE TABLE IF NOT EXISTS` in content_db/database. They never
+                    # met while migrations were run by hand on an already-stamped
+                    # database. Running from start-up they do, and the baseline
+                    # migration dies on a table the imperative path already made.
+                    #
+                    # Adopting the existing schema is what `stamp` is for: mark it as
+                    # the baseline rather than replaying a creation that has happened,
+                    # then let every later migration apply normally.
+                    log.warning("migrations: existing schema with no version — stamping baseline")
+                    command.stamp(config, _BASELINE_REVISION)
                 command.upgrade(config, "head")
                 after = MigrationContext.configure(connection).get_current_revision()
             finally:
@@ -97,3 +128,8 @@ def upgrade_to_head(db_url: str | None = None) -> str | None:
     else:
         log.warning("migrations: upgraded %s -> %s", before, after)
     return after
+
+
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
+    print(f"schema at: {upgrade_to_head()}")

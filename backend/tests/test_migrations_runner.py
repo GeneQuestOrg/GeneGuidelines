@@ -46,30 +46,6 @@ def test_the_lock_key_is_stable() -> None:
     assert migrations_runner._LOCK_KEY == 0x6D6967726174696F & 0x7FFFFFFFFFFFFFFF
 
 
-def test_startup_runs_migrations_before_anything_touches_the_schema() -> None:
-    """Ordering is the whole safety property: seeds and the app must not see a schema
-    that has not been upgraded yet."""
-    import pathlib
-
-    main = (pathlib.Path(__file__).resolve().parents[1] / "main.py").read_text()
-
-    upgrade_at = main.find("upgrade_to_head")
-    init_at = main.find("init_db)")
-    assert upgrade_at != -1, "start-up no longer runs migrations"
-    assert upgrade_at < init_at, "migrations must run before init_db and the seeds"
-
-
-def test_migrations_are_not_best_effort() -> None:
-    """A try/except around this would restore exactly the failure it prevents."""
-    import pathlib
-    import re
-
-    main = (pathlib.Path(__file__).resolve().parents[1] / "main.py").read_text()
-    window = main[main.find("upgrade_to_head") - 400 : main.find("upgrade_to_head") + 200]
-
-    assert not re.search(r"try:\s*\n[^\n]*upgrade_to_head", window)
-
-
 def test_running_migrations_does_not_silence_the_application_log() -> None:
     """The bug this file's own failures uncovered.
 
@@ -113,3 +89,26 @@ def test_the_normal_path_uses_the_application_engine_factory() -> None:
     source = (pathlib.Path(__file__).resolve().parents[1] / "migrations_runner.py").read_text()
 
     assert "from backend.shared.persistence.engine import get_engine" in source
+
+
+def test_the_schema_has_two_owners_and_that_is_why_startup_migration_is_off() -> None:
+    """Records a dead end so nobody walks it twice.
+
+    Running alembic from the app's start-up is the obvious fix for hand-applied
+    migrations, and it cannot work here yet: the schema has two owners. Alembic's
+    baseline creates `catalog_stats` and so does imperative CREATE TABLE IF NOT EXISTS
+    in content_db, so replaying the baseline dies on a duplicate. Stamping the baseline
+    to skip it then dies on `private_contexts`, which the imperative path never
+    creates. They produce different, partially overlapping schemas — neither replaying
+    nor stamping tells the truth about what is there.
+
+    Unifying ownership is the real fix and is its own piece of work.
+    """
+    import pathlib as _pl
+
+    content_db = (_pl.Path(__file__).resolve().parents[1] / "content_db.py").read_text()
+
+    assert "CREATE TABLE IF NOT EXISTS catalog_stats" in content_db, (
+        "the imperative creation path is gone — schema ownership may now be unified, "
+        "so re-evaluate running migrations at start-up"
+    )

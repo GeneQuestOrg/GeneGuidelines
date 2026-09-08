@@ -20,15 +20,6 @@ async def lifespan(app: FastAPI):
     """Startup: init DB schema, then seed from JSON only when tables are empty (in thread, so event loop is not blocked)."""
     loop = asyncio.get_event_loop()
 
-    # Schema first, and deliberately NOT best-effort. Deploying code and migrating the
-    # database are one release; splitting them across a pipeline and a human is what
-    # let code ship that read a column nobody had created yet. If this fails the
-    # process should die visibly rather than serve traffic against a schema it does
-    # not actually have.
-    from backend.migrations_runner import upgrade_to_head
-
-    await loop.run_in_executor(None, upgrade_to_head)
-
     await loop.run_in_executor(None, init_db)
     await loop.run_in_executor(None, run_seed_if_empty)
 
