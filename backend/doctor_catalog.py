@@ -13,10 +13,12 @@ try:
     from .config import BACKEND_DIR
     from .content_db import get_disease_by_slug, list_diseases_catalog, normalize_disease_slug
     from .doctor_geo_coords import coords_for_city_country, resolve_location
+    from .doctor_scope import derive_scope
 except ImportError:
     from config import BACKEND_DIR
     from content_db import get_disease_by_slug, list_diseases_catalog, normalize_disease_slug
     from doctor_geo_coords import coords_for_city_country, resolve_location
+    from doctor_scope import derive_scope
 
 CONTENT_DOCTORS_PATH = BACKEND_DIR / "content_doctors.json"
 
@@ -1026,6 +1028,14 @@ def get_doctors_for_disease(disease_slug: str) -> dict[str, Any]:
         return {"diseaseSlug": disease_slug, "source": "none", "doctors": []}
 
     source, doctors = _merged_doctors_for_catalog_slug(normalized, _finder_docs_index())
+    # Which presentation each doctor handles, derived from what the record already
+    # holds. Computed here, after the merge, so seeded and pipeline-found doctors are
+    # described the same way — and so it stays a pure function of stored data rather
+    # than something a run has to remember to write.
+    for doctor in doctors:
+        doctor["scope"] = [
+            {"key": tag.key, "basis": tag.basis} for tag in derive_scope(doctor)
+        ]
     return {"diseaseSlug": normalized, "source": source, "doctors": doctors}
 
 

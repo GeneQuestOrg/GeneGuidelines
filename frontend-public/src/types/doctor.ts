@@ -1,3 +1,8 @@
+export interface DoctorScope {
+  readonly key: "craniofacial" | "skeletal" | "endocrine" | "paediatric";
+  readonly basis: string;
+}
+
 export type PubmedRole =
   | "research_leader"
   | "research_participant"
@@ -130,6 +135,13 @@ export interface PublicDoctor {
   /** Papers behind the profile. Omitted from the directory list response (weight);
    *  present on `/api/doctors/{slug}`, which is what the profile view fetches. */
   readonly publications?: readonly DoctorPublication[];
+  /**
+   * Which presentation of the disease this doctor handles, derived from the record.
+   * A parent with a craniofacial child is asking a narrower question than "has this
+   * doctor seen FD"; `basis` carries the stored text the tag was read from so the
+   * claim can be checked rather than trusted.
+   */
+  readonly scope?: readonly DoctorScope[];
   readonly bio: string;
   readonly publicSource: string;
   readonly endorsements: readonly string[];

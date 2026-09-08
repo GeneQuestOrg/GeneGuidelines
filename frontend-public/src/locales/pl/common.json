@@ -80,6 +80,12 @@
     "empty": "Nie odnotowano jeszcze żadnych linii terapii dla tej choroby."
   },
   "doctorCard": {
+    "scope": {
+      "craniofacial": "czaszka i twarz",
+      "skeletal": "kości długie",
+      "endocrine": "endokrynologia",
+      "paediatric": "dzieci"
+    },
     "paperCount_one": "{{count}} praca o tej chorobie",
     "paperCount_few": "{{count}} prace o tej chorobie",
     "paperCount_many": "{{count}} prac o tej chorobie",

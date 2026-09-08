@@ -192,6 +192,25 @@
   margin-top: 6px;
 }
 
+/* Which presentation the doctor handles. Sits directly under the name because it is
+   the first thing a parent needs: "skull and face · children" answers their question,
+   "has seen fibrous dysplasia" does not. */
+.doc__scope {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.chip--scope {
+  font-size: var(--fs-xs);
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--surf-2, #f1f3f4);
+  color: var(--ink-2);
+  cursor: help;
+}
+
 /* Clinical standing, for doctors PubMed cannot see: an official consultant post, a
    patient organisation vouching for them. Distinct from the research-role tags so
    the two axes never read as the same claim. */

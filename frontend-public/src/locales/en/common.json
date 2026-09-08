@@ -78,6 +78,12 @@
     "empty": "No therapy lines recorded for this disease yet."
   },
   "doctorCard": {
+    "scope": {
+      "craniofacial": "skull and face",
+      "skeletal": "long bones",
+      "endocrine": "endocrine",
+      "paediatric": "children"
+    },
     "paperCount_one": "{{count}} paper on this disease",
     "paperCount_other": "{{count}} papers on this disease",
     "authorPosition": {

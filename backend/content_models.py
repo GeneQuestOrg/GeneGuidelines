@@ -162,6 +162,14 @@ DoctorTier = Literal[
 ]
 
 
+class DoctorScopeResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    key: Literal["craniofacial", "skeletal", "endocrine", "paediatric"]
+    # The exact stored text the tag was read from, so the page can show its reason.
+    basis: str
+
+
 class DoctorEvidenceResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -280,6 +288,10 @@ class PublicDoctorResponse(BaseModel):
     # representable rather than approximated.
     evidence: DoctorEvidenceResponse | None = None
     publications: list[DoctorPublicationResponse] = Field(default_factory=list)
+    # Which presentation of the disease this doctor handles, derived from the record
+    # (see backend/doctor_scope.py). Empty when the stored fields do not say — a
+    # missing scope costs a family one question, a wrong one sends them elsewhere.
+    scope: list[DoctorScopeResponse] = Field(default_factory=list)
     bio: str = ""
     publicSource: str = ""
     endorsements: list[str] = Field(default_factory=list)

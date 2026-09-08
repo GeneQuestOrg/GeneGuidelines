@@ -36,6 +36,9 @@ export function DoctorCard({ doctor, km, compact = false, onNav }: DoctorCardPro
   // payload, just never shown. A reader can now weigh the name against it.
   const evidenceLine = doctorEvidenceLine(doctor, t);
   const hasMeasuredPapers = (doctor.publications?.length ?? 0) > 0;
+  // The question a family actually has is "is this the person for MY child's
+  // presentation", which is narrower than "has this doctor seen the disease".
+  const scope = doctor.scope ?? [];
   // Some of the people a family most needs never publish. The surgeon who actually
   // operates on paediatric craniofacial FD can have zero PubMed records, and the
   // role vocabulary here is entirely PubMed-derived, so he was being shown as
@@ -76,6 +79,15 @@ export function DoctorCard({ doctor, km, compact = false, onNav }: DoctorCardPro
       ) : (
         <div className="doc__spec doc__spec--unverified">{t("doctorCard.specialtyNotVerified")}</div>
       )}
+      {scope.length > 0 ? (
+        <div className="doc__scope">
+          {scope.map((tag) => (
+            <span key={tag.key} className={`chip chip--scope chip--scope-${tag.key}`} title={tag.basis}>
+              {t(`doctorCard.scope.${tag.key}`)}
+            </span>
+          ))}
+        </div>
+      ) : null}
       <div className="doc__inst">
         {doctor.institution} · {doctorLocation(doctor, t)}
       </div>
