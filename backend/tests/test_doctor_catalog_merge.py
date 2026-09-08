@@ -96,7 +96,11 @@ def test_get_doctors_merges_seed_and_finder(monkeypatch) -> None:
     assert len(merged["practices"]) == 2
     assert len(merged["parentRecs"]) == 1
     assert merged["rodo"]["status"] == "published_optout"
-    assert merged["experienceByDisease"]["mas"] == "research_participant"
+    # The per-disease tier uses PubMed role words, and this doctor has no PubMed
+    # record at all — he is known from an official consultant post and a patient
+    # organisation, not from papers. "unknown" is the honest tier; his standing is
+    # carried by the clinical signals the card shows instead.
+    assert merged["experienceByDisease"]["mas"] == "unknown"
 
 
 def test_build_finder_index_persistent_and_in_memory_same_slug(monkeypatch) -> None:

@@ -11,15 +11,15 @@
       "lat": 53.778,
       "lng": 20.48,
       "diseases": ["fd", "mas"],
-      "pubmedRole": "research_leader",
+      "pubmedRole": "unknown",
       "score": 78,
       "bio": "National consultant in oral and maxillofacial surgery with long experience in pediatric craniofacial fibrous dysplasia. Prefers conservative management until skeletal maturity.",
       "publicSource": "krzysztofdowgierd.pl, WSSD",
       "endorsements": ["FDMAS Alliance"],
       "contact": "form",
       "source": "content_seed",
-      "addedVia": "pubmed",
-      "experienceByDisease": { "fd": "research_leader", "mas": "research_participant" },
+      "addedVia": "consortium",
+      "experienceByDisease": { "fd": "unknown", "mas": "unknown" },
       "practices": [
         {
           "type": "hospital",
@@ -64,14 +64,15 @@
       "lat": 52.408,
       "lng": 16.934,
       "diseases": ["fd"],
-      "pubmedRole": "research_participant",
+      "pubmedRole": "unknown",
       "score": 38,
       "bio": "Maxillofacial surgeon focusing on orthognathic surgery and implantology in patients with craniofacial bone lesions.",
       "publicSource": "implantclinicallecou.pl",
       "endorsements": [],
       "contact": "form",
       "source": "content_seed",
-      "experienceByDisease": { "fd": "research_participant" }
+      "addedVia": "consortium",
+      "experienceByDisease": { "fd": "unknown" }
     },
     {
       "slug": "appelman-dijkstra",
@@ -100,6 +101,7 @@
       "endorsements": ["FDMAS Alliance", "International FD/MAS Consortium"],
       "contact": "form",
       "source": "content_seed",
+      "addedVia": "consortium",
       "experienceByDisease": { "fd": "research_leader", "mas": "research_leader" }
     },
     {
@@ -115,11 +117,21 @@
       "diseases": ["fd", "mas"],
       "pubmedRole": "research_leader",
       "score": 91,
+      "publications": [
+        {
+          "pmid": "40781626",
+          "title": "Fibrous dysplasia/McCune-Albright syndrome: state-of-the-art advances, pathogenesis, and basic/translational research.",
+          "year": 2025,
+          "journal": "Orphanet J Rare Dis",
+          "position": "last"
+        }
+      ],
       "bio": "Leading authority on FD/MAS histopathology and GNAS mosaicism. Co-author of international FD/MAS guidelines.",
       "publicSource": "uniroma1.it",
       "endorsements": ["International FD/MAS Consortium"],
       "contact": "form",
       "source": "content_seed",
+      "addedVia": "consortium",
       "experienceByDisease": { "fd": "research_leader", "mas": "research_leader" }
     },
     {
@@ -135,11 +147,21 @@
       "diseases": ["fd", "mas"],
       "pubmedRole": "research_leader",
       "score": 89,
+      "publications": [
+        {
+          "pmid": "40781626",
+          "title": "Fibrous dysplasia/McCune-Albright syndrome: state-of-the-art advances, pathogenesis, and basic/translational research.",
+          "year": 2025,
+          "journal": "Orphanet J Rare Dis",
+          "position": "middle"
+        }
+      ],
       "bio": "Director of the FD/MAS clinic at UCSF. Expert in GNAS signaling and translational models.",
       "publicSource": "ucsf.edu",
       "endorsements": ["FDMAS Alliance"],
       "contact": "form",
       "source": "content_seed",
+      "addedVia": "consortium",
       "experienceByDisease": { "fd": "research_leader", "mas": "research_leader" }
     },
     {
@@ -153,14 +175,15 @@
       "lat": 51.935,
       "lng": 15.506,
       "diseases": ["fd"],
-      "pubmedRole": "case_study_author",
+      "pubmedRole": "unknown",
       "score": 14,
       "bio": "Nearest competent oral surgery contact in the Lubusz region for initial consultation and referral coordination.",
       "publicSource": "Regional registry",
       "endorsements": [],
       "contact": "form",
       "source": "content_seed",
-      "experienceByDisease": { "fd": "case_study_author" }
+      "addedVia": "consortium",
+      "experienceByDisease": { "fd": "unknown" }
     }
   ]
 }

@@ -35,6 +35,18 @@ export function DoctorCard({ doctor, km, compact = false, onNav }: DoctorCardPro
   // report claims far more than the record holds — and the weight was already in the
   // payload, just never shown. A reader can now weigh the name against it.
   const evidenceLine = doctorEvidenceLine(doctor, t);
+  const hasMeasuredPapers = (doctor.publications?.length ?? 0) > 0;
+  // Some of the people a family most needs never publish. The surgeon who actually
+  // operates on paediatric craniofacial FD can have zero PubMed records, and the
+  // role vocabulary here is entirely PubMed-derived, so he was being shown as
+  // "research leader" — a claim about a man with no papers. Where there is no
+  // publication record, the card shows what we can actually stand behind instead:
+  // the official clinical position and who vouches for him.
+  const clinicalSignals = hasMeasuredPapers
+    ? []
+    : [doctor.role, ...(doctor.endorsements ?? [])].filter(
+        (value): value is string => typeof value === "string" && value.trim().length > 0,
+      );
   const reachText = reachabilityLabel(doctor.reachability ?? "unknown");
   const recencyBand = recencyBandOf(doctor);
   const href = `/doctor/${doctor.slug}`;
@@ -73,10 +85,18 @@ export function DoctorCard({ doctor, km, compact = false, onNav }: DoctorCardPro
           calibre next to the name instead of inferring it from the "Specialists"
           heading. Shown in compact mode too: the per-disease list is exactly where
           the choice gets made, and it was the one place hiding this. */}
-      {evidenceLine || roleLabel ? (
+      {hasMeasuredPapers ? (
         <div className="doc__evidence">
           <span className={`tag tag--role tag--${safeRoleClass}`}>{roleLabel}</span>
           {evidenceLine ? <span className="doc__evidence-detail">{evidenceLine}</span> : null}
+        </div>
+      ) : clinicalSignals.length > 0 ? (
+        <div className="doc__evidence">
+          {clinicalSignals.map((signal) => (
+            <span key={signal} className="tag tag--clinical">
+              {signal}
+            </span>
+          ))}
         </div>
       ) : null}
       {!compact && reachText ? (

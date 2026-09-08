@@ -192,6 +192,15 @@
   margin-top: 6px;
 }
 
+/* Clinical standing, for doctors PubMed cannot see: an official consultant post, a
+   patient organisation vouching for them. Distinct from the research-role tags so
+   the two axes never read as the same claim. */
+.tag--clinical {
+  background: var(--ok-bg, #e6f4ea);
+  border: 1px solid var(--ok-line, #b7dfc4);
+  color: var(--ok-ink, #1e4620);
+}
+
 .doc__evidence-detail {
   font-size: var(--fs-xs);
   color: var(--ink-3);

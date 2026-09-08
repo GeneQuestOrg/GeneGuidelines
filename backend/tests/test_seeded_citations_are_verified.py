@@ -31,6 +31,12 @@ import pathlib
 VERIFIED: dict[str, str] = {
     # Appelman-Dijkstra N is a listed author of the 2019 best-practice consensus.
     "31196103": "Best practice management guidelines for fibrous dysplasia/McCune-Albright syndrome",
+    # Riminucci M (last, 18/18) and Hsiao EC (17/18) both authored this 2025 review;
+    # it also sits on the FD shelf, so the citation and the guideline agree.
+    "40781626": (
+        "Fibrous dysplasia/McCune-Albright syndrome: state-of-the-art advances, "
+        "pathogenesis, and basic/translational research."
+    ),
 }
 
 _SEED = pathlib.Path(__file__).resolve().parents[1] / "content_doctors.json"
@@ -115,3 +121,34 @@ def test_an_unmeasured_doctor_gets_no_evidence_block_rather_than_zeros() -> None
 
     measured = _merge_evidence_dicts({}, {"firstOrLastAuthorPapers": 7})
     assert measured is not None and measured["firstOrLastAuthorPapers"] == 7
+
+
+def test_a_doctor_without_publications_carries_no_research_role() -> None:
+    """PubMed roles describe a publication record. Applied to someone with none they
+    are simply false — and the person it hit hardest was the surgeon a family most
+    needs to find, shown as a "research leader" with zero papers. Their standing is
+    real, it just is not of this kind, so it is carried by the clinical signals
+    (official post, patient-organisation endorsement) instead.
+    """
+    data = json.loads(_SEED.read_text(encoding="utf-8"))
+    rows = data.get("doctors", data) if isinstance(data, dict) else data
+
+    offenders = [
+        f"{doc.get('slug')}: pubmedRole={doc.get('pubmedRole')} with 0 publications"
+        for doc in rows
+        if not (doc.get("publications") or [])
+        and str(doc.get("pubmedRole", "unknown")) != "unknown"
+    ]
+
+    assert not offenders, "\n  ".join(["research roles without a record:", *offenders])
+
+
+def test_seeded_records_do_not_claim_pubmed_provenance() -> None:
+    """They were curated by hand; addedVia="pubmed" claimed they were discovered by
+    the pipeline, which is a provenance label nobody could check."""
+    data = json.loads(_SEED.read_text(encoding="utf-8"))
+    rows = data.get("doctors", data) if isinstance(data, dict) else data
+
+    wrong = [doc.get("slug") for doc in rows if doc.get("addedVia") == "pubmed"]
+
+    assert not wrong, f"seeded records claiming PubMed discovery: {wrong}"

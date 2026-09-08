@@ -59,3 +59,26 @@ describe("doctor evidence line", () => {
     expect(line).toBe("1 papers · first");
   });
 });
+
+describe("doctors PubMed cannot see", () => {
+  /**
+   * The clinician who made the correct call on a child's craniofacial FD can have
+   * zero PubMed records. The role vocabulary is entirely PubMed-derived
+   * (research_leader / research_participant / case_study_author / unknown), so such a
+   * doctor was carrying "research_leader" — a claim about someone with no papers —
+   * and the one signal that IS verifiable, the national consultant post, rendered
+   * only on the profile, a click away from where the choice gets made.
+   */
+  it("makes no publication claim for a doctor with no publications", () => {
+    expect(doctorEvidenceLine({ publications: [] }, t)).toBe("");
+  });
+
+  it("keeps such a doctor in the pool rather than scoring them out", () => {
+    // Nobody is removed for lacking papers: for a rare disease the nearest clinician
+    // who has actually operated may be the whole answer.
+    const seeded = { publications: [] as { year: number | null; position: string }[] };
+
+    expect(doctorEvidenceLine(seeded, t)).toBe("");
+    expect(seeded.publications).toBeDefined();
+  });
+});
