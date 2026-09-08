@@ -31,6 +31,14 @@ _ROOT = pathlib.Path(__file__).resolve().parent.parent
 _LOCK_KEY = 0x6D6967726174696F & 0x7FFFFFFFFFFFFFFF
 
 
+def _psycopg3(url: str) -> str:
+    """Pin the driver the rest of the app uses, whatever shape the URL arrives in."""
+    for prefix in ("postgresql://", "postgres://"):
+        if url.startswith(prefix):
+            return "postgresql+psycopg://" + url[len(prefix) :]
+    return url
+
+
 def upgrade_to_head(db_url: str | None = None) -> str | None:
     """Run alembic to head. Returns the revision now applied, or None when skipped."""
     from backend.config import DB_URL as _CONFIGURED
@@ -50,11 +58,26 @@ def upgrade_to_head(db_url: str | None = None) -> str | None:
     from alembic.runtime.migration import MigrationContext
     from sqlalchemy import create_engine, text
 
+    # This project talks to Postgres through psycopg 3. A bare "postgresql://" URL
+    # makes SQLAlchemy reach for psycopg2, which is not a dependency here — it
+    # happened to be installed on the developer machine and was absent in CI and in
+    # the container. Same shape of failure as reaching for bs4: works locally, dies
+    # where it matters.
+    url = _psycopg3(url)
+
     config = Config(str(ini))
     config.set_main_option("script_location", str(_ROOT / "alembic"))
     config.set_main_option("sqlalchemy.url", url)
 
-    engine = create_engine(url)
+    # Reuse the application's own engine factory rather than building a second one:
+    # it already normalises the URL to psycopg 3, and one place deciding how this
+    # project connects is the whole point. An explicit URL (tests) still gets its own.
+    if db_url:
+        engine = create_engine(_psycopg3(db_url))
+    else:
+        from backend.shared.persistence.engine import get_engine
+
+        engine = get_engine()
     try:
         with engine.connect() as connection:
             # Serialise across processes. Released when the connection closes, so a

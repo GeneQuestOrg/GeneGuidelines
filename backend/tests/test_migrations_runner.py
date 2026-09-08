@@ -87,3 +87,29 @@ def test_running_migrations_does_not_silence_the_application_log() -> None:
     assert "disable_existing_loggers=False" in env, (
         "alembic's fileConfig will silence the application's own loggers"
     )
+
+
+def test_the_runner_never_reaches_for_psycopg2() -> None:
+    """This project talks to Postgres through psycopg 3.
+
+    A bare "postgresql://" URL makes SQLAlchemy import psycopg2, which is not a
+    dependency — it happened to be installed on the developer machine and was absent
+    in CI and in the container. The same shape as reaching for bs4: green locally,
+    dead where it matters.
+    """
+    for url in ("postgresql://u:p@h/db", "postgres://u:p@h/db"):
+        assert migrations_runner._psycopg3(url).startswith("postgresql+psycopg://")
+
+    # Already-qualified and non-Postgres URLs pass through untouched.
+    assert migrations_runner._psycopg3("postgresql+psycopg://u@h/db") == "postgresql+psycopg://u@h/db"
+    assert migrations_runner._psycopg3("sqlite:///x.db") == "sqlite:///x.db"
+
+
+def test_the_normal_path_uses_the_application_engine_factory() -> None:
+    """One place decides how this project connects. A second engine built by hand is
+    how the driver drifted apart in the first place."""
+    import pathlib
+
+    source = (pathlib.Path(__file__).resolve().parents[1] / "migrations_runner.py").read_text()
+
+    assert "from backend.shared.persistence.engine import get_engine" in source
