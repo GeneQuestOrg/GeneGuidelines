@@ -45,6 +45,7 @@ export function DoctorCard({ doctor, km, compact = false, onNav }: DoctorCardPro
   // "research leader" — a claim about a man with no papers. Where there is no
   // publication record, the card shows what we can actually stand behind instead:
   // the official clinical position and who vouches for him.
+  const ernCentres = doctor.ernCentres ?? [];
   const clinicalSignals = hasMeasuredPapers
     ? []
     : [doctor.role, ...(doctor.endorsements ?? [])].filter(
@@ -79,6 +80,24 @@ export function DoctorCard({ doctor, km, compact = false, onNav }: DoctorCardPro
       ) : (
         <div className="doc__spec doc__spec--unverified">{t("doctorCard.specialtyNotVerified")}</div>
       )}
+      {ernCentres.map((centre) => (
+        <a
+          key={`${centre.ern}-${centre.centre}`}
+          className="doc__ern"
+          href={centre.sourceUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(e) => e.stopPropagation()}
+          title={t("doctorCard.ernTooltip", {
+            ern: centre.ern,
+            centre: centre.centre,
+            role: centre.roleDetail,
+            date: centre.verifiedOn,
+          })}
+        >
+          {t("doctorCard.ernCentre", { ern: centre.ern })}
+        </a>
+      ))}
       {scope.length > 0 ? (
         <div className="doc__scope">
           {scope.map((tag) => (

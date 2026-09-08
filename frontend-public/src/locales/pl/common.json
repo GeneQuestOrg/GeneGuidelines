@@ -80,6 +80,8 @@
     "empty": "Nie odnotowano jeszcze żadnych linii terapii dla tej choroby."
   },
   "doctorCard": {
+    "ernCentre": "{{ern}} — ośrodek sieci",
+    "ernTooltip": "Szpital tego lekarza jest ośrodkiem sieci {{ern}} ({{role}}): {{centre}}. Akredytację ma placówka, nie lekarz. Zweryfikowano {{date}} — kliknij, żeby zobaczyć źródło.",
     "scope": {
       "craniofacial": "czaszka i twarz",
       "skeletal": "kości długie",

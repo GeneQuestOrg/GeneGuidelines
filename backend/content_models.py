@@ -170,6 +170,28 @@ class DoctorScopeResponse(BaseModel):
     basis: str
 
 
+class DoctorFacilityResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    name: str
+    city: str
+    capabilities: list[str] = Field(default_factory=list)
+    paediatricCapabilities: list[str] = Field(default_factory=list)
+    source: str = ""
+    release: str = ""
+
+
+class DoctorErnCentreResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    ern: str
+    roleDetail: str
+    centre: str
+    city: str
+    sourceUrl: str
+    verifiedOn: str
+
+
 class DoctorEvidenceResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -292,6 +314,13 @@ class PublicDoctorResponse(BaseModel):
     # (see backend/doctor_scope.py). Empty when the stored fields do not say — a
     # missing scope costs a family one question, a wrong one sends them elsewhere.
     scope: list[DoctorScopeResponse] = Field(default_factory=list)
+    # ERN centres this doctor practises at. Institution-level by nature: the networks
+    # accredit hospitals, not individuals, and the wording must not blur that.
+    ernCentres: list[DoctorErnCentreResponse] = Field(default_factory=list)
+    # None when the doctor could not be matched to a registered facility with
+    # confidence — an unmatched doctor loses a badge, a mismatched one gets a claim
+    # about a building they have never worked in.
+    facility: DoctorFacilityResponse | None = None
     bio: str = ""
     publicSource: str = ""
     endorsements: list[str] = Field(default_factory=list)

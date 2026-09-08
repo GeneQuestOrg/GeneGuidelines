@@ -78,6 +78,8 @@
     "empty": "No therapy lines recorded for this disease yet."
   },
   "doctorCard": {
+    "ernCentre": "{{ern}} network centre",
+    "ernTooltip": "This doctor's hospital is a {{ern}} centre ({{role}}): {{centre}}. The network accredits the hospital, not the individual. Verified {{date}} — click for the source.",
     "scope": {
       "craniofacial": "skull and face",
       "skeletal": "long bones",

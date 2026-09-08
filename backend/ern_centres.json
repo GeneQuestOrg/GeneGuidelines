@@ -1,0 +1,34 @@
+{
+  "_comment": [
+    "European Reference Network member centres, recorded per centre with the page they",
+    "were read from and the date that was verified. ERNs publish membership at",
+    "INSTITUTION level, never per clinician, so this attaches to a doctor through the",
+    "hospital they practise in.",
+    "",
+    "This is the signal PubMed structurally cannot produce: a surgeon who operates and",
+    "does not publish is invisible to a citation database, but the network that exists",
+    "precisely to answer 'where in Europe do I go with this rare disease' names his",
+    "hospital. `localAliases` carries the Polish name because ERNs list centres under",
+    "their English name and our records hold the local one.",
+    "",
+    "Re-check with: python3 -m backend.scripts.validate_ern_centres"
+  ],
+  "centres": [
+    {
+      "ern": "ERN CRANIO",
+      "scope": "rare and complex craniofacial anomalies and ENT disorders",
+      "role": "affiliated_partner",
+      "roleDetail": "Associated National Centre",
+      "name": "Prof. dr S Popowski Regional Specialised Children's Hospital",
+      "localAliases": [
+        "Wojewódzki Specjalistyczny Szpital Dziecięcy w Olsztynie",
+        "Wojewódzki Specjalistyczny Szpital Dziecięcy im. prof. dr Stanisława Popowskiego w Olsztynie",
+        "WSSD Olsztyn"
+      ],
+      "city": "Olsztyn",
+      "country": "PL",
+      "sourceUrl": "https://www.ern-cranio.eu/erncraniomembersandpartners",
+      "verifiedOn": "2026-09-08"
+    }
+  ]
+}

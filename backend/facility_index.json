@@ -1,0 +1,5589 @@
+{
+  "_comment": [
+    "Derived from the EU healthcare facility register (GISCO). Do not edit by",
+    "hand — rebuild with `python3 -m backend.scripts.build_facility_index`.",
+    "Only facilities with at least one disease-relevant ward are kept."
+  ],
+  "source": "https://gisco-services.ec.europa.eu/pub/healthcare/",
+  "release": "2023_v2025_11",
+  "countries": [
+    "PL"
+  ],
+  "facilities": [
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ W AUGUSTOWIE",
+      "city": "AUGUSTÓW",
+      "country": "PL",
+      "lat": 53.8513,
+      "lon": 22.99358,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 7
+    },
+    {
+      "name": "SZPITAL BARLINEK SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "BARLINEK",
+      "country": "PL",
+      "lat": 52.99781,
+      "lon": 15.22447,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 4
+    },
+    {
+      "name": "SZPITAL POWIATOWY IM. JANA PAWŁA II W BARTOSZYCACH",
+      "city": "BARTOSZYCE",
+      "country": "PL",
+      "lat": 54.25844295,
+      "lon": 20.792787430688563,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 7
+    },
+    {
+      "name": "SZPITAL WOJEWÓDZKI IM. JANA PAWŁA II W BEŁCHATOWIE",
+      "city": "BEŁCHATÓW",
+      "country": "PL",
+      "lat": 51.37526,
+      "lon": 19.35128,
+      "capabilities": [
+        "craniofacial",
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 9
+    },
+    {
+      "name": "REGIONALNE CENTRUM MEDYCZNE W BIAŁOGARDZIE SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "BIAŁOGARD",
+      "country": "PL",
+      "lat": 54.0064653,
+      "lon": 15.971717347845342,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 4
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ MINISTERSTWA SPRAW WEWNĘTRZNYCH I ADMINISTRACJI W BIAŁYMSTOKU",
+      "city": "BIAŁYSTOK",
+      "country": "PL",
+      "lat": 53.13935395,
+      "lon": 23.165827503804632,
+      "capabilities": [
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 6
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ WOJEWÓDZKI SZPITAL ZESPOLONY IM. JĘDRZEJA ŚNIADECKIEGO W BIAŁYMSTOKU",
+      "city": "BIAŁYSTOK",
+      "country": "PL",
+      "lat": 53.12493,
+      "lon": 23.16223,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 3
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ WOJEWÓDZKI SZPITAL ZESPOLONY IM. JĘDRZEJA ŚNIADECKIEGO W BIAŁYMSTOKU",
+      "city": "BIAŁYSTOK",
+      "country": "PL",
+      "lat": 53.125546400000005,
+      "lon": 23.163260133504373,
+      "capabilities": [
+        "craniofacial",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 13
+    },
+    {
+      "name": "UNIWERSYTECKI DZIECIĘCY SZPITAL KLINICZNY IM. L. ZAMENHOFA W BIAŁYMSTOKU",
+      "city": "BIAŁYSTOK",
+      "country": "PL",
+      "lat": 53.12443505,
+      "lon": 23.15760337238909,
+      "capabilities": [
+        "craniofacial",
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [
+        "craniofacial",
+        "skeletal"
+      ],
+      "wardCount": 12
+    },
+    {
+      "name": "UNIWERSYTECKI SZPITAL KLINICZNY W BIAŁYMSTOKU",
+      "city": "BIAŁYSTOK",
+      "country": "PL",
+      "lat": 53.1246096,
+      "lon": 23.1602844,
+      "capabilities": [
+        "craniofacial",
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 21
+    },
+    {
+      "name": "SZPITAL BIELAŃSKI IM.KS. JERZEGO POPIEŁUSZKI SAMODZIELNY PUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ",
+      "city": "BIELANY",
+      "country": "PL",
+      "lat": 52.286533399999996,
+      "lon": 20.950305463456072,
+      "capabilities": [
+        "craniofacial",
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 8
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ W BIELSKU PODLASKIM",
+      "city": "BIELSK PODLASKI",
+      "country": "PL",
+      "lat": 52.7592358,
+      "lon": 23.203358392054938,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 8
+    },
+    {
+      "name": "SZPITAL PEDIATRYCZNY W BIELSKU-BIAŁEJ",
+      "city": "BIELSKO-BIAŁA",
+      "country": "PL",
+      "lat": 49.82099,
+      "lon": 19.02875,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 4
+    },
+    {
+      "name": "SZPITAL WOJEWÓDZKI W BIELSKU-BIAŁEJ",
+      "city": "BIELSKO-BIAŁA",
+      "country": "PL",
+      "lat": 49.79284,
+      "lon": 19.03906,
+      "capabilities": [
+        "craniofacial",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 7
+    },
+    {
+      "name": "SZPITAL POWIATOWY IM. JANA MIKULICZA W BISKUPCU",
+      "city": "BISKUPIEC",
+      "country": "PL",
+      "lat": 53.86578565,
+      "lon": 20.95742306927797,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 8
+    },
+    {
+      "name": "SCANMED SPÓŁKA AKCYJNA",
+      "city": "BLACHOWNIA",
+      "country": "PL",
+      "lat": 50.7682286,
+      "lon": 18.9706584,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 5
+    },
+    {
+      "name": "SZPITAL GMINNY",
+      "city": "BOGATYNIA",
+      "country": "PL",
+      "lat": 50.90710435,
+      "lon": 14.970470910050445,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 6
+    },
+    {
+      "name": "WOJEWÓDZKI SZPITAL DLA NERWOWO I PSYCHICZNIE CHORYCH W BOLESŁAWCU",
+      "city": "BOLESŁAWIEC",
+      "country": "PL",
+      "lat": 51.260563,
+      "lon": 15.58356,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 3
+    },
+    {
+      "name": "ZESPÓŁ OPIEKI ZDROWOTNEJ W BOLESŁAWCU",
+      "city": "BOLESŁAWIEC",
+      "country": "PL",
+      "lat": 51.254617499999995,
+      "lon": 15.567376329595255,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 11
+    },
+    {
+      "name": "POWIATOWE CENTRUM MEDYCZNE SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ W BRANIEWIE",
+      "city": "BRANIEWO",
+      "country": "PL",
+      "lat": 54.374938900000004,
+      "lon": 19.830049528145185,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 5
+    },
+    {
+      "name": "BRZESKIE CENTRUM MEDYCZNE",
+      "city": "BRZEG",
+      "country": "PL",
+      "lat": 50.85226495,
+      "lon": 17.475784240253752,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 7
+    },
+    {
+      "name": "POWIATOWE CENTRUM MEDYCZNE W WOŁOWIE SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "BRZEG DOLNY",
+      "country": "PL",
+      "lat": 51.26355,
+      "lon": 16.70901,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 5
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZESPÓŁ OPIEKI ZDROWOTNEJ W BRZESKU",
+      "city": "BRZESKO",
+      "country": "PL",
+      "lat": 49.969259949999994,
+      "lon": 20.590956168498828,
+      "capabilities": [
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 2
+    },
+    {
+      "name": "POWIATOWE CENTRUM ZDROWIA W BRZEZINACH-SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "BRZEZINY",
+      "country": "PL",
+      "lat": 51.80543,
+      "lon": 19.75442,
+      "capabilities": [
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 2
+    },
+    {
+      "name": "SZPITAL SPECJALISTYCZNY W BRZOZOWIE PODKARPACKI OŚRODEK ONKOLOGICZNY IM.KS.B.MARKIEWICZA",
+      "city": "BRZOZÓW",
+      "country": "PL",
+      "lat": 49.6919534,
+      "lon": 22.0267327,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 8
+    },
+    {
+      "name": "ZESPÓŁ OPIEKI ZDROWOTNEJ W BUSKU-ZDROJU",
+      "city": "BUSKO-ZDRÓJ",
+      "country": "PL",
+      "lat": 50.46744995,
+      "lon": 20.704165315612023,
+      "capabilities": [
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 3
+    },
+    {
+      "name": "WOJEWÓDZKI SZPITAL DZIECIĘCY IM. J. BRUDZIŃSKIEGO W BYDGOSZCZY",
+      "city": "BYDGOSZCZ",
+      "country": "PL",
+      "lat": 53.1302612,
+      "lon": 18.026209173546363,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 1
+    },
+    {
+      "name": "BYSTRZYCKIE CENTRUM ZDROWIA SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "BYSTRZYCA KŁODZKA",
+      "country": "PL",
+      "lat": 50.2999635,
+      "lon": 16.6535015971671,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 2
+    },
+    {
+      "name": "SZPITAL SPECJALISTYCZNY NR 2 W BYTOMIU",
+      "city": "BYTOM",
+      "country": "PL",
+      "lat": 50.34728905,
+      "lon": 18.90865087828614,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 4
+    },
+    {
+      "name": "WOJEWÓDZKI SZPITAL SPECJALISTYCZNY NR 4 W BYTOMIU",
+      "city": "BYTOM",
+      "country": "PL",
+      "lat": 50.3535949,
+      "lon": 18.9117377731362,
+      "capabilities": [
+        "craniofacial",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 9
+    },
+    {
+      "name": "SZPITAL POWIATU BYTOWSKIEGO SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "BYTÓW",
+      "country": "PL",
+      "lat": 54.17843,
+      "lon": 17.48601,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 6
+    },
+    {
+      "name": "SZPITAL POWIATOWY IM. PROF. ROMANA DREWSA",
+      "city": "CHODZIEŻ",
+      "country": "PL",
+      "lat": 52.9880502,
+      "lon": 16.9153161,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 6
+    },
+    {
+      "name": "MAWIKO SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ\"",
+      "city": "CHOJNICE",
+      "country": "PL",
+      "lat": 53.7117853,
+      "lon": 17.547308,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 2
+    },
+    {
+      "name": "SZPITAL SPECJALISTYCZNY IM. J.K. ŁUKOWICZA W CHOJNICACH",
+      "city": "CHOJNICE",
+      "country": "PL",
+      "lat": 53.7117853,
+      "lon": 17.547308,
+      "capabilities": [
+        "craniofacial",
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 12
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ ZESPÓŁ SZPITALI MIEJSKICH",
+      "city": "CHORZÓW",
+      "country": "PL",
+      "lat": 50.2919398,
+      "lon": 18.942799039157578,
+      "capabilities": [
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 5
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ ZESPÓŁ SZPITALI MIEJSKICH",
+      "city": "CHORZÓW",
+      "country": "PL",
+      "lat": 50.29664165,
+      "lon": 18.94847766606972,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [
+        "skeletal"
+      ],
+      "wardCount": 6
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ W CHOSZCZNIE",
+      "city": "CHOSZCZNO",
+      "country": "PL",
+      "lat": 53.165639,
+      "lon": 15.4123256,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 5
+    },
+    {
+      "name": "SZPITAL POWIATOWY W CHRZANOWIE",
+      "city": "CHRZANÓW",
+      "country": "PL",
+      "lat": 50.13625745,
+      "lon": 19.430395151295397,
+      "capabilities": [
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 5
+    },
+    {
+      "name": "WOJEWÓDZKI SZPITAL SPECJALISTYCZNY IM. ŚW. RAFAŁA W CZERWONEJ GÓRZE",
+      "city": "CHĘCINY",
+      "country": "PL",
+      "lat": 50.8224091,
+      "lon": 20.488303423116342,
+      "capabilities": [
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 5
+    },
+    {
+      "name": "SPECJALISTYCZNY SZPITAL WOJEWÓDZKI W CIECHANOWIE",
+      "city": "CIECHANÓW",
+      "country": "PL",
+      "lat": 52.88328035,
+      "lon": 20.636653454726165,
+      "capabilities": [
+        "craniofacial",
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 19
+    },
+    {
+      "name": "ZESPÓŁ ZAKŁADÓW OPIEKI ZDROWOTNEJ W CIESZYNIE",
+      "city": "CIESZYN",
+      "country": "PL",
+      "lat": 49.74628,
+      "lon": 18.63899,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 8
+    },
+    {
+      "name": "POWIATOWY ZESPÓŁ ZAKŁADÓW OPIEKI ZDROWOTNEJ",
+      "city": "CZELADŹ",
+      "country": "PL",
+      "lat": 50.326679999999996,
+      "lon": 19.076315626961623,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 6
+    },
+    {
+      "name": "MIEJSKI SZPITAL ZESPOLONY",
+      "city": "CZĘSTOCHOWA",
+      "country": "PL",
+      "lat": 50.81288635,
+      "lon": 19.13386212889173,
+      "capabilities": [
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 6
+    },
+    {
+      "name": "MIEJSKI SZPITAL ZESPOLONY",
+      "city": "CZĘSTOCHOWA",
+      "country": "PL",
+      "lat": 50.81288635,
+      "lon": 19.13386212889173,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 1
+    },
+    {
+      "name": "WOJEWÓDZKI SZPITAL SPECJALISTYCZNY IM. NAJŚWIĘTSZEJ MARYI PANNY",
+      "city": "CZĘSTOCHOWA",
+      "country": "PL",
+      "lat": 50.8297789,
+      "lon": 19.09207497835454,
+      "capabilities": [
+        "craniofacial",
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 11
+    },
+    {
+      "name": "WOJEWÓDZKI SZPITAL SPECJALISTYCZNY IM. NAJŚWIĘTSZEJ MARYI PANNY",
+      "city": "CZĘSTOCHOWA",
+      "country": "PL",
+      "lat": 50.8295982,
+      "lon": 19.11294775129729,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 6
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ W CZŁUCHOWIE",
+      "city": "CZŁUCHÓW",
+      "country": "PL",
+      "lat": 53.65947,
+      "lon": 17.35414,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 3
+    },
+    {
+      "name": "SZPITALE POLSKIE SPÓŁKA AKCYJNA\"",
+      "city": "DRAWSKO POMORSKIE",
+      "country": "PL",
+      "lat": 53.5248397,
+      "lon": 15.8118718,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 7
+    },
+    {
+      "name": "POWIATOWE CENTRUM ZDROWIA SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ\"",
+      "city": "DREZDENKO",
+      "country": "PL",
+      "lat": 52.834531999999996,
+      "lon": 15.826306188748797,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 7
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ W DZIAŁDOWIE",
+      "city": "DZIAŁDOWO",
+      "country": "PL",
+      "lat": 53.24214805,
+      "lon": 20.19267675506466,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 8
+    },
+    {
+      "name": "SAMODZIELNY ZESPÓŁ PUBLICZNYCH ZAKŁADÓW OPIEKI ZDROWOTNEJ IM. DZIECI WARSZAWY W DZIEKANOWIE LEŚNYM",
+      "city": "DZIEKANÓW LEŚNY",
+      "country": "PL",
+      "lat": 52.341217900000004,
+      "lon": 20.84993881461032,
+      "capabilities": [
+        "craniofacial",
+        "paediatric"
+      ],
+      "paediatricCapabilities": [
+        "craniofacial"
+      ],
+      "wardCount": 4
+    },
+    {
+      "name": "NIEPUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ SZPITAL POWIATOWY W DZIERŻONIOWIE SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "DZIERŻONIÓW",
+      "country": "PL",
+      "lat": 50.7283874,
+      "lon": 16.6583311261829,
+      "capabilities": [
+        "craniofacial",
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 6
+    },
+    {
+      "name": "ZAGŁĘBIOWSKIE CENTRUM ONKOLOGII SZPITAL SPECJALISTYCZNY IM. SZ. STARKIEWICZA W DĄBROWIE GÓRNICZEJ",
+      "city": "DĄBROWA GÓRNICZA",
+      "country": "PL",
+      "lat": 50.32014,
+      "lon": 19.17679,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 6
+    },
+    {
+      "name": "ZESPÓŁ OPIEKI ZDROWOTNEJ W DĄBROWIE TARNOWSKIEJ",
+      "city": "DĄBROWA TARNOWSKA",
+      "country": "PL",
+      "lat": 50.177016800000004,
+      "lon": 20.976639537103388,
+      "capabilities": [
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 3
+    },
+    {
+      "name": "ZESPÓŁ OPIEKI ZDROWOTNEJ W DĘBICY",
+      "city": "DĘBICA",
+      "country": "PL",
+      "lat": 50.03890855,
+      "lon": 21.3938551595705,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 9
+    },
+    {
+      "name": "SZPITAL W DĘBNIE IM. ŚWIETEJ MATKI TERESY Z KALKUTY SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "DĘBNO",
+      "country": "PL",
+      "lat": 52.731785,
+      "lon": 14.702774123307734,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 2
+    },
+    {
+      "name": "SZPITAL MIEJSKI ŚW. JANA PAWŁA II W ELBLĄGU",
+      "city": "ELBLĄG",
+      "country": "PL",
+      "lat": 54.155332200000004,
+      "lon": 19.42559543650143,
+      "capabilities": [
+        "craniofacial"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 5
+    },
+    {
+      "name": "SZPITAL MIEJSKI ŚW. JANA PAWŁA II W ELBLĄGU",
+      "city": "ELBLĄG",
+      "country": "PL",
+      "lat": 54.157182399999996,
+      "lon": 19.422909032991445,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 8
+    },
+    {
+      "name": "WOJEWÓDZKI SZPITAL ZESPOLONY W ELBLĄGU",
+      "city": "ELBLĄG",
+      "country": "PL",
+      "lat": 54.1782654,
+      "lon": 19.430302690612542,
+      "capabilities": [
+        "craniofacial",
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 11
+    },
+    {
+      "name": "1 WOJSKOWY SZPITAL KLINICZNY Z POLIKLINIKĄ SAMODZIELNY PUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ",
+      "city": "EŁK",
+      "country": "PL",
+      "lat": 53.82006294999999,
+      "lon": 22.363854834026917,
+      "capabilities": [
+        "craniofacial",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 9
+    },
+    {
+      "name": "PRO-MEDICA W EŁKU SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ\"",
+      "city": "EŁK",
+      "country": "PL",
+      "lat": 53.7938452,
+      "lon": 22.3389376,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 8
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ W GARWOLINIE",
+      "city": "GARWOLIN",
+      "country": "PL",
+      "lat": 51.86986725,
+      "lon": 21.636840161411378,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 9
+    },
+    {
+      "name": "7 SZPITAL MARYNARKI WOJENNEJ Z PRZYCHODNIĄ SAMODZIELNY PUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ IMIENIA KONTRADMIRAŁA PROFESORA WIESŁAWA ŁASIŃSKIEGO W GDAŃSKU",
+      "city": "GDAŃSK",
+      "country": "PL",
+      "lat": 54.392684599999995,
+      "lon": 18.568135228931787,
+      "capabilities": [
+        "craniofacial",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 9
+    },
+    {
+      "name": "COPERNICUS PODMIOT LECZNICZY SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "GDAŃSK",
+      "country": "PL",
+      "lat": 54.402631150000005,
+      "lon": 18.613473375528557,
+      "capabilities": [
+        "craniofacial",
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [
+        "craniofacial"
+      ],
+      "wardCount": 13
+    },
+    {
+      "name": "COPERNICUS PODMIOT LECZNICZY SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "GDAŃSK",
+      "country": "PL",
+      "lat": 54.35124,
+      "lon": 18.63998,
+      "capabilities": [
+        "craniofacial",
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 12
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ MINISTERSTWA SPRAW WEWNĘTRZNYCH I ADMINISTRACJI W GDAŃSKU",
+      "city": "GDAŃSK",
+      "country": "PL",
+      "lat": 54.35093,
+      "lon": 18.63603,
+      "capabilities": [
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 5
+    },
+    {
+      "name": "SZPITAL DZIECIĘCY POLANKI IM. MACIEJA PŁAŻYŃSKIEGO W GDAŃSKU SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "GDAŃSK",
+      "country": "PL",
+      "lat": 54.3952393,
+      "lon": 18.562585455199258,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 6
+    },
+    {
+      "name": "SZPITALE POMORSKIE SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "GDAŃSK",
+      "country": "PL",
+      "lat": 54.3641177,
+      "lon": 18.6185438527882,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 4
+    },
+    {
+      "name": "UNIWERSYTECKIE CENTRUM KLINICZNE",
+      "city": "GDAŃSK",
+      "country": "PL",
+      "lat": 54.365772899999996,
+      "lon": 18.622659004534768,
+      "capabilities": [
+        "craniofacial",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 11
+    },
+    {
+      "name": "UNIWERSYTECKIE CENTRUM KLINICZNE",
+      "city": "GDAŃSK",
+      "country": "PL",
+      "lat": 54.365772899999996,
+      "lon": 18.622659004534768,
+      "capabilities": [
+        "endocrine",
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 15
+    },
+    {
+      "name": "UNIWERSYTECKIE CENTRUM KLINICZNE",
+      "city": "GDAŃSK",
+      "country": "PL",
+      "lat": 54.365772899999996,
+      "lon": 18.622659004534768,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 2
+    },
+    {
+      "name": "WOJEWÓDZKI SZPITAL PSYCHIATRYCZNY IM. PROF. TADEUSZA BILIKIEWICZA W GDAŃSKU",
+      "city": "GDAŃSK",
+      "country": "PL",
+      "lat": 54.3757042,
+      "lon": 18.5757624243004,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 7
+    },
+    {
+      "name": "SZPITALE POMORSKIE SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "GDYNIA",
+      "country": "PL",
+      "lat": 54.4886596,
+      "lon": 18.552589145421884,
+      "capabilities": [
+        "craniofacial",
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 7
+    },
+    {
+      "name": "SZPITALE POMORSKIE SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "GDYNIA",
+      "country": "PL",
+      "lat": 54.522256,
+      "lon": 18.541996,
+      "capabilities": [
+        "craniofacial",
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 9
+    },
+    {
+      "name": "GIŻYCKA OCHRONA ZDROWIA SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "GIŻYCKO",
+      "country": "PL",
+      "lat": 54.03692,
+      "lon": 21.78213,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 8
+    },
+    {
+      "name": "SZPITAL MIEJSKI NR 4 W GLIWICACH SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "GLIWICE",
+      "country": "PL",
+      "lat": 50.29369975,
+      "lon": 18.651910812612428,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 6
+    },
+    {
+      "name": "SZPITALNE CENTRUM MEDYCZNE W GOLENIOWIE SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "GOLENIÓW",
+      "country": "PL",
+      "lat": 53.5697579,
+      "lon": 14.833954295127125,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 5
+    },
+    {
+      "name": "SZPITAL SPECJALISTYCZNY IM. HENRYKA KLIMONTOWICZA W GORLICACH",
+      "city": "GORLICE",
+      "country": "PL",
+      "lat": 49.6513608,
+      "lon": 21.1625989,
+      "capabilities": [
+        "craniofacial",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 4
+    },
+    {
+      "name": "SZPITAL W GORZEWIE",
+      "city": "GORZEWO",
+      "country": "PL",
+      "lat": 52.4692407,
+      "lon": 19.4972537,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 8
+    },
+    {
+      "name": "WIELOSPECJALISTYCZNY SZPITAL WOJEWÓDZKI W GORZOWIE WLKP. SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "GORZÓW WIELKOPOLSKI",
+      "country": "PL",
+      "lat": 52.7632566,
+      "lon": 15.2376266,
+      "capabilities": [
+        "craniofacial",
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 17
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZESPÓŁ OPIEKI ZDROWOTNEJ W GOSTYNIU",
+      "city": "GOSTYŃ",
+      "country": "PL",
+      "lat": 51.88266005,
+      "lon": 17.010534935714837,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 4
+    },
+    {
+      "name": "GOLDMEDICA SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "GOŁDAP",
+      "country": "PL",
+      "lat": 54.3094508,
+      "lon": 22.3062468,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 3
+    },
+    {
+      "name": "SZPITAL OGÓLNY IM. DR WITOLDA GINELA W GRAJEWIE",
+      "city": "GRAJEWO",
+      "country": "PL",
+      "lat": 53.645379750000004,
+      "lon": 22.470157580806692,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 10
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY SPECJALISTYCZNY SZPITAL ZACHODNI IM.ŚW.JANA PAWŁA II",
+      "city": "GRODZISK MAZOWIECKI",
+      "country": "PL",
+      "lat": 52.094859,
+      "lon": 20.61598921758096,
+      "capabilities": [
+        "craniofacial",
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 13
+    },
+    {
+      "name": "REGIONALNY SZPITAL SPECJALISTYCZNY IM. DR. WŁADYSŁAWA BIEGAŃSKIEGO",
+      "city": "GRUDZIĄDZ",
+      "country": "PL",
+      "lat": 53.4517392,
+      "lon": 18.7867872,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 6
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZESPÓŁ ZAKŁADÓW OPIEKI ZDROWOTNEJ W GRYFICACH",
+      "city": "GRYFICE",
+      "country": "PL",
+      "lat": 53.92381655,
+      "lon": 15.176167989887642,
+      "capabilities": [
+        "craniofacial",
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 11
+    },
+    {
+      "name": "POWIATOWE CENTRUM MEDYCZNE W GRÓJCU SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "GRÓJEC",
+      "country": "PL",
+      "lat": 51.8682256,
+      "lon": 20.8687258069964,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 9
+    },
+    {
+      "name": "GŁOGOWSKI SZPITAL POWIATOWY SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ\"",
+      "city": "GŁOGÓW",
+      "country": "PL",
+      "lat": 51.655214799999996,
+      "lon": 16.076985204789125,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 10
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZESPÓŁ OPIEKI ZDROWOTNEJ W GŁUBCZYCACH",
+      "city": "GŁUBCZYCE",
+      "country": "PL",
+      "lat": 50.20323945,
+      "lon": 17.811977242441,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 5
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ W HAJNÓWCE",
+      "city": "HAJNÓWKA",
+      "country": "PL",
+      "lat": 52.74616425,
+      "lon": 23.611525555704496,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 7
+    },
+    {
+      "name": "POWIATOWY SZPITAL IM. WŁADYSŁAWA BIEGAŃSKIEGO W IŁAWIE",
+      "city": "IŁAWA",
+      "country": "PL",
+      "lat": 53.5863226,
+      "lon": 19.5669176,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 8
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZESPÓŁ ZAKŁADÓW OPIEKI ZDROWOTNEJ - SZPITAL W IŁŻY",
+      "city": "IŁŻA",
+      "country": "PL",
+      "lat": 51.165206999999995,
+      "lon": 21.234147900771205,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 6
+    },
+    {
+      "name": "\"SZPITAL POWIATOWY W JAROCINIE\" SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "JAROCIN",
+      "country": "PL",
+      "lat": 51.9695654,
+      "lon": 17.504987,
+      "capabilities": [
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 2
+    },
+    {
+      "name": "CENTRUM OPIEKI MEDYCZNEJ",
+      "city": "JAROSŁAW",
+      "country": "PL",
+      "lat": 50.01260685,
+      "lon": 22.693723819710016,
+      "capabilities": [
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 6
+    },
+    {
+      "name": "WOJEWÓDZKI SZPITAL SPECJALISTYCZNY NR 2 W JASTRZĘBIU ZDROJU",
+      "city": "JASTRZĘBIE-ZDRÓJ",
+      "country": "PL",
+      "lat": 49.9459634,
+      "lon": 18.584095060737987,
+      "capabilities": [
+        "craniofacial",
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 12
+    },
+    {
+      "name": "SZPITAL SPECJALISTYCZNY W JAŚLE",
+      "city": "JASŁO",
+      "country": "PL",
+      "lat": 49.75238,
+      "lon": 21.48041,
+      "capabilities": [
+        "craniofacial",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 5
+    },
+    {
+      "name": "JAWORSKIE CENTRUM MEDYCZNE SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "JAWOR",
+      "country": "PL",
+      "lat": 51.04692175,
+      "lon": 16.1987321803009,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 6
+    },
+    {
+      "name": "SZPITAL WIELOSPECJALISTYCZNY W JAWORZNIE",
+      "city": "JAWORZNO",
+      "country": "PL",
+      "lat": 50.20446685,
+      "lon": 19.28453428537048,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 9
+    },
+    {
+      "name": "MAZOWIECKIE CENTRUM NEUROPSYCHIATRII SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "JÓZEFÓW",
+      "country": "PL",
+      "lat": 52.12843125,
+      "lon": 21.23616307341907,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 3
+    },
+    {
+      "name": "ARTMEDIK SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "JĘDRZEJÓW",
+      "country": "PL",
+      "lat": 50.6489763,
+      "lon": 20.3022442,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 5
+    },
+    {
+      "name": "WOJEWÓDZKI SZPITAL ZESPOLONY IM.LUDWIKA PERZYNY W KALISZU",
+      "city": "KALISZ",
+      "country": "PL",
+      "lat": 51.76522785,
+      "lon": 18.066383637147432,
+      "capabilities": [
+        "craniofacial",
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 11
+    },
+    {
+      "name": "DOLNOŚLĄSKIE CENTRUM REHABILITACJI SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "KAMIENNA GÓRA",
+      "country": "PL",
+      "lat": 50.7774259,
+      "lon": 16.06114705645101,
+      "capabilities": [
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 2
+    },
+    {
+      "name": "POWIATOWE CENTRUM ZDROWIA W KAMIENNEJ GÓRZE SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "KAMIENNA GÓRA",
+      "country": "PL",
+      "lat": 50.7865,
+      "lon": 16.02703,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 7
+    },
+    {
+      "name": "EMC INSTYTUT MEDYCZNY SPÓŁKA AKCYJNA",
+      "city": "KAMIEŃ POMORSKI",
+      "country": "PL",
+      "lat": 53.9690112,
+      "lon": 14.777043718416497,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 2
+    },
+    {
+      "name": "POWIATOWE CENTRUM ZDROWIA SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "KARTUZY",
+      "country": "PL",
+      "lat": 54.3370574,
+      "lon": 18.1959559,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 6
+    },
+    {
+      "name": "CENTRUM MEDYCZNE MAVIT SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ\"",
+      "city": "KATOWICE",
+      "country": "PL",
+      "lat": 50.2470921,
+      "lon": 19.079873990064243,
+      "capabilities": [
+        "craniofacial"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 1
+    },
+    {
+      "name": "GÓRNOŚLĄSKIE CENTRUM MEDYCZNE IM. PROF. LESZKA GIECA ŚLĄSKIEGO UNIWERSYTETU MEDYCZNEGO W KATOWICACH",
+      "city": "KATOWICE",
+      "country": "PL",
+      "lat": 50.21093325,
+      "lon": 19.000529771276238,
+      "capabilities": [
+        "craniofacial",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 14
+    },
+    {
+      "name": "GÓRNOŚLĄSKIE CENTRUM ZDROWIA DZIECKA IM. ŚW. JANA PAWŁA II SAMODZIELNY PUBLICZNY SZPITAL KLINICZNY NR 6 ŚLĄSKIEGO UNIWERSYTETU MEDYCZNEGO W KATOWICACH",
+      "city": "KATOWICE",
+      "country": "PL",
+      "lat": 50.2236763,
+      "lon": 18.950688547521,
+      "capabilities": [
+        "craniofacial",
+        "endocrine",
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [
+        "craniofacial",
+        "endocrine",
+        "skeletal"
+      ],
+      "wardCount": 9
+    },
+    {
+      "name": "NZOZ EUROMEDIC KLINIKI SPECJALISTYCZNE SPÓŁKA AKCYJNA",
+      "city": "KATOWICE",
+      "country": "PL",
+      "lat": 50.245602899999994,
+      "lon": 19.012615106294653,
+      "capabilities": [
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 4
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY SZPITAL KLINICZNY IM.ANDRZEJA MIELĘCKIEGO ŚLĄSKIEGO UNIWERSYTETU MEDYCZNEGO W KATOWICACH",
+      "city": "KATOWICE",
+      "country": "PL",
+      "lat": 50.254034000000004,
+      "lon": 19.02874433101527,
+      "capabilities": [
+        "craniofacial"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 6
+    },
+    {
+      "name": "SZPITAL MURCKI SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "KATOWICE",
+      "country": "PL",
+      "lat": 50.19716455,
+      "lon": 19.04060011240023,
+      "capabilities": [
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 4
+    },
+    {
+      "name": "SZPITAL ZAKONU BONIFRATRÓW W KATOWICACH SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "KATOWICE",
+      "country": "PL",
+      "lat": 50.26876365,
+      "lon": 19.0398154805175,
+      "capabilities": [
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 5
+    },
+    {
+      "name": "UNIWERSYTECKIE CENTRUM KLINICZNE IM. PROF. K. GIBIŃSKIEGO ŚLĄSKIEGO UNIWERSYTETU MEDYCZNEGO W KATOWICACH",
+      "city": "KATOWICE",
+      "country": "PL",
+      "lat": 50.22379925,
+      "lon": 18.95423575652105,
+      "capabilities": [
+        "craniofacial"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 7
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ MINISTERSTWA SPRAW WEWNĘTRZNYCH I ADMINISTRACJI W KIELCACH",
+      "city": "KIELCE",
+      "country": "PL",
+      "lat": 50.86698,
+      "lon": 20.62354,
+      "capabilities": [
+        "craniofacial"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 5
+    },
+    {
+      "name": "SZPITAL KIELECKI ŚW.ALEKSANDRA SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "KIELCE",
+      "country": "PL",
+      "lat": 50.8700644,
+      "lon": 20.6357894,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 6
+    },
+    {
+      "name": "WOJEWÓDZKI SZPITAL ZESPOLONY W KIELCACH",
+      "city": "KIELCE",
+      "country": "PL",
+      "lat": 50.8733192,
+      "lon": 20.60091636008547,
+      "capabilities": [
+        "craniofacial",
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 26
+    },
+    {
+      "name": "WOJEWÓDZKI SZPITAL ZESPOLONY W KIELCACH",
+      "city": "KIELCE",
+      "country": "PL",
+      "lat": 50.8700644,
+      "lon": 20.6357894,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 1
+    },
+    {
+      "name": "POWIATOWE CENTRUM ZDROWIA SPÓŁKA AKCYJNA W KLUCZBORKU",
+      "city": "KLUCZBORK",
+      "country": "PL",
+      "lat": 50.96773,
+      "lon": 18.21735,
+      "capabilities": [
+        "craniofacial",
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 4
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZESPÓŁ OPIEKI ZDROWOTNEJ W KOLBUSZOWEJ",
+      "city": "KOLBUSZOWA",
+      "country": "PL",
+      "lat": 50.2424037,
+      "lon": 21.761808525494704,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 6
+    },
+    {
+      "name": "SZPITAL OGÓLNY W KOLNIE",
+      "city": "KOLNO",
+      "country": "PL",
+      "lat": 53.41228,
+      "lon": 21.92181,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 5
+    },
+    {
+      "name": "WOJEWÓDZKI SZPITAL ZESPOLONY IM. DR. ROMANA OSTRZYCKIEGO W KONINIE",
+      "city": "KONIN",
+      "country": "PL",
+      "lat": 52.2265254,
+      "lon": 18.2639233,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 6
+    },
+    {
+      "name": "WOJEWÓDZKI SZPITAL ZESPOLONY IM. DR. ROMANA OSTRZYCKIEGO W KONINIE",
+      "city": "KONIN",
+      "country": "PL",
+      "lat": 52.194800349999994,
+      "lon": 18.24009695333796,
+      "capabilities": [
+        "craniofacial",
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 6
+    },
+    {
+      "name": "WOJEWÓDZKI SZPITAL ZESPOLONY W KONINIE",
+      "city": "KONIN",
+      "country": "PL",
+      "lat": 52.2265254,
+      "lon": 18.2639233,
+      "capabilities": [
+        "craniofacial",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 5
+    },
+    {
+      "name": "MAZOWIECKIE CENTRUM REHABILITACJI STOCER\" SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ\"",
+      "city": "KONSTANCIN-JEZIORNA",
+      "country": "PL",
+      "lat": 52.08252,
+      "lon": 21.11335,
+      "capabilities": [
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 5
+    },
+    {
+      "name": "UZDROWISKO KONSTANCIN-ZDRÓJ SPÓŁKA AKCYJNA\"",
+      "city": "KONSTANCIN-JEZIORNA",
+      "country": "PL",
+      "lat": 52.07943726,
+      "lon": 21.10245132,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 1
+    },
+    {
+      "name": "SZPITAL WOJEWÓDZKI IM. MIKOŁAJA KOPERNIKA W KOSZALINIE",
+      "city": "KOSZALIN",
+      "country": "PL",
+      "lat": 54.1989376,
+      "lon": 16.2154432,
+      "capabilities": [
+        "craniofacial",
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 11
+    },
+    {
+      "name": "POWIATOWE CENTRUM ZDROWIA SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ W KOWARACH",
+      "city": "KOWARY",
+      "country": "PL",
+      "lat": 50.8092025,
+      "lon": 15.8385258,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 6
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZESPÓŁ ZAKŁADÓW OPIEKI ZDROWOTNEJ W KOZIENICACH",
+      "city": "KOZIENICE",
+      "country": "PL",
+      "lat": 51.5915232,
+      "lon": 21.5282654,
+      "capabilities": [
+        "craniofacial",
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 12
+    },
+    {
+      "name": "REGIONALNY SZPITAL W KOŁOBRZEGU",
+      "city": "KOŁOBRZEG",
+      "country": "PL",
+      "lat": 54.17462,
+      "lon": 15.56761,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 9
+    },
+    {
+      "name": "ZESPÓŁ OPIEKI ZDROWOTNEJ W KOŃSKICH",
+      "city": "KOŃSKIE",
+      "country": "PL",
+      "lat": 51.1908,
+      "lon": 20.39173,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 13
+    },
+    {
+      "name": "SZPITAL SPECJALISTYCZNY W KOŚCIERZYNIE SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "KOŚCIERZYNA",
+      "country": "PL",
+      "lat": 54.121204399999996,
+      "lon": 17.949679195673195,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 11
+    },
+    {
+      "name": "5 WOJSKOWY SZPITAL KLINICZNY Z POLIKLINIKĄ-SAMODZIELNY PUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ W KRAKOWIE",
+      "city": "KRAKÓW",
+      "country": "PL",
+      "lat": 50.07736765,
+      "lon": 19.933981810766586,
+      "capabilities": [
+        "craniofacial",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 5
+    },
+    {
+      "name": "KRAKOWSKI SZPITAL SPECJALISTYCZNY IM. JANA PAWŁA II",
+      "city": "KRAKÓW",
+      "country": "PL",
+      "lat": 50.0901698,
+      "lon": 19.935675143580163,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 8
+    },
+    {
+      "name": "KRAKOWSKIE CENTRUM REHABILITACJI I ORTOPEDII",
+      "city": "KRAKÓW",
+      "country": "PL",
+      "lat": 50.063637,
+      "lon": 19.865793,
+      "capabilities": [
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 1
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ MINISTERSTWA SPRAW WEWNĘTRZNYCH I ADMINISTRACJI W KRAKOWIE",
+      "city": "KRAKÓW",
+      "country": "PL",
+      "lat": 50.07215915,
+      "lon": 19.9125463489128,
+      "capabilities": [
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 2
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ SZPITAL UNIWERSYTECKI W KRAKOWIE",
+      "city": "KRAKÓW",
+      "country": "PL",
+      "lat": 50.0082247,
+      "lon": 20.000377900759,
+      "capabilities": [
+        "craniofacial"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 7
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ SZPITAL UNIWERSYTECKI W KRAKOWIE",
+      "city": "KRAKÓW",
+      "country": "PL",
+      "lat": 50.06222475,
+      "lon": 19.9511432815966,
+      "capabilities": [
+        "craniofacial"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 1
+    },
+    {
+      "name": "SCANMED SPÓŁKA AKCYJNA",
+      "city": "KRAKÓW",
+      "country": "PL",
+      "lat": 50.01055665,
+      "lon": 19.97532888623041,
+      "capabilities": [
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 1
+    },
+    {
+      "name": "SCANMED SZPITAL ŚW.RAFAŁA",
+      "city": "KRAKÓW",
+      "country": "PL",
+      "lat": 50.01055665,
+      "lon": 19.97532888623041,
+      "capabilities": [
+        "craniofacial"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 3
+    },
+    {
+      "name": "SZPITAL MIEJSKI SPECJALISTYCZNY IM. GABRIELA NARUTOWICZA W KRAKOWIE",
+      "city": "KRAKÓW",
+      "country": "PL",
+      "lat": 50.08306090000001,
+      "lon": 19.93929127645631,
+      "capabilities": [
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 2
+    },
+    {
+      "name": "SZPITAL SPECJALISTYCZNY IM. LUDWIKA RYDYGIERA W KRAKOWIE SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "KRAKÓW",
+      "country": "PL",
+      "lat": 50.09238,
+      "lon": 20.01707,
+      "capabilities": [
+        "craniofacial",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 6
+    },
+    {
+      "name": "SZPITAL SPECJALISTYCZNY IM. STEFANA ŻEROMSKIEGO SAMODZIELNY PUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ W KRAKOWIE",
+      "city": "KRAKÓW",
+      "country": "PL",
+      "lat": 50.0657,
+      "lon": 20.04611,
+      "capabilities": [
+        "craniofacial"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 4
+    },
+    {
+      "name": "SZPITAL SPECJALISTYCZNY IM. STEFANA ŻEROMSKIEGO SAMODZIELNY PUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ W KRAKOWIE",
+      "city": "KRAKÓW",
+      "country": "PL",
+      "lat": 50.066626,
+      "lon": 20.049625,
+      "capabilities": [
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 1
+    },
+    {
+      "name": "SZPITAL SPECJALISTYCZNY IM. STEFANA ŻEROMSKIEGO SAMODZIELNY PUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ W KRAKOWIE",
+      "city": "KRAKÓW",
+      "country": "PL",
+      "lat": 50.06504,
+      "lon": 20.0486,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 1
+    },
+    {
+      "name": "UNIWERSYTECKI SZPITAL DZIECIĘCY W KRAKOWIE",
+      "city": "KRAKÓW",
+      "country": "PL",
+      "lat": 50.0123916,
+      "lon": 20.0014209,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [
+        "skeletal"
+      ],
+      "wardCount": 2
+    },
+    {
+      "name": "WOJEWÓDZKI SZPITAL OKULISTYCZNY W KRAKOWIE",
+      "city": "KRAKÓW",
+      "country": "PL",
+      "lat": 50.0993985,
+      "lon": 20.06360891035591,
+      "capabilities": [
+        "craniofacial"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 1
+    },
+    {
+      "name": "KRAPKOWICKIE CENTRUM ZDROWIA SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "KRAPKOWICE",
+      "country": "PL",
+      "lat": 50.491983700000006,
+      "lon": 17.971903924010025,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 5
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZESPÓŁ OPIEKI ZDROWOTNEJ W KRASNYMSTAWIE",
+      "city": "KRASNYSTAW",
+      "country": "PL",
+      "lat": 50.9839355,
+      "lon": 23.1630832,
+      "capabilities": [
+        "craniofacial",
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 11
+    },
+    {
+      "name": "WOJEWÓDZKI SZPITAL PODKARPACKI IM.JANA PAWŁA II W KROŚNIE",
+      "city": "KROSNO",
+      "country": "PL",
+      "lat": 49.702812449999996,
+      "lon": 21.783136582477617,
+      "capabilities": [
+        "craniofacial",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 9
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ - SZPITAL IM.DR. JÓZEFA DIETLA W KRYNICY-ZDROJU",
+      "city": "KRYNICA-ZDRÓJ",
+      "country": "PL",
+      "lat": 49.4053564,
+      "lon": 20.9534177,
+      "capabilities": [
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 2
+    },
+    {
+      "name": "STOBRAWSKIE CENTRUM MEDYCZNE SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ Z SIEDZIBĄ W KUP",
+      "city": "KUP",
+      "country": "PL",
+      "lat": 50.80424,
+      "lon": 17.88529,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 3
+    },
+    {
+      "name": "KUTNOWSKI SZPITAL SAMORZĄDOWY SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ\"",
+      "city": "KUTNO",
+      "country": "PL",
+      "lat": 52.23891,
+      "lon": 19.37154,
+      "capabilities": [
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 3
+    },
+    {
+      "name": "ZDROWIE SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ\"",
+      "city": "KWIDZYN",
+      "country": "PL",
+      "lat": 53.7272077,
+      "lon": 18.9208011,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 8
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZESPÓŁ OPIEKI ZDROWOTNEJ",
+      "city": "KĘDZIERZYN-KOŹLE",
+      "country": "PL",
+      "lat": 50.33244,
+      "lon": 18.15134,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 7
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZESPÓŁ OPIEKI ZDROWOTNEJ",
+      "city": "KĘDZIERZYN-KOŹLE",
+      "country": "PL",
+      "lat": 50.33133,
+      "lon": 18.15009,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 1
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ W KĘPNIE",
+      "city": "KĘPNO",
+      "country": "PL",
+      "lat": 51.276532,
+      "lon": 17.98396965129914,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 4
+    },
+    {
+      "name": "SZPITAL POWIATOWY W KĘTRZYNIE",
+      "city": "KĘTRZYN",
+      "country": "PL",
+      "lat": 54.08262515,
+      "lon": 21.37735853450357,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 6
+    },
+    {
+      "name": "ZESPÓŁ OPIEKI ZDROWOTNEJ W KŁOBUCKU",
+      "city": "KŁOBUCK",
+      "country": "PL",
+      "lat": 50.9064156611526,
+      "lon": 18.9366650404059,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 2
+    },
+    {
+      "name": "ZESPÓŁ OPIEKI ZDROWOTNEJ W KŁODZKU\"",
+      "city": "KŁODZKO",
+      "country": "PL",
+      "lat": 50.4555829,
+      "lon": 16.6604755,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 10
+    },
+    {
+      "name": "WOJEWÓDZKI SZPITAL SPECJALISTYCZNY W LEGNICY",
+      "city": "LEGNICA",
+      "country": "PL",
+      "lat": 51.2099081,
+      "lon": 16.217267417947397,
+      "capabilities": [
+        "craniofacial",
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 17
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZESPÓŁ OPIEKI ZDROWOTNEJ W LESKU",
+      "city": "LESKO",
+      "country": "PL",
+      "lat": 49.47048825,
+      "lon": 22.330430838833003,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 5
+    },
+    {
+      "name": "WOJEWÓDZKI SZPITAL ZESPOLONY W LESZNIE",
+      "city": "LESZNO",
+      "country": "PL",
+      "lat": 51.8382766,
+      "lon": 16.6078934,
+      "capabilities": [
+        "craniofacial",
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 11
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZESPÓŁ OPIEKI ZDROWOTNEJ W LEŻAJSKU",
+      "city": "LEŻAJSK",
+      "country": "PL",
+      "lat": 50.27197,
+      "lon": 22.40154,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 10
+    },
+    {
+      "name": "ZESPÓŁ OPIEKI ZDROWOTNEJ W LIDZBARKU WARMIŃSKIM",
+      "city": "LIDZBARK WARMIŃSKI",
+      "country": "PL",
+      "lat": 54.12634735,
+      "lon": 20.59179759078946,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 4
+    },
+    {
+      "name": "SZPITAL POWIATOWY W LIMANOWEJ IMIENIA MIŁOSIERDZIA BOŻEGO",
+      "city": "LIMANOWA",
+      "country": "PL",
+      "lat": 49.7160365,
+      "lon": 20.4136574,
+      "capabilities": [
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 2
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZESPÓŁ ZAKŁADÓW OPIEKI ZDROWOTNEJ",
+      "city": "LIPSKO",
+      "country": "PL",
+      "lat": 51.1601147,
+      "lon": 21.6578849,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 8
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ W LUBACZOWIE",
+      "city": "LUBACZÓW",
+      "country": "PL",
+      "lat": 50.17086505,
+      "lon": 23.124372265709205,
+      "capabilities": [
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 5
+    },
+    {
+      "name": "NIEPUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ ŁUŻYCKIE CENTRUM MEDYCZNE W LUBANIU SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "LUBAŃ",
+      "country": "PL",
+      "lat": 51.1161532,
+      "lon": 15.271219268911139,
+      "capabilities": [
+        "craniofacial",
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 11
+    },
+    {
+      "name": "MIEDZIOWE CENTRUM ZDROWIA SPÓŁKA AKCYJNA\"",
+      "city": "LUBIN",
+      "country": "PL",
+      "lat": 51.4084513,
+      "lon": 16.194895,
+      "capabilities": [
+        "craniofacial"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 6
+    },
+    {
+      "name": "REGIONALNE CENTRUM ZDROWIA SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "LUBIN",
+      "country": "PL",
+      "lat": 51.400645,
+      "lon": 16.197936,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 11
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY SZPITAL KLINICZNY NR 1 W LUBLINIE",
+      "city": "LUBLIN",
+      "country": "PL",
+      "lat": 51.2516629,
+      "lon": 22.5573728,
+      "capabilities": [
+        "craniofacial",
+        "paediatric"
+      ],
+      "paediatricCapabilities": [
+        "craniofacial"
+      ],
+      "wardCount": 4
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY SZPITAL KLINICZNY NR 1 W LUBLINIE",
+      "city": "LUBLIN",
+      "country": "PL",
+      "lat": 51.2504264,
+      "lon": 22.5637613,
+      "capabilities": [
+        "craniofacial",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 4
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY SZPITAL KLINICZNY NR 1 W LUBLINIE",
+      "city": "LUBLIN",
+      "country": "PL",
+      "lat": 51.20695415,
+      "lon": 22.58827080809854,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 6
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY SZPITAL KLINICZNY NR 1 W LUBLINIE",
+      "city": "LUBLIN",
+      "country": "PL",
+      "lat": 51.2508464,
+      "lon": 22.5636325,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 15
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY SZPITAL KLINICZNY NR 4 W LUBLINIE",
+      "city": "LUBLIN",
+      "country": "PL",
+      "lat": 51.259747250000004,
+      "lon": 22.564445936942487,
+      "capabilities": [
+        "craniofacial",
+        "endocrine",
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 33
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY SZPITAL WOJEWÓDZKI IM. JANA BOŻEGO W LUBLINIE",
+      "city": "LUBLIN",
+      "country": "PL",
+      "lat": 51.2562523,
+      "lon": 22.5671209,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 3
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY SZPITAL WOJEWÓDZKI IM. JANA BOŻEGO W LUBLINIE",
+      "city": "LUBLIN",
+      "country": "PL",
+      "lat": 51.2154359,
+      "lon": 22.5698117880335,
+      "capabilities": [
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 6
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY SZPITAL WOJEWÓDZKI IM. JANA BOŻEGO W LUBLINIE",
+      "city": "LUBLIN",
+      "country": "PL",
+      "lat": 51.2562523,
+      "lon": 22.5671209,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 2
+    },
+    {
+      "name": "UNIWERSYTECKI SZPITAL DZIECIĘCY W LUBLINIE",
+      "city": "LUBLIN",
+      "country": "PL",
+      "lat": 51.26036,
+      "lon": 22.5610326,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 1
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZESPÓŁ OPIEKI ZDROWOTNEJ W LUBLIŃCU",
+      "city": "LUBLINIEC",
+      "country": "PL",
+      "lat": 50.66529,
+      "lon": 18.68043,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 4
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY SPECJALISTYCZNY ZAKŁAD OPIEKI ZDROWOTNEJ",
+      "city": "LĘBORK",
+      "country": "PL",
+      "lat": 54.5385996,
+      "lon": 17.7513925,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 8
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ - ZESPÓŁ ZAKŁADÓW",
+      "city": "MAKÓW MAZOWIECKI",
+      "country": "PL",
+      "lat": 52.86135625,
+      "lon": 21.0876497855101,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 7
+    },
+    {
+      "name": "POWIATOWE CENTRUM ZDROWIA SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "MALBORK",
+      "country": "PL",
+      "lat": 54.0313698,
+      "lon": 19.02214701484304,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 6
+    },
+    {
+      "name": "SZPITAL MIEJSKI W MIASTKU SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "MIASTKO",
+      "country": "PL",
+      "lat": 54.010965,
+      "lon": 16.980574,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 6
+    },
+    {
+      "name": "SZPITAL POWIATOWY IM.EDMUNDA BIERNACKIEGO W MIELCU",
+      "city": "MIELEC",
+      "country": "PL",
+      "lat": 50.2888,
+      "lon": 21.43662,
+      "capabilities": [
+        "craniofacial",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 11
+    },
+    {
+      "name": "SZPITAL ŚW.JÓZEFA SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ\"",
+      "city": "MIKOŁÓW",
+      "country": "PL",
+      "lat": 50.1701247,
+      "lon": 18.9084745,
+      "capabilities": [
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 3
+    },
+    {
+      "name": "MILICKIE CENTRUM MEDYCZNE SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "MILICZ",
+      "country": "PL",
+      "lat": 51.5170796,
+      "lon": 17.2610121445739,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 10
+    },
+    {
+      "name": "SZPITAL MIĘDZYRZECKI SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "MIĘDZYRZECZ",
+      "country": "PL",
+      "lat": 52.4418879,
+      "lon": 15.5814249,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 6
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZESPÓŁ OPIEKI ZDROWOTNEJ W MIŃSKU MAZOWIECKIM",
+      "city": "MIŃSK MAZOWIECKI",
+      "country": "PL",
+      "lat": 52.17355405,
+      "lon": 21.5778097238543,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 6
+    },
+    {
+      "name": "CENTRALNY SZPITAL KLINICZNY MINISTERSTWA SPRAW WEWNĘTRZNYCH I ADMINISTRACJI W WARSZAWIE",
+      "city": "MOKOTÓW",
+      "country": "PL",
+      "lat": 52.19902895,
+      "lon": 20.99835737174883,
+      "capabilities": [
+        "craniofacial",
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 21
+    },
+    {
+      "name": "INSTYTUT PSYCHIATRII I NEUROLOGII",
+      "city": "MOKOTÓW",
+      "country": "PL",
+      "lat": 52.17234225,
+      "lon": 21.0634152009966,
+      "capabilities": [
+        "craniofacial"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 5
+    },
+    {
+      "name": "SZPITAL CZERNIAKOWSKI SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "MOKOTÓW",
+      "country": "PL",
+      "lat": 52.20495,
+      "lon": 21.0375,
+      "capabilities": [
+        "craniofacial",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 8
+    },
+    {
+      "name": "SZPITAL SPECJALISTYCZNY IM. ŚWIĘTEJ RODZINY SAMODZIELNY PUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ",
+      "city": "MOKOTÓW",
+      "country": "PL",
+      "lat": 52.2039632,
+      "lon": 21.01754218165076,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 5
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ W MOŃKACH",
+      "city": "MOŃKI",
+      "country": "PL",
+      "lat": 53.4061636,
+      "lon": 22.80325365574238,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 4
+    },
+    {
+      "name": "SZPITAL MRĄGOWSKI IM. MICHAŁA KAJKI SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "MRĄGOWO",
+      "country": "PL",
+      "lat": 53.879296350000004,
+      "lon": 21.30236452208503,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 5
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZESPÓŁ OPIEKI ZDROWOTNEJ W MYSZKOWIE",
+      "city": "MYSZKÓW",
+      "country": "PL",
+      "lat": 50.572822,
+      "lon": 19.305593,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 5
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ SZPITAL NR 2 IM. DR. TADEUSZA BOCZONIA W MYSŁOWICACH",
+      "city": "MYSŁOWICE",
+      "country": "PL",
+      "lat": 50.2467999,
+      "lon": 19.1332141236995,
+      "capabilities": [
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 3
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ W MYŚLENICACH",
+      "city": "MYŚLENICE",
+      "country": "PL",
+      "lat": 49.8289136,
+      "lon": 19.946251334635313,
+      "capabilities": [
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 3
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ W MŁAWIE",
+      "city": "MŁAWA",
+      "country": "PL",
+      "lat": 53.12338285,
+      "lon": 20.37074079306636,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 7
+    },
+    {
+      "name": "NAMYSŁOWSKIE CENTRUM ZDROWIA SPÓŁKA AKCYJNA",
+      "city": "NAMYSŁÓW",
+      "country": "PL",
+      "lat": 51.083433150000005,
+      "lon": 17.708884102580704,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 5
+    },
+    {
+      "name": "ZESPÓŁ OPIEKI ZDROWOTNEJ W NIDZICY",
+      "city": "NIDZICA",
+      "country": "PL",
+      "lat": 53.35986,
+      "lon": 20.43298,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 5
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZESPÓŁ ZAKŁADÓW OPIEKI ZDROWOTNEJ W NISKU",
+      "city": "NISKO",
+      "country": "PL",
+      "lat": 50.51957,
+      "lon": 22.14353,
+      "capabilities": [
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 4
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZESPÓŁ ZAKŁADÓW OPIEKI ZDROWOTNEJ W NOWEJ DĘBIE",
+      "city": "NOWA DĘBA",
+      "country": "PL",
+      "lat": 50.42036215,
+      "lon": 21.75542752172723,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 5
+    },
+    {
+      "name": "ZESPÓŁ OPIEKI ZDROWOTNEJ W KŁODZKU\"",
+      "city": "NOWA RUDA",
+      "country": "PL",
+      "lat": 50.58375115,
+      "lon": 16.4958345158045,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 2
+    },
+    {
+      "name": "WIELOSPECJALISTYCZNY SZPITAL SAMODZIELNY PUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ W NOWEJ SOLI",
+      "city": "NOWA SÓL",
+      "country": "PL",
+      "lat": 51.80600945,
+      "lon": 15.688135138411205,
+      "capabilities": [
+        "craniofacial",
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 16
+    },
+    {
+      "name": "SZPITAL POWIATOWY W NOWYM MIEŚCIE LUBAWSKIM SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "NOWE MIASTO LUBAWSKIE",
+      "country": "PL",
+      "lat": 53.42424,
+      "lon": 19.58645,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 5
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ W NOWYM MIEŚCIE NAD PILICĄ",
+      "city": "NOWE MIASTO NAD PILICĄ",
+      "country": "PL",
+      "lat": 51.6160639,
+      "lon": 20.56475652266428,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 6
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY SZPITAL REJONOWY W NOWOGARDZIE",
+      "city": "NOWOGARD",
+      "country": "PL",
+      "lat": 53.672683899999996,
+      "lon": 15.109851180172594,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 4
+    },
+    {
+      "name": "NOWODWORSKIE CENTRUM MEDYCZNE W NOWYM DWORZE MAZOWIECKIM",
+      "city": "NOWY DWÓR MAZOWIECKI",
+      "country": "PL",
+      "lat": 52.41964195,
+      "lon": 20.724840500472034,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 5
+    },
+    {
+      "name": "SZPITAL SPECJALISTYCZNY IM. JĘDRZEJA ŚNIADECKIEGO W NOWYM SĄCZU",
+      "city": "NOWY SĄCZ",
+      "country": "PL",
+      "lat": 49.6191854,
+      "lon": 20.7008628,
+      "capabilities": [
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 4
+    },
+    {
+      "name": "PODHALAŃSKI SZPITAL SPECJALISTYCZNY IM. JANA PAWŁA II W NOWYM TARGU",
+      "city": "NOWY TARG",
+      "country": "PL",
+      "lat": 49.4895554,
+      "lon": 20.028094486513464,
+      "capabilities": [
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 3
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ IMIENIA DOKTORA KAZIMIERZA HOŁOGI",
+      "city": "NOWY TOMYŚL",
+      "country": "PL",
+      "lat": 52.3152564,
+      "lon": 16.1415022,
+      "capabilities": [
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 4
+    },
+    {
+      "name": "ZESPÓŁ OPIEKI ZDROWOTNEJ",
+      "city": "NYSA",
+      "country": "PL",
+      "lat": 50.4714189,
+      "lon": 17.3298968919116,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 8
+    },
+    {
+      "name": "MAZOWIECKIE CENTRUM REHABILITACJI STOCER\" SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ\"",
+      "city": "OCHOTA",
+      "country": "PL",
+      "lat": 52.21930425,
+      "lon": 20.9792460522757,
+      "capabilities": [
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 5
+    },
+    {
+      "name": "UNIWERSYTECKIE CENTRUM KLINICZNE WARSZAWSKIEGO UNIWERSYTETU MEDYCZNEGO",
+      "city": "OCHOTA",
+      "country": "PL",
+      "lat": 52.2252532,
+      "lon": 20.9980475,
+      "capabilities": [
+        "craniofacial"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 5
+    },
+    {
+      "name": "UNIWERSYTECKIE CENTRUM KLINICZNE WARSZAWSKIEGO UNIWERSYTETU MEDYCZNEGO",
+      "city": "OCHOTA",
+      "country": "PL",
+      "lat": 52.2242931,
+      "lon": 20.9975923,
+      "capabilities": [
+        "craniofacial",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 12
+    },
+    {
+      "name": "UNIWERSYTECKIE CENTRUM KLINICZNE WARSZAWSKIEGO UNIWERSYTETU MEDYCZNEGO",
+      "city": "OCHOTA",
+      "country": "PL",
+      "lat": 52.20897545,
+      "lon": 20.983623991454593,
+      "capabilities": [
+        "craniofacial",
+        "paediatric"
+      ],
+      "paediatricCapabilities": [
+        "craniofacial"
+      ],
+      "wardCount": 22
+    },
+    {
+      "name": "UNIWERSYTECKIE CENTRUM KLINICZNE WARSZAWSKIEGO UNIWERSYTETU MEDYCZNEGO",
+      "city": "OCHOTA",
+      "country": "PL",
+      "lat": 52.20715,
+      "lon": 20.98479,
+      "capabilities": [
+        "craniofacial",
+        "paediatric"
+      ],
+      "paediatricCapabilities": [
+        "craniofacial"
+      ],
+      "wardCount": 12
+    },
+    {
+      "name": "UNIWERSYTECKIE CENTRUM ZDROWIA KOBIETY I NOWORODKA WARSZAWSKIEGO UNIWERSYTETU MEDYCZNEGO SP. Z O.O.",
+      "city": "OCHOTA",
+      "country": "PL",
+      "lat": 52.22444985,
+      "lon": 20.995022749425942,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 2
+    },
+    {
+      "name": "OLMEDICA W OLECKU - SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "OLECKO",
+      "country": "PL",
+      "lat": 54.0423,
+      "lon": 22.49703,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 5
+    },
+    {
+      "name": "ZESPÓŁ OPIEKI ZDROWOTNEJ W OLEŚNIE",
+      "city": "OLESNO",
+      "country": "PL",
+      "lat": 50.88067435,
+      "lon": 18.412323629055592,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 7
+    },
+    {
+      "name": "POWIATOWY ZESPÓŁ SZPITALI",
+      "city": "OLEŚNICA",
+      "country": "PL",
+      "lat": 51.2087893,
+      "lon": 17.3906084,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 7
+    },
+    {
+      "name": "MIEJSKI SZPITAL ZESPOLONY W OLSZTYNIE",
+      "city": "OLSZTYN",
+      "country": "PL",
+      "lat": 53.76987255,
+      "lon": 20.47878499516264,
+      "capabilities": [
+        "craniofacial",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 9
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ MINISTERSTWA SPRAW WEWNĘTRZNYCH I ADMINISTRACJI Z WARMIŃSKO-MAZURSKIM CENTRUM ONKOLOGII W OLSZTYNIE",
+      "city": "OLSZTYN",
+      "country": "PL",
+      "lat": 53.7987234,
+      "lon": 20.483345176610054,
+      "capabilities": [
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 7
+    },
+    {
+      "name": "UNIWERSYTECKI SZPITAL KLINICZNY W OLSZTYNIE",
+      "city": "OLSZTYN",
+      "country": "PL",
+      "lat": 53.773147249999994,
+      "lon": 20.470136420652366,
+      "capabilities": [
+        "craniofacial"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 9
+    },
+    {
+      "name": "WOJEWÓDZKI SPECJALISTYCZNY SZPITAL DZIECIĘCY IM. PROF. DR STANISŁAWA POPOWSKIEGO W OLSZTYNIE",
+      "city": "OLSZTYN",
+      "country": "PL",
+      "lat": 53.76811445,
+      "lon": 20.4956331650941,
+      "capabilities": [
+        "craniofacial",
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [
+        "craniofacial",
+        "skeletal"
+      ],
+      "wardCount": 9
+    },
+    {
+      "name": "WOJEWÓDZKI SZPITAL SPECJALISTYCZNY W OLSZTYNIE",
+      "city": "OLSZTYN",
+      "country": "PL",
+      "lat": 53.76880115,
+      "lon": 20.49359223529411,
+      "capabilities": [
+        "craniofacial",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 11
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ SZPITAL POWIATOWY IM. EDMUNDA BIERNACKIEGO W OPOCZNIE",
+      "city": "OPOCZNO",
+      "country": "PL",
+      "lat": 51.3790267,
+      "lon": 20.27899881784403,
+      "capabilities": [
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 2
+    },
+    {
+      "name": "KLINICZNE CENTRUM GINEKOLOGII, POŁOŻNICTWA I NEONATOLOGII W OPOLU",
+      "city": "OPOLE",
+      "country": "PL",
+      "lat": 50.666811249999995,
+      "lon": 17.928410861904375,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 2
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ MINISTERSTWA SPRAW WEWNĘTRZNYCH I ADMINISTRACJI W OPOLU",
+      "city": "OPOLE",
+      "country": "PL",
+      "lat": 50.6632736,
+      "lon": 17.9251653355636,
+      "capabilities": [
+        "endocrine",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 5
+    },
+    {
+      "name": "SZPITAL WOJEWÓDZKI W OPOLU SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "OPOLE",
+      "country": "PL",
+      "lat": 50.67136125,
+      "lon": 17.9361019480774,
+      "capabilities": [
+        "endocrine",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 10
+    },
+    {
+      "name": "UNIWERSYTECKI SZPITAL KLINICZNY W OPOLU",
+      "city": "OPOLE",
+      "country": "PL",
+      "lat": 50.6765982,
+      "lon": 17.976456553602596,
+      "capabilities": [
+        "craniofacial",
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 12
+    },
+    {
+      "name": "ZESPÓŁ OPIEKI ZDROWOTNEJ W OSTROWCU ŚWIĘTOKRZYSKIM",
+      "city": "OSTROWIEC ŚWIĘTOKRZYSKI",
+      "country": "PL",
+      "lat": 50.9523744,
+      "lon": 21.362302557750567,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 10
+    },
+    {
+      "name": "MAZOWIECKI SZPITAL SPECJALISTYCZNY IM. DR. JÓZEFA PSARSKIEGO W OSTROŁĘCE",
+      "city": "OSTROŁĘKA",
+      "country": "PL",
+      "lat": 53.06325885,
+      "lon": 21.591855281319017,
+      "capabilities": [
+        "craniofacial",
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 16
+    },
+    {
+      "name": "SZPITAL W OSTRÓDZIE SPÓŁKA AKCYJNA",
+      "city": "OSTRÓDA",
+      "country": "PL",
+      "lat": 53.69276485,
+      "lon": 19.974653568459402,
+      "capabilities": [
+        "craniofacial",
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 9
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZESPÓŁ ZAKŁADÓW OPIEKI ZDROWOTNEJ W OSTROWI MAZOWIECKIEJ",
+      "city": "OSTRÓW MAZOWIECKA",
+      "country": "PL",
+      "lat": 52.79953,
+      "lon": 21.91239,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 8
+    },
+    {
+      "name": "ZESPÓŁ ZAKŁADÓW OPIEKI ZDROWOTNEJ W OSTROWIE WIELKOPOLSKIM",
+      "city": "OSTRÓW WIELKOPOLSKI",
+      "country": "PL",
+      "lat": 51.63594265,
+      "lon": 17.813116678192124,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 3
+    },
+    {
+      "name": "ZESPÓŁ ZAKŁADÓW OPIEKI ZDROWOTNEJ W OSTROWIE WIELKOPOLSKIM",
+      "city": "OSTRÓW WIELKOPOLSKI",
+      "country": "PL",
+      "lat": 51.6550425,
+      "lon": 17.8259731,
+      "capabilities": [
+        "craniofacial",
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 15
+    },
+    {
+      "name": "POWIATOWE CENTRUM ZDROWIA SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ W RESTRUKTURYZACJI",
+      "city": "OTWOCK",
+      "country": "PL",
+      "lat": 52.09806,
+      "lon": 21.26281,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 6
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY SZPITAL KLINICZNY IM.PROF.ADAMA GRUCY CENTRUM MEDYCZNEGO KSZTAŁCENIA PODYPLOMOWEGO",
+      "city": "OTWOCK",
+      "country": "PL",
+      "lat": 52.121091449999994,
+      "lon": 21.276665194124746,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [
+        "skeletal"
+      ],
+      "wardCount": 12
+    },
+    {
+      "name": "EMC INSTYTUT MEDYCZNY SPÓŁKA AKCYJNA",
+      "city": "OZIMEK",
+      "country": "PL",
+      "lat": 50.681643,
+      "lon": 18.219549154388716,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 2
+    },
+    {
+      "name": "ZESPÓŁ OPIEKI ZDROWOTNEJ W OŁAWIE",
+      "city": "OŁAWA",
+      "country": "PL",
+      "lat": 50.95222,
+      "lon": 17.28525,
+      "capabilities": [
+        "craniofacial",
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 9
+    },
+    {
+      "name": "ZESPÓŁ OPIEKI ZDROWOTNEJ W OŚWIĘCIMIU",
+      "city": "OŚWIĘCIM",
+      "country": "PL",
+      "lat": 50.040588,
+      "lon": 19.235807,
+      "capabilities": [
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 3
+    },
+    {
+      "name": "PABIANICKIE CENTRUM MEDYCZNE SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "PABIANICE",
+      "country": "PL",
+      "lat": 51.6521762,
+      "lon": 19.3299671,
+      "capabilities": [
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 4
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ W PARCZEWIE",
+      "city": "PARCZEW",
+      "country": "PL",
+      "lat": 51.6337185,
+      "lon": 22.913004720775447,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 9
+    },
+    {
+      "name": "SZPITAL POWIATOWY SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOSCIĄ W PASŁĘKU",
+      "city": "PASŁĘK",
+      "country": "PL",
+      "lat": 54.0628285166317,
+      "lon": 19.6629561591683,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 3
+    },
+    {
+      "name": "EMC PIASECZNO SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ\"",
+      "city": "PIASECZNO",
+      "country": "PL",
+      "lat": 52.06255,
+      "lon": 21.02529,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 7
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY WOJEWÓDZKI SZPITAL CHIRURGII URAZOWEJ IM.DR.JANUSZA DAABA W PIEKARACH ŚLĄSKICH",
+      "city": "PIEKARY ŚLĄSKIE",
+      "country": "PL",
+      "lat": 50.3721542,
+      "lon": 18.9455804922239,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [
+        "skeletal"
+      ],
+      "wardCount": 4
+    },
+    {
+      "name": "SAMODZIELNY SZPITAL WOJEWÓDZKI IM. MIKOŁAJA KOPERNIKA W PIOTRKOWIE TRYBUNALSKIM",
+      "city": "PIOTRKÓW TRYBUNALSKI",
+      "country": "PL",
+      "lat": 51.41872265,
+      "lon": 19.71417616913199,
+      "capabilities": [
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 3
+    },
+    {
+      "name": "SAMODZIELNY SZPITAL WOJEWÓDZKI IM.MIKOŁAJA KOPERNIKA W PIOTRKOWIE TRYBUNALSKIM",
+      "city": "PIOTRKÓW TRYBUNALSKI",
+      "country": "PL",
+      "lat": 51.41872265,
+      "lon": 19.71417616913199,
+      "capabilities": [
+        "craniofacial"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 4
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ SZPITAL POWIATOWY W PISZU",
+      "city": "PISZ",
+      "country": "PL",
+      "lat": 53.626353699999996,
+      "lon": 21.799120741932732,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 7
+    },
+    {
+      "name": "SZPITAL SPECJALISTYCZNY W PILE IM. STANISŁAWA STASZICA",
+      "city": "PIŁA",
+      "country": "PL",
+      "lat": 53.120138,
+      "lon": 16.7161855,
+      "capabilities": [
+        "craniofacial",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 8
+    },
+    {
+      "name": "PODDĘBICKIE CENTRUM ZDROWIA SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ\"",
+      "city": "PODDĘBICE",
+      "country": "PL",
+      "lat": 51.88907,
+      "lon": 18.95327,
+      "capabilities": [
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 3
+    },
+    {
+      "name": "SPECJALISTYCZNE CENTRUM MEDYCZNE SPÓŁKA AKCYJNA",
+      "city": "POLANICA-ZDRÓJ",
+      "country": "PL",
+      "lat": 50.407464250000004,
+      "lon": 16.500614049605502,
+      "capabilities": [
+        "craniofacial",
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 12
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY SZPITAL KLINICZNY NR 1 IM. PROF. TADEUSZA SOKOŁOWSKIEGO POMORSKIEGO UNIWERSYTETU MEDYCZNEGO W SZCZECINIE",
+      "city": "POLICE",
+      "country": "PL",
+      "lat": 53.5471903,
+      "lon": 14.561225665674122,
+      "capabilities": [
+        "endocrine"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 4
+    },
+    {
+      "name": "POWIATOWE CENTRUM ZDROWIA SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "PONIATOWA",
+      "country": "PL",
+      "lat": 51.1742321,
+      "lon": 22.0746023077824,
+      "capabilities": [
+        "craniofacial",
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 6
+    },
+    {
+      "name": "ORTOPEDYCZNO-REHABILITACYJNY SZPITAL KLINICZNY IM. WIKTORA DEGI UNIWERSYTETU MEDYCZNEGO IM. KAROLA MARCINKOWSKIEGO W POZNANIU",
+      "city": "POZNAŃ",
+      "country": "PL",
+      "lat": 52.38937215,
+      "lon": 16.920700937522994,
+      "capabilities": [
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 7
+    },
+    {
+      "name": "SZPITAL KLINICZNY IM. KAROLA JONSCHERA UNIWERSYTETU MEDYCZNEGO IM. KAROLA MARCINKOWSKIEGO W POZNANIU",
+      "city": "POZNAŃ",
+      "country": "PL",
+      "lat": 52.411868299999995,
+      "lon": 16.879807611268436,
+      "capabilities": [
+        "craniofacial",
+        "paediatric"
+      ],
+      "paediatricCapabilities": [
+        "craniofacial"
+      ],
+      "wardCount": 8
+    },
+    {
+      "name": "SZPITAL KLINICZNY IM.HELIODORA ŚWIĘCICKIEGO UNIWERSYTETU MEDYCZNEGO IM.KAROLA MARCINKOWSKIEGO W POZNANIU",
+      "city": "POZNAŃ",
+      "country": "PL",
+      "lat": 52.403251850000004,
+      "lon": 16.887176884510964,
+      "capabilities": [
+        "craniofacial"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 4
+    },
+    {
+      "name": "SZPITAL KLINICZNY IM.HELIODORA ŚWIĘCICKIEGO UNIWERSYTETU MEDYCZNEGO IM.KAROLA MARCINKOWSKIEGO W POZNANIU",
+      "city": "POZNAŃ",
+      "country": "PL",
+      "lat": 52.40549,
+      "lon": 16.90178,
+      "capabilities": [
+        "craniofacial",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 3
+    },
+    {
+      "name": "SZPITAL WOJEWÓDZKI W POZNANIU",
+      "city": "POZNAŃ",
+      "country": "PL",
+      "lat": 52.4390173,
+      "lon": 16.906262,
+      "capabilities": [
+        "craniofacial",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 7
+    },
+    {
+      "name": "WIELOSPECJALISTYCZNY SZPITAL MIEJSKI IM. JÓZEFA STRUSIA Z ZAKŁADEM OPIEKUŃCZO - LECZNICZYM. SAMODZIELNY PUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ Z SIEDZIBĄ W POZNANIU PRZY UL. SZWAJCARSKIEJ 3.",
+      "city": "POZNAŃ",
+      "country": "PL",
+      "lat": 52.3897,
+      "lon": 16.9952,
+      "capabilities": [
+        "craniofacial",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 9
+    },
+    {
+      "name": "PRZYJAZNY SZPITAL W POŁCZYNIE ZDROJU SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "POŁCZYN-ZDRÓJ",
+      "country": "PL",
+      "lat": 53.7626545,
+      "lon": 16.0903364945551,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 4
+    },
+    {
+      "name": "SZPITAL DZIECIĘCY IM. PROF. DR. MED. JANA BOGDANOWICZA SAMODZIELNY PUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ",
+      "city": "PRAGA-POŁUDNIE",
+      "country": "PL",
+      "lat": 52.23417705,
+      "lon": 21.0629843336779,
+      "capabilities": [
+        "craniofacial",
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [
+        "craniofacial",
+        "skeletal"
+      ],
+      "wardCount": 8
+    },
+    {
+      "name": "WOJSKOWY INSTYTUT MEDYCZNY",
+      "city": "PRAGA-POŁUDNIE",
+      "country": "PL",
+      "lat": 52.25221605,
+      "lon": 21.088832618949567,
+      "capabilities": [
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 7
+    },
+    {
+      "name": "SZPITAL PRASKI P.W. PRZEMIENIENIA PAŃSKIEGO SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "PRAGA-PÓŁNOC",
+      "country": "PL",
+      "lat": 52.25086,
+      "lon": 21.028835993376063,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 9
+    },
+    {
+      "name": "PRUDNICKIE CENTRUM MEDYCZNE SPÓŁKA AKCYJNA W PRUDNIKU",
+      "city": "PRUDNIK",
+      "country": "PL",
+      "lat": 50.3231227,
+      "lon": 17.5679197747556,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 3
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZESPÓŁ ZAKŁADÓW OPIEKI ZDROWOTNEJ W PRUSZKOWIE",
+      "city": "PRUSZKÓW",
+      "country": "PL",
+      "lat": 52.15914665,
+      "lon": 20.81891285307206,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 5
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZESPÓŁ ZAKŁADÓW OPIEKI ZDROWOTNEJ W PRZASNYSZU",
+      "city": "PRZASNYSZ",
+      "country": "PL",
+      "lat": 53.02879345,
+      "lon": 20.8945818310445,
+      "capabilities": [
+        "craniofacial",
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 9
+    },
+    {
+      "name": "WOJEWÓDZKI SZPITAL IM. ŚW.OJCA PIO W PRZEMYŚLU",
+      "city": "PRZEMYŚL",
+      "country": "PL",
+      "lat": 49.80946695,
+      "lon": 22.784502352012783,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 8
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ",
+      "city": "PRZEWORSK",
+      "country": "PL",
+      "lat": 50.06484345,
+      "lon": 22.477423030156082,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 13
+    },
+    {
+      "name": "CENTRUM PRZEDSIĘBIORCZOŚCI CP SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "PSZCZYNA",
+      "country": "PL",
+      "lat": 49.973268,
+      "lon": 18.939698,
+      "capabilities": [
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 5
+    },
+    {
+      "name": "SZPITAL PUCKI SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "PUCK",
+      "country": "PL",
+      "lat": 54.7212264,
+      "lon": 18.4140658,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 5
+    },
+    {
+      "name": "SZPITAL POWIATOWY GAJDA-MED SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "PUŁTUSK",
+      "country": "PL",
+      "lat": 52.69379205,
+      "lon": 21.114588033502063,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 8
+    },
+    {
+      "name": "SZPITAL POWIATOWY W PYRZYCACH",
+      "city": "PYRZYCE",
+      "country": "PL",
+      "lat": 53.14672335,
+      "lon": 14.895816391579858,
+      "capabilities": [
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 4
+    },
+    {
+      "name": "PŁOCKI ZAKŁAD OPIEKI ZDROWOTNEJ SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "PŁOCK",
+      "country": "PL",
+      "lat": 52.54049,
+      "lon": 19.69539,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 9
+    },
+    {
+      "name": "WOJEWÓDZKI SZPITAL ZESPOLONY W PŁOCKU",
+      "city": "PŁOCK",
+      "country": "PL",
+      "lat": 52.5565234,
+      "lon": 19.6540088,
+      "capabilities": [
+        "craniofacial",
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 18
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZESPÓŁ ZAKŁADÓW OPIEKI ZDROWOTNEJ IM.MARSZAŁKA JÓZEFA PIŁSUDSKIEGO W PŁOŃSKU",
+      "city": "PŁOŃSK",
+      "country": "PL",
+      "lat": 52.630397900000006,
+      "lon": 20.376049430008038,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 9
+    },
+    {
+      "name": "SZPITAL REJONOWY IM. DR JÓZEFA ROSTKA W RACIBORZU",
+      "city": "RACIBÓRZ",
+      "country": "PL",
+      "lat": 50.101625299999995,
+      "lon": 18.203721384150462,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 8
+    },
+    {
+      "name": "MAZOWIECKI SZPITAL SPECJALISTYCZNY SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "RADOM",
+      "country": "PL",
+      "lat": 51.437427,
+      "lon": 21.1577443,
+      "capabilities": [
+        "craniofacial",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 9
+    },
+    {
+      "name": "MAZOWIECKI SZPITAL SPECJALISTYCZNY SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "RADOM",
+      "country": "PL",
+      "lat": 51.437427,
+      "lon": 21.1577443,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 10
+    },
+    {
+      "name": "RADOMSKI SZPITAL SPECJALISTYCZNY IM. DR TYTUSA CHAŁUBIŃSKIEGO",
+      "city": "RADOM",
+      "country": "PL",
+      "lat": 51.3987499,
+      "lon": 21.145476939662025,
+      "capabilities": [
+        "craniofacial",
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 8
+    },
+    {
+      "name": "RADOMSKI SZPITAL SPECJALISTYCZNY IM.DR TYTUSA CHAŁUBIŃSKIEGO - OPIEKA STACJONARNA",
+      "city": "RADOM",
+      "country": "PL",
+      "lat": 51.3997457,
+      "lon": 21.1445598,
+      "capabilities": [
+        "craniofacial",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 8
+    },
+    {
+      "name": "SZPITAL POWIATOWY W RADOMSKU",
+      "city": "RADOMSKO",
+      "country": "PL",
+      "lat": 51.0567657,
+      "lon": 19.46023229439556,
+      "capabilities": [
+        "craniofacial",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 6
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ W RADZYNIU PODLASKIM",
+      "city": "RADZYŃ PODLASKI",
+      "country": "PL",
+      "lat": 51.77125195,
+      "lon": 22.607411517833263,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 11
+    },
+    {
+      "name": "SZPITAL MIEJSKI W RUDZIE ŚLĄSKIEJ SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "RUDA ŚLĄSKA",
+      "country": "PL",
+      "lat": 50.314812450000005,
+      "lon": 18.889368107383863,
+      "capabilities": [
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 6
+    },
+    {
+      "name": "SZPITAL MIEJSKI W RUDZIE ŚLĄSKIEJ SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "RUDA ŚLĄSKA",
+      "country": "PL",
+      "lat": 50.27535,
+      "lon": 18.854313,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 1
+    },
+    {
+      "name": "NOWE TECHNIKI MEDYCZNE SZPITAL SPECJALISTYCZNY IMIENIA ŚWIĘTEJ RODZINY SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "RUDNA MAŁA",
+      "country": "PL",
+      "lat": 50.1046068,
+      "lon": 21.9794634,
+      "capabilities": [
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 7
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ WOJEWÓDZKI SZPITAL SPECJALISTYCZNY NR 3 W RYBNIKU",
+      "city": "RYBNIK",
+      "country": "PL",
+      "lat": 50.11115755,
+      "lon": 18.520187956167838,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 10
+    },
+    {
+      "name": "POWIATOWY PUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ W RYDUŁTOWACH I WODZISŁAWIU ŚLĄSKIM Z SIEDZIBĄ W WODZISŁAWIU ŚLĄSKIM",
+      "city": "RYDUŁTOWY",
+      "country": "PL",
+      "lat": 50.058747100000005,
+      "lon": 18.425116719165533,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 2
+    },
+    {
+      "name": "ASKLEPIOS B.P. SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "RZESZÓW",
+      "country": "PL",
+      "lat": 50.0248307,
+      "lon": 22.0062449,
+      "capabilities": [
+        "craniofacial",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 6
+    },
+    {
+      "name": "KLINICZNY SZPITAL WOJEWÓDZKI NR 1 IM.FRYDERYKA CHOPINA W RZESZOWIE",
+      "city": "RZESZÓW",
+      "country": "PL",
+      "lat": 50.035738,
+      "lon": 22.00776838635983,
+      "capabilities": [
+        "craniofacial"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 7
+    },
+    {
+      "name": "KLINICZNY SZPITAL WOJEWÓDZKI NR 2 IM. ŚW.JADWIGI KRÓLOWEJ W RZESZOWIE",
+      "city": "RZESZÓW",
+      "country": "PL",
+      "lat": 50.03466555,
+      "lon": 22.037643412018518,
+      "capabilities": [
+        "craniofacial",
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [
+        "skeletal"
+      ],
+      "wardCount": 10
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZESPÓŁ OPIEKI ZDROWOTNEJ NR 1 W RZESZOWIE",
+      "city": "RZESZÓW",
+      "country": "PL",
+      "lat": 50.0488824,
+      "lon": 22.001947179130433,
+      "capabilities": [
+        "craniofacial",
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 9
+    },
+    {
+      "name": "SZPITAL SPECJALISTYCZNY PRO-FAMILIA SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ SPÓŁKA KOMANDYTOWA",
+      "city": "RZESZÓW",
+      "country": "PL",
+      "lat": 50.030877849999996,
+      "lon": 22.03973876056012,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 5
+    },
+    {
+      "name": "SZPITAL SPECJALISTYCZNY DUCHA ŚWIĘTEGO W SANDOMIERZU",
+      "city": "SANDOMIERZ",
+      "country": "PL",
+      "lat": 50.698411899999996,
+      "lon": 21.752215598498914,
+      "capabilities": [
+        "craniofacial",
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 14
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZESPÓŁ OPIEKI ZDROWOTNEJ W SANOKU",
+      "city": "SANOK",
+      "country": "PL",
+      "lat": 49.5518939,
+      "lon": 22.1994122,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 7
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ W SEJNACH",
+      "city": "SEJNY",
+      "country": "PL",
+      "lat": 54.11455825,
+      "lon": 23.35151559783212,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 4
+    },
+    {
+      "name": "MAZOWIECKI SZPITAL WOJEWÓDZKI IM. ŚW. JANA PAWŁA II W SIEDLCACH SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "SIEDLCE",
+      "country": "PL",
+      "lat": 52.17754,
+      "lon": 22.29143,
+      "capabilities": [
+        "craniofacial",
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 16
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ",
+      "city": "SIEDLCE",
+      "country": "PL",
+      "lat": 52.16893,
+      "lon": 22.28631,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 9
+    },
+    {
+      "name": "SZPITAL MIEJSKI W SIEMIANOWICACH ŚLĄSKICH SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "SIEMIANOWICE ŚLĄSKIE",
+      "country": "PL",
+      "lat": 50.3050305,
+      "lon": 19.0335812,
+      "capabilities": [
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 4
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ W SIEMIATYCZACH",
+      "city": "SIEMIATYCZE",
+      "country": "PL",
+      "lat": 52.4216206,
+      "lon": 22.863652126063396,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 4
+    },
+    {
+      "name": "SZPITAL WOJEWÓDZKI IM. PRYMASA KARDYNAŁA STEFANA WYSZYŃSKIEGO W SIERADZU",
+      "city": "SIERADZ",
+      "country": "PL",
+      "lat": 51.58229,
+      "lon": 18.71008,
+      "capabilities": [
+        "craniofacial",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 6
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZESPÓŁ ZAKŁADÓW OPIEKI ZDROWOTNEJ W SIERPCU",
+      "city": "SIERPC",
+      "country": "PL",
+      "lat": 52.85242,
+      "lon": 19.67545,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 7
+    },
+    {
+      "name": "ZESPÓŁ OPIEKI ZDROWOTNEJ W SKARŻYSKU-KAMIENNEJ SZPITAL POWIATOWY IM. MARII SKŁODOWSKIEJ-CURIE",
+      "city": "SKARŻYSKO-KAMIENNA",
+      "country": "PL",
+      "lat": 51.126126,
+      "lon": 20.870538454764315,
+      "capabilities": [
+        "craniofacial",
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 9
+    },
+    {
+      "name": "WOJEWÓDZKI SZPITAL ZESPOLONY IM. STANISŁAWA RYBICKIEGO W SKIERNIEWICACH",
+      "city": "SKIERNIEWICE",
+      "country": "PL",
+      "lat": 51.96323635,
+      "lon": 20.1527928066616,
+      "capabilities": [
+        "craniofacial",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 3
+    },
+    {
+      "name": "ZESPÓŁ OPIEKI ZDROWOTNEJ SZPITALA POWIATOWEGO\" W SOCHACZEWIE\"",
+      "city": "SOCHACZEW",
+      "country": "PL",
+      "lat": 52.23877135,
+      "lon": 20.227041625211584,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 7
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ W SOKOŁOWIE PODLASKIM",
+      "city": "SOKOŁÓW PODLASKI",
+      "country": "PL",
+      "lat": 52.40365,
+      "lon": 22.24207,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 11
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ W SOKÓŁCE",
+      "city": "SOKÓŁKA",
+      "country": "PL",
+      "lat": 53.40769795,
+      "lon": 23.484194569688892,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 7
+    },
+    {
+      "name": "CENTRUM PEDIATRII IM.JANA PAWŁA II W SOSNOWCU SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "SOSNOWIEC",
+      "country": "PL",
+      "lat": 50.2732695,
+      "lon": 19.198184739891843,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 3
+    },
+    {
+      "name": "SOSNOWIECKI SZPITAL MIEJSKI SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "SOSNOWIEC",
+      "country": "PL",
+      "lat": 50.27022865,
+      "lon": 19.1323294581849,
+      "capabilities": [
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 5
+    },
+    {
+      "name": "WOJEWÓDZKI SZPITAL SPECJALISTYCZNY NR 5 IM. ŚW. BARBARY W SOSNOWCU",
+      "city": "SOSNOWIEC",
+      "country": "PL",
+      "lat": 50.30341075,
+      "lon": 19.123379578005277,
+      "capabilities": [
+        "craniofacial",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 9
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZESPÓŁ ZAKŁADÓW OPIEKI ZDROWOTNEJ POWIATOWY SZPITAL SPECJALISTYCZNY W STALOWEJ WOLI",
+      "city": "STALOWA WOLA",
+      "country": "PL",
+      "lat": 50.563551950000004,
+      "lon": 22.070204098942813,
+      "capabilities": [
+        "craniofacial",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 8
+    },
+    {
+      "name": "POWIATOWY ZAKŁAD OPIEKI ZDROWOTNEJ",
+      "city": "STARACHOWICE",
+      "country": "PL",
+      "lat": 51.06421,
+      "lon": 21.07239,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 11
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY WIELOSPECJALISTYCZNY ZAKŁAD OPIEKI ZDROWOTNEJ W STARGARDZIE",
+      "city": "STARGARD",
+      "country": "PL",
+      "lat": 53.343398,
+      "lon": 15.037795794230771,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 5
+    },
+    {
+      "name": "KOCIEWSKIE CENTRUM ZDROWIA SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "STAROGARD GDAŃSKI",
+      "country": "PL",
+      "lat": 53.9677888,
+      "lon": 18.5083315,
+      "capabilities": [
+        "craniofacial",
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 10
+    },
+    {
+      "name": "SZPITAL DLA NERWOWO I PSYCHICZNIE CHORYCH IM. ST. KRYZANA",
+      "city": "STAROGARD GDAŃSKI",
+      "country": "PL",
+      "lat": 53.9795072,
+      "lon": 18.509140329605366,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 5
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZESPÓŁ ZAKŁADÓW OPIEKI ZDROWOTNEJ W STASZOWIE",
+      "city": "STASZÓW",
+      "country": "PL",
+      "lat": 50.5607093,
+      "lon": 21.19136039362152,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 7
+    },
+    {
+      "name": "SZPITAL POWIATOWY IM. PRAŁATA J. GLOWATZKIEGO W STRZELCACH OPOLSKICH",
+      "city": "STRZELCE OPOLSKIE",
+      "country": "PL",
+      "lat": 50.51474875,
+      "lon": 18.291369238759422,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 7
+    },
+    {
+      "name": "NIEPUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ STRZELIŃSKIE CENTRUM MEDYCZNE-SZPITAL",
+      "city": "STRZELIN",
+      "country": "PL",
+      "lat": 50.787994,
+      "lon": 17.069611350967982,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 6
+    },
+    {
+      "name": "ZESPÓŁ OPIEKI ZDROWOTNEJ W SUCHEJ BESKIDZKIEJ",
+      "city": "SUCHA BESKIDZKA",
+      "country": "PL",
+      "lat": 49.7364285,
+      "lon": 19.604941,
+      "capabilities": [
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 3
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ W SULECHOWIE",
+      "city": "SULECHÓW",
+      "country": "PL",
+      "lat": 52.08936135,
+      "lon": 15.622601114106859,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 6
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ",
+      "city": "SULĘCIN",
+      "country": "PL",
+      "lat": 52.4373588,
+      "lon": 15.115749566720389,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 5
+    },
+    {
+      "name": "SZPITAL WOJEWÓDZKI IM. DR. LUDWIKA RYDYGIERA W SUWAŁKACH",
+      "city": "SUWAŁKI",
+      "country": "PL",
+      "lat": 54.1192283,
+      "lon": 22.925866078642876,
+      "capabilities": [
+        "craniofacial",
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 16
+    },
+    {
+      "name": "109 SZPITAL WOJSKOWY Z PRZYCHODNIĄ SAMODZIELNY PUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ",
+      "city": "SZCZECIN",
+      "country": "PL",
+      "lat": 53.44288,
+      "lon": 14.54152,
+      "capabilities": [
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 5
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY SPECJALISTYCZNY ZAKŁAD OPIEKI ZDROWOTNEJ ZDROJE\"\"",
+      "city": "SZCZECIN",
+      "country": "PL",
+      "lat": 53.3706687,
+      "lon": 14.6418005,
+      "capabilities": [
+        "craniofacial",
+        "paediatric"
+      ],
+      "paediatricCapabilities": [
+        "craniofacial"
+      ],
+      "wardCount": 16
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY SZPITAL KLINICZNY NR 1 IM. PROF. TADEUSZA SOKOŁOWSKIEGO POMORSKIEGO UNIWERSYTETU MEDYCZNEGO W SZCZECINIE",
+      "city": "SZCZECIN",
+      "country": "PL",
+      "lat": 53.44815,
+      "lon": 14.50541,
+      "capabilities": [
+        "craniofacial",
+        "endocrine",
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [
+        "skeletal"
+      ],
+      "wardCount": 17
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY WOJEWÓDZKI SZPITAL ZESPOLONY W SZCZECINIE",
+      "city": "SZCZECIN",
+      "country": "PL",
+      "lat": 53.4537097,
+      "lon": 14.527629061092986,
+      "capabilities": [
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 6
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY WOJEWÓDZKI SZPITAL ZESPOLONY W SZCZECINIE",
+      "city": "SZCZECIN",
+      "country": "PL",
+      "lat": 53.4537097,
+      "lon": 14.527629061092986,
+      "capabilities": [
+        "craniofacial",
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 8
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ MINISTERSTWA SPRAW WEWNĘTRZNYCH I ADMINISTRACJI W SZCZECINIE",
+      "city": "SZCZECIN",
+      "country": "PL",
+      "lat": 53.43516765,
+      "lon": 14.5244738023534,
+      "capabilities": [
+        "craniofacial",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 7
+    },
+    {
+      "name": "SZPITAL W SZCZECINKU SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "SZCZECINEK",
+      "country": "PL",
+      "lat": 53.7124177,
+      "lon": 16.6795405,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 6
+    },
+    {
+      "name": "ZESPÓŁ OPIEKI ZDROWOTNEJ W SZCZYTNIE",
+      "city": "SZCZYTNO",
+      "country": "PL",
+      "lat": 53.55741,
+      "lon": 20.98509,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 6
+    },
+    {
+      "name": "NOWY SZPITAL W SZPROTAWIE SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "SZPROTAWA",
+      "country": "PL",
+      "lat": 51.5671634,
+      "lon": 15.553249519609997,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 3
+    },
+    {
+      "name": "SZPITALE POLSKIE SPÓŁKA AKCYJNA\"",
+      "city": "SZTUM",
+      "country": "PL",
+      "lat": 53.92253,
+      "lon": 19.02505,
+      "capabilities": [
+        "craniofacial",
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 9
+    },
+    {
+      "name": "SZPITAL POWIATOWY W SŁAWNIE",
+      "city": "SŁAWNO",
+      "country": "PL",
+      "lat": 54.36909275,
+      "lon": 16.678130441861363,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 5
+    },
+    {
+      "name": "NIEPUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ SZPITAL IM. PROFESORA ZBIGNIEWA RELIGI W SŁUBICACH SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "SŁUBICE",
+      "country": "PL",
+      "lat": 52.3516908,
+      "lon": 14.556829521353592,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 6
+    },
+    {
+      "name": "WOJEWÓDZKI SZPITAL SPECJALISTYCZNY IM. JANUSZA KORCZAKA W SŁUPSKU SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "SŁUPSK",
+      "country": "PL",
+      "lat": 54.45149,
+      "lon": 17.06051,
+      "capabilities": [
+        "craniofacial",
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 15
+    },
+    {
+      "name": "MAZOWIECKI SZPITAL BRÓDNOWSKI W WARSZAWIE SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "TARGÓWEK",
+      "country": "PL",
+      "lat": 52.290703050000005,
+      "lon": 21.044350047761565,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 3
+    },
+    {
+      "name": "WOJEWÓDZKI SZPITAL IM.ZOFII Z ZAMOYSKICH TARNOWSKIEJ W TARNOBRZEGU",
+      "city": "TARNOBRZEG",
+      "country": "PL",
+      "lat": 50.56765825,
+      "lon": 21.6709676550039,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 7
+    },
+    {
+      "name": "WIELOSPECJALISTYCZNY SZPITAL POWIATOWY SPÓŁKA AKCYJNA",
+      "city": "TARNOWSKIE GÓRY",
+      "country": "PL",
+      "lat": 50.439746150000005,
+      "lon": 18.806090366967872,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 6
+    },
+    {
+      "name": "SPECJALISTYCZNY SZPITAL IM. E. SZCZEKLIKA W TARNOWIE",
+      "city": "TARNÓW",
+      "country": "PL",
+      "lat": 50.0167408,
+      "lon": 20.99495986180758,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 4
+    },
+    {
+      "name": "SZPITAL WOJEWÓDZKI IM.ŚW.ŁUKASZA SAMODZIELNY PUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ W TARNOWIE",
+      "city": "TARNÓW",
+      "country": "PL",
+      "lat": 50.013790650000004,
+      "lon": 21.032601571759447,
+      "capabilities": [
+        "craniofacial",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 6
+    },
+    {
+      "name": "SZPITALE TCZEWSKIE SPÓŁKA AKCYJNA",
+      "city": "TCZEW",
+      "country": "PL",
+      "lat": 54.0826,
+      "lon": 18.78991,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 6
+    },
+    {
+      "name": "TOMASZOWSKIE CENTRUM ZDROWIA SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "TOMASZÓW MAZOWIECKI",
+      "country": "PL",
+      "lat": 51.522588400000004,
+      "lon": 20.005783840208636,
+      "capabilities": [
+        "craniofacial",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 5
+    },
+    {
+      "name": "WOJEWÓDZKI SZPITAL ZESPOLONY IM.L.RYDYGIERA W TORUNIU",
+      "city": "TORUŃ",
+      "country": "PL",
+      "lat": 53.0376044,
+      "lon": 18.6578116,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 4
+    },
+    {
+      "name": "SZPITAL IM.ŚW.JADWIGI ŚLĄSKIEJ W TRZEBNICY",
+      "city": "TRZEBNICA",
+      "country": "PL",
+      "lat": 51.31995595,
+      "lon": 17.058548391017013,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 8
+    },
+    {
+      "name": "MEGREZ SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "TYCHY",
+      "country": "PL",
+      "lat": 50.113186850000005,
+      "lon": 19.008421779862253,
+      "capabilities": [
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 8
+    },
+    {
+      "name": "SZPITAL MIEJSKI W TYCHACH SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ\"",
+      "city": "TYCHY",
+      "country": "PL",
+      "lat": 50.11918475,
+      "lon": 18.982510735177474,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 3
+    },
+    {
+      "name": "ŚLĄSKIE CENTRUM REUMATOLOGII, REHABILITACJI I ZAPOBIEGANIA NIEPEŁNOSPRAWNOŚCI IM. GEN. JERZEGO ZIĘTKA W USTRONIU SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "USTROŃ",
+      "country": "PL",
+      "lat": 49.72612,
+      "lon": 18.82194,
+      "capabilities": [
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 1
+    },
+    {
+      "name": "ZESPÓŁ ZAKŁADÓW OPIEKI ZDROWOTNEJ W WADOWICACH",
+      "city": "WADOWICE",
+      "country": "PL",
+      "lat": 49.88019,
+      "lon": 19.49336,
+      "capabilities": [
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 1
+    },
+    {
+      "name": "CENTRUM MEDYCZNE ŻELAZNA\" SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ\"",
+      "city": "WARSZAWA",
+      "country": "PL",
+      "lat": 52.24093,
+      "lon": 20.98635,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 1
+    },
+    {
+      "name": "INSTYTUT MATKI I DZIECKA",
+      "city": "WARSZAWA",
+      "country": "PL",
+      "lat": 52.2270082423912,
+      "lon": 20.970221347759,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [
+        "skeletal"
+      ],
+      "wardCount": 2
+    },
+    {
+      "name": "INSTYTUT POMNIK - CENTRUM ZDROWIA DZIECKA\"\"",
+      "city": "WARSZAWA",
+      "country": "PL",
+      "lat": 52.20655,
+      "lon": 21.19187,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 2
+    },
+    {
+      "name": "INSTYTUT PSYCHIATRII I NEUROLOGII",
+      "city": "WARSZAWA",
+      "country": "PL",
+      "lat": 52.17234225,
+      "lon": 21.0634152009966,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 3
+    },
+    {
+      "name": "MAZOWIECKI SZPITAL BRÓDNOWSKI W WARSZAWIE SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "WARSZAWA",
+      "country": "PL",
+      "lat": 52.290703050000005,
+      "lon": 21.044350047761565,
+      "capabilities": [
+        "craniofacial",
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 16
+    },
+    {
+      "name": "MIĘDZYLESKI SZPITAL SPECJALISTYCZNY W WARSZAWIE",
+      "city": "WARSZAWA",
+      "country": "PL",
+      "lat": 52.203894500000004,
+      "lon": 21.183792609196665,
+      "capabilities": [
+        "craniofacial",
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 16
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY KLINICZNY SZPITAL OKULISTYCZNY W WARSZAWIE",
+      "city": "WARSZAWA",
+      "country": "PL",
+      "lat": 52.2172247,
+      "lon": 21.01983892786992,
+      "capabilities": [
+        "craniofacial"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 2
+    },
+    {
+      "name": "SZPITAL DZIECIĘCY IM.PROF.DR.MED.JANA BOGDANOWICZA SAMODZIELNY PUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ",
+      "city": "WARSZAWA",
+      "country": "PL",
+      "lat": 52.23417705,
+      "lon": 21.0629843336779,
+      "capabilities": [
+        "craniofacial",
+        "paediatric"
+      ],
+      "paediatricCapabilities": [
+        "craniofacial"
+      ],
+      "wardCount": 1
+    },
+    {
+      "name": "SZPITAL SOLEC SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "WARSZAWA",
+      "country": "PL",
+      "lat": 52.23565,
+      "lon": 21.03125,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 7
+    },
+    {
+      "name": "UNIWERSYTECKIE CENTRUM KLINICZNE WARSZAWSKIEGO UNIWERSYTETU MEDYCZNEGO",
+      "city": "WARSZAWA",
+      "country": "PL",
+      "lat": 52.20715,
+      "lon": 20.98479,
+      "capabilities": [
+        "craniofacial",
+        "paediatric"
+      ],
+      "paediatricCapabilities": [
+        "craniofacial"
+      ],
+      "wardCount": 1
+    },
+    {
+      "name": "WARSZAWSKI SZPITAL DLA DZIECI - SAMODZIELNY PUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ",
+      "city": "WARSZAWA",
+      "country": "PL",
+      "lat": 52.237591800000004,
+      "lon": 21.019318745350994,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 3
+    },
+    {
+      "name": "WOJSKOWY INSTYTUT MEDYCYNY LOTNICZEJ",
+      "city": "WARSZAWA",
+      "country": "PL",
+      "lat": 52.26190365,
+      "lon": 20.964131840880547,
+      "capabilities": [
+        "craniofacial"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 6
+    },
+    {
+      "name": "WOJSKOWY INSTYTUT MEDYCZNY",
+      "city": "WARSZAWA",
+      "country": "PL",
+      "lat": 52.25221605,
+      "lon": 21.088832618949567,
+      "capabilities": [
+        "craniofacial",
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 22
+    },
+    {
+      "name": "INSTYTUT POMNIK - CENTRUM ZDROWIA DZIECKA\"\"",
+      "city": "WAWER",
+      "country": "PL",
+      "lat": 52.20655,
+      "lon": 21.19187,
+      "capabilities": [
+        "craniofacial",
+        "paediatric"
+      ],
+      "paediatricCapabilities": [
+        "craniofacial"
+      ],
+      "wardCount": 11
+    },
+    {
+      "name": "SPECJALISTYCZNY SZPITAL IM. DRA ALFREDA SOKOŁOWSKIEGO",
+      "city": "WAŁBRZYCH",
+      "country": "PL",
+      "lat": 50.775216099999994,
+      "lon": 16.277224591453127,
+      "capabilities": [
+        "craniofacial",
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 27
+    },
+    {
+      "name": "107 SZPITAL WOJSKOWY Z PRZYCHODNIĄ - SAMODZIELNY PUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ W WAŁCZU",
+      "city": "WAŁCZ",
+      "country": "PL",
+      "lat": 53.28293165,
+      "lon": 16.459220669440704,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 6
+    },
+    {
+      "name": "SZPITALE POMORSKIE SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "WEJHEROWO",
+      "country": "PL",
+      "lat": 54.61435795,
+      "lon": 18.2466165792713,
+      "capabilities": [
+        "craniofacial",
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 14
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ W WIELUNIU",
+      "city": "WIELUŃ",
+      "country": "PL",
+      "lat": 51.2127573,
+      "lon": 18.5651116454397,
+      "capabilities": [
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 2
+    },
+    {
+      "name": "POWIATOWY PUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ W RYDUŁTOWACH I WODZISŁAWIU ŚLĄSKIM Z SIEDZIBĄ W WODZISŁAWIU ŚLĄSKIM",
+      "city": "WODZISŁAW ŚLĄSKI",
+      "country": "PL",
+      "lat": 50.0093271,
+      "lon": 18.463078423927797,
+      "capabilities": [
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 5
+    },
+    {
+      "name": "CENTRUM MEDYCZNE ŻELAZNA\" SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ\"",
+      "city": "WOLA",
+      "country": "PL",
+      "lat": 52.24093,
+      "lon": 20.98635,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 5
+    },
+    {
+      "name": "CENTRUM MEDYCZNE ŻELAZNA\" SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ\"",
+      "city": "WOLA",
+      "country": "PL",
+      "lat": 52.24002838,
+      "lon": 20.98701668,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 1
+    },
+    {
+      "name": "INSTYTUT MATKI I DZIECKA",
+      "city": "WOLA",
+      "country": "PL",
+      "lat": 52.2267934,
+      "lon": 20.970051225840685,
+      "capabilities": [
+        "craniofacial",
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [
+        "skeletal"
+      ],
+      "wardCount": 14
+    },
+    {
+      "name": "SZPITAL MATKI BOŻEJ NIEUSTAJĄCEJ POMOCY W WOŁOMINIE",
+      "city": "WOŁOMIN",
+      "country": "PL",
+      "lat": 52.3471302,
+      "lon": 21.220691263841893,
+      "capabilities": [
+        "craniofacial",
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 12
+    },
+    {
+      "name": "4 WOJSKOWY SZPITAL KLINICZNY Z POLIKLINIKĄ SAMODZIELNY PUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ WE WROCŁAWIU",
+      "city": "WROCŁAW",
+      "country": "PL",
+      "lat": 51.0756923,
+      "lon": 17.0216706,
+      "capabilities": [
+        "craniofacial",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 19
+    },
+    {
+      "name": "DOLNOŚLĄSKI SZPITAL SPECJALISTYCZNY IM. T.MARCINIAKA-CENTRUM MEDYCYNY RATUNKOWEJ",
+      "city": "WROCŁAW",
+      "country": "PL",
+      "lat": 51.143654549999994,
+      "lon": 16.9088122906322,
+      "capabilities": [
+        "craniofacial",
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 12
+    },
+    {
+      "name": "DOLNOŚLĄSKIE CENTRUM CHORÓB SERCA MEDINET - SZPITAL WROCŁAW",
+      "city": "WROCŁAW",
+      "country": "PL",
+      "lat": 51.1506658572204,
+      "lon": 17.0444547580894,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 3
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ MINISTERSTWA SPRAW WEWNĘTRZNYCH I ADMINISTRACJI WE WROCŁAWIU",
+      "city": "WROCŁAW",
+      "country": "PL",
+      "lat": 51.12464,
+      "lon": 17.03616,
+      "capabilities": [
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 5
+    },
+    {
+      "name": "SZPITAL SPECJALISTYCZNY IM.A.FALKIEWICZA WE WROCŁAWIU",
+      "city": "WROCŁAW",
+      "country": "PL",
+      "lat": 51.06379805,
+      "lon": 17.079923868749997,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 4
+    },
+    {
+      "name": "UNIWERSYTECKI SZPITAL KLINICZNY IM. JANA MIKULICZA - RADECKIEGO WE WROCŁAWIU",
+      "city": "WROCŁAW",
+      "country": "PL",
+      "lat": 51.0749018,
+      "lon": 17.027308497332186,
+      "capabilities": [
+        "craniofacial",
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 35
+    },
+    {
+      "name": "WOJEWÓDZKI SZPITAL SPECJALISTYCZNY WE WROCŁAWIU",
+      "city": "WROCŁAW",
+      "country": "PL",
+      "lat": 51.1486648975106,
+      "lon": 17.0449471473896,
+      "capabilities": [
+        "craniofacial",
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 14
+    },
+    {
+      "name": "SZPITAL POWIATOWY WE WRZEŚNI SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ\"",
+      "city": "WRZEŚNIA",
+      "country": "PL",
+      "lat": 52.3250439,
+      "lon": 17.5733965,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 8
+    },
+    {
+      "name": "SZPITAL OGÓLNY W WYSOKIEM MAZOWIECKIEM",
+      "city": "WYSOKIE MAZOWIECKIE",
+      "country": "PL",
+      "lat": 52.9154671,
+      "lon": 22.52234943288953,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 7
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZESPÓŁ ZAKŁADÓW OPIEKI ZDROWOTNEJ W WYSZKOWIE",
+      "city": "WYSZKÓW",
+      "country": "PL",
+      "lat": 52.5863633,
+      "lon": 21.443660996038737,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 12
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ W WĘGROWIE",
+      "city": "WĘGRÓW",
+      "country": "PL",
+      "lat": 52.4058503,
+      "lon": 22.063488125981465,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 7
+    },
+    {
+      "name": "ZESPÓŁ OPIEKI ZDROWOTNEJ WE WŁOSZCZOWIE - SZPITAL POWIATOWY IM. JANA PAWŁA II",
+      "city": "WŁOSZCZOWA",
+      "country": "PL",
+      "lat": 50.846666049999996,
+      "lon": 19.973667655408875,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 6
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY SZPITAL KLINICZNY NR 1 IM.PROF.STANISŁAWA SZYSZKO ŚLĄSKIEGO UNIWERSYTETU MEDYCZNEGO W KATOWICACH",
+      "city": "ZABRZE",
+      "country": "PL",
+      "lat": 50.290856000000005,
+      "lon": 18.791609917413,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 7
+    },
+    {
+      "name": "SZPITAL MIEJSKI W ZABRZU SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "ZABRZE",
+      "country": "PL",
+      "lat": 50.325741699999995,
+      "lon": 18.826397635449673,
+      "capabilities": [
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 5
+    },
+    {
+      "name": "ŚLĄSKIE CENTRUM CHORÓB SERCA W ZABRZU",
+      "city": "ZABRZE",
+      "country": "PL",
+      "lat": 50.313049649999996,
+      "lon": 18.781112223410222,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 9
+    },
+    {
+      "name": "SZPITAL POWIATOWY IM. DR TYTUSA CHAŁUBIŃSKIEGO W ZAKOPANEM",
+      "city": "ZAKOPANE",
+      "country": "PL",
+      "lat": 49.3047517,
+      "lon": 19.956293367772762,
+      "capabilities": [
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 3
+    },
+    {
+      "name": "UNIWERSYTECKI SZPITAL ORTOPEDYCZNO-REHABILITACYJNY W ZAKOPANEM",
+      "city": "ZAKOPANE",
+      "country": "PL",
+      "lat": 49.286056450000004,
+      "lon": 19.985148723482467,
+      "capabilities": [
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 2
+    },
+    {
+      "name": "SZPITAL POWIATOWY W ZAMBROWIE SPÓŁKA Z O.O.",
+      "city": "ZAMBRÓW",
+      "country": "PL",
+      "lat": 52.988351449999996,
+      "lon": 22.253548763175683,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 5
+    },
+    {
+      "name": "ZAMOJSKI SZPITAL NIEPUBLICZNY SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ\"",
+      "city": "ZAMOŚĆ",
+      "country": "PL",
+      "lat": 50.7237835,
+      "lon": 23.2559188,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 9
+    },
+    {
+      "name": "SZPITAL POWIATOWY W ZAWIERCIU",
+      "city": "ZAWIERCIE",
+      "country": "PL",
+      "lat": 50.4815264,
+      "lon": 19.407621253584146,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 7
+    },
+    {
+      "name": "WOJEWÓDZKI SZPITAL SPECJALISTYCZNY IM. MARII SKŁODOWSKIEJ-CURIE W ZGIERZU",
+      "city": "ZGIERZ",
+      "country": "PL",
+      "lat": 51.8627624,
+      "lon": 19.3887666212698,
+      "capabilities": [
+        "craniofacial",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 7
+    },
+    {
+      "name": "WIELOSPECJALISTYCZNY SZPITAL - SAMODZIELNY PUBLICZNY ZESPÓŁ OPIEKI ZDROWOTNEJ W ZGORZELCU",
+      "city": "ZGORZELEC",
+      "country": "PL",
+      "lat": 51.157832400000004,
+      "lon": 15.010963653772766,
+      "capabilities": [
+        "craniofacial",
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 15
+    },
+    {
+      "name": "SZPITAL UNIWERSYTECKI IMIENIA KAROLA MARCINKOWSKIEGO W ZIELONEJ GÓRZE SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "ZIELONA GÓRA",
+      "country": "PL",
+      "lat": 51.94095935,
+      "lon": 15.520335658175657,
+      "capabilities": [
+        "craniofacial",
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 22
+    },
+    {
+      "name": "SZPITAL ŚW. ANTONIEGO W ZĄBKOWICACH ŚLĄSKICH",
+      "city": "ZĄBKOWICE ŚLĄSKIE",
+      "country": "PL",
+      "lat": 50.58737585,
+      "lon": 16.81739669864865,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 6
+    },
+    {
+      "name": "SZPITAL POWIATOWY IM.A.WOLAŃCZYKA SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "ZŁOTORYJA",
+      "country": "PL",
+      "lat": 51.116262750000004,
+      "lon": 15.909562611749294,
+      "capabilities": [
+        "craniofacial",
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 9
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ W ŁAPACH",
+      "city": "ŁAPY",
+      "country": "PL",
+      "lat": 52.988052100000004,
+      "lon": 22.86767577032391,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 4
+    },
+    {
+      "name": "CENTRUM DIALIZA SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ\"",
+      "city": "ŁASK",
+      "country": "PL",
+      "lat": 51.58999045,
+      "lon": 19.15286718492583,
+      "capabilities": [
+        "craniofacial",
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 3
+    },
+    {
+      "name": "CENTRUM MEDYCZNE W ŁAŃCUCIE SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ\"",
+      "city": "ŁAŃCUT",
+      "country": "PL",
+      "lat": 50.06556305,
+      "lon": 22.23369334611997,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 12
+    },
+    {
+      "name": "SZPITAL WOJEWÓDZKI IM. KARDYNAŁA STEFANA WYSZYŃSKIEGO W ŁOMŻY",
+      "city": "ŁOMŻA",
+      "country": "PL",
+      "lat": 53.15914295,
+      "lon": 22.086971348796645,
+      "capabilities": [
+        "craniofacial",
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 16
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ W ŁOSICACH",
+      "city": "ŁOSICE",
+      "country": "PL",
+      "lat": 52.21522995,
+      "lon": 22.70764137090159,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 4
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ W ŁUKOWIE",
+      "city": "ŁUKÓW",
+      "country": "PL",
+      "lat": 51.92416615,
+      "lon": 22.380672053554164,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 10
+    },
+    {
+      "name": "INSTYTUT CENTRUM ZDROWIA MATKI POLKI\"\"",
+      "city": "ŁÓDŹ",
+      "country": "PL",
+      "lat": 51.7068193,
+      "lon": 19.480536502848988,
+      "capabilities": [
+        "craniofacial",
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [
+        "craniofacial",
+        "skeletal"
+      ],
+      "wardCount": 11
+    },
+    {
+      "name": "MIEJSKIE CENTRUM MEDYCZNE IM. DR. KAROLA JONSCHERA W ŁODZI",
+      "city": "ŁÓDŹ",
+      "country": "PL",
+      "lat": 51.7517033,
+      "lon": 19.4829337,
+      "capabilities": [
+        "craniofacial",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 4
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ CENTRALNY SZPITAL KLINICZNY UNIWERSYTETU MEDYCZNEGO W ŁODZI",
+      "city": "ŁÓDŹ",
+      "country": "PL",
+      "lat": 52.09899165,
+      "lon": 19.927771593350847,
+      "capabilities": [
+        "craniofacial",
+        "paediatric"
+      ],
+      "paediatricCapabilities": [
+        "craniofacial"
+      ],
+      "wardCount": 2
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ CENTRALNY SZPITAL KLINICZNY UNIWERSYTETU MEDYCZNEGO W ŁODZI",
+      "city": "ŁÓDŹ",
+      "country": "PL",
+      "lat": 52.09899165,
+      "lon": 19.927771593350847,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 4
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ CENTRALNY SZPITAL KLINICZNY UNIWERSYTETU MEDYCZNEGO W ŁODZI",
+      "city": "ŁÓDŹ",
+      "country": "PL",
+      "lat": 52.09899165,
+      "lon": 19.927771593350847,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [
+        "skeletal"
+      ],
+      "wardCount": 6
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ MINISTERSTWA SPRAW WEWNĘTRZNYCH I ADMINISTRACJI W ŁODZI",
+      "city": "ŁÓDŹ",
+      "country": "PL",
+      "lat": 51.7816233,
+      "lon": 19.473969864631655,
+      "capabilities": [
+        "craniofacial",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 6
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ UNIWERSYTECKI SZPITAL KLINICZNY IM. WOJSKOWEJ AKADEMII MEDYCZNEJ UNIWERSYTETU MEDYCZNEGO W ŁODZI - CENTRALNY SZPITAL WETERANÓW",
+      "city": "ŁÓDŹ",
+      "country": "PL",
+      "lat": 51.7596727,
+      "lon": 19.4465436370332,
+      "capabilities": [
+        "craniofacial"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 3
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ UNIWERSYTECKI SZPITAL KLINICZNY IM. WOJSKOWEJ AKADEMII MEDYCZNEJ UNIWERSYTETU MEDYCZNEGO W ŁODZI - CENTRALNY SZPITAL WETERANÓW",
+      "city": "ŁÓDŹ",
+      "country": "PL",
+      "lat": 51.759672699999996,
+      "lon": 19.44654363703317,
+      "capabilities": [
+        "craniofacial",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 8
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ UNIWERSYTECKI SZPITAL KLINICZNY IM. WOJSKOWEJ AKADEMII MEDYCZNEJ UNIWERSYTETU MEDYCZNEGO W ŁODZI - CENTRALNY SZPITAL WETERANÓW",
+      "city": "ŁÓDŹ",
+      "country": "PL",
+      "lat": 51.767638649999995,
+      "lon": 19.437509955019856,
+      "capabilities": [
+        "craniofacial"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 1
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ UNIWERSYTECKI SZPITAL KLINICZNY NR 1 IM. NORBERTA BARLICKIEGO UNIWERSYTETU MEDYCZNEGO W ŁODZI",
+      "city": "ŁÓDŹ",
+      "country": "PL",
+      "lat": 51.77402885,
+      "lon": 19.483723866943308,
+      "capabilities": [
+        "craniofacial"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 5
+    },
+    {
+      "name": "WOJEWÓDZKI SPECJALISTYCZNY SZPITAL IM DR. WŁ. BIEGAŃSKIEGO W ŁODZI",
+      "city": "ŁÓDŹ",
+      "country": "PL",
+      "lat": 51.73130435,
+      "lon": 19.456486828710545,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 7
+    },
+    {
+      "name": "WOJEWÓDZKI SPECJALISTYCZNY SZPITAL IM. M. PIROGOWA W ŁODZI",
+      "city": "ŁÓDŹ",
+      "country": "PL",
+      "lat": 51.751524200000006,
+      "lon": 19.455002419857067,
+      "capabilities": [
+        "craniofacial"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 4
+    },
+    {
+      "name": "WOJEWÓDZKIE WIELOSPECJALISTYCZNE CENTRUM ONKOLOGII I TRAUMATOLOGII IM. M. KOPERNIKA W ŁODZI",
+      "city": "ŁÓDŹ",
+      "country": "PL",
+      "lat": 51.73130435,
+      "lon": 19.456486828710545,
+      "capabilities": [
+        "craniofacial",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 7
+    },
+    {
+      "name": "WOJEWÓDZKIE WIELOSPECJALISTYCZNE CENTRUM ONKOLOGII I TRAUMATOLOGII IM. M. KOPERNIKA W ŁODZI",
+      "city": "ŁÓDŹ",
+      "country": "PL",
+      "lat": 51.761137500000004,
+      "lon": 19.484269556453906,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 1
+    },
+    {
+      "name": "WOJEWÓDZKIE WIELOSPECJALISTYCZNE CENTRUM ONKOLOGII I TRAUMATOLOGII IM.M.KOPERNIKA W ŁODZI",
+      "city": "ŁÓDŹ",
+      "country": "PL",
+      "lat": 51.73130435,
+      "lon": 19.456486828710545,
+      "capabilities": [
+        "craniofacial"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 2
+    },
+    {
+      "name": "ZESPÓŁ OPIEKI ZDROWOTNEJ W ŁĘCZYCY",
+      "city": "ŁĘCZYCA",
+      "country": "PL",
+      "lat": 52.0595254,
+      "lon": 19.1876761,
+      "capabilities": [
+        "craniofacial"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 2
+    },
+    {
+      "name": "SZPITAL POWIATOWY IM. TADEUSZA MALIŃSKIEGO W ŚREMIE SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "ŚREM",
+      "country": "PL",
+      "lat": 52.089442197164,
+      "lon": 17.0068636549596,
+      "capabilities": [
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 3
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY SZPITAL KLINICZNY IM. PROF. W. ORŁOWSKIEGO CENTRUM MEDYCZNEGO KSZTAŁCENIA PODYPLOMOWEGO",
+      "city": "ŚRÓDMIEŚCIE",
+      "country": "PL",
+      "lat": 52.2293705,
+      "lon": 21.03258594734794,
+      "capabilities": [
+        "craniofacial",
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 12
+    },
+    {
+      "name": "SZPITAL KLINICZNY IM. KS. ANNY MAZOWIECKIEJ",
+      "city": "ŚRÓDMIEŚCIE",
+      "country": "PL",
+      "lat": 52.2450552,
+      "lon": 21.02182856679766,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 6
+    },
+    {
+      "name": "SZPITAL SPECJALISTYCZNY INFLANCKA\" IM. KRYSI NIŻYŃSKIEJ - \"ZAKURZONEJ\" W WARSZAWIE\"",
+      "city": "ŚRÓDMIEŚCIE",
+      "country": "PL",
+      "lat": 52.25505215,
+      "lon": 20.99157030935133,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 5
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZESPÓŁ OPIEKI ZDROWOTNEJ W ŚWIDNICY",
+      "city": "ŚWIDNICA",
+      "country": "PL",
+      "lat": 50.83127705,
+      "lon": 16.469289926086873,
+      "capabilities": [
+        "craniofacial",
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 13
+    },
+    {
+      "name": "MIKULICZ SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ\"",
+      "city": "ŚWIEBODZICE",
+      "country": "PL",
+      "lat": 50.85421,
+      "lon": 16.32154,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 6
+    },
+    {
+      "name": "NOWY SZPITAL W ŚWIEBODZINIE SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "ŚWIEBODZIN",
+      "country": "PL",
+      "lat": 52.252054150000006,
+      "lon": 15.53474636290299,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 6
+    },
+    {
+      "name": "WOJEWÓDZKI SZPITAL DLA NERWOWO I PSYCHICZNIE CHORYCH IM. DR J. BEDNARZA",
+      "city": "ŚWIECIE",
+      "country": "PL",
+      "lat": 53.4076953,
+      "lon": 18.455949042356487,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 8
+    },
+    {
+      "name": "SZPITAL MIEJSKI IM. JANA GARDUŁY W ŚWINOUJŚCIU SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "ŚWINOUJŚCIE",
+      "country": "PL",
+      "lat": 53.9098104,
+      "lon": 14.2578897201274,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 5
+    },
+    {
+      "name": "ZESPÓŁ OPIEKI ZDROWOTNEJ W ŚWIĘTOCHŁOWICACH SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "ŚWIĘTOCHŁOWICE",
+      "country": "PL",
+      "lat": 50.30589,
+      "lon": 18.91593,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 4
+    },
+    {
+      "name": "105. KRESOWY SZPITAL WOJSKOWY Z PRZYCHODNIĄ SAMODZIELNY PUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ",
+      "city": "ŻAGAŃ",
+      "country": "PL",
+      "lat": 51.612528999999995,
+      "lon": 15.33210827419298,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 5
+    },
+    {
+      "name": "105. KRESOWY SZPITAL WOJSKOWY Z PRZYCHODNIĄ SAMODZIELNY PUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ",
+      "city": "ŻARY",
+      "country": "PL",
+      "lat": 51.641569200000006,
+      "lon": 15.148486262213286,
+      "capabilities": [
+        "craniofacial"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 9
+    },
+    {
+      "name": "SZPITAL NA WYSPIE SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "ŻARY",
+      "country": "PL",
+      "lat": 51.644364350000004,
+      "lon": 15.152378801063605,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 7
+    },
+    {
+      "name": "MIEJSKIE ZAKŁADY OPIEKI ZDROWOTNEJ W ŻORACH SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "ŻORY",
+      "country": "PL",
+      "lat": 50.035638,
+      "lon": 18.683907,
+      "capabilities": [
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 4
+    },
+    {
+      "name": "SAMODZIELNY PUBLICZNY ZESPÓŁ ZAKŁADÓW OPIEKI ZDROWOTNEJ W ŻUROMINIE",
+      "city": "ŻUROMIN",
+      "country": "PL",
+      "lat": 53.070203,
+      "lon": 19.919517060280562,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 8
+    },
+    {
+      "name": "CENTRUM ZDROWIA MAZOWSZA ZACHODNIEGO SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "ŻYRARDÓW",
+      "country": "PL",
+      "lat": 52.0592,
+      "lon": 20.44019,
+      "capabilities": [
+        "craniofacial",
+        "paediatric"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 9
+    },
+    {
+      "name": "ICZ HEALTHCARE SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "city": "ŻYWIEC",
+      "country": "PL",
+      "lat": 49.66733,
+      "lon": 19.2253,
+      "capabilities": [
+        "paediatric",
+        "skeletal"
+      ],
+      "paediatricCapabilities": [],
+      "wardCount": 6
+    }
+  ]
+}

@@ -3,6 +3,15 @@ export interface DoctorScope {
   readonly basis: string;
 }
 
+export interface DoctorErnCentre {
+  readonly ern: string;
+  readonly roleDetail: string;
+  readonly centre: string;
+  readonly city: string;
+  readonly sourceUrl: string;
+  readonly verifiedOn: string;
+}
+
 export type PubmedRole =
   | "research_leader"
   | "research_participant"
@@ -142,6 +151,13 @@ export interface PublicDoctor {
    * claim can be checked rather than trusted.
    */
   readonly scope?: readonly DoctorScope[];
+  /**
+   * European Reference Network centres this doctor practises at. Institution-level
+   * by nature — the networks accredit hospitals, never individuals — and the copy
+   * must keep that distinction. For a clinician with no publications this is often
+   * the only strong, checkable signal that exists.
+   */
+  readonly ernCentres?: readonly DoctorErnCentre[];
   readonly bio: string;
   readonly publicSource: string;
   readonly endorsements: readonly string[];

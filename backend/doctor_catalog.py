@@ -14,11 +14,15 @@ try:
     from .content_db import get_disease_by_slug, list_diseases_catalog, normalize_disease_slug
     from .doctor_geo_coords import coords_for_city_country, resolve_location
     from .doctor_scope import derive_scope
+    from .ern_membership import memberships_for
+    from .facility_lookup import capability_for as facility_capability_for
 except ImportError:
     from config import BACKEND_DIR
     from content_db import get_disease_by_slug, list_diseases_catalog, normalize_disease_slug
     from doctor_geo_coords import coords_for_city_country, resolve_location
     from doctor_scope import derive_scope
+    from ern_membership import memberships_for
+    from facility_lookup import capability_for as facility_capability_for
 
 CONTENT_DOCTORS_PATH = BACKEND_DIR / "content_doctors.json"
 
@@ -1035,6 +1039,36 @@ def get_doctors_for_disease(disease_slug: str) -> dict[str, Any]:
     for doctor in doctors:
         doctor["scope"] = [
             {"key": tag.key, "basis": tag.basis} for tag in derive_scope(doctor)
+        ]
+        # Membership is a property of the hospital, not the person, and is presented
+        # that way. It is the one strong signal available for a clinician PubMed
+        # cannot see at all.
+        # What the doctor's hospital is equipped for, per the EU register. Independent
+        # of the doctor's own record: a surgeon can be the right person at a place
+        # without the ward, and a place can have the ward with nobody listed.
+        facility = facility_capability_for(doctor)
+        doctor["facility"] = (
+            {
+                "name": facility.name,
+                "city": facility.city,
+                "capabilities": list(facility.capabilities),
+                "paediatricCapabilities": list(facility.paediatric_capabilities),
+                "source": facility.source,
+                "release": facility.release,
+            }
+            if facility
+            else None
+        )
+        doctor["ernCentres"] = [
+            {
+                "ern": m.ern,
+                "roleDetail": m.role_detail,
+                "centre": m.centre,
+                "city": m.city,
+                "sourceUrl": m.source_url,
+                "verifiedOn": m.verified_on,
+            }
+            for m in memberships_for(doctor)
         ]
     return {"diseaseSlug": normalized, "source": source, "doctors": doctors}
 
