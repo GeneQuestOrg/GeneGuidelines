@@ -64,6 +64,8 @@ export const apiDoctorRepository: DoctorRepository = {
         country: input.country ?? "",
         disease_slug: input.diseaseSlug ?? "",
         note: input.note ?? "",
+        what_helped: input.what_helped ?? "",
+        how_found: input.how_found ?? "",
       },
     );
     return {

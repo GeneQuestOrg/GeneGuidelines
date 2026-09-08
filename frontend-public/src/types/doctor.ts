@@ -219,6 +219,10 @@ export interface DoctorSubmissionInput {
   readonly country?: string;
   readonly diseaseSlug?: string;
   readonly note?: string;
+  /** What this clinician got right — a fact about judgement, not a rating. */
+  readonly what_helped?: string;
+  /** How the family reached them. No registry records who sends whom. */
+  readonly how_found?: string;
 }
 
 /** Body of `POST /api/doctors/{slug}/parent-recs` — a parent recommends a doctor. */

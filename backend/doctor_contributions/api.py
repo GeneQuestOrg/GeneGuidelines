@@ -22,6 +22,7 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from ..account.deps import CurrentUser, require_role, require_superadmin
 from ..account.models import Role, User
+from .answers import compose_note
 from .contracts import (
     DoctorSubmissionResponse,
     ParentRecResponse,
@@ -67,7 +68,9 @@ def submit_doctor(
         city=body.city,
         country=body.country,
         disease_slug=body.disease_slug,
-        note=body.note,
+        note=compose_note(
+            note=body.note, what_helped=body.what_helped, how_found=body.how_found
+        ),
         rodo_contact_email=body.rodo_contact_email,
     )
     return submission_to_response(submission)
@@ -88,7 +91,9 @@ def submit_parent_rec(
     rec = service.submit_parent_rec(
         doctor_slug=slug,
         submitted_by=str(user.id),
-        text=body.text,
+        text=compose_note(
+            note=body.text, what_helped=body.what_helped, how_found=body.how_found
+        ),
         region=body.region,
         relation=body.relation.value,
     )

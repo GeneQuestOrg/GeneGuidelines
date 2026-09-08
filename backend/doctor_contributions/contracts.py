@@ -23,7 +23,25 @@ class SubmitDoctorRequest(BaseModel):
     city: str = Field(default="", max_length=120)
     country: str = Field(default="", max_length=120)
     disease_slug: str = Field(default="", max_length=120)
+    # Kept so older clients keep working; new submissions use the two fields below.
     note: str = Field(default="", max_length=4000)
+    # Two questions instead of one free-text box, because the single box asked
+    # "why do you recommend them" and got sentiment back. What a family actually
+    # knows, and nobody else has, is these two things:
+    #
+    #   what_helped   — what this clinician got right. The founder's own case: a
+    #                   correct diagnosis after the earlier path was heading for
+    #                   surgery. That is a fact about clinical judgement, not a rating.
+    #   how_found     — the referral path. For a rare disease the route to the right
+    #                   person is the scarcest knowledge there is, and it exists only
+    #                   in families' heads: no registry records who sends whom.
+    #
+    # Deliberately no field for who got it WRONG. Publishing that beside a name is a
+    # legal risk and the fastest way to lose the clinicians we need on side — even
+    # when the family has every right to be angry.
+    what_helped: str = Field(default="", max_length=4000)
+    how_found: str = Field(default="", max_length=4000)
+
     rodo_contact_email: str | None = Field(default=None, max_length=320)
 
 
@@ -34,6 +52,23 @@ class SubmitParentRecRequest(BaseModel):
 
     text: str = Field(min_length=1, max_length=4000)
     region: str | None = Field(default=None, max_length=120)
+    # Two questions instead of one free-text box, because the single box asked
+    # "why do you recommend them" and got sentiment back. What a family actually
+    # knows, and nobody else has, is these two things:
+    #
+    #   what_helped   — what this clinician got right. The founder's own case: a
+    #                   correct diagnosis after the earlier path was heading for
+    #                   surgery. That is a fact about clinical judgement, not a rating.
+    #   how_found     — the referral path. For a rare disease the route to the right
+    #                   person is the scarcest knowledge there is, and it exists only
+    #                   in families' heads: no registry records who sends whom.
+    #
+    # Deliberately no field for who got it WRONG. Publishing that beside a name is a
+    # legal risk and the fastest way to lose the clinicians we need on side — even
+    # when the family has every right to be angry.
+    what_helped: str = Field(default="", max_length=4000)
+    how_found: str = Field(default="", max_length=4000)
+
     relation: RecRelation = RecRelation.PARENT
 
 

@@ -111,6 +111,11 @@
     "submittedTitle": "Submitted for moderation",
     "submittedBody": "Thank you. A reviewer will check this submission before it appears in the public directory.",
     "duplicateHint": "This doctor may already be in our directory — the reviewer will merge duplicates so nothing is lost.",
-    "done": "Done"
+    "done": "Done",
+    "whatHelpedLabel": "What did this doctor get right?",
+    "whatHelpedPlaceholder": "For example: made the correct diagnosis when the earlier path was heading for surgery. Specifics help another family far more than a rating.",
+    "howFoundLabel": "How did you reach them?",
+    "howFoundPlaceholder": "For example: referred by another doctor, suggested by a parent in a group, found by our own searching.",
+    "howFoundHint": "For a rare disease, the route to the right doctor is the hardest knowledge to come by and no registry holds it. We are not asking who got it wrong."
   }
 }

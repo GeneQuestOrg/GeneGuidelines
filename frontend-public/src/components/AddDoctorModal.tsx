@@ -41,7 +41,9 @@ export function AddDoctorModal({ onClose, initialDiseaseSlug }: AddDoctorModalPr
   const [institution, setInstitution] = useState("");
   const [city, setCity] = useState("");
   const [country, setCountry] = useState("");
-  const [note, setNote] = useState("");
+  const [note] = useState("");
+  const [whatHelped, setWhatHelped] = useState("");
+  const [howFound, setHowFound] = useState("");
   const [diseaseSlug, setDiseaseSlug] = useState<string | null>(
     initialDiseaseSlug ?? null,
   );
@@ -88,6 +90,8 @@ export function AddDoctorModal({ onClose, initialDiseaseSlug }: AddDoctorModalPr
           country: country.trim(),
           diseaseSlug: diseaseSlug ?? "",
           note: note.trim(),
+          what_helped: whatHelped.trim(),
+          how_found: howFound.trim(),
         });
         dispatch({ type: "success", possibleDuplicate: result.possibleDuplicate });
       } catch (e: unknown) {
@@ -98,7 +102,7 @@ export function AddDoctorModal({ onClose, initialDiseaseSlug }: AddDoctorModalPr
         dispatch({ type: "failure", message });
       }
     },
-    [trimmedName, specialty, institution, city, country, diseaseSlug, note, t],
+    [trimmedName, specialty, institution, city, country, diseaseSlug, note, whatHelped, howFound, t],
   );
 
   return (
@@ -217,15 +221,30 @@ export function AddDoctorModal({ onClose, initialDiseaseSlug }: AddDoctorModalPr
                 )}
               </div>
 
+              {/* Two questions, not one box. The single "why do you recommend them"
+                  field got sentiment back; what a family knows and no registry has
+                  is what this clinician got right, and how they were found at all. */}
               <label className="add-doc-form__field">
-                <span className="add-doc-form__label">{t("addDoctorModal.noteLabel")}</span>
+                <span className="add-doc-form__label">{t("addDoctorModal.whatHelpedLabel")}</span>
                 <textarea
                   className="add-doc-form__textarea"
-                  value={note}
-                  onChange={(e) => setNote(e.target.value)}
+                  value={whatHelped}
+                  onChange={(e) => setWhatHelped(e.target.value)}
                   rows={3}
-                  placeholder={t("addDoctorModal.notePlaceholder")}
+                  placeholder={t("addDoctorModal.whatHelpedPlaceholder")}
                 />
+              </label>
+
+              <label className="add-doc-form__field">
+                <span className="add-doc-form__label">{t("addDoctorModal.howFoundLabel")}</span>
+                <textarea
+                  className="add-doc-form__textarea"
+                  value={howFound}
+                  onChange={(e) => setHowFound(e.target.value)}
+                  rows={2}
+                  placeholder={t("addDoctorModal.howFoundPlaceholder")}
+                />
+                <span className="add-doc-form__hint">{t("addDoctorModal.howFoundHint")}</span>
               </label>
 
               {state.status === "error" ? (

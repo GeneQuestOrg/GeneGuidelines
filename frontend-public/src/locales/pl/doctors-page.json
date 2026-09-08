@@ -113,6 +113,11 @@
     "submittedTitle": "Zgłoszenie wysłane do moderacji",
     "submittedBody": "Dziękujemy. Recenzent sprawdzi to zgłoszenie, zanim trafi do publicznego katalogu.",
     "duplicateHint": "Ten lekarz może już być w naszym katalogu — recenzent scali duplikaty, więc nic nie zostanie utracone.",
-    "done": "Gotowe"
+    "done": "Gotowe",
+    "whatHelpedLabel": "Co ten lekarz zrobił dobrze?",
+    "whatHelpedPlaceholder": "Np. postawił właściwe rozpoznanie, gdy wcześniejsza ścieżka prowadziła do operacji. Konkret pomaga innej rodzinie bardziej niż ogólna ocena.",
+    "howFoundLabel": "Jak do niego trafiliście?",
+    "howFoundPlaceholder": "Np. skierowanie od innego lekarza, podpowiedź od rodzica z grupy, własne poszukiwania.",
+    "howFoundHint": "Droga do właściwego lekarza to przy chorobie rzadkiej najtrudniejsza do zdobycia wiedza — nie ma jej w żadnym rejestrze. Nie pytamy, kto się pomylił."
   }
 }
