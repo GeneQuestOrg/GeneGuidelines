@@ -46,6 +46,10 @@ export function DoctorCard({ doctor, km, compact = false, onNav }: DoctorCardPro
   // publication record, the card shows what we can actually stand behind instead:
   // the official clinical position and who vouches for him.
   const ernCentres = doctor.ernCentres ?? [];
+  // The hospital's own paediatric capability, from the EU register. Kept to the
+  // paediatric list on purpose: "has a maxillofacial ward" and "has one for children"
+  // are different answers, and only the second one helps a parent.
+  const paediatricWards = doctor.facility?.paediatricCapabilities ?? [];
   const clinicalSignals = hasMeasuredPapers
     ? []
     : [doctor.role, ...(doctor.endorsements ?? [])].filter(
@@ -80,6 +84,16 @@ export function DoctorCard({ doctor, km, compact = false, onNav }: DoctorCardPro
       ) : (
         <div className="doc__spec doc__spec--unverified">{t("doctorCard.specialtyNotVerified")}</div>
       )}
+      {paediatricWards.length > 0 ? (
+        <div className="doc__facility" title={t("doctorCard.facilityTooltip", {
+          facility: doctor.facility?.name ?? "",
+          release: doctor.facility?.release ?? "",
+        })}>
+          {t("doctorCard.facilityWards", {
+            wards: paediatricWards.map((key) => t(`doctorCard.scope.${key}`)).join(" · "),
+          })}
+        </div>
+      ) : null}
       {ernCentres.map((centre) => (
         <a
           key={`${centre.ern}-${centre.centre}`}

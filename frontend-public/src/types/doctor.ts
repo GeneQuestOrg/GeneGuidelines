@@ -12,6 +12,15 @@ export interface DoctorErnCentre {
   readonly verifiedOn: string;
 }
 
+export interface DoctorFacility {
+  readonly name: string;
+  readonly city: string;
+  readonly capabilities: readonly string[];
+  readonly paediatricCapabilities: readonly string[];
+  readonly source: string;
+  readonly release: string;
+}
+
 export type PubmedRole =
   | "research_leader"
   | "research_participant"
@@ -158,6 +167,12 @@ export interface PublicDoctor {
    * the only strong, checkable signal that exists.
    */
   readonly ernCentres?: readonly DoctorErnCentre[];
+  /**
+   * What this doctor's hospital is equipped for, per the EU facility register.
+   * Null when they could not be matched to a registered facility with confidence.
+   * A property of the place, never of the person.
+   */
+  readonly facility?: DoctorFacility | null;
   readonly bio: string;
   readonly publicSource: string;
   readonly endorsements: readonly string[];

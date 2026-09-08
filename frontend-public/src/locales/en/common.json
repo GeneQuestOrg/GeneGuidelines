@@ -78,6 +78,8 @@
     "empty": "No therapy lines recorded for this disease yet."
   },
   "doctorCard": {
+    "facilityWards": "Hospital has children's wards: {{wards}}",
+    "facilityTooltip": "Per the EU facility register ({{release}}), {{facility}} runs these wards for children. This describes the hospital, not the doctor.",
     "ernCentre": "{{ern}} network centre",
     "ernTooltip": "This doctor's hospital is a {{ern}} centre ({{role}}): {{centre}}. The network accredits the hospital, not the individual. Verified {{date}} — click for the source.",
     "scope": {

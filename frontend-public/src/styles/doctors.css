@@ -211,6 +211,16 @@
   cursor: help;
 }
 
+/* The hospital's own paediatric capability, from the EU register. Reads as a fact
+   about the building, so it is styled as a quiet line rather than a badge on the
+   person. */
+.doc__facility {
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+  margin-top: 4px;
+  cursor: help;
+}
+
 /* Clinical standing, for doctors PubMed cannot see: an official consultant post, a
    patient organisation vouching for them. Distinct from the research-role tags so
    the two axes never read as the same claim. */
