@@ -2,6 +2,8 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import enAbout from "../locales/en/about.json";
+import enCommon from "../locales/en/common.json";
+import plCommon from "../locales/pl/common.json";
 import plAbout from "../locales/pl/about.json";
 import { MY_CASE_ENABLED } from "../config/features";
 
@@ -42,6 +44,21 @@ describe("About page claims", () => {
     expect(MY_CASE_ENABLED).toBe(false);
     expect(source).toMatch(/MY_CASE_ENABLED \? \(\s*<section id="privacy"/);
     expect(source).toMatch(/MY_CASE_ENABLED \? \(\s*<li>/);
+  });
+
+  it.each([
+    ["en", enCommon],
+    ["pl", plCommon],
+  ])("%s footer promises no de-identification that does not happen", (_locale, copy) => {
+    const footer = copy.footer as Record<string, string>;
+    const line = [footer.poweredByLead, footer.poweredByModel, footer.poweredByTail].join("");
+
+    // It sat on every page claiming an on-device model de-identifies family documents
+    // — describing the case-context feature, which is switched off, and switched off
+    // precisely BECAUSE the deployment runs Gemma at a hosted provider outside the EU.
+    // The property the promise rested on never held in production.
+    expect(line).not.toMatch(/de-identif|odpersonalizowan|leaves the building|opuści budynek/i);
+    expect(line).toMatch(/frontier/i);
   });
 
   it("keeps the disabled copy rather than deleting it", () => {

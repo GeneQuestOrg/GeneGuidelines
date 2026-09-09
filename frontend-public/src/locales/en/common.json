@@ -19,19 +19,19 @@
   },
   "betaBadge": "Public beta",
   "betaNotice": {
-    "pillTitle": "What \u201cpublic beta\u201d means here",
+    "pillTitle": "What “public beta” means here",
     "title": "This is a public beta",
     "body": "The guidelines are AI-drafted from cited sources and nobody has formally signed them off. We are still collecting feedback on what reads wrong, what is missing, and what is confusing.",
     "feedbackCta": "Tell us what you think",
     "supportCta": "Support the project",
-    "supportNote": "GeneQuest is a non-profit. Researching one disease costs real compute \u2014 when the budget runs out, the queue waits for a top-up."
+    "supportNote": "GeneQuest is a non-profit. Researching one disease costs real compute — when the budget runs out, the queue waits for a top-up."
   },
   "footer": {
     "brand": "GeneQuest Foundation",
     "desc": "Living guidelines for rare genetic diseases — an AI-drafted, source-cited summary of official guidelines and the literature, refreshed on demand. Not an official guideline; clinicians can rate and flag it.",
-    "poweredByLead": "Powered by ",
+    "poweredByLead": "Literature triage and doctor ranking run on ",
     "poweredByModel": "Gemma 4",
-    "poweredByTail": " — an open model that can run on-device, so a family's documents are de-identified before anything leaves the building.",
+    "poweredByTail": ", an open model. The guideline text itself is written by a frontier model — every paragraph anchored in a named source.",
     "navLabel": "Footer",
     "home": "Home",
     "startResearch": "Start research",
@@ -254,10 +254,22 @@
       }
     },
     "access": {
-      "oa": { "label": "Open access · full text", "short": "Open access" },
-      "abstract": { "label": "Abstract only", "short": "Abstract" },
-      "paywall": { "label": "Behind paywall", "short": "Paywall" },
-      "unknown": { "label": "Access unknown", "short": "Unknown" }
+      "oa": {
+        "label": "Open access · full text",
+        "short": "Open access"
+      },
+      "abstract": {
+        "label": "Abstract only",
+        "short": "Abstract"
+      },
+      "paywall": {
+        "label": "Behind paywall",
+        "short": "Paywall"
+      },
+      "unknown": {
+        "label": "Access unknown",
+        "short": "Unknown"
+      }
     }
   },
   "researchWorkstreams": {

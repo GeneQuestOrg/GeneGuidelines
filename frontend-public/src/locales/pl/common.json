@@ -19,19 +19,19 @@
   },
   "betaBadge": "Publiczna beta",
   "betaNotice": {
-    "pillTitle": "Co tu znaczy \u201epubliczna beta\u201d",
+    "pillTitle": "Co tu znaczy „publiczna beta”",
     "title": "To jest publiczna beta",
-    "body": "Wytyczne tworzy AI na podstawie cytowanych \u017ar\u00f3de\u0142 i nikt ich formalnie nie zatwierdzi\u0142. Wci\u0105\u017c zbieramy uwagi: co brzmi \u017ale, czego brakuje, co jest niejasne.",
-    "feedbackCta": "Powiedz nam, co my\u015blisz",
+    "body": "Wytyczne tworzy AI na podstawie cytowanych źródeł i nikt ich formalnie nie zatwierdził. Wciąż zbieramy uwagi: co brzmi źle, czego brakuje, co jest niejasne.",
+    "feedbackCta": "Powiedz nam, co myślisz",
     "supportCta": "Wesprzyj projekt",
-    "supportNote": "GeneQuest to fundacja non-profit. Opracowanie jednej choroby kosztuje realne obliczenia \u2014 gdy bud\u017cet si\u0119 ko\u0144czy, kolejka czeka na do\u0142adowanie."
+    "supportNote": "GeneQuest to fundacja non-profit. Opracowanie jednej choroby kosztuje realne obliczenia — gdy budżet się kończy, kolejka czeka na doładowanie."
   },
   "footer": {
     "brand": "GeneQuest Foundation",
     "desc": "Żywe wytyczne dla rzadkich chorób genetycznych — AI-owy skrót oficjalnych wytycznych i literatury, ze źródłami, odświeżany na żądanie. Nie oficjalna wytyczna; lekarze mogą go oceniać i zgłaszać uwagi.",
-    "poweredByLead": "Napędzane przez ",
+    "poweredByLead": "Przesiew literatury i ranking lekarzy: ",
     "poweredByModel": "Gemma 4",
-    "poweredByTail": " — otwarty model, który może działać lokalnie na urządzeniu, więc dokumenty rodziny są odpersonalizowane, zanim cokolwiek opuści budynek.",
+    "poweredByTail": ", model otwarty. Samą treść wytycznej pisze model frontier — każdy akapit zakotwiczony w nazwanym źródle.",
     "navLabel": "Stopka",
     "home": "Strona główna",
     "startResearch": "Zleć research",
@@ -264,10 +264,22 @@
       }
     },
     "access": {
-      "oa": { "label": "Otwarty dostęp · pełny tekst", "short": "Otwarty dostęp" },
-      "abstract": { "label": "Tylko streszczenie", "short": "Streszczenie" },
-      "paywall": { "label": "Za paywallem", "short": "Paywall" },
-      "unknown": { "label": "Dostęp nieznany", "short": "Nieznany" }
+      "oa": {
+        "label": "Otwarty dostęp · pełny tekst",
+        "short": "Otwarty dostęp"
+      },
+      "abstract": {
+        "label": "Tylko streszczenie",
+        "short": "Streszczenie"
+      },
+      "paywall": {
+        "label": "Za paywallem",
+        "short": "Paywall"
+      },
+      "unknown": {
+        "label": "Dostęp nieznany",
+        "short": "Nieznany"
+      }
     }
   },
   "researchWorkstreams": {
