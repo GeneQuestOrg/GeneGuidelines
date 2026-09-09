@@ -1,5 +1,6 @@
 import { Button } from "@gene-guidelines/ui";
 import { useTranslation } from "react-i18next";
+import { MY_CASE_ENABLED } from "../config/features";
 import type { AudienceView } from "../router/types";
 import "./about-view.css";
 
@@ -284,13 +285,17 @@ export function AboutView({ onNav }: AboutViewProps) {
                 <b>{t("diseasePage.item6Bold")}</b>
                 {t("diseasePage.item6Body")}
               </li>
-              <li>
-                {t("diseasePage.item7Pre")}
-                <b>{t("diseasePage.item7Bold")}</b>
-                {t("diseasePage.item7Body1")}
-                <em>{t("diseasePage.item7Em")}</em>
-                {t("diseasePage.item7Body2")}
-              </li>
+              {/* The case-context panel. Listed among what a disease page offers, and
+                  switched off — so this promised a feature no reader could reach. */}
+              {MY_CASE_ENABLED ? (
+                <li>
+                  {t("diseasePage.item7Pre")}
+                  <b>{t("diseasePage.item7Bold")}</b>
+                  {t("diseasePage.item7Body1")}
+                  <em>{t("diseasePage.item7Em")}</em>
+                  {t("diseasePage.item7Body2")}
+                </li>
+              ) : null}
             </ul>
             <p>{t("diseasePage.closing")}</p>
           </section>
@@ -346,15 +351,21 @@ export function AboutView({ onNav }: AboutViewProps) {
             </ol>
           </section>
 
-          <section id="privacy" className="about__sec">
-            <h2 className="about__h2">{t("privacy.heading")}</h2>
-            <p>
-              {t("privacy.p1Text1")}
-              <b>{t("privacy.p1Bold")}</b>
-              {t("privacy.p1Text2")}
-            </p>
-            <p>{t("privacy.p2")}</p>
-          </section>
+          {/* Describes the de-identification pipeline for the case-context panel.
+              That feature is switched off (MY_CASE_ENABLED), so this section was
+              explaining a privacy mechanism nobody could reach — a promise about
+              machinery that is not running. It comes back with the feature. */}
+          {MY_CASE_ENABLED ? (
+            <section id="privacy" className="about__sec">
+              <h2 className="about__h2">{t("privacy.heading")}</h2>
+              <p>
+                {t("privacy.p1Text1")}
+                <b>{t("privacy.p1Bold")}</b>
+                {t("privacy.p1Text2")}
+              </p>
+              <p>{t("privacy.p2")}</p>
+            </section>
+          ) : null}
 
           <section id="not" className="about__sec">
             <h2 className="about__h2">{t("not.heading")}</h2>

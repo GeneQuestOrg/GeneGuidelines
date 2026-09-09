@@ -130,9 +130,9 @@
   "how": {
     "heading": "Jak to działa",
     "p1": "To nie kolejny medyczny chatbot. Platforma opiera się na powtarzalnych, weryfikowalnych procesach: każde zalecenie jest zakotwiczone w PMID, a każda zmiana zostaje zachowana jako datowana różnica względem wskazanego akapitu — widać więc, co się zmieniło, kiedy i która praca to zmieniła. Klinicyści mogą ocenić każdą z tych zmian.",
-    "p2Text1": "Działa na modelu ",
-    "p2Bold": "Gemma 4",
-    "p2Text2": ", modelu otwartym. Siła nie tkwi w większym modelu — tkwi w inżynierii promptów opartej na prawdziwych ścieżkach diagnostycznych (takich jak ta powyżej) oraz w systemie, który wyostrza się z każdą oceną klinicysty i każdym zanonimizowanym przypadkiem rodziny, jaki napotka. W planach jest dostrajanie (fine-tuning) osobno dla każdej choroby na tym gromadzącym się sygnale.",
+    "p2Text1": "Różne zadania dostają różne modele. Ranking prac, klasyfikacja typu publikacji i przesiew lekarzy chodzą na ",
+    "p2Bold": "Gemmie 4",
+    "p2Text2": ", modelu otwartym — to praca masowa, gdzie otwarty model wystarcza. Pisanie wytycznej to co innego: podsumowania, które czytasz, tworzy model frontier, bo zmierzyliśmy różnicę i była duża. Siła nie leży w żadnym pojedynczym modelu — leży w promptach opartych na prawdziwych ścieżkach diagnostycznych (takich jak ta powyżej), w tym, że każdy akapit jest zakotwiczony w nazwanym źródle, i w systemie, który wyostrza się z każdą oceną klinicysty.",
     "p3Text1": "Dwie warstwy działają równolegle. ",
     "p3Bold1": "Oficjalny konsensus",
     "p3Text2": " — tam, gdzie istnieje (np. Boyce et al. 2019 dla FD/MAS) — jest prawdą podstawową. Obok niego ",

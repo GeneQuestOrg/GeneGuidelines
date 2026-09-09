@@ -130,9 +130,9 @@
   "how": {
     "heading": "How it works",
     "p1": "This is not another medical chatbot. The platform runs on reproducible, reviewable workflows: every recommendation is anchored to a PMID, and every change is kept as a dated diff against a named paragraph — so you can see what changed, when, and which paper moved it. Clinicians can rate any of those changes.",
-    "p2Text1": "It runs on ",
+    "p2Text1": "Different jobs get different models. Ranking papers, classifying publication types and screening doctors run on ",
     "p2Bold": "Gemma 4",
-    "p2Text2": ", an open model. The strength is not a bigger model — it is prompt engineering grounded in real diagnostic journeys (like the one above), and a system that sharpens with every clinician rating and anonymised family case it sees. Per-disease fine-tuning on that accumulating signal is on the roadmap.",
+    "p2Text2": ", an open model — that is high-volume work where an open model is enough. Writing a guideline does not: the summaries you read are produced by a frontier model, because we measured the difference and it was large. The strength is not any one model — it is prompt engineering grounded in real diagnostic journeys (like the one above), every paragraph anchored in a named source, and a system that sharpens with every clinician rating it sees.",
     "p3Text1": "Two layers run side by side. ",
     "p3Bold1": "Official consensus",
     "p3Text2": " — where one exists (e.g. Boyce et al. 2019 for FD/MAS) — is the ground truth. Alongside it, a ",

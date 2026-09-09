@@ -4,7 +4,7 @@
 
 Not a chatbot over a pile of papers. Not a static PDF that goes stale in months. A **living, audit-trailed layer** that turns *"the knowledge existed but never reached the doctor making the decision"* into a page a parent can print and bring to the visit — and that, for the first time, keeps a rare-disease guideline moving between the rare consensus updates that take [**~9 years**](https://pubmed.ncbi.nlm.nih.gov/39592333/) to land.
 
-Powered by **Gemma 4** · 7 disease entities · PMID-grounded · `CC-BY 4.0`
+Open model for the volume, frontier model for the writing · 7 disease entities · every paragraph anchored in a named source · `CC-BY 4.0`
 
 ```bash
 docker compose up --build      # → http://localhost:5173
@@ -14,7 +14,7 @@ docker compose up --build      # → http://localhost:5173
 
 The reason this works is that the same engine serves three people at once, and each one *gives* something the others need:
 
-- **A parent, just handed a diagnosis,** gets a map of what they didn't know to ask — the stage-by-stage pathway, red flags, ready-made questions for the visit, and a geo-ranked directory of doctors who have *actually treated this disease*. If their disease is not in the catalogue yet, they can start the AI research for it themselves.
+- **A parent, just handed a diagnosis,** gets a map of what they didn't know existed: what the guidelines cover, which presentation each listed doctor actually handles, and where to find trials and foundations. What they deliberately do **not** get is advice. We do not tell a family what to do or when to seek a second opinion — that is a recommendation, and the point is to send them to a clinician better prepared, not to replace one. If their disease is not in the catalogue yet, they can start the AI research for it themselves.
 - **A first-contact or "in-between" clinician** — the endocrinologist or orthopaedist who meets this entity once a year and decides outside their core — gets the official guideline plus the AI's proposed updates, and rates each one *useful / not useful* in a couple of minutes.
 - **A specialist or consortium** gets a running, cited diff since the last consensus — *"N new papers, 3 may change a recommendation, here's the provenance"* — ready material for the next guideline version.
 
@@ -29,7 +29,7 @@ Every recommendation carries an explicit epistemic level, so no one confuses con
 - [Why we built this](#why-we-built-this)
 - [How it works](#how-it-works)
 - [Why every clinician signal counts twice](#why-every-clinician-signal-counts-twice)
-- [Why Gemma 4](#why-gemma-4)
+- [Which model does what](#which-model-does-what)
 - [The people backing it](#the-people-backing-it)
 - [Run it locally](#run-it-locally)
 - [Architecture](#architecture)
@@ -67,9 +67,17 @@ The path to AI that genuinely helps rare-disease patients runs through **trusted
 
 We intend that record (the **audit corpus**) to feed the training and alignment of future medical models, openly and with contributors credited. Because provenance and attribution are built in — no anonymous mass-aggregation — the corpus can be released later without retroactive data-hygiene work. Every signal counts twice: once for the patient on the page, once for the model that learns from the trace.
 
-## Why Gemma 4
+## Which model does what
 
-Three properties of the Gemma 4 family decide the architecture, not the marketing:
+Jobs of different shapes get models of different sizes, and the split is measured
+rather than assumed. Ranking papers, classifying publication types and screening
+doctors run on **Gemma 4** — high-volume work an open model handles well. Writing a
+guideline does not: those summaries are produced by a frontier model, because the
+difference was measured on a real disease and it was large (one source cited versus
+seven, and a claim about the limits of histology that the smaller model missed
+entirely).
+
+Three properties of Gemma 4 still decide the volume half of the architecture:
 
 1. **Edge-deployable.** The E4B variant runs on a clinician's laptop or a hospital server, which is what makes a private-document path possible at all: parse and PII-strip locally into a structured `RedactedFacts` JSON, and let the synthesis model see only de-identified facts. We built that path and then **switched it off** (`MY_CASE_ENABLED`), because this deployment runs Gemma 4 at a hosted provider outside the EU — so the property the design depends on did not hold in production. It comes back when the redaction model runs in the EU, and not before.
 2. **Cost profile that fits a foundation.** A real living-guideline workflow triages thousands of documents a month per disease. Running Gemma 4 on the operator's own hardware (or a flat-rate endpoint) keeps that volume affordable, which keeps the evidence horizon long — a token-priced API would force exactly the triage shortcuts the architecture is built to avoid.
