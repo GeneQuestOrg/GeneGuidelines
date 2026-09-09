@@ -49,6 +49,28 @@
         "publisher": { "@type": "Organization", "name": "GeneQuest Foundation", "url": "https://genequest.org/" }
       }
     </script>
+    <!--
+      Analytics: self-hosted Umami, same instance as genequest.org (cookieless, so no
+      consent banner). The product has shipped for months with no measurement at all —
+      a diagnosis from July that stayed true: the foundation site knows it gets ~22
+      visitors a month, and nobody knows whether anyone reaches the product itself.
+
+      Needs its OWN website id (a separate property in the Umami panel — reusing the
+      foundation's would mix two sites into one number). Set VITE_UMAMI_WEBSITE_ID at
+      build time; with it unset the script is simply not injected, which is why this
+      can ship before the property exists.
+    -->
+    <script type="module">
+      const websiteId = import.meta.env.VITE_UMAMI_WEBSITE_ID;
+      if (import.meta.env.PROD && websiteId) {
+        const s = document.createElement("script");
+        s.defer = true;
+        s.src =
+          "https://umami.blacktree-a28e1549.polandcentral.azurecontainerapps.io/script.js";
+        s.dataset.websiteId = websiteId;
+        document.head.appendChild(s);
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>
