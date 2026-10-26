@@ -30,3 +30,7 @@ plans/*.md
 !plans/README.md
 !plans/checklist.md
 .gstack/
+
+# Local cluster credentials — never commit
+kubeconfig*
+*.kubeconfig
