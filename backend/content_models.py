@@ -6,6 +6,11 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+try:
+    from .doctor_axis import is_clinical_entry
+except ImportError:  # pragma: no cover - flat-layout import shim
+    from doctor_axis import is_clinical_entry  # type: ignore[no-redef]
+
 # Recency bands for "is this person on top of the disease RIGHT NOW" — the signal a family
 # needs (a mis-diagnosis is corrected by someone currently active, not merely titled). Derived
 # from the newest publication year the profile carries; ``unknown`` when no year is present.
@@ -327,6 +332,12 @@ class PublicDoctorResponse(BaseModel):
     contact: str = "form"
     source: str = "content_seed"
     executionId: str | None = None
+    # ``YYYY-MM-DD`` of the event that produced this row — the doctor_finder run that
+    # searched the literature, or the day a family submitted the entry. Never a deploy or
+    # request time, and ``None`` (render nothing) when no such event left a timestamp: a
+    # curated seed row has no date, and inventing one would be worse than having none.
+    # NOT a review date — nobody has checked these entries (ADR 008).
+    dataAsOf: str | None = None
     # Author-identity disambiguation confidence for doctor_finder rows: "high"
     # (ORCID, or curated-seed match), "medium" (PubMed author-id / consistent
     # name cluster), "low" (initials-only / collision-shaped). None for plain
@@ -351,6 +362,11 @@ class PublicDoctorResponse(BaseModel):
     # and a patient-facing availability signal.
     clinicalSpecialties: list[ClinicalSpecialtyResponse] = Field(default_factory=list)
     reachability: Literal["sees_patients", "expert_reachable", "unknown"] = "unknown"
+    # Which axis this entry sits on (see ``backend/doctor_axis.py``). Derived below from the
+    # same predicate that decides what the directory lists, so a profile page can never
+    # describe a person differently from the listing that did or did not include them.
+    # ``research_author`` = found by authorship alone; not offered as a doctor to go to.
+    listedAs: Literal["clinician", "research_author"] = "clinician"
 
     @model_validator(mode="after")
     def _derive_directory_defaults(self) -> "PublicDoctorResponse":
@@ -380,6 +396,26 @@ class PublicDoctorResponse(BaseModel):
         if self.recencyBand == "unknown":
             basis = self.lastCentralPaperYear or self.lastPaperYear
             self.recencyBand = recency_band_for_year(basis)
+        # Always recomputed, never trusted from the input: a producer that forgot to set it
+        # would otherwise publish a research author under the default "clinician".
+        self.listedAs = (
+            "clinician"
+            if is_clinical_entry(
+                {
+                    "specialty": self.specialty,
+                    "reachability": self.reachability,
+                    "clinicalSpecialties": [
+                        {
+                            "canonicalCode": s.canonicalCode,
+                            "labelEn": s.labelEn,
+                            "confidence": s.confidence,
+                        }
+                        for s in self.clinicalSpecialties
+                    ],
+                }
+            )
+            else "research_author"
+        )
         return self
 
 

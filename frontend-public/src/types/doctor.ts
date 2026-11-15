@@ -179,6 +179,12 @@ export interface PublicDoctor {
   readonly contact: string;
   readonly source?: string;
   readonly executionId?: string | null;
+  /**
+   * `YYYY-MM-DD` of the event that produced this entry — the literature search that found
+   * the doctor, or the day a family submitted them. Null/absent for a hand-curated row,
+   * which has no event to date. Never a review date: nobody has checked these entries.
+   */
+  readonly dataAsOf?: string | null;
   /** How certain we are this profile is one real person (ORCID > name match). */
   readonly identityConfidence?: "high" | "medium" | "low" | null;
   // draft9 directory fields. Optional on the type so fixtures and older API responses stay
@@ -198,6 +204,13 @@ export interface PublicDoctor {
   readonly clinicalSpecialties?: readonly ClinicalSpecialty[];
   /** Patient-facing availability signal; "expert_reachable" is never hidden by the "sees patients" toggle. */
   readonly reachability?: Reachability;
+  /**
+   * Which axis the entry sits on, decided by the backend (`backend/doctor_axis.py`) with the
+   * same predicate that decides what the directory lists. `"research_author"` means the entry
+   * exists because the person co-authored a paper about the condition — reachable by direct
+   * link, never offered as a doctor to go to.
+   */
+  readonly listedAs?: "clinician" | "research_author";
 }
 
 export interface DiseaseDoctorsPayload {

@@ -98,5 +98,9 @@
     "submit": "Zapisz rekomendację",
     "disclaimerLive": "Wysłano do moderacji — Twój wpis pojawi się publicznie, gdy recenzent go zatwierdzi.",
     "disclaimerLocal": "Na razie zapisane tylko na tym urządzeniu. Publikacja wymaga moderacji, która zacznie działać po uruchomieniu kont."
+  },
+  "researchAuthor": {
+    "title": "Wpis autorski, nie lekarz do umówienia",
+    "body": "Ten wpis istnieje, bo ta osoba jest współautorką publikacji o tej chorobie. Nie mamy potwierdzenia, że przyjmuje pacjentów ani jaką ma specjalizację, więc nie pokazujemy jej w wyszukiwarce specjalistów. Nic tutaj nie mówi, że leczy tę chorobę."
   }
 }

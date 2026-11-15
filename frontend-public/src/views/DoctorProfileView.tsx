@@ -139,6 +139,16 @@ export function DoctorProfileView({ slug, userLoc, onNav }: DoctorProfileViewPro
   return (
     <section className="page page--doctor">
       <SpecialistDisclaimer />
+      {/* Reached only by a direct link: the directory stopped listing research-axis
+          entries, but the profile URL still resolves (shared links, and the courtesy mail
+          that points a person at their own entry). Say plainly why they are here, so
+          nobody reads a paper co-author as a clinic to call. */}
+      {doctor.listedAs === "research_author" ? (
+        <aside className="dprofile__disclaimer" role="note">
+          <strong>{t("researchAuthor.title")}</strong>
+          <p>{t("researchAuthor.body")}</p>
+        </aside>
+      ) : null}
       <div className="dprofile__hero">
         <div className="dprofile__hero-top">
           <div>

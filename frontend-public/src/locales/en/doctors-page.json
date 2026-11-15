@@ -6,7 +6,7 @@
     "listAndMap": "List and map",
     "mapOnly": "Map only"
   },
-  "lead": "Factual signals, not our opinion. We don't divide doctors into trusted and the rest — we show what's documented: publications, guideline authorship, recent activity, and what other families report.",
+  "lead": "Factual signals, not our opinion. We don't divide doctors into trusted and the rest — we show what's documented: publications, guideline authorship, recent activity, and what other families report. A doctor is listed once a registry or a person has confirmed what they practise; co-authoring a paper about the condition is not, on its own, enough.",
   "addDoctorCta": {
     "openModal": "Recommend a doctor we're missing",
     "signIn": "Sign in to recommend a doctor we're missing"
@@ -71,7 +71,8 @@
     "unknownDiseaseYet": "yet.",
     "startResearchRun": "Start a research run",
     "unknownDiseaseTail": "to build the evidence base for this condition.",
-    "noMatches": "No specialists match the current filters. Try a different role, source, or distance filter."
+    "noMatches": "No specialists match the current filters. Try a different role, source, or distance filter.",
+    "noConfirmedClinicians": "Nobody is listed for this condition yet whose clinical specialty we could confirm. The research we have found on it is on the condition's own page — authors of those papers are not listed here as doctors to go to."
   },
   "provenance": {
     "lead": "Profiles are built from public sources (PubMed, clinic websites) and family reports. A profile can be withdrawn at any time — write to"
@@ -117,5 +118,9 @@
     "howFoundLabel": "How did you reach them?",
     "howFoundPlaceholder": "For example: referred by another doctor, suggested by a parent in a group, found by our own searching.",
     "howFoundHint": "For a rare disease, the route to the right doctor is the hardest knowledge to come by and no registry holds it. We are not asking who got it wrong."
+  },
+  "dataAsOf": {
+    "forDisease": "Doctor data for {{disease}}: collected by a literature search on {{date}}. That is when it was gathered — not a date anyone verified these entries.",
+    "directory": "Doctor data is gathered one condition at a time; the most recent search ran on {{date}}. That is when it was gathered — not a date anyone verified these entries."
   }
 }

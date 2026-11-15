@@ -14,6 +14,7 @@ import { TrialsList } from "./TrialsList";
 import { CompactSourceShelf } from "./guidelines/CompactSourceShelf";
 import { useContentPrs } from "../hooks/useContentPrs";
 import { useDiseaseDoctors } from "../hooks/useDiseaseDoctors";
+import { useGuidelineSynthesis } from "../hooks/useGuidelineSynthesis";
 import { useDiseaseFoundations } from "../hooks/useDiseaseFoundations";
 import { useDiseaseTherapies } from "../hooks/useDiseaseTherapies";
 import { useDiseaseTrials } from "../hooks/useDiseaseTrials";
@@ -23,6 +24,7 @@ import {
   attachDoctorDistances,
   sortDoctorsByDistanceThenScore,
 } from "../utils/doctorSort";
+import { formatDataDate, newestDataAsOf } from "../utils/dataFreshness";
 import "../styles/disease-page.css";
 import "../styles/doctors.css";
 
@@ -56,7 +58,7 @@ export function DiseaseTabs({
   relatedLoading,
   onNav,
 }: DiseaseTabsProps) {
-  const { t } = useTranslation("common");
+  const { t, i18n } = useTranslation("common");
   const [tab, setTab] = useState<DiseaseTabId>("overview");
   const slug = disease.slug;
   const { openPrs, loading: prsLoading, error: prsError } = useContentPrs(slug);
@@ -81,6 +83,22 @@ export function DiseaseTabs({
     error: foundationsError,
   } = useDiseaseFoundations(slug);
   const { docs: sourceDocs } = useSourceShelf(slug);
+  // Fetched here only for its write date — the one honest answer to "how old is what I am
+  // reading". Small payload, and the alternative (the guideline document's `lastReviewed`)
+  // dates a different artefact under a word that would read as clinical sign-off.
+  const { synthesis } = useGuidelineSynthesis(slug);
+
+  // Both dates come from a recorded event: the literature search behind the doctor rows,
+  // and the day the summary was written. Null means no such event is on record, and the
+  // page then says nothing rather than implying a freshness it cannot evidence.
+  const doctorsAsOf = useMemo(
+    () => formatDataDate(newestDataAsOf(doctorsPayload?.doctors ?? []), i18n.language),
+    [doctorsPayload, i18n.language],
+  );
+  const guidelineAsOf = useMemo(
+    () => formatDataDate(synthesis?.lastUpdated ?? null, i18n.language),
+    [synthesis, i18n.language],
+  );
 
   // Parent-only copy blocks. Clinician copy omits `orientation`.
   const orientation = isClinician ? undefined : copy.orientation;
@@ -127,6 +145,11 @@ export function DiseaseTabs({
                 sub={copy.doctorsSub(disease.doctorsCount)}
               >
                 <SpecialistDisclaimer />
+                {doctorsAsOf != null ? (
+                  <p className="d-panel-note">
+                    {t("dataAsOf.doctors", { date: doctorsAsOf })}
+                  </p>
+                ) : null}
                 <div className="d-doctors-preview">
                   {previewDoctors.slice(0, 3).map((doctor) => (
                     <DoctorCard
@@ -265,6 +288,9 @@ export function DiseaseTabs({
         {tab === "doctors" ? (
           <Section title={copy.doctorsTitle}>
             <p className="d-panel-stat">{copy.doctorsSub(disease.doctorsCount)}</p>
+            {doctorsAsOf != null ? (
+              <p className="d-panel-note">{t("dataAsOf.doctors", { date: doctorsAsOf })}</p>
+            ) : null}
             <div className="page__actions">
               <Button variant="primary" type="button" onClick={() => onNav(`/doctors?disease=${slug}`)}>
                 {isClinician
@@ -341,6 +367,9 @@ export function DiseaseTabs({
         {tab === "guidelines" ? (
           <Section title={copy.guidelinesTitle} sub={copy.guidelinesSub}>
             <p className="d-panel-stat">{copy.openPrsSub(disease.openPRs)}</p>
+            {guidelineAsOf != null ? (
+              <p className="d-panel-note">{t("dataAsOf.guideline", { date: guidelineAsOf })}</p>
+            ) : null}
             <div className="page__actions">
               <Button variant="primary" type="button" onClick={() => onNav(`/diseases/${slug}/guidelines`)}>
                 {copy.synthesisCta}

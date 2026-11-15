@@ -33,6 +33,7 @@ import {
   WORK_TYPE_ORDER,
   type WorkType,
 } from "../utils/doctorLabels";
+import { formatDataDate, newestDataAsOf } from "../utils/dataFreshness";
 import "../styles/doctors.css";
 
 export interface DoctorsViewProps {
@@ -49,7 +50,7 @@ const RECENCY_FILTER_ALL = "all";
 type ViewMode = "both" | "list" | "map";
 
 export function DoctorsView({ search, onNav }: DoctorsViewProps) {
-  const { t } = useTranslation("doctors-page");
+  const { t, i18n } = useTranslation("doctors-page");
   const { doctors, loading, error } = useDoctors();
   const { diseases, loading: diseasesLoading } = useDiseaseCatalog();
   const account = useAccountContext();
@@ -196,18 +197,31 @@ export function DoctorsView({ search, onNav }: DoctorsViewProps) {
       if (d.country && /^[A-Z]{2}$/.test(d.country)) countries.add(d.country);
       if (d.reachability === "sees_patients") seesPatients += 1;
     }
-    const ratio = scoped.length > 0 ? withSpecialty / scoped.length : 0;
+    const scopedCount = scoped.length;
+    const ratio = scopedCount > 0 ? withSpecialty / scopedCount : 0;
     // Threshold intentionally low (5%) for a rare disease: even a handful of verified surgeons is
     // exactly the value we want to expose, and every specialty shown is individually honest
     // (source badge). Set >0 so a disease with zero clinical data hides the facet entirely.
     const ready = withSpecialty >= 3 || ratio >= 0.05;
     return {
       ready,
+      scopedCount,
       groups: [...groups].sort(),
       countries: [...countries].sort(),
       seesPatients,
     };
   }, [doctors, activeDiseaseSlug]);
+
+  // When the rows on this page were gathered. Measured over the disease-scoped set BEFORE
+  // the facets, so narrowing a filter never appears to change how fresh the data is. Null
+  // (render nothing) when no row carries a real date — a date we cannot prove is worse
+  // than no date at all.
+  const dataAsOfLabel = useMemo(() => {
+    const scoped = doctors.filter(
+      (d) => !activeDiseaseSlug || d.diseases.includes(activeDiseaseSlug),
+    );
+    return formatDataDate(newestDataAsOf(scoped), i18n.language);
+  }, [doctors, activeDiseaseSlug, i18n.language]);
 
   // Count of active "advanced" filters so we can badge the disclosure trigger.
   const advancedActiveCount = useMemo(() => {
@@ -289,6 +303,16 @@ export function DoctorsView({ search, onNav }: DoctorsViewProps) {
           </div>
         </div>
         <p className="page__lead">{t("lead")}</p>
+        {dataAsOfLabel != null ? (
+          <p className="doctors-provenance">
+            {activeDiseaseLabel != null
+              ? t("dataAsOf.forDisease", {
+                  disease: activeDiseaseLabel,
+                  date: dataAsOfLabel,
+                })
+              : t("dataAsOf.directory", { date: dataAsOfLabel })}
+          </p>
+        ) : null}
         <AddDoctorCta
           account={account}
           onOpen={() => setAddDoctorOpen(true)}
@@ -536,6 +560,12 @@ export function DoctorsView({ search, onNav }: DoctorsViewProps) {
                     </button>{" "}
                     {t("empty.unknownDiseaseTail")}
                   </p>
+                ) : clinical.scopedCount === 0 ? (
+                  // The directory only carries people whose specialty someone confirmed, so
+                  // "nothing here" can mean we have none for this condition rather than that
+                  // the filters are too narrow. Telling a parent to widen a filter that would
+                  // change nothing sends them hunting for a list that does not exist.
+                  <p className="d-panel-empty">{t("empty.noConfirmedClinicians")}</p>
                 ) : (
                   <p className="d-panel-empty">{t("empty.noMatches")}</p>
                 )

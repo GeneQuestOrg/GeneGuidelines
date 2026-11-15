@@ -34,7 +34,7 @@ from ..doctor_catalog import (
     effective_public_doctor_count_for_disease,
     get_doctor_by_slug,
     get_doctors_for_disease,
-    list_all_doctors,
+    list_public_doctors,
     public_doctor_counts_by_slug,
     total_distinct_public_doctor_profiles,
 )
@@ -172,8 +172,14 @@ async def get_all_doctors(
 
     Returns the whole directory by default (the search page filters client-side);
     ``limit``/``offset`` are there for callers that want to page instead.
+
+    "Directory" means the clinical axis only — somebody other than PubMed has to say a
+    person is a clinician before a newly diagnosed family is pointed at them. There is
+    deliberately no parameter that turns that off: this response is what the foundation
+    links families to, and what every other reader (site, crawler, assistant) copies.
+    Research-axis records are still in the catalog and still reachable per profile.
     """
-    rows = await _run_sync(list_all_doctors)
+    rows = await _run_sync(list_public_doctors)
     if offset:
         rows = rows[offset:]
     if limit is not None:

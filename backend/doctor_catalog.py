@@ -6,12 +6,14 @@ import json
 import re
 import threading
 import unicodedata
+from datetime import date
 from pathlib import Path
 from typing import Any, Literal
 
 try:
     from .config import BACKEND_DIR
     from .content_db import get_disease_by_slug, list_diseases_catalog, normalize_disease_slug
+    from .doctor_axis import clinical_entries
     from .doctor_geo_coords import coords_for_city_country, resolve_location
     from .doctor_scope import derive_scope
     from .ern_membership import memberships_for
@@ -19,6 +21,7 @@ try:
 except ImportError:
     from config import BACKEND_DIR
     from content_db import get_disease_by_slug, list_diseases_catalog, normalize_disease_slug
+    from doctor_axis import clinical_entries
     from doctor_geo_coords import coords_for_city_country, resolve_location
     from doctor_scope import derive_scope
     from ern_membership import memberships_for
@@ -119,12 +122,34 @@ def _decode_stored_text(text: str) -> str:
     return html.unescape(text)
 
 
+def as_of_date(value: Any) -> str | None:
+    """A stored timestamp reduced to the calendar date it happened on, or None.
+
+    The only dates this directory may show are the ones a real event left behind — a
+    doctor_finder run, a family's submission. So this accepts an ISO timestamp (the shape
+    every producer writes) and returns its ``YYYY-MM-DD`` head; anything else, including
+    an empty string or a free-text date, becomes None and the page shows nothing. Showing
+    a wrong date about medical data is worse than showing none, and truncating to the day
+    also stops an hour-precise timestamp implying the catalog is watched continuously.
+    """
+    text = str(value or "").strip()
+    if len(text) < 10:
+        return None
+    head = text[:10]
+    try:
+        date.fromisoformat(head)
+    except ValueError:
+        return None
+    return head
+
+
 def _entry_to_public_doctor(
     entry: dict[str, Any],
     *,
     diseases: list[str],
     source: str,
     execution_id: str | None = None,
+    data_as_of: str | None = None,
 ) -> dict[str, Any]:
     flags = entry.get("flags") or {}
     if not isinstance(flags, dict):
@@ -242,6 +267,10 @@ def _entry_to_public_doctor(
         "contact": "form",
         "source": source,
         "executionId": execution_id,
+        # When the run that produced this row gathered its data. Carried per row rather
+        # than per response: the directory mixes diseases researched months apart, so one
+        # "catalog updated" date for all of them would overstate the oldest.
+        "dataAsOf": as_of_date(data_as_of),
         "identityConfidence": str(entry.get("identity_confidence") or "low"),
     }
 
@@ -522,6 +551,13 @@ def _merge_public_doctor_rows(
         "rodo": rodo,
         "parentRecs": parent_recs,
         "reviewStatus": review_status,
+        # Newest of the two inputs: a merged row is as current as the most recent thing
+        # that touched it. ``None`` when neither side carries a real timestamp (a curated
+        # seed row changes only when someone edits the file, which leaves no date behind).
+        "dataAsOf": max(
+            filter(None, (as_of_date(seed.get("dataAsOf")), as_of_date(finder.get("dataAsOf")))),
+            default=None,
+        ),
     }
 
 
@@ -808,6 +844,8 @@ def _submission_to_public_doctor(submission: Any) -> dict[str, Any]:
         "contact": "form",
         "source": "content_seed",
         "executionId": None,
+        # A family submission is as of the day the family sent it.
+        "dataAsOf": as_of_date(getattr(submission, "created_at", None)),
         "parentRecs": [],
         "reviewStatus": None,
     }
@@ -918,6 +956,7 @@ def _public_doctors_from_finder_report(
     report: dict[str, Any],
     *,
     execution_id: str | None,
+    data_as_of: str | None = None,
 ) -> list[dict[str, Any]] | None:
     authors = report.get("top_authors") or []
     if not isinstance(authors, list) or not authors:
@@ -928,6 +967,7 @@ def _public_doctors_from_finder_report(
             diseases=[disease_slug],
             source="doctor_finder",
             execution_id=execution_id or None,
+            data_as_of=data_as_of,
         )
         for entry in authors
         if isinstance(entry, dict)
@@ -950,11 +990,17 @@ def _build_finder_docs_index() -> dict[str, list[dict[str, Any]] | None]:
         from doctor_finder_store import load_successful_reports_for_catalog_index
 
     index: dict[str, list[dict[str, Any]] | None] = {}
-    for slug, (eid, report, _started) in load_successful_reports_for_catalog_index().items():
+    for slug, (eid, report, started) in load_successful_reports_for_catalog_index().items():
         index[slug] = _public_doctors_from_finder_report(
             slug,
             report,
             execution_id=eid or None,
+            # The run's own start time, straight from the persisted snapshot. Not the
+            # deploy, not the request: the moment this disease's literature was actually
+            # searched. ``started_at`` rather than ``finished_at`` because a re-persist of
+            # the same execution re-stamps the latter, and a date must not move without
+            # the data moving.
+            data_as_of=started,
         )
     return index
 
@@ -1032,6 +1078,10 @@ def get_doctors_for_disease(disease_slug: str) -> dict[str, Any]:
         return {"diseaseSlug": disease_slug, "source": "none", "doctors": []}
 
     source, doctors = _merged_doctors_for_catalog_slug(normalized, _finder_docs_index())
+    # A publication co-author is not a doctor to send a family to (see doctor_axis).
+    # Applied before the enrichment below, which is per-row work we owe only to rows
+    # that will actually be shown.
+    doctors = clinical_entries(doctors)
     # Which presentation each doctor handles, derived from what the record already
     # holds. Computed here, after the merge, so seeded and pipeline-found doctors are
     # described the same way — and so it stays a pure function of stored data rather
@@ -1087,6 +1137,10 @@ def public_doctor_counts_by_slug(slugs: list[str] | tuple[str, ...]) -> dict[str
 
     Used by GET /api/diseases so listing the catalog does not re-read the seed
     file and rebuild the finder index once per disease row.
+
+    Counts exactly what GET /api/diseases/{slug}/doctors will return — clinical-axis rows
+    only. A disease card promising hundreds of specialists over a tab that lists a dozen
+    would be its own lie, and the two numbers come from the same merge for that reason.
     """
     finder_index = _finder_docs_index()
     seeded_docs = _load_content_doctors_file()
@@ -1100,13 +1154,13 @@ def public_doctor_counts_by_slug(slugs: list[str] | tuple[str, ...]) -> dict[str
             finder_index,
             seeded_docs=seeded_docs,
         )
-        counts[normalized] = len(doctors)
+        counts[normalized] = len(clinical_entries(doctors))
     return counts
 
 
 def total_distinct_public_doctor_profiles() -> int:
     """Distinct specialist profile slugs across all diseases (union for home-page stats)."""
-    return len(list_all_doctors())
+    return len(list_public_doctors())
 
 
 def _merge_global_doctor_entries(a: dict[str, Any], b: dict[str, Any]) -> dict[str, Any]:
@@ -1182,6 +1236,18 @@ def list_all_doctors() -> list[dict[str, Any]]:
         _ALL_DOCTORS_CACHE = [_apply_approved_recs(doc) for doc in by_slug.values()]
         _ALL_DOCTORS_CACHE_VERSION = version
         return _ALL_DOCTORS_CACHE
+
+
+def list_public_doctors() -> list[dict[str, Any]]:
+    """The directory a family is shown: clinical-axis rows only (see ``doctor_axis``).
+
+    Separate from :func:`list_all_doctors`, which stays complete on purpose — profile
+    deep-links must keep resolving and the duplicate check behind family submissions has
+    to see every row it might collide with. The cut is made here, at the one boundary
+    every public listing goes through, so no caller and no query parameter can re-admit a
+    row whose only claim to being a doctor is that they co-signed a paper.
+    """
+    return clinical_entries(list_all_doctors())
 
 
 def get_doctor_by_slug(slug: str) -> dict[str, Any] | None:

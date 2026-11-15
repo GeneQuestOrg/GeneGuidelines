@@ -94,5 +94,9 @@
     "submit": "Save recommendation",
     "disclaimerLive": "Submitted for moderation — your entry appears publicly once a reviewer approves it.",
     "disclaimerLocal": "Saved on this device for now. Publication requires moderation once accounts launch."
+  },
+  "researchAuthor": {
+    "title": "Listed as an author, not as a doctor to go to",
+    "body": "This entry exists because this person co-authored published research on the condition. We have no confirmation that they see patients or what they practise, so they are not shown in the specialist search. Nothing here says they treat this condition."
   }
 }

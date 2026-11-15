@@ -6,7 +6,7 @@
     "listAndMap": "Lista i mapa",
     "mapOnly": "Tylko mapa"
   },
-  "lead": "Fakty, nie nasza opinia. Nie dzielimy lekarzy na zaufanych i resztę — pokazujemy to, co jest udokumentowane: publikacje, współautorstwo wytycznych, aktualną aktywność i to, co zgłaszają inne rodziny.",
+  "lead": "Fakty, nie nasza opinia. Nie dzielimy lekarzy na zaufanych i resztę — pokazujemy to, co jest udokumentowane: publikacje, współautorstwo wytycznych, aktualną aktywność i to, co zgłaszają inne rodziny. Lekarz trafia na listę dopiero wtedy, gdy rejestr albo człowiek potwierdził, co ten lekarz praktykuje; samo współautorstwo pracy o chorobie nie wystarczy.",
   "addDoctorCta": {
     "openModal": "Zarekomenduj lekarza, którego nie mamy na liście",
     "signIn": "Zaloguj się, aby zarekomendować lekarza, którego nie mamy na liście"
@@ -73,7 +73,8 @@
     "unknownDiseaseYet": "— jeszcze nie mamy o niej wpisu.",
     "startResearchRun": "Rozpocznij badanie",
     "unknownDiseaseTail": "aby zbudować bazę dowodów dla tego schorzenia.",
-    "noMatches": "Żaden specjalista nie odpowiada obecnym filtrom. Spróbuj zmienić rolę, źródło lub zasięg odległości."
+    "noMatches": "Żaden specjalista nie odpowiada obecnym filtrom. Spróbuj zmienić rolę, źródło lub zasięg odległości.",
+    "noConfirmedClinicians": "Dla tej choroby nie mamy jeszcze nikogo, czyją specjalizację kliniczną udało się potwierdzić. Badania, które o niej znaleźliśmy, są na stronie samej choroby — autorów tych prac nie pokazujemy tutaj jako lekarzy do umówienia."
   },
   "provenance": {
     "lead": "Profile powstają na podstawie publicznych źródeł (PubMed, strony klinik) oraz zgłoszeń od rodzin. Profil można wycofać w każdej chwili — napisz na"
@@ -119,5 +120,9 @@
     "howFoundLabel": "Jak do niego trafiliście?",
     "howFoundPlaceholder": "Np. skierowanie od innego lekarza, podpowiedź od rodzica z grupy, własne poszukiwania.",
     "howFoundHint": "Droga do właściwego lekarza to przy chorobie rzadkiej najtrudniejsza do zdobycia wiedza — nie ma jej w żadnym rejestrze. Nie pytamy, kto się pomylił."
+  },
+  "dataAsOf": {
+    "forDisease": "Dane o lekarzach dla: {{disease}} — zebrane przez wyszukiwanie literatury {{date}}. To data zebrania danych, a nie data sprawdzenia tych wpisów przez kogokolwiek.",
+    "directory": "Dane o lekarzach zbieramy osobno dla każdej choroby; ostatnie wyszukiwanie: {{date}}. To data zebrania danych, a nie data sprawdzenia tych wpisów przez kogokolwiek."
   }
 }

@@ -477,5 +477,9 @@
     "couldNotLoadSpecialistProfile": "Could not load specialist profile.",
     "failedToLoadTrials": "Failed to load trials.",
     "failedToLoadBibliography": "Failed to load analyzed bibliography."
+  },
+  "dataAsOf": {
+    "doctors": "Doctor data gathered on {{date}} — not a date anyone verified these entries.",
+    "guideline": "This summary was written on {{date}} from the sources it cites. Nobody has signed it off."
   }
 }

@@ -503,5 +503,9 @@
     "couldNotLoadSpecialistProfile": "Nie udało się wczytać profilu specjalisty.",
     "failedToLoadTrials": "Nie udało się wczytać badań klinicznych.",
     "failedToLoadBibliography": "Nie udało się wczytać przeanalizowanej bibliografii."
+  },
+  "dataAsOf": {
+    "doctors": "Dane o lekarzach zebrane {{date}} — to nie jest data sprawdzenia tych wpisów.",
+    "guideline": "To zestawienie powstało {{date}} na podstawie cytowanych w nim źródeł. Nikt go nie zatwierdził."
   }
 }
