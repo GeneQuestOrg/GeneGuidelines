@@ -79,15 +79,15 @@ function links(locale, seo, current) {
 }
 
 /** /diseases/fd — the hub. Facts and signposts; the live data is named, not faked. */
-function fdBody(locale, { seo, common }) {
+function fdBody(locale, { seo, map, common }) {
   return [
     `<h1>${esc(seo.fd.title)}</h1>`,
     p(seo.fd.description),
     `<dl class="ggp-facts">`,
-    `<dt>Gene</dt><dd>GNAS</dd>`,
-    `<dt>OMIM</dt><dd>174800</dd>`,
+    `<dt>${esc(map.factGene)}</dt><dd>GNAS</dd>`,
+    `<dt>${esc(map.factOmim)}</dt><dd>174800</dd>`,
     `</dl>`,
-    note(`${seo.citation}`),
+    note(seo.citation),
     note(common.footer.desc),
     links(locale, seo, "/diseases/fd"),
   ].join("\n");
