@@ -30,7 +30,7 @@
     },
     "phosphate": {
       "name": "Fasting phosphate",
-      "why": "The guideline describes renal phosphate wasting as important to diagnose — it is an important predictor of future fracture risk.",
+      "why": "The guideline describes renal phosphate wasting as important to diagnose — and as a predictor of future fracture risk.",
       "quote": "Abnormal phosphate homeostasis, specifically renal phosphate wasting leading to hypophosphatemia, is important to diagnose as it is an important predictor of future fracture risk, as well as other complications.",
       "when": "When polyostotic disease is suspected; blood drawn fasting.",
       "whenQuote": "In all subjects with suspected polyostotic disease, baseline overnight fasting phosphate levels should be checked."
@@ -69,7 +69,7 @@
     },
     "pituitary": {
       "name": "Pituitary — IGF-1, growth hormone, prolactin",
-      "why": "The guideline lists these three blood measurements for all patients; what they are about is growth hormone excess.",
+      "why": "The guideline lists these three blood measurements for all patients.",
       "quote": "All patients should have a random blood test for IGF-1, growth hormone (GH) and prolactin measurements.",
       "when": "All patients; pituitary MRI where the blood results are abnormal.",
       "whenQuote": "Pituitary MRI is indicated in case of abnormal biochemistry …, although a normal pituitary MRI does not rule out the possibility of GH excess as the affected tissue may not be detectable by MRI."

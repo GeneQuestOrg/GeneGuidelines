@@ -19,18 +19,18 @@
   "quoteLabel": "Wytyczna:",
   "sourceLine": "Źródło wszystkich cytatów: Javaid MK i wsp., Best practice management guidelines for fibrous dysplasia/McCune-Albright syndrome, Orphanet J Rare Dis 2019;14:139 (PMID 31196103). Cytaty pochodzą z sekcji „Diagnosis”, „Histological and genetic characterisation”, „Staging of FD/MAS” oraz „Management of Craniofacial FD”.",
   "authorshipLine": "Listę zestawiła Fundacja GeneQuest na podstawie tej wytycznej; autorzy wytycznej jej nie przeglądali ani nie zatwierdzali.",
-  "safetyLine": "To nie jest porada medyczna ani skierowanie. Co z tej listy dotyczy Waszego dziecka, rozstrzyga lekarz.",
+  "safetyLine": "To nie jest porada medyczna ani skierowanie. Co z tej listy dotyczy Twojego dziecka, rozstrzyga lekarz.",
   "rows": {
     "labs": {
       "name": "Badania krwi — panel kostny",
-      "why": "Panel, który wytyczna wymienia w ocenie wyjściowej: profil nerkowy, fosfataza zasadowa, wodorowęglany, wapń skorygowany albuminą, fosforany, witamina D 25OH, parathormon.",
+      "why": "Panel, który wytyczna wymienia w ocenie wyjściowej: profil nerkowy, fosfataza zasadowa całkowita, wodorowęglany, wapń skorygowany albuminą, fosforany, 25-OH witamina D, parathormon.",
       "quote": "Bone-related laboratory testing … should include a standard biochemistry screen of renal profile, total alkaline phosphatase, bicarbonate, albumin-adjusted serum calcium, phosphate …, 25OH-vitamin D and parathyroid hormone.",
       "when": "Przy rozpoznaniu lub podejrzeniu FD/MAS.",
       "whenQuote": "Staging should be considered at the time of presentation with suspected FD/MAS taking into account age and clinical presentation."
     },
     "phosphate": {
       "name": "Fosfor na czczo",
-      "why": "Utratę fosforanów przez nerki wytyczna opisuje jako ważną do rozpoznania — jest ważnym wskaźnikiem przyszłego ryzyka złamań.",
+      "why": "Utratę fosforanów przez nerki wytyczna opisuje jako ważną do rozpoznania — i jako wskaźnik przyszłego ryzyka złamań.",
       "quote": "Abnormal phosphate homeostasis, specifically renal phosphate wasting leading to hypophosphatemia, is important to diagnose as it is an important predictor of future fracture risk, as well as other complications.",
       "when": "Gdy podejrzewana jest postać wielokostna; krew pobierana na czczo.",
       "whenQuote": "In all subjects with suspected polyostotic disease, baseline overnight fasting phosphate levels should be checked."
@@ -69,7 +69,7 @@
     },
     "pituitary": {
       "name": "Przysadka — IGF-1, hormon wzrostu, prolaktyna",
-      "why": "Wytyczna wymienia te trzy oznaczenia z krwi u wszystkich pacjentów; chodzi o nadmiar hormonu wzrostu.",
+      "why": "Wytyczna wymienia te trzy oznaczenia z krwi u wszystkich pacjentów.",
       "quote": "All patients should have a random blood test for IGF-1, growth hormone (GH) and prolactin measurements.",
       "when": "U wszystkich; MR przysadki — gdy wyniki są nieprawidłowe.",
       "whenQuote": "Pituitary MRI is indicated in case of abnormal biochemistry …, although a normal pituitary MRI does not rule out the possibility of GH excess as the affected tissue may not be detectable by MRI."
@@ -107,7 +107,7 @@
     },
     "gnas": {
       "name": "Badanie genetyczne GNAS",
-      "why": "Wytyczne wymieniają je, gdy rozpoznanie budzi wątpliwości — zwłaszcza przy pojedynczym ognisku w czaszce. Wynik dodatni jest informacją; ujemny z krwi nie wyklucza.",
+      "why": "Wytyczna wymienia je, gdy rozpoznanie budzi wątpliwości — zwłaszcza przy pojedynczym ognisku w czaszce. Wynik dodatni jest informacją; ujemny z krwi nie wyklucza.",
       "quote": "A genetic diagnosis is recommended where the diagnosis is in question. This especially applies to isolated/monostotic lesions in the skull…",
       "when": "Gdy rozpoznanie jest niepewne.",
       "whenQuote": "Use of blood for mutation analysis cannot exclude the diagnosis of monostotic FD, but a positive result is informative."
