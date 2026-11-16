@@ -37,6 +37,7 @@
   "step1AnchorQuote": "„W Warszawie nasz syn miał histopatologię, której wytyczne nie wymagały — i dostał błędną diagnozę. Rozstrzygnęły dopiero tomografia w Olsztynie i badanie GNAS.”",
   "step1CtaConfirm": "Co potwierdzić i w jakiej kolejności",
   "step1CtaQuestions": "Pytania do Twojego lekarza",
+  "step1CtaTests": "Lista badań do wydruku",
   "askTitle": "Zapytaj lekarza",
   "askNote": "Te pytania wynikają wprost z wytycznych. Nie znaczą, że coś poszło nie tak — pomagają sprawdzić, czy obraz jest kompletny.",
   "askQuoteLabel": "Wytyczna:",
@@ -100,6 +101,9 @@
   "step0PredxLedePart3": "— co dalej eksplorować, jakiego specjalistę rozważyć, o co pytać — spisana jako dokument do przedyskutowania z lekarzem.",
   "safetyBold": "Wszystko tutaj to punkt wyjścia do rozmowy z Twoim lekarzem — nie rekomendacja.",
   "safetyBody": "Oficjalne wytyczne pokazujemy wprost; rekomendacje „do rozważenia” i szkice AI zawsze mają etykietę, uzasadnienie i notę „przedyskutuj z lekarzem”. Decyzje podejmuje Twój lekarz — my pomagamy wiedzieć, o co pytać.",
+  "feedbackPart1": "Czego tu brakuje? Napiszcie do nas na",
+  "feedbackEmail": "kontakt@genequest.org",
+  "feedbackPart2": "— to pomaga nam zdecydować, co dopisać.",
   "footerPart1": "— otwarta infrastruktura dla wytycznych w chorobach rzadkich, prowadzona przez GeneQuest Foundation. Każdą decyzję projektową sprawdzamy jednym pytaniem:",
   "footerEm": "czy to pomogłoby naszemu synowi?"
 }

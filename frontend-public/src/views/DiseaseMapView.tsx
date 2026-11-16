@@ -212,6 +212,17 @@ export function DiseaseMapView({ slug, onNav }: DiseaseMapViewProps) {
                     <span className="dmap-btn__arr" aria-hidden>→</span>
                   </a>
                 ) : null}
+                {/* The sheet a family carries into the appointment. FD only —
+                    its rows rest on sentences about fibrous dysplasia. */}
+                {isFd ? (
+                  <a
+                    className="dmap-btn"
+                    href={`/diseases/${slug}/tests`}
+                    onClick={go(`/diseases/${slug}/tests`)}
+                  >
+                    {t("step1CtaTests")}
+                  </a>
+                ) : null}
                 {MY_CASE_ENABLED ? (
                   <a
                     className="dmap-btn"
@@ -408,6 +419,16 @@ export function DiseaseMapView({ slug, onNav }: DiseaseMapViewProps) {
             <b>{t("safetyBold")}</b> {t("safetyBody")}
           </div>
         </div>
+
+        {/* An invitation to write, not a form: collecting addresses would create
+            an obligation the foundation cannot meet yet. */}
+        {isFd ? (
+          <p className="dmap-feedback">
+            {t("feedbackPart1")}{" "}
+            <a href="mailto:kontakt@genequest.org">{t("feedbackEmail")}</a>{" "}
+            {t("feedbackPart2")}
+          </p>
+        ) : null}
 
         <footer className="dmap-foot">
           <b>GeneGuidelines</b> {t("footerPart1")}{" "}

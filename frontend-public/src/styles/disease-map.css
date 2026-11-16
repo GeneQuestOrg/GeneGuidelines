@@ -338,3 +338,18 @@
   color: var(--ink-4);
 }
 .dmap-ask__src { margin: 14px 0 0; font-size: 12.5px; line-height: 1.5; color: var(--ink-4); }
+
+/* ── Feedback invitation ─────────────────────────────────────── */
+/* A plain mailto, deliberately: no form, no address collection, no waiting
+   list. An address the foundation stores is a promise it cannot keep yet. */
+.dmap-feedback {
+  margin: 22px 0 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ink-3);
+}
+.dmap-feedback a {
+  color: var(--accent-ink);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
