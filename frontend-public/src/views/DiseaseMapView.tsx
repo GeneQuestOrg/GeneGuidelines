@@ -6,6 +6,16 @@ import { PlaceholderView } from "./PlaceholderView";
 import { MY_CASE_ENABLED } from "../config/features";
 import "../styles/disease-map.css";
 
+/** Step 1's questions, paired with the guideline sentence each one rests on. */
+const ASK_QUESTIONS: ReadonlyArray<readonly [string, string]> = [
+  ["askQ1", "askS1"],
+  ["askQ2", "askS2"],
+  ["askQ3", "askS3"],
+  ["askQ4", "askS4"],
+  ["askQ5", "askS5"],
+  ["askQ6", "askS6"],
+];
+
 export interface DiseaseMapViewProps {
   readonly slug: string;
   readonly onNav: (path: string) => void;
@@ -150,25 +160,45 @@ export function DiseaseMapView({ slug, onNav }: DiseaseMapViewProps) {
                 {t("step1Hook")}
               </span>
               <h3 className="dmap-step__title">{t("step1Title")}</h3>
-              <p className="dmap-step__lede">
-                {isFd ? (
-                  <>
-                    {t("step1LedeFdPart1")} <b>{t("step1LedeFdBold1")}</b>{" "}
-                    {t("step1LedeFdPart2")} <em>{t("step1LedeFdEm")}</em>{" "}
-                    {t("step1LedeFdPart3")} <b>{t("step1LedeFdBold2")}</b>
-                    {t("step1LedeFdPart4")}
-                  </>
-                ) : (
-                  <>
-                    {t("step1LedeGenericPart1")} <b>{t("step1LedeGenericBold")}</b>{" "}
-                    {t("step1LedeGenericPart2")}
-                  </>
-                )}
-              </p>
+              {isFd ? (
+                <>
+                  <p className="dmap-step__lede">{t("step1LedeFdA")}</p>
+                  <p className="dmap-step__lede">{t("step1LedeFdB")}</p>
+                </>
+              ) : (
+                <p className="dmap-step__lede">
+                  {t("step1LedeGenericPart1")} <b>{t("step1LedeGenericBold")}</b>{" "}
+                  {t("step1LedeGenericPart2")}
+                </p>
+              )}
               {isFd ? (
                 <div className="dmap-anchor">
                   <div className="dmap-anchor__lbl">{t("anchorLabel")}</div>
                   <div className="dmap-anchor__q">{t("step1AnchorQuote")}</div>
+                </div>
+              ) : null}
+
+              {/* Questions, never advice: each one carries the verbatim guideline
+                  sentence it rests on. FD only — the quotes are from the FD/MAS
+                  guideline (Javaid 2019) and say nothing about any other disease. */}
+              {isFd ? (
+                <div className="dmap-ask">
+                  <div className="dmap-ask__hd">{t("askTitle")}</div>
+                  <p className="dmap-ask__note">{t("askNote")}</p>
+                  <ul className="dmap-ask__list">
+                    {ASK_QUESTIONS.map(([qKey, sKey]) => (
+                      <li key={qKey}>
+                        <details className="dmap-ask__item">
+                          <summary className="dmap-ask__q">{t(qKey)}</summary>
+                          <p className="dmap-ask__s">
+                            <span className="dmap-ask__lbl">{t("askQuoteLabel")}</span>{" "}
+                            <q>{t(sKey)}</q>
+                          </p>
+                        </details>
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="dmap-ask__src">{t("askSource")}</p>
                 </div>
               ) : null}
               <div className="dmap-actions">
