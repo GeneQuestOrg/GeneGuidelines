@@ -30,7 +30,7 @@
     },
     "phosphate": {
       "name": "Fasting phosphate",
-      "why": "The guideline describes renal phosphate wasting as important to diagnose, because it carries fracture risk.",
+      "why": "The guideline describes renal phosphate wasting as important to diagnose — it is an important predictor of future fracture risk.",
       "quote": "Abnormal phosphate homeostasis, specifically renal phosphate wasting leading to hypophosphatemia, is important to diagnose as it is an important predictor of future fracture risk, as well as other complications.",
       "when": "When polyostotic disease is suspected; blood drawn fasting.",
       "whenQuote": "In all subjects with suspected polyostotic disease, baseline overnight fasting phosphate levels should be checked."
@@ -44,7 +44,7 @@
     },
     "radiographs": {
       "name": "X-ray of the involved bone in two planes",
-      "why": "Lesions of clinical significance found on whole-body imaging are, in the guideline, imaged with conventional radiographs of the whole bone.",
+      "why": "Lesions of clinical significance found on bone scintigraphy are, in the guideline, imaged with conventional radiographs of the whole bone.",
       "quote": "Areas of clinically significant axial and appendicular FD identified on bone scintigraphy should be imaged with conventional radiographs in two planes of the whole bone.",
       "when": "After whole-body imaging."
     },
@@ -63,13 +63,13 @@
     },
     "thyroid": {
       "name": "Thyroid — TSH, free T4, T3, ultrasound",
-      "why": "The thyroid is one of the extra-skeletal features of FD/MAS; the guideline lists these for all patients.",
+      "why": "The guideline lists these measurements and the ultrasound for all patients — to pick up thyroid involvement consistent with MAS, including without symptoms.",
       "quote": "All patients should have a targeted history and physical examination, measurement of TSH, free T4 & total or free T3 and thyroid ultrasound to characterise subclinical involvement consistent with MAS.",
       "when": "All patients, at baseline."
     },
     "pituitary": {
       "name": "Pituitary — IGF-1, growth hormone, prolactin",
-      "why": "Growth hormone excess is one of the extra-skeletal features of FD/MAS; the guideline lists these three for all patients.",
+      "why": "The guideline lists these three blood measurements for all patients; what they are about is growth hormone excess.",
       "quote": "All patients should have a random blood test for IGF-1, growth hormone (GH) and prolactin measurements.",
       "when": "All patients; pituitary MRI where the blood results are abnormal.",
       "whenQuote": "Pituitary MRI is indicated in case of abnormal biochemistry …, although a normal pituitary MRI does not rule out the possibility of GH excess as the affected tissue may not be detectable by MRI."

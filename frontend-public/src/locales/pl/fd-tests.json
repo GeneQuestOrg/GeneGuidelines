@@ -30,7 +30,7 @@
     },
     "phosphate": {
       "name": "Fosfor na czczo",
-      "why": "Utratę fosforanów przez nerki wytyczna opisuje jako ważną do rozpoznania, bo wiąże się z ryzykiem złamań.",
+      "why": "Utratę fosforanów przez nerki wytyczna opisuje jako ważną do rozpoznania — jest ważnym wskaźnikiem przyszłego ryzyka złamań.",
       "quote": "Abnormal phosphate homeostasis, specifically renal phosphate wasting leading to hypophosphatemia, is important to diagnose as it is an important predictor of future fracture risk, as well as other complications.",
       "when": "Gdy podejrzewana jest postać wielokostna; krew pobierana na czczo.",
       "whenQuote": "In all subjects with suspected polyostotic disease, baseline overnight fasting phosphate levels should be checked."
@@ -44,7 +44,7 @@
     },
     "radiographs": {
       "name": "RTG zajętej kości w dwóch płaszczyznach",
-      "why": "Zmiany istotne klinicznie, znalezione w obrazowaniu całego ciała, wytyczna opisuje jako obrazowane klasycznym RTG całej kości.",
+      "why": "Zmiany istotne klinicznie, znalezione w scyntygrafii, wytyczna opisuje jako obrazowane klasycznym RTG całej kości.",
       "quote": "Areas of clinically significant axial and appendicular FD identified on bone scintigraphy should be imaged with conventional radiographs in two planes of the whole bone.",
       "when": "Po obrazowaniu całego ciała."
     },
@@ -63,13 +63,13 @@
     },
     "thyroid": {
       "name": "Tarczyca — TSH, fT4, T3, USG",
-      "why": "Tarczyca jest jedną z cech pozaszkieletowych FD/MAS; wytyczna wymienia te oznaczenia u wszystkich pacjentów.",
+      "why": "Wytyczna wymienia te oznaczenia i USG u wszystkich pacjentów — żeby wychwycić zajęcie tarczycy, także bezobjawowe, odpowiadające MAS.",
       "quote": "All patients should have a targeted history and physical examination, measurement of TSH, free T4 & total or free T3 and thyroid ultrasound to characterise subclinical involvement consistent with MAS.",
       "when": "U wszystkich, w ocenie wyjściowej."
     },
     "pituitary": {
       "name": "Przysadka — IGF-1, hormon wzrostu, prolaktyna",
-      "why": "Nadmiar hormonu wzrostu jest jedną z cech pozaszkieletowych FD/MAS; wytyczna wymienia te trzy oznaczenia u wszystkich.",
+      "why": "Wytyczna wymienia te trzy oznaczenia z krwi u wszystkich pacjentów; chodzi o nadmiar hormonu wzrostu.",
       "quote": "All patients should have a random blood test for IGF-1, growth hormone (GH) and prolactin measurements.",
       "when": "U wszystkich; MR przysadki — gdy wyniki są nieprawidłowe.",
       "whenQuote": "Pituitary MRI is indicated in case of abnormal biochemistry …, although a normal pituitary MRI does not rule out the possibility of GH excess as the affected tissue may not be detectable by MRI."
