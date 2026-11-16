@@ -1,0 +1,26 @@
+{
+  "siteTitle": "GeneGuidelines — Living guidelines for rare genetic diseases",
+  "siteDescription": "Living guidelines, specialists, and clinical trials for rare genetic diseases.",
+  "titleSuffix": " · GeneGuidelines",
+  "citation": "Javaid MK et al., Best practice management guidelines for fibrous dysplasia/McCune-Albright syndrome, Orphanet J Rare Dis 2019;14:139 (PMID 31196103).",
+  "linkMap": "Parent map",
+  "linkTests": "Printable list of tests",
+  "linkGuidelines": "What the guidelines say",
+  "linkDoctors": "Doctors who know FD",
+  "fd": {
+    "title": "Fibrous dysplasia (FD/MAS)",
+    "description": "Fibrous dysplasia and McCune-Albright syndrome: the official FD/MAS guideline, doctors with documented experience, clinical trials and foundations — gathered by the GeneQuest Foundation."
+  },
+  "fdMap": {
+    "title": "FD/MAS: a map for a parent after the diagnosis",
+    "description": "What exists after an FD/MAS diagnosis that nobody tells you about: how the diagnosis is confirmed, questions for your doctor with the verbatim guideline sentences behind them, doctors, guidelines, foundations and trials."
+  },
+  "fdTests": {
+    "title": "FD/MAS: baseline evaluation — a printable list of tests",
+    "description": "To print: the tests the FD/MAS guideline (Javaid 2019) names in the baseline evaluation — each with the verbatim sentence behind it and an empty box for a result and a date."
+  },
+  "fdGuidelines": {
+    "title": "FD/MAS: what the official guideline says",
+    "description": "A summary of the official FD/MAS guideline (Javaid 2019, PMID 31196103) and the literature, with a link to every source. It is not an official guideline — the GeneQuest Foundation wrote it."
+  }
+}

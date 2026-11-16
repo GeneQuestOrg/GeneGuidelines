@@ -29,6 +29,12 @@ def spa_client(tmp_path, monkeypatch):
     (tmp_path / "robots.txt").write_text(
         "User-agent: *\nAllow: /\n", encoding="utf-8"
     )
+    prerendered = tmp_path / "pl" / "diseases" / "fd"
+    prerendered.mkdir(parents=True)
+    (prerendered / "index.html").write_text(
+        "<!doctype html><title>Dysplazja</title><div id=gg-prerender>treść</div>",
+        encoding="utf-8",
+    )
 
     import backend.main as main
 
@@ -87,3 +93,23 @@ def test_health_unaffected_by_catch_all(spa_client: TestClient) -> None:
     resp = spa_client.get("/health")
     assert resp.status_code == 200
     assert resp.json() == {"status": "ok"}
+
+
+def test_prerendered_page_wins_over_the_empty_shell(spa_client: TestClient) -> None:
+    # The FD pages are written at build time to `<path>/index.html`. The path is a
+    # directory, so without the directory-index branch the catch-all would answer
+    # with the SPA shell and everything that does not run JavaScript would see a
+    # title and nothing else — which is exactly what the live site did.
+    resp = spa_client.get("/pl/diseases/fd")
+    assert resp.status_code == 200
+    assert "text/html" in resp.headers["content-type"]
+    assert "<title>Dysplazja</title>" in resp.text
+    assert "gg-prerender" in resp.text
+
+
+def test_directory_without_an_index_still_falls_back(spa_client: TestClient) -> None:
+    # "/pl/diseases" is a directory in the bundle but holds no index.html of its
+    # own, so it must keep resolving to the SPA shell rather than 404.
+    resp = spa_client.get("/pl/diseases")
+    assert resp.status_code == 200
+    assert "<title>GeneGuidelines</title>" in resp.text

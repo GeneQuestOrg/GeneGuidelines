@@ -4,6 +4,7 @@ import { userLocationFromCity } from "./config/cities";
 import { useHistoryRouter } from "./router/useHistoryRouter";
 import i18n from "./i18n";
 import { useTweaks } from "./hooks/useTweaks";
+import { useDocumentMeta } from "./hooks/useDocumentMeta";
 import { PublicHeader } from "./components/PublicHeader";
 import { AppFooter } from "./components/AppFooter";
 import { ErrorBoundary } from "./components/ErrorBoundary";
@@ -63,6 +64,9 @@ function AppShell() {
       /* storage blocked (private mode / disabled) — locale still lives in the URL */
     }
   }, [locale]);
+  /* The served HTML carries the right head for the FD pages (prerender/); this
+     keeps it right after an in-app navigation, which changes no document at all. */
+  useDocumentMeta(route, locale);
   const { tweaks, setTweak } = useTweaks();
   const { account, isAuthenticated } = useAccountContext();
   const { viewAs } = useViewAsContext();

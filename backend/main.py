@@ -272,4 +272,12 @@ def spa_fallback(full_path: str) -> FileResponse:
         and candidate.is_relative_to(_static_root)
     ):
         return FileResponse(candidate)
+    # A prerendered page is written to `<path>/index.html`
+    # (frontend-public/prerender/build.mjs), so the path resolves to a directory
+    # and misses the branch above. Without this the static page would be built
+    # and never served, and the route would keep answering with the empty shell.
+    if full_path and candidate.is_dir() and candidate.is_relative_to(_static_root):
+        prerendered = candidate / "index.html"
+        if prerendered.is_file():
+            return FileResponse(prerendered)
     return FileResponse(_static_dir / "index.html")

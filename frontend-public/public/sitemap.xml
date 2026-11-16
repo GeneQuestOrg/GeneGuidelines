@@ -58,6 +58,63 @@
     <priority>0.7</priority>
   </url>
 
+  <!-- Fibrous dysplasia: the pages a family actually lands on. Prerendered at
+       build time (frontend-public/prerender) so a crawler sees them. -->
+  <url>
+    <loc>https://geneguidelines.genequest.org/diseases/fd/map</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geneguidelines.genequest.org/diseases/fd/map" />
+    <xhtml:link rel="alternate" hreflang="pl" href="https://geneguidelines.genequest.org/pl/diseases/fd/map" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://geneguidelines.genequest.org/diseases/fd/map" />
+    <lastmod>2026-11-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://geneguidelines.genequest.org/pl/diseases/fd/map</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geneguidelines.genequest.org/diseases/fd/map" />
+    <xhtml:link rel="alternate" hreflang="pl" href="https://geneguidelines.genequest.org/pl/diseases/fd/map" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://geneguidelines.genequest.org/diseases/fd/map" />
+    <lastmod>2026-11-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://geneguidelines.genequest.org/diseases/fd/tests</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geneguidelines.genequest.org/diseases/fd/tests" />
+    <xhtml:link rel="alternate" hreflang="pl" href="https://geneguidelines.genequest.org/pl/diseases/fd/tests" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://geneguidelines.genequest.org/diseases/fd/tests" />
+    <lastmod>2026-11-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://geneguidelines.genequest.org/pl/diseases/fd/tests</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geneguidelines.genequest.org/diseases/fd/tests" />
+    <xhtml:link rel="alternate" hreflang="pl" href="https://geneguidelines.genequest.org/pl/diseases/fd/tests" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://geneguidelines.genequest.org/diseases/fd/tests" />
+    <lastmod>2026-11-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://geneguidelines.genequest.org/diseases/fd/guidelines</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geneguidelines.genequest.org/diseases/fd/guidelines" />
+    <xhtml:link rel="alternate" hreflang="pl" href="https://geneguidelines.genequest.org/pl/diseases/fd/guidelines" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://geneguidelines.genequest.org/diseases/fd/guidelines" />
+    <lastmod>2026-11-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://geneguidelines.genequest.org/pl/diseases/fd/guidelines</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geneguidelines.genequest.org/diseases/fd/guidelines" />
+    <xhtml:link rel="alternate" hreflang="pl" href="https://geneguidelines.genequest.org/pl/diseases/fd/guidelines" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://geneguidelines.genequest.org/diseases/fd/guidelines" />
+    <lastmod>2026-11-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
   <url>
     <loc>https://geneguidelines.genequest.org/diseases/mas</loc>
     <xhtml:link rel="alternate" hreflang="en" href="https://geneguidelines.genequest.org/diseases/mas" />

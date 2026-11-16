@@ -1,0 +1,26 @@
+{
+  "siteTitle": "GeneGuidelines — żywe wytyczne dla rzadkich chorób genetycznych",
+  "siteDescription": "Żywe wytyczne ze źródłami, specjaliści i badania kliniczne w rzadkich chorobach genetycznych.",
+  "titleSuffix": " · GeneGuidelines",
+  "citation": "Javaid MK i wsp., Best practice management guidelines for fibrous dysplasia/McCune-Albright syndrome, Orphanet J Rare Dis 2019;14:139 (PMID 31196103).",
+  "linkMap": "Mapa dla rodzica",
+  "linkTests": "Lista badań do wydruku",
+  "linkGuidelines": "Co mówią wytyczne",
+  "linkDoctors": "Lekarze znający FD",
+  "fd": {
+    "title": "Dysplazja włóknista (FD/MAS)",
+    "description": "Dysplazja włóknista i zespół McCune'a-Albrighta: oficjalna wytyczna FD/MAS, lekarze z udokumentowanym doświadczeniem, badania kliniczne i fundacje — zebrane przez Fundację GeneQuest."
+  },
+  "fdMap": {
+    "title": "FD/MAS: mapa dla rodzica po diagnozie",
+    "description": "Co istnieje po diagnozie FD/MAS, a o czym nikt nie mówi: jak potwierdza się rozpoznanie, pytania do lekarza z dosłownymi cytatami z wytycznej, lekarze, wytyczne, fundacje i badania kliniczne."
+  },
+  "fdTests": {
+    "title": "FD/MAS: ocena wyjściowa — lista badań do wydruku",
+    "description": "Do wydruku: badania, które wytyczna FD/MAS (Javaid 2019) wymienia w ocenie wyjściowej — każde z dosłownym cytatem ze źródła i pustym miejscem na wynik i datę."
+  },
+  "fdGuidelines": {
+    "title": "FD/MAS: co mówi oficjalna wytyczna",
+    "description": "Skrót oficjalnej wytycznej FD/MAS (Javaid 2019, PMID 31196103) i literatury, z linkiem do każdego źródła. To nie jest oficjalna wytyczna — przygotowała go Fundacja GeneQuest."
+  }
+}

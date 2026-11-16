@@ -28,6 +28,12 @@ Backend (unchanged):
 python -m uvicorn backend.main:app --reload
 ```
 
+## Prerendered FD pages
+
+`npm run build:public` runs `node prerender/build.mjs` after `vite build`. It writes a static copy of the four fibrous-dysplasia pages — `/diseases/fd`, `/diseases/fd/map`, `/diseases/fd/tests`, `/diseases/fd/guidelines`, each in both languages — to `dist/<path>/index.html`, with that page's title, description, Open Graph tags and JSON-LD, and a readable body inside `#gg-prerender`. Before this, `/pl/diseases/fd` returned 68 characters: a crawler, a link preview and a language model saw a title and nothing else.
+
+The content comes from the locale catalogues that are checked in, because the build runs in CI with no backend and no database. Anything that lives only in the database — the AI synthesis, the doctor list, the trial list — is named and linked, never invented at build time. `main.tsx` removes `#gg-prerender` before React mounts, and `spa_fallback` in `backend/main.py` serves `<path>/index.html` for a directory path, which is what makes the files reachable at all.
+
 ## API base URL
 
 Leave `VITE_API_URL` unset during `vite dev` / `vite preview` so requests use relative `/api/...` and the Vite proxy forwards to `http://127.0.0.1:8000`.
