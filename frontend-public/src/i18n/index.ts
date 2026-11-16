@@ -20,6 +20,7 @@ import enResearchRun from "../locales/en/research-run.json";
 import enMisc from "../locales/en/misc.json";
 import enAbout from "../locales/en/about.json";
 import enDiseaseStub from "../locales/en/disease-stub.json";
+import enFdTests from "../locales/en/fd-tests.json";
 import plCommon from "../locales/pl/common.json";
 import plHome from "../locales/pl/home.json";
 import plParent from "../locales/pl/parent.json";
@@ -38,6 +39,7 @@ import plResearchRun from "../locales/pl/research-run.json";
 import plMisc from "../locales/pl/misc.json";
 import plAbout from "../locales/pl/about.json";
 import plDiseaseStub from "../locales/pl/disease-stub.json";
+import plFdTests from "../locales/pl/fd-tests.json";
 
 /**
  * i18next bootstrap. Design constraints (see plan-i18n-pl-2026-07-16.md):
@@ -71,6 +73,7 @@ export const I18N_NAMESPACES = [
   "misc",
   "about",
   "disease-stub",
+  "fd-tests",
 ] as const;
 
 void i18n.use(initReactI18next).init({
@@ -94,6 +97,7 @@ void i18n.use(initReactI18next).init({
       misc: enMisc,
       about: enAbout,
       "disease-stub": enDiseaseStub,
+      "fd-tests": enFdTests,
     },
     pl: {
       common: plCommon,
@@ -114,6 +118,7 @@ void i18n.use(initReactI18next).init({
       misc: plMisc,
       about: plAbout,
       "disease-stub": plDiseaseStub,
+      "fd-tests": plFdTests,
     },
   },
   lng: readLocaleFromLocation(),

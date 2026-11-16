@@ -36,6 +36,14 @@ describe("parsePath", () => {
       name: "myCase",
       slug: "fabry",
     });
+    expect(parsePath("/diseases/fd/map", "")).toEqual({
+      name: "diseaseMap",
+      slug: "fd",
+    });
+    expect(parsePath("/diseases/fd/tests", "")).toEqual({
+      name: "diseaseTests",
+      slug: "fd",
+    });
     expect(parsePath("/diseases/fabry/guidelines", "")).toEqual({
       name: "guidelines",
       slug: "fabry",

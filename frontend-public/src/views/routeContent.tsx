@@ -5,6 +5,7 @@ import type { ViewRole } from "../auth/resolveRole";
 import { HomeView } from "./HomeView";
 import { DiseaseView } from "./DiseaseView";
 import { DiseaseMapView } from "./DiseaseMapView";
+import { FdTestsView } from "./FdTestsView";
 import { DiseaseIndexView } from "./DiseaseIndexView";
 import { PlaceholderView } from "./PlaceholderView";
 import { AboutView } from "./AboutView";
@@ -79,6 +80,8 @@ export function routeContent({
       return <MyCaseView slug={route.slug} onNav={onNav} />;
     case "diseaseMap":
       return <DiseaseMapView slug={route.slug} onNav={onNav} />;
+    case "diseaseTests":
+      return <FdTestsView slug={route.slug} onNav={onNav} />;
     case "diseaseIndex":
       return <DiseaseIndexView initialQuery={route.query} onNav={onNav} />;
     case "account":

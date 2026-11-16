@@ -60,6 +60,9 @@ export function parsePath(pathname: string, search: string): Route {
     if (parts[2] === "map") {
       return { name: "diseaseMap", slug };
     }
+    if (parts[2] === "tests") {
+      return { name: "diseaseTests", slug };
+    }
     if (parts[2] === "guidelines") {
       if (parts[3] === "pr" && parts[4]) {
         return { name: "guidelines", slug, prId: parts[4] };

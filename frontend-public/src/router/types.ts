@@ -6,6 +6,7 @@ export type Route =
   | { name: "diseaseIndex"; query?: string }
   | { name: "disease"; slug: string; alert?: string }
   | { name: "diseaseMap"; slug: string }
+  | { name: "diseaseTests"; slug: string }
   | { name: "myCase"; slug: string }
   | { name: "flowchart"; slug: string }
   | { name: "guidelines"; slug: string; prId?: string; srcParaId?: string }

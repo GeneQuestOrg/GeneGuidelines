@@ -1,0 +1,117 @@
+{
+  "loading": "Loading the list…",
+  "notFoundTitle": "No such list",
+  "notFoundDesc": "This list exists only for fibrous dysplasia (FD/MAS) for now, because the quotations come from a guideline written about that disease.",
+  "notFoundAction": "Browse diseases",
+  "crumbAriaLabel": "breadcrumb",
+  "crumbDiseases": "Diseases",
+  "crumbMap": "Parent map",
+  "crumbHere": "List of tests",
+  "eyebrow": "To print · one A4 page",
+  "title": "Baseline evaluation in FD/MAS — what the guideline lists",
+  "lede": "Each row carries the sentence from the guideline it rests on. The “result / date” box is empty — it is space to write in.",
+  "printCta": "Print",
+  "backToMap": "Back to the parent map",
+  "colTest": "Test",
+  "colWhy": "Why it is on the list",
+  "colWhen": "When it applies",
+  "colResult": "result / date",
+  "quoteLabel": "Guideline:",
+  "sourceLine": "Every quotation is from: Javaid MK et al., Best practice management guidelines for fibrous dysplasia/McCune-Albright syndrome, Orphanet J Rare Dis 2019;14:139 (PMID 31196103). The sentences come from the sections “Diagnosis”, “Histological and genetic characterisation”, “Staging of FD/MAS” and “Management of Craniofacial FD”.",
+  "authorshipLine": "The GeneQuest Foundation put this list together from that guideline; the guideline authors have not reviewed or approved it.",
+  "safetyLine": "This is not medical advice and not a referral. Which of these applies to your child is for your doctor to say.",
+  "metaDescription": "A printable list: the tests the FD/MAS guideline (Javaid 2019) names in the baseline evaluation — each with the verbatim sentence behind it and space for a result and a date.",
+  "rows": {
+    "labs": {
+      "name": "Blood tests — bone panel",
+      "why": "The panel the guideline lists in the baseline evaluation: renal profile, alkaline phosphatase, bicarbonate, albumin-adjusted calcium, phosphate, 25OH vitamin D, parathyroid hormone.",
+      "quote": "Bone-related laboratory testing … should include a standard biochemistry screen of renal profile, total alkaline phosphatase, bicarbonate, albumin-adjusted serum calcium, phosphate …, 25OH-vitamin D and parathyroid hormone.",
+      "when": "At presentation with suspected FD/MAS.",
+      "whenQuote": "Staging should be considered at the time of presentation with suspected FD/MAS taking into account age and clinical presentation."
+    },
+    "phosphate": {
+      "name": "Fasting phosphate",
+      "why": "The guideline describes renal phosphate wasting as important to diagnose, because it carries fracture risk.",
+      "quote": "Abnormal phosphate homeostasis, specifically renal phosphate wasting leading to hypophosphatemia, is important to diagnose as it is an important predictor of future fracture risk, as well as other complications.",
+      "when": "When polyostotic disease is suspected; blood drawn fasting.",
+      "whenQuote": "In all subjects with suspected polyostotic disease, baseline overnight fasting phosphate levels should be checked."
+    },
+    "wholeBody": {
+      "name": "Whole-body imaging",
+      "why": "Shows how much of the skeleton is involved — bone scintigraphy, whole-body MR, or low-dose 2D/3D radiography.",
+      "quote": "To evaluate the extent of FD, whole body imaging using bone scintigraphy, whole body MR or low-dose 2D/3D radiography (e.g. EOS), to determine the presence and extent of skeletal involvement should be considered for all patients ≥ age 5 years.",
+      "when": "From age 5; in a child without symptoms the guideline describes waiting until then.",
+      "whenQuote": "Due to the possibility of false negative results, whole body imaging should be delayed in asymptomatic children until age 5 … and when the child can tolerate an MRI without general anaesthesia."
+    },
+    "radiographs": {
+      "name": "X-ray of the involved bone in two planes",
+      "why": "Lesions of clinical significance found on whole-body imaging are, in the guideline, imaged with conventional radiographs of the whole bone.",
+      "quote": "Areas of clinically significant axial and appendicular FD identified on bone scintigraphy should be imaged with conventional radiographs in two planes of the whole bone.",
+      "when": "After whole-body imaging."
+    },
+    "craniofacialCt": {
+      "name": "Craniofacial CT, fine cut (≤ 1 mm)",
+      "why": "Radiological assessment of the craniofacial skeleton in the guideline covers facial and orthognathic series plus a fine-cut CT.",
+      "quote": "Radiological assessment includes standard radiological facial and orthognathic series and fine cut CT 1 mm or less slice thickness.",
+      "when": "When lesions involve the skull or the facial skeleton; in children the scan is repeated.",
+      "whenQuote": "Baseline and periodic CT scans of the head should be performed in children, usually every 2 years or less frequently based on the localisation and severity of the lesion(s)."
+    },
+    "hearing": {
+      "name": "Hearing assessment",
+      "why": "Where the skull base is involved, the guideline lists a hearing assessment every year.",
+      "quote": "An assessment of hearing should be performed annually in all patients with skull base disease.",
+      "when": "Annually, where the skull base is involved."
+    },
+    "thyroid": {
+      "name": "Thyroid — TSH, free T4, T3, ultrasound",
+      "why": "The thyroid is one of the extra-skeletal features of FD/MAS; the guideline lists these for all patients.",
+      "quote": "All patients should have a targeted history and physical examination, measurement of TSH, free T4 & total or free T3 and thyroid ultrasound to characterise subclinical involvement consistent with MAS.",
+      "when": "All patients, at baseline."
+    },
+    "pituitary": {
+      "name": "Pituitary — IGF-1, growth hormone, prolactin",
+      "why": "Growth hormone excess is one of the extra-skeletal features of FD/MAS; the guideline lists these three for all patients.",
+      "quote": "All patients should have a random blood test for IGF-1, growth hormone (GH) and prolactin measurements.",
+      "when": "All patients; pituitary MRI where the blood results are abnormal.",
+      "whenQuote": "Pituitary MRI is indicated in case of abnormal biochemistry …, although a normal pituitary MRI does not rule out the possibility of GH excess as the affected tissue may not be detectable by MRI."
+    },
+    "testicular": {
+      "name": "Testicular ultrasound (boys)",
+      "why": "The guideline lists it for all boys and men, including those without symptoms.",
+      "quote": "All males should have a testicular ultrasound at baseline … and after age 5 to characterise subclinical involvement consistent with MAS.",
+      "when": "At baseline and after age 5."
+    },
+    "ovarian": {
+      "name": "FSH, LH, estradiol and pelvic ultrasound (girls)",
+      "why": "The guideline lists these for girls who have symptoms.",
+      "quote": "If symptomatic, girls should have a random blood FSH, LH, estradiol and pelvic ultrasound.",
+      "when": "Where there are symptoms."
+    },
+    "growth": {
+      "name": "Growth curve and bone age",
+      "why": "The guideline lists a review of the growth curve and a standardised bone age examination for all children.",
+      "quote": "All children should have a review of their growth curve for linear growth acceleration or deceleration and a standardised bone age examination.",
+      "when": "All children."
+    },
+    "adrenal": {
+      "name": "Cortisol — adrenal axis",
+      "why": "The guideline lists these where there is clinical suspicion of hypercortisolism.",
+      "quote": "In case of clinical suspicion of current hypercortisolism, 24-h urinary free cortisol, low dose dexamethasone suppression test, diurnal cortisol and adrenal CT should be performed.",
+      "when": "On suspicion; an ACTH stimulation test where neonatal hypercortisolism is in the history.",
+      "whenQuote": "The ACTH stimulation test should be performed in all patients with a known or suspected history of neonatal hypercortisolism."
+    },
+    "skin": {
+      "name": "Skin examination — café-au-lait macules",
+      "why": "The guideline lists a skin examination for all patients, looking for typical café-au-lait macules.",
+      "quote": "A physical examination should be performed in all patients for typical café-au-lait macules …",
+      "when": "All patients."
+    },
+    "gnas": {
+      "name": "GNAS genetic test",
+      "why": "The guideline lists it where the diagnosis is in question — especially for a single lesion in the skull. A positive result is informative; a negative one from blood does not rule FD out.",
+      "quote": "A genetic diagnosis is recommended where the diagnosis is in question. This especially applies to isolated/monostotic lesions in the skull…",
+      "when": "Where the diagnosis is uncertain.",
+      "whenQuote": "Use of blood for mutation analysis cannot exclude the diagnosis of monostotic FD, but a positive result is informative."
+    }
+  }
+}

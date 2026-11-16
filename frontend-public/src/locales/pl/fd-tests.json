@@ -1,0 +1,117 @@
+{
+  "loading": "Wczytywanie listy…",
+  "notFoundTitle": "Nie ma takiej listy",
+  "notFoundDesc": "Ta lista istnieje na razie tylko dla dysplazji włóknistej (FD/MAS), bo cytaty pochodzą z wytycznej napisanej o tej chorobie.",
+  "notFoundAction": "Przeglądaj choroby",
+  "crumbAriaLabel": "ścieżka nawigacji",
+  "crumbDiseases": "Choroby",
+  "crumbMap": "Mapa dla rodzica",
+  "crumbHere": "Lista badań",
+  "eyebrow": "Do wydruku · jedna strona A4",
+  "title": "Ocena wyjściowa w FD/MAS — co wymienia wytyczna",
+  "lede": "Przy każdej pozycji stoi zdanie z wytycznej, z którego pochodzi. Rubryka „wynik / data” jest pusta — to miejsce na zapis.",
+  "printCta": "Drukuj",
+  "backToMap": "Wróć do mapy dla rodzica",
+  "colTest": "Badanie",
+  "colWhy": "Dlaczego jest na liście",
+  "colWhen": "Kiedy dotyczy",
+  "colResult": "wynik / data",
+  "quoteLabel": "Wytyczna:",
+  "sourceLine": "Źródło wszystkich cytatów: Javaid MK i wsp., Best practice management guidelines for fibrous dysplasia/McCune-Albright syndrome, Orphanet J Rare Dis 2019;14:139 (PMID 31196103). Cytaty pochodzą z sekcji „Diagnosis”, „Histological and genetic characterisation”, „Staging of FD/MAS” oraz „Management of Craniofacial FD”.",
+  "authorshipLine": "Listę zestawiła Fundacja GeneQuest na podstawie tej wytycznej; autorzy wytycznej jej nie przeglądali ani nie zatwierdzali.",
+  "safetyLine": "To nie jest porada medyczna ani skierowanie. Co z tej listy dotyczy Waszego dziecka, rozstrzyga lekarz.",
+  "metaDescription": "Lista do wydruku: badania, które wytyczna FD/MAS (Javaid 2019) wymienia w ocenie wyjściowej — każde z dosłownym cytatem ze źródła i miejscem na wynik i datę.",
+  "rows": {
+    "labs": {
+      "name": "Badania krwi — panel kostny",
+      "why": "Panel, który wytyczna wymienia w ocenie wyjściowej: profil nerkowy, fosfataza zasadowa, wodorowęglany, wapń skorygowany albuminą, fosforany, witamina D 25OH, parathormon.",
+      "quote": "Bone-related laboratory testing … should include a standard biochemistry screen of renal profile, total alkaline phosphatase, bicarbonate, albumin-adjusted serum calcium, phosphate …, 25OH-vitamin D and parathyroid hormone.",
+      "when": "Przy rozpoznaniu lub podejrzeniu FD/MAS.",
+      "whenQuote": "Staging should be considered at the time of presentation with suspected FD/MAS taking into account age and clinical presentation."
+    },
+    "phosphate": {
+      "name": "Fosfor na czczo",
+      "why": "Utratę fosforanów przez nerki wytyczna opisuje jako ważną do rozpoznania, bo wiąże się z ryzykiem złamań.",
+      "quote": "Abnormal phosphate homeostasis, specifically renal phosphate wasting leading to hypophosphatemia, is important to diagnose as it is an important predictor of future fracture risk, as well as other complications.",
+      "when": "Gdy podejrzewana jest postać wielokostna; krew pobierana na czczo.",
+      "whenQuote": "In all subjects with suspected polyostotic disease, baseline overnight fasting phosphate levels should be checked."
+    },
+    "wholeBody": {
+      "name": "Obrazowanie całego ciała",
+      "why": "Pokazuje, ile miejsc w szkielecie jest zajętych — scyntygrafia kości, MR całego ciała albo niskodawkowe RTG 2D/3D.",
+      "quote": "To evaluate the extent of FD, whole body imaging using bone scintigraphy, whole body MR or low-dose 2D/3D radiography (e.g. EOS), to determine the presence and extent of skeletal involvement should be considered for all patients ≥ age 5 years.",
+      "when": "Od 5. roku życia; u dziecka bez objawów wytyczna opisuje odroczenie do tego wieku.",
+      "whenQuote": "Due to the possibility of false negative results, whole body imaging should be delayed in asymptomatic children until age 5 … and when the child can tolerate an MRI without general anaesthesia."
+    },
+    "radiographs": {
+      "name": "RTG zajętej kości w dwóch płaszczyznach",
+      "why": "Zmiany istotne klinicznie, znalezione w obrazowaniu całego ciała, wytyczna opisuje jako obrazowane klasycznym RTG całej kości.",
+      "quote": "Areas of clinically significant axial and appendicular FD identified on bone scintigraphy should be imaged with conventional radiographs in two planes of the whole bone.",
+      "when": "Po obrazowaniu całego ciała."
+    },
+    "craniofacialCt": {
+      "name": "TK twarzoczaszki, cienkie warstwy (≤ 1 mm)",
+      "why": "Ocena radiologiczna twarzoczaszki obejmuje w wytycznej serie zdjęć twarzy i zgryzu oraz cienkowarstwową tomografię.",
+      "quote": "Radiological assessment includes standard radiological facial and orthognathic series and fine cut CT 1 mm or less slice thickness.",
+      "when": "Gdy zmiany obejmują czaszkę lub twarzoczaszkę; u dzieci badanie powtarzane.",
+      "whenQuote": "Baseline and periodic CT scans of the head should be performed in children, usually every 2 years or less frequently based on the localisation and severity of the lesion(s)."
+    },
+    "hearing": {
+      "name": "Ocena słuchu",
+      "why": "Przy zmianach podstawy czaszki wytyczna wymienia coroczną ocenę słuchu.",
+      "quote": "An assessment of hearing should be performed annually in all patients with skull base disease.",
+      "when": "Co roku, gdy zajęta jest podstawa czaszki."
+    },
+    "thyroid": {
+      "name": "Tarczyca — TSH, fT4, T3, USG",
+      "why": "Tarczyca jest jedną z cech pozaszkieletowych FD/MAS; wytyczna wymienia te oznaczenia u wszystkich pacjentów.",
+      "quote": "All patients should have a targeted history and physical examination, measurement of TSH, free T4 & total or free T3 and thyroid ultrasound to characterise subclinical involvement consistent with MAS.",
+      "when": "U wszystkich, w ocenie wyjściowej."
+    },
+    "pituitary": {
+      "name": "Przysadka — IGF-1, hormon wzrostu, prolaktyna",
+      "why": "Nadmiar hormonu wzrostu jest jedną z cech pozaszkieletowych FD/MAS; wytyczna wymienia te trzy oznaczenia u wszystkich.",
+      "quote": "All patients should have a random blood test for IGF-1, growth hormone (GH) and prolactin measurements.",
+      "when": "U wszystkich; MR przysadki — gdy wyniki są nieprawidłowe.",
+      "whenQuote": "Pituitary MRI is indicated in case of abnormal biochemistry …, although a normal pituitary MRI does not rule out the possibility of GH excess as the affected tissue may not be detectable by MRI."
+    },
+    "testicular": {
+      "name": "USG jąder (chłopcy)",
+      "why": "Wytyczna wymienia je u wszystkich chłopców i mężczyzn, także bez objawów.",
+      "quote": "All males should have a testicular ultrasound at baseline … and after age 5 to characterise subclinical involvement consistent with MAS.",
+      "when": "Wyjściowo i po 5. roku życia."
+    },
+    "ovarian": {
+      "name": "FSH, LH, estradiol i USG miednicy (dziewczynki)",
+      "why": "Wytyczna wymienia te badania u dziewczynek, u których występują objawy.",
+      "quote": "If symptomatic, girls should have a random blood FSH, LH, estradiol and pelvic ultrasound.",
+      "when": "Gdy są objawy."
+    },
+    "growth": {
+      "name": "Krzywa wzrostu i wiek kostny",
+      "why": "Wytyczna wymienia przegląd krzywej wzrostu i standaryzowaną ocenę wieku kostnego u wszystkich dzieci.",
+      "quote": "All children should have a review of their growth curve for linear growth acceleration or deceleration and a standardised bone age examination.",
+      "when": "U wszystkich dzieci."
+    },
+    "adrenal": {
+      "name": "Kortyzol — oś nadnerczowa",
+      "why": "Wytyczna wymienia te badania, gdy jest kliniczne podejrzenie hiperkortyzolemii.",
+      "quote": "In case of clinical suspicion of current hypercortisolism, 24-h urinary free cortisol, low dose dexamethasone suppression test, diurnal cortisol and adrenal CT should be performed.",
+      "when": "Przy podejrzeniu; test z ACTH — gdy w wywiadzie jest hiperkortyzolemia noworodkowa.",
+      "whenQuote": "The ACTH stimulation test should be performed in all patients with a known or suspected history of neonatal hypercortisolism."
+    },
+    "skin": {
+      "name": "Badanie skóry — plamy café-au-lait",
+      "why": "Wytyczna wymienia badanie skóry u wszystkich pacjentów, w kierunku typowych plam café-au-lait.",
+      "quote": "A physical examination should be performed in all patients for typical café-au-lait macules …",
+      "when": "U wszystkich."
+    },
+    "gnas": {
+      "name": "Badanie genetyczne GNAS",
+      "why": "Wytyczne wymieniają je, gdy rozpoznanie budzi wątpliwości — zwłaszcza przy pojedynczym ognisku w czaszce. Wynik dodatni jest informacją; ujemny z krwi nie wyklucza.",
+      "quote": "A genetic diagnosis is recommended where the diagnosis is in question. This especially applies to isolated/monostotic lesions in the skull…",
+      "when": "Gdy rozpoznanie jest niepewne.",
+      "whenQuote": "Use of blood for mutation analysis cannot exclude the diagnosis of monostotic FD, but a positive result is informative."
+    }
+  }
+}
