@@ -1,6 +1,5 @@
 /**
- * What a crawler, a link unfurler and a language model see when they fetch an FD
- * page.
+ * What a crawler, a link unfurler and a language model see when they fetch the home page, the about page or an FD page.
  *
  * Measured 2026-11-15: `https://geneguidelines.genequest.org/pl/diseases/fd`
  * returned 68 characters — the title and nothing else. The content is assembled
@@ -14,7 +13,7 @@
  * read. Anything that only exists in the database (the AI synthesis, the doctor
  * list, the trial list) is named and linked, never invented here.
  *
- * FD only, on purpose. The quotations are about fibrous dysplasia.
+ * The disease pages are FD only, on purpose: the quotations are about fibrous dysplasia. The home and about pages are built from their own catalogues, which say nothing disease-specific.
  */
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -44,6 +43,8 @@ function catalogues(locale) {
     map: loadJson(`../src/locales/${locale}/disease-map.json`),
     tests: loadJson(`../src/locales/${locale}/fd-tests.json`),
     common: loadJson(`../src/locales/${locale}/common.json`),
+    home: loadJson(`../src/locales/${locale}/home.json`),
+    about: loadJson(`../src/locales/${locale}/about.json`),
   };
 }
 
@@ -76,6 +77,78 @@ function links(locale, seo, current) {
   return `<nav class="ggp-links">${all
     .map(([path, label]) => `<a href="${esc(withLocale(path, locale))}">${esc(label)}</a>`)
     .join(" · ")}</nav>`;
+}
+
+/**
+ * / — the home page. What the site is, what is in it, and the sentence that says nobody signs the summaries off. The disease list and the counts come from the database, so they are linked, not listed.
+ */
+function homeBody(locale, { seo, home, common }) {
+  const finds = home.finds
+    .map((item) => `<li><p class="ggp-q">${esc(item.title)}</p><p>${esc(item.body)}</p></li>`)
+    .join("\n");
+  const nav = [
+    ["/diseases/fd", seo.fd.title],
+    ["/diseases", seo.linkDiseases],
+    ["/doctors", seo.linkAllDoctors],
+    ["/about", seo.linkAbout],
+  ]
+    .map(([path, label]) => `<a href="${esc(withLocale(path, locale))}">${esc(label)}</a>`)
+    .join(" · ");
+  return [
+    `<p class="ggp-note">${esc(home.eyebrow)}</p>`,
+    `<h1>${esc(home.titleLine1)} ${esc(home.titleEmphasis)}</h1>`,
+    p(home.subtitle),
+    `<h2>${esc(home.findsTitle)}</h2>`,
+    p(home.findsSub),
+    `<ul class="ggp-rows">${finds}</ul>`,
+    note(home.honestFootnote),
+    note(common.footer.desc),
+    `<nav class="ggp-links">${nav}</nav>`,
+  ].join("\n");
+}
+
+/**
+ * /about — why the site exists. Only the sections every reader sees: the case-context panel and its privacy section are switched off in the app (MY_CASE_ENABLED), so they are left out here as well.
+ */
+function aboutBody(locale, { seo, about, common }) {
+  const h = about.hero;
+  const fam = about.specialist.families;
+  const cli = about.specialist.clinicians;
+  const nots = ["diagnostic", "chatbot", "consultation"]
+    .map(
+      (key) =>
+        `<li><p class="ggp-q">${esc(about.not[`${key}Title`])}</p><p>${esc(about.not[`${key}Body`])}</p></li>`,
+    )
+    .join("\n");
+  const limits = about.limitations.items
+    .map((item) => `<li><p class="ggp-q">${esc(item.lead)}</p><p>${esc(item.body.trim())}</p></li>`)
+    .join("\n");
+  return [
+    `<h1>${esc(`${h.leadText1}${h.leadNum}${h.leadText2}`)}</h1>`,
+    p(h.leadLine2),
+    p(h.leadLine3),
+    p(h.tldr),
+    `<h2>${esc(about.origins.heading)}</h2>`,
+    ...about.origins.paragraphs.map(p),
+    `<h2>${esc(about.scale.heading)}</h2>`,
+    p(about.scale.closing),
+    `<h2>${esc(about.specialist.heading)}</h2>`,
+    `<h3>${esc(fam.heading)}</h3>`,
+    p(`${fam.p1Lead}${fam.p1Em}${fam.p1Rest}`),
+    p(fam.p2),
+    p(`${fam.p3Text1}${fam.p3Bold}${fam.p3Text2}`),
+    `<h3>${esc(cli.heading)}</h3>`,
+    p(cli.p1),
+    `<h2>${esc(about.not.heading)}</h2>`,
+    `<ul class="ggp-rows">${nots}</ul>`,
+    `<h2>${esc(about.limitations.heading)}</h2>`,
+    `<ul class="ggp-rows">${limits}</ul>`,
+    `<h2>${esc(about.who.heading)}</h2>`,
+    p(`${about.who.p1Bold}${about.who.p1Body}`),
+    p(about.who.p2),
+    note(common.footer.desc),
+    links(locale, seo, "/about"),
+  ].join("\n");
 }
 
 /** /diseases/fd — the hub. Facts and signposts; the live data is named, not faked. */
@@ -173,6 +246,8 @@ function fdGuidelinesBody(locale, { seo, common }) {
 }
 
 const PAGES = [
+  { path: "/", key: "home", body: homeBody, kind: "site" },
+  { path: "/about", key: "about", body: aboutBody, kind: "site" },
   { path: "/diseases/fd", key: "fd", body: fdBody },
   { path: "/diseases/fd/map", key: "fdMap", body: fdMapBody },
   { path: "/diseases/fd/tests", key: "fdTests", body: fdTestsBody },
@@ -180,20 +255,13 @@ const PAGES = [
 ];
 
 function jsonLd(locale, page, seo, url) {
-  return {
+  const base = {
     "@context": "https://schema.org",
     "@type": "MedicalWebPage",
     name: seo[page.key].title,
     url,
     description: seo[page.key].description,
     inLanguage: locale,
-    about: {
-      "@type": "MedicalCondition",
-      name: locale === "pl" ? "Dysplazja włóknista" : "Fibrous dysplasia",
-      alternateName: "McCune-Albright syndrome",
-      code: { "@type": "MedicalCode", codeValue: "174800", codingSystem: "OMIM" },
-    },
-    citation: seo.citation,
     audience: { "@type": "MedicalAudience", audienceType: ["Patient", "Clinician"] },
     publisher: {
       "@type": "Organization",
@@ -201,10 +269,24 @@ function jsonLd(locale, page, seo, url) {
       url: "https://genequest.org/",
     },
   };
+  // The home and about pages are about the site, not about a disease: no MedicalCondition, no guideline citation.
+  if (page.kind === "site") {
+    return base;
+  }
+  return {
+    ...base,
+    about: {
+      "@type": "MedicalCondition",
+      name: locale === "pl" ? "Dysplazja włóknista" : "Fibrous dysplasia",
+      alternateName: "McCune-Albright syndrome",
+      code: { "@type": "MedicalCode", codeValue: "174800", codingSystem: "OMIM" },
+    },
+    citation: seo.citation,
+  };
 }
 
 /**
- * Every FD page to write, in both languages: where it goes, what its head should
+ * Every prerendered page to write, in both languages: where it goes, what its head should
  * say, and the markup a reader without JavaScript gets.
  */
 export function buildPages() {
@@ -219,7 +301,8 @@ export function buildPages() {
         locale,
         path,
         url,
-        title: `${seo[page.key].title}${seo.titleSuffix}`,
+        // The home page carries the site title as it is; every other page gets the suffix, the way the app's own <title> does.
+        title: page.key === "home" ? seo.siteTitle : `${seo[page.key].title}${seo.titleSuffix}`,
         description: seo[page.key].description,
         alternates: LOCALES.map((other) => ({
           hreflang: other,

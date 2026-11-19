@@ -10,18 +10,38 @@ import { buildPages, LOCALES, ORIGIN } from "./pages.mjs";
 const pages = buildPages();
 const byPath = Object.fromEntries(pages.map((page) => [page.path, page]));
 
-describe("prerendered FD pages", () => {
-  it("covers every FD route in both languages", () => {
+describe("prerendered pages", () => {
+  it("covers the home page, the about page and every FD route in both languages", () => {
     expect(pages.map((page) => page.path).sort()).toEqual([
+      "/",
+      "/about",
       "/diseases/fd",
       "/diseases/fd/guidelines",
       "/diseases/fd/map",
       "/diseases/fd/tests",
+      "/pl",
+      "/pl/about",
       "/pl/diseases/fd",
       "/pl/diseases/fd/guidelines",
       "/pl/diseases/fd/map",
       "/pl/diseases/fd/tests",
     ]);
+  });
+
+  it.each(["/", "/pl"])("%s says what the site is and that nobody signs it off", (path) => {
+    const page = byPath[path];
+    expect(page.title).not.toContain(" · GeneGuidelines");
+    expect(page.body).toContain("<h1>");
+    expect(page.body.toLowerCase()).toMatch(/no one formally signs off|nikt się pod nim oficjalnie nie podpisuje/);
+    // The home page is about the site, not about FD.
+    expect(page.jsonLd.about).toBeUndefined();
+  });
+
+  it.each(["/about", "/pl/about"])("%s leaves out the switched-off case-context panel", (path) => {
+    const body = byPath[path].body;
+    expect(body).toContain("<h1>");
+    expect(body).not.toContain("SHA-256");
+    expect(body.toLowerCase()).not.toContain("discharge summary");
   });
 
   it.each(pages.map((page) => [page.path]))("%s carries a head a crawler can use", (path) => {

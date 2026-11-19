@@ -113,3 +113,22 @@ def test_directory_without_an_index_still_falls_back(spa_client: TestClient) -> 
     resp = spa_client.get("/pl/diseases")
     assert resp.status_code == 200
     assert "<title>GeneGuidelines</title>" in resp.text
+
+
+def test_shell_serves_app_routes_once_home_is_prerendered(spa_client: TestClient, tmp_path) -> None:
+    """With the home page prerendered into index.html, only "/" gets it: every other app route gets the shell, which names no canonical URL, so /diseases/mas is not declared a duplicate of the home page."""
+    (tmp_path / "index.html").write_text(
+        '<!doctype html><title>Home</title><link rel="canonical" href="https://x/"><div id=gg-prerender>home</div>',
+        encoding="utf-8",
+    )
+    (tmp_path / "_shell.html").write_text(
+        "<!doctype html><title>GeneGuidelines</title><div id=root></div>", encoding="utf-8"
+    )
+    assert "gg-prerender" in spa_client.get("/").text
+    for path in ("/diseases/mas", "/doctors", "/pl/doctors"):
+        resp = spa_client.get(path)
+        assert resp.status_code == 200, path
+        assert "canonical" not in resp.text, path
+        assert "<title>GeneGuidelines</title>" in resp.text, path
+    # A prerendered page still wins over the shell.
+    assert "Dysplazja" in spa_client.get("/pl/diseases/fd").text

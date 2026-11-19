@@ -7,6 +7,17 @@
   "linkTests": "Lista badań do wydruku",
   "linkGuidelines": "Co mówią wytyczne",
   "linkDoctors": "Lekarze znający FD",
+  "linkDiseases": "Wszystkie choroby",
+  "linkAllDoctors": "Katalog lekarzy",
+  "linkAbout": "Dlaczego to zbudowaliśmy",
+  "home": {
+    "title": "GeneGuidelines — żywe wytyczne dla rzadkich chorób genetycznych",
+    "description": "Dla rodzin i lekarzy w rzadkiej chorobie genetycznej: streszczenie oficjalnych wytycznych ze źródłami, lekarze z udokumentowanym doświadczeniem, badania kliniczne i fundacje w jednym miejscu. Prowadzi Fundacja GeneQuest."
+  },
+  "about": {
+    "title": "Dlaczego to zbudowaliśmy",
+    "description": "Dlaczego choroba rzadka przerasta pojedynczego lekarza, co z tym robi GeneGuidelines, czym nie jest i gdzie są jego granice — piszą rodzice dziecka z dysplazją włóknistą."
+  },
   "fd": {
     "title": "Dysplazja włóknista (FD/MAS)",
     "description": "Dysplazja włóknista i zespół McCune'a-Albrighta: oficjalna wytyczna FD/MAS, lekarze z udokumentowanym doświadczeniem, badania kliniczne i fundacje — zebrane przez Fundację GeneQuest."

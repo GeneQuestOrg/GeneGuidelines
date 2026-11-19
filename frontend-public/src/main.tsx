@@ -75,7 +75,7 @@ function withAuth0(children: ReactNode): ReactNode {
 }
 
 /**
- * Static prerender block. `prerender/build.mjs` writes the FD pages into `dist/`
+ * Static prerender block. `prerender/build.mjs` writes the home, about and FD pages into `dist/`
  * with a readable copy of the page in `#gg-prerender`, so a crawler, a link
  * unfurler or a language model that never runs JavaScript still sees the page.
  * The browser has no use for it once React is about to mount, so it goes first.

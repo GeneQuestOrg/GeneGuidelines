@@ -280,4 +280,8 @@ def spa_fallback(full_path: str) -> FileResponse:
         prerendered = candidate / "index.html"
         if prerendered.is_file():
             return FileResponse(prerendered)
+    # index.html is the prerendered home page, so it answers "/" only. Every other app route gets the shell, which names no canonical URL — the home page's canonical on /diseases/mas would declare it a duplicate of "/". An older bundle without a shell keeps the old behaviour.
+    shell = _static_dir / "_shell.html"
+    if full_path and shell.is_file():
+        return FileResponse(shell)
     return FileResponse(_static_dir / "index.html")

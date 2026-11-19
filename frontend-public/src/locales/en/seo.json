@@ -7,6 +7,17 @@
   "linkTests": "Printable list of tests",
   "linkGuidelines": "What the guidelines say",
   "linkDoctors": "Doctors who know FD",
+  "linkDiseases": "All diseases",
+  "linkAllDoctors": "Doctor directory",
+  "linkAbout": "Why we built this",
+  "home": {
+    "title": "GeneGuidelines — Living guidelines for rare genetic diseases",
+    "description": "For families and clinicians facing a rare genetic disease: a source-cited summary of the official guidelines, doctors with documented experience, clinical trials and foundations, in one place. Built by the GeneQuest Foundation."
+  },
+  "about": {
+    "title": "Why we built this",
+    "description": "Why a rare disease outruns any one doctor, what GeneGuidelines does about it, what it is not, and its limits — written by the parents of a child with fibrous dysplasia."
+  },
   "fd": {
     "title": "Fibrous dysplasia (FD/MAS)",
     "description": "Fibrous dysplasia and McCune-Albright syndrome: the official FD/MAS guideline, doctors with documented experience, clinical trials and foundations — gathered by the GeneQuest Foundation."

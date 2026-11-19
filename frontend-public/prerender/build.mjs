@@ -1,5 +1,5 @@
 /**
- * Write the static FD pages into `dist/` after `vite build`.
+ * Write the static pages into `dist/` after `vite build`.
  *
  * Each page reuses the built `index.html` verbatim — same hashed bundle, same
  * fonts, same analytics snippet — and only swaps the head tags that describe the
@@ -9,6 +9,8 @@
  *
  * The backend serves `<dir>/index.html` for a directory path (backend/main.py,
  * `spa_fallback`); without that these files would be written and never served.
+ *
+ * The home page is one of them, so `dist/index.html` stops being the shell every other route falls back to. The shell is written to `dist/_shell.html` first, and without a canonical link or og:url: the template's point at the home page, and served on /diseases/mas or /doctors they told a search engine that every such page was a duplicate of the home page. The app sets the right canonical itself once it runs (src/hooks/useDocumentMeta.ts).
  */
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -114,6 +116,13 @@ function render(template, page) {
   return html;
 }
 
+/** The fallback shell: the template minus the tags that name one URL as the page. */
+function shell(template) {
+  return template
+    .replace(/\s*<link\b[^>]*\brel="canonical"[^>]*>/gi, "")
+    .replace(/\s*<meta\b[^>]*\bproperty="og:url"[^>]*>/gi, "");
+}
+
 function main() {
   const templatePath = join(dist, "index.html");
   let template;
@@ -122,6 +131,9 @@ function main() {
   } catch {
     throw new Error(`prerender: ${templatePath} not found — run vite build first`);
   }
+
+  writeFileSync(join(dist, "_shell.html"), shell(template), "utf8");
+  console.log("prerender: fallback shell → /dist/_shell.html");
 
   const pages = buildPages();
   for (const page of pages) {

@@ -8,12 +8,12 @@ const ORIGIN = "https://geneguidelines.genequest.org";
 /**
  * Which `seo.json` entry describes a route.
  *
- * FD only, and deliberately so: these are the four pages that are prerendered at
- * build time (frontend-public/prerender), and this keeps what the browser shows
- * after an in-app navigation identical to what the server already served. Every
- * other route keeps the site-level title rather than inheriting a stale one.
+ * Only the pages prerendered at build time (frontend-public/prerender): the about page and the four FD pages. This keeps what the browser shows after an in-app navigation identical to what the server already served. The home page and every other route keep the site-level title rather than inheriting a stale one.
  */
 function seoKeyFor(route: Route): string | null {
+  if (route.name === "about") {
+    return "about";
+  }
   if (route.name === "disease" && route.slug === "fd") {
     return "fd";
   }
@@ -40,13 +40,39 @@ function pathFor(route: Route): string {
       return `/diseases/${route.slug}/tests`;
     case "guidelines":
       return `/diseases/${route.slug}/guidelines`;
+    case "about":
+      return "/about";
     default:
       return "/";
   }
 }
 
+/**
+ * The canonical URL. A described page and the home page have a fixed one; any other route is its own page, so it names itself. Pointing it at "/" — what this used to do — tells a search engine /diseases/mas is a copy of the home page.
+ */
+function canonicalFor(route: Route, key: string | null, locale: Locale): string {
+  if (key != null) {
+    return `${ORIGIN}${withLocalePrefix(pathFor(route), locale)}`;
+  }
+  if (route.name === "home") {
+    return `${ORIGIN}${withLocalePrefix("/", locale)}`;
+  }
+  return `${ORIGIN}${window.location.pathname}`;
+}
+
 function setMeta(selector: string, attribute: string, value: string): void {
   document.head.querySelector(selector)?.setAttribute(attribute, value);
+}
+
+/** The shell served for most routes has no canonical link, so create it once. */
+function setCanonical(url: string): void {
+  let link = document.head.querySelector<HTMLLinkElement>('link[rel="canonical"]');
+  if (link == null) {
+    link = document.createElement("link");
+    link.rel = "canonical";
+    document.head.appendChild(link);
+  }
+  link.href = url;
 }
 
 /**
@@ -61,11 +87,11 @@ export function useDocumentMeta(route: Route, locale: Locale): void {
   useEffect(() => {
     const title = key == null ? t("siteTitle") : `${t(`${key}.title`)}${t("titleSuffix")}`;
     const description = key == null ? t("siteDescription") : t(`${key}.description`);
-    const url = `${ORIGIN}${withLocalePrefix(key == null ? "/" : pathFor(route), locale)}`;
+    const url = canonicalFor(route, key, locale);
 
     document.title = title;
     setMeta('meta[name="description"]', "content", description);
-    setMeta('link[rel="canonical"]', "href", url);
+    setCanonical(url);
     setMeta('meta[property="og:title"]', "content", title);
     setMeta('meta[property="og:description"]', "content", description);
     setMeta('meta[property="og:url"]', "content", url);
