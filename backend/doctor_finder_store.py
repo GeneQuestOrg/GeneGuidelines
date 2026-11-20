@@ -8,8 +8,10 @@ from typing import Any
 
 try:
     from .database import get_connection
+    from .doctor_removals import strip_removed_authors
 except ImportError:
     from database import get_connection
+    from doctor_removals import strip_removed_authors
 
 log = logging.getLogger(__name__)
 
@@ -57,6 +59,8 @@ def save_doctor_finder_run_result(
     if not execution_id:
         return
     ensure_doctor_finder_run_results_schema()
+    # Write-time half of the removal list: a clinician who asked to be removed is not stored again by a new run.
+    doctor_report = strip_removed_authors(doctor_report)
     report_json = json.dumps(doctor_report, ensure_ascii=False) if isinstance(doctor_report, dict) else None
     err_text = str(error).strip() if error is not None else None
     slug_norm = (catalog_slug or "").strip().lower() or None

@@ -52,6 +52,9 @@ PUBLIC_MUTATIONS: dict[str, str] = {
         "The search box itself — a visitor with no account types a symptom or a "
         "misspelling and needs an answer. Costs one LLM call, so it is rate limited."
     ),
+    "POST /api/doctors/{slug}/requests": (
+        "A clinician in the directory never made an account with us; the privacy policy promises them a correction/removal request without one. Rate limited per IP in routers/doctor_requests.py; stores nothing, only emails the foundation."
+    ),
     "POST /api/feedback": (
         "Anonymous contact box; a parent must be able to report a wrong claim "
         "without making an account. Rate limited per IP in routers/feedback.py."

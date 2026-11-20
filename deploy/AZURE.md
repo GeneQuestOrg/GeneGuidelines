@@ -601,6 +601,19 @@ curl -sS "https://geneguidelines.genequest.org/api/diseases/fd/trials?nocache=$(
 
 Expect **401** on `/api/account/me` when Auth0 is configured; **503** means `AUTH0_DOMAIN` is missing on the Container App; **404** means the auth code is not deployed yet.
 
+## Privacy operations (RODO, 2026-11-20)
+
+The code side of the privacy policy shipped with the "paczka RODO". Four things live outside the code and are done by hand:
+
+1. **Container log retention: 30 days.** The privacy policy states it. Container Apps send console logs to the Log Analytics workspace of the environment; set that workspace's retention to 30 days (Azure portal → Log Analytics workspace → Usage and estimated costs → Data retention, or `az monitor log-analytics workspace update --resource-group <rg> --workspace-name <ws> --retention-time 30`). The app no longer writes query strings to the access log and the worker no longer logs outbound URLs, so new lines carry no emails, places or the NCBI key; old lines age out with the retention.
+2. **Telegram ping for clinician requests (optional).** Create a bot with @BotFather, send it one message from your phone, read your chat id (`https://api.telegram.org/bot<token>/getUpdates`), then set two secrets on **gg-public** (the web process handles the request): `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID`. Unset = the request still reaches `FEEDBACK_TO` by email, just without the ping. The ping carries the request type and profile slug only.
+3. **Umami for GeneGuidelines.** Add a separate website for `geneguidelines.genequest.org` in the Umami panel and set its id as the GitHub **repository variable** `VITE_UMAMI_WEBSITE_ID` (Settings → Secrets and variables → Actions → Variables). The next deploy bakes it into the bundle; the CSP already allows the Umami origin (`UMAMI_ORIGIN`, default the Poland Central instance). Events counted: `print-fd-tests`, `share-disease-link`.
+4. **Resend.** Clinician requests and "summary changed" emails use the existing `RESEND_API_KEY` / `EMAIL_FROM`; nothing new to configure.
+
+**Removing a clinician** after a request: `python -m backend.scripts.remove_doctor <profile-slug> --reason objection`, commit `backend/doctor_removals.json` (it holds hashes only — the repository is public), deploy. The profile disappears from every list, profile URL, count and server-rendered page, and later doctor-finder runs do not store or show the person again. Answer the requester from the mailbox; the GDPR gives a month.
+
+**Retention** runs in **gg-worker** at start and daily (`backend/retention.py`): anonymous session ids on research requests cleared after 12 months, expired invites deleted 30 days after expiry, accounts inactive 24 months counted in the log (not deleted — they need a notice first). Unsubscribing deletes the subscriber row at once.
+
 ## Local development vs GeneQuest-hosted instance
 
 | | Local (`make dev` / Docker Compose) | Azure (`gg-public`) |

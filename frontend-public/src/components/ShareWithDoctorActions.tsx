@@ -6,6 +6,7 @@ import {
   buildWhatsAppShareUrl,
   getCurrentPageUrl,
 } from "../utils/sharePage";
+import { trackEvent } from "../utils/analytics";
 
 export interface ShareWithDoctorActionsProps {
   diseaseName: string;
@@ -30,6 +31,7 @@ export function ShareWithDoctorActions({ diseaseName }: ShareWithDoctorActionsPr
   );
 
   const copyLink = () => {
+    trackEvent("share-disease-link", { method: "copy" });
     void navigator.clipboard?.writeText(url).then(
       () => {
         setCopied(true);
@@ -56,10 +58,16 @@ export function ShareWithDoctorActions({ diseaseName }: ShareWithDoctorActionsPr
         href={whatsappHref}
         target="_blank"
         rel="noopener noreferrer"
+        onClick={() => trackEvent("share-disease-link", { method: "whatsapp" })}
       >
         {t("shareWhatsApp")}
       </Button>
-      <Button as="a" size="sm" href={emailHref}>
+      <Button
+        as="a"
+        size="sm"
+        href={emailHref}
+        onClick={() => trackEvent("share-disease-link", { method: "email" })}
+      >
         {t("shareEmail")}
       </Button>
     </div>

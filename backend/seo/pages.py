@@ -265,6 +265,7 @@ def doctor_profile(row: Mapping[str, Any], L: Labels, locale: str, names: Mappin
         _p(_place(doc)) if _place(doc) else "",
         f"<h2>{esc(L['doctorDiseases'])}</h2><ul>{diseases}</ul>" if diseases else "",
         _note(L["doctorsProvenance"]),
+        _note(L["doctorPrivacyNote"]),
         _site_links(L, locale),
     ]
     description = fill(L["doctorProfileDescription"], name=doc.name, specialty=doc.specialty, place=_place(doc))

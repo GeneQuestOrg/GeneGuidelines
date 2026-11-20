@@ -14,6 +14,7 @@ try:
     from .config import BACKEND_DIR
     from .content_db import get_disease_by_slug, list_diseases_catalog, normalize_disease_slug
     from .doctor_axis import clinical_entries
+    from .doctor_removals import without_removed
     from .doctor_geo_coords import coords_for_city_country, resolve_location
     from .doctor_scope import derive_scope
     from .ern_membership import memberships_for
@@ -22,6 +23,7 @@ except ImportError:
     from config import BACKEND_DIR
     from content_db import get_disease_by_slug, list_diseases_catalog, normalize_disease_slug
     from doctor_axis import clinical_entries
+    from doctor_removals import without_removed
     from doctor_geo_coords import coords_for_city_country, resolve_location
     from doctor_scope import derive_scope
     from ern_membership import memberships_for
@@ -221,7 +223,8 @@ def _entry_to_public_doctor(
         practices = [{
             "type": str(resolved_practice.get("type") or "primary"),
             "name": str(resolved_practice.get("name") or affiliation or "Practice location"),
-            "address": resolved_practice.get("address"),
+            # The NPPES street address stays in the backend: the public profile names the city and state only (RODO review 2026-11-20 — a street address is more than a family needs to choose a doctor).
+            "address": None,
             "city": p_city,
             "state": p_state,
             "country": p_country,
@@ -1036,6 +1039,20 @@ def _merged_doctors_for_catalog_slug(
     *,
     seeded_docs: list[dict[str, Any]] | None = None,
 ) -> tuple[str, list[dict[str, Any]]]:
+    """Merge seed file + doctor_finder hits for one catalog disease slug, minus clinicians who asked to be removed.
+
+    Every per-disease list and count goes through here, so this is where the removal list (``doctor_removals``) is applied on read.
+    """
+    source, doctors = _merged_doctors_for_catalog_slug_unfiltered(normalized, finder_index, seeded_docs=seeded_docs)
+    return source, without_removed(doctors)
+
+
+def _merged_doctors_for_catalog_slug_unfiltered(
+    normalized: str,
+    finder_index: dict[str, list[dict[str, Any]] | None],
+    *,
+    seeded_docs: list[dict[str, Any]] | None = None,
+) -> tuple[str, list[dict[str, Any]]]:
     """Merge seed file + doctor_finder hits for one catalog disease slug."""
     doctors_seed = seeded_docs if seeded_docs is not None else _load_content_doctors_file()
     seeded = [
@@ -1233,7 +1250,8 @@ def list_all_doctors() -> list[dict[str, Any]]:
 
         # DOC-5: apply approved parent recs to every row (seed-file rows that
         # carry no disease never went through the per-disease merge above).
-        _ALL_DOCTORS_CACHE = [_apply_approved_recs(doc) for doc in by_slug.values()]
+        # The removal list applies to the global list too, so a removed profile URL resolves to nothing.
+        _ALL_DOCTORS_CACHE = without_removed([_apply_approved_recs(doc) for doc in by_slug.values()])
         _ALL_DOCTORS_CACHE_VERSION = version
         return _ALL_DOCTORS_CACHE
 

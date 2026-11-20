@@ -50,6 +50,7 @@ def test_subscribe_and_confirm(subscription_service: SubscriptionService) -> Non
         email="parent@example.com",
         prefs=AlertPrefs(),
         radius_km=500,
+        client_ref="browser-ref-0123456789",
     )
     assert result is not None
     assert result.subscription.status == "pending"
@@ -60,7 +61,7 @@ def test_subscribe_and_confirm(subscription_service: SubscriptionService) -> Non
     assert confirmed is not None
     assert confirmed.status == "confirmed"
 
-    status = subscription_service.status(disease_slug="fd", email="parent@example.com")
+    status = subscription_service.status(disease_slug="fd", client_ref="browser-ref-0123456789")
     assert status == "confirmed"
 
 

@@ -16,6 +16,10 @@ class SubscribeRequest(BaseModel):
     email: str = Field(..., min_length=3, max_length=320)
     prefs: AlertPrefsRequest = Field(default_factory=AlertPrefsRequest)
     radius_km: int | None = Field(default=500, ge=50, le=2000)
+    # Random reference the browser generated and keeps; only its hash is stored, and only it can read this subscription's status.
+    client_ref: str | None = Field(default=None, min_length=16, max_length=128)
+    # Separate consent to be contacted about testing GeneGuidelines / the community. Off unless the visitor ticks it.
+    community: bool = False
 
     @field_validator("email")
     @classmethod

@@ -54,6 +54,7 @@
     "lastUpdated": "Ostatnia aktualizacja: {{date}}",
     "cited": "Cytowane:",
     "unknownTitle": "Choroba, która nie ma jeszcze strony",
-    "unknownBody": "Nie mamy jeszcze opracowanej strony dla tej choroby. Katalog rośnie, gdy ktoś zleci research dla danej choroby."
+    "unknownBody": "Nie mamy jeszcze opracowanej strony dla tej choroby. Katalog rośnie, gdy ktoś zleci research dla danej choroby.",
+    "doctorPrivacyNote": "To Pan/Pani? Napisz na kontakt@genequest.org — poprawimy ten wpis albo go usuniemy i nie pojawi się przy kolejnych aktualizacjach katalogu."
   }
 }

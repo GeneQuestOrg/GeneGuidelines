@@ -57,6 +57,7 @@ FALLBACK_EN: dict[str, str] = {
     "directoryDescription": "A directory of doctors with documented experience in rare genetic diseases, built from public sources (PubMed, clinic websites) and family reports.",
     "doctorsByDisease": "Doctors by disease",
     "doctorProfileDescription": "{{name}} — {{specialty}}, {{place}}. A profile built from public sources.",
+    "doctorPrivacyNote": "Is this you? Write to kontakt@genequest.org and we will correct this entry or remove it and keep it out of future updates of the directory.",
     "trialsForTitle": "Clinical trials for {{disease}}",
     "trialsDescription": "Clinical trials catalogued for {{disease}} from ClinicalTrials.gov, with their recruitment status and sites.",
     "trialsDirectoryDescription": "Clinical trials catalogued for rare genetic diseases from ClinicalTrials.gov, with their recruitment status and sites.",

@@ -1,17 +1,16 @@
 import { fetchSubscriptionStatus } from "../api/subscriptions";
 import {
-  readStoredSubscriptionEmail,
+  readStoredSubscriptionRef,
+  subscriptionUiFromApiStatus,
   type SubscriptionUiStatus,
 } from "./diseaseSubscriptionStorage";
 
 export async function loadSubscriptionUiStatus(slug: string): Promise<SubscriptionUiStatus> {
-  const email = readStoredSubscriptionEmail(slug);
-  if (email == null) return "none";
+  const ref = readStoredSubscriptionRef(slug);
+  if (ref == null) return "none";
   try {
-    const { status } = await fetchSubscriptionStatus(slug, email);
-    if (status === "confirmed") return "confirmed";
-    if (status === "pending") return "pending";
-    return "none";
+    const { status } = await fetchSubscriptionStatus(slug, ref);
+    return subscriptionUiFromApiStatus(status);
   } catch {
     return "none";
   }

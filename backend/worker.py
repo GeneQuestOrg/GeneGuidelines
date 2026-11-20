@@ -34,6 +34,23 @@ logging.basicConfig(
 )
 log = logging.getLogger("backend.worker")
 
+# INFO here would log every outbound URL — the NCBI api_key, and the clinician names and states sent to NPPES and ClinicalTrials.gov.
+from backend.shared.log_privacy import install_log_privacy  # noqa: E402
+
+install_log_privacy()
+
+
+async def _retention_loop() -> None:
+    """Apply the retention rules now and then once a day; a failed pass is logged and retried next day."""
+    from backend.retention import RUN_EVERY, run_retention
+
+    while True:
+        try:
+            await asyncio.to_thread(run_retention)
+        except Exception:  # noqa: BLE001 — retention must never take the research worker down
+            log.exception("backend.worker: retention pass failed")
+        await asyncio.sleep(RUN_EVERY.total_seconds())
+
 
 async def _run() -> None:
     from backend.config import DB_URL
@@ -51,6 +68,7 @@ async def _run() -> None:
     # rebuilt from its payload the moment a worker claims it.
     register_research_factories(scheduler)
     await scheduler.start()
+    retention = asyncio.create_task(_retention_loop())
     log.info(
         "backend.worker: scheduler started (max_concurrent=%s) — waiting for jobs",
         scheduler.max_concurrent,
@@ -68,6 +86,7 @@ async def _run() -> None:
         await stop.wait()
     finally:
         log.info("backend.worker: shutting down — cancelling worker pool")
+        retention.cancel()
         await scheduler.shutdown()
 
 

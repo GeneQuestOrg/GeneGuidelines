@@ -98,5 +98,22 @@
   "researchAuthor": {
     "title": "Listed as an author, not as a doctor to go to",
     "body": "This entry exists because this person co-authored published research on the condition. We have no confirmation that they see patients or what they practise, so they are not shown in the specialist search. Nothing here says they treat this condition."
+  },
+  "privacyRequest": {
+    "summary": "Is this you? Ask us to correct or remove this entry",
+    "intro": "This entry was built from publications and public registers. You can ask us to correct it, or to remove it and keep it out of future updates of the directory. We answer within a month, usually much sooner. You can also write to kontakt@genequest.org.",
+    "kindLegend": "What would you like us to do?",
+    "kindRemoval": "Remove this entry",
+    "kindCorrection": "Correct this entry",
+    "relationLabel": "I am",
+    "relationSelf": "the person in this entry",
+    "relationRepresentative": "acting on their behalf",
+    "emailLabel": "Your email, for our reply",
+    "messageLabel": "Anything we should know (optional)",
+    "send": "Send request",
+    "sending": "Sending…",
+    "done": "Received. We will reply by email — within a month, usually much sooner.",
+    "errorEmail": "Enter a valid email address so we can reply.",
+    "errorSend": "Could not send right now — please write to kontakt@genequest.org."
   }
 }

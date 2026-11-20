@@ -1706,3 +1706,39 @@
   color: var(--accent-ink);
   font-weight: 600;
 }
+
+/* Clinician GDPR request (correction / removal) — a quiet disclosure under the contact block. */
+.dprofile__privacy {
+  margin-top: 0.75rem;
+  font-size: 0.9rem;
+}
+.dprofile__privacy summary {
+  cursor: pointer;
+  color: var(--color-text-muted, inherit);
+}
+.dprofile__privacy-form {
+  display: grid;
+  gap: 0.6rem;
+  margin-top: 0.6rem;
+  max-width: 34rem;
+}
+.dprofile__privacy-form label {
+  display: grid;
+  gap: 0.25rem;
+}
+.dprofile__privacy-form fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.dprofile__privacy-form fieldset label {
+  display: inline-flex;
+  gap: 0.35rem;
+  align-items: center;
+}
+.dprofile__privacy-error {
+  color: var(--color-danger, #b42318);
+}

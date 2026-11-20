@@ -9,15 +9,21 @@ from fastapi.middleware.gzip import GZipMiddleware
 from backend.config import CORS_ORIGINS
 from backend.database import init_db, run_seed_if_empty
 from backend.routers import agent, tickets, tools, flows
-from backend.config import DB_URL, MEMORY_POSTGRES_DSN, AUTH0_DOMAIN
+from backend.config import DB_URL, MEMORY_POSTGRES_DSN, AUTH0_DOMAIN, UMAMI_ORIGIN
 import logging
 
 logger = logging.getLogger(__name__)
+
+# The access log must not record query strings (emails, typed places, coordinates, tokens). Installed at import and again at startup, in case the server reconfigured logging in between; it is idempotent.
+from backend.shared.log_privacy import install_log_privacy  # noqa: E402
+
+install_log_privacy()
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Startup: init DB schema, then seed from JSON only when tables are empty (in thread, so event loop is not blocked)."""
+    install_log_privacy()
     loop = asyncio.get_event_loop()
 
     await loop.run_in_executor(None, init_db)
@@ -110,16 +116,15 @@ def _content_security_policy_for_path(path: str) -> str:
             "frame-ancestors 'none'; "
             "base-uri 'self'"
         )
-    # API responses keep the strict policy; bundled SPA at / needs a relaxed
-    # one so Vite-built assets, Google Fonts, and same-origin XHR all work.
+    # API responses keep the strict policy; the bundled SPA at / needs a relaxed one for Vite-built assets, same-origin XHR, the Auth0 tenant and the self-hosted Umami tracker. Fonts are self-hosted since 2026-11-20 — Google Fonts sent every visitor's IP to Google.
     if not path.startswith("/api") and path != "/health":
         return (
             "default-src 'self'; "
-            "script-src 'self'; "
-            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+            f"script-src 'self' {UMAMI_ORIGIN}; "
+            "style-src 'self' 'unsafe-inline'; "
             "img-src 'self' data: blob: https://*.tile.openstreetmap.org; "
-            "font-src 'self' data: https://fonts.gstatic.com; "
-            f"connect-src 'self'{_AUTH0_CONNECT_SRC}; "
+            "font-src 'self' data:; "
+            f"connect-src 'self'{_AUTH0_CONNECT_SRC} {UMAMI_ORIGIN}; "
             "frame-ancestors 'none'; "
             "base-uri 'self'"
         )
@@ -167,7 +172,7 @@ from backend.doctor_contributions.api import router as doctor_contributions_rout
 from backend.guidelines.api import router as guidelines_router  # noqa: E402
 from backend.guidelines.bibliography.api import router as bibliography_router  # noqa: E402
 from backend.subscriptions.api import router as subscriptions_router  # noqa: E402
-from backend.routers import content, doctor_finder, feedback, geo, pipeline  # noqa: E402
+from backend.routers import content, doctor_finder, doctor_requests, feedback, geo, pipeline  # noqa: E402
 
 # The new content module owns GET /api/diseases and GET /api/diseases/{slug};
 # the legacy `content` router below still serves the other content endpoints
@@ -181,6 +186,8 @@ app.include_router(account_router, prefix="/api")
 # (/doctors/submissions, /doctors/contributions/pending) win over that
 # router's GET /doctors/{slug} catch-all.
 app.include_router(doctor_contributions_router, prefix="/api")
+# Clinician GDPR requests (correction / removal) — POST /api/doctors/{slug}/requests; before the legacy `content` router like the other doctor sub-paths.
+app.include_router(doctor_requests.router, prefix="/api")
 # Guidelines layer (GL-4) — GET /api/diseases/{slug}/{source-documents,
 # guideline-synthesis,guideline-suggestions,synthesis-signals}. Before the
 # legacy `content` router so its literal sub-paths win the match.

@@ -14,6 +14,8 @@ class AlertPrefs:
     trials: bool = True
     therapies: bool = False
     doctors: bool = True
+    # Separate, opt-in consent: "you may contact me to help test GeneGuidelines / about the community". Never implied by subscribing to a disease.
+    community: bool = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -28,6 +30,8 @@ class DiseaseAlertSubscription:
     created_at: str
     confirmed_at: str | None
     unsubscribed_at: str | None
+    # SHA-256 of a random reference the subscribing browser keeps, so that browser can ask for its own status without anyone being able to look up an arbitrary email address.
+    client_ref_hash: str | None = None
 
 
 __all__ = [

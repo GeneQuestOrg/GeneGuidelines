@@ -10,7 +10,11 @@ export type AlertPrefsPayload = {
 export type SubscribePayload = {
   email: string;
   prefs: AlertPrefsPayload;
-  radius_km: number;
+  radius_km: number | null;
+  /** Random reference this browser keeps; only its hash is stored, and only it can read the status. */
+  client_ref: string;
+  /** Separate, optional consent to be contacted about testing GeneGuidelines / the community. */
+  community: boolean;
 };
 
 export type SubscribeResponse = {
@@ -21,6 +25,14 @@ export type SubscribeResponse = {
 
 export type SubscriptionStatusResponse = {
   status: "pending" | "confirmed" | null;
+};
+
+/** The one alert we send: the guideline summary changed. Nothing else is promised, so nothing else is asked for. */
+export const SUMMARY_CHANGE_PREFS: AlertPrefsPayload = {
+  guidelines: true,
+  trials: false,
+  therapies: false,
+  doctors: false,
 };
 
 export async function subscribeToDiseaseAlerts(
@@ -35,9 +47,9 @@ export async function subscribeToDiseaseAlerts(
 
 export async function fetchSubscriptionStatus(
   slug: string,
-  email: string,
+  ref: string,
 ): Promise<SubscriptionStatusResponse> {
-  const params = new URLSearchParams({ email });
+  const params = new URLSearchParams({ ref });
   return apiGet<SubscriptionStatusResponse>(
     `/api/diseases/${encodeURIComponent(slug)}/subscriptions/status?${params}`,
   );

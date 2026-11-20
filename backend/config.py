@@ -595,6 +595,19 @@ API_PUBLIC_URL = (os.environ.get("API_PUBLIC_URL") or "http://localhost:8000").s
 #   FEEDBACK_TO=kontakt@genequest.org
 FEEDBACK_TO = (os.environ.get("FEEDBACK_TO") or "kontakt@genequest.org").strip()
 
+# -- Phone ping for privacy requests (Telegram) ----------------------------------
+# A clinician asking to be corrected or removed is a request with a legal deadline (a month under the GDPR), so besides the email to FEEDBACK_TO the founder gets a Telegram message. Both unset = no message; nothing else depends on them. The message carries only the request type and the profile slug, never the requester's email.
+#   TELEGRAM_BOT_TOKEN=123456:ABC...   (from @BotFather)
+#   TELEGRAM_CHAT_ID=123456789         (the founder's chat with the bot)
+TELEGRAM_BOT_TOKEN = (os.environ.get("TELEGRAM_BOT_TOKEN") or "").strip()
+TELEGRAM_CHAT_ID = (os.environ.get("TELEGRAM_CHAT_ID") or "").strip()
+
+# -- Analytics (Umami, cookieless, self-hosted in Azure Poland Central) -----------
+# The public SPA loads the tracker from this origin when the build sets VITE_UMAMI_WEBSITE_ID; the Content-Security-Policy must allow it as a script source and as the beacon target, or the browser silently drops both.
+UMAMI_ORIGIN = (
+    os.environ.get("UMAMI_ORIGIN") or "https://umami.blacktree-a28e1549.polandcentral.azurecontainerapps.io"
+).strip().rstrip("/")
+
 # -- "My case" private uploads -----------------------------------------------
 # OFF, and deliberately a constant rather than an env var: it is a decision about
 # what the product is, not per-environment configuration, so it belongs in a

@@ -1,15 +1,12 @@
 import { useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@gene-guidelines/ui";
-import {
-  subscribeToDiseaseAlerts,
-  type AlertPrefsPayload,
-} from "../api/subscriptions";
+import { SUMMARY_CHANGE_PREFS, subscribeToDiseaseAlerts } from "../api/subscriptions";
 import type { Disease } from "../types";
 import {
-  clearStoredSubscriptionEmail,
-  readStoredSubscriptionEmail,
-  writeStoredSubscriptionEmail,
+  clearStoredSubscriptionRef,
+  ensureSubscriptionRef,
+  readStoredSubscriptionRef,
 } from "../utils/diseaseSubscriptionStorage";
 import "../styles/disease-subscribe-modal.css";
 
@@ -19,32 +16,21 @@ export interface DiseaseSubscribeModalProps {
   onSaved: () => void;
 }
 
-const DEFAULT_PREFS: AlertPrefsPayload = {
-  guidelines: true,
-  trials: true,
-  therapies: false,
-  doctors: true,
-};
-
-export function DiseaseSubscribeModal({
-  disease,
-  onClose,
-  onSaved,
-}: DiseaseSubscribeModalProps) {
+/**
+ * "Email me when this summary changes" — the one alert GeneGuidelines actually sends.
+ *
+ * Until 2026-11-20 this form offered alerts about trials, therapies and nearby doctors within a radius, none of which was ever sent. It now asks only for what it delivers, plus a separate, unticked consent to be contacted about testing the product.
+ */
+export function DiseaseSubscribeModal({ disease, onClose, onSaved }: DiseaseSubscribeModalProps) {
   const { t } = useTranslation("common");
-  const storedEmail = readStoredSubscriptionEmail(disease.slug);
-  const [email, setEmail] = useState(storedEmail ?? "");
-  const [prefs, setPrefs] = useState<AlertPrefsPayload>(DEFAULT_PREFS);
-  const [radiusKm, setRadiusKm] = useState(500);
+  const hasStoredRef = readStoredSubscriptionRef(disease.slug) != null;
+  const [email, setEmail] = useState("");
+  const [community, setCommunity] = useState(false);
   const [saved, setSaved] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [devConfirmUrl, setDevConfirmUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-
-  const togglePref = (key: keyof AlertPrefsPayload) => {
-    setPrefs((prev) => ({ ...prev, [key]: !prev[key] }));
-  };
 
   const save = async (event: FormEvent) => {
     event.preventDefault();
@@ -62,10 +48,11 @@ export function DiseaseSubscribeModal({
     try {
       const response = await subscribeToDiseaseAlerts(disease.slug, {
         email: trimmed,
-        prefs,
-        radius_km: radiusKm,
+        prefs: SUMMARY_CHANGE_PREFS,
+        radius_km: null,
+        client_ref: ensureSubscriptionRef(disease.slug),
+        community,
       });
-      writeStoredSubscriptionEmail(disease.slug, trimmed);
       setMessage(response.message);
       setDevConfirmUrl(response.dev_confirm_url ?? null);
       setSaved(true);
@@ -77,8 +64,8 @@ export function DiseaseSubscribeModal({
     }
   };
 
-  const unsubscribe = () => {
-    clearStoredSubscriptionEmail(disease.slug);
+  const forgetOnThisDevice = () => {
+    clearStoredSubscriptionRef(disease.slug);
     onSaved();
     onClose();
   };
@@ -136,82 +123,32 @@ export function DiseaseSubscribeModal({
                 disabled={submitting}
               />
             </label>
-            <fieldset className="dsub-modal__prefs">
-              <legend>{t("subscribeModal.prefsLegend")}</legend>
-              <label className="dsub-modal__pref">
-                <input
-                  type="checkbox"
-                  checked={prefs.guidelines}
-                  onChange={() => togglePref("guidelines")}
-                  disabled={submitting}
-                />
-                <div>
-                  <b>{t("subscribeModal.prefGuidelinesTitle")}</b>
-                  <span>{t("subscribeModal.prefGuidelinesBody")}</span>
-                </div>
-              </label>
-              <label className="dsub-modal__pref">
-                <input
-                  type="checkbox"
-                  checked={prefs.trials}
-                  onChange={() => togglePref("trials")}
-                  disabled={submitting}
-                />
-                <div>
-                  <b>{t("subscribeModal.prefTrialsTitle")}</b>
-                  <span>{t("subscribeModal.prefTrialsBody")}</span>
-                </div>
-              </label>
-              <label className="dsub-modal__pref">
-                <input
-                  type="checkbox"
-                  checked={prefs.therapies}
-                  onChange={() => togglePref("therapies")}
-                  disabled={submitting}
-                />
-                <div>
-                  <b>{t("subscribeModal.prefTherapiesTitle")}</b>
-                  <span>{t("subscribeModal.prefTherapiesBody")}</span>
-                </div>
-              </label>
-              <label className="dsub-modal__pref">
-                <input
-                  type="checkbox"
-                  checked={prefs.doctors}
-                  onChange={() => togglePref("doctors")}
-                  disabled={submitting}
-                />
-                <div>
-                  <b>{t("subscribeModal.prefDoctorsTitle")}</b>
-                  <span>{t("subscribeModal.prefDoctorsBody")}</span>
-                </div>
-              </label>
-            </fieldset>
-            {prefs.trials || prefs.doctors ? (
-              <label className="dsub-modal__field">
-                <span className="dsub-modal__label">{t("subscribeModal.radiusLabel")}</span>
-                <input
-                  type="range"
-                  min={50}
-                  max={2000}
-                  step={50}
-                  value={radiusKm}
-                  onChange={(e) => setRadiusKm(Number(e.target.value))}
-                  disabled={submitting}
-                />
-                <span className="dsub-modal__hint">
-                  <b>{radiusKm} km</b> {t("subscribeModal.radiusHintSuffix")}
-                </span>
-              </label>
-            ) : null}
+            <label className="dsub-modal__pref">
+              <input
+                type="checkbox"
+                checked={community}
+                onChange={() => setCommunity((value) => !value)}
+                disabled={submitting}
+              />
+              <div>
+                <b>{t("subscribeModal.communityTitle")}</b>
+                <span>{t("subscribeModal.communityBody")}</span>
+              </div>
+            </label>
+            <p className="dsub-modal__hint">{t("subscribeModal.privacyNote")}</p>
             {error != null ? (
               <p className="dsub-modal__error" role="alert">
                 {error}
               </p>
             ) : null}
             <div className="dsub-modal__actions">
-              {storedEmail != null ? (
-                <Button type="button" variant="ghost" onClick={unsubscribe} disabled={submitting}>
+              {hasStoredRef ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={forgetOnThisDevice}
+                  disabled={submitting}
+                >
                   {t("subscribeModal.clearSavedEmail")}
                 </Button>
               ) : null}

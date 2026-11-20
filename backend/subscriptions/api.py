@@ -35,12 +35,14 @@ def subscribe_to_disease(
         trials=body.prefs.trials,
         therapies=body.prefs.therapies,
         doctors=body.prefs.doctors,
+        community=body.community,
     )
     result = service.subscribe(
         disease_slug=slug.strip().lower(),
         email=body.email,
         prefs=prefs,
         radius_km=body.radius_km,
+        client_ref=body.client_ref,
     )
     if result is None:
         raise HTTPException(status_code=404, detail="Disease not found")
@@ -68,11 +70,14 @@ def subscribe_to_disease(
 )
 def subscription_status(
     slug: str,
-    email: str = Query(..., min_length=3, max_length=320),
+    ref: str = Query(..., min_length=16, max_length=128),
     service: SubscriptionService = Depends(provide_subscription_service),
 ) -> SubscriptionStatusResponse:
-    """Return pending/confirmed for an email on this disease, or null if none."""
-    status = service.status(disease_slug=slug.strip().lower(), email=email.strip().lower())
+    """Pending/confirmed for the subscription this browser made (by its private reference), or null.
+
+    It used to take ``?email=``, which let anyone check whether any address was subscribed to any disease. An email address is no longer accepted here at all.
+    """
+    status = service.status(disease_slug=slug.strip().lower(), client_ref=ref.strip())
     if status is None:
         return SubscriptionStatusResponse(status=None)
     return SubscriptionStatusResponse(status=status)
@@ -95,7 +100,7 @@ def unsubscribe(
     token: str = Query(..., min_length=16, max_length=128),
     service: SubscriptionService = Depends(provide_subscription_service),
 ):
-    """One-click unsubscribe from alert emails."""
+    """One-click unsubscribe: the subscription and its address are deleted."""
     sub = service.unsubscribe(token.strip())
     if sub is None:
         raise HTTPException(status_code=404, detail="Invalid unsubscribe link")

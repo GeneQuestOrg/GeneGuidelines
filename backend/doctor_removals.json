@@ -1,0 +1,4 @@
+{
+  "about": "Clinicians removed from the public directory at their request (GDPR Art. 17 erasure / Art. 21 objection). Only SHA-256 hashes of the public profile slug are stored here, because this repository is public. Add an entry with: python -m backend.scripts.remove_doctor <slug> --reason objection",
+  "entries": []
+}

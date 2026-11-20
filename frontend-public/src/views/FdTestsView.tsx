@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { PlaceholderView } from "./PlaceholderView";
 import "../styles/fd-tests.css";
+import { trackEvent } from "../utils/analytics";
 
 /**
  * The rows of the printable list, in print order.
@@ -86,7 +87,10 @@ export function FdTestsView({ slug, onNav }: FdTestsViewProps) {
             <button
               type="button"
               className="fdtests-btn fdtests-btn--accent"
-              onClick={() => window.print()}
+              onClick={() => {
+                trackEvent("print-fd-tests");
+                window.print();
+              }}
             >
               {t("printCta")}
             </button>

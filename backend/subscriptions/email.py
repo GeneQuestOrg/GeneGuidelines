@@ -1,12 +1,14 @@
-"""Transactional email for subscription confirmation."""
+"""Transactional email for disease subscriptions: the double opt-in confirmation and the one alert we actually send — the guideline summary for this disease changed.
+
+Every email carries a one-click unsubscribe link, and no log line carries the subscriber's address.
+"""
 
 from __future__ import annotations
 
 import logging
 
-import httpx
-
-from ..config import API_PUBLIC_URL, EMAIL_FROM, PUBLIC_APP_URL, RESEND_API_KEY
+from ..config import API_PUBLIC_URL, PUBLIC_APP_URL
+from ..shared.outbound_email import send_email
 
 logger = logging.getLogger(__name__)
 
@@ -19,6 +21,10 @@ def build_unsubscribe_url(token: str) -> str:
     return f"{API_PUBLIC_URL}/api/subscriptions/unsubscribe?token={token}"
 
 
+def build_disease_url(disease_slug: str) -> str:
+    return f"{PUBLIC_APP_URL}/diseases/{disease_slug}/guidelines"
+
+
 def send_confirmation_email(
     *,
     to_email: str,
@@ -28,71 +34,66 @@ def send_confirmation_email(
 ) -> bool:
     """Send double opt-in confirmation. Returns True if an email was dispatched."""
     confirm_url = build_confirm_url(confirm_token)
-    subject = f"Confirm alerts for {disease_name}"
+    unsubscribe_url = build_unsubscribe_url(confirm_token)
+    subject = f"Confirm: email me when the {disease_name} summary changes"
     text = (
-        f"You asked to receive substantive updates about {disease_name} on GeneGuidelines.\n\n"
-        f"Confirm your subscription (one click):\n{confirm_url}\n\n"
-        f"If you did not request this, ignore this email.\n\n"
+        f"You asked GeneGuidelines to email you when the guideline summary for {disease_name} changes. "
+        f"That is the only email we will send.\n\n"
+        f"Confirm (one click):\n{confirm_url}\n\n"
+        f"Did not ask for this, or changed your mind? Remove your address:\n{unsubscribe_url}\n\n"
         f"— GeneQuest Foundation"
     )
     html = (
-        f"<p>You asked to receive substantive updates about <b>{disease_name}</b> "
-        f"on GeneGuidelines.</p>"
-        f'<p><a href="{confirm_url}">Confirm your subscription</a></p>'
-        f"<p>If you did not request this, ignore this email.</p>"
+        f"<p>You asked GeneGuidelines to email you when the guideline summary for <b>{disease_name}</b> "
+        f"changes. That is the only email we will send.</p>"
+        f'<p><a href="{confirm_url}">Confirm</a></p>'
+        f'<p>Did not ask for this, or changed your mind? <a href="{unsubscribe_url}">Remove your address</a>.</p>'
         f"<p>— GeneQuest Foundation</p>"
     )
+    return send_email(to=to_email, subject=subject, text=text, html=html, purpose=f"subscription confirmation ({disease_slug})")
 
-    if not RESEND_API_KEY:
-        logger.warning(
-            "RESEND_API_KEY unset — subscription confirmation not emailed "
-            "(disease=%s email=%s confirm_url=%s)",
-            disease_slug,
-            to_email,
-            confirm_url,
-        )
-        return False
 
-    payload = {
-        "from": EMAIL_FROM,
-        "to": [to_email],
-        "subject": subject,
-        "text": text,
-        "html": html,
-    }
-    try:
-        response = httpx.post(
-            "https://api.resend.com/emails",
-            headers={
-                "Authorization": f"Bearer {RESEND_API_KEY}",
-                "Content-Type": "application/json",
-            },
-            json=payload,
-            timeout=15.0,
-        )
-        response.raise_for_status()
-        return True
-    except Exception:
-        logger.exception(
-            "Failed to send subscription confirmation (disease=%s email=%s)",
-            disease_slug,
-            to_email,
-        )
-        return False
+def send_summary_changed_email(
+    *,
+    to_email: str,
+    disease_name: str,
+    disease_slug: str,
+    unsubscribe_token: str,
+) -> bool:
+    """Tell a confirmed subscriber the guideline summary for their disease was rewritten."""
+    page_url = build_disease_url(disease_slug)
+    unsubscribe_url = build_unsubscribe_url(unsubscribe_token)
+    subject = f"The {disease_name} guideline summary on GeneGuidelines has changed"
+    text = (
+        f"The AI summary of the guidelines and literature for {disease_name} has been rewritten:\n{page_url}\n\n"
+        f"It is not an official guideline and nobody formally signs it off — read it with your doctor.\n\n"
+        f"Stop these emails (one click, your address is deleted):\n{unsubscribe_url}\n\n"
+        f"— GeneQuest Foundation"
+    )
+    html = (
+        f"<p>The AI summary of the guidelines and literature for <b>{disease_name}</b> has been rewritten: "
+        f'<a href="{page_url}">read it on GeneGuidelines</a>.</p>'
+        f"<p>It is not an official guideline and nobody formally signs it off — read it with your doctor.</p>"
+        f'<p><a href="{unsubscribe_url}">Stop these emails</a> (one click, your address is deleted).</p>'
+        f"<p>— GeneQuest Foundation</p>"
+    )
+    return send_email(to=to_email, subject=subject, text=text, html=html, purpose=f"summary changed ({disease_slug})")
 
 
 def redirect_after_confirm(disease_slug: str) -> str:
-    return f"{PUBLIC_APP_URL}/#/diseases/{disease_slug}?alert=confirmed"
+    return f"{PUBLIC_APP_URL}/diseases/{disease_slug}?alert=confirmed"
 
 
 def redirect_after_unsubscribe(disease_slug: str) -> str:
-    return f"{PUBLIC_APP_URL}/#/diseases/{disease_slug}?alert=unsubscribed"
+    return f"{PUBLIC_APP_URL}/diseases/{disease_slug}?alert=unsubscribed"
 
 
 __all__ = [
     "build_confirm_url",
+    "build_disease_url",
     "build_unsubscribe_url",
     "redirect_after_confirm",
     "redirect_after_unsubscribe",
     "send_confirmation_email",
+    "send_summary_changed_email",
 ]

@@ -24,6 +24,8 @@ env:
   VITE_AUTH0_DOMAIN: ${{ vars.VITE_AUTH0_DOMAIN || 'genequest.eu.auth0.com' }}
   VITE_AUTH0_CLIENT_ID: ${{ vars.VITE_AUTH0_CLIENT_ID || 'eIjwuYWNv6ygMR0Ib1Z9T891qC2q9aXI' }}
   VITE_AUTH0_AUDIENCE: ${{ vars.VITE_AUTH0_AUDIENCE || 'https://api.geneguidelines.genequest.org' }}
+  # Umami website id for geneguidelines.genequest.org (its own property, not the foundation site's). Set the repository variable VITE_UMAMI_WEBSITE_ID; empty = no tracker in the bundle.
+  VITE_UMAMI_WEBSITE_ID: ${{ vars.VITE_UMAMI_WEBSITE_ID || '' }}
 
 jobs:
   verify:
@@ -97,6 +99,7 @@ jobs:
           VITE_AUTH0_DOMAIN="${VITE_AUTH0_DOMAIN}" \
           VITE_AUTH0_CLIENT_ID="${VITE_AUTH0_CLIENT_ID}" \
           VITE_AUTH0_AUDIENCE="${VITE_AUTH0_AUDIENCE}" \
+          VITE_UMAMI_WEBSITE_ID="${VITE_UMAMI_WEBSITE_ID}" \
             npm run build:public
 
       - uses: azure/login@v2

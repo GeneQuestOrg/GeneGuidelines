@@ -27,6 +27,9 @@ from ..base import NodeExecutor, NodeInput, NodeOutput
 
 log = logging.getLogger(__name__)
 
+# Marker for "the previous synthesis could not be read" — distinct from None, which means "there was none".
+_UNKNOWN = object()
+
 _DEFAULT_DISCLAIMER = (
     "This summary was prepared by AI from the source documents on the shelf — it is "
     "not an official guideline and may contain inaccuracies. Every claim links to the "
@@ -37,8 +40,10 @@ _DEFAULT_DISCLAIMER = (
 class GuidelineSynthesisWriterExecutor(NodeExecutor):
     """Collect section outputs → assemble synthesis dict → upsert into GL-4."""
 
-    def __init__(self, repo=None) -> None:
+    def __init__(self, repo=None, notify=None) -> None:
         self._repo = repo  # injectable for tests; lazy SQLA repo in production
+        # Subscriber notification (summary changed); injectable for tests, the Resend sender in production.
+        self._notify = notify
 
     @classmethod
     def node_type(cls) -> str:
@@ -132,15 +137,38 @@ class GuidelineSynthesisWriterExecutor(NodeExecutor):
             "redFlags": None,
         }
 
+        previous_sections = self._previous_sections(slug)
         try:
             self._get_repo().upsert_synthesis(slug, synthesis)
         except Exception as exc:  # noqa: BLE001 — a write failure must fail the node, not pass silently
             log.warning("guideline_synthesis_writer: upsert failed for %s: %s", slug, exc)
             return NodeOutput(data={"ok": False, "error": f"synthesis upsert failed: {exc}"})
+        self._notify_if_changed(slug, disease_name, previous_sections, sections)
 
         return NodeOutput(
             data={"ok": True, "slug": slug, "sectionCount": len(sections), "sourceCount": len(source_ids)}
         )
+
+    def _previous_sections(self, slug: str):
+        """The sections currently stored, None when there is no summary yet, or _UNKNOWN when the read failed."""
+        try:
+            previous = self._get_repo().get_synthesis(slug)
+        except Exception as exc:  # noqa: BLE001 — not knowing the old text only means not emailing
+            log.warning("guideline_synthesis_writer: could not read previous synthesis for %s: %s", slug, exc)
+            return _UNKNOWN
+        return list(previous.sections) if previous is not None else None
+
+    def _notify_if_changed(self, slug: str, disease_name: str, previous_sections, sections: list[dict]) -> None:
+        """Email the disease's confirmed subscribers when the text changed; a failure here never fails the write."""
+        from ...subscriptions.notify import notify_summary_changed, summary_changed
+
+        if previous_sections is _UNKNOWN or not summary_changed(previous_sections, sections):
+            return
+        notify = self._notify or notify_summary_changed
+        try:
+            notify(slug, disease_name)
+        except Exception as exc:  # noqa: BLE001 — the summary is written; a missed email is logged, not fatal
+            log.warning("guideline_synthesis_writer: subscriber notification failed for %s: %s", slug, exc)
 
     def _collect_sections(
         self, context: dict, section_specs: list[dict], quotes_by_para: dict[tuple[str, str], list[dict]]

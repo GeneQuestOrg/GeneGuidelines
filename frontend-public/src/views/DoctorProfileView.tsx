@@ -7,6 +7,7 @@ import { recFormMode } from "../utils/contributionGating";
 import { repositories } from "../repositories";
 import { ApiRequestError } from "../api/client";
 import { DistancePill } from "../components/DistancePill";
+import { DoctorPrivacyRequest } from "../components/DoctorPrivacyRequest";
 import { SpecialistDisclaimer } from "../components/SpecialistDisclaimer";
 import { TrialsList } from "../components/TrialsList";
 import { useDiseaseCatalog } from "../hooks/useDiseaseCatalog";
@@ -434,6 +435,7 @@ export function DoctorProfileView({ slug, userLoc, onNav }: DoctorProfileViewPro
           {doctor.rodo?.note ? (
             <p className="dprofile__rodo">{doctor.rodo.note}</p>
           ) : null}
+          <DoctorPrivacyRequest slug={doctor.slug} />
         </div>
         <Button type="button" variant="ghost" onClick={() => onNav("/about")}>
           {t("contact.cta")}

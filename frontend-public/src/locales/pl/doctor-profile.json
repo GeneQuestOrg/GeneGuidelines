@@ -102,5 +102,22 @@
   "researchAuthor": {
     "title": "Wpis autorski, nie lekarz do umówienia",
     "body": "Ten wpis istnieje, bo ta osoba jest współautorką publikacji o tej chorobie. Nie mamy potwierdzenia, że przyjmuje pacjentów ani jaką ma specjalizację, więc nie pokazujemy jej w wyszukiwarce specjalistów. Nic tutaj nie mówi, że leczy tę chorobę."
+  },
+  "privacyRequest": {
+    "summary": "To Pan/Pani? Poproś o poprawienie lub usunięcie wpisu",
+    "intro": "Ten wpis powstał na podstawie publikacji i publicznych rejestrów. Możesz poprosić o jego poprawienie albo usunięcie — wtedy nie pojawi się też przy kolejnych aktualizacjach katalogu. Odpowiadamy w ciągu miesiąca, zwykle dużo szybciej. Możesz też napisać na kontakt@genequest.org.",
+    "kindLegend": "Czego dotyczy prośba?",
+    "kindRemoval": "Usunięcie wpisu",
+    "kindCorrection": "Poprawienie wpisu",
+    "relationLabel": "Jestem",
+    "relationSelf": "osobą, której dotyczy wpis",
+    "relationRepresentative": "osobą działającą w jej imieniu",
+    "emailLabel": "Twój e-mail, na który odpowiemy",
+    "messageLabel": "Co powinniśmy wiedzieć (opcjonalnie)",
+    "send": "Wyślij prośbę",
+    "sending": "Wysyłanie…",
+    "done": "Otrzymaliśmy prośbę. Odpowiemy e-mailem — w ciągu miesiąca, zwykle dużo szybciej.",
+    "errorEmail": "Podaj prawidłowy adres e-mail, żebyśmy mogli odpowiedzieć.",
+    "errorSend": "Nie udało się teraz wysłać — napisz proszę na kontakt@genequest.org."
   }
 }

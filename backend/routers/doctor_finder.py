@@ -22,6 +22,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 
 from ..auth import require_api_key_if_set
+from ..doctor_removals import strip_removed_authors
 from ..agents.simple_runner import current_model_profile, resolve_model_spec_for_node
 from ..flows.doctor_finder.alias_generator import generate_disease_aliases_async, merge_alias_lists
 from ..flows.doctor_finder.schemas import DoctorFinderAliasSuggestInput, DoctorFinderInput
@@ -88,6 +89,19 @@ def _doctor_finder_step_error_message(node_outputs: dict[str, Any]) -> str | Non
         if blob.get("ok") is False:
             return str(blob.get("error") or f"{nid} failed")
     return None
+
+
+def _without_street_addresses(report: dict[str, Any] | None) -> dict[str, Any] | None:
+    """A copy of a run report whose authors' NPPES practices keep city/state but lose the street address."""
+    if not isinstance(report, dict) or not isinstance(report.get("top_authors"), list):
+        return report
+    authors = [
+        {**a, "resolved_practice": {**a["resolved_practice"], "address": None}}
+        if isinstance(a, dict) and isinstance(a.get("resolved_practice"), dict)
+        else a
+        for a in report["top_authors"]
+    ]
+    return {**report, "top_authors": authors}
 
 
 def _extract_doctor_report_from_node_outputs(node_outputs: dict[str, Any]) -> dict[str, Any] | None:
@@ -430,5 +444,6 @@ def get_run_result(execution_id: str):
         "disease_name": disease_nm,
         "done": done_flag,
         "error": err_out,
-        "doctor_report": doctor_report,
+        # The run report is public too (anyone can read a run): the removal list applies, and registry street addresses stay in the backend.
+        "doctor_report": _without_street_addresses(strip_removed_authors(doctor_report)),
     }

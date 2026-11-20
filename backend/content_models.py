@@ -246,6 +246,13 @@ class PracticeResponse(BaseModel):
     source: Literal["nppes", "nil", "clinic_llm", "curated", "affiliation"] = "affiliation"
     confidence: Literal["high", "medium", "low"] = "low"
 
+    @model_validator(mode="after")
+    def _no_registry_street_address(self) -> "PracticeResponse":
+        # Defence in depth for the catalogue rule: a registry-sourced (NPPES) practice never carries a street address out of the API.
+        if self.source == "nppes":
+            self.address = None
+        return self
+
 
 class ClinicalSpecialtyResponse(BaseModel):
     """A canonical clinical specialty (NUCC code) with provenance — a separate axis from the

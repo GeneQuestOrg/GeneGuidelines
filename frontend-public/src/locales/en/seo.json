@@ -54,6 +54,7 @@
     "lastUpdated": "Last revised: {{date}}",
     "cited": "Cited:",
     "unknownTitle": "A disease without a page yet",
-    "unknownBody": "We have no researched page for this disease yet. The catalogue grows when someone runs research for a disease."
+    "unknownBody": "We have no researched page for this disease yet. The catalogue grows when someone runs research for a disease.",
+    "doctorPrivacyNote": "Is this you? Write to kontakt@genequest.org and we will correct this entry or remove it and keep it out of future updates of the directory."
   }
 }

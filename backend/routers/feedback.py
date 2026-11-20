@@ -88,12 +88,8 @@ def send_feedback_email(
     html = f"{html_meta}<p>{message}</p>"
 
     if not RESEND_API_KEY:
-        logger.warning(
-            "RESEND_API_KEY unset — feedback not emailed (email=%s context=%s message=%r)",
-            email,
-            context,
-            message[:200],
-        )
+        # No address, page or message text in the log: logs are kept for 30 days and are not the place for what a visitor wrote.
+        logger.warning("RESEND_API_KEY unset — feedback not emailed (reply address given: %s)", bool(email))
         return False
 
     payload: dict = {
@@ -118,7 +114,7 @@ def send_feedback_email(
         response.raise_for_status()
         return True
     except Exception:
-        logger.exception("Failed to send feedback email (email=%s context=%s)", email, context)
+        logger.exception("Failed to send feedback email")
         return False
 
 
