@@ -3,7 +3,7 @@ import { useDisease } from "../hooks/useDisease";
 import { useSourceShelf } from "../hooks/useSourceShelf";
 import { useOfficialGuideline } from "../hooks/useOfficialGuideline";
 import { PlaceholderView } from "./PlaceholderView";
-import { MY_CASE_ENABLED } from "../config/features";
+import { MY_CASE_ENABLED, PRE_DIAGNOSIS_INTERVIEW_ENABLED } from "../config/features";
 import "../styles/disease-map.css";
 
 /** Step 1's questions, paired with the guideline sentence each one rests on. */
@@ -362,7 +362,14 @@ export function DiseaseMapView({ slug, onNav }: DiseaseMapViewProps) {
               </span>
               <h3 className="dmap-step__title">{t("step5Title")}</h3>
               <p className="dmap-step__lede">
-                {t("step5LedePart1")} <b>{t("step5LedeBold")}</b> {t("step5LedePart2")}
+                {t("step5LedePart1")}
+                {/* Trial alerts need a privately loaded case, which is switched off — so the promise is too. */}
+                {MY_CASE_ENABLED ? (
+                  <>
+                    {" "}
+                    {t("step5MyCaseLead")} <b>{t("step5LedeBold")}</b> {t("step5LedePart2")}
+                  </>
+                ) : null}
               </p>
               <div className="dmap-actions">
                 <a
@@ -383,28 +390,30 @@ export function DiseaseMapView({ slug, onNav }: DiseaseMapViewProps) {
             </div>
           </article>
 
-          {/* STEP 0 — pre-diagnosis */}
-          <article className="dmap-step">
-            <div className="dmap-step__rail">
-              <div className="dmap-step__num dmap-step__num--zero">0</div>
-            </div>
-            <div className="dmap-step__body">
-              <span className="dmap-step__hook">
-                <span className="dmap-step__tri" aria-hidden>◆</span>
-                {t("step0Hook")}
-              </span>
-              <h3 className="dmap-step__title">{t("step0Title")}</h3>
-              <div className="dmap-predx">
-                <span className="dmap-predx__tag">{t("step0Tag")}</span>
-                <h4 className="dmap-predx__title">{t("step0PredxTitle")}</h4>
-                <p className="dmap-predx__lede">
-                  {t("step0PredxLedePart1")} <b>{t("step0PredxLedeBold1")}</b>
-                  {t("step0PredxLedePart2")} <b>{t("step0PredxLedeBold2")}</b>{" "}
-                  {t("step0PredxLedePart3")}
-                </p>
+          {/* STEP 0 — pre-diagnosis: a planned, unbuilt module; hidden until it exists (see features.ts). */}
+          {PRE_DIAGNOSIS_INTERVIEW_ENABLED ? (
+            <article className="dmap-step">
+              <div className="dmap-step__rail">
+                <div className="dmap-step__num dmap-step__num--zero">0</div>
               </div>
-            </div>
-          </article>
+              <div className="dmap-step__body">
+                <span className="dmap-step__hook">
+                  <span className="dmap-step__tri" aria-hidden>◆</span>
+                  {t("step0Hook")}
+                </span>
+                <h3 className="dmap-step__title">{t("step0Title")}</h3>
+                <div className="dmap-predx">
+                  <span className="dmap-predx__tag">{t("step0Tag")}</span>
+                  <h4 className="dmap-predx__title">{t("step0PredxTitle")}</h4>
+                  <p className="dmap-predx__lede">
+                    {t("step0PredxLedePart1")} <b>{t("step0PredxLedeBold1")}</b>
+                    {t("step0PredxLedePart2")} <b>{t("step0PredxLedeBold2")}</b>{" "}
+                    {t("step0PredxLedePart3")}
+                  </p>
+                </div>
+              </div>
+            </article>
+          ) : null}
         </div>
 
         {/* SAFETY */}

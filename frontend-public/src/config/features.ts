@@ -21,3 +21,10 @@
  * turn it on together with an EU-hosted redaction model, not before.
  */
 export const MY_CASE_ENABLED = false;
+
+/**
+ * "Pre-diagnosis interview" — the adaptive intake interview the parent map advertised as a planned module (step 0).
+ *
+ * OFF, and not built. A family-facing page should not show a feature that does not exist, and a tool that interprets one person's symptoms is very likely medical-device software under the EU MDR, whatever the "discuss with your doctor" framing. Switch it on only together with a built, legally reviewed module.
+ */
+export const PRE_DIAGNOSIS_INTERVIEW_ENABLED = false;
