@@ -235,7 +235,7 @@ def health():
 # /health) so those win the match; only genuinely unknown paths reach here.
 from pathlib import Path as _Path  # noqa: E402
 from fastapi import HTTPException  # noqa: E402
-from fastapi.responses import FileResponse  # noqa: E402
+from fastapi.responses import FileResponse, HTMLResponse  # noqa: E402
 from fastapi.staticfiles import StaticFiles as _StaticFiles  # noqa: E402
 
 _static_dir = _Path("/app/static")
@@ -254,8 +254,14 @@ if _assets_dir.is_dir():
     logger.info("Mounted SPA assets from %s", _assets_dir)
 
 
+from backend import seo as _seo  # noqa: E402
+
+# /sitemap.xml from the live catalogue; before the catch-all so it wins over the bundled file.
+app.include_router(_seo.create_router(lambda: _static_dir))
+
+
 @app.get("/{full_path:path}", include_in_schema=False)
-def spa_fallback(full_path: str) -> FileResponse:
+def spa_fallback(full_path: str, request: Request) -> Response:
     """History-mode SPA fallback: index.html for app routes, real files verbatim,
     and a JSON 404 for unknown API/framework paths (never HTML)."""
     if full_path == "api" or full_path.startswith("api/") or full_path in _NON_SPA_EXACT:
@@ -281,6 +287,10 @@ def spa_fallback(full_path: str) -> FileResponse:
         if prerendered.is_file():
             return FileResponse(prerendered)
     # index.html is the prerendered home page, so it answers "/" only. Every other app route gets the shell, which names no canonical URL — the home page's canonical on /diseases/mas would declare it a duplicate of "/". An older bundle without a shell keeps the old behaviour.
+    # Every other public page (a disease, its guidelines, doctors, trials) gets the shell with a readable copy rendered from the database, so a crawler, a link preview or a language model sees the page and not an empty document. None means "not a page we render, or the render failed": the plain shell as before.
+    rendered = _seo.render_for_path(full_path, request.query_params, _static_dir)
+    if rendered is not None:
+        return HTMLResponse(rendered)
     shell = _static_dir / "_shell.html"
     if full_path and shell.is_file():
         return FileResponse(shell)

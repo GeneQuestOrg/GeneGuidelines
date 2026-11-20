@@ -16,13 +16,11 @@ describe("prerendered pages", () => {
       "/",
       "/about",
       "/diseases/fd",
-      "/diseases/fd/guidelines",
       "/diseases/fd/map",
       "/diseases/fd/tests",
       "/pl",
       "/pl/about",
       "/pl/diseases/fd",
-      "/pl/diseases/fd/guidelines",
       "/pl/diseases/fd/map",
       "/pl/diseases/fd/tests",
     ]);
@@ -80,12 +78,10 @@ describe("prerendered pages", () => {
     },
   );
 
-  it("never claims the synthesis it cannot bake in", () => {
-    // The AI synthesis lives in the database and the build has no database, so
-    // the guideline page points at the source instead of inventing a summary.
-    for (const path of ["/diseases/fd/guidelines", "/pl/diseases/fd/guidelines"]) {
-      expect(byPath[path].body).toContain("10.1186/s13023-019-1102-9");
-    }
+  it("leaves the guideline page to the server, which has the synthesis", () => {
+    // The build has no database; backend/seo renders /diseases/fd/guidelines from the real synthesis.
+    expect(byPath["/diseases/fd/guidelines"]).toBeUndefined();
+    expect(byPath["/pl/diseases/fd/guidelines"]).toBeUndefined();
   });
 
   it("keeps the withdrawn phrasings out of every page", () => {

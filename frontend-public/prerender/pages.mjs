@@ -82,7 +82,7 @@ function links(locale, seo, current) {
 /**
  * / — the home page. What the site is, what is in it, and the sentence that says nobody signs the summaries off. The disease list and the counts come from the database, so they are linked, not listed.
  */
-function homeBody(locale, { seo, home, common }) {
+function homeBody(locale, { seo, home }) {
   const finds = home.finds
     .map((item) => `<li><p class="ggp-q">${esc(item.title)}</p><p>${esc(item.body)}</p></li>`)
     .join("\n");
@@ -102,7 +102,6 @@ function homeBody(locale, { seo, home, common }) {
     p(home.findsSub),
     `<ul class="ggp-rows">${finds}</ul>`,
     note(home.honestFootnote),
-    note(common.footer.desc),
     `<nav class="ggp-links">${nav}</nav>`,
   ].join("\n");
 }
@@ -230,20 +229,7 @@ function fdTestsBody(locale, { seo, tests, common }) {
   ].join("\n");
 }
 
-/**
- * /diseases/fd/guidelines — the synthesis itself lives in the database and is
- * rebuilt on demand, so it cannot be baked in at build time. What can be baked in
- * is what the page is, which guideline it summarises, and that nobody signs it off.
- */
-function fdGuidelinesBody(locale, { seo, common }) {
-  return [
-    `<h1>${esc(seo.fdGuidelines.title)}</h1>`,
-    p(seo.fdGuidelines.description),
-    `<p class="ggp-note">${esc(seo.citation)} <a href="https://doi.org/10.1186/s13023-019-1102-9">doi:10.1186/s13023-019-1102-9</a></p>`,
-    note(common.footer.desc),
-    links(locale, seo, "/diseases/fd/guidelines"),
-  ].join("\n");
-}
+// /diseases/fd/guidelines is not built here: the synthesis lives in the database, and the server renders that page from it at request time (backend/seo), sources and all.
 
 const PAGES = [
   { path: "/", key: "home", body: homeBody, kind: "site" },
@@ -251,7 +237,6 @@ const PAGES = [
   { path: "/diseases/fd", key: "fd", body: fdBody },
   { path: "/diseases/fd/map", key: "fdMap", body: fdMapBody },
   { path: "/diseases/fd/tests", key: "fdTests", body: fdTestsBody },
-  { path: "/diseases/fd/guidelines", key: "fdGuidelines", body: fdGuidelinesBody },
 ];
 
 function jsonLd(locale, page, seo, url) {

@@ -33,5 +33,27 @@
   "fdGuidelines": {
     "title": "FD/MAS: what the official guideline says",
     "description": "A summary of the official FD/MAS guideline (Javaid 2019, PMID 31196103) and the literature, with a link to every source. It is not an official guideline — the GeneQuest Foundation wrote it."
+  },
+  "ssr": {
+    "diseasesDescription": "Rare genetic diseases in the GeneGuidelines catalogue, each with a source-cited summary of the official guidelines and literature, doctors with documented experience and clinical trials.",
+    "hubDescription": "{{disease}}: a source-cited summary of the official guidelines and literature, doctors with documented experience, clinical trials and foundations — gathered by the GeneQuest Foundation.",
+    "guidelinesDescription": "What the guidelines and the literature say about {{disease}}, summarised by AI with a link to every source. Not an official guideline; nobody formally signs it off.",
+    "doctorsForTitle": "Doctors for {{disease}}",
+    "doctorsDescription": "Doctors with documented experience in {{disease}}, built from public sources (PubMed, clinic websites) and family reports.",
+    "directoryDescription": "A directory of doctors with documented experience in rare genetic diseases, built from public sources (PubMed, clinic websites) and family reports.",
+    "doctorsByDisease": "Doctors by disease",
+    "doctorProfileDescription": "{{name}} — {{specialty}}, {{place}}. A profile built from public sources.",
+    "trialsForTitle": "Clinical trials for {{disease}}",
+    "trialsDescription": "Clinical trials catalogued for {{disease}} from ClinicalTrials.gov, with their recruitment status and sites.",
+    "trialsDirectoryDescription": "Clinical trials catalogued for rare genetic diseases from ClinicalTrials.gov, with their recruitment status and sites.",
+    "trialsByDisease": "Clinical trials by disease",
+    "doctorsCount": "Doctors listed: {{count}}",
+    "trialsCount": "Clinical trials catalogued: {{count}}",
+    "shownOf": "Showing {{shown}} of {{total}}.",
+    "noneYet": "Nothing is listed here yet.",
+    "lastUpdated": "Last revised: {{date}}",
+    "cited": "Cited:",
+    "unknownTitle": "A disease without a page yet",
+    "unknownBody": "We have no researched page for this disease yet. The catalogue grows when someone runs research for a disease."
   }
 }

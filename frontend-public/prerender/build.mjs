@@ -16,6 +16,7 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { buildPages } from "./pages.mjs";
+import { buildSsrStrings } from "./ssr-strings.mjs";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
 const dist = join(root, "dist");
@@ -134,6 +135,10 @@ function main() {
 
   writeFileSync(join(dist, "_shell.html"), shell(template), "utf8");
   console.log("prerender: fallback shell → /dist/_shell.html");
+
+  // The labels the backend renders every other page with (backend/seo/strings.py).
+  writeFileSync(join(dist, "_ssr-strings.json"), JSON.stringify(buildSsrStrings()), "utf8");
+  console.log("prerender: server-render labels → /dist/_ssr-strings.json");
 
   const pages = buildPages();
   for (const page of pages) {

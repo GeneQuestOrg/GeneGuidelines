@@ -33,5 +33,27 @@
   "fdGuidelines": {
     "title": "FD/MAS: co mówi oficjalna wytyczna",
     "description": "Skrót oficjalnej wytycznej FD/MAS (Javaid 2019, PMID 31196103) i literatury, z linkiem do każdego źródła. To nie jest oficjalna wytyczna — przygotowała go Fundacja GeneQuest."
+  },
+  "ssr": {
+    "diseasesDescription": "Rzadkie choroby genetyczne w katalogu GeneGuidelines: dla każdej streszczenie oficjalnych wytycznych i literatury ze źródłami, lekarze z udokumentowanym doświadczeniem i badania kliniczne.",
+    "hubDescription": "{{disease}}: streszczenie oficjalnych wytycznych i literatury ze źródłami, lekarze z udokumentowanym doświadczeniem, badania kliniczne i fundacje — zebrane przez Fundację GeneQuest.",
+    "guidelinesDescription": "Co mówią wytyczne i literatura o chorobie {{disease}} — streszczenie przygotowane przez AI, z odnośnikiem do każdego źródła. To nie jest oficjalna wytyczna; nikt się pod nią formalnie nie podpisuje.",
+    "doctorsForTitle": "Lekarze: {{disease}}",
+    "doctorsDescription": "Lekarze z udokumentowanym doświadczeniem w chorobie {{disease}}, na podstawie publicznych źródeł (PubMed, strony klinik) i zgłoszeń rodzin.",
+    "directoryDescription": "Katalog lekarzy z udokumentowanym doświadczeniem w rzadkich chorobach genetycznych, na podstawie publicznych źródeł (PubMed, strony klinik) i zgłoszeń rodzin.",
+    "doctorsByDisease": "Lekarze według choroby",
+    "doctorProfileDescription": "{{name}} — {{specialty}}, {{place}}. Profil zbudowany z publicznych źródeł.",
+    "trialsForTitle": "Badania kliniczne: {{disease}}",
+    "trialsDescription": "Badania kliniczne dla choroby {{disease}} skatalogowane z ClinicalTrials.gov, ze statusem rekrutacji i ośrodkami.",
+    "trialsDirectoryDescription": "Badania kliniczne w rzadkich chorobach genetycznych skatalogowane z ClinicalTrials.gov, ze statusem rekrutacji i ośrodkami.",
+    "trialsByDisease": "Badania kliniczne według choroby",
+    "doctorsCount": "Lekarze w katalogu: {{count}}",
+    "trialsCount": "Skatalogowane badania kliniczne: {{count}}",
+    "shownOf": "Pokazano {{shown}} z {{total}}.",
+    "noneYet": "Na razie nic tu nie ma.",
+    "lastUpdated": "Ostatnia aktualizacja: {{date}}",
+    "cited": "Cytowane:",
+    "unknownTitle": "Choroba, która nie ma jeszcze strony",
+    "unknownBody": "Nie mamy jeszcze opracowanej strony dla tej choroby. Katalog rośnie, gdy ktoś zleci research dla danej choroby."
   }
 }

@@ -1,7 +1,7 @@
 {
   "title": "Diseases",
   "resultsFor": "Results for “{{query}}”",
-  "lead": "Rare genetic conditions with living, physician-reviewed guidelines.",
+  "lead": "Rare genetic conditions with living, source-cited summaries of their guidelines.",
   "startResearch": "+ Start research",
   "sectionTitle": "All diseases",
   "loading": "Loading catalog…",

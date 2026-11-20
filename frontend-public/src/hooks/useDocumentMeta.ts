@@ -57,8 +57,39 @@ function canonicalFor(route: Route, key: string | null, locale: Locale): string 
   if (route.name === "home") {
     return `${ORIGIN}${withLocalePrefix("/", locale)}`;
   }
+  // A disease filter selects the content, so it is part of the page's address (the server renders /doctors?disease=fd as its own page).
+  if ((route.name === "doctors" || route.name === "trials") && route.disease != null) {
+    return `${ORIGIN}${window.location.pathname}?disease=${route.disease}`;
+  }
   return `${ORIGIN}${window.location.pathname}`;
 }
+
+interface ServedHead {
+  readonly path: string;
+  readonly title: string;
+  readonly description: string;
+  readonly canonical: string;
+}
+
+/**
+ * The head the server rendered for the page the visitor landed on (backend/seo), captured before the app touches it. Those pages have no `seo.json` entry, so without this the effect below would replace a page-specific title with the site title — which is also what a search engine that runs JavaScript would then read.
+ */
+const servedHead: ServedHead | null = (() => {
+  if (typeof document === "undefined") {
+    return null;
+  }
+  const path = document.head.querySelector<HTMLMetaElement>('meta[name="gg-ssr-path"]')?.content;
+  if (!path) {
+    return null;
+  }
+  return {
+    path,
+    title: document.title,
+    description:
+      document.head.querySelector<HTMLMetaElement>('meta[name="description"]')?.content ?? "",
+    canonical: document.head.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.href ?? "",
+  };
+})();
 
 function setMeta(selector: string, attribute: string, value: string): void {
   document.head.querySelector(selector)?.setAttribute(attribute, value);
@@ -85,9 +116,14 @@ export function useDocumentMeta(route: Route, locale: Locale): void {
   const key = seoKeyFor(route);
 
   useEffect(() => {
-    const title = key == null ? t("siteTitle") : `${t(`${key}.title`)}${t("titleSuffix")}`;
-    const description = key == null ? t("siteDescription") : t(`${key}.description`);
-    const url = canonicalFor(route, key, locale);
+    const here = `${window.location.pathname}${window.location.search}`;
+    const served =
+      key == null && servedHead != null && servedHead.path === here ? servedHead : null;
+    const title =
+      served?.title ?? (key == null ? t("siteTitle") : `${t(`${key}.title`)}${t("titleSuffix")}`);
+    const description =
+      served?.description ?? (key == null ? t("siteDescription") : t(`${key}.description`));
+    const url = served?.canonical ?? canonicalFor(route, key, locale);
 
     document.title = title;
     setMeta('meta[name="description"]', "content", description);
