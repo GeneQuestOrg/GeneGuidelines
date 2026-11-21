@@ -27,7 +27,7 @@ Spec format (verified against ``flow_definitions`` columns):
           "description": "Entry point",
           "prompt": "",
           "prompt_mode": "agentic",
-          "model_name": "openrouter:google/gemma-4-31b-it:free",
+          "model_name": "anthropic:claude-sonnet-5-5",
           "loop_policy": "none",
           "execution_policy": "auto",
           "max_retry": 3,

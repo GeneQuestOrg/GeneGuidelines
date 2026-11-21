@@ -344,7 +344,7 @@ async def find_official_guideline_for_disease(
     try:
         ranked, model_spec = await _rank_with_gemma(disease_name, candidates, resolved_gene)
     except Exception as exc:
-        log.exception("Gemma ranking failed for %s", disease_name)
+        log.exception("Model ranking failed for %s", disease_name)
         _log_run(exec_id, disease_slug, "failed", error=f"ranker: {exc}")
         return None
 

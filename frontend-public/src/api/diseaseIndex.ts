@@ -1,6 +1,6 @@
 /** Typed clients for the rare-disease index endpoints exposed by
  * ``backend/disease_index/api.py`` — Tier 1 fuzzy autocomplete and
- * Tier 2 Gemma-backed wider search.
+ * Tier 2 Claude-backed wider search.
  *
  * The shape mirrors :class:`backend.disease_index.contracts` 1:1; field
  * names stay camelCase because the FastAPI DTOs already produce that.
@@ -104,7 +104,7 @@ export async function suggestDiseases(
   );
 }
 
-/** Tier 2 — Gemma-backed lookup. Slow (1–8 s), AI-priced. Triggered only
+/** Tier 2 — Claude-backed lookup. Slow (5–12 s), AI-priced. Triggered only
  * when the user opens the "missing disease" dialog and clicks search. */
 export async function widerSearchDisease(
   query: string,

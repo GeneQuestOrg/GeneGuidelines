@@ -1,12 +1,6 @@
-"""Pick the right model spec for a service-layer Gemma call, with local fallback.
+"""Pick the model spec for a service-layer structured call (finders, disease search and its judge, translation) and run it.
 
-Workflows in this project advertise themselves as Gemma-powered. When
-``OPENROUTER_API_KEY`` is set we route through OpenRouter's Gemma 4 endpoint —
-that is the documented demo path. When a local Ollama daemon is running with
-a ``gemma4`` model pulled, we use it as a fallback for the (paid-tier) 429s
-that OpenRouter occasionally returns when the upstream provider rate-limits.
-The writeup is honest about this: the same prompts run unchanged against a
-local Ollama Gemma instance for clinics that need the bytes to stay on-prem.
+Under MODEL_PROFILE=anthropic every call goes to Claude through ``backend.agents.anthropic_direct``, and any other spec is replaced by the default Claude model, so the privacy policy's "Anthropic is the only AI provider" holds. The other profiles keep the older behaviour: the operator's profile if its key is set, and a local Ollama Gemma as a fallback for HTTP 429 from the primary (never used under the Claude-only profile).
 """
 
 from __future__ import annotations
@@ -55,11 +49,17 @@ def resolve_gemma_or_fallback_spec() -> str:
     is unreachable.
     """
     from ..config import (
+        ANTHROPIC_DEFAULT_SPEC,
+        ANTHROPIC_ONLY,
         DEFAULT_MODEL_PROFILE,
         DEEPSEEK_API_KEY,
         MODEL_PROFILES,
         OPENROUTER_API_KEY,
     )
+
+    if ANTHROPIC_ONLY:
+        # Claude is the only provider; a missing key fails at call time with a clear ClaudeCallError("config").
+        return ANTHROPIC_DEFAULT_SPEC
 
     openai_key = (os.environ.get("OPENAI_API_KEY") or "").strip() or None
     key_for_profile = {
@@ -155,7 +155,18 @@ async def run_structured_with_ollama_fallback(
         float(timeout_sec) if timeout_sec is not None else FINDER_LLM_TIMEOUT_SEC
     )
 
+    from ..agents.anthropic_direct import call_structured, enforce_anthropic_only, is_anthropic_spec
+    from ..config import ANTHROPIC_ONLY
+
+    primary_spec = enforce_anthropic_only(primary_spec)
+
     async def _call(spec: str):
+        if is_anthropic_spec(spec):
+            async with _get_finder_llm_parallel_semaphore():
+                return await asyncio.wait_for(
+                    call_structured(spec=spec, system_prompt=system_prompt, user_prompt=user_prompt, result_type=result_type, node_max_tokens=max_tokens, timeout_sec=effective_timeout),
+                    timeout=effective_timeout + 15,
+                )
         ag = agent_module.get_simple_structured_agent(
             system_prompt, result_type, model_spec=spec, max_tokens=max_tokens
         )
@@ -163,6 +174,10 @@ async def run_structured_with_ollama_fallback(
             return await asyncio.wait_for(ag.run(user_prompt), timeout=effective_timeout)
 
     def _result(res, spec: str):
+        if is_anthropic_spec(spec):
+            if return_usage:
+                return res.output, spec, res.usage
+            return res.output, spec
         out = _coerce_output(res, result_type)
         if return_usage:
             return out, spec, _extract_usage(res)
@@ -172,7 +187,7 @@ async def run_structured_with_ollama_fallback(
         res = await _call(primary_spec)
         return _result(res, primary_spec)
     except Exception as exc:  # noqa: BLE001 — we narrow the 429 case below
-        if not _is_429_error(exc):
+        if not _is_429_error(exc) or ANTHROPIC_ONLY:
             raise
         fallback_spec = resolve_local_fallback_spec()
         if not fallback_spec:

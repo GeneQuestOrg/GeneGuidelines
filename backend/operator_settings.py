@@ -40,10 +40,12 @@ PROFILE_LABELS: dict[str, str] = {
     "test": "Test (DeepSeek)",
     "openrouter": "OpenRouter",
     "vllm": "vLLM (Gemma)",
+    "anthropic": "Claude (Anthropic)",
 }
 
 _PROVIDER_ENV: dict[str, str] = {
     "openai": "OPENAI_API_KEY",
+    "anthropic": "ANTHROPIC_API_KEY",
     "deepseek": "DEEPSEEK_API_KEY",
     "openrouter": "OPENROUTER_API_KEY",
     "vllm": "LLM_API_KEY",
@@ -66,6 +68,8 @@ def _model_provider(model_spec: str | None) -> str | None:
 def _provider_configured(provider: str) -> bool:
     if provider == "openai":
         return _env_configured("OPENAI_API_KEY")
+    if provider == "anthropic":
+        return _env_configured("ANTHROPIC_API_KEY")
     if provider == "deepseek":
         return bool(DEEPSEEK_API_KEY)
     if provider == "openrouter":

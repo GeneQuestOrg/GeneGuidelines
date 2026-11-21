@@ -519,7 +519,7 @@ async def find_therapies_for_disease(
             disease_name, abstracts, resolved_gene
         )
     except Exception as exc:
-        log.exception("Gemma extraction failed for therapies of %s", disease_name)
+        log.exception("Model extraction failed for therapies of %s", disease_name)
         fallback = _fallback_therapies_from_abstracts(abstracts)
         inserted = _persist_therapies(disease_slug, fallback)
         _backfill_seed_rows_from_abstracts(disease_slug, abstracts)

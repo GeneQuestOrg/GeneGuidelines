@@ -13,7 +13,7 @@ const NOONAN_BASELINE: GuidelineBaseline = {
   readState: { read: false, note: "No clinician has read this draft yet." },
   runSteps: [
     { label: "PubMed scan (RAS-MAPK, Noonan)", meta: "47 papers", done: true },
-    { label: "Fact extraction & structuring (librarian step)", meta: "Gemma 4", done: true },
+    { label: "Fact extraction & structuring (librarian step)", meta: "Claude", done: true },
     { label: "Evidence-strength scoring + provenance", meta: "in progress", active: true },
     { label: "Draft sections: diagnosis / monitoring / therapy", meta: "queued", done: false },
   ],

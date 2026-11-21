@@ -820,6 +820,27 @@ def _sync_guideline_synthesis_section_prompts_from_spec() -> None:
     conn.close()
 
 
+# The PubMed pass1 evidence appraisal runs on Opus 5.5: in the FD model-choice lab Sonnet picked almost the same papers but left out the findings that change a clinical decision (0.3 vs 2.7 of 6 key claims); see docs/adr/006-claude-only-ai-provider.md.
+PUBMED_PASS1_MODEL = "anthropic:claude-opus-5-5"
+
+
+def _sync_pubmed_pass1_model() -> None:
+    """Keep the model on the seeded pubmed ``pass1-*`` rows equal to PUBMED_PASS1_MODEL.
+
+    The pubmed flow is seeded from backend/database.py once; after that the row is what the engine runs, so changing the seed alone would do nothing on production (the drift that bit the synthesis three times). Only rows that differ are rewritten, so restarts are no-ops.
+    """
+    now = datetime.now().isoformat()
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute(
+        "UPDATE flow_definitions SET model_name = %s, updated_at = %s "
+        "WHERE flow_key = %s AND node_id LIKE %s AND COALESCE(model_name, '') <> %s",
+        (PUBMED_PASS1_MODEL, now, "pubmed", "pass1-%", PUBMED_PASS1_MODEL),
+    )
+    conn.commit()
+    conn.close()
+
+
 def _sync_guideline_shelf_classify_prompt_from_spec() -> None:
     """Refresh gsb-classify prompt so shelf runs emit ``considered`` negative paths."""
     spec = _load_guideline_spec("guideline_shelf_build")

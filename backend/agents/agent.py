@@ -109,6 +109,12 @@ def get_openai_chat_model(model_spec: str | None) -> OpenAIChatModel:
     DeepSeek, OpenRouter, and vLLM use OpenAI-compatible HTTP APIs; we reuse OpenAIChatModel with a
     custom AsyncOpenAI client (base_url + api_key from env).
     """
+    if (model_spec or DEFAULT_MODEL_NAME).strip().lower().startswith("anthropic:"):
+        # Claude runs on the direct adapter (backend/agents/anthropic_direct.py) for structured calls. The agentic MCP runner has no Claude path; no production flow uses it (pm-1 retrieval is deterministic, PUBMED_PM1_DETERMINISTIC_RETRIEVAL=1).
+        raise RuntimeError(
+            f"Model spec {model_spec or DEFAULT_MODEL_NAME!r} is a Claude model; the agentic (MCP tool) runner does not support Claude. "
+            "Run the node with prompt_mode=simple."
+        )
     provider, mid = _resolve_model_spec(model_spec or DEFAULT_MODEL_NAME)
     cache_key = f"{provider}:{mid}"
     if cache_key in _openai_model_by_id:

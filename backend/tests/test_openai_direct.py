@@ -129,9 +129,10 @@ def test_http_error_is_surfaced(monkeypatch: pytest.MonkeyPatch) -> None:
 # --- routing ---------------------------------------------------------------
 
 
-def test_only_the_synthesis_sections_use_the_expensive_model() -> None:
-    """Cheap model for the thousands of triage calls, frontier model for the five
-    calls a parent actually reads. Reversing that would be expensive and pointless.
+def test_only_the_synthesis_sections_name_their_own_model() -> None:
+    """The five calls a parent actually reads name their model and effort (Sonnet 5.5 at
+    effort high, chosen by the FD model-choice lab, ADR 006); every other node inherits
+    the active profile.
     """
     import pathlib
 
@@ -142,7 +143,7 @@ def test_only_the_synthesis_sections_use_the_expensive_model() -> None:
 
     for node_id, model in by_id.items():
         if node_id.startswith("gs-sec-"):
-            assert model == "direct:gpt-6-astra", f"{node_id} must use the frontier model"
+            assert model == "anthropic:claude-sonnet-5-5@high", f"{node_id} must use the model the lab chose"
         else:
             assert model in (None, ""), f"{node_id} must inherit the active profile"
 

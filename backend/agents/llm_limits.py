@@ -3,6 +3,7 @@ from __future__ import annotations
 
 # Substring match on model id (after provider:). First match wins.
 _MODEL_ID_COMPLETION_CEILINGS: tuple[tuple[str, int], ...] = (
+    ("claude", 128_000),
     ("gpt-5.5", 128_000),
     ("gpt-5.4", 128_000),
     ("gpt-4o-mini", 16_384),

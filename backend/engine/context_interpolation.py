@@ -25,7 +25,8 @@ def interpolate_context_placeholders(text: str, store: dict) -> str:
     def _get(path: str) -> str:
         parts = path.split(".")
         if len(parts) < 2:
-            return ""
+            # A bare node id ({{ context.pass1-overview }}) means that node's whole output. The pm-4 section prompts reference their pass1 node this way, and until this branch existed the reference always resolved to "", so every section was written without the evidence appraisal it was meant to build on.
+            return _whole_node_output(parts[0]) if parts and parts[0] else ""
         root, *rest = parts
         if root == "initial":
             cur: Any = initial
@@ -56,6 +57,17 @@ def interpolate_context_placeholders(text: str, store: dict) -> str:
                 _logger.debug("context placeholder unresolved: path=%r", path)
                 return ""
         return "" if cur is None else str(cur)
+
+    def _whole_node_output(node_id: str) -> str:
+        if node_id in ("initial", "memory"):
+            return ""
+        blob = outputs.get(node_id)
+        if blob is None or (isinstance(blob, dict) and (not blob or blob.get("skipped") is True)):
+            _logger.debug("context placeholder unresolved: node=%r", node_id)
+            return ""
+        if isinstance(blob, (dict, list)):
+            return json.dumps(blob, ensure_ascii=False, default=str)
+        return str(blob)
 
     def repl(m: re.Match) -> str:
         dot_path = m.group(1)
