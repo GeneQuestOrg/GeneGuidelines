@@ -6,7 +6,7 @@ import plTests from "../locales/pl/fd-tests.json";
 
 /**
  * The printable list is an artefact a parent hands to a clinician, so it is held
- * to the same rules as the parent map (DiseaseMapView.copy.test.ts):
+ * to the same rules as the parent map (components/ParentDiseaseMap.copy.test.ts):
  *
  *   - a row is published only with the verbatim guideline sentence behind it
  *     (the evidence gate, ADR 005), and that sentence is quoted, so it is
@@ -17,7 +17,7 @@ import plTests from "../locales/pl/fd-tests.json";
  *   - the sheet always says who wrote it and that nobody signed it off.
  */
 const source = readFileSync(
-  fileURLToPath(new URL("./FdTestsView.tsx", import.meta.url)),
+  fileURLToPath(new URL("../components/FdTestsSheet.tsx", import.meta.url)),
   "utf8",
 );
 

@@ -143,6 +143,31 @@ describe("prerendered pages", () => {
     },
   );
 
+  it.each([
+    ["/diseases/fd", "/diseases/fd/guidelines"],
+    ["/pl/diseases/fd", "/pl/diseases/fd/guidelines"],
+  ])(
+    "%s carries the parent view in the app's order: map, list of tests, summary link, contact",
+    (path, guidelinesHref) => {
+      const body = byPath[path].body;
+      const at = (needle) => {
+        const index = body.indexOf(needle);
+        expect(index, needle).toBeGreaterThan(-1);
+        return index;
+      };
+      const questions = at("complete staging evaluation");
+      const tests = at('<ul class="ggp-rows">');
+      const summary = at(`href="${guidelinesHref}"`);
+      const contact = at('href="mailto:kontakt@genequest.org"');
+      expect(questions).toBeLessThan(tests);
+      expect(tests).toBeLessThan(summary);
+      expect(summary).toBeLessThan(contact);
+      expect(body).toContain("31196103");
+      expect(body.toLowerCase()).toMatch(/nie przeglądali|have not reviewed/);
+      expect(body.toLowerCase()).toMatch(/nie stawiamy diagnoz|we don't diagnose/);
+    },
+  );
+
   it("leaves the guideline page to the server, which has the synthesis", () => {
     // The build has no database; backend/seo renders /diseases/fd/guidelines from the real synthesis.
     expect(byPath["/diseases/fd/guidelines"]).toBeUndefined();

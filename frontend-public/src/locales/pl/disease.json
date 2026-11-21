@@ -15,8 +15,6 @@
   "alertUnsubscribed": "Twój adres został usunięty — nie będziemy już pisać w sprawie {{disease}}.",
   "guidelinesTitle": "Wytyczne",
   "synthesisSub": "Nie ma jednego dokumentu. Poniżej jest jedna synteza łącząca wszystkie źródła — a pod nią półka z samymi źródłami.",
-  "orientationCtaTitle": "Nowa diagnoza? Zacznij od mapy orientacyjnej.",
-  "orientationCtaSub": "Rzeczy, o które nie wiesz, że trzeba pytać — potwierdzenie diagnozy, lekarze znający {{disease}}, wytyczne, fundacje, badania — w kolejności, w jakiej będą Ci potrzebne.",
   "myCaseCtaTitle": "Masz dokumentację medyczną? Zobacz, jak Twój przypadek może pomóc.",
   "myCaseCtaSub": "Prześlij wyniki, aby udostępnić je specjalistom, gdy zechcesz — i przekaż zanonimizowane dane, które przyspieszą badania nad nowymi terapiami dla {{disease}}."
 }

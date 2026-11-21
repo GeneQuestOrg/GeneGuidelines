@@ -11,7 +11,18 @@ test.describe("public home → disease flow", () => {
     await fdCard.click();
 
     await expect(page).toHaveURL(/\/diseases\/fd/);
-    await expect(page.getByRole("heading", { level: 1, name: "Fibrous Dysplasia" })).toBeVisible();
+
+    // Parent view: the orientation map leads, the printable list of tests follows,
+    // the AI summary is one card away, and the page ends with the unusual-case contact.
+    await expect(page.getByRole("heading", { level: 1 })).toContainText(/first week/i);
+    await expect(
+      page.getByRole("heading", { level: 2, name: /Baseline evaluation in FD\/MAS/i }),
+    ).toBeVisible();
+    await expect(page.getByRole("button", { name: /guideline synthesis/i })).toBeVisible();
+    await expect(page.getByRole("link", { name: /Write to us/i })).toHaveAttribute(
+      "href",
+      /^mailto:kontakt@genequest\.org/,
+    );
 
     const personaGroup = page.getByRole("radiogroup", { name: /You are reading as/i });
     await expect(personaGroup).toBeVisible();
@@ -19,6 +30,9 @@ test.describe("public home → disease flow", () => {
     const clinicianOption = personaGroup.getByRole("radio", { name: /Clinician/i });
     await clinicianOption.click();
     await expect(clinicianOption).toHaveAttribute("aria-checked", "true");
+
+    // Clinician view: the data hub, unchanged.
+    await expect(page.getByRole("heading", { level: 1, name: "Fibrous Dysplasia" })).toBeVisible();
 
     const tabList = page.getByRole("tablist", { name: /Disease sections/i });
     await expect(tabList).toBeVisible();

@@ -9,11 +9,11 @@ import { DiseaseHero } from "../components/DiseaseHero";
 import { DiseaseSubscribeModal } from "../components/DiseaseSubscribeModal";
 import { MachineTranslationNote } from "../components/MachineTranslationNote";
 import { loadSubscriptionUiStatus } from "../utils/loadSubscriptionUiStatus";
-import { MyCaseCta } from "../components/MyCaseCta";
-import { OrientationMapCta } from "../components/OrientationMapCta";
 import { DiseaseTabs } from "../components/DiseaseTabs";
+import { ParentDiseasePage } from "../components/ParentDiseasePage";
 import { OfficialGuidelineBlock } from "../components/OfficialGuidelineBlock";
 import { SynthesisTeaser } from "../components/guidelines/SynthesisTeaser";
+import { hasOfficialGuideline } from "../utils/officialGuideline";
 import { CompactSourceShelf } from "../components/guidelines/CompactSourceShelf";
 import { useDisease } from "../hooks/useDisease";
 import { useOfficialGuideline } from "../hooks/useOfficialGuideline";
@@ -32,6 +32,10 @@ export interface DiseaseViewProps {
   userLoc: UserLocation | null;
   onNav: (path: string) => void;
   alert?: string;
+  /**
+   * `auto` (the default): parents and anonymous visitors get the parent layout (map → tests → summary card → data), clinicians the data hub. `parent` forces the parent layout for everyone — the old /diseases/{slug}/map address, kept for links already shared.
+   */
+  layout?: "auto" | "parent";
 }
 
 function parseAlertFromSearch(): string | undefined {
@@ -39,7 +43,7 @@ function parseAlertFromSearch(): string | undefined {
   return new URLSearchParams(window.location.search).get("alert") ?? undefined;
 }
 
-export function DiseaseView({ slug, role, userLoc, onNav, alert }: DiseaseViewProps) {
+export function DiseaseView({ slug, role, userLoc, onNav, alert, layout = "auto" }: DiseaseViewProps) {
   const { t } = useTranslation("disease");
   const [showSubscribe, setShowSubscribe] = useState(false);
   const [subscriptionStatus, setSubscriptionStatus] = useState<SubscriptionUiStatus>("none");
@@ -56,6 +60,7 @@ export function DiseaseView({ slug, role, userLoc, onNav, alert }: DiseaseViewPr
   const reprocessingRun = activeRuns.find((r) => r.diseaseSlug === slug) ?? null;
   const copy = useAudienceCopy(audienceForRole(role)).disease;
   const isClinician = isClinicianView(role);
+  const parentLayout = layout === "parent" || !isClinician;
 
   useEffect(() => {
     let cancelled = false;
@@ -162,14 +167,58 @@ export function DiseaseView({ slug, role, userLoc, onNav, alert }: DiseaseViewPr
           {t("alertUnsubscribed", { disease: disease.nameShort })}
         </p>
       ) : null}
-      <DiseaseHero
-        disease={disease}
-        copy={copy}
-        isClinician={isClinician}
-        subscriptionStatus={subscriptionStatus}
-        onNav={onNav}
-        onSubscribe={() => setShowSubscribe(true)}
-      />
+      {parentLayout ? (
+        <ParentDiseasePage
+          disease={disease}
+          copy={copy}
+          isClinician={isClinician}
+          sourceCount={sourceDocs.length}
+          officialPointer={officialPointer}
+          related={related}
+          relatedLoading={relatedLoading}
+          userLoc={userLoc}
+          subscriptionStatus={subscriptionStatus}
+          onSubscribe={() => setShowSubscribe(true)}
+          onNav={onNav}
+        />
+      ) : (
+        <>
+          <DiseaseHero
+            disease={disease}
+            copy={copy}
+            isClinician={isClinician}
+            subscriptionStatus={subscriptionStatus}
+            onNav={onNav}
+            onSubscribe={() => setShowSubscribe(true)}
+          />
+          <MachineTranslationNote />
+          {sourceDocs.length > 0 ? (
+            <Section title={t("guidelinesTitle")} sub={t("synthesisSub")}>
+              <SynthesisTeaser
+                diseaseName={disease.name}
+                sourceCount={sourceDocs.length}
+                hasOfficial={hasOfficialGuideline(disease, officialPointer)}
+                onOpen={() => onNav(`/diseases/${slug}/guidelines`)}
+              />
+              <CompactSourceShelf
+                docs={sourceDocs}
+                onSeeAll={() => onNav(`/diseases/${slug}/guidelines`)}
+              />
+            </Section>
+          ) : officialPointer != null ? (
+            <OfficialGuidelineBlock pointer={officialPointer} />
+          ) : null}
+          <DiseaseTabs
+            disease={disease}
+            copy={copy}
+            isClinician={isClinician}
+            related={related}
+            relatedLoading={relatedLoading}
+            userLoc={userLoc}
+            onNav={onNav}
+          />
+        </>
+      )}
       {showSubscribe ? (
         <DiseaseSubscribeModal
           disease={disease}
@@ -180,37 +229,6 @@ export function DiseaseView({ slug, role, userLoc, onNav, alert }: DiseaseViewPr
           onSaved={() => refreshSubscriptionStatus()}
         />
       ) : null}
-      <MachineTranslationNote />
-      {!isClinician ? <OrientationMapCta disease={disease} onNav={onNav} /> : null}
-      {!isClinician ? <MyCaseCta disease={disease} onNav={onNav} /> : null}
-      {sourceDocs.length > 0 ? (
-        <Section
-          title={t("guidelinesTitle")}
-          sub={t("synthesisSub")}
-        >
-          <SynthesisTeaser
-            diseaseName={disease.name}
-            sourceCount={sourceDocs.length}
-            hasOfficial={disease.status !== "pending"}
-            onOpen={() => onNav(`/diseases/${slug}/guidelines`)}
-          />
-          <CompactSourceShelf
-            docs={sourceDocs}
-            onSeeAll={() => onNav(`/diseases/${slug}/guidelines`)}
-          />
-        </Section>
-      ) : officialPointer != null ? (
-        <OfficialGuidelineBlock pointer={officialPointer} />
-      ) : null}
-      <DiseaseTabs
-        disease={disease}
-        copy={copy}
-        isClinician={isClinician}
-        related={related}
-        relatedLoading={relatedLoading}
-        userLoc={userLoc}
-        onNav={onNav}
-      />
     </section>
   );
 }

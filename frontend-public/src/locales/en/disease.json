@@ -15,8 +15,6 @@
   "alertUnsubscribed": "Your address has been removed — no more emails about {{disease}}.",
   "guidelinesTitle": "Guidelines",
   "synthesisSub": "There is no single document. Below is one synthesis combining every source — and under it, a shelf of the sources themselves.",
-  "orientationCtaTitle": "New to this diagnosis? Start with the orientation map.",
-  "orientationCtaSub": "The things you don't know to ask about — confirming the diagnosis, doctors who know {{disease}}, guidelines, foundations, trials — in the order you'll need them.",
   "myCaseCtaTitle": "Have medical records? See how your case can help.",
   "myCaseCtaSub": "Upload results to share with specialists when you choose — and contribute anonymized facts that speed research on new treatments for {{disease}}."
 }

@@ -17,7 +17,7 @@ import plMap from "../locales/pl/disease-map.json";
  *   - the withdrawn phrasings are a closed list and stay out of the copy.
  */
 const source = readFileSync(
-  fileURLToPath(new URL("./DiseaseMapView.tsx", import.meta.url)),
+  fileURLToPath(new URL("./ParentDiseaseMap.tsx", import.meta.url)),
   "utf8",
 );
 

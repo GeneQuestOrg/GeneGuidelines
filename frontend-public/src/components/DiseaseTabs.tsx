@@ -12,6 +12,7 @@ import { FoundationsList } from "./FoundationsList";
 import { TherapiesList } from "./TherapiesList";
 import { TrialsList } from "./TrialsList";
 import { CompactSourceShelf } from "./guidelines/CompactSourceShelf";
+import { PARENT_PAGE_ANCHORS } from "./parentPageAnchors";
 import { useContentPrs } from "../hooks/useContentPrs";
 import { useDiseaseDoctors } from "../hooks/useDiseaseDoctors";
 import { useGuidelineSynthesis } from "../hooks/useGuidelineSynthesis";
@@ -196,26 +197,31 @@ export function DiseaseTabs({
               )}
             </Section>
 
-            <Section title={t("diseaseTabs.therapiesTitle")} divider>
-              <p className="d-panel-note">{t("diseaseTabs.therapiesNote")}</p>
-              {therapiesError != null ? (
-                <p className="d-panel-empty" role="alert">{therapiesError}</p>
-              ) : therapiesLoading ? (
-                <p className="d-panel-empty">{t("diseaseTabs.loadingTherapies")}</p>
-              ) : (
-                <TherapiesList therapies={therapies} />
-              )}
-            </Section>
+            {/* The ids are the targets of the parent map's step 4 and 5 buttons. */}
+            <div id={PARENT_PAGE_ANCHORS.therapies} className="d-anchor">
+              <Section title={t("diseaseTabs.therapiesTitle")} divider>
+                <p className="d-panel-note">{t("diseaseTabs.therapiesNote")}</p>
+                {therapiesError != null ? (
+                  <p className="d-panel-empty" role="alert">{therapiesError}</p>
+                ) : therapiesLoading ? (
+                  <p className="d-panel-empty">{t("diseaseTabs.loadingTherapies")}</p>
+                ) : (
+                  <TherapiesList therapies={therapies} />
+                )}
+              </Section>
+            </div>
 
-            <Section title={t("diseaseTabs.foundationsTitle")} divider>
-              {foundationsError != null ? (
-                <p className="d-panel-empty" role="alert">{foundationsError}</p>
-              ) : foundationsLoading ? (
-                <p className="d-panel-empty">{t("diseaseTabs.loadingFoundations")}</p>
-              ) : (
-                <FoundationsList foundations={foundations} diseaseName={disease.name} />
-              )}
-            </Section>
+            <div id={PARENT_PAGE_ANCHORS.foundations} className="d-anchor">
+              <Section title={t("diseaseTabs.foundationsTitle")} divider>
+                {foundationsError != null ? (
+                  <p className="d-panel-empty" role="alert">{foundationsError}</p>
+                ) : foundationsLoading ? (
+                  <p className="d-panel-empty">{t("diseaseTabs.loadingFoundations")}</p>
+                ) : (
+                  <FoundationsList foundations={foundations} diseaseName={disease.name} />
+                )}
+              </Section>
+            </div>
 
             {orientation != null && sourceDocs.length > 0 ? (
               <Section

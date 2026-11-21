@@ -57,15 +57,15 @@ function catalogues(locale) {
 }
 
 /**
- * The question/sentence pairs and the row order are read out of the views rather
+ * The question/sentence pairs and the row order are read out of the components rather
  * than repeated here, so the static page cannot drift from what the app renders.
  */
 const askPairs = [
-  ...read("../src/views/DiseaseMapView.tsx").matchAll(/\["(askQ\d+)",\s*"(askS\d+)"\]/g),
+  ...read("../src/components/ParentDiseaseMap.tsx").matchAll(/\["(askQ\d+)",\s*"(askS\d+)"\]/g),
 ].map(([, question, sentence]) => [question, sentence]);
 
 const testRowIds = (
-  read("../src/views/FdTestsView.tsx").match(/const ROW_IDS = \[([\s\S]*?)\] as const;/)?.[1] ?? ""
+  read("../src/components/FdTestsSheet.tsx").match(/const ROW_IDS = \[([\s\S]*?)\] as const;/)?.[1] ?? ""
 )
   .split(",")
   .map((entry) => entry.trim().replace(/^"|"$/g, ""))
@@ -202,23 +202,8 @@ function privacyBody(locale, { privacy }) {
   ].join("\n");
 }
 
-/** /diseases/fd — the hub. Facts and signposts; the live data is named, not faked. */
-function fdBody(locale, { seo, map, common }) {
-  return [
-    `<h1>${esc(seo.fd.title)}</h1>`,
-    p(seo.fd.description),
-    `<dl class="ggp-facts">`,
-    `<dt>${esc(map.factGene)}</dt><dd>GNAS</dd>`,
-    `<dt>${esc(map.factOmim)}</dt><dd>174800</dd>`,
-    `</dl>`,
-    note(seo.citation),
-    note(common.footer.desc),
-    links(locale, seo, "/diseases/fd"),
-  ].join("\n");
-}
-
-/** /diseases/fd/map — the orientation map, questions and all. */
-function fdMapBody(locale, { seo, map, common }) {
+/** The orientation map as text: the five steps, then the questions with the sentence behind each. */
+function mapSection(map) {
   const questions = askPairs
     .map(
       ([question, sentence]) =>
@@ -235,8 +220,6 @@ function fdMapBody(locale, { seo, map, common }) {
     .map((title) => `<li>${esc(title)}</li>`)
     .join("\n");
   return [
-    `<h1>${esc(seo.fdMap.title)}</h1>`,
-    p(seo.fdMap.description),
     `<h2>${esc(map.introTitle)}</h2>`,
     `<ol class="ggp-steps">${steps}</ol>`,
     `<h2>${esc(map.askTitle)}</h2>`,
@@ -244,14 +227,12 @@ function fdMapBody(locale, { seo, map, common }) {
     `<ul class="ggp-asks">${questions}</ul>`,
     note(map.askSource),
     note(map.safetyBold),
-    note(common.footer.desc),
-    links(locale, seo, "/diseases/fd/map"),
-  ].join("\n");
+  ];
 }
 
-/** /diseases/fd/tests — the printable sheet, as text. */
-function fdTestsBody(locale, { seo, tests, common }) {
-  const rows = testRowIds
+/** The printable sheet's rows as text. */
+function testRows(tests) {
+  return testRowIds
     .map((id) => {
       const row = tests.rows[id];
       const when = row.whenQuote
@@ -268,11 +249,57 @@ function fdTestsBody(locale, { seo, tests, common }) {
       ].join("");
     })
     .join("\n");
+}
+
+/**
+ * /diseases/fd — the parent view, in the order the app renders it: the orientation map, the printable list of tests, the AI summary as one link (the summary itself lives in the database), and the address for a case that does not fit.
+ */
+function fdBody(locale, { seo, map, tests, common }) {
+  const contact = "kontakt@genequest.org";
+  return [
+    `<h1>${esc(seo.fd.title)}</h1>`,
+    p(seo.fd.description),
+    `<dl class="ggp-facts">`,
+    `<dt>${esc(map.factGene)}</dt><dd>GNAS</dd>`,
+    `<dt>${esc(map.factOmim)}</dt><dd>174800</dd>`,
+    `</dl>`,
+    ...mapSection(map),
+    `<h2>${esc(tests.title)}</h2>`,
+    p(tests.lede),
+    `<ul class="ggp-rows">${testRows(tests)}</ul>`,
+    note(tests.sourceLine),
+    note(tests.authorshipLine),
+    `<h2>${esc(map.summaryTitle)}</h2>`,
+    p(map.summarySub),
+    `<p><a href="${esc(withLocale("/diseases/fd/guidelines", locale))}">${esc(seo.linkGuidelines)}</a></p>`,
+    `<h2>${esc(map.unusualTitle)}</h2>`,
+    p(map.unusualBody),
+    `<p class="ggp-note">${esc(map.unusualNote.replace("{{email}}", contact))}</p>`,
+    `<p><a href="mailto:${contact}">${esc(map.unusualCta)} — ${contact}</a></p>`,
+    note(seo.citation),
+    note(common.footer.desc),
+    links(locale, seo, "/diseases/fd"),
+  ].join("\n");
+}
+
+/** /diseases/fd/map — the orientation map, questions and all (the old address of the map, kept for links already shared). */
+function fdMapBody(locale, { seo, map, common }) {
+  return [
+    `<h1>${esc(seo.fdMap.title)}</h1>`,
+    p(seo.fdMap.description),
+    ...mapSection(map),
+    note(common.footer.desc),
+    links(locale, seo, "/diseases/fd/map"),
+  ].join("\n");
+}
+
+/** /diseases/fd/tests — the printable sheet, as text. */
+function fdTestsBody(locale, { seo, tests, common }) {
   return [
     `<h1>${esc(tests.title)}</h1>`,
     p(seo.fdTests.description),
     p(tests.lede),
-    `<ul class="ggp-rows">${rows}</ul>`,
+    `<ul class="ggp-rows">${testRows(tests)}</ul>`,
     note(tests.sourceLine),
     note(tests.authorshipLine),
     note(tests.safetyLine),

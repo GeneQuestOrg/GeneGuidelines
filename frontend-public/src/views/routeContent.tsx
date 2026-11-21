@@ -5,7 +5,6 @@ import type { Locale } from "../router/locale";
 import type { ViewRole } from "../auth/resolveRole";
 import { HomeView } from "./HomeView";
 import { DiseaseView } from "./DiseaseView";
-import { DiseaseMapView } from "./DiseaseMapView";
 import { FdTestsView } from "./FdTestsView";
 import { DiseaseIndexView } from "./DiseaseIndexView";
 import { PlaceholderView } from "./PlaceholderView";
@@ -84,7 +83,16 @@ export function routeContent({
       }
       return <MyCaseView slug={route.slug} onNav={onNav} />;
     case "diseaseMap":
-      return <DiseaseMapView slug={route.slug} onNav={onNav} />;
+      // The map now opens the parent view of the disease page; this address stays for links already shared.
+      return (
+        <DiseaseView
+          slug={route.slug}
+          role={role}
+          userLoc={userLoc}
+          onNav={onNav}
+          layout="parent"
+        />
+      );
     case "diseaseTests":
       return <FdTestsView slug={route.slug} onNav={onNav} />;
     case "diseaseIndex":
