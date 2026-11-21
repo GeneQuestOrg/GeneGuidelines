@@ -106,7 +106,7 @@ az containerapp secret list \
   -o table
 ```
 
-Expected secrets on `gg-public`: `db-url`, `llm-api-key`, `openrouter-key` (and optionally `openai-key`).
+Expected secrets on `gg-public`: `db-url` and `anthropic-key`, plus the service keys listed under § Container App secrets.
 
 ### 5. Get the production `DB_URL` (for backup / migration only)
 
@@ -236,14 +236,12 @@ The backend runs in **vLLM-compatible** mode (`MODEL_PROFILE=vllm` + `LLM_BASE_U
 
 | Container App env var | Hosted value |
 |---|---|
-| `MODEL_PROFILE` | `vllm` |
-| `LLM_BASE_URL` | `https://api.siliconflow.com/v1` |
-| `LLM_MODEL` | `google/gemma-4-31B-it` |
-| `LLM_API_KEY` | `secretref:llm-api-key` |
+| `MODEL_PROFILE` | `anthropic` (every model call goes to Claude, ADR 006) |
+| `ANTHROPIC_API_KEY` | `secretref:anthropic-key` |
 | `DB_URL` | Azure PostgreSQL connection string (`secretref:db-url` or env) |
-| `LLM_AUTH_HEADER_STYLE` | `bearer` |
-| `OPENAI_API_KEY` | placeholder (API compatibility; unused in vLLM mode) |
 | `OPENROUTER_API_KEY` | `secretref:openrouter-key` |
+
+Since 21.11.2026 no `LLM_*` or `OPENAI_API_KEY` variable is set on either app, and the SiliconFlow (`llm-api-key`) and OpenAI (`openai-key`) secrets were deleted on 22.11.2026.
 
 ### Email alerts (disease subscriptions, double opt-in)
 
@@ -280,12 +278,11 @@ After deploy, run `alembic upgrade head` if the subscription migration (`b8e3f1a
 
 | Secret name | Purpose |
 |---|---|
-| `llm-api-key` | SiliconFlow API key |
-| `openai-key` | OpenAI (optional fallback) |
-| `openrouter-key` | OpenRouter (used when `LLM_BASE_URL` + `LLM_API_KEY` are not set) |
+| `anthropic-key` | Anthropic (Claude), the only AI provider in production |
+| `openrouter-key` | OpenRouter (not used under the `anthropic` profile) |
 | `resend-api-key` | Resend (subscription confirmation emails) |
 
-When both `LLM_BASE_URL` and `LLM_API_KEY` are set, `backend/config.py` enables `SINGLE_LLM_MODE=True` and routes all profiles to that endpoint.
+Under `MODEL_PROFILE=anthropic`, `backend/config.py` keeps `SINGLE_LLM_MODE` off and reroutes any non-Claude model spec to the default Claude model. (Outside that profile, setting both `LLM_BASE_URL` and `LLM_API_KEY` enables `SINGLE_LLM_MODE` and routes all profiles to that endpoint.)
 
 **Never commit API keys.** Set and rotate them only in Azure Portal or via `az containerapp secret set`. Self-hosters supply their own keys in `.env` (see `backend/.env.example`).
 
@@ -426,16 +423,16 @@ which the `az ... --command` flag cannot parse, so create from a JSON/YAML spec:
 RG=geneguidelines-demo
 # Pull the values to mirror (do not print them):
 S_DB=$(az containerapp secret show -n gg-public -g $RG --secret-name db-url --query value -o tsv)
-S_LLM=$(az containerapp secret show -n gg-public -g $RG --secret-name llm-api-key --query value -o tsv)
+S_ANT=$(az containerapp secret show -n gg-public -g $RG --secret-name anthropic-key --query value -o tsv)
 S_NCBI=$(az containerapp secret show -n gg-public -g $RG --secret-name ncbi-api-key --query value -o tsv)
 S_OR=$(az containerapp secret show -n gg-public -g $RG --secret-name openrouter-key --query value -o tsv)
 ACR_PWD=$(az acr credential show -n ggdemo45223 --query "passwords[0].value" -o tsv)
 TAG=$(az containerapp show -n gg-public -g $RG --query "properties.template.containers[0].image" -o tsv | sed 's/.*://')
 
 # Write a 0600 spec (JSON is valid YAML; lets the command carry "-m"):
-python3 - "$S_DB" "$S_LLM" "$S_NCBI" "$S_OR" "$ACR_PWD" "$TAG" > /tmp/gg-worker.json <<'PY'
+python3 - "$S_DB" "$S_ANT" "$S_NCBI" "$S_OR" "$ACR_PWD" "$TAG" > /tmp/gg-worker.json <<'PY'
 import json, sys
-db, llm, ncbi, orr, acr, tag = sys.argv[1:7]
+db, ant, ncbi, orr, acr, tag = sys.argv[1:7]
 print(json.dumps({
   "location": "Poland Central",
   "properties": {
@@ -443,7 +440,7 @@ print(json.dumps({
     "configuration": {
       "activeRevisionsMode": "Single",
       "secrets": [
-        {"name":"db-url","value":db},{"name":"llm-api-key","value":llm},
+        {"name":"db-url","value":db},{"name":"anthropic-key","value":ant},
         {"name":"ncbi-api-key","value":ncbi},{"name":"openrouter-key","value":orr},
         {"name":"acr-password","value":acr}],
       "registries": [{"server":"ggdemo45223.azurecr.io","username":"ggdemo45223","passwordSecretRef":"acr-password"}]
@@ -455,12 +452,8 @@ print(json.dumps({
         "command":["python","-m","backend.worker"],
         "resources":{"cpu":1.0,"memory":"2.0Gi"},
         "env":[
-          {"name":"MODEL_PROFILE","value":"vllm"},
-          {"name":"LLM_BASE_URL","value":"https://api.siliconflow.com/v1"},
-          {"name":"LLM_MODEL","value":"google/gemma-4-31B-it"},
-          {"name":"LLM_AUTH_HEADER_STYLE","value":"bearer"},
-          {"name":"LLM_API_KEY","secretRef":"llm-api-key"},
-          {"name":"OPENAI_API_KEY","value":"sk-placeholder-unused-in-vllm-mode"},
+          {"name":"MODEL_PROFILE","value":"anthropic"},
+          {"name":"ANTHROPIC_API_KEY","secretRef":"anthropic-key"},
           {"name":"OPENROUTER_API_KEY","secretRef":"openrouter-key"},
           {"name":"DB_URL","secretRef":"db-url"},
           {"name":"NCBI_API_KEY","secretRef":"ncbi-api-key"},
@@ -567,11 +560,13 @@ az containerapp update \
   --image ggdemo45223.azurecr.io/geneguidelines-backend:manual-$(date +%Y%m%d)
 ```
 
-Rotate the LLM key in Azure only (not in the workflow):
+Rotate the Claude key in Azure only (not in the workflow), on both apps:
 
 ```bash
-az containerapp secret set --name gg-public --resource-group geneguidelines-demo \
-  --secrets llm-api-key="<SILICONFLOW_KEY>"
+for app in gg-public gg-worker; do
+  az containerapp secret set --name $app --resource-group geneguidelines-demo \
+    --secrets anthropic-key="<ANTHROPIC_KEY>"
+done
 ```
 
 **Do not** set `GENEGUIDELINES_API_KEY` on the GeneQuest-hosted instance — browser-initiated bootstrap (e.g. “Add disease”) will return 401.
