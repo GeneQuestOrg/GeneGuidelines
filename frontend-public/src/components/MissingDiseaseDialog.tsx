@@ -24,6 +24,7 @@ import {
 import { useTranslation } from "react-i18next";
 import { Button } from "@gene-guidelines/ui";
 import { ApiRequestError } from "../api/client";
+import { AiInputNotice } from "./AiInputNotice";
 import {
   type WiderSearchCandidate,
   type WiderSearchResponse,
@@ -143,6 +144,7 @@ export function MissingDiseaseDialog({
             <span className="miss-modal__hint">
               {t("missingDiseaseDialog.fieldHint")}
             </span>
+            <AiInputNotice className="miss-modal__hint" />
           </label>
 
           <div className="miss-modal__hints">

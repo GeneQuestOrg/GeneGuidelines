@@ -102,6 +102,7 @@
   "privacyRequest": {
     "summary": "Is this you? Ask us to correct or remove this entry",
     "intro": "This entry was built from publications and public registers. You can ask us to correct it, or to remove it and keep it out of future updates of the directory. We answer within a month, usually much sooner. You can also write to kontakt@genequest.org.",
+    "policyLink": "What we keep about clinicians, and why: privacy policy, section V",
     "kindLegend": "What would you like us to do?",
     "kindRemoval": "Remove this entry",
     "kindCorrection": "Correct this entry",

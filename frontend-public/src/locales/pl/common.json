@@ -36,9 +36,14 @@
     "home": "Strona główna",
     "startResearch": "Zleć research",
     "about": "O projekcie",
+    "privacy": "Polityka prywatności",
     "account": "Twoje konto",
     "feedback": "Prześlij opinię",
     "github": "GitHub"
+  },
+  "aiInputNotice": {
+    "text": "Nie wpisuj danych osobowych ani opisu stanu zdrowia konkretnej osoby — tekst trafia do modelu AI.",
+    "link": "Polityka prywatności"
   },
   "disclaimer": {
     "doctor": {

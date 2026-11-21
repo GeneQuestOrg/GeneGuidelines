@@ -36,9 +36,14 @@
     "home": "Home",
     "startResearch": "Start research",
     "about": "About the project",
+    "privacy": "Privacy policy",
     "account": "Your account",
     "feedback": "Feedback",
     "github": "GitHub"
+  },
+  "aiInputNotice": {
+    "text": "Don’t type personal data or a description of a specific person’s health — the text goes to an AI model.",
+    "link": "Privacy policy"
   },
   "disclaimer": {
     "doctor": {

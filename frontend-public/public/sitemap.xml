@@ -247,4 +247,23 @@
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
+
+  <url>
+    <loc>https://geneguidelines.genequest.org/privacy</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geneguidelines.genequest.org/privacy" />
+    <xhtml:link rel="alternate" hreflang="pl" href="https://geneguidelines.genequest.org/pl/privacy" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://geneguidelines.genequest.org/privacy" />
+    <lastmod>2026-11-21</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://geneguidelines.genequest.org/pl/privacy</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geneguidelines.genequest.org/privacy" />
+    <xhtml:link rel="alternate" hreflang="pl" href="https://geneguidelines.genequest.org/pl/privacy" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://geneguidelines.genequest.org/privacy" />
+    <lastmod>2026-11-21</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
 </urlset>

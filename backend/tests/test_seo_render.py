@@ -232,6 +232,12 @@ def test_live_sitemap_lists_listed_diseases_and_published_guidelines_only(client
     assert 'hreflang="pl"' in xml
 
 
+def test_live_sitemap_lists_the_privacy_policy_in_both_languages(client) -> None:
+    xml = client.get("/sitemap.xml").text
+    assert "<loc>https://geneguidelines.genequest.org/privacy</loc>" in xml
+    assert "<loc>https://geneguidelines.genequest.org/pl/privacy</loc>" in xml
+
+
 def test_sitemap_falls_back_to_the_bundled_file(client) -> None:
     client.state["fail"] = True
     assert "bundled" in client.get("/sitemap.xml").text

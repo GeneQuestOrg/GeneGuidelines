@@ -37,6 +37,7 @@ export function AppFooter({ onNav }: AppFooterProps) {
         {link("/", t("footer.home"))}
         {link("/start-research", t("footer.startResearch"))}
         {link("/about", t("footer.about"))}
+        {link("/privacy", t("footer.privacy"))}
         {link("/account", t("footer.account"))}
         <button
           type="button"

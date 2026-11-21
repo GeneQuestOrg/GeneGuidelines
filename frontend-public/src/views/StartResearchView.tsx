@@ -41,6 +41,7 @@ import { DEFAULT_GUIDELINE_PROFILE } from "../api/guidelineRun";
 import { slugifyDisease } from "../utils/slugifyDisease";
 import { DiseaseAutocomplete } from "../components/DiseaseAutocomplete";
 import { MissingDiseaseDialog } from "../components/MissingDiseaseDialog";
+import { AiInputNotice } from "../components/AiInputNotice";
 import "../styles/research.css";
 import "../styles/start-research.css";
 
@@ -179,6 +180,7 @@ export function StartResearchView({ onNav }: StartResearchViewProps) {
             )}
 
             <span className="field__hint">{t("fieldHint")}</span>
+            <AiInputNotice className="field__hint" />
           </div>
 
           <label className="field field--check">

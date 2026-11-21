@@ -1,0 +1,37 @@
+/* Privacy policy page. Layout, headings and lists come from about-view.css; this only adds what a legal text needs on top of it. */
+
+.privacy__title {
+  margin-bottom: 0.75rem;
+}
+
+.privacy__version {
+  margin: 0 0 0.75rem;
+  max-width: 42rem;
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  color: var(--gg-text-muted, var(--ink-2));
+}
+
+.privacy__language {
+  margin: 0;
+  font-size: 0.875rem;
+}
+
+/* Long storage key names and the email address must wrap on a phone instead of widening the page. */
+.privacy__article {
+  overflow-wrap: anywhere;
+}
+
+.privacy__article code {
+  font-family: var(--font-mono, ui-monospace, "SF Mono", monospace);
+  font-size: 0.875em;
+  padding: 0.0625rem 0.3125rem;
+  border-radius: 0.25rem;
+  background: var(--gg-surface-muted, rgba(0, 0, 0, 0.04));
+  border: 1px solid var(--gg-border, rgba(0, 0, 0, 0.08));
+}
+
+/* The section text refers to items by number ("sekcja II.7"), so the numbers stay visible. */
+.privacy__list li::marker {
+  color: var(--gg-text-muted, var(--ink-3));
+}
