@@ -1,0 +1,156 @@
+{
+  "ui": {
+    "tocHeading": "Contents",
+    "otherLanguage": "Read the Polish version, which is legally binding"
+  },
+  "policy": {
+    "title": "GeneGuidelines privacy policy",
+    "version": "Version: {{date}}. This is an English translation; the Polish version is legally binding under the EU GDPR and Polish law, and prevails where the two differ.",
+    "sections": [
+      {
+        "id": "controller",
+        "heading": "I. Who is the controller",
+        "blocks": [
+          {
+            "p": "The controller of personal data processed on geneguidelines.genequest.org (the \"Site\") is the GeneQuest Foundation – Laboratories and Therapies for Genetic Diseases (Fundacja GeneQuest – Laboratoria i Terapie Chorób Genetycznych), KRS 0001211461, ul. Bolesława Krzywoustego 1/7, 65-039 Zielona Góra, Poland (the \"Foundation\"). Contact for anything about personal data: kontakt@genequest.org. The Foundation has not appointed a data protection officer."
+          },
+          {
+            "p": "The Site is an information tool about rare diseases: AI-written summaries of official guidelines and the literature, a directory of clinicians, clinical trials and foundations. It is not for diagnosis or treatment; its content is material to discuss with a doctor."
+          },
+          {
+            "p": "**We do not process data about your health on the Site.** We do not ask for medical records and we do not store them. Do not type into the search fields anything that identifies you or another person, or a description of a specific person's health — the Site only needs a disease name or a general description of symptoms. We do not store wider-search text: it is sent to the AI model provider (section VI) only to recognise the disease, and the provider does not use it to train models. If you type health information there anyway, we do not keep it and do not link it to you."
+          }
+        ]
+      },
+      {
+        "id": "visitors",
+        "heading": "II. Visitors",
+        "blocks": [
+          {
+            "ol": [
+              "**Technical data.** The server records each request (page address, time, browser information). Your IP address is used only in server memory to limit request rates (abuse protection) and is not written to the database. Legal basis: the Foundation's legitimate interest in keeping the Site secure and running (Art. 6(1)(f) GDPR). The server log does not record parameters from page addresses (such as a typed place) and is kept for up to 30 days.",
+              "**Disease search.** What you type into search is not stored. When you use the wider search (\"help us find your disease\"), the text is sent to the AI model provider (section VI) to recognise the disease name.",
+              "**Commissioning research on a new disease.** We store the disease name and its other names, plus a random session identifier generated in your browser (not linked to your identity; used to keep the queue fair). The disease name is sent to public databases (PubMed, ClinicalTrials.gov, Europe PMC) and to the AI model provider. Legal basis: Art. 6(1)(f) GDPR. The session identifier is deleted after 12 months; the disease and the research results are Site content.",
+              "**Location.** If you type a place to sort doctors or trials by distance, we send that text to the LocationIQ geocoding service (EU endpoint), without your IP address. If you use \"my location\", your browser computes the coordinates and adds them to the page address; we do not store them in the database.",
+              "**Maps** load from OpenStreetMap Foundation servers, which receive your IP address and the map area you view. Fonts are served from our own server, so Google does not receive your IP address.",
+              "**Feedback** (the feedback form and paragraph ratings): the message, optionally your email, and the page it concerns are emailed to the Foundation's mailbox through Resend and not stored in the database. Legal basis: Art. 6(1)(f) GDPR (replying and improving the content). Retention: as the Foundation's email correspondence.",
+              "**Visit statistics.** We count visits with Umami running on our own server in Azure (Poland Central region), with no cookies and without storing your IP address (it is used only to determine the country at the moment of the visit). We see the number of visits, pages viewed, the referring page, country, device and browser type, and a few events (such as printing the tests list or sharing a link). Legal basis: the Foundation's legitimate interest in knowing whether the Site is useful to anyone (Art. 6(1)(f) GDPR). Retention: detailed visit data are kept for 24 months."
+            ]
+          }
+        ]
+      },
+      {
+        "id": "account",
+        "heading": "III. User accounts",
+        "blocks": [
+          {
+            "ol": [
+              "Sign-in is handled by Auth0 (Okta), EU region. At sign-in we receive an account identifier, your email address and whether it is verified. We store: the account identifier, email, your role on the Site (parent, clinician, researcher), verification status, optionally your ORCID iD (if you connect ORCID), and the dates the account was created and last active.",
+              "Purpose: running your account and the features that need it (recommending doctors, rating suggestions as a verified clinician). Legal basis: Art. 6(1)(b) GDPR (providing an electronic service).",
+              "Linked to the account: your doctor recommendations, ratings of AI suggestions (only aggregate counts are public), and invitations.",
+              "Retention: until the account is deleted. To delete your account, write to kontakt@genequest.org — we delete it within a month. Accounts inactive for 24 months are deleted after prior notice by email."
+            ]
+          }
+        ]
+      },
+      {
+        "id": "recommendations",
+        "heading": "IV. Doctor recommendations by parents",
+        "blocks": [
+          {
+            "p": "A signed-in parent can recommend a doctor: we store the doctor's details (name, specialty, institution, city, country), the disease and a comment. Once the Foundation approves it, the doctor's details are public together with the recommender's comment, relation and region — never their identity. The \"what helped\" and \"how you found the doctor\" fields are never public. Legal basis: Art. 6(1)(f) GDPR (helping families find doctors who know the disease)."
+          }
+        ]
+      },
+      {
+        "id": "clinicians",
+        "heading": "V. Clinicians in the directory (information under Art. 14 GDPR)",
+        "blocks": [
+          {
+            "p": "This section informs clinicians and researchers whose data we show in the directory and who did not give it to us themselves."
+          },
+          {
+            "ol": [
+              "**Purpose:** helping patients and families find clinicians with documented experience in a given rare disease. Legal basis: the legitimate interest of the Foundation and of people seeking help (Art. 6(1)(f) GDPR); the data concern professional activity only.",
+              "**Categories of data:** name, affiliation and workplace (city, country, city coordinates), role in publications and the resulting level of documented experience, up to five key publications, ORCID iD (when given in publications; it forms part of the profile address), clinical specialty; for US clinicians, practice data from the NPPES registry organisation, city and state, without the street address. We do not process clinicians' email addresses.",
+              "**Sources:** publicly available databases: PubMed / NCBI (publication authors and affiliations), the NPPES registry (USA), ClinicalTrials.gov, the Research Organization Registry (ROR), OpenStreetMap / Nominatim, and recommendations by parents (section IV).",
+              "**Recipients:** the data are public on the Site. To determine location and specialty we send names, affiliations or institution names to the services listed in section VI (geocoding, Brave search — no names, AI models) and queries to the NPPES and ClinicalTrials.gov registries.",
+              "**Retention:** as long as we maintain the directory for the disease, or until a successful objection.",
+              "**Objection and erasure:** any clinician can ask for an entry to be corrected or removed, or object (Art. 21 GDPR), by writing to kontakt@genequest.org or with the \"Is this you? Ask us to correct or remove this entry\" form on their profile page. The form stores nothing in our database; it emails the request to the Foundation. We remove the entry and block it from being added again in later directory updates."
+            ]
+          }
+        ]
+      },
+      {
+        "id": "recipients",
+        "heading": "VI. Recipients and processors",
+        "blocks": [
+          {
+            "ul": [
+              "**Microsoft Azure** — hosting of the Site and the database, Poland Central region (EU).",
+              "**Auth0 (Okta)** — sign-in; data stored in the EU region.",
+              "**Anthropic** (USA) — Claude AI models: process text typed into the wider search, the name of a requested disease, the content of scientific publications (including author names) and clinicians' affiliations. The provider does not use these data to train models.",
+              "**Resend** (USA) — sending email (subscription confirmations and alerts, feedback, clinicians' requests).",
+              "**LocationIQ (Unwired Labs)** — geocoding of a typed place, EU endpoint.",
+              "**Brave Search** (USA) — locating institutions; receives institution names only, no personal data.",
+              "**OpenStreetMap Foundation** — map tiles (United Kingdom; adequacy decision)."
+            ]
+          },
+          {
+            "p": "Personal data leave the European Economic Area to Anthropic and Resend (USA) and, where sub-processors have access, in the case of Auth0. The safeguards are the European Commission's standard contractual clauses in our data processing agreements with these providers and, for Resend, also its certification under the EU–US Data Privacy Framework. We will provide information about these safeguards on request to kontakt@genequest.org."
+          }
+        ]
+      },
+      {
+        "id": "storage",
+        "heading": "VII. Cookies and browser storage",
+        "blocks": [
+          {
+            "p": "The Site uses no analytics or advertising cookies. Your browser stores:"
+          },
+          {
+            "ul": [
+              "your chosen language (`gg.locale`);",
+              "a random session identifier, if you commission research (`gg-anon-session`);",
+              "a random subscription identifier for a disease, to show its status (`gg-sub-ref-…`) — not your email;",
+              "view settings (`gg-tweaks`) and doctors you added on this device only (`gg-extra-recs`) — never sent to us;",
+              "if you were invited as a clinician — the invitation token during sign-in (`gg.pendingInviteToken`, until the tab is closed);",
+              "after sign-in — the session data the Auth0 library keeps (tokens and basic profile data) and the cookies `auth0.….is.authenticated` and `_legacy_auth0.….is.authenticated` (valid 1 day);",
+              "for the Site's administrators — the chosen preview mode (`gg-view-as`)."
+            ]
+          },
+          {
+            "p": "You can clear them in your browser settings; signing out removes the sign-in session data. Visit statistics (section II.7) use no cookies and no browser storage."
+          }
+        ]
+      },
+      {
+        "id": "subscriptions",
+        "heading": "VIII. Disease alert subscriptions",
+        "blocks": [
+          {
+            "p": "If you subscribe to alerts about a disease, we store: your email, the disease, the kinds of alerts you chose, a radius in km, the dates of subscribing and confirming, and a hash of a random identifier from your browser. Legal basis: consent (Art. 6(1)(a) GDPR), confirmed by a link in an email. We write only when that disease's guideline summary changes. Every email has an unsubscribe link; when you unsubscribe we delete your address at once. Separately, only if you tick that box (unticked by default), you can agree to be contacted about testing GeneGuidelines and about the families' community — you withdraw it by unsubscribing or by writing to kontakt@genequest.org."
+          }
+        ]
+      },
+      {
+        "id": "rights",
+        "heading": "IX. Your rights",
+        "blocks": [
+          {
+            "p": "You have the right to access, rectify and erase your data, to restrict processing, to data portability, and to object to processing based on legitimate interest. Where processing is based on consent, you can withdraw it at any time without affecting earlier processing. Requests: kontakt@genequest.org — we reply within a month. You can also lodge a complaint with the Polish supervisory authority, the President of the Personal Data Protection Office (Prezes UODO, ul. Stawki 2, 00-193 Warsaw)."
+          }
+        ]
+      },
+      {
+        "id": "changes",
+        "heading": "X. Automated decisions and changes",
+        "blocks": [
+          {
+            "p": "We make no decisions about anyone based solely on automated processing that produce legal effects. The ranking in the clinician directory comes from publication data and only orders the list. We announce changes to this policy by publishing a new dated version."
+          }
+        ]
+      }
+    ]
+  }
+}

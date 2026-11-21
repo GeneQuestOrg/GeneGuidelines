@@ -106,6 +106,7 @@
   "privacyRequest": {
     "summary": "To Pan/Pani? Poproś o poprawienie lub usunięcie wpisu",
     "intro": "Ten wpis powstał na podstawie publikacji i publicznych rejestrów. Możesz poprosić o jego poprawienie albo usunięcie — wtedy nie pojawi się też przy kolejnych aktualizacjach katalogu. Odpowiadamy w ciągu miesiąca, zwykle dużo szybciej. Możesz też napisać na kontakt@genequest.org.",
+    "policyLink": "Jakie dane lekarzy przetwarzamy i dlaczego: polityka prywatności, sekcja V",
     "kindLegend": "Czego dotyczy prośba?",
     "kindRemoval": "Usunięcie wpisu",
     "kindCorrection": "Poprawienie wpisu",

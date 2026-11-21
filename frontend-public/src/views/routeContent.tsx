@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import type { TFunction } from "i18next";
 import type { AudienceView, Route, UserLocation } from "../router/types";
+import type { Locale } from "../router/locale";
 import type { ViewRole } from "../auth/resolveRole";
 import { HomeView } from "./HomeView";
 import { DiseaseView } from "./DiseaseView";
@@ -9,6 +10,7 @@ import { FdTestsView } from "./FdTestsView";
 import { DiseaseIndexView } from "./DiseaseIndexView";
 import { PlaceholderView } from "./PlaceholderView";
 import { AboutView } from "./AboutView";
+import { PrivacyView } from "./PrivacyView";
 import { BibliographyView } from "./BibliographyView";
 import { GuidelinesView } from "./GuidelinesView";
 import { FlowchartView } from "./FlowchartView";
@@ -31,6 +33,8 @@ export interface RouteContentProps {
   search: string;
   onNav: (path: string) => void;
   onSignIn: () => void;
+  /** Switch language on the current page (the router's `setLocale`). */
+  onSetLocale: (locale: Locale) => void;
   /**
    * `routeContent` is called as a plain function from `AppShell`'s render body, not
    * mounted as JSX — it must not call hooks itself (that would make a hook call
@@ -49,6 +53,7 @@ export function routeContent({
   search,
   onNav,
   onSignIn,
+  onSetLocale,
   t,
 }: RouteContentProps): ReactNode {
   switch (route.name) {
@@ -90,6 +95,8 @@ export function routeContent({
       return <JoinView token={route.token} onNav={onNav} />;
     case "about":
       return <AboutView view={view} onNav={onNav} />;
+    case "privacy":
+      return <PrivacyView onSetLocale={onSetLocale} />;
     case "doctors":
       return (
         <DoctorsView

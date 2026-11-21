@@ -1,0 +1,10 @@
+/* Links are unstyled site-wide (tokens.css), so the one in this helper line needs its own underline to read as a link. */
+.ai-input-notice a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.ai-input-notice a:hover {
+  color: var(--ink-2);
+}

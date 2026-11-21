@@ -1742,3 +1742,13 @@
 .dprofile__privacy-error {
   color: var(--color-danger, #b42318);
 }
+/* Links are unstyled site-wide, so the policy link under the intro needs its own underline. */
+.dprofile__privacy-policy {
+  margin: 0;
+  font-size: 0.85rem;
+}
+.dprofile__privacy-policy a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}

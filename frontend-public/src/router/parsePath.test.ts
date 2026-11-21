@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { splitLocale } from "./locale";
 import { parsePath } from "./parsePath";
 
 describe("parsePath", () => {
@@ -70,6 +71,14 @@ describe("parsePath", () => {
     expect(parsePath("/doctor/jane-doe", "")).toEqual({ name: "doctor", slug: "jane-doe" });
     expect(parsePath("/account", "")).toEqual({ name: "account" });
     expect(parsePath("/about", "")).toEqual({ name: "about" });
+  });
+
+  it("parses the privacy policy in both languages", () => {
+    expect(parsePath("/privacy", "")).toEqual({ name: "privacy" });
+    // The Polish page is the same route behind the /pl prefix, which the router strips first.
+    const pl = splitLocale("/pl/privacy");
+    expect(pl.locale).toBe("pl");
+    expect(parsePath(pl.pathname, "")).toEqual({ name: "privacy" });
   });
 
   it("parses doctor invite landing", () => {

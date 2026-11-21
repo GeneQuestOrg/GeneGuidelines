@@ -15,6 +15,7 @@ export type Route =
   | { name: "doctor"; slug: string }
   | { name: "startResearch"; diseaseSlug?: string }
   | { name: "about" }
+  | { name: "privacy" }
   | { name: "account" }
   | { name: "join"; token: string }
   | {

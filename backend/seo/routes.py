@@ -1,6 +1,6 @@
 """Which public paths are server-rendered, and the sitemap that lists them.
 
-`render_for_path` is called by the SPA catch-all (backend/main.py) only after a real file and a build-time prerendered page have both missed, so the static home, about and FD pages keep winning. It answers ``None`` — "serve the plain shell" — for any path it does not know and for any failure: a database problem must cost a crawler the readable copy, never cost a family the page.
+`render_for_path` is called by the SPA catch-all (backend/main.py) only after a real file and a build-time prerendered page have both missed, so the static home, about, privacy and FD pages keep winning. It answers ``None`` — "serve the plain shell" — for any path it does not know and for any failure: a database problem must cost a crawler the readable copy, never cost a family the page.
 """
 
 from __future__ import annotations
@@ -94,7 +94,16 @@ def render_for_path(full_path: str, query: Mapping[str, str], static_dir: Path) 
 
 
 # Listed whatever the database says: built at build time, or an index page that always renders. A guideline page is not here — it is listed only when its synthesis is published (FD's included).
-STATIC_PATHS = ("/", "/about", "/diseases", "/doctors", "/diseases/fd", "/diseases/fd/map", "/diseases/fd/tests")
+STATIC_PATHS = (
+    "/",
+    "/about",
+    "/privacy",
+    "/diseases",
+    "/doctors",
+    "/diseases/fd",
+    "/diseases/fd/map",
+    "/diseases/fd/tests",
+)
 
 
 def sitemap_paths(data: SeoData) -> list[str]:

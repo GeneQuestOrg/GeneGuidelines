@@ -1,0 +1,156 @@
+{
+  "ui": {
+    "tocHeading": "Spis treści",
+    "otherLanguage": "English translation"
+  },
+  "policy": {
+    "title": "Polityka prywatności serwisu GeneGuidelines",
+    "version": "Wersja: {{date}}. Polityka jest zgodna z Rozporządzeniem Parlamentu Europejskiego i Rady (UE) 2016/679 z dnia 27 kwietnia 2016 r. (RODO).",
+    "sections": [
+      {
+        "id": "controller",
+        "heading": "I. Kto jest administratorem",
+        "blocks": [
+          {
+            "p": "Administratorem danych osobowych przetwarzanych w serwisie geneguidelines.genequest.org (dalej „Serwis”) jest Fundacja GeneQuest – Laboratoria i Terapie Chorób Genetycznych, KRS 0001211461, ul. Bolesława Krzywoustego 1/7, 65-039 Zielona Góra (dalej „Fundacja”). Kontakt we wszystkich sprawach dotyczących danych osobowych: kontakt@genequest.org. Fundacja nie wyznaczyła inspektora ochrony danych."
+          },
+          {
+            "p": "Serwis to narzędzie informacyjne o chorobach rzadkich: streszczenia oficjalnych wytycznych i literatury przygotowane przez AI, katalog lekarzy, badania kliniczne i fundacje. Serwis nie służy do diagnozowania ani leczenia, a jego treści są materiałem do omówienia z lekarzem."
+          },
+          {
+            "p": "**Nie przetwarzamy w Serwisie danych o Twoim zdrowiu.** Nie prosimy o dokumentację medyczną i jej nie zapisujemy. W pola wyszukiwania nie wpisuj danych pozwalających zidentyfikować Ciebie lub inną osobę ani opisu stanu zdrowia konkretnej osoby — Serwis potrzebuje tylko nazwy choroby albo ogólnego opisu objawów. Tekstu z poszerzonego wyszukiwania nie zapisujemy: trafia do dostawcy modeli AI (sekcja VI) wyłącznie po to, żeby rozpoznać chorobę, a dostawca nie używa go do trenowania modeli. Jeśli mimo to wpiszesz w nim informacje o zdrowiu, nie przechowujemy ich i nie łączymy z Tobą."
+          }
+        ]
+      },
+      {
+        "id": "visitors",
+        "heading": "II. Osoby odwiedzające Serwis",
+        "blocks": [
+          {
+            "ol": [
+              "**Dane techniczne.** Przy każdym wejściu serwer odnotowuje zapytanie (adres strony, czas, informacje o przeglądarce). Adres IP używamy w pamięci serwera wyłącznie do ograniczania liczby zapytań (ochrona przed nadużyciami); nie zapisujemy go w bazie danych. Podstawa: prawnie uzasadniony interes Fundacji w zapewnieniu bezpieczeństwa i działania Serwisu (art. 6 ust. 1 lit. f RODO). Dziennik serwera nie zapisuje parametrów z adresów stron (np. wpisanej miejscowości) i przechowujemy go do 30 dni.",
+              "**Wyszukiwanie chorób.** Tekst wpisany w wyszukiwarkę nie jest zapisywany. Gdy korzystasz z poszerzonego wyszukiwania („pomóż znaleźć chorobę”), tekst jest przekazywany do dostawcy modeli AI (sekcja VI), żeby rozpoznać nazwę choroby.",
+              "**Zlecenie researchu nowej choroby.** Zapisujemy nazwę choroby i jej inne nazwy oraz losowy identyfikator sesji wygenerowany w Twojej przeglądarce (nie wiąże się z Twoją tożsamością; służy do sprawiedliwej kolejki zleceń). Nazwa choroby jest przekazywana do publicznych baz (PubMed, ClinicalTrials.gov, Europe PMC) i do dostawcy modeli AI. Podstawa: art. 6 ust. 1 lit. f RODO. Identyfikator sesji usuwamy po 12 miesiącach; sama choroba i wyniki researchu są treścią Serwisu.",
+              "**Lokalizacja.** Jeśli wpiszesz miejscowość, żeby posortować lekarzy lub badania według odległości, przekazujemy ten tekst do usługi geokodowania LocationIQ (serwer w UE) — bez Twojego adresu IP. Jeśli użyjesz przycisku „moja lokalizacja”, współrzędne wylicza Twoja przeglądarka i dopisuje je do adresu strony; nie zapisujemy ich w bazie.",
+              "**Mapy** ładowane są z serwerów OpenStreetMap Foundation, które otrzymują Twój adres IP i oglądany obszar mapy. Czcionki ładujemy z własnego serwera, więc Google nie dostaje Twojego adresu IP.",
+              "**Zgłoszenie uwagi** (formularz „Prześlij opinię” i oceny akapitów): treść, opcjonalnie Twój e-mail i adres strony, której dotyczy, wysyłamy mailem na skrzynkę Fundacji przez usługę Resend; nie zapisujemy tego w bazie. Podstawa: art. 6 ust. 1 lit. f RODO (odpowiedź i poprawa treści). Okres: jak korespondencja e-mail Fundacji.",
+              "**Statystyki odwiedzin.** Liczymy odwiedziny narzędziem Umami działającym na naszym serwerze w Azure (region Polska Centralna), bez cookies i bez zapisywania adresu IP (służy tylko do ustalenia kraju w chwili wejścia). Widzimy liczbę wejść, oglądane strony, stronę, z której ktoś przyszedł, kraj, rodzaj urządzenia i przeglądarki oraz kilka zdarzeń (np. wydruk listy badań, udostępnienie linku). Podstawa: prawnie uzasadniony interes Fundacji w sprawdzaniu, czy Serwis jest komuś przydatny (art. 6 ust. 1 lit. f RODO). Okres: szczegółowe dane o wizytach przechowujemy 24 miesiące."
+            ]
+          }
+        ]
+      },
+      {
+        "id": "account",
+        "heading": "III. Konto użytkownika",
+        "blocks": [
+          {
+            "ol": [
+              "Logowanie obsługuje Auth0 (Okta), w regionie UE. Przy logowaniu otrzymujemy identyfikator konta, adres e-mail i informację, czy e-mail jest potwierdzony. W naszej bazie zapisujemy: identyfikator konta, e-mail, rolę w Serwisie (rodzic, lekarz, badacz), status weryfikacji, opcjonalnie identyfikator ORCID (jeśli połączysz konto z ORCID) oraz daty utworzenia konta i ostatniej aktywności.",
+              "Cel: prowadzenie konta i udostępnienie funkcji wymagających zalogowania (polecanie lekarzy, oceny sugestii przez zweryfikowanych lekarzy). Podstawa: art. 6 ust. 1 lit. b RODO (świadczenie usługi drogą elektroniczną).",
+              "Z kontem powiązane są Twoje działania w Serwisie: polecenia lekarzy, oceny sugestii AI (publicznie widać tylko liczby zbiorcze), zaproszenia.",
+              "Okres: do usunięcia konta. Usunięcie konta: napisz na kontakt@genequest.org — usuniemy konto w ciągu miesiąca. Konta nieaktywne przez 24 miesiące usuwamy po wcześniejszym powiadomieniu e-mailem."
+            ]
+          }
+        ]
+      },
+      {
+        "id": "recommendations",
+        "heading": "IV. Polecenia lekarzy przez rodziców",
+        "blocks": [
+          {
+            "p": "Zalogowany rodzic może polecić lekarza: zapisujemy dane lekarza (imię i nazwisko, specjalizacja, placówka, miasto, kraj), chorobę i komentarz. Po akceptacji przez Fundację publicznie widać dane lekarza oraz komentarz, relację i region polecającego — nigdy jego tożsamość. Pola „co pomogło” i „jak znalazłeś lekarza” nie są publiczne. Podstawa: art. 6 ust. 1 lit. f RODO (informowanie rodzin o lekarzach znających chorobę)."
+          }
+        ]
+      },
+      {
+        "id": "clinicians",
+        "heading": "V. Lekarze w katalogu (informacja z art. 14 RODO)",
+        "blocks": [
+          {
+            "p": "Ta sekcja jest informacją dla lekarzy i badaczy, których dane pokazujemy w katalogu, a którzy nie przekazali ich nam sami."
+          },
+          {
+            "ol": [
+              "**Cel:** pomóc pacjentom i rodzinom znaleźć lekarzy z udokumentowanym doświadczeniem w danej chorobie rzadkiej. Podstawa: prawnie uzasadniony interes Fundacji i osób szukających pomocy (art. 6 ust. 1 lit. f RODO); dane dotyczą wyłącznie działalności zawodowej.",
+              "**Kategorie danych:** imię i nazwisko, afiliacja i miejsce pracy (miasto, kraj, współrzędne miasta), rola w publikacjach i wynikający z niej poziom udokumentowanego doświadczenia, do pięciu kluczowych publikacji, identyfikator ORCID (jeśli podany w publikacjach; jest częścią adresu profilu), specjalizacja kliniczna; dla lekarzy z USA — dane praktyki z rejestru NPPES nazwa placówki, miasto i stan, bez adresu ulicy. Nie przetwarzamy adresów e-mail lekarzy.",
+              "**Źródła:** publicznie dostępne bazy: PubMed / NCBI (autorzy i afiliacje publikacji), rejestr NPPES (USA), ClinicalTrials.gov, Research Organization Registry (ROR), OpenStreetMap / Nominatim, a także polecenia rodziców (sekcja IV).",
+              "**Odbiorcy:** dane są publiczne w Serwisie. Przy ustalaniu lokalizacji i specjalizacji przekazujemy nazwiska, afiliacje lub nazwy instytucji usługom wymienionym w sekcji VI (geokodowanie, wyszukiwarka Brave — bez nazwisk, modele AI) oraz zapytania do rejestrów NPPES i ClinicalTrials.gov.",
+              "**Okres:** dopóki prowadzimy katalog dla danej choroby albo do skutecznego sprzeciwu.",
+              "**Prawo sprzeciwu i usunięcia:** każdy lekarz może zażądać poprawienia lub usunięcia wpisu albo wnieść sprzeciw (art. 21 RODO), pisząc na kontakt@genequest.org albo formularzem „Poproś o poprawienie lub usunięcie wpisu” na stronie swojego profilu. Formularz nie zapisuje niczego w bazie — wysyła wniosek mailem do Fundacji. Wpis usuwamy i blokujemy jego ponowne dodanie przy kolejnych aktualizacjach katalogu."
+            ]
+          }
+        ]
+      },
+      {
+        "id": "recipients",
+        "heading": "VI. Komu przekazujemy dane (odbiorcy i podmioty przetwarzające)",
+        "blocks": [
+          {
+            "ul": [
+              "**Microsoft Azure** — hosting Serwisu i bazy danych, region Polska Centralna (UE).",
+              "**Auth0 (Okta)** — logowanie; dane przechowywane w regionie UE.",
+              "**Anthropic** (USA) — modele AI Claude: przetwarzają tekst wpisany w poszerzone wyszukiwanie, nazwę zleconej choroby, treść publikacji naukowych (w tym nazwiska autorów) oraz afiliacje lekarzy. Dostawca nie używa tych danych do trenowania modeli.",
+              "**Resend** (USA) — wysyłka e-maili (potwierdzenia i powiadomienia subskrypcji, zgłoszenia uwag, wnioski lekarzy).",
+              "**LocationIQ (Unwired Labs)** — geokodowanie wpisanej miejscowości, punkt końcowy w UE.",
+              "**Brave Search** (USA) — wyszukiwanie lokalizacji instytucji; otrzymuje wyłącznie nazwy instytucji, bez danych osobowych.",
+              "**OpenStreetMap Foundation** — kafelki map (Wielka Brytania; decyzja Komisji o odpowiednim stopniu ochrony)."
+            ]
+          },
+          {
+            "p": "Dane osobowe trafiają poza Europejski Obszar Gospodarczy do Anthropic i Resend (USA), a w razie dostępu podwykonawców — także w przypadku Auth0. Podstawą są standardowe klauzule umowne zatwierdzone przez Komisję Europejską, zawarte w umowach powierzenia z tymi dostawcami, a w przypadku Resend także certyfikacja w EU–US Data Privacy Framework. Informację o tych zabezpieczeniach przekażemy na prośbę wysłaną na kontakt@genequest.org."
+          }
+        ]
+      },
+      {
+        "id": "storage",
+        "heading": "VII. Pliki cookies i pamięć przeglądarki",
+        "blocks": [
+          {
+            "p": "Serwis nie używa cookies analitycznych ani reklamowych. W pamięci Twojej przeglądarki zapisujemy:"
+          },
+          {
+            "ul": [
+              "wybrany język (`gg.locale`);",
+              "losowy identyfikator sesji, jeśli zlecisz research (`gg-anon-session`);",
+              "losowy identyfikator subskrypcji danej choroby, żeby pokazać jej status (`gg-sub-ref-…`) — nie Twój e-mail;",
+              "ustawienia widoku (`gg-tweaks`) i lekarzy dopisanych przez Ciebie tylko na tym urządzeniu (`gg-extra-recs`) — nie wysyłamy ich do nas;",
+              "jeśli zaproszono Cię jako lekarza — token zaproszenia na czas logowania (`gg.pendingInviteToken`, do zamknięcia karty);",
+              "po zalogowaniu — dane sesji logowania zapisane przez bibliotekę Auth0 (tokeny i podstawowe dane profilu) oraz cookies `auth0.….is.authenticated` i `_legacy_auth0.….is.authenticated` (ważne 1 dzień);",
+              "u administratorów Serwisu — wybrany tryb podglądu (`gg-view-as`)."
+            ]
+          },
+          {
+            "p": "Możesz je usunąć w ustawieniach przeglądarki; wylogowanie usuwa dane sesji logowania. Statystyki odwiedzin (sekcja II.7) nie używają cookies ani pamięci przeglądarki."
+          }
+        ]
+      },
+      {
+        "id": "subscriptions",
+        "heading": "VIII. Subskrypcje powiadomień o chorobie",
+        "blocks": [
+          {
+            "p": "Jeśli zapiszesz się na powiadomienia o chorobie, zapisujemy: e-mail, chorobę, wybrane rodzaje powiadomień, promień w km, daty zapisu i potwierdzenia oraz skrót (hash) losowego identyfikatora z Twojej przeglądarki. Podstawa: zgoda (art. 6 ust. 1 lit. a RODO), potwierdzana linkiem w mailu. Piszemy tylko wtedy, gdy zmieni się streszczenie wytycznych tej choroby. Każdy mail ma link do wypisania; po wypisaniu od razu usuwamy Twój adres. Osobno, tylko jeśli zaznaczysz to pole (domyślnie niezaznaczone), możesz zgodzić się na kontakt w sprawie testowania GeneGuidelines i społeczności rodzin — tę zgodę wycofujesz wypisaniem albo mailem na kontakt@genequest.org."
+          }
+        ]
+      },
+      {
+        "id": "rights",
+        "heading": "IX. Twoje prawa",
+        "blocks": [
+          {
+            "p": "Masz prawo dostępu do swoich danych, ich sprostowania, usunięcia, ograniczenia przetwarzania, przenoszenia oraz prawo sprzeciwu wobec przetwarzania opartego na prawnie uzasadnionym interesie. Jeśli przetwarzanie opiera się na zgodzie, możesz ją wycofać w dowolnym momencie, bez wpływu na zgodność z prawem wcześniejszego przetwarzania. Wnioski: kontakt@genequest.org — odpowiadamy w ciągu miesiąca. Masz też prawo wnieść skargę do Prezesa Urzędu Ochrony Danych Osobowych (ul. Stawki 2, 00-193 Warszawa)."
+          }
+        ]
+      },
+      {
+        "id": "changes",
+        "heading": "X. Zautomatyzowane decyzje i zmiany polityki",
+        "blocks": [
+          {
+            "p": "Nie podejmujemy wobec nikogo decyzji opartych wyłącznie na zautomatyzowanym przetwarzaniu, które wywoływałyby skutki prawne. Ranking lekarzy w katalogu wynika z danych o publikacjach i służy wyłącznie porządkowaniu listy. O zmianach tej polityki informujemy, publikując nową wersję z datą."
+          }
+        ]
+      }
+    ]
+  }
+}

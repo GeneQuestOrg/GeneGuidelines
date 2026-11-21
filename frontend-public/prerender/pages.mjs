@@ -1,5 +1,5 @@
 /**
- * What a crawler, a link unfurler and a language model see when they fetch the home page, the about page or an FD page.
+ * What a crawler, a link unfurler and a language model see when they fetch the home page, the about page, the privacy policy or an FD page.
  *
  * Measured 2026-11-15: `https://geneguidelines.genequest.org/pl/diseases/fd`
  * returned 68 characters — the title and nothing else. The content is assembled
@@ -13,10 +13,17 @@
  * read. Anything that only exists in the database (the AI synthesis, the doctor
  * list, the trial list) is named and linked, never invented here.
  *
- * The disease pages are FD only, on purpose: the quotations are about fibrous dysplasia. The home and about pages are built from their own catalogues, which say nothing disease-specific.
+ * The disease pages are FD only, on purpose: the quotations are about fibrous dysplasia. The home, about and privacy pages are built from their own catalogues, which say nothing disease-specific.
  */
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+import {
+  PRIVACY_POLICY_VERSION,
+  VERSION_PLACEHOLDER,
+  formatPolicyVersion,
+  inlineTokens,
+  privacyPolicyHref,
+} from "../src/content/privacyPolicy.mjs";
 
 const read = (relative) =>
   readFileSync(fileURLToPath(new URL(relative, import.meta.url)), "utf8");
@@ -45,6 +52,7 @@ function catalogues(locale) {
     common: loadJson(`../src/locales/${locale}/common.json`),
     home: loadJson(`../src/locales/${locale}/home.json`),
     about: loadJson(`../src/locales/${locale}/about.json`),
+    privacy: loadJson(`../src/locales/${locale}/privacy.json`),
   };
 }
 
@@ -150,6 +158,50 @@ function aboutBody(locale, { seo, about, common }) {
   ].join("\n");
 }
 
+/** One string of the policy as HTML: bold leads, storage key names as code, email addresses as mailto links — the same tokens the React view renders (src/content/privacyPolicy.mjs). */
+function policyInline(text) {
+  return inlineTokens(text)
+    .map((token) => {
+      if (token.kind === "bold") return `<b>${esc(token.value)}</b>`;
+      if (token.kind === "code") return `<code>${esc(token.value)}</code>`;
+      if (token.kind === "email")
+        return `<a href="mailto:${esc(token.value)}">${esc(token.value)}</a>`;
+      return esc(token.value);
+    })
+    .join("");
+}
+
+function policyBlock(block) {
+  if (block.p !== undefined) return `<p>${policyInline(block.p)}</p>`;
+  const tag = block.ol !== undefined ? "ol" : "ul";
+  const items = (block.ol ?? block.ul).map((item) => `<li>${policyInline(item)}</li>`).join("\n");
+  return `<${tag}>${items}</${tag}>`;
+}
+
+/**
+ * /privacy and /pl/privacy — the whole policy, verbatim from the catalogue the app reads (Polish binding, English a translation), with the publication date filled in from its one constant. Every section keeps its id, so a link to #clinicians lands on the right heading without JavaScript too.
+ */
+function privacyBody(locale, { privacy }) {
+  const { ui, policy } = privacy;
+  const other = locale === "pl" ? "en" : "pl";
+  const [before, after = ""] = policy.version.split(VERSION_PLACEHOLDER);
+  const version = `${policyInline(before)}<time datetime="${PRIVACY_POLICY_VERSION}">${esc(formatPolicyVersion(locale))}</time>${policyInline(after)}`;
+  const sections = policy.sections.map((section) =>
+    [
+      `<section id="${esc(section.id)}">`,
+      `<h2>${esc(section.heading)}</h2>`,
+      ...section.blocks.map(policyBlock),
+      `</section>`,
+    ].join("\n"),
+  );
+  return [
+    `<h1>${esc(policy.title)}</h1>`,
+    `<p>${version}</p>`,
+    `<p class="ggp-note"><a href="${esc(privacyPolicyHref(other))}" hreflang="${other}" lang="${other}">${esc(ui.otherLanguage)}</a></p>`,
+    ...sections,
+  ].join("\n");
+}
+
 /** /diseases/fd — the hub. Facts and signposts; the live data is named, not faked. */
 function fdBody(locale, { seo, map, common }) {
   return [
@@ -234,6 +286,7 @@ function fdTestsBody(locale, { seo, tests, common }) {
 const PAGES = [
   { path: "/", key: "home", body: homeBody, kind: "site" },
   { path: "/about", key: "about", body: aboutBody, kind: "site" },
+  { path: "/privacy", key: "privacy", body: privacyBody, kind: "site" },
   { path: "/diseases/fd", key: "fd", body: fdBody },
   { path: "/diseases/fd/map", key: "fdMap", body: fdMapBody },
   { path: "/diseases/fd/tests", key: "fdTests", body: fdTestsBody },
@@ -254,7 +307,7 @@ function jsonLd(locale, page, seo, url) {
       url: "https://genequest.org/",
     },
   };
-  // The home and about pages are about the site, not about a disease: no MedicalCondition, no guideline citation.
+  // The home, about and privacy pages are about the site, not about a disease: no MedicalCondition, no guideline citation.
   if (page.kind === "site") {
     return base;
   }

@@ -18,6 +18,10 @@
     "title": "Why we built this",
     "description": "Why a rare disease outruns any one doctor, what GeneGuidelines does about it, what it is not, and its limits — written by the parents of a child with fibrous dysplasia."
   },
+  "privacy": {
+    "title": "Privacy policy",
+    "description": "How GeneGuidelines, run by the GeneQuest Foundation, processes personal data: what we collect and why, how long we keep it, who receives it, and your rights under the GDPR."
+  },
   "fd": {
     "title": "Fibrous dysplasia (FD/MAS)",
     "description": "Fibrous dysplasia and McCune-Albright syndrome: the official FD/MAS guideline, doctors with documented experience, clinical trials and foundations — gathered by the GeneQuest Foundation."

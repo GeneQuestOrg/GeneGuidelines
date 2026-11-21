@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@gene-guidelines/ui";
+import { privacyPolicyHref } from "../content/privacyPolicy.mjs";
 import {
   submitDoctorRequest,
   type DoctorRequestKind,
@@ -17,7 +18,8 @@ export interface DoctorPrivacyRequestProps {
  * The request is emailed to the foundation and nothing is stored. A removal is then applied by listing the profile in backend/doctor_removals.json, which also keeps it out of later directory updates.
  */
 export function DoctorPrivacyRequest({ slug }: DoctorPrivacyRequestProps) {
-  const { t } = useTranslation("doctor-profile");
+  const { t, i18n } = useTranslation("doctor-profile");
+  const locale = (i18n.resolvedLanguage ?? i18n.language) === "pl" ? "pl" : "en";
   const [kind, setKind] = useState<DoctorRequestKind>("removal");
   const [relation, setRelation] = useState<DoctorRequestRelation>("self");
   const [email, setEmail] = useState("");
@@ -59,6 +61,11 @@ export function DoctorPrivacyRequest({ slug }: DoctorPrivacyRequestProps) {
       ) : (
         <form className="dprofile__privacy-form" onSubmit={(e) => void submit(e)}>
           <p>{t("privacyRequest.intro")}</p>
+          <p className="dprofile__privacy-policy">
+            <a href={privacyPolicyHref(locale, "clinicians")} target="_blank" rel="noopener">
+              {t("privacyRequest.policyLink")}
+            </a>
+          </p>
           <fieldset>
             <legend>{t("privacyRequest.kindLegend")}</legend>
             <label>

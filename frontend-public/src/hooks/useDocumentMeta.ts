@@ -8,11 +8,14 @@ const ORIGIN = "https://geneguidelines.genequest.org";
 /**
  * Which `seo.json` entry describes a route.
  *
- * Only the pages prerendered at build time (frontend-public/prerender): the about page and the four FD pages. This keeps what the browser shows after an in-app navigation identical to what the server already served. The home page and every other route keep the site-level title rather than inheriting a stale one.
+ * Only the pages prerendered at build time (frontend-public/prerender): the about and privacy pages and the four FD pages. This keeps what the browser shows after an in-app navigation identical to what the server already served. The home page and every other route keep the site-level title rather than inheriting a stale one.
  */
 function seoKeyFor(route: Route): string | null {
   if (route.name === "about") {
     return "about";
+  }
+  if (route.name === "privacy") {
+    return "privacy";
   }
   if (route.name === "disease" && route.slug === "fd") {
     return "fd";
@@ -42,6 +45,8 @@ function pathFor(route: Route): string {
       return `/diseases/${route.slug}/guidelines`;
     case "about":
       return "/about";
+    case "privacy":
+      return "/privacy";
     default:
       return "/";
   }

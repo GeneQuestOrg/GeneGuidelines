@@ -108,6 +108,10 @@ export function parsePath(pathname: string, search: string): Route {
     return { name: "about" };
   }
 
+  if (parts[0] === "privacy") {
+    return { name: "privacy" };
+  }
+
   if (parts[0] === "account") {
     return { name: "account" };
   }

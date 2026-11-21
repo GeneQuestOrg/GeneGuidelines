@@ -92,6 +92,7 @@ function AppShell() {
         search,
         onNav: navigate,
         onSignIn: () => setAuthOpen(true),
+        onSetLocale: setLocale,
         t,
       })
     );
