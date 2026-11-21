@@ -33,7 +33,7 @@
               "**Zlecenie researchu nowej choroby.** Zapisujemy nazwę choroby i jej inne nazwy oraz losowy identyfikator sesji wygenerowany w Twojej przeglądarce (nie wiąże się z Twoją tożsamością; służy do sprawiedliwej kolejki zleceń). Nazwa choroby jest przekazywana do publicznych baz (PubMed, ClinicalTrials.gov, Europe PMC) i do dostawcy modeli AI. Podstawa: art. 6 ust. 1 lit. f RODO. Identyfikator sesji usuwamy po 12 miesiącach; sama choroba i wyniki researchu są treścią Serwisu.",
               "**Lokalizacja.** Jeśli wpiszesz miejscowość, żeby posortować lekarzy lub badania według odległości, przekazujemy ten tekst do usługi geokodowania LocationIQ (serwer w UE) — bez Twojego adresu IP. Jeśli użyjesz przycisku „moja lokalizacja”, współrzędne wylicza Twoja przeglądarka i dopisuje je do adresu strony; nie zapisujemy ich w bazie.",
               "**Mapy** ładowane są z serwerów OpenStreetMap Foundation, które otrzymują Twój adres IP i oglądany obszar mapy. Czcionki ładujemy z własnego serwera, więc Google nie dostaje Twojego adresu IP.",
-              "**Zgłoszenie uwagi** (formularz „Feedback” i oceny akapitów): treść, opcjonalnie Twój e-mail i adres strony, której dotyczy, wysyłamy mailem na skrzynkę Fundacji przez usługę Resend; nie zapisujemy tego w bazie. Podstawa: art. 6 ust. 1 lit. f RODO (odpowiedź i poprawa treści). Okres: jak korespondencja e-mail Fundacji.",
+              "**Zgłoszenie uwagi** (formularz „Prześlij opinię” i oceny akapitów): treść, opcjonalnie Twój e-mail i adres strony, której dotyczy, wysyłamy mailem na skrzynkę Fundacji przez usługę Resend; nie zapisujemy tego w bazie. Podstawa: art. 6 ust. 1 lit. f RODO (odpowiedź i poprawa treści). Okres: jak korespondencja e-mail Fundacji.",
               "**Statystyki odwiedzin.** Liczymy odwiedziny narzędziem Umami działającym na naszym serwerze w Azure (region Polska Centralna), bez cookies i bez zapisywania adresu IP (służy tylko do ustalenia kraju w chwili wejścia). Widzimy liczbę wejść, oglądane strony, stronę, z której ktoś przyszedł, kraj, rodzaj urządzenia i przeglądarki oraz kilka zdarzeń (np. wydruk listy badań, udostępnienie linku). Podstawa: prawnie uzasadniony interes Fundacji w sprawdzaniu, czy Serwis jest komuś przydatny (art. 6 ust. 1 lit. f RODO). Okres: szczegółowe dane o wizytach przechowujemy 24 miesiące."
             ]
           }
@@ -114,7 +114,9 @@
               "losowy identyfikator sesji, jeśli zlecisz research (`gg-anon-session`);",
               "losowy identyfikator subskrypcji danej choroby, żeby pokazać jej status (`gg-sub-ref-…`) — nie Twój e-mail;",
               "ustawienia widoku (`gg-tweaks`) i lekarzy dopisanych przez Ciebie tylko na tym urządzeniu (`gg-extra-recs`) — nie wysyłamy ich do nas;",
-              "po zalogowaniu — dane sesji logowania zapisane przez bibliotekę Auth0 (tokeny i podstawowe dane profilu) oraz cookie `auth0.….is.authenticated` (ważne 1 dzień)."
+              "jeśli zaproszono Cię jako lekarza — token zaproszenia na czas logowania (`gg.pendingInviteToken`, do zamknięcia karty);",
+              "po zalogowaniu — dane sesji logowania zapisane przez bibliotekę Auth0 (tokeny i podstawowe dane profilu) oraz cookies `auth0.….is.authenticated` i `_legacy_auth0.….is.authenticated` (ważne 1 dzień);",
+              "u administratorów Serwisu — wybrany tryb podglądu (`gg-view-as`)."
             ]
           },
           {

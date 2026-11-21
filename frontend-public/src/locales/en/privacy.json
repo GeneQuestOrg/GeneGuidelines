@@ -76,7 +76,7 @@
               "**Sources:** publicly available databases: PubMed / NCBI (publication authors and affiliations), the NPPES registry (USA), ClinicalTrials.gov, the Research Organization Registry (ROR), OpenStreetMap / Nominatim, and recommendations by parents (section IV).",
               "**Recipients:** the data are public on the Site. To determine location and specialty we send names, affiliations or institution names to the services listed in section VI (geocoding, Brave search — no names, AI models) and queries to the NPPES and ClinicalTrials.gov registries.",
               "**Retention:** as long as we maintain the directory for the disease, or until a successful objection.",
-              "**Objection and erasure:** any clinician can ask for an entry to be corrected or removed, or object (Art. 21 GDPR), by writing to kontakt@genequest.org or with the \"Ask for this entry to be corrected or removed\" form on their profile page. The form stores nothing in our database; it emails the request to the Foundation. We remove the entry and block it from being added again in later directory updates."
+              "**Objection and erasure:** any clinician can ask for an entry to be corrected or removed, or object (Art. 21 GDPR), by writing to kontakt@genequest.org or with the \"Is this you? Ask us to correct or remove this entry\" form on their profile page. The form stores nothing in our database; it emails the request to the Foundation. We remove the entry and block it from being added again in later directory updates."
             ]
           }
         ]
@@ -114,7 +114,9 @@
               "a random session identifier, if you commission research (`gg-anon-session`);",
               "a random subscription identifier for a disease, to show its status (`gg-sub-ref-…`) — not your email;",
               "view settings (`gg-tweaks`) and doctors you added on this device only (`gg-extra-recs`) — never sent to us;",
-              "after sign-in — the session data the Auth0 library keeps (tokens and basic profile data) and the cookie `auth0.….is.authenticated` (valid 1 day)."
+              "if you were invited as a clinician — the invitation token during sign-in (`gg.pendingInviteToken`, until the tab is closed);",
+              "after sign-in — the session data the Auth0 library keeps (tokens and basic profile data) and the cookies `auth0.….is.authenticated` and `_legacy_auth0.….is.authenticated` (valid 1 day);",
+              "for the Site's administrators — the chosen preview mode (`gg-view-as`)."
             ]
           },
           {
