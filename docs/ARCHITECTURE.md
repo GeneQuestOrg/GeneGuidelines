@@ -136,6 +136,9 @@ packages/
   ui/              # @gene-guidelines/ui — design tokens, shared primitives
   ops/             # Shared admin widgets (flow canvas, node editor, run trace)
 
+scripts/
+  labs/            # Model and prompt choices decided on data (see scripts/labs/README.md)
+
 docs/
   ARCHITECTURE.md  # This file
   adr/             # Architecture Decision Records

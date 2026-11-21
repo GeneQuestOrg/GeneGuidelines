@@ -11,5 +11,6 @@ Living clinical guidelines for rare genetic diseases, generated and kept current
 | [`ENGINEERING_VISION.md`](ENGINEERING_VISION.md) | Full technical vision (~3000 lines): current-state synthesis, patterns for new components, GG → Research Canvas migration map, quality tooling roadmap, risks |
 | [`adr/001-dual-frontend-subdomain-deploy.md`](adr/001-dual-frontend-subdomain-deploy.md) | Why we run `frontend-public` and `frontend-admin` separately |
 | [`../backend/README.md`](../backend/README.md) | Backend folder layout — current state vs target module-first structure |
+| [`../scripts/labs/README.md`](../scripts/labs/README.md) | Labs: model and prompt choices decided on data (product code, real model calls, frozen inputs, pre-registered decision rule) |
 
 For setup, environment variables, and dev commands, start at the repo-root [`README.md`](../README.md) and [`CLAUDE.md`](../CLAUDE.md).
