@@ -86,17 +86,29 @@ _LOCALE_LANGUAGE = {
 # --------------------------------------------------------------------------- #
 
 
-class _KeyedTranslation(BaseModel):
-    """The model's reply: the same opaque keys, each mapped to translated text."""
+class _TranslatedItem(BaseModel):
+    """One translated slot: the opaque input key and its target-language text."""
 
     model_config = ConfigDict(extra="forbid")
 
-    translations: dict[str, str] = Field(
-        default_factory=dict,
+    key: str = Field(description="One input key, copied exactly. Keys are opaque identifiers; never translate them.")
+    text: str = Field(description="The target-language translation of that key's English value.")
+
+
+class _KeyedTranslation(BaseModel):
+    """The model's reply: one item per input key.
+
+    A list of {key, text} items and not a ``dict[str, str]``: Claude's structured output (ADR 006) only accepts objects with named properties, so the SDK turns a free-form map into an object that allows no keys at all, and the model could only answer ``{}``. Every translation then silently fell back to English and was stored as if it were Polish.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    translations: list[_TranslatedItem] = Field(
+        default_factory=list,
         description=(
-            "An object with EXACTLY the input keys, each mapped to the "
-            "target-language translation of its English value. Do not add, drop, "
-            "or rename keys; keys are opaque identifiers, never translate them."
+            "Exactly one item for EVERY input key, with the key copied exactly and "
+            "the target-language translation of its English value. Do not add, drop, "
+            "or rename keys."
         ),
     )
 
@@ -268,7 +280,8 @@ async def _translate_payload(
     language = _language_name(locale)
     user_prompt = (
         f"Translate the English string VALUES of this JSON object into {language}. "
-        "Return an object with the SAME keys, each mapped to its translated value.\n\n"
+        "Return `translations` as a list with exactly one item (key, text) for EVERY key: "
+        "the key copied exactly, the text translated.\n\n"
         + json.dumps(payload, ensure_ascii=False)
     )
     out, model_used, usage = await run_structured_with_ollama_fallback(
@@ -280,7 +293,21 @@ async def _translate_payload(
         timeout_sec=_TRANSLATION_TIMEOUT_SEC,
         return_usage=True,
     )
-    return dict(out.translations), model_used, usage
+    translations = {item.key: item.text for item in out.translations}
+    missing = [key for key in payload if not (translations.get(key) or "").strip()]
+    if missing:
+        # Never store a partial translation: a dropped slot would fall back to English and then count as fresh until the English changes.
+        raise RuntimeError(f"translation into {language} returned {len(payload) - len(missing)} of {len(payload)} keys")
+    return translations, model_used, usage
+
+
+def _is_untranslated_copy(stored_text: str | None, english: str | None) -> bool:
+    """A stored "translation" identical to the English source was never translated.
+
+    Between the switch to Claude and the schema fix, every translation came back empty and the English text was stored under the target locale with a matching source hash, so the freshness check alone would keep it forever.
+    """
+    s, e = (stored_text or "").strip(), (english or "").strip()
+    return bool(e) and s == e
 
 
 # --------------------------------------------------------------------------- #
@@ -588,7 +615,7 @@ async def _translate_summary(
         return _EMPTY
     source_hash = _hash_text(text)
     stored = translation_repo.get_for_entity("disease", slug, locale).get("summary")
-    if stored is not None and stored.source_hash == source_hash:
+    if stored is not None and stored.source_hash == source_hash and not _is_untranslated_copy(stored.text, text):
         return _FRESH
     translations, model_used, usage = await _translate_payload(
         {"0": text}, locale, primary_spec
@@ -628,7 +655,7 @@ async def _translate_synthesis(
 
     source_hash = _hash_json(payload)
     stored = synth_repo.get(slug, locale)
-    if stored is not None and stored.source_hash == source_hash:
+    if stored is not None and stored.source_hash == source_hash and not _is_untranslated_copy(stored.title, synthesis.title):
         return _FRESH
 
     translations, model_used, usage = await _translate_payload(

@@ -207,3 +207,40 @@ def test_bare_node_placeholder_renders_that_nodes_output():
     assert '"findings": "biopsy rarely needed"' in out
     assert "31196103" in out
     assert out.endswith("B  C ")
+
+
+def test_free_form_map_schemas_are_refused_before_any_call():
+    """A dict[str, str] field becomes an object with no allowed keys, so Claude could only answer {}."""
+
+    class _Map(BaseModel):
+        translations: dict[str, str]
+
+    with pytest.raises(ad.ClaudeCallError) as err:
+        ad.build_request(model="m", effort="medium", system_prompt="", user_prompt="u", result_type=_Map, max_tokens=1)
+    assert err.value.kind == "config"
+    assert "translations" in str(err.value)
+
+
+def test_translation_schema_is_expressible_for_claude():
+    from backend.services.content_translation import _KeyedTranslation
+
+    assert ad.free_form_maps(_KeyedTranslation.model_json_schema()) == []
+
+
+def test_translation_that_drops_a_key_is_not_stored(monkeypatch):
+    from backend.services import content_translation as ct
+
+    async def partial(**_kwargs):
+        return ct._KeyedTranslation(translations=[ct._TranslatedItem(key="0", text="Rozpoznanie")]), "anthropic:claude-sonnet-5-5", (1, 1, 2)
+
+    monkeypatch.setattr(ct, "run_structured_with_ollama_fallback", partial)
+    with pytest.raises(RuntimeError, match="1 of 2 keys"):
+        asyncio.run(ct._translate_payload({"0": "Diagnosis", "1": "Therapy"}, "pl", "anthropic:claude-sonnet-5-5"))
+
+
+def test_an_english_copy_stored_as_polish_is_not_fresh():
+    from backend.services.content_translation import _is_untranslated_copy
+
+    assert _is_untranslated_copy("FOP — synthesis of the guidelines", "FOP — synthesis of the guidelines")
+    assert not _is_untranslated_copy("FOP — synteza wytycznych", "FOP — synthesis of the guidelines")
+    assert not _is_untranslated_copy("", "")

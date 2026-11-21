@@ -116,8 +116,31 @@ def _make_client(key: str, timeout_sec: float):
     return anthropic.AsyncAnthropic(api_key=key, max_retries=2, timeout=timeout_sec)
 
 
+def free_form_maps(schema: Any, path: str = "$") -> list[str]:
+    """Paths of objects whose keys are not named (``dict[str, X]``, ``additionalProperties`` set to a schema or true).
+
+    Claude's structured output accepts only objects with named properties; the SDK turns such a map into an object that allows no keys, so the model can only answer ``{}`` and the call "succeeds" with nothing in it.
+    """
+    found: list[str] = []
+    if isinstance(schema, dict):
+        extra = schema.get("additionalProperties")
+        if extra is True or isinstance(extra, dict):
+            found.append(path)
+        for key, value in schema.items():
+            if isinstance(value, (dict, list)):
+                found.extend(free_form_maps(value, f"{path}.{key}"))
+    elif isinstance(schema, list):
+        for i, value in enumerate(schema):
+            found.extend(free_form_maps(value, f"{path}[{i}]"))
+    return found
+
+
 def build_request(*, model: str, effort: str, system_prompt: str, user_prompt: str, result_type: Type[BaseModel], max_tokens: int) -> dict[str, Any]:
     import anthropic
+
+    maps = free_form_maps(result_type.model_json_schema())
+    if maps:
+        raise ClaudeCallError("config", f"{result_type.__name__} has free-form map fields Claude's structured output cannot express ({', '.join(maps[:3])}); use a list of named items instead")
 
     kwargs: dict[str, Any] = {
         "model": model,

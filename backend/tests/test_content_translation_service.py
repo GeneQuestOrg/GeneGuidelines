@@ -142,7 +142,7 @@ class _FakeModel:
         if self._fail_if is not None and self._fail_if(payload):
             raise RuntimeError("simulated model failure")
         translated = {k: "PL::" + v for k, v in payload.items()}
-        out = ct._KeyedTranslation(translations=translated)
+        out = ct._KeyedTranslation(translations=[ct._TranslatedItem(key=k, text=v) for k, v in translated.items()])
         usage = (11, 7, 18)
         if return_usage:
             return out, "openai:gpt-5.4", usage
