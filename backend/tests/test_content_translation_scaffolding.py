@@ -51,6 +51,10 @@ def test_translation_model_mirrors_wider_search_judge_resolution() -> None:
     from backend import config
 
     assert config.TRANSLATION_MODEL == config.WIDER_SEARCH_JUDGE_MODEL
+    if config.ANTHROPIC_ONLY:
+        # MODEL_PROFILE=anthropic (ADR 006): both go to the default Claude model.
+        assert config.TRANSLATION_MODEL == config.ANTHROPIC_DEFAULT_SPEC
+        return
     has_openai = bool((os.environ.get("OPENAI_API_KEY") or "").strip())
     if has_openai:
         assert config.TRANSLATION_MODEL == "openai:gpt-5.4"

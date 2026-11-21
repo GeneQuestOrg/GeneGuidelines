@@ -53,10 +53,9 @@
     {
       "node_id": "rank-with-gemma",
       "node_type": "prompt",
-      "label": "Rank with Gemma 4",
-      "description": "Structured-output Gemma call: pick the recognised consensus document, return confidence + reasoning. Refuses to invent PMIDs that were not in the candidate list.",
+      "label": "Rank candidates",
+      "description": "Structured-output model call: pick the recognised consensus document, return confidence + reasoning. Refuses to invent PMIDs that were not in the candidate list.",
       "prompt_mode": "simple",
-      "model_name": "openrouter:google/gemma-4-31b-it:free",
       "prompt": "You are a clinical librarian. Pick the recognised international consensus / best-practice guideline for {{ context.start.result.disease_name }} from the candidate PubMed papers in {{ context.format-candidates.result.candidates_text }}. NEVER invent a PMID. Return best_pmid, title, authors, year, journal, confidence (0-1), reasoning.",
       "output_schema": "{\"type\":\"object\",\"properties\":{\"best_pmid\":{\"type\":\"string\"},\"title\":{\"type\":\"string\"},\"authors\":{\"type\":\"string\"},\"year\":{\"type\":\"integer\"},\"journal\":{\"type\":\"string\"},\"confidence\":{\"type\":\"number\",\"minimum\":0,\"maximum\":1},\"reasoning\":{\"type\":\"string\"}},\"required\":[\"best_pmid\",\"title\",\"authors\",\"year\",\"journal\",\"confidence\"]}",
       "max_retry": 2
@@ -65,7 +64,7 @@
       "node_id": "verify-candidate",
       "node_type": "code",
       "label": "Reject hallucinated PMIDs",
-      "description": "Guard: refuse to persist a PMID Gemma did not see in the candidate list.",
+      "description": "Guard: refuse to persist a PMID the model did not see in the candidate list.",
       "python_source": "best = input.get('rank-with-gemma', {}).get('result', {}).get('best_pmid', '')\ncandidates = input.get('parse-pmids', {}).get('result', {}).get('pmids', [])\nif best not in candidates:\n    raise ValueError(f'Ranker returned non-candidate PMID {best}')\nreturn input.get('rank-with-gemma', {}).get('result', {})",
       "prompt_mode": "agentic",
       "max_retry": 1

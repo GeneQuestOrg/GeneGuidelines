@@ -499,7 +499,7 @@ async def find_trials_for_disease(
             disease_name, studies, resolved_gene
         )
     except Exception as exc:
-        log.exception("Gemma extraction failed for trials of %s", disease_name)
+        log.exception("Model extraction failed for trials of %s", disease_name)
         safe_trials = _fallback_trials_from_studies(studies)
         inserted = _persist_trials(disease_slug, safe_trials)
         _log_run(exec_id, disease_slug, "ready")

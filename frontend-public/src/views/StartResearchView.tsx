@@ -16,7 +16,7 @@
  * If the user types something the local index does not know, the
  * autocomplete shows a "Help us find this disease" CTA which opens the
  * :class:`MissingDiseaseDialog` modal — Tier 2 wider search backed by
- * Gemma 4. Out-of-scope categories (infectious / acquired) are blocked
+ * Claude. Out-of-scope categories (infectious / acquired) are blocked
  * inside the modal so a research run cannot be triggered for them.
  */
 

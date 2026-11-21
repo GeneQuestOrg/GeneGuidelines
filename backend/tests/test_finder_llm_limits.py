@@ -33,7 +33,8 @@ class FinderLlmLimitsTests(unittest.IsolatedAsyncioTestCase):
 
         mr.reset_finder_llm_parallel_semaphore_for_tests()
         mr._finder_llm_parallel_semaphore = asyncio.Semaphore(1)
-        with patch(
+        # This test drives the pydantic-ai path with a fake agent; under MODEL_PROFILE=anthropic the spec would be rerouted to Claude instead.
+        with patch("backend.config.ANTHROPIC_ONLY", False), patch(
             "backend.agents.agent.get_simple_structured_agent",
         ) as mock_agent:
             mock_agent.return_value.run = AsyncMock(side_effect=fake_run)

@@ -36,6 +36,8 @@ try:
         _ensure_guideline_synthesis_quote_nodes,
         _sync_guideline_synthesis_section_prompts_from_spec,
         _sync_guideline_shelf_classify_prompt_from_spec,
+        _sync_pubmed_pass1_model,
+        PUBMED_PASS1_MODEL,
     )
 except ImportError:
     from database_flow_ensures import (
@@ -52,6 +54,8 @@ except ImportError:
         _ensure_guideline_synthesis_quote_nodes,
         _sync_guideline_synthesis_section_prompts_from_spec,
         _sync_guideline_shelf_classify_prompt_from_spec,
+        _sync_pubmed_pass1_model,
+        PUBMED_PASS1_MODEL,
     )
 
 
@@ -202,6 +206,7 @@ def init_db():
     _ensure_guideline_synthesis_quote_nodes()
     _sync_guideline_synthesis_section_prompts_from_spec()
     _sync_guideline_shelf_classify_prompt_from_spec()
+    _sync_pubmed_pass1_model()
     try:
         from .content_db import (
             ensure_content_schema,
@@ -778,6 +783,7 @@ def _ensure_pubmed_flow():
             "position_x": -900,
             "position_y": 660,
             "prompt_mode": "simple",
+            "model_name": PUBMED_PASS1_MODEL,
             "output_schema": pass1_schema,
             "python_source": None,
         },
@@ -790,6 +796,7 @@ def _ensure_pubmed_flow():
             "position_x": -650,
             "position_y": 660,
             "prompt_mode": "simple",
+            "model_name": PUBMED_PASS1_MODEL,
             "output_schema": pass1_schema,
             "python_source": None,
         },
@@ -802,6 +809,7 @@ def _ensure_pubmed_flow():
             "position_x": -400,
             "position_y": 660,
             "prompt_mode": "simple",
+            "model_name": PUBMED_PASS1_MODEL,
             "output_schema": pass1_schema,
             "python_source": None,
         },
@@ -814,6 +822,7 @@ def _ensure_pubmed_flow():
             "position_x": -150,
             "position_y": 660,
             "prompt_mode": "simple",
+            "model_name": PUBMED_PASS1_MODEL,
             "output_schema": pass1_schema,
             "python_source": None,
         },
@@ -826,6 +835,7 @@ def _ensure_pubmed_flow():
             "position_x": 350,
             "position_y": 660,
             "prompt_mode": "simple",
+            "model_name": PUBMED_PASS1_MODEL,
             "output_schema": pass1_schema,
             "python_source": None,
         },
@@ -838,6 +848,7 @@ def _ensure_pubmed_flow():
             "position_x": 600,
             "position_y": 660,
             "prompt_mode": "simple",
+            "model_name": PUBMED_PASS1_MODEL,
             "output_schema": pass1_schema,
             "python_source": None,
         },
@@ -850,6 +861,7 @@ def _ensure_pubmed_flow():
             "position_x": 850,
             "position_y": 660,
             "prompt_mode": "simple",
+            "model_name": PUBMED_PASS1_MODEL,
             "output_schema": pass1_schema,
             "python_source": None,
         },

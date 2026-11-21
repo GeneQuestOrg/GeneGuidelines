@@ -45,7 +45,7 @@ def test_get_pipeline_settings(client: TestClient) -> None:
     resp = client.get("/api/pipeline/settings", headers=_ADMIN_HEADERS)
     assert resp.status_code == 200
     body = resp.json()
-    assert body["defaultModelProfile"] in ("production", "test", "openrouter", "vllm")
+    assert body["defaultModelProfile"] in ("production", "test", "openrouter", "vllm", "anthropic")
     profiles = body["modelProfiles"]
     if body.get("singleLlmMode"):
         assert len(profiles) == 1

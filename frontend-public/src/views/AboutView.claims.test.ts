@@ -33,11 +33,10 @@ describe("About page claims", () => {
     const how = copy.how as { p2Text1: string; p2Bold: string; p2Text2: string };
     const paragraph = [how.p2Text1, how.p2Bold, how.p2Text2].join("");
 
-    // It may name Gemma — that is true of the volume work — but must not present it
-    // as what produces the summaries.
-    expect(paragraph).toMatch(/frontier|model frontier/i);
-    expect(paragraph).not.toMatch(/runs on\s*Gemma 4, an open model/i);
-    expect(paragraph).not.toMatch(/Działa na modelu\s*Gemma 4, modelu otwartym/i);
+    // Since the switch to Claude (ADR 006) every AI step runs on Claude; naming a model
+    // the product no longer calls would contradict the privacy policy's list of providers.
+    expect(paragraph).toMatch(/Claude \(Anthropic\)/);
+    expect(paragraph).not.toMatch(/Gemma/i);
   });
 
   it("does not describe the case-context panel while it is switched off", () => {
@@ -58,7 +57,9 @@ describe("About page claims", () => {
     // precisely BECAUSE the deployment runs Gemma at a hosted provider outside the EU.
     // The property the promise rested on never held in production.
     expect(line).not.toMatch(/de-identif|odpersonalizowan|leaves the building|opuści budynek/i);
-    expect(line).toMatch(/frontier/i);
+    // It names the one AI provider the privacy policy lists (ADR 006), and no other.
+    expect(line).toMatch(/Claude \(Anthropic\)/);
+    expect(line).not.toMatch(/Gemma|frontier/i);
   });
 
   it("keeps the disabled copy rather than deleting it", () => {

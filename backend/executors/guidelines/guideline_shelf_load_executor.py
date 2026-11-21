@@ -58,7 +58,7 @@ def _sections_run_on_a_direct_model() -> bool:
         }
     except Exception:  # noqa: BLE001 - budget must never be the thing that fails a run
         return False
-    return bool(models) and all(m.startswith("direct:") for m in models)
+    return bool(models) and all(m.startswith(("direct:", "anthropic:")) for m in models)
 
 
 def _shelf_char_budget() -> int:

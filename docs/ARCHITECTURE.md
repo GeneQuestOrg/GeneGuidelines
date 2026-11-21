@@ -73,7 +73,7 @@ Block types currently registered:
 
 ## Structured output
 
-Every AI block defines an output schema (Pydantic model or JSON schema). If the model returns malformed output, Pydantic AI retries up to `max_retry`. Downstream blocks read fields by name — a decision node can safely test `result.confidence >= 0.7` because `confidence` is guaranteed to be a float.
+Every AI block defines an output schema (Pydantic model or JSON schema). In production every model call goes to Claude (`MODEL_PROFILE=anthropic`, [ADR 006](adr/006-claude-only-ai-provider.md)) through `backend/agents/anthropic_direct.py`, which sends that schema as a JSON-schema response format; other profiles go through Pydantic AI. Malformed or truncated output is retried up to `max_retry`; a safety refusal is not. Downstream blocks read fields by name — a decision node can safely test `result.confidence >= 0.7` because `confidence` is guaranteed to be a float.
 
 ## MCP tool catalog
 

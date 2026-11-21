@@ -154,7 +154,7 @@ flowchart TD
     parse_pmids["Parse PMIDs<br/><i>code</i>"]
     pubmed_esummary["PubMed esummary<br/><i>http_request</i>"]
     format_candidates["Format candidate list<br/><i>code</i>"]
-    rank_with_gemma["Rank with Gemma 4<br/><i>prompt</i>"]
+    rank_with_gemma["Rank candidates<br/><i>prompt</i>"]
     verify_candidate["Reject hallucinated PMIDs<br/><i>code</i>"]
     persist_pointer["Persist pointer<br/><i>code</i>"]
     end_node["End<br/><i>end</i>"]

@@ -10,7 +10,7 @@ System overview: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md). Public quick-st
 |---|---|
 | Frontend | React 18, Vite, TypeScript, React Flow, Leaflet |
 | Backend | FastAPI, Uvicorn, Python 3.12+ |
-| Agent | Pydantic AI (OpenAI / DeepSeek / OpenRouter, `MODEL_PROFILE`-switched), MCP |
+| Agent | Claude via a direct Anthropic adapter in production (`MODEL_PROFILE=anthropic`, ADR 006); Pydantic AI (OpenAI / DeepSeek / OpenRouter / vLLM) for the other profiles; MCP |
 | Database | PostgreSQL (psycopg, `DB_URL`) + alembic migrations |
 | Streaming | Server-Sent Events (run trace), REST API everywhere else |
 
@@ -93,10 +93,12 @@ Local `.env` only — never commit secrets to `.env`, `CLAUDE.md`, or any tracke
 
 | Var | Required? | Purpose |
 |---|---|---|
-| `OPENAI_API_KEY` | Yes for `production` profile | Default model profile |
+| `ANTHROPIC_API_KEY` | Yes for `anthropic` profile (production) | Claude, the only AI provider in production (ADR 006). |
+| `CLAUDE_DEFAULT_MODEL` | No (default `claude-sonnet-5-5`) | Default Claude model under the `anthropic` profile; steps that name their own model (synthesis, PubMed pass1) are unaffected. |
+| `OPENAI_API_KEY` | Yes for `production` profile | OpenAI profile (not used in production since ADR 006) |
 | `DEEPSEEK_API_KEY` | Yes for `test` profile | DeepSeek-compatible models |
 | `OPENROUTER_API_KEY` | Yes for `openrouter` profile | OpenRouter routing |
-| `MODEL_PROFILE` | No (default `production`) | Switches active profile |
+| `MODEL_PROFILE` | No (default `production`) | Switches active profile. `anthropic` sends every model call to Claude and reroutes any other stored model spec to the default Claude model. |
 | `GENEGUIDELINES_API_KEY` | No | When set, protected endpoints require `Authorization: Bearer` or `X-API-Key`. SSE in the browser passes `?api_key=...`; the frontend reads `VITE_GENEGUIDELINES_API_KEY` only outside production (the key would be visible in the JS bundle). |
 | `BRAVE_API_KEY` | No | Doctor Finder geo enrichment step (`df-20`): Brave Web Search + structured LLM for affiliations without ISO2. |
 | `NCBI_API_KEY` | No | Raises PubMed E-utilities rate limits. |

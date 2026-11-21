@@ -2,7 +2,7 @@
  *
  * Opens when the autocomplete cannot match the user's text against the
  * local rare-disease index. The user re-types or refines the query, hits
- * "Search the literature", and Gemma 4 (via
+ * "Search the literature", and Claude (via
  * ``POST /api/disease-index/wider-search``) returns one or more candidate
  * diseases together with a category classification (genetic, infectious,
  * multifactorial, …).
@@ -158,7 +158,7 @@ export function MissingDiseaseDialog({
             </span>
             <ol>
               <li>
-                <b>Gemma 4</b> {t("missingDiseaseDialog.pipelineStep1")}
+                <b>Claude</b> {t("missingDiseaseDialog.pipelineStep1")}
               </li>
               <li>
                 <b>{t("missingDiseaseDialog.pipelineStep2Lead")}</b> —{" "}

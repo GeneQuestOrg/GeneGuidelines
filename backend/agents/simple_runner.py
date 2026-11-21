@@ -47,6 +47,11 @@ def resolve_model_spec_for_node(node: dict) -> str:
         profile = resolve_active_profile()
         from ..config import LLM_MODEL_ID, SINGLE_LLM_MODE
 
+        if profile == "anthropic":
+            # A bare Claude id gets its provider prefix; anything else is not ours to call and falls to the profile's default model below.
+            if raw.lower().startswith("claude"):
+                return f"anthropic:{raw}"
+            return MODEL_PROFILES["anthropic"]["simple"] or ""
         if profile == "vllm" or SINGLE_LLM_MODE:
             return f"vllm:{raw}"
         if profile == "openrouter":
@@ -254,6 +259,26 @@ async def run_llm_simple_async(
     poison_store_on_failure=False: do not set store['error'] (e.g. agentic step close path).
     sse_kind: 'kind' field used for emitted SSE events (defaults to 'llm_simple').
     """
+    # Under MODEL_PROFILE=anthropic every spec that is not a Claude model is replaced by the default Claude model, so a stale flow row cannot send text to another provider. `anthropic:<model>[@effort]` then runs on the direct Anthropic adapter, the way the model-choice lab measured it. See backend/agents/anthropic_direct.py.
+    from .anthropic_direct import enforce_anthropic_only, is_anthropic_spec
+
+    model_spec = enforce_anthropic_only(model_spec)
+    if is_anthropic_spec(model_spec):
+        return await _run_direct_anthropic(
+            spec=model_spec,
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
+            result_type=result_type,
+            max_tokens=max_tokens,
+            max_retry=max_retry,
+            store=store,
+            event_queue=event_queue,
+            node_id=node_id,
+            emit_fn=emit_fn,
+            poison_store_on_failure=poison_store_on_failure,
+            sse_kind=sse_kind,
+        )
+
     # `direct:<model>` bypasses pydantic-ai for OpenAI reasoning models. They reject
     # `max_tokens` in favour of `max_completion_tokens`, which pydantic-ai 1.97.0 does
     # not send, so the call returns empty content and the node silently produces
@@ -486,6 +511,98 @@ async def run_llm_simple_async(
             event_queue,
             {"kind": "sys", "text": f"[SYSTEM] {msg} (flow step continued without full step_close)."},
         )
+    return {}
+
+
+# A Claude call can legitimately take minutes (Opus writing a PubMed section from a 200k-token corpus), but not the 90 minutes SIMPLE_LLM_CALL_TIMEOUT_SEC allows the old self-hosted endpoint.
+_ANTHROPIC_CALL_TIMEOUT_CAP_SEC = 900.0
+
+
+def _record_usage_numbers(store: dict, model_spec: str, usage: tuple[int, int, int]) -> None:
+    """Token-ledger row for a call that did not go through pydantic-ai."""
+    try:
+        from ..research_queue.token_budget import record_usage
+
+        prompt, completion, total = usage
+        record_usage(
+            execution_id=str(store.get("execution_id") or ""),
+            model_spec=model_spec,
+            prompt_tokens=prompt,
+            completion_tokens=completion,
+            total_tokens=total,
+            disease_slug=(str(store.get("catalog_slug") or store.get("disease_slug") or "").strip() or None),
+        )
+    except Exception:  # noqa: BLE001 — token capture must never break a run
+        pass
+
+
+async def _run_direct_anthropic(
+    *,
+    spec: str,
+    system_prompt: str,
+    user_prompt: str,
+    result_type: Type[BaseModel],
+    max_tokens: int,
+    max_retry: int,
+    store: dict,
+    event_queue: Queue | None,
+    node_id: str,
+    emit_fn: Any,
+    poison_store_on_failure: bool,
+    sse_kind: str,
+) -> dict[str, Any]:
+    """Structured call on Claude with the same contract as the pydantic-ai path: the validated dict, or {} with store['error'] set.
+
+    Retries a truncated or schema-invalid answer (a truncated one with twice the output budget) and an API error the SDK's own retries did not clear. Never retries a refusal: the server-side fallback has already had its turn.
+    """
+    from ..config import SIMPLE_LLM_CALL_TIMEOUT_SEC
+    from ..engine.prompt_formatting import prepare_llm_message_text
+    from .anthropic_direct import ClaudeCallError, call_structured, reasoning_max_tokens
+
+    sys_clean = prepare_llm_message_text(system_prompt)
+    user_clean = prepare_llm_message_text(user_prompt)
+    timeout_sec = min(float(SIMPLE_LLM_CALL_TIMEOUT_SEC), _ANTHROPIC_CALL_TIMEOUT_CAP_SEC)
+    tries = max(1, int(max_retry) if max_retry else 3)
+    budget_override: int | None = None
+    last_err = ""
+    emit_fn(event_queue, {"kind": sse_kind, "text": f"[{node_id}] {spec} (anthropic)"})
+    for attempt in range(1, tries + 1):
+        _log_llm_from_store(store, "llm_call_start", node_id, attempt=attempt, max_attempts=tries, model_spec=spec, timeout_sec=timeout_sec, system_chars=len(sys_clean), user_chars=len(user_clean), max_tokens=budget_override or reasoning_max_tokens(max_tokens), prompt_mode="simple")
+        t0 = time.monotonic()
+        try:
+            async with _get_simple_llm_parallel_semaphore():
+                result = await asyncio.wait_for(
+                    call_structured(spec=spec, system_prompt=sys_clean, user_prompt=user_clean, result_type=result_type, node_max_tokens=max_tokens, timeout_sec=timeout_sec, max_tokens_override=budget_override),
+                    timeout=timeout_sec + 30,
+                )
+        except (ClaudeCallError, asyncio.TimeoutError) as exc:
+            duration_ms = int((time.monotonic() - t0) * 1000)
+            kind = exc.kind if isinstance(exc, ClaudeCallError) else "timeout"
+            last_err = str(exc) if isinstance(exc, ClaudeCallError) else f"TimeoutError: Claude call exceeded {timeout_sec:.0f}s"
+            _log_llm_from_store(store, "llm_call_error", node_id, attempt=attempt, model_spec=spec, duration_ms=duration_ms, error=last_err[:300])
+            emit_fn(event_queue, {"kind": sse_kind, "node_id": node_id, "attempt": attempt, "ok": False, "error": last_err})
+            retryable = kind == "timeout" or (isinstance(exc, ClaudeCallError) and exc.retryable)
+            if not retryable or attempt >= tries:
+                break
+            if kind == "truncated":
+                budget_override = min((budget_override or reasoning_max_tokens(max_tokens)) * 2, 128_000)
+            delay = transient_retry_delay_sec(attempt)
+            emit_fn(event_queue, {"kind": "sys", "text": f"[SYSTEM] Node {node_id}: Claude call failed ({kind}); retrying in {delay:.0f}s ({attempt}/{tries})."})
+            await asyncio.sleep(delay)
+            continue
+        duration_ms = int((time.monotonic() - t0) * 1000)
+        _log_llm_from_store(store, "llm_call_done", node_id, attempt=attempt, model_spec=spec, duration_ms=duration_ms, ok=True, served_by=result.model, input_tokens=result.input_tokens, output_tokens=result.output_tokens)
+        _record_usage_numbers(store, spec, result.usage)
+        emit_fn(event_queue, {"kind": sse_kind, "node_id": node_id, "attempt": attempt, "ok": True})
+        return result.output.model_dump()
+
+    msg = f"Structured LLM node {node_id}: {spec} failed: {last_err}"
+    log.warning("%s", msg)
+    if poison_store_on_failure:
+        store["error"] = msg
+        emit_fn(event_queue, {"kind": "sys", "text": f"[SYSTEM] {msg}"})
+    else:
+        emit_fn(event_queue, {"kind": "sys", "text": f"[SYSTEM] {msg} (flow step continued without full step_close)."})
     return {}
 
 

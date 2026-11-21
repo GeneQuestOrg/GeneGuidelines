@@ -70,16 +70,23 @@ VLLM_BASE_URL = normalize_openai_compatible_base_url(_LLM_BASE_RAW) if _LLM_BASE
 _LLM_AUTH_STYLE = (_env_first("LLM_AUTH_HEADER_STYLE", "VLLM_AUTH_HEADER_STYLE") or "bearer").lower()
 VLLM_AUTH_HEADER_STYLE = "raw" if _LLM_AUTH_STYLE in ("raw", "token", "plain") else "bearer"
 
-# When set, every model profile routes to this endpoint (single provider for the whole app).
-SINGLE_LLM_MODE = bool(VLLM_API_KEY and VLLM_BASE_URL)
+_env_model_profile_early = (os.environ.get("MODEL_PROFILE") or "").strip().lower()
+
+# Claude (Anthropic) as the only AI provider. MODEL_PROFILE=anthropic routes every model call in the app to Claude: the flow nodes, the finders, the disease search and its judge, translation. Any other model spec still stored in a flow row or set in an env var is replaced by the default Claude model at call time (backend.agents.anthropic_direct.enforce_anthropic_only), because the privacy policy names Anthropic as the only AI provider and a stale row must not quietly send text elsewhere. Which Claude model runs which step was decided by the FD model-choice lab (scripts/labs/model_choice_fd/; docs/adr/006-claude-only-ai-provider.md): Sonnet 5.5 by default, Opus 5.5 for the PubMed pass1 evidence appraisal (named on those nodes), Sonnet 5.5 at effort high for the synthesis sections (named in the guideline_synthesis spec).
+ANTHROPIC_ONLY = _env_model_profile_early == "anthropic"
+CLAUDE_DEFAULT_MODEL = (os.environ.get("CLAUDE_DEFAULT_MODEL") or "").strip() or "claude-sonnet-5-5"
+ANTHROPIC_DEFAULT_SPEC = f"anthropic:{CLAUDE_DEFAULT_MODEL}"
+
+# When set, every model profile routes to this endpoint (single provider for the whole app). Never under MODEL_PROFILE=anthropic: leftover LLM_* variables must not pull the app back to the old endpoint.
+SINGLE_LLM_MODE = bool(VLLM_API_KEY and VLLM_BASE_URL) and not ANTHROPIC_ONLY
 UNIFIED_LLM_MODEL_SPEC = f"vllm:{LLM_MODEL_ID}" if SINGLE_LLM_MODE else None
 _VLLM_MODEL_SPEC = f"vllm:{LLM_MODEL_ID}"
-
-_env_model_profile_early = (os.environ.get("MODEL_PROFILE") or "").strip().lower()
 
 
 def _default_llm_model_spec() -> str:
     """Fallback when DEFAULT_LLM_MODEL is unset — follow MODEL_PROFILE / vLLM env, not OpenAI."""
+    if ANTHROPIC_ONLY:
+        return ANTHROPIC_DEFAULT_SPEC
     if SINGLE_LLM_MODE or _env_model_profile_early == "vllm":
         return _VLLM_MODEL_SPEC
     if _env_model_profile_early == "openrouter":
@@ -93,7 +100,7 @@ def _default_llm_model_spec() -> str:
 
 # Agent model (Pydantic AI) — global default
 _DEFAULT_LLM_MODEL_ENV = (os.environ.get("DEFAULT_LLM_MODEL") or "").strip()
-DEFAULT_MODEL_NAME = _DEFAULT_LLM_MODEL_ENV or _default_llm_model_spec()
+DEFAULT_MODEL_NAME = ANTHROPIC_DEFAULT_SPEC if ANTHROPIC_ONLY else (_DEFAULT_LLM_MODEL_ENV or _default_llm_model_spec())
 
 # Model profiles selectable per run (?profile=production|test|openrouter|vllm):
 #   - "production": OpenAI (DEFAULT_SIMPLE_LLM_MODEL / DEFAULT_AGENTIC_LLM_MODEL)
@@ -143,6 +150,7 @@ _SYNTHESIS_AGENTIC = (
 # configured the pipeline degrades to a generator-only result and says so.
 WIDER_SEARCH_JUDGE_MODEL = (
     (os.environ.get("WIDER_SEARCH_JUDGE_MODEL") or "").strip()
+    or (ANTHROPIC_DEFAULT_SPEC if ANTHROPIC_ONLY else None)
     or ("openai:gpt-5.4" if (os.environ.get("OPENAI_API_KEY") or "").strip() else None)
 )
 
@@ -156,6 +164,7 @@ WIDER_SEARCH_JUDGE_MODEL = (
 # this config only — nothing reads it until the worker lands in a later PR.
 TRANSLATION_MODEL = (
     (os.environ.get("TRANSLATION_MODEL") or "").strip()
+    or (ANTHROPIC_DEFAULT_SPEC if ANTHROPIC_ONLY else None)
     or ("openai:gpt-5.4" if (os.environ.get("OPENAI_API_KEY") or "").strip() else None)
 )
 
@@ -229,6 +238,12 @@ MODEL_PROFILES: dict[str, dict[str, str | None]] = {
         "agentic": _SYNTHESIS_AGENTIC,
         "overflow": _PROD_OVERFLOW,
     },
+    # Claude has a 1M-token context, so there is no overflow model to fall back to.
+    "anthropic": {
+        "simple": ANTHROPIC_DEFAULT_SPEC,
+        "agentic": ANTHROPIC_DEFAULT_SPEC,
+        "overflow": None,
+    },
 }
 
 if SINGLE_LLM_MODE and UNIFIED_LLM_MODEL_SPEC:
@@ -292,8 +307,8 @@ AGENT_PYDANTIC_AI_REQUEST_LIMIT = (
 )
 AGENT_PYDANTIC_AI_REQUEST_LIMIT = max(10, min(10_000, AGENT_PYDANTIC_AI_REQUEST_LIMIT))
 SIMPLE_LLM_CALL_TIMEOUT_SEC = float((os.environ.get("SIMPLE_LLM_CALL_TIMEOUT_SEC") or "").strip() or 5400.0)
-# Max concurrent simple LLM calls (PubMed pass1/pm-4 waves). Lower for self-hosted vLLM behind nginx.
-_SIMPLE_LLM_PARALLEL_DEFAULT = "2" if SINGLE_LLM_MODE else "6"
+# Max concurrent simple LLM calls (PubMed pass1/pm-4 waves). Lower for self-hosted vLLM behind nginx, and for Claude, where each pass1 call can carry a ~200k-token corpus against the account's input-tokens-per-minute limit.
+_SIMPLE_LLM_PARALLEL_DEFAULT = "2" if SINGLE_LLM_MODE else ("3" if ANTHROPIC_ONLY else "6")
 SIMPLE_LLM_PARALLEL_CONCURRENCY = max(
     1,
     int((os.environ.get("SIMPLE_LLM_PARALLEL_CONCURRENCY") or "").strip() or _SIMPLE_LLM_PARALLEL_DEFAULT),
@@ -615,7 +630,8 @@ UMAMI_ORIGIN = (
 # built for the Gemma hackathon demo; with judging over it falls outside the
 # product's scope (doctors, guidelines, PubMed findings, trials, foundations,
 # therapies), and its privacy story does not hold for real use while the
-# de-identification call leaves the EU (LLM_BASE_URL is SiliconFlow).
+# de-identification call leaves the EU (it would go to the AI provider in the USA),
+# and the privacy policy does not cover uploaded medical documents.
 #
 # The endpoints and their tests stay. Turn this on together with an EU-hosted
 # redaction model and the matching switch in
