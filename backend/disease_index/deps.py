@@ -52,8 +52,9 @@ def provide_wider_search_lookup() -> WiderLookupCallable:
 
 def provide_wider_search_service(
     lookup: WiderLookupCallable = Depends(provide_wider_search_lookup),
+    index: DiseaseIndexRepo = Depends(provide_disease_index_repo),
 ) -> WiderDiseaseSearchService:
-    return WiderDiseaseSearchService(lookup=lookup)
+    return WiderDiseaseSearchService(lookup=lookup, index=index)
 
 
 __all__ = [

@@ -425,6 +425,8 @@
     "unverifiedBadge": "niezweryfikowane",
     "verifiedTitle": "Drugi, mocniejszy model sprawdził te dopasowania.",
     "unverifiedTitle": "Automatyczna weryfikacja była niedostępna — sprawdź dokładnie, zanim uruchomisz research.",
+    "indexBadge": "✓ numer OMIM z naszego indeksu chorób",
+    "indexTitle": "To dopasowanie pochodzi z indeksu chorób (Orphanet i OMIM), nie z modelu AI.",
     "notFoundFallback": "Nie udało nam się tego pewnie zidentyfikować. Spróbuj innej pisowni, dodaj nazwę genu albo uruchom research z dokładnie wpisanym tekstem.",
     "whyThisMatch": "Dlaczego to dopasowanie",
     "confidenceLabel": "Pewność",

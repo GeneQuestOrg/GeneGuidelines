@@ -20,9 +20,13 @@ import time
 from dataclasses import dataclass
 
 from ..content.repository import DiseaseRepo
-from .models import DiseaseCategory, DiseaseSuggestion
+from .models import DiseaseCategory, DiseaseIndexEntry, DiseaseSuggestion
+from .omim import omim_number
 from .repository import DiseaseIndexRepo
 from .scope import is_hard_blocked, is_in_scope, scope_label
+
+#: ``model_used`` of a wider-search answer that came from the local index (an OMIM number), not from a model.
+LOCAL_INDEX_MODEL = "local-index"
 
 
 # --- Tier 1 ------------------------------------------------------------------
@@ -44,7 +48,8 @@ class DiseaseSuggestionService:
     def suggest(self, query: str, *, limit: int = 10) -> list[DiseaseSuggestion]:
         if not query or not query.strip():
             return []
-        raw = self.repo.search(query, limit=limit)
+        # "OMIM 174800" and "OMIM:174800" search as the bare number, which the index holds as an exact alias.
+        raw = self.repo.search(omim_number(query) or query, limit=limit)
         if not raw:
             return []
         local_slugs = self._known_local_slugs()
@@ -131,9 +136,20 @@ class WiderDiseaseSearchService:
     """
 
     lookup: WiderLookupCallable
+    #: The local index, consulted first when the query is an OMIM number. ``None`` skips that step.
+    index: DiseaseIndexRepo | None = None
 
     async def search(self, query: str) -> WiderSearchResult:
         started = time.monotonic()
+        from_index = self._omim_from_index(query)
+        if from_index:
+            return WiderSearchResult(
+                candidates=from_index,
+                notes="",
+                elapsed_ms=int((time.monotonic() - started) * 1000),
+                judged=False,
+                model_used=LOCAL_INDEX_MODEL,
+            )
         identification = await self.lookup(query)
         elapsed_ms = int((time.monotonic() - started) * 1000)
         judge_model = str(getattr(identification, "judge_model", "") or "")
@@ -147,6 +163,40 @@ class WiderDiseaseSearchService:
             elapsed_ms=elapsed_ms,
             judged=bool(getattr(identification, "judged", False)),
             model_used=model_used,
+        )
+
+    def _omim_from_index(self, query: str) -> list[WiderSearchCandidate]:
+        """Index entries that carry the OMIM number the query consists of; empty when it is not one or the index has none."""
+        number = omim_number(query)
+        if number is None or self.index is None:
+            return []
+        try:
+            hits = self.index.search(number, limit=5)
+        except Exception:
+            # A degraded index must not take the wider search down with it; the models still get the query.
+            return []
+        entries: dict[str, DiseaseIndexEntry] = {}
+        for entry, _alias, _score in hits:
+            if number in entry.omim_codes:
+                entries.setdefault(entry.primary_id, entry)
+        return [self._candidate_from_entry(entry, number) for entry in entries.values()]
+
+    @staticmethod
+    def _candidate_from_entry(entry: DiseaseIndexEntry, number: str) -> WiderSearchCandidate:
+        category: DiseaseCategory = entry.category or "unknown"
+        return WiderSearchCandidate(
+            canonical_name=entry.canonical_name,
+            omim=number,
+            gene=", ".join(entry.gene_symbols),
+            inheritance=entry.inheritance or "",
+            summary=entry.summary,
+            category=category,
+            is_in_scope=is_in_scope(category),
+            is_hard_blocked=is_hard_blocked(category),
+            scope_label=scope_label(category),
+            confidence=1.0,
+            model_used=LOCAL_INDEX_MODEL,
+            evidence=f"OMIM {number} is listed for {entry.canonical_name} in the local disease index ({entry.primary_id}).",
         )
 
     @staticmethod
@@ -189,6 +239,7 @@ class WiderDiseaseSearchService:
 
 
 __all__ = [
+    "LOCAL_INDEX_MODEL",
     "DiseaseSuggestionService",
     "WiderDiseaseSearchService",
     "WiderSearchCandidate",

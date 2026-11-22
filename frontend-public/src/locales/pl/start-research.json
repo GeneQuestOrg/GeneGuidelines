@@ -21,6 +21,7 @@
   "submitRunResearch": "Zleć research →",
   "cancel": "Anuluj",
   "pickedFromLiterature": "z literatury ({{model}})",
+  "pickedFromIndex": "z indeksu chorób (OMIM)",
   "pickedBadgeOk": "✓ Wytyczne dostępne",
   "pickedBadgeNew": "Zostanie zlecony research",
   "pickedClear": "Wyczyść"

@@ -21,6 +21,7 @@
   "submitRunResearch": "Run research →",
   "cancel": "Cancel",
   "pickedFromLiterature": "from literature ({{model}})",
+  "pickedFromIndex": "from our disease index (OMIM)",
   "pickedBadgeOk": "✓ Guidelines available",
   "pickedBadgeNew": "Research run will be launched",
   "pickedClear": "Clear"

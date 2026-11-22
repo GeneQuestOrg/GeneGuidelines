@@ -399,6 +399,8 @@
     "unverifiedBadge": "unverified",
     "verifiedTitle": "A second, stronger model checked these matches.",
     "unverifiedTitle": "Automatic verification was unavailable — double-check before starting a run.",
+    "indexBadge": "✓ OMIM number from our disease index",
+    "indexTitle": "This match comes from our disease index (Orphanet and OMIM), not from an AI model.",
     "notFoundFallback": "We could not confidently identify this. Try a different spelling, include the gene, or start a run with the term as typed.",
     "whyThisMatch": "Why this match",
     "confidenceLabel": "Confidence",

@@ -57,6 +57,9 @@ export interface SuggestResponse {
   elapsedMs: number;
 }
 
+/** `modelUsed` of a wider-search candidate that came from the local disease index (the query was an OMIM number the index knows), not from a model. Mirrors `LOCAL_INDEX_MODEL` in backend/disease_index/service.py. */
+export const LOCAL_INDEX_MODEL = "local-index";
+
 export interface WiderSearchCandidate {
   canonicalName: string;
   omim: string;

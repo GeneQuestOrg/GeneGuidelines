@@ -26,6 +26,7 @@ import { Button } from "@gene-guidelines/ui";
 import { ApiRequestError } from "../api/client";
 import { AiInputNotice } from "./AiInputNotice";
 import {
+  LOCAL_INDEX_MODEL,
   type WiderSearchCandidate,
   type WiderSearchResponse,
   widerSearchDisease,
@@ -243,6 +244,9 @@ function CandidatesList({
 }): ReactNode {
   const { t } = useTranslation("common");
   const { candidates, notes, judged } = result;
+  // An OMIM number the index knows is answered from the index, not by a model: neither "verified by a second model" nor "unverified" is true of it.
+  const fromIndex =
+    candidates.length > 0 && candidates.every((c) => c.modelUsed === LOCAL_INDEX_MODEL);
 
   if (candidates.length === 0) {
     return (
@@ -260,16 +264,20 @@ function CandidatesList({
           {t("missingDiseaseDialog.resultsTitle")}
         </h3>
         <span
-          className={`miss-modal__verify miss-modal__verify--${judged ? "yes" : "no"}`}
+          className={`miss-modal__verify miss-modal__verify--${judged || fromIndex ? "yes" : "no"}`}
           title={
-            judged
-              ? t("missingDiseaseDialog.verifiedTitle")
-              : t("missingDiseaseDialog.unverifiedTitle")
+            fromIndex
+              ? t("missingDiseaseDialog.indexTitle")
+              : judged
+                ? t("missingDiseaseDialog.verifiedTitle")
+                : t("missingDiseaseDialog.unverifiedTitle")
           }
         >
-          {judged
-            ? t("missingDiseaseDialog.verifiedBadge")
-            : t("missingDiseaseDialog.unverifiedBadge")}
+          {fromIndex
+            ? t("missingDiseaseDialog.indexBadge")
+            : judged
+              ? t("missingDiseaseDialog.verifiedBadge")
+              : t("missingDiseaseDialog.unverifiedBadge")}
         </span>
       </div>
       {notes?.trim() ? <p className="miss-modal__notes">{notes}</p> : null}

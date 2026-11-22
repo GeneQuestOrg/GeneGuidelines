@@ -34,6 +34,7 @@ import {
   type BootstrapDiseaseRequest,
 } from "../api/bootstrapDisease";
 import {
+  LOCAL_INDEX_MODEL,
   type DiseaseSuggestion,
   type WiderSearchCandidate,
 } from "../api/diseaseIndex";
@@ -317,7 +318,9 @@ function PickedCard({
           {gene ? <code>{gene}</code> : null}
           {!isIndexed ? (
             <span className="picked__source">
-              {t("pickedFromLiterature", { model: picked.candidate.modelUsed })}
+              {picked.candidate.modelUsed === LOCAL_INDEX_MODEL
+                ? t("pickedFromIndex")
+                : t("pickedFromLiterature", { model: picked.candidate.modelUsed })}
             </span>
           ) : null}
         </div>
