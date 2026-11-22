@@ -30,6 +30,33 @@ class PubmedFlowRealDefinitionTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn(("pm_fix", "end"), edge_pairs)
         self.assertNotIn(("pm-verify", "end"), edge_pairs)
 
+    def test_legacy_single_call_guideline_node_is_dropped_on_init(self) -> None:
+        """Production kept the old pm-4 row (pm-3 → pm-4 → pm_eval) and ran it on every research run, ≈200K tokens nobody read."""
+        conn = db.get_connection()
+        cur = conn.cursor()
+        cur.execute(
+            "INSERT INTO flow_definitions (flow_key, node_id, node_type, label, prompt, prompt_mode, updated_at) "
+            "VALUES ('pubmed', 'pm-4', 'prompt', 'AI Literature Guideline', 'legacy', 'simple', '2026-05-01T00:00:00') "
+            "ON CONFLICT DO NOTHING"
+        )
+        for source_id, target_id in (("pm-3", "pm-4"), ("pm-4", "pm_eval")):
+            cur.execute(
+                "INSERT INTO flow_edges (flow_key, source_node_id, target_node_id) VALUES ('pubmed', %s, %s) ON CONFLICT DO NOTHING",
+                (source_id, target_id),
+            )
+        conn.commit()
+        conn.close()
+        self.assertIsNotNone(db.get_flow_node("pubmed", "pm-4"))
+
+        db.init_db()
+
+        self.assertIsNone(db.get_flow_node("pubmed", "pm-4"))
+        edges = db.get_flow_edges("pubmed")
+        self.assertFalse([e for e in edges if "pm-4" in (e["source_node_id"], e["target_node_id"])])
+        # The sectioned path that replaced it is untouched.
+        self.assertIsNotNone(db.get_flow_node("pubmed", "pm-4-build"))
+        self.assertIn(("pm-verify", "pm_eval"), {(e["source_node_id"], e["target_node_id"]) for e in edges})
+
     async def test_real_pubmed_code_nodes_contract(self) -> None:
         pm2_node = db.get_flow_node("pubmed", "pm-2")
         gate_node = db.get_flow_node("pubmed", "pm_gate")

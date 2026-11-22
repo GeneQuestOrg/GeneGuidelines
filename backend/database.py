@@ -37,6 +37,7 @@ try:
         _sync_guideline_synthesis_section_prompts_from_spec,
         _sync_guideline_shelf_classify_prompt_from_spec,
         _sync_pubmed_pass1_model,
+        _drop_legacy_pubmed_nodes,
         PUBMED_PASS1_MODEL,
     )
 except ImportError:
@@ -55,6 +56,7 @@ except ImportError:
         _sync_guideline_synthesis_section_prompts_from_spec,
         _sync_guideline_shelf_classify_prompt_from_spec,
         _sync_pubmed_pass1_model,
+        _drop_legacy_pubmed_nodes,
         PUBMED_PASS1_MODEL,
     )
 
@@ -207,6 +209,7 @@ def init_db():
     _sync_guideline_synthesis_section_prompts_from_spec()
     _sync_guideline_shelf_classify_prompt_from_spec()
     _sync_pubmed_pass1_model()
+    _drop_legacy_pubmed_nodes()
     try:
         from .content_db import (
             ensure_content_schema,

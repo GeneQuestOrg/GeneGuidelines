@@ -841,6 +841,27 @@ def _sync_pubmed_pass1_model() -> None:
     conn.close()
 
 
+# The single-call literature guideline of the old pubmed flow. The sectioned flow (pass1-* → pm-4-* → pm-4-build) replaced it, but databases seeded before that kept the row and its edges, because the pubmed reseed skips a flow that already has 20+ nodes. On production it still ran on every research run (≈200K input tokens, about USD 0.55) while nothing read its output: pm_fix revises pm-4-build and pm_eval checks pm-4-build and pm-5-repair.
+LEGACY_PUBMED_NODE_IDS: tuple[str, ...] = ("pm-4",)
+
+
+def _drop_legacy_pubmed_nodes() -> None:
+    """Remove the legacy pubmed nodes (LEGACY_PUBMED_NODE_IDS) and every edge touching them. Restarts are no-ops once they are gone."""
+    conn = get_connection()
+    cur = conn.cursor()
+    ids = list(LEGACY_PUBMED_NODE_IDS)
+    cur.execute(
+        "DELETE FROM flow_edges WHERE flow_key = %s AND (source_node_id = ANY(%s) OR target_node_id = ANY(%s))",
+        ("pubmed", ids, ids),
+    )
+    cur.execute(
+        "DELETE FROM flow_definitions WHERE flow_key = %s AND node_id = ANY(%s)",
+        ("pubmed", ids),
+    )
+    conn.commit()
+    conn.close()
+
+
 def _sync_guideline_shelf_classify_prompt_from_spec() -> None:
     """Refresh gsb-classify prompt so shelf runs emit ``considered`` negative paths."""
     spec = _load_guideline_spec("guideline_shelf_build")
