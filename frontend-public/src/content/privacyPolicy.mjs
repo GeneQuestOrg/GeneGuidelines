@@ -7,7 +7,7 @@
  */
 
 /** The policy's publication date, ISO. Change it here, and only here, when a new version is published. */
-export const PRIVACY_POLICY_VERSION = "2026-11-21";
+export const PRIVACY_POLICY_VERSION = "2026-11-22";
 
 /** The page's in-app path (unprefixed; the Polish page is /pl/privacy). */
 export const PRIVACY_PATH = "/privacy";

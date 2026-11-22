@@ -33,7 +33,7 @@ describe("PrivacyView", () => {
     const html = await render("pl", view());
     expect(html).toContain("Polityka prywatności serwisu GeneGuidelines</h1>");
     expect(html).toContain("V. Lekarze w katalogu (informacja z art. 14 RODO)</h2>");
-    expect(html).toContain(`<time dateTime="${PRIVACY_POLICY_VERSION}">21 listopada 2026</time>`);
+    expect(html).toContain(`<time dateTime="${PRIVACY_POLICY_VERSION}">22 listopada 2026</time>`);
     expect(html).not.toContain("[data publikacji]");
     expect(html).not.toContain("{{date}}");
     // A link across to the translation, for an English reader who landed here.
@@ -44,7 +44,7 @@ describe("PrivacyView", () => {
     const html = await render("en", view());
     expect(html).toContain("GeneGuidelines privacy policy</h1>");
     expect(html).toContain("V. Clinicians in the directory (information under Art. 14 GDPR)</h2>");
-    expect(html).toContain(`<time dateTime="${PRIVACY_POLICY_VERSION}">21 November 2026</time>`);
+    expect(html).toContain(`<time dateTime="${PRIVACY_POLICY_VERSION}">22 November 2026</time>`);
     expect(html).not.toContain("[publication date]");
     expect(html).toContain("the Polish version is legally binding");
     expect(html).toMatch(

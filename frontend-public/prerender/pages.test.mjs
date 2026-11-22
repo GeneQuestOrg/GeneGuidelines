@@ -52,8 +52,8 @@ describe("prerendered pages", () => {
   });
 
   it.each([
-    ["/pl/privacy", "pl", "21 listopada 2026", "/privacy"],
-    ["/privacy", "en", "21 November 2026", "/pl/privacy"],
+    ["/pl/privacy", "pl", "22 listopada 2026", "/privacy"],
+    ["/privacy", "en", "22 November 2026", "/pl/privacy"],
   ])("%s carries the whole policy, dated, without JavaScript", (path, locale, date, otherPath) => {
     const page = byPath[path];
     const { policy } = privacyCatalogue(locale);
@@ -61,7 +61,7 @@ describe("prerendered pages", () => {
 
     expect(page.body).toContain(`<h1>${policy.title}</h1>`);
     // The date comes from one constant; the draft's placeholder never reaches a reader.
-    expect(page.body).toContain(`<time datetime="2026-11-21">${date}</time>`);
+    expect(page.body).toContain(`<time datetime="2026-11-22">${date}</time>`);
     expect(text).not.toMatch(/\[data publikacji\]|\[publication date\]|\{\{date\}\}/);
     expect(page.body).toContain(`href="${otherPath}"`);
 
