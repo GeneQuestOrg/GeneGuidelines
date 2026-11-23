@@ -72,7 +72,34 @@ def unknown_disease(path: str, L: Labels, locale: str) -> Page:
     return Page(path=path, title=_titled(L["unknownTitle"], L), description=L["unknownBody"], body=body, noindex=True)
 
 
-def disease_hub(d: Disease, L: Labels, locale: str) -> Page:
+def _guideline_points(block: Mapping[str, Any] | None, L: Labels, locale: str) -> str:
+    """The generated diagnosis block, in the page's language, with its fixed AI notice, each quote's source link and credit, and its source note. Empty when there is no published block."""
+    if not block or not block.get("points"):
+        return ""
+    pl = locale == "pl"
+    items = []
+    for p in block["points"]:
+        link = f'<a href="{esc(p.get("doc_url") or "")}">{esc(p.get("doc_citation") or p.get("doc_title") or "")}</a>' if p.get("doc_url") else esc(p.get("doc_citation") or "")
+        credit = f" {esc(p['credit'])}" if p.get("credit") else ""
+        items.append(
+            "<li>"
+            + _p(p["summary_pl"] if pl else p["summary_en"])
+            + _p(p["question_pl"] if pl else p["question_en"])
+            + f'<blockquote cite="{esc(p.get("doc_url") or "")}"><p>{esc(p["quote"])}</p></blockquote>'
+            + f'<p class="ggp-note">{link}{credit}</p>'
+            + "</li>"
+        )
+    return (
+        '<section class="ggp-points">'
+        + f"<h2>{esc(block['title_pl'] if pl else block['title_en'])}</h2>"
+        + _note(block["notice_pl"] if pl else block["notice_en"])
+        + f"<ol>{''.join(items)}</ol>"
+        + _note(block["source_pl"] if pl else block["source_en"])
+        + "</section>"
+    )
+
+
+def disease_hub(d: Disease, L: Labels, locale: str, points: Mapping[str, Any] | None = None) -> Page:
     facts = [(L["factGene"], d.gene), (L["factOmim"], d.omim), (L["factInheritance"], d.inheritance), (L["factPrevalence"], d.prevalence_text)]
     dl = "".join(f"<dt>{esc(k)}</dt><dd>{esc(v)}</dd>" for k, v in facts if str(v or "").strip())
     parts = [f'<p class="ggp-note">{esc(d.name_short)}</p>' if d.name_short and d.name_short != d.name else "", f"<h1>{esc(d.name)}</h1>"]
@@ -83,6 +110,7 @@ def disease_hub(d: Disease, L: Labels, locale: str) -> Page:
         f'<dl class="ggp-facts">{dl}</dl>' if dl else "",
         _p(fill(L["doctorsCount"], count=d.doctors_count)),
         _p(fill(L["trialsCount"], count=d.trials_count)),
+        _guideline_points(points, L, locale),
         _nav(
             [
                 (f"/diseases/{d.slug}/guidelines", L["linkGuidelines"]),

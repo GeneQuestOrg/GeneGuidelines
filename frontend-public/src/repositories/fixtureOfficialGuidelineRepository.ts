@@ -1,6 +1,7 @@
 import type { GuidelineBaseline } from "../types/guidelineBaseline";
 import type { AnalyzedPaper } from "../types/analyzedPaper";
 import type { GuidelineSuggestion } from "../types/guidelineSuggestion";
+import type { GuidelinePoints } from "../types/guidelinePoints";
 import type { GuidelineSynthesis, SynthSectionSignal } from "../types/guidelineSynthesis";
 import type { OfficialGuideline } from "../types/officialGuideline";
 import type { SourceDoc } from "../types/sourceDoc";
@@ -158,6 +159,10 @@ export const fixtureOfficialGuidelineRepository: OfficialGuidelineRepository = {
   },
   async getSuggestions(diseaseSlug: string): Promise<readonly GuidelineSuggestion[]> {
     return SUGGESTIONS[diseaseSlug] ?? [];
+  },
+  // No fixture blocks: a generated block exists only where the backend published one.
+  async getGuidelinePoints(): Promise<GuidelinePoints | null> {
+    return null;
   },
   // Fixtures are static: echo back the current aggregate + the optimistic verdict
   // so the offline/test repo satisfies the interface without persistence.

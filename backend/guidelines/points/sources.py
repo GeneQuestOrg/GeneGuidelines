@@ -246,3 +246,76 @@ def doc_from_dict(raw: dict) -> SourceDoc:
         authors=str(raw.get("authors") or ""), role=str(raw.get("role") or ""), license=str(raw.get("license") or ""), pubtypes=tuple(raw.get("pubtypes") or ()),
         copyright=str(raw.get("copyright") or ""), book=str(raw.get("book") or ""),
     )
+
+
+# --- the production loader: a stored shelf to graded, readable documents ----------------------------------------------
+
+
+def pubmed_pubtypes(pmids: list[str], api_key: str | None = None) -> dict[str, list[str]]:
+    """PMID → PubMed publication types (E-utilities esummary). Missing on any failure: such a document is then graded by its title alone."""
+    import json as _json
+    import urllib.parse
+    import urllib.request
+
+    out: dict[str, list[str]] = {}
+    for i in range(0, len(pmids), 150):
+        params = {"db": "pubmed", "retmode": "json", "id": ",".join(pmids[i:i + 150])}
+        if api_key:
+            params["api_key"] = api_key
+        url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?" + urllib.parse.urlencode(params)
+        try:
+            request = urllib.request.Request(url, headers={"User-Agent": "GeneQuestFoundation/1.0 (https://genequest.org)"})
+            with urllib.request.urlopen(request, timeout=60) as response:
+                result = _json.load(response).get("result") or {}
+        except Exception as exc:  # noqa: BLE001 - grading falls back to titles
+            log.warning("points.sources: esummary failed: %s", exc)
+            continue
+        for uid in result.get("uids") or []:
+            out[uid] = list((result.get(uid) or {}).get("pubtype") or [])
+    return out
+
+
+def load_shelf_documents(shelf: list, *, api_key: str | None = None, genereviews: dict | None = None) -> list[SourceDoc]:
+    """Grade every document on a stored shelf (``SourceDocument`` rows) and read the full text of the guideline-grade ones: open-access articles through Europe PMC / NCBI, Bookshelf chapters through the stored copy (``bookshelf_chapters``). Network calls; never raises for one document."""
+    from ...tools.pmc_fulltext import _pmid_to_pmcid
+
+    genereviews = genereviews or {}
+    pmids = [str(d.pmid).strip() for d in shelf if str(d.pmid or "").strip()]
+    pubtypes = pubmed_pubtypes(pmids, api_key) if pmids else {}
+    missing_pmc = [str(d.pmid).strip() for d in shelf if str(d.pmid or "").strip() and not d.pmcid]
+    pmcids = _pmid_to_pmcid(missing_pmc, api_key=api_key) if missing_pmc else {}
+    out: list[SourceDoc] = []
+    for d in shelf:
+        pmid = str(d.pmid or "").strip() or None
+        accession = str(d.bookshelf or "").strip() or None
+        title = str(d.title or "")
+        if accession and not pmid:
+            chapter = genereviews.get(accession)
+            title = chapter.title if chapter else title
+            grade, reason = grade_document(title=title, is_bookshelf=True, book_title="GeneReviews" if chapter else "")
+            if grade is None:
+                grade, reason = "C", "Bookshelf chapter outside GeneReviews"
+        else:
+            grade, reason = grade_document(title=title, pubtypes=pubtypes.get(pmid or "", []))
+        paragraphs: list[Paragraph] = []
+        status, licence, copyright_, pmcid = "", "", "", (d.pmcid or (pmcids.get(pmid) if pmid else None))
+        try:
+            if not grade:
+                status = "not_fetched: not guideline-grade"
+            elif pmid:
+                if pmcid:
+                    paragraphs, status, _language, licence = fetch_pmc_paragraphs(pmcid, api_key=api_key)
+                else:
+                    status = "no_pmcid: not in PubMed Central, so no full text can be fetched"
+            elif accession:
+                paragraphs, status, licence, copyright_ = fetch_bookshelf_paragraphs(accession)
+        except Exception as exc:  # noqa: BLE001 - one unreadable document leaves the block thinner, never fails it
+            status = f"unreadable: {type(exc).__name__}: {exc}"
+            paragraphs = []
+        out.append(SourceDoc(
+            doc_id=str(d.doc_id), title=title, year=str(d.year or ""), grade=grade or "", grade_reason=reason, text_status=status,
+            paragraphs=tuple(paragraphs), pmid=pmid, pmcid=pmcid, bookshelf=accession, journal=str(d.journal or ""), authors=str(d.authors or ""),
+            role=str(d.role or ""), license=licence, pubtypes=tuple(pubtypes.get(pmid or "", [])), copyright=copyright_,
+            book="GeneReviews" if accession and accession in genereviews else "",
+        ))
+    return out

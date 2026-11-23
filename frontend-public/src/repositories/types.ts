@@ -19,6 +19,7 @@ import type { GuidelineBaseline } from "../types/guidelineBaseline";
 import type { AnalyzedPaper } from "../types/analyzedPaper";
 import type { GuidelineDocument } from "../types/guidelineDocument";
 import type { GuidelineSuggestion, SuggestionVoteOutcome } from "../types/guidelineSuggestion";
+import type { GuidelinePoints } from "../types/guidelinePoints";
 import type { GuidelineSynthesis, SynthSectionSignal } from "../types/guidelineSynthesis";
 import type { OfficialGuideline } from "../types/officialGuideline";
 import type { PrivateContext } from "../types/privateContext";
@@ -90,6 +91,8 @@ export interface OfficialGuidelineRepository {
   getShelf(diseaseSlug: string): Promise<readonly SourceDoc[]>;
   /** AI synthesis over the source shelf (GL-2); null when no guideline exists (level c). */
   getSynthesis(diseaseSlug: string): Promise<GuidelineSynthesis | null>;
+  /** The generated diagnosis block (verbatim quote, summary, question); null when none is published. */
+  getGuidelinePoints(diseaseSlug: string): Promise<GuidelinePoints | null>;
   /** AI suggestions hanging beside the synthesis (GL-3); empty when none. */
   getSuggestions(diseaseSlug: string): Promise<readonly GuidelineSuggestion[]>;
   /**

@@ -266,9 +266,29 @@ class BookshelfChapterRow(Base):
     fetched_at: Mapped[str] = mapped_column(Text, nullable=False, default="")
 
 
+class GuidelinePointsRow(Base):
+    """The generated "What the guideline says about diagnosis – to show your doctor" block of one disease (``backend.guidelines.points``).
+
+    One row per disease, replaced by each run. ``publish`` is 0 when the loop found fewer than three points that passed both checks; such a row is kept (so an unchanged shelf is not paid for again) but never served. ``shelf_hash`` fingerprints the shelf and the loop version the block was built from; the job re-runs only when it changes. ``block`` is the published shape (``points.block.published_block``), ``record`` the loop's full record for audit.
+    """
+
+    __tablename__ = "guideline_points"
+
+    disease_slug: Mapped[str] = mapped_column(Text, primary_key=True)
+    publish: Mapped[int] = mapped_column(Integer, nullable=False)
+    reason: Mapped[str] = mapped_column(Text, nullable=False)
+    shelf_hash: Mapped[str] = mapped_column(Text, nullable=False)
+    block: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    record: Mapped[dict] = mapped_column(JSON, nullable=False)
+    models: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    cost_usd: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    generated_at: Mapped[str] = mapped_column(Text, nullable=False, default="")
+
+
 __all__ = [
     "Base",
     "BookshelfChapterRow",
+    "GuidelinePointsRow",
     "SourceDocumentRow",
     "GuidelineSynthesisRow",
     "GuidelineSynthesisTranslationRow",

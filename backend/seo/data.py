@@ -25,6 +25,8 @@ class SeoData:
     list_doctors_for_disease: Callable[[str], list[dict[str, Any]]]
     get_doctor: Callable[[str], dict[str, Any] | None]
     list_trials_for_disease: Callable[[str], list[Trial] | None]
+    # The published guideline-points block (dict) or None; defaulted so a fake can leave it out.
+    get_guideline_points: Callable[[str], dict | None] = lambda slug: None
 
 
 def production_data() -> SeoData:
@@ -69,4 +71,14 @@ def production_data() -> SeoData:
         list_doctors_for_disease=doctors_for,
         get_doctor=get_doctor_by_slug,
         list_trials_for_disease=trials.list_for_disease,
+        get_guideline_points=_published_points,
     )
+
+
+def _published_points(slug: str) -> dict | None:
+    from ..guidelines.points.store import published_block
+
+    try:
+        return published_block(slug)
+    except Exception:  # noqa: BLE001 - an unmigrated table means no block on the page, not a failed page
+        return None

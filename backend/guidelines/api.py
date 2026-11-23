@@ -6,6 +6,7 @@ Four GET endpoints the public site's api-repo calls, mounted under ``/api``:
 - ``/diseases/{slug}/guideline-synthesis`` -> the synthesis, 404 when none (GL-2)
 - ``/diseases/{slug}/guideline-suggestions`` -> AI suggestions (GL-3a)
 - ``/diseases/{slug}/synthesis-signals`` -> per-section signal map (GL-3b)
+- ``/diseases/{slug}/guideline-points`` -> the generated diagnosis block, 404 when none is published
 
 Lists/maps return empty (200) when a disease has no data; only the single
 synthesis 404s — matching how the frontend api-repo degrades (404 -> []/{}/null).
@@ -21,6 +22,7 @@ from ..account.deps import OptionalUser
 from ..account.models import User
 from ..shared.locale import resolve_locale
 from .contracts import (
+    GuidelinePointsResponse,
     SourceDocResponse,
     SuggestionResponse,
     SuggestionVoteRequest,
@@ -63,6 +65,23 @@ def get_synthesis(
     if synthesis is None:
         raise HTTPException(status_code=404, detail="No guideline synthesis")
     return SynthesisResponse.from_domain(synthesis)
+
+
+@router.get(
+    "/diseases/{slug}/guideline-points",
+    response_model=GuidelinePointsResponse,
+)
+def get_guideline_points(slug: str) -> GuidelinePointsResponse:
+    """The generated "What the guideline says about diagnosis – to show your doctor" block; 404 when none is published (fewer than three checked points, not generated yet, or FD, whose page keeps its hand-written block). Both languages in one response; the page picks its own."""
+    from .points.store import get_points
+
+    try:
+        row = get_points(slug.strip().lower())
+    except Exception as exc:  # noqa: BLE001 - an unmigrated table reads as "no block"
+        raise HTTPException(status_code=404, detail="No guideline points") from exc
+    if row is None or not row.publish or not row.block:
+        raise HTTPException(status_code=404, detail="No guideline points")
+    return GuidelinePointsResponse.from_block(row.block, row.generated_at)
 
 
 @router.get(

@@ -56,7 +56,7 @@ def _build(parts: list[str], query: Mapping[str, str], data: SeoData, locale: st
         if disease is None:
             return pages.unknown_disease("/".join(["", *parts]), L, locale)
         if len(parts) == 2:
-            return pages.disease_hub(disease, L, locale)
+            return pages.disease_hub(disease, L, locale, data.get_guideline_points(slug))
         return pages.guidelines_page(disease, data.get_synthesis(slug, locale), data.list_source_documents(slug), L, locale)
     if head in ("doctors", "trials") and len(parts) == 1:
         slug = normalize_slug(query.get("disease") or "")

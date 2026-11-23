@@ -221,3 +221,57 @@ __all__ = [
     "SuggestionVoteRequest",
     "SuggestionVoteResult",
 ]
+
+
+class GuidelinePointResponse(BaseModel):
+    """One point of the generated "What the guideline says about diagnosis" block."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    id: str
+    quote: str
+    summaryEn: str
+    summaryPl: str
+    questionEn: str
+    questionPl: str
+    section: str
+    docId: str
+    docTitle: str
+    docYear: str
+    docCitation: str
+    docUrl: str
+    docGrade: str
+    licence: str
+    credit: str
+
+
+class GuidelinePointsResponse(BaseModel):
+    """The generated block for one disease. Served only when the loop published it (at least three points through the verbatim check and the verifier)."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    basis: str
+    titleEn: str
+    titlePl: str
+    noticeEn: str
+    noticePl: str
+    sourceEn: str
+    sourcePl: str
+    credits: list[str]
+    generatedAt: str
+    points: list[GuidelinePointResponse]
+
+    @classmethod
+    def from_block(cls, block: dict, generated_at: str) -> "GuidelinePointsResponse":
+        return cls(
+            basis=block["basis"], titleEn=block["title_en"], titlePl=block["title_pl"], noticeEn=block["notice_en"], noticePl=block["notice_pl"],
+            sourceEn=block["source_en"], sourcePl=block["source_pl"], credits=list(block.get("credits") or []), generatedAt=generated_at,
+            points=[
+                GuidelinePointResponse(
+                    id=p["id"], quote=p["quote"], summaryEn=p["summary_en"], summaryPl=p["summary_pl"], questionEn=p["question_en"], questionPl=p["question_pl"],
+                    section=p.get("section") or "", docId=p["doc_id"], docTitle=p.get("doc_title") or "", docYear=str(p.get("doc_year") or ""),
+                    docCitation=p.get("doc_citation") or "", docUrl=p.get("doc_url") or "", docGrade=p.get("doc_grade") or "", licence=p.get("licence") or "", credit=p.get("credit") or "",
+                )
+                for p in block["points"]
+            ],
+        )

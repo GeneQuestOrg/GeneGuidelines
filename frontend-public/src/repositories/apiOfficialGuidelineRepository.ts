@@ -5,6 +5,7 @@ import type {
   GuidelineSuggestion,
   SuggestionVoteOutcome,
 } from "../types/guidelineSuggestion";
+import type { GuidelinePoints } from "../types/guidelinePoints";
 import type { GuidelineSynthesis, SynthSectionSignal } from "../types/guidelineSynthesis";
 import type { OfficialGuideline } from "../types/officialGuideline";
 import type { SourceDoc } from "../types/sourceDoc";
@@ -58,6 +59,24 @@ export const apiOfficialGuidelineRepository: OfficialGuidelineRepository = {
     try {
       return await apiGet<GuidelineSynthesis>(
         `/api/diseases/${encodeURIComponent(normalized)}/guideline-synthesis`,
+      );
+    } catch (err) {
+      if (err instanceof ApiRequestError && err.status === 404) {
+        return null;
+      }
+      throw err;
+    }
+  },
+
+  // 404 → no published block (not generated yet, fewer than three checked points, or FD).
+  async getGuidelinePoints(diseaseSlug: string): Promise<GuidelinePoints | null> {
+    const normalized = normalizeDiseaseSlug(diseaseSlug);
+    if (normalized == null) {
+      return null;
+    }
+    try {
+      return await apiGet<GuidelinePoints>(
+        `/api/diseases/${encodeURIComponent(normalized)}/guideline-points`,
       );
     } catch (err) {
       if (err instanceof ApiRequestError && err.status === 404) {

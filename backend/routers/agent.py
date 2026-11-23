@@ -416,6 +416,37 @@ async def _maybe_translate_after_synthesis(execution_id: str, store: dict[str, A
         )
 
 
+_POINTS_TASKS: set[asyncio.Task] = set()
+
+
+async def _maybe_points_after_synthesis(execution_id: str, store: dict[str, Any]) -> None:
+    """Build the disease's guideline-points block once its synthesis has run (``backend.services.guideline_points_job``).
+
+    Sibling of :func:`_maybe_translate_after_synthesis`. The job itself skips a disease whose stored block was built from the same shelf, and FD, which keeps its hand-written block. It takes minutes, so it is started as a background task and never holds up the synthesis run. Off when ``GUIDELINE_POINTS_AFTER_SYNTHESIS`` is "0".
+    """
+    if str(store.get("flow_key") or "") != "guideline_synthesis" or store.get("error"):
+        return
+    if os.environ.get("GUIDELINE_POINTS_AFTER_SYNTHESIS", "1").strip() == "0":
+        return
+    initial = store.get("disease_initial")
+    initial = initial if isinstance(initial, dict) else {}
+    disease_slug = str(initial.get("disease_slug") or "").strip().lower()
+    if not disease_slug:
+        return
+    from ..services.guideline_points_job import run_guideline_points
+
+    async def _run() -> None:
+        try:
+            result = await run_guideline_points(disease_slug)
+            log.info("points-after-synthesis: %s after synthesis %s: %s", disease_slug, execution_id, result)
+        except Exception:  # noqa: BLE001 — the block is an addition; it must never break anything else
+            log.exception("points-after-synthesis: failed for %s after synthesis %s", disease_slug, execution_id)
+
+    task = asyncio.create_task(_run())
+    _POINTS_TASKS.add(task)
+    task.add_done_callback(_POINTS_TASKS.discard)
+
+
 async def execute_agent_async(
     execution_id: str,
     ticket_id: int,
@@ -467,6 +498,8 @@ async def execute_agent_async(
         # failures and the two are mutually exclusive by flow_key, so one can
         # never break the other or the run-status response path.
         await _maybe_translate_after_synthesis(execution_id, store)
+        # Build the guideline-points block from the same shelf (background; skips an unchanged shelf and FD).
+        await _maybe_points_after_synthesis(execution_id, store)
 
 
 async def _execute_agent_async_body(

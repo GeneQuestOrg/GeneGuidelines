@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
 import type { Disease } from "../types";
 import { MY_CASE_ENABLED, PRE_DIAGNOSIS_INTERVIEW_ENABLED } from "../config/features";
+import { GeneratedGuidelinePoints } from "./GeneratedGuidelinePoints";
 import { PARENT_PAGE_ANCHORS } from "./parentPageAnchors";
 import "../styles/disease-map.css";
 import { localizeInheritance, localizePrevalence } from "../utils/diseaseFacts";
@@ -154,9 +155,9 @@ export function ParentDiseaseMap({ disease, hasGuideline, onNav }: ParentDisease
                 in one open question. The framing is deliberate: our own diagnosis went
                 wrong not because a doctor was careless but because one fact (tissue for
                 GNAS) was missing, so the parent brings the fact with the guideline's
-                authority instead of questioning the doctor. FD only — the sentences are
-                from the FD/MAS guideline (Javaid 2019) and say nothing about any other
-                disease. */}
+                authority instead of questioning the doctor. Hand-written for FD only — the
+                sentences are from the FD/MAS guideline (Javaid 2019) and say nothing about
+                any other disease. */}
             {isFd ? (
               <div className="dmap-ask">
                 <div className="dmap-ask__hd">{t("askTitle")}</div>
@@ -178,7 +179,12 @@ export function ParentDiseaseMap({ disease, hasGuideline, onNav }: ParentDisease
                 </ol>
                 <p className="dmap-ask__src">{t("askSource")}</p>
               </div>
-            ) : null}
+            ) : (
+              // Every other disease shows the block the guideline-points loop generated and checked
+              // (backend/guidelines/points/), or nothing when none was published. FD keeps the
+              // hand-written block above, which is also the generator's worked example.
+              <GeneratedGuidelinePoints slug={slug} />
+            )}
             <div className="dmap-actions">
               {/* The sheet a family carries into the appointment, right below the
                   map. FD only — its rows rest on sentences about fibrous dysplasia. */}
