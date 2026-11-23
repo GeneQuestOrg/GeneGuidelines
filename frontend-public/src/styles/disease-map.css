@@ -310,25 +310,26 @@
   color: var(--ink-4);
 }
 .dmap-ask__note { margin: 8px 0 0; font-size: 14px; line-height: 1.55; color: var(--ink-3); }
-.dmap-ask__list { list-style: none; margin: 12px 0 0; padding: 0; }
-.dmap-ask__list > li + li { margin-top: 2px; border-top: 1px solid var(--line-2); padding-top: 2px; }
-.dmap-ask__item { padding: 7px 0; }
-.dmap-ask__q {
-  cursor: pointer;
-  font-size: 15px;
-  line-height: 1.5;
-  font-weight: 500;
-  color: var(--ink);
-  list-style: none;
-  display: flex;
-  gap: 9px;
-  align-items: baseline;
+.dmap-ask__list { list-style: none; margin: 12px 0 0; padding: 0; counter-reset: ask; }
+.dmap-ask__list > li + li { border-top: 1px solid var(--line-2); }
+.dmap-ask__item { counter-increment: ask; position: relative; padding: 12px 0 12px 28px; }
+.dmap-ask__item::before {
+  content: counter(ask);
+  position: absolute;
+  left: 0;
+  top: 12px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink-4);
 }
-.dmap-ask__q::-webkit-details-marker { display: none; }
-.dmap-ask__q::before { content: "+"; font-family: var(--font-mono); color: var(--ink-4); flex: none; }
-.dmap-ask__item[open] .dmap-ask__q::before { content: "\2212"; }
-.dmap-ask__q:hover { color: var(--ink-2); }
-.dmap-ask__s { margin: 7px 0 0 18px; font-size: 14px; line-height: 1.55; color: var(--ink-2); }
+.dmap-ask__point { margin: 0; font-size: 15px; line-height: 1.55; color: var(--ink); }
+.dmap-ask__q { margin: 6px 0 0; font-size: 14.5px; line-height: 1.5; font-weight: 600; color: var(--ink-2); }
+.dmap-ask__src-q { margin: 6px 0 0; }
+.dmap-ask__src-q > summary { cursor: pointer; list-style: none; display: inline-flex; gap: 6px; align-items: baseline; }
+.dmap-ask__src-q > summary::-webkit-details-marker { display: none; }
+.dmap-ask__src-q > summary::before { content: "+"; }
+.dmap-ask__src-q[open] > summary::before { content: "\2212"; }
+.dmap-ask__s { margin: 6px 0 0; font-size: 14px; line-height: 1.55; color: var(--ink-2); }
 .dmap-ask__s q { font-family: var(--font-serif); font-style: italic; }
 .dmap-ask__lbl {
   font-family: var(--font-mono);

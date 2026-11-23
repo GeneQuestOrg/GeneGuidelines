@@ -5,7 +5,9 @@ import { PARENT_PAGE_ANCHORS } from "./parentPageAnchors";
 import "../styles/disease-map.css";
 import { localizeInheritance, localizePrevalence } from "../utils/diseaseFacts";
 
-/** Step 1's questions, paired with the guideline sentence each one rests on. */
+/**
+ * Step 1's guideline points, in the order a family meets them. Each pair is a question and the verbatim guideline sentence it rests on; the plain-language summary of that sentence (askP<n>) is shown first, so a parent brings the doctor what the guideline says instead of quizzing them.
+ */
 const ASK_QUESTIONS: ReadonlyArray<readonly [string, string]> = [
   ["askQ1", "askS1"],
   ["askQ2", "askS2"],
@@ -147,26 +149,32 @@ export function ParentDiseaseMap({ disease, hasGuideline, onNav }: ParentDisease
               </div>
             ) : null}
 
-            {/* Questions, never advice: each one carries the verbatim guideline
-                sentence it rests on. FD only — the quotes are from the FD/MAS
-                guideline (Javaid 2019) and say nothing about any other disease. */}
+            {/* What the guideline says, to show the doctor — never advice. Each point
+                summarises a verbatim guideline sentence, which sits underneath, and ends
+                in one open question. The framing is deliberate: our own diagnosis went
+                wrong not because a doctor was careless but because one fact (tissue for
+                GNAS) was missing, so the parent brings the fact with the guideline's
+                authority instead of questioning the doctor. FD only — the sentences are
+                from the FD/MAS guideline (Javaid 2019) and say nothing about any other
+                disease. */}
             {isFd ? (
               <div className="dmap-ask">
                 <div className="dmap-ask__hd">{t("askTitle")}</div>
                 <p className="dmap-ask__note">{t("askNote")}</p>
-                <ul className="dmap-ask__list">
+                <ol className="dmap-ask__list">
                   {ASK_QUESTIONS.map(([qKey, sKey]) => (
-                    <li key={qKey}>
-                      <details className="dmap-ask__item">
-                        <summary className="dmap-ask__q">{t(qKey)}</summary>
+                    <li key={qKey} className="dmap-ask__item">
+                      <p className="dmap-ask__point">{t(qKey.replace("askQ", "askP"))}</p>
+                      <p className="dmap-ask__q">{t(qKey)}</p>
+                      <details className="dmap-ask__src-q">
+                        <summary className="dmap-ask__lbl">{t("askQuoteLabel")}</summary>
                         <p className="dmap-ask__s">
-                          <span className="dmap-ask__lbl">{t("askQuoteLabel")}</span>{" "}
                           <q>{t(sKey)}</q>
                         </p>
                       </details>
                     </li>
                   ))}
-                </ul>
+                </ol>
                 <p className="dmap-ask__src">{t("askSource")}</p>
               </div>
             ) : null}

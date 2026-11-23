@@ -202,12 +202,12 @@ function privacyBody(locale, { privacy }) {
   ].join("\n");
 }
 
-/** The orientation map as text: the five steps, then the questions with the sentence behind each. */
+/** The orientation map as text: the five steps, then the guideline points, each with its question and the sentence behind it. */
 function mapSection(map) {
   const questions = askPairs
     .map(
       ([question, sentence]) =>
-        `<li><p class="ggp-q">${esc(map[question])}</p><blockquote>${esc(map[sentence])}</blockquote></li>`,
+        `<li><p>${esc(map[question.replace("askQ", "askP")])}</p><p class="ggp-q">${esc(map[question])}</p><blockquote>${esc(map[sentence])}</blockquote></li>`,
     )
     .join("\n");
   const steps = [

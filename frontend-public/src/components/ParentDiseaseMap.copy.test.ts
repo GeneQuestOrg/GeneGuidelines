@@ -34,12 +34,20 @@ describe("parent map copy", () => {
   });
 
   it.each(pairs)("%s is published with its source sentence %s", (question, quote) => {
+    const point = question.replace("askQ", "askP");
     for (const [lang, map] of Object.entries(locales)) {
       expect(map[question], `${lang}:${question}`).toBeTruthy();
       expect(map[quote], `${lang}:${quote}`).toBeTruthy();
+      // The plain-language summary shown above the question.
+      expect(map[point], `${lang}:${point}`).toBeTruthy();
     }
     // A quotation is the same text in every language or it is not a quotation.
     expect(locales.pl[quote]).toBe(locales.en[quote]);
+  });
+
+  it("keeps the point about tissue for GNAS testing, the fact our own diagnosis missed", () => {
+    const quotes = pairs.map(([, quote]) => locales.en[quote]);
+    expect(quotes.some((q) => q.includes("fresh or fresh frozen material to enable genetic testing for GNAS mutation"))).toBe(true);
   });
 
   it.each(["kiedy szukać drugiej opinii", "sygnały ostrzegawcze", "histopatologia"])(
