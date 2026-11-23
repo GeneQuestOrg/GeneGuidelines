@@ -60,3 +60,13 @@ Run on commit `814aa36`, snapshot `2026-11-23`; the full report (per disease: do
 - **FD against the hand-written block:** every run reproduces points 1, 2, 3 and 6; run 1 misses the blood-test and tissue-handling points, run 2 misses the blood-test point. The loop checks what the generator chose, never what it left out.
 - **Found and fixed after the run** (`97b5bc8`): reviews and case reports graded A by title; PMC list items glued together, which failed a correct FOP quote; the closest-passage hint inside long lists.
 - **Not solved:** NCBI Bookshelf serves automated fetches a reCAPTCHA page, so no GeneReviews chapter could be read (the production synthesis uses the same reader); several guidelines are not in PubMed Central; the verifier is inconsistent on compound questions and on some Polish wording across calls.
+
+## Results of the second run (2026-11-24, 6.60 USD)
+
+Snapshot `2026-11-24` (GeneReviews for FD/MAS, FOP and OI read from NCBI's archive; the two off-disease chapters on the PUS3 shelf left out by the relevance check), commit `1ce6a5d`.
+
+- **Calibration** (new verifier prompt, calibration examples held out): rule met in both repeats, 10/10 corruptions caught, hand-written points 5/6; the one FIX, in both repeats, is hand-written point 3 (its summary names GNAS, which the quoted sentences do not; its question "is this test worth considering?" nudges toward a test). 0.63 USD.
+- **Catalog:** 6 of 7 diseases publish (fop 8, fd 8, mas 8, noonan 6, osteogenesis-imperfecta 8, stargardt-disease 7 points); the PUS3 syndrome has no readable document about it. The coverage review added 4 points in every disease. Of 47 point verdicts, 29 were PASS, 16 FIX applied as the verifier wrote them (14 of 29 fixes were to the Polish summary), 2 points withdrawn; no disease needed a revision round. 0.74–1.16 USD per disease, 5.97 USD in all.
+- **MAS** now covers the endocrine work-up: growth hormone and prolactin, thyroid, and fasting phosphate (no point on precocious puberty).
+- **FD against the hand-written block** (worked example held out): points 1, 3 and 6 are reproduced; 2 (a single lesion usually needs histology), 4 (a negative blood test cannot exclude FD) and 5 (tissue handling for GNAS) are not. The coverage review spent its four gaps on the MAS-type evaluation (thyroid, growth hormone, phosphate, craniofacial CT) instead. FD keeps its hand-written block on the page.
+- **Gained from GeneReviews:** FOP "biopsies of lesions are never indicated" and "a variant of uncertain significance neither confirms nor rules out"; OI "no family history does not rule out the diagnosis".
