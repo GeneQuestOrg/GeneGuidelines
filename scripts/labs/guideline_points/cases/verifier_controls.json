@@ -1,0 +1,36 @@
+{
+  "about": "Known-answer controls for the verifier. Each takes one gold FD point (gold1..gold6 = askP/askQ/askS 1..6 of the hand-written block) and breaks it in exactly one way; the verifier must return FIX. Written by hand before any verifier call, 2026-11-23. Every quote here is still verbatim in the FD/MAS consensus (PMID 31196103), so each control reaches the verifier.",
+  "controls": [
+    {"id": "c-modality", "base": "gold1", "expect": "FIX", "what": "'can be made' became 'is', and 'in most cases' was dropped", "change": {
+      "summary_en": "FD/MAS is diagnosed clinically, after an evaluation of the whole body: bones, hormones, soft tissue and skin.",
+      "summary_pl": "FD/MAS rozpoznaje się klinicznie, po ocenie całego ciała: kości, układu hormonalnego, tkanek miękkich i skóry."}},
+    {"id": "c-added", "base": "gold1", "expect": "FIX", "what": "summary adds tests the quote does not name", "change": {
+      "summary_en": "In most cases FD/MAS can be diagnosed clinically, after an evaluation of the whole body (bones, hormones, soft tissue and skin), usually with a bone scan and blood tests.",
+      "summary_pl": "W większości przypadków FD/MAS można rozpoznać klinicznie, po ocenie całego ciała (kości, układu hormonalnego, tkanek miękkich i skóry), zwykle za pomocą scyntygrafii kości i badań krwi."}},
+    {"id": "c-official", "base": "gold2", "expect": "FIX", "what": "framed as an official confirmation", "change": {
+      "summary_en": "The official guideline confirms that a single bone lesion without skin or hormone findings can resemble many other diseases and usually needs confirmation under the microscope.",
+      "summary_pl": "Oficjalna wytyczna potwierdza, że pojedyncza zmiana w kości, bez objawów skórnych i hormonalnych, może przypominać wiele innych chorób i zwykle wymaga potwierdzenia w badaniu histopatologicznym."}},
+    {"id": "c-audit", "base": "gold3", "expect": "FIX", "what": "question audits the doctor and presupposes the test was due", "change": {
+      "question_en": "Did you order the GNAS genetic test that the guideline recommends?",
+      "question_pl": "Czy zlecił Pan/Pani badanie genetyczne GNAS, które zaleca wytyczna?"}},
+    {"id": "c-omission", "base": "gold3", "expect": "FIX", "what": "the omission at '…' drops the condition 'where the diagnosis is in question', and the summary drops it too", "change": {
+      "quote": "A genetic diagnosis is recommended … This especially applies to isolated/monostotic lesions in the skull…",
+      "summary_en": "The guideline recommends a genetic test for the GNAS mutation, especially for a single lesion in the skull.",
+      "summary_pl": "Wytyczna zaleca badanie genetyczne w kierunku mutacji GNAS, zwłaszcza przy pojedynczej zmianie w czaszce."}},
+    {"id": "c-advice", "base": "gold4", "expect": "FIX", "what": "question nudges the parent to demand a procedure", "change": {
+      "question_en": "Since a blood test cannot rule FD out, should we insist on a biopsy?",
+      "question_pl": "Skoro badanie z krwi nie wyklucza FD, czy powinniśmy domagać się biopsji?"}},
+    {"id": "c-polish", "base": "gold4", "expect": "FIX", "what": "Polish summary reverses the meaning (EN unchanged)", "change": {
+      "summary_pl": "Ujemny wynik badania genetycznego z krwi wyklucza FD dotyczącą jednej kości; wynik dodatni jest pomocny."}},
+    {"id": "c-truncated", "base": "gold5", "expect": "FIX", "what": "quote cut after the first sentence, losing the false-negative caveat", "change": {
+      "quote": "Diagnostic biopsies should be processed as fresh or fresh frozen material to enable genetic testing for GNAS mutation.",
+      "summary_en": "If a diagnostic biopsy is taken, the tissue should be sent fresh or fresh frozen so that it can be tested for GNAS.",
+      "summary_pl": "Jeśli wykonuje się biopsję diagnostyczną, materiał powinien trafić do badania jako świeży lub świeżo mrożony, żeby dało się zbadać GNAS."}},
+    {"id": "c-qualifier", "base": "gold6", "expect": "FIX", "what": "'usually' dropped from the summary", "change": {
+      "summary_en": "A biopsy is needed only in unusual or questionable cases, or when a malignant tumour is suspected.",
+      "summary_pl": "Biopsja jest potrzebna tylko w przypadkach nietypowych lub wątpliwych albo przy podejrzeniu nowotworu złośliwego."}},
+    {"id": "c-presuppose", "base": "gold6", "expect": "FIX", "what": "question presupposes that a biopsy will be done", "change": {
+      "question_en": "What should the biopsy in our case settle?",
+      "question_pl": "Co ma rozstrzygnąć biopsja u naszego dziecka?"}}
+  ]
+}

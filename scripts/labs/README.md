@@ -40,6 +40,7 @@ Into the lab's own `results/` folder, and frozen inputs into its `data/snapshots
 | Lab | Question | Status |
 |---|---|---|
 | [`model_choice_fd/`](model_choice_fd/README.md) | Which Claude model for which GeneGuidelines task, measured on fibrous dysplasia | Run 2026-11-20/21, 11.63 USD; synthesis waits for Dorota's blind review, the PubMed decision for the 30-paper check |
+| [`guideline_points/`](guideline_points/README.md) | Can a generator→verifier loop write the "What the guideline says about diagnosis" block for every catalog disease, as well as the hand-written FD block? | Phase 1 run 2026-11-23 (results in the run's report) |
 
 ## Key decisions
 
