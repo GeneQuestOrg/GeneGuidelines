@@ -42,6 +42,12 @@ python -m scripts.labs.guideline_points.lab --env-file ../GeneGuidelines/.env re
 
 `--out` may be outside the repository; inside it, use `results/`, which git ignores. `run` is resumable: a disease whose result file exists is skipped, and a folder started with other product code is refused. Tests: `backend/tests/test_guideline_points.py` (deterministic check, grading, loop control and the Claude caller, all with the model mocked).
 
-## Results
+## Results (2026-11-23, two runs of the whole catalog, 6.54 USD)
 
-See the report of the 2026-11-23 run (path in the lab index, `scripts/labs/README.md`).
+Run on commit `814aa36`, snapshot `2026-11-23`; the full report (per disease: documents, block, every FIX) was written by `report` outside the repository and is not tracked.
+
+- **Calibration:** the deterministic check finds all six hand-written FD quotes. The verifier met the rule in both repeats: 10/10 corruptions caught each time; hand-written points 6/6 and 5/6 (the one FIX: summary 3 names GNAS, which the quoted sentences do not).
+- **Catalog:** 6 of 7 diseases get a block in both runs (fd 5/6 points, mas 6/5, fop 3/3, noonan 4/5, osteogenesis-imperfecta 5/5, stargardt-disease 5/3); the ultra-rare syndrome gets none, because its two shelf entries are unreadable GeneReviews chapters on other diseases. Noonan and Stargardt rest on reviews only. 60 points drafted, 27 passed on the first round, 55 accepted, 5 dropped; of 97 verifier fixes, 58 were to the questions. 0.35–0.62 USD per disease per run.
+- **FD against the hand-written block:** every run reproduces points 1, 2, 3 and 6; run 1 misses the blood-test and tissue-handling points, run 2 misses the blood-test point. The loop checks what the generator chose, never what it left out.
+- **Found and fixed after the run** (`97b5bc8`): reviews and case reports graded A by title; PMC list items glued together, which failed a correct FOP quote; the closest-passage hint inside long lists.
+- **Not solved:** NCBI Bookshelf serves automated fetches a reCAPTCHA page, so no GeneReviews chapter could be read (the production synthesis uses the same reader); several guidelines are not in PubMed Central; the verifier is inconsistent on compound questions and on some Polish wording across calls.

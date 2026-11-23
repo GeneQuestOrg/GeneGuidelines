@@ -119,7 +119,9 @@ def _caught_lines(r: dict) -> list[str]:
             lines.append(f"- Round {rnd['round']}, {p['id']} ({_STATUS_WORD.get(p['status'], p['status'])}): quote \"{_md(p['point']['quote'])[:220]}\" — {detail}")
     for d in r["loop"].get("dropped") or []:
         lines.append(f"- Dropped {d['id']} (round {d['round']}): {_md(d['why'])}")
-    return lines or ["Nothing: every drafted point passed on the first round."]
+    if lines:
+        return lines
+    return ["Nothing: every drafted point passed on the first round."] if r["loop"].get("rounds") else ["Nothing was drafted, so nothing was checked."]
 
 
 def _doc_table(r: dict) -> list[str]:
@@ -133,7 +135,7 @@ def _doc_table(r: dict) -> list[str]:
 
 
 def _fd_section(results: dict[str, dict]) -> list[str]:
-    fd = [r for key, r in results.items() if r["slug"] == "fd"]
+    fd = sorted((r for r in results.values() if r["slug"] == "fd"), key=lambda r: r.get("tag") or "")
     if not fd:
         return ["No FD result."]
     lines = []
