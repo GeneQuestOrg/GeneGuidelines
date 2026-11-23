@@ -30,7 +30,7 @@
   "step1Hook": "Nobody tells you the diagnosis is yours to double-check",
   "step1Title": "First, make sure it’s really this disease — and this subtype.",
   "step1LedeFdA": "The doctor establishes whether the lesion involves one bone, several bones, or also the skin and hormones (McCune-Albright syndrome). In a typical picture the diagnosis is made clinically, after a staging evaluation of the whole body; a biopsy is needed in unusual or questionable cases.",
-  "step1LedeFdB": "The gene change is present in only some cells, so a negative genetic test from blood does not close the matter.",
+  "step1LedeFdB": "The gene change is present in only some cells, so a negative genetic test from blood does not close the matter. The guideline adds that when the clinical picture, imaging and histology do not confirm FD, a genetic test of the affected tissue itself is indicated in some cases.",
   "step1LedeGenericPart1": "Many rare diseases look like more common ones on a first pass. Before anyone proposes treatment, the diagnosis and subtype must be confirmed — often",
   "step1LedeGenericBold": "molecularly",
   "step1LedeGenericPart2": "and on imaging, not by one test in isolation.",

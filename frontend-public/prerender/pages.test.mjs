@@ -91,11 +91,12 @@ describe("prerendered pages", () => {
     expect(ids("pl")).toContain("clinicians");
   });
 
-  it.each(["/", "/pl"])("%s says what the site is and that nobody signs it off", (path) => {
+  it.each(["/", "/pl"])("%s says what the site is, that AI writes it and that no clinician approved it", (path) => {
     const page = byPath[path];
     expect(page.title).not.toContain(" · GeneGuidelines");
     expect(page.body).toContain("<h1>");
-    expect(page.body.toLowerCase()).toMatch(/no one formally signs off|nikt się pod nim oficjalnie nie podpisuje/);
+    expect(page.body.toLowerCase()).toMatch(/written by ai|napisane przez ai/);
+    expect(page.body.toLowerCase()).toMatch(/no clinician has approved it|żaden lekarz go nie zatwierdził/);
     // The home page is about the site, not about FD.
     expect(page.jsonLd.about).toBeUndefined();
   });
