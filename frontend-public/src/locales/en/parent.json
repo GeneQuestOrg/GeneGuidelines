@@ -4,8 +4,8 @@
   "parentPersonaSub": "Plain language. What to do now, which questions to ask, and where to find help.",
   "doctorPersonaTitle": "Clinician",
   "doctorPersonaSub": "Full pathways, literature, dosing detail, and proposed updates for review.",
-  "skeletonNoticeTitle": "Skeleton coverage.",
-  "skeletonNoticeBody": "Sections exist but content is still minimal — a full AI guideline pipeline will follow in a later release.",
+  "skeletonNoticeTitle": "Partial information.",
+  "skeletonNoticeBody": "For this condition we have only part of the information so far: some sections may be short or empty.",
   "relatedTitle": "Related conditions",
   "tabs": {
     "overview": "Overview",

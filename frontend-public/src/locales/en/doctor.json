@@ -4,8 +4,8 @@
   "parentPersonaSub": "Plain-language pathway and family resources.",
   "doctorPersonaTitle": "Clinician",
   "doctorPersonaSub": "Full guideline text, diagnostic algorithms, dosing, literature trace, and proposed-update queue.",
-  "skeletonNoticeTitle": "Skeleton coverage.",
-  "skeletonNoticeBody": "Minimal sections only — run the full pipeline before citing in clinical decisions.",
+  "skeletonNoticeTitle": "Partial coverage.",
+  "skeletonNoticeBody": "Some sections are still short or empty; check the sources before relying on them in a clinical decision.",
   "relatedTitle": "Related phenotypes",
   "tabs": {
     "overview": "Overview",

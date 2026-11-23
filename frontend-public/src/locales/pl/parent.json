@@ -4,8 +4,8 @@
   "parentPersonaSub": "Prostym językiem. Co robić teraz, o co pytać i gdzie szukać pomocy.",
   "doctorPersonaTitle": "Lekarz",
   "doctorPersonaSub": "Pełne ścieżki, literatura, szczegóły dawkowania i proponowane zmiany do przeglądu.",
-  "skeletonNoticeTitle": "Pokrycie szkieletowe.",
-  "skeletonNoticeBody": "Sekcje istnieją, ale treść jest jeszcze minimalna — pełny pipeline wytycznych AI pojawi się w kolejnym wydaniu.",
+  "skeletonNoticeTitle": "Niepełne informacje.",
+  "skeletonNoticeBody": "Dla tej choroby mamy na razie tylko część informacji – niektóre sekcje mogą być krótkie albo puste.",
   "relatedTitle": "Powiązane choroby",
   "tabs": {
     "overview": "Przegląd",

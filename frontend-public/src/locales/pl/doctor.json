@@ -4,8 +4,8 @@
   "parentPersonaSub": "Ścieżka prostym językiem i zasoby dla rodziny.",
   "doctorPersonaTitle": "Lekarz",
   "doctorPersonaSub": "Pełny tekst wytycznej, algorytmy diagnostyczne, dawkowanie, ślad literaturowy i kolejka proponowanych zmian.",
-  "skeletonNoticeTitle": "Pokrycie szkieletowe.",
-  "skeletonNoticeBody": "Tylko minimalne sekcje — uruchom pełny pipeline przed cytowaniem w decyzjach klinicznych.",
+  "skeletonNoticeTitle": "Niepełne pokrycie.",
+  "skeletonNoticeBody": "Część sekcji jest jeszcze krótka albo pusta; zanim oprzesz na nich decyzję kliniczną, sprawdź źródła.",
   "relatedTitle": "Powiązane fenotypy",
   "tabs": {
     "overview": "Przegląd",
