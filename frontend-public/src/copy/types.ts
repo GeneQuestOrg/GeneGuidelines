@@ -83,8 +83,6 @@ export interface ParentOrientationCopy {
   /** Named "Materials for the family doctor" section (lower-middle). */
   familyDoctorTitle: string;
   familyDoctorSub: string;
-  /** Light, persistent "take this to your doctor" affordance. */
-  takeToDoctorCta: string;
 }
 
 export interface DiseaseCopy {

@@ -67,7 +67,6 @@ function buildOrientation(t: TFunction): ParentOrientationCopy {
     questionsForDoctor: objectResult<string[]>(t, "orientation.questionsForDoctor"),
     familyDoctorTitle: t("orientation.familyDoctorTitle"),
     familyDoctorSub: t("orientation.familyDoctorSub"),
-    takeToDoctorCta: t("orientation.takeToDoctorCta"),
   };
 }
 

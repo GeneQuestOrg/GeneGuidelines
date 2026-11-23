@@ -22,6 +22,11 @@ const diseaseTabsSource = readFileSync(
   "utf8",
 );
 
+const familyDoctorSource = readFileSync(
+  fileURLToPath(new URL("./FamilyDoctorMaterials.tsx", import.meta.url)),
+  "utf8",
+);
+
 describe("DiseaseTabs medical-safety", () => {
   it("does not render the unsourced red-flags block on the disease page", () => {
     // Assert on render-only tokens (the CSS class and the `.map` render), not the
@@ -31,8 +36,17 @@ describe("DiseaseTabs medical-safety", () => {
   });
 
   it("keeps the source shelf (Materials for the family doctor) — hard, cited data", () => {
-    expect(diseaseTabsSource).toContain("familyDoctorTitle");
-    expect(diseaseTabsSource).toContain("CompactSourceShelf");
+    // The section lives in its own component since it gained print and e-mail.
+    expect(diseaseTabsSource).toContain("<FamilyDoctorMaterials");
+    expect(familyDoctorSource).toContain("familyDoctorTitle");
+    expect(familyDoctorSource).toContain("CompactSourceShelf");
+  });
+
+  it("never shows a parent a review queue or a sign-off", () => {
+    // Proposed updates and the "official guideline" stub are clinician-only, and the seeded disease.openPRs count is never rendered.
+    expect(diseaseTabsSource).not.toContain("disease.openPRs");
+    expect(diseaseTabsSource).toContain("isClinician && openPrs.length > 0");
+    expect(diseaseTabsSource).not.toMatch(/\{openPrs\.length > 0 \?/);
   });
 
   it("preserves the red-flags copy data in both locales so removal is reversible", () => {

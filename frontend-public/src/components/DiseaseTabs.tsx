@@ -11,7 +11,7 @@ import { DiseaseOpenPrList } from "./DiseaseOpenPrList";
 import { FoundationsList } from "./FoundationsList";
 import { TherapiesList } from "./TherapiesList";
 import { TrialsList } from "./TrialsList";
-import { CompactSourceShelf } from "./guidelines/CompactSourceShelf";
+import { FamilyDoctorMaterials } from "./FamilyDoctorMaterials";
 import { PARENT_PAGE_ANCHORS } from "./parentPageAnchors";
 import { useContentPrs } from "../hooks/useContentPrs";
 import { useDiseaseDoctors } from "../hooks/useDiseaseDoctors";
@@ -223,26 +223,13 @@ export function DiseaseTabs({
               </Section>
             </div>
 
-            {orientation != null && sourceDocs.length > 0 ? (
-              <Section
-                title={orientation.familyDoctorTitle}
-                sub={orientation.familyDoctorSub}
-                action={
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    onClick={() => window.print()}
-                  >
-                    {orientation.takeToDoctorCta}
-                  </Button>
-                }
-                divider
-              >
-                <CompactSourceShelf
-                  docs={sourceDocs}
-                  onSeeAll={() => onNav(`/diseases/${slug}/guidelines`)}
-                />
-              </Section>
+            {orientation != null ? (
+              <FamilyDoctorMaterials
+                docs={sourceDocs}
+                copy={orientation}
+                diseaseName={disease.nameShort || disease.name}
+                onSeeAll={() => onNav(`/diseases/${slug}/guidelines`)}
+              />
             ) : null}
 
             {/* Medical-safety: the static, hand-seeded "Red flags — when to seek a
@@ -372,7 +359,10 @@ export function DiseaseTabs({
 
         {tab === "guidelines" ? (
           <Section title={copy.guidelinesTitle} sub={copy.guidelinesSub}>
-            <p className="d-panel-stat">{copy.openPrsSub(disease.openPRs)}</p>
+            {/* Proposed updates are a clinician concept, so a parent never sees a review queue: nobody signs this summary off. The count is the live one; the disease record's own `openPRs` is a seeded number with nothing behind it and is not shown anywhere. */}
+            {isClinician ? (
+              <p className="d-panel-stat">{copy.openPrsSub(openPrs.length)}</p>
+            ) : null}
             {guidelineAsOf != null ? (
               <p className="d-panel-note">{t("dataAsOf.guideline", { date: guidelineAsOf })}</p>
             ) : null}
@@ -381,7 +371,7 @@ export function DiseaseTabs({
                 {copy.synthesisCta}
               </Button>
             </div>
-            {openPrs.length > 0 ? (
+            {isClinician && openPrs.length > 0 ? (
               <Section title={copy.openPrsTitle} sub={copy.openPrsSub(openPrs.length)} divider>
                 <DiseaseOpenPrList
                   prs={openPrs}
@@ -392,11 +382,13 @@ export function DiseaseTabs({
                 />
               </Section>
             ) : null}
-            <Section title={copy.officialGuidelineTitle} sub={copy.officialGuidelineSub} divider>
-              <p className="d-panel-stat">
-                {t("diseaseTabs.consensusDocumentFor", { name: disease.name })}
-              </p>
-            </Section>
+            {isClinician ? (
+              <Section title={copy.officialGuidelineTitle} sub={copy.officialGuidelineSub} divider>
+                <p className="d-panel-stat">
+                  {t("diseaseTabs.consensusDocumentFor", { name: disease.name })}
+                </p>
+              </Section>
+            ) : null}
           </Section>
         ) : null}
       </div>

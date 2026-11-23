@@ -55,8 +55,8 @@
   "trialsSub_many": "{{count}} aktywnych lub rekrutujących badań powiązanych z tą chorobą.",
   "trialsSub_other": "{{count}} aktywnych lub rekrutujących badań powiązanych z tą chorobą.",
   "trialsEmpty": "Nie ma jeszcze wskazanych rekrutujących badań.",
-  "guidelinesTitle": "Żywa wytyczna",
-  "guidelinesSub": "Przystępne streszczenie aktualnego dokumentu konsensusu — pełne cytowania w czytniku.",
+  "guidelinesTitle": "Streszczenie wytycznych",
+  "guidelinesSub": "Streszczenie opublikowanych wytycznych i literatury, napisane przez AI, z odnośnikami do źródeł.",
   "guidelinesCta": "Przeczytaj wytyczną",
   "myCaseCta": "🔒 Moja sprawa",
   "notifyCta": "🔔 Powiadom mnie",
@@ -85,6 +85,10 @@
     ],
     "familyDoctorTitle": "Materiały dla lekarza rodzinnego",
     "familyDoctorSub": "Gotowe do druku lub wysłania. Lekarz rodzinny często nie ma czasu, żeby samodzielnie znaleźć te publikacje — zabierz dokumenty źródłowe na następną wizytę.",
-    "takeToDoctorCta": "Zabierz to do lekarza — drukuj / wyślij"
+    "printForDoctorCta": "Drukuj listę",
+    "emailForDoctorCta": "Wyślij e-mailem",
+    "emailForDoctorSubject": "{{name}} – publikacje dla lekarza",
+    "emailForDoctorIntro": "Dzień dobry,\n\nprzesyłam listę publikacji o chorobie {{name}}, które mogą się przydać przy prowadzeniu naszego dziecka. Listę przygotował serwis GeneGuidelines Fundacji GeneQuest (geneguidelines.genequest.org); autorzy publikacji jej nie przeglądali.",
+    "etAl": "i wsp."
   }
 }

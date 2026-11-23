@@ -5,6 +5,7 @@ import type { DiseaseCopy } from "../copy";
 import type { SubscriptionUiStatus } from "../utils/diseaseSubscriptionStorage";
 import { MY_CASE_ENABLED } from "../config/features";
 import "../styles/disease-page.css";
+import { localizeInheritance, localizePrevalence } from "../utils/diseaseFacts";
 
 export interface DiseaseHeroProps {
   disease: Disease;
@@ -23,7 +24,7 @@ export function DiseaseHero({
   onNav,
   onSubscribe,
 }: DiseaseHeroProps) {
-  const { t } = useTranslation("common");
+  const { t, i18n } = useTranslation("common");
   const slug = disease.slug;
   // The "pending" status carries the safety-critical epistemic frame ("AI-drafted…,
   // not an official guideline"). Localize it so a Polish reader sees Polish framing;
@@ -64,11 +65,11 @@ export function DiseaseHero({
         </div>
         <div>
           <dt>{t("diseaseFacts.inheritance")}</dt>
-          <dd>{disease.inheritance}</dd>
+          <dd>{localizeInheritance(disease.inheritance, i18n.language)}</dd>
         </div>
         <div>
           <dt>{t("diseaseFacts.prevalence")}</dt>
-          <dd>{disease.prevalenceText}</dd>
+          <dd>{localizePrevalence(disease.prevalenceText, i18n.language)}</dd>
         </div>
         <div>
           <dt>{t("diseaseFacts.types")}</dt>

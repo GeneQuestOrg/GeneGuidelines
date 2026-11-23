@@ -51,8 +51,8 @@
   "trialsSub_one": "{{count}} active or recruiting trial associated with this disease.",
   "trialsSub_other": "{{count}} active or recruiting trials associated with this disease.",
   "trialsEmpty": "No recruiting trials listed yet.",
-  "guidelinesTitle": "Living guideline",
-  "guidelinesSub": "Patient-friendly summary of the current consensus document — full citations in the reader.",
+  "guidelinesTitle": "Guideline summary",
+  "guidelinesSub": "A summary of the published guidelines and literature, written by AI, with links to the sources.",
   "guidelinesCta": "Read the guideline",
   "myCaseCta": "🔒 My case",
   "notifyCta": "🔔 Notify me",
@@ -79,6 +79,10 @@
     ],
     "familyDoctorTitle": "Materials for the family doctor",
     "familyDoctorSub": "Ready to print or email. A family doctor often doesn't have time to find these papers themselves — take the source documents to your next visit.",
-    "takeToDoctorCta": "Take this to your doctor — print / send"
+    "printForDoctorCta": "Print the list",
+    "emailForDoctorCta": "E-mail the list",
+    "emailForDoctorSubject": "{{name}} – papers for the doctor",
+    "emailForDoctorIntro": "Hello,\n\nhere is a list of papers on {{name}} that may help with our child's care. The list comes from GeneGuidelines, a service of the GeneQuest Foundation (geneguidelines.genequest.org); the authors of the papers did not review it.",
+    "etAl": "et al."
   }
 }

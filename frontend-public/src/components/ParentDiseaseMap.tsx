@@ -3,6 +3,7 @@ import type { Disease } from "../types";
 import { MY_CASE_ENABLED, PRE_DIAGNOSIS_INTERVIEW_ENABLED } from "../config/features";
 import { PARENT_PAGE_ANCHORS } from "./parentPageAnchors";
 import "../styles/disease-map.css";
+import { localizeInheritance, localizePrevalence } from "../utils/diseaseFacts";
 
 /** Step 1's questions, paired with the guideline sentence each one rests on. */
 const ASK_QUESTIONS: ReadonlyArray<readonly [string, string]> = [
@@ -27,7 +28,7 @@ export interface ParentDiseaseMapProps {
  * The prose is hand-authored and editorial (the orientation voice is the product); only the disease facts, the action-button counts, and the guideline-exists state are wired to live data. Founder anchors are the FD diagnostic odyssey and show only for FD; the spine itself is disease-agnostic.
  */
 export function ParentDiseaseMap({ disease, hasGuideline, onNav }: ParentDiseaseMapProps) {
-  const { t } = useTranslation("disease-map");
+  const { t, i18n } = useTranslation("disease-map");
   const slug = disease.slug;
   const isFd = slug === "fd";
   const nameShort = disease.nameShort || disease.name;
@@ -70,12 +71,12 @@ export function ParentDiseaseMap({ disease, hasGuideline, onNav }: ParentDisease
           ) : null}
           {disease.inheritance ? (
             <span className="dmap-fact">
-              <span className="dmap-fact__k">{t("factInheritance")}</span> {disease.inheritance}
+              <span className="dmap-fact__k">{t("factInheritance")}</span> {localizeInheritance(disease.inheritance, i18n.language)}
             </span>
           ) : null}
           {disease.prevalenceText ? (
             <span className="dmap-fact">
-              <span className="dmap-fact__k">{t("factPrevalence")}</span> {disease.prevalenceText}
+              <span className="dmap-fact__k">{t("factPrevalence")}</span> {localizePrevalence(disease.prevalenceText, i18n.language)}
             </span>
           ) : null}
           {disease.omim ? (
