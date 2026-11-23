@@ -28,6 +28,15 @@ Can a generator→verifier loop produce, for each catalog disease with a guideli
 
 Metrics per disease: shelf documents graded and readable, documents shown to the generator, points drafted, accepted and dropped, revision rounds, whether the block would publish, its basis, cost and tokens.
 
+## Amendment of 2026-11-24 (before the second run)
+
+Darek approved four changes after the first run; the second run measures them, on a new snapshot (`2026-11-24`) whose GeneReviews chapters are read from NCBI's bulk archive with the product's reader (`backend/tools/genereviews_archive.py`), and whose shelves pass the relevance check (`backend/guidelines/relevance.py`).
+
+- **Loop:** a coverage review (Opus, own prompt) after the draft, with the generator adding a point per gap (up to 8 points); a FIX with complete replacements whose quote passes the verbatim check is published as the verifier wrote it; on a revision the verifier sees its previous verdict; titles by basis; quotes from sources without an open licence at most 400 characters; GeneReviews credit on its points.
+- **Worked example:** the hand-written FD block is the generator's worked example and the verifier's calibrated PASS example for every disease except FD, where it is held out.
+- **Verifier calibration** is re-run with the new verifier prompt and the calibration examples held out (they are the gold), under the same rule as before.
+- **Rules for this run** (descriptive, n = 1): the FD comparison as before; MAS passes its new requirement if at least one accepted point is about the endocrine work-up; publication follows the loop's rule only. Budget: up to 25 USD more, enforced by the same ledger (`--cap 32`, the first run having spent 6.54 USD).
+
 ## Commands
 
 From the repository root, with the product's requirements installed (Python 3.12, `anthropic==2.12.0`) and the product's `.env` (the Anthropic key is read from that file only):
