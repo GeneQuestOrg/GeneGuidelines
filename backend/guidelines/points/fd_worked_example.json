@@ -1,0 +1,50 @@
+{
+  "about": "The hand-written FD block (frontend-public/src/locales/{en,pl}/disease-map.json, askP/askQ/askS 1-6), checked twice by an independent verifier against the full guideline. It is the generator's worked example and the verifier's calibrated PASS example. It must stay identical to the locale files (backend/tests/test_guideline_points_example.py); FD's own evaluation holds it out.",
+  "disease": "Fibrous dysplasia / McCune-Albright syndrome",
+  "doc_id": "31196103",
+  "source": "Javaid MK et al., Best practice management guidelines for fibrous dysplasia/McCune-Albright syndrome: a consensus statement from the FD/MAS international consortium, Orphanet J Rare Dis 2019;14:139 (PMID 31196103)",
+  "points": [
+    {
+      "quote": "In most cases, the diagnosis of FD/MAS can be made clinically after a complete staging evaluation for skeletal, endocrine, soft tissue and dermatologic features.",
+      "summary_en": "In most cases FD/MAS can be diagnosed clinically, after an evaluation of the whole body: bones, hormones, soft tissue and skin.",
+      "summary_pl": "W większości przypadków FD/MAS można rozpoznać klinicznie, po ocenie całego ciała: kości, układu hormonalnego, tkanek miękkich i skóry.",
+      "question_en": "Which of these areas have been assessed in our child so far, and is anything else planned?",
+      "question_pl": "Które z tych obszarów zostały już u naszego dziecka ocenione i czy coś jeszcze jest planowane?"
+    },
+    {
+      "quote": "Isolated monostotic bone lesions without accompanying skin or endocrine findings include a wide differential diagnosis and diagnostic uncertainty and usually require histological confirmation.",
+      "summary_en": "A single bone lesion without skin or hormone findings can resemble many other diseases and usually needs confirmation under the microscope.",
+      "summary_pl": "Pojedyncza zmiana w kości, bez objawów skórnych i hormonalnych, może przypominać wiele innych chorób i zwykle wymaga potwierdzenia w badaniu histopatologicznym.",
+      "question_en": "Is it a single lesion in our case, and what is the diagnosis based on?",
+      "question_pl": "Czy u nas to pojedyncza zmiana i na czym opiera się rozpoznanie?"
+    },
+    {
+      "quote": "A genetic diagnosis is recommended where the diagnosis is in question. This especially applies to isolated/monostotic lesions in the skull, after exclusion of other associated skeletal and/or extraskeletal features…",
+      "summary_en": "When the diagnosis is in question, the guideline recommends a genetic test for the GNAS mutation, especially for a single lesion in the skull once other signs of the disease have been ruled out.",
+      "summary_pl": "Gdy rozpoznanie budzi wątpliwości, wytyczna zaleca badanie genetyczne w kierunku mutacji GNAS, zwłaszcza przy pojedynczej zmianie w czaszce, gdy wykluczono inne objawy choroby.",
+      "question_en": "Is the diagnosis certain in our case, or is this test worth considering?",
+      "question_pl": "Czy u nas rozpoznanie jest pewne, czy warto rozważyć to badanie?"
+    },
+    {
+      "quote": "Use of blood for mutation analysis cannot exclude the diagnosis of monostotic FD, but a positive result is informative.",
+      "summary_en": "A negative genetic test from blood cannot rule out FD in a single bone; a positive result is informative.",
+      "summary_pl": "Ujemny wynik badania genetycznego z krwi nie wyklucza FD dotyczącej jednej kości; wynik dodatni jest pomocny.",
+      "question_en": "If the blood test was negative, what does that mean for us?",
+      "question_pl": "Jeśli wynik z krwi był ujemny, co to dla nas znaczy?"
+    },
+    {
+      "quote": "Diagnostic biopsies should be processed as fresh or fresh frozen material to enable genetic testing for GNAS mutation. False negatives may occur if the biopsy contains normal tissue and the biopsy may need to be repeated. Mutation analysis can also be performed in paraffin-embedded samples although false negatives are then more likely.",
+      "summary_en": "If a diagnostic biopsy is taken, the tissue should be sent fresh or fresh frozen so that it can be tested for GNAS. A result can still be falsely negative if the sample contains normal tissue, and the biopsy may then need to be repeated. Testing is also possible on paraffin-embedded samples, but a false negative is then more likely.",
+      "summary_pl": "Jeśli wykonuje się biopsję diagnostyczną, materiał powinien trafić do badania jako świeży lub świeżo mrożony, żeby dało się zbadać GNAS. Wynik może być fałszywie ujemny, jeśli w pobranym materiale jest prawidłowa tkanka – czasem trzeba wtedy powtórzyć biopsję. Badanie można też wykonać na materiale zatopionym w parafinie, ale wtedy wynik fałszywie ujemny jest bardziej prawdopodobny.",
+      "question_en": "If a biopsy is planned, how will the sample be handled, and could it be tested for GNAS?",
+      "question_pl": "Jeśli planowana jest biopsja, jak zostanie zabezpieczony materiał i czy będzie można wykonać z niego badanie GNAS?"
+    },
+    {
+      "quote": "Biopsy with histological evaluation of suspected bone disease is usually only necessary in unusual or questionable cases, and/or if malignancy is suspected.",
+      "summary_en": "A biopsy is usually needed only in unusual or questionable cases, or when a malignant tumour is suspected.",
+      "summary_pl": "Biopsja jest zwykle potrzebna tylko w przypadkach nietypowych lub wątpliwych albo przy podejrzeniu nowotworu złośliwego.",
+      "question_en": "Is a biopsy needed in our case, and if so, what should it settle?",
+      "question_pl": "Czy u nas biopsja jest potrzebna, a jeśli tak, co ma rozstrzygnąć?"
+    }
+  ]
+}

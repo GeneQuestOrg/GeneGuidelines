@@ -5,6 +5,7 @@ The LLM-facing models are sent to Claude as a JSON-schema response format (``ant
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from typing import Literal
 
@@ -15,8 +16,12 @@ POINT_FIELDS = ("quote", "summary_en", "summary_pl", "question_en", "question_pl
 PointField = Literal["quote", "summary_en", "summary_pl", "question_en", "question_pl"]
 
 MIN_POINTS_TO_PUBLISH = 3
-MAX_POINTS = 6
+# The generator aims for 3-6 points; the coverage pass may take a block to 8 when a disease needs more at diagnosis (McCune-Albright: the bone work-up and the endocrine one).
+MAX_POINTS = 8
 MAX_REVISION_ROUNDS = 2
+# Longest quote from a source without an open licence ("short verbatim quotes with attribution and a link").
+RESTRICTED_QUOTE_MAX_CHARS = 400
+_OPEN_LICENCE = ("creativecommons", "creative commons", "cc by", "cc0", "public domain", "not under copyright", "u.s. government work")
 
 
 class DraftPoint(BaseModel):
@@ -72,6 +77,25 @@ class VerifierOutput(BaseModel):
     verdicts: list[PointVerdict] = Field(..., description="One verdict per point, in the order given")
 
 
+class CoverageGap(BaseModel):
+    """Something a family needs to know at diagnosis that the draft block leaves out, as the coverage reviewer found it."""
+
+    model_config = ConfigDict(extra="ignore", str_strip_whitespace=True)
+
+    topic: str = Field(..., description="What is missing, in a few words")
+    doc_id: str = Field(..., description="id of the document that says it")
+    section: str = Field(..., description="Heading the passage sits under")
+    passage: str = Field(..., description="The passage, copied verbatim from the document")
+    why: str = Field(..., description="Why a family needs this at diagnosis, in one sentence")
+
+
+class CoverageOutput(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    gaps: list[CoverageGap] = Field(..., description="At most four gaps, most important first; empty when nothing a family needs is missing")
+    least_important: list[str] = Field(..., description="ids of draft points that matter least, to drop first if the block would exceed its limit")
+
+
 @dataclass(frozen=True)
 class Paragraph:
     section: str
@@ -100,10 +124,41 @@ class SourceDoc:
     role: str = ""
     license: str = ""
     pubtypes: tuple[str, ...] = field(default_factory=tuple)
+    copyright: str = ""
+    book: str = ""
 
     @property
     def readable(self) -> bool:
         return bool(self.paragraphs)
+
+    @property
+    def open_licence(self) -> bool:
+        """An open licence (Creative Commons, public domain, a US Government work) allows quoting at any length with attribution; anything else (GeneReviews' terms, "fair use", no licence) allows only short quotes."""
+        text = (self.license or "").lower()
+        return any(marker in text for marker in _OPEN_LICENCE)
+
+    @property
+    def quote_limit(self) -> int | None:
+        return None if self.open_licence else RESTRICTED_QUOTE_MAX_CHARS
+
+    @property
+    def url(self) -> str:
+        if self.pmcid:
+            return f"https://pmc.ncbi.nlm.nih.gov/articles/{self.pmcid}/"
+        if self.bookshelf:
+            return f"https://www.ncbi.nlm.nih.gov/books/{self.bookshelf}/"
+        if self.pmid:
+            return f"https://pubmed.ncbi.nlm.nih.gov/{self.pmid}/"
+        return ""
+
+    @property
+    def credit(self) -> str:
+        """The credit a source's terms ask for. GeneReviews: source and copyright with every copy, and a link."""
+        if self.book.lower().startswith("genereviews") or "genereviews" in (self.copyright or "").lower():
+            years = re.search(r"(19|20)\d{2}\s*[-\u2013]\s*(19|20)\d{2}", self.copyright or "")
+            span = years.group(0).replace("-", "\u2013").replace(" ", "") if years else "1993\u20132026"
+            return f"GeneReviews\u00ae, https://www.genereviews.org. Copyright \u00a9 {span} University of Washington, Seattle. GeneReviews is a registered trademark of the University of Washington, Seattle."
+        return ""
 
     @property
     def chars(self) -> int:

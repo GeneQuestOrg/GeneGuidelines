@@ -143,9 +143,9 @@ def test_selection_leaves_out_a_document_about_another_disease():
 
 def test_block_basis_never_calls_a_review_the_guideline():
     assert block_basis(["A", "A"]) == "guideline"
-    assert block_basis(["A", "B"]) == "guideline+genereviews"
-    assert block_basis(["A", "C"]) == "guideline+review"
-    assert block_basis(["B", "C"]) == "review"
+    assert block_basis(["A", "B"]) == "guideline+reviews"
+    assert block_basis(["A", "C"]) == "guideline+reviews"
+    assert block_basis(["B", "C"]) == "reviews" and block_basis(["B"]) == "reviews"
     assert block_basis([]) is None
 
 
@@ -179,8 +179,8 @@ class FakeCaller:
         self.responses = list(responses)
         self.calls: list[dict] = []
 
-    async def call(self, *, role, system, prefix, user, result_type):
-        self.calls.append({"role": role, "system": system, "prefix": prefix, "user": user})
+    async def call(self, *, role, system, prefix, user, result_type, cache=True):
+        self.calls.append({"role": role, "system": system, "prefix": prefix, "user": user, "cache": cache})
         response = self.responses.pop(0)
         if callable(response):
             response = response(user)
@@ -194,6 +194,7 @@ GOOD = [
     _point("p2", quote="Isolated monostotic bone lesions without accompanying skin or endocrine findings include a wide differential diagnosis"),
     _point("p3", quote="Diagnostic biopsies should be processed as fresh or fresh frozen material to enable genetic testing for GNAS mutation. False negatives may occur if the biopsy contains normal tissue"),
 ]
+NO_GAPS = {"gaps": [], "least_important": []}
 
 
 def _draft(points, reason=""):
@@ -204,18 +205,33 @@ def _verdicts(*pairs):
     return {"verdicts": [{"id": pid, "verdict": v, "fixes": fixes, "reason": "r"} for pid, v, fixes in pairs]}
 
 
-def _run(generator, verifier, docs=(CONSENSUS,), **kw):
-    return asyncio.run(build_points_block(disease_name="Fibrous dysplasia", docs=list(docs), generator=generator, verifier=verifier, **kw))
+def _run(generator, verifier, docs=(CONSENSUS,), coverage=None, **kw):
+    coverage = coverage if coverage is not None else FakeCaller([NO_GAPS])
+    return asyncio.run(build_points_block(disease_name="Fibrous dysplasia", docs=list(docs), generator=generator, verifier=verifier, coverage=coverage, **kw))
 
 
 def test_all_points_pass_first_round_and_the_block_publishes():
     gen = FakeCaller([_draft(GOOD)])
     ver = FakeCaller([_verdicts(("p1", "PASS", []), ("p2", "PASS", []), ("p3", "PASS", []))])
-    record = _run(gen, ver)
+    cov = FakeCaller([NO_GAPS])
+    record = _run(gen, ver, coverage=cov)
     assert record["publish"] is True and [p["id"] for p in record["accepted"]] == ["p1", "p2", "p3"]
     assert revision_rounds_used(record) == 0 and len(gen.calls) == 1 and len(ver.calls) == 1
-    assert gen.calls[0]["prefix"] and "31196103" in gen.calls[0]["prefix"] and ver.calls[0]["prefix"] == ""
+    assert gen.calls[0]["prefix"] and "31196103" in gen.calls[0]["prefix"] and 'licence="restricted"' in gen.calls[0]["prefix"]
     assert "[paragraph containing the quote]" in ver.calls[0]["user"]
+    assert cov.calls[0]["role"] == "coverage" and cov.calls[0]["cache"] is False and "p3" in cov.calls[0]["user"]
+
+
+def test_coverage_gaps_become_points_that_go_through_the_verifier():
+    blood = _point("p4", quote="Bisphosphonates may be used to treat bone pain that does not respond to analgesics in adults with FD.")
+    cov = FakeCaller([{"gaps": [{"topic": "bone pain", "doc_id": "31196103", "section": "Treatment", "passage": blood.quote, "why": "families ask"}], "least_important": ["p2"]}])
+    gen = FakeCaller([_draft(GOOD), _draft(GOOD + [blood])])
+    ver = FakeCaller([_verdicts(("p1", "PASS", []), ("p2", "PASS", []), ("p3", "PASS", []), ("p4", "PASS", []))])
+    record = _run(gen, ver, coverage=cov)
+    assert record["coverage"]["added"] == ["p4"] and [p["id"] for p in record["accepted"]] == ["p1", "p2", "p3", "p4"]
+    completion = gen.calls[1]["user"]
+    assert "leaves out" in completion and "bone pain" in completion and "p2" in completion
+    assert 'id="p4"' in ver.calls[0]["user"]
 
 
 def test_a_quote_that_fails_the_verbatim_check_never_reaches_the_verifier_and_never_publishes():
@@ -232,9 +248,23 @@ def test_a_quote_that_fails_the_verbatim_check_never_reaches_the_verifier_and_ne
     assert record["publish"] is True
 
 
-def test_verifier_fix_goes_back_to_the_generator_and_a_revised_point_can_pass():
+def test_a_complete_verifier_fix_is_published_as_the_verifier_wrote_it():
+    fix = [
+        {"field": "summary_en", "replacement": "If a biopsy is taken, fresh tissue allows a GNAS test; false negatives may occur.", "reason": "drops the caveat"},
+        {"field": "summary_pl", "replacement": "Jeśli wykonuje się biopsję, świeży materiał pozwala zbadać GNAS; wynik może być fałszywie ujemny.", "reason": "match EN"},
+    ]
+    gen = FakeCaller([_draft(GOOD)])
+    ver = FakeCaller([_verdicts(("p1", "PASS", []), ("p2", "PASS", []), ("p3", "FIX", fix))])
+    record = _run(gen, ver)
+    assert record["publish"] is True and revision_rounds_used(record) == 0 and len(gen.calls) == 1
+    assert record["rounds"][0]["points"][2]["status"] == "accepted_verifier_fix"
+    assert record["accepted"][2]["summary_en"].endswith("false negatives may occur.")
+
+
+def test_an_incomplete_fix_goes_back_to_the_generator_and_the_verifier_sees_its_verdict():
     fixed = _point("p3", quote=GOOD[2].quote, summary_en="If a biopsy is taken, fresh tissue allows a GNAS test; false negatives may occur.")
     gen = FakeCaller([_draft(GOOD), _draft([fixed])])
+    # An English fix without the matching Polish would publish two languages saying different things.
     fix = [{"field": "summary_en", "replacement": "If a biopsy is taken, fresh tissue allows a GNAS test; false negatives may occur.", "reason": "the summary drops the false-negative caveat"}]
     ver = FakeCaller([_verdicts(("p1", "PASS", []), ("p2", "PASS", []), ("p3", "FIX", fix)), _verdicts(("p3", "PASS", []))])
     record = _run(gen, ver)
@@ -243,11 +273,27 @@ def test_verifier_fix_goes_back_to_the_generator_and_a_revised_point_can_pass():
     revision_prompt = gen.calls[1]["user"]
     assert "false-negative caveat" in revision_prompt and "Points already accepted" in revision_prompt and "p1:" in revision_prompt
     assert gen.calls[1]["prefix"] == gen.calls[0]["prefix"]  # identical prefix, so the shelf is read from the prompt cache
+    assert "<your_previous_verdict>" in ver.calls[1]["user"] and "false-negative caveat" in ver.calls[1]["user"]
+    assert "<your_previous_verdict>" not in ver.calls[0]["user"]
+
+
+def test_a_replacement_quote_must_itself_pass_the_verbatim_check():
+    fix = [
+        {"field": "quote", "replacement": "Diagnostic biopsies must always be processed fresh.", "reason": "context"},
+        {"field": "summary_en", "replacement": "x", "reason": "match"},
+        {"field": "summary_pl", "replacement": "x", "reason": "match"},
+    ]
+    gen = FakeCaller([_draft(GOOD), _draft([GOOD[2]])])
+    ver = FakeCaller([_verdicts(("p1", "PASS", []), ("p2", "PASS", []), ("p3", "FIX", fix)), _verdicts(("p3", "PASS", []))])
+    record = _run(gen, ver)
+    first = record["rounds"][0]["points"][2]
+    assert first["status"] == "failed_verifier" and first["fix_check"]["ok"] is False
+    assert record["accepted"][2]["quote"] == GOOD[2].quote
 
 
 def test_points_still_failing_after_two_revisions_are_dropped_and_fewer_than_three_do_not_publish():
     gen = FakeCaller([_draft(GOOD), _draft([GOOD[2]]), _draft([GOOD[2]])])
-    fix = [{"field": "question_en", "replacement": "Is a biopsy planned, and if so, how will the sample be handled?", "reason": "presupposes"}]
+    fix = [{"field": "quote", "replacement": "", "reason": "no fair quote in this passage"}]
     ver = FakeCaller([_verdicts(("p1", "PASS", []), ("p2", "PASS", []), ("p3", "FIX", fix))] + [_verdicts(("p3", "FIX", fix))] * 2)
     record = _run(gen, ver)
     assert len(gen.calls) == 3 and len(ver.calls) == 3
@@ -258,17 +304,18 @@ def test_points_still_failing_after_two_revisions_are_dropped_and_fewer_than_thr
 
 def test_pass_with_proposed_fixes_counts_as_fix():
     fix = [{"field": "summary_pl", "replacement": "Poprawka.", "reason": "term"}]
-    gen = FakeCaller([_draft(GOOD), _draft([GOOD[0]]), _draft([GOOD[0]])])
-    ver = FakeCaller([_verdicts(("p1", "PASS", fix), ("p2", "PASS", []), ("p3", "PASS", []))] + [_verdicts(("p1", "PASS", fix))] * 2)
+    gen = FakeCaller([_draft(GOOD)])
+    ver = FakeCaller([_verdicts(("p1", "PASS", fix), ("p2", "PASS", []), ("p3", "PASS", []))])
     record = _run(gen, ver)
-    assert "p1" not in [p["id"] for p in record["accepted"]] and record["publish"] is False
+    assert record["rounds"][0]["points"][0]["status"] == "accepted_verifier_fix" and record["accepted"][0]["summary_pl"] == "Poprawka."
 
 
 def test_withdrawn_and_missing_revisions_are_dropped():
     four = GOOD + [_point("p4", quote="Bisphosphonates may be used to treat bone pain that does not respond to analgesics in adults with FD.")]
     withdrawn = four[3].model_copy(update={"withdrawn": True, "note": "not about diagnosis"})
+    unfixable = [{"field": "quote", "replacement": "", "reason": "treatment, not diagnosis"}]
     gen = FakeCaller([_draft(four), _draft([withdrawn])])
-    ver = FakeCaller([_verdicts(("p1", "PASS", []), ("p2", "PASS", []), ("p3", "PASS", []), ("p4", "FIX", [{"field": "quote", "replacement": "", "reason": "treatment, not diagnosis"}]))])
+    ver = FakeCaller([_verdicts(("p1", "PASS", []), ("p2", "PASS", []), ("p3", "PASS", []), ("p4", "FIX", unfixable))])
     record = _run(gen, ver)
     assert record["publish"] is True and record["dropped"][0]["why"].startswith("withdrawn")
     gen = FakeCaller([_draft(four), _draft([])])
@@ -285,14 +332,17 @@ def test_failed_calls_are_failures_never_passes():
     record = _run(gen, ver)
     assert record["accepted"] == [] and record["publish"] is False
     assert {p["status"] for p in record["rounds"][0]["points"]} == {"verifier_error"}
+    # A failed coverage call leaves the draft as it was; it never blocks or passes anything by itself.
+    record = _run(FakeCaller([_draft(GOOD)]), FakeCaller([_verdicts(("p1", "PASS", []), ("p2", "PASS", []), ("p3", "PASS", []))]), coverage=FakeCaller([None]))
+    assert record["publish"] is True and "error" in record["coverage"]
 
 
 def test_missing_verdict_is_not_a_pass_and_extra_points_are_capped():
-    seven = [_point(f"p{i}") for i in range(1, 8)]
-    gen = FakeCaller([_draft(seven), _draft([]), _draft([])])
-    ver = FakeCaller([_verdicts(*[(f"p{i}", "PASS", []) for i in range(1, 6)])])
+    many = [_point(f"p{i}") for i in range(1, 11)]
+    gen = FakeCaller([_draft(many), _draft([]), _draft([])])
+    ver = FakeCaller([_verdicts(*[(f"p{i}", "PASS", []) for i in range(1, 8)])])
     record = _run(gen, ver)
-    assert len(record["rounds"][0]["points"]) == 6
+    assert len(record["rounds"][0]["points"]) == 8
     assert any(d["why"].startswith("over the limit") for d in record["dropped"])
     assert [p["status"] for p in record["rounds"][0]["points"]][-1] == "no_verdict"
 
@@ -304,12 +354,46 @@ def test_no_readable_document_means_no_call_and_no_block():
     assert record["publish"] is False and gen.calls == [] and ver.calls == []
 
 
-def test_published_block_carries_fixed_provenance_and_nothing_when_not_publishable():
+def test_the_worked_example_is_used_unless_held_out():
+    from backend.guidelines.points.prompts import worked_example
+
+    example = worked_example()
+    gen = FakeCaller([_draft(GOOD)])
+    ver = FakeCaller([_verdicts(("p1", "PASS", []), ("p2", "PASS", []), ("p3", "PASS", []))])
+    _run(gen, ver, example=example)
+    assert "<worked_example>" in gen.calls[0]["system"] and example["points"][4]["quote"] in gen.calls[0]["system"]
+    assert "<calibration_examples>" in ver.calls[0]["prefix"]
+    gen = FakeCaller([_draft(GOOD)])
+    ver = FakeCaller([_verdicts(("p1", "PASS", []), ("p2", "PASS", []), ("p3", "PASS", []))])
+    record = _run(gen, ver, example=None)
+    assert "<worked_example>" not in gen.calls[0]["system"] and ver.calls[0]["prefix"] == "" and record["example_used"] is False
+
+
+def test_a_source_without_an_open_licence_is_quoted_only_briefly():
+    sentence = "Genetic testing of affected tissue is recommended when the diagnosis is in question after a complete clinical evaluation. "
+    text = sentence * 5
+    fields = dict(doc_id="D", title="t", year="2024", grade="A", grade_reason="", text_status="ok", paragraphs=(Paragraph("Diagnosis", text),))
+    restricted = SourceDoc(**fields, license="This file is available for text mining.")
+    open_doc = SourceDoc(**fields, license="https://creativecommons.org/licenses/by/4.0/")
+    long_quote, short_quote = (sentence * 4).strip(), (sentence * 2).strip()
+    assert check_point(_point(quote=short_quote, doc_id="D"), {"D": DocIndex(restricted)}).kind == "ok"
+    assert check_point(_point(quote=long_quote, doc_id="D"), {"D": DocIndex(restricted)}).kind == "too_long"
+    assert check_point(_point(quote=long_quote, doc_id="D"), {"D": DocIndex(open_doc)}).kind == "ok"
+
+
+def test_published_block_carries_fixed_provenance_links_and_credit():
     record = {"publish": True, "accepted": [p.model_dump() for p in GOOD]}
     block = published_block(record, [CONSENSUS])
     assert block["basis"] == "guideline" and block["title_en"].startswith("What the guideline says")
     assert "Nobody" in block["source_en"] and "PMID 31196103" in block["source_en"] and "Nikt" in block["source_pl"]
+    assert block["points"][0]["doc_url"] == "https://pubmed.ncbi.nlm.nih.gov/31196103/" and block["notice_en"].startswith("Generated by AI")
     assert published_block({"publish": False, "accepted": record["accepted"]}, [CONSENSUS]) is None
+    genereviews = SourceDoc(doc_id="NBK274564", title="Fibrous Dysplasia / McCune-Albright Syndrome", year="continuously updated", grade="B", grade_reason="", text_status="ok", bookshelf="NBK274564", book="GeneReviews", copyright="Copyright © 1993-2026, University of Washington, Seattle.", paragraphs=CONSENSUS.paragraphs)
+    record = {"publish": True, "accepted": [p.model_copy(update={"doc_id": "NBK274564"}).model_dump() for p in GOOD]}
+    block = published_block(record, [genereviews])
+    assert block["basis"] == "reviews" and block["title_en"].startswith("What reviews of the literature say") and "wytyczna" not in block["title_pl"]
+    assert "University of Washington" in block["points"][0]["credit"] and "genereviews.org" in block["source_en"]
+    assert block["points"][0]["doc_url"] == "https://www.ncbi.nlm.nih.gov/books/NBK274564/"
 
 
 # --- the Claude caller, with a fake client ------------------------------------------------------------------------------

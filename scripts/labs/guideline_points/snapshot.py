@@ -87,7 +87,21 @@ def bookshelf_block_reason(accession: str) -> str:
     return "bookshelf_unreadable: the page was served but no chapter text was parsed"
 
 
-def _doc_record(raw: dict, meta: dict, pmcids: dict[str, str], api_key: str | None) -> dict:
+def genereviews_from_archive(archive: str, accessions: set[str], index: dict) -> dict[str, object]:
+    """accession → parsed chapter, read once from a copy of NCBI's GeneReviews archive with the product's reader (the same code the production refresh job runs)."""
+    from backend.tools.genereviews_archive import iter_chapters, open_archive
+
+    by_shortname = {index[a].shortname: a for a in accessions if a in index}
+    out: dict[str, object] = {}
+    if not by_shortname:
+        return out
+    with open_archive(archive) as stream:
+        for chapter in iter_chapters(stream, set(by_shortname)):
+            out[by_shortname[chapter.shortname]] = chapter
+    return out
+
+
+def _doc_record(raw: dict, meta: dict, pmcids: dict[str, str], api_key: str | None, chapters: dict | None = None) -> dict:
     from backend.guidelines.points.models import SourceDoc
     from backend.guidelines.points.sources import (
         doc_to_dict,
@@ -118,8 +132,16 @@ def _doc_record(raw: dict, meta: dict, pmcids: dict[str, str], api_key: str | No
             status = "no_pmcid: not in PubMed Central, so no full text can be fetched"
         else:
             paragraphs, status, _language, licence = fetch_pmc_paragraphs(pmcid, api_key=api_key)
+    elif accession and accession in (chapters or {}):
+        from backend.guidelines.points.models import Paragraph
+
+        chapter = chapters[accession]
+        paragraphs = [Paragraph(section=h, text=t) for h, t in chapter.sections]
+        status = "ok: read from NCBI's GeneReviews archive (LitArch gene_NBK1116.tar.gz)"
+        licence, extra["copyright"], extra["book"] = chapter.licence, chapter.copyright, "GeneReviews"
     elif accession:
-        paragraphs, status = fetch_bookshelf_paragraphs(accession)
+        paragraphs, status, licence, copyright_ = fetch_bookshelf_paragraphs(accession)
+        extra["copyright"] = copyright_
         if not paragraphs:
             status = bookshelf_block_reason(accession)
     else:
@@ -128,11 +150,15 @@ def _doc_record(raw: dict, meta: dict, pmcids: dict[str, str], api_key: str | No
         doc_id=str(raw.get("id") or pmid or accession), title=title, year=str(raw.get("year") or ""), grade=grade or "", grade_reason=reason,
         text_status=status, paragraphs=tuple(paragraphs), pmid=pmid, pmcid=pmcid, bookshelf=accession, journal=str(raw.get("journal") or ""),
         authors=str(raw.get("authors") or extra.get("authors") or ""), role=str(raw.get("role") or ""), license=licence, pubtypes=tuple(pubtypes),
+        copyright=str(extra.get("copyright") or ""), book="GeneReviews" if "genereviews" in str(extra.get("book") or "").lower() else str(extra.get("book") or ""),
     )
-    return {**doc_to_dict(doc), **extra}
+    return {**extra, **doc_to_dict(doc)}
 
 
-def build(name: str, only: list[str] | None = None) -> dict:
+def build(name: str, only: list[str] | None = None, genereviews_archive: str | None = None) -> dict:
+    from backend.guidelines.points.sources import doc_from_dict
+    from backend.guidelines.relevance import assess, identity_from_disease
+    from backend.tools.genereviews_index import load_index
     from backend.tools.pmc_fulltext import _pmid_to_pmcid
 
     folder = snapshot_path(name)
@@ -146,6 +172,9 @@ def build(name: str, only: list[str] | None = None) -> dict:
     pmids = sorted({str(d["pmid"]).strip() for shelf in shelves.values() for d in shelf if d.get("pmid")})
     meta = pubmed_metadata(pmids, api_key)
     pmcids = _pmid_to_pmcid(pmids, api_key=api_key)
+    index = load_index()
+    shelf_books = {str(d["bookshelf"]) for shelf in shelves.values() for d in shelf if d.get("bookshelf")}
+    chapters = genereviews_from_archive(genereviews_archive, shelf_books, index) if genereviews_archive else {}
     cache: dict[str, dict] = {}
     write_json(folder / "catalog.json", catalog)
     parts: dict[str, str] = {}
@@ -155,12 +184,15 @@ def build(name: str, only: list[str] | None = None) -> dict:
             key = str(raw.get("pmid") or raw.get("bookshelf") or raw.get("id"))
             if key not in cache:
                 print(f"  {slug}: {key} ...", flush=True)
-                cache[key] = _doc_record(raw, meta, pmcids, api_key)
-            docs.append({**cache[key], "doc_id": str(raw.get("id") or key), "role": raw.get("role") or ""})
+                cache[key] = _doc_record(raw, meta, pmcids, api_key, chapters)
+            entry = {**cache[key], "doc_id": str(raw.get("id") or key), "role": raw.get("role") or ""}
+            doc = doc_from_dict(entry)
+            entry["relevance"] = assess(identity_from_disease(details[slug]), title=doc.title, bookshelf=doc.bookshelf, text="\n".join(p.text for p in doc.paragraphs), genereviews=index).as_dict()
+            docs.append(entry)
         path = folder / "diseases" / f"{slug}.json"
         write_json(path, {"slug": slug, "name": details[slug].get("name") or slug, "disease": details[slug], "shelf": shelves[slug], "docs": docs})
         parts[slug] = sha256_file(path)
     commit, dirty = git_state()
-    manifest = {"name": name, "created_at": now_iso(), "api_base": API_BASE, "git_commit": commit, "git_dirty": dirty, "catalog_sha256": sha256_file(folder / "catalog.json"), "diseases": parts}
+    manifest = {"name": name, "created_at": now_iso(), "api_base": API_BASE, "git_commit": commit, "git_dirty": dirty, "genereviews_archive": genereviews_archive, "genereviews_chapters": sorted(chapters), "catalog_sha256": sha256_file(folder / "catalog.json"), "diseases": parts}
     write_json(folder / "manifest.json", manifest)
     return manifest

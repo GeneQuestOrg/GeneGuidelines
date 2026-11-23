@@ -31,7 +31,7 @@ class Budget(Protocol):
 
 
 class PointsCaller(Protocol):
-    async def call(self, *, role: str, system: str, prefix: str, user: str, result_type: type[BaseModel]) -> tuple[BaseModel | None, dict]: ...
+    async def call(self, *, role: str, system: str, prefix: str, user: str, result_type: type[BaseModel], cache: bool = True) -> tuple[BaseModel | None, dict]: ...
 
 
 def _usage(message: Any) -> dict:
@@ -55,20 +55,20 @@ class ClaudePointsCaller:
             client = anthropic.AsyncAnthropic(api_key=api_key, max_retries=2, timeout=timeout_sec)
         self.client = client
 
-    def _request(self, system: str, prefix: str, user: str, result_type: type[BaseModel]) -> dict[str, Any]:
+    def _request(self, system: str, prefix: str, user: str, result_type: type[BaseModel], cache: bool = True) -> dict[str, Any]:
         kwargs = build_request(model=self.model, effort=self.effort, system_prompt=system, user_prompt=user, result_type=result_type, max_tokens=self.max_tokens)
         if prefix:
-            kwargs["messages"] = [{"role": "user", "content": [
-                {"type": "text", "text": prefix, "cache_control": {"type": "ephemeral"}},
-                {"type": "text", "text": user},
-            ]}]
+            first: dict[str, Any] = {"type": "text", "text": prefix}
+            if cache:
+                first["cache_control"] = {"type": "ephemeral"}
+            kwargs["messages"] = [{"role": "user", "content": [first, {"type": "text", "text": user}]}]
         return kwargs
 
-    async def call(self, *, role: str, system: str, prefix: str, user: str, result_type: type[BaseModel]) -> tuple[BaseModel | None, dict]:
+    async def call(self, *, role: str, system: str, prefix: str, user: str, result_type: type[BaseModel], cache: bool = True) -> tuple[BaseModel | None, dict]:
         attempts: list[dict] = []
         output: BaseModel | None = None
         for _ in range(1 + max(0, self.retries)):
-            output, attempt = await self._once(role, system, prefix, user, result_type)
+            output, attempt = await self._once(role, system, prefix, user, result_type, cache)
             attempts.append(attempt)
             if output is not None or not attempt.get("retryable"):
                 break
@@ -79,10 +79,10 @@ class ClaudePointsCaller:
         record["cost_usd_total"] = None if any(c is None for c in costs) else sum(costs)
         return output, record
 
-    async def _once(self, role: str, system: str, prefix: str, user: str, result_type: type[BaseModel]) -> tuple[BaseModel | None, dict]:
+    async def _once(self, role: str, system: str, prefix: str, user: str, result_type: type[BaseModel], cache: bool = True) -> tuple[BaseModel | None, dict]:
         import anthropic
 
-        kwargs = self._request(system, prefix, user, result_type)
+        kwargs = self._request(system, prefix, user, result_type, cache)
         prompt_chars = len(system) + len(prefix) + len(user)
         record: dict[str, Any] = {
             "role": role, "model": self.model, "effort": self.effort, "max_tokens": self.max_tokens, "prompt_chars": prompt_chars,

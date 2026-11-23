@@ -103,17 +103,13 @@ def select_documents(docs: Iterable[SourceDoc], max_chars: int = MAX_INPUT_CHARS
 
 
 def block_basis(grades: Iterable[str]) -> str | None:
-    """What the accepted points rest on: "guideline" (every point from a grade A document), "guideline+genereviews", "genereviews", "guideline+review" (grade A and C), or "review" (reviews only, GeneReviews included)."""
+    """What the accepted points rest on: "guideline" when every point comes from a consensus statement or practice guideline (grade A), "guideline+reviews" when some do, "reviews" when none do (GeneReviews counts as a review)."""
     found = set(grades)
     if not found:
         return None
-    if "C" in found:
-        return "guideline+review" if "A" in found else "review"
     if found == {"A"}:
         return "guideline"
-    if found == {"B"}:
-        return "genereviews"
-    return "guideline+genereviews"
+    return "guideline+reviews" if "A" in found else "reviews"
 
 
 def _year(value: str) -> int:
@@ -214,22 +210,27 @@ def fetch_pmc_paragraphs(pmcid: str, api_key: str | None = None) -> tuple[list[P
     return paragraphs, "ok", language, licence
 
 
-def fetch_bookshelf_paragraphs(accession: str) -> tuple[list[Paragraph], str]:
-    """(paragraphs, status) of a Bookshelf chapter through the product's reader. An empty result is reported, never papered over with the abstract."""
+def fetch_bookshelf_paragraphs(accession: str) -> tuple[list[Paragraph], str, str, str]:
+    """(paragraphs, status, licence, copyright) of a Bookshelf chapter through the product's reader, which serves the stored copy read from NCBI's archive first. An empty result is reported, never papered over with the abstract."""
     from ...tools.bookshelf_fulltext import fetch_chapter_sections
+    from ..chapters import get_chapter
 
     sections = fetch_chapter_sections(accession)
     paragraphs = [Paragraph(section=heading, text=" ".join(block.split())) for heading, text in sections for block in text.split("\n") if len(block.strip()) >= 40]
     if not paragraphs:
-        return [], "bookshelf_unreadable: the chapter page gave no text"
-    return paragraphs, "ok"
+        return [], "bookshelf_unreadable: the chapter is not stored and its page gave no text", "", ""
+    try:
+        row = get_chapter(accession)
+    except Exception:  # noqa: BLE001 - text from the page has no stored licence; the chapter is then treated as restricted
+        row = None
+    return paragraphs, "ok", (row.licence if row else ""), (row.copyright if row else "")
 
 
 def doc_to_dict(doc: SourceDoc, with_text: bool = True) -> dict:
     out = {
         "doc_id": doc.doc_id, "title": doc.title, "year": doc.year, "grade": doc.grade, "grade_reason": doc.grade_reason,
         "text_status": doc.text_status, "pmid": doc.pmid, "pmcid": doc.pmcid, "bookshelf": doc.bookshelf, "journal": doc.journal,
-        "authors": doc.authors, "role": doc.role, "license": doc.license, "pubtypes": list(doc.pubtypes), "chars": doc.chars, "paragraph_count": len(doc.paragraphs),
+        "authors": doc.authors, "role": doc.role, "license": doc.license, "copyright": doc.copyright, "book": doc.book, "pubtypes": list(doc.pubtypes), "chars": doc.chars, "paragraph_count": len(doc.paragraphs),
     }
     if with_text:
         out["paragraphs"] = [{"section": p.section, "text": p.text} for p in doc.paragraphs]
@@ -243,4 +244,5 @@ def doc_from_dict(raw: dict) -> SourceDoc:
         paragraphs=tuple(Paragraph(section=str(p.get("section") or ""), text=str(p["text"])) for p in raw.get("paragraphs") or []),
         pmid=raw.get("pmid"), pmcid=raw.get("pmcid"), bookshelf=raw.get("bookshelf"), journal=str(raw.get("journal") or ""),
         authors=str(raw.get("authors") or ""), role=str(raw.get("role") or ""), license=str(raw.get("license") or ""), pubtypes=tuple(raw.get("pubtypes") or ()),
+        copyright=str(raw.get("copyright") or ""), book=str(raw.get("book") or ""),
     )

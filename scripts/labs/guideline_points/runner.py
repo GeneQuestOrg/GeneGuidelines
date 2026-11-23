@@ -17,7 +17,7 @@ from backend.guidelines.points.claude import (
 )
 from backend.guidelines.points.loop import build_points_block, revision_rounds_used
 from backend.guidelines.points.models import VerifierOutput
-from backend.guidelines.points.prompts import VERIFIER_SYSTEM, render_verifier_input
+from backend.guidelines.points.prompts import VERIFIER_SYSTEM, render_verifier_input, worked_example
 from backend.guidelines.points.quote_check import DocIndex, check_point
 from backend.guidelines.points.sources import doc_to_dict
 
@@ -25,6 +25,8 @@ from .checks import disease_inputs
 from .common import LabBudget, LabError, git_state, now_iso, read_json, sha256_file, source_hashes, write_json
 from .gold import FD_GUIDELINE_DOC, gold_hashes, verifier_controls
 from .snapshot import load_catalog, snapshot_path
+
+HELD_OUT = {"fd"}
 
 
 def _provenance(snapshot: str, kind: str) -> dict:
@@ -130,14 +132,17 @@ async def run_all(snapshot: str, out: Path, *, api_key: str, cap: float, only: l
             continue
         data, docs, selected, notes = disease_inputs(snapshot, slug)
         started = now_iso()
+        # The hand-written FD block is the worked example everywhere except in FD's own evaluation, where it is the answer being compared against.
+        example = None if slug in HELD_OUT else worked_example()
         if selected:
-            record = await build_points_block(disease_name=data["name"], docs=selected, generator=generator, verifier=verifier)
+            record = await build_points_block(disease_name=data["name"], docs=selected, generator=generator, verifier=verifier, example=example)
         else:
             record = {"disease_name": data["name"], "documents": [], "rounds": [], "calls": [], "accepted": [], "dropped": [], "publish": False, "reason": "no readable guideline-grade document on the shelf", "no_points_reason": ""}
         result = {
             "slug": slug,
             "name": data["name"],
             "tag": tag,
+            "example_held_out": example is None,
             "started_at": started,
             "finished_at": now_iso(),
             "documents": [{**doc_to_dict(d, with_text=False), "shelf_title": raw.get("shelf_title"), "book": raw.get("book")} for d, raw in zip(docs, data["docs"])],

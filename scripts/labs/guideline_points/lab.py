@@ -38,7 +38,7 @@ def _api_key(args) -> str:
 def cmd_snapshot(args) -> int:
     from .snapshot import build
 
-    manifest = build(args.name, args.disease or None)
+    manifest = build(args.name, args.disease or None, args.genereviews_archive)
     print(f"snapshot {args.name}: {len(manifest['diseases'])} diseases")
     return 0
 
@@ -88,6 +88,7 @@ def main(argv: list[str] | None = None) -> int:
     p = sub.add_parser("snapshot", help="freeze catalog, shelves and full text (public APIs only)")
     p.add_argument("--name", required=True)
     p.add_argument("--disease", action="append", help="limit to these slugs (repeatable)")
+    p.add_argument("--genereviews-archive", help="URL or local copy of NCBI's gene_NBK1116.tar.gz, read with the product's archive reader")
     p.set_defaults(func=cmd_snapshot)
 
     p = sub.add_parser("relevance", help="no model: the shelf relevance check over every catalog shelf (public API, NCBI)")

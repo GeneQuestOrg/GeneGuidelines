@@ -14,7 +14,8 @@ from .common import read_json
 from .gold import gold_points
 from .snapshot import load_catalog
 
-_STATUS_WORD = {"accepted": "PASS", "failed_check": "verbatim check failed", "failed_verifier": "verifier FIX", "no_verdict": "no verdict", "verifier_error": "verifier call failed"}
+_STATUS_WORD = {"accepted": "PASS", "accepted_verifier_fix": "verifier FIX, published as the verifier wrote it", "failed_check": "verbatim check failed", "failed_verifier": "verifier FIX, back to the generator", "no_verdict": "no verdict", "verifier_error": "verifier call failed"}
+_ENDOCRINE = ("endocrin", "puberty", "thyroid", "growth hormone", "cortisol", "cushing", "phosphat", "fgf23", "fgf-23", "hormon", "gonad", "adrenal", "prolactin")
 
 
 def _md(text: str) -> str:
@@ -53,8 +54,8 @@ def _results(out: Path) -> dict[str, dict]:
 
 def _summary_table(results: list[dict]) -> list[str]:
     lines = [
-        "| Disease | Shelf docs (graded / readable) | Documents shown to the generator | Points drafted | Passed | Dropped | Revision rounds | Block would publish | Basis | Cost (USD) |",
-        "|---|---|---|---|---|---|---|---|---|---|",
+        "| Disease | Shelf docs (graded / readable) | Documents shown to the generator | Points drafted | Coverage gaps / added | Passed (of them fixed by the verifier) | Dropped | Revision rounds | Block would publish | Basis | Cost (USD) |",
+        "|---|---|---|---|---|---|---|---|---|---|---|",
     ]
     for r in results:
         docs = r["documents"]
@@ -64,7 +65,11 @@ def _summary_table(results: list[dict]) -> list[str]:
         loop = r["loop"]
         drafted = len(loop["rounds"][0]["points"]) if loop.get("rounds") else 0
         basis = (r.get("block") or {}).get("basis") or "-"
-        lines.append(f"| {r['slug']}{(' (' + r['tag'] + ')') if r.get('tag') else ''} | {len(docs)} ({len(graded)} / {len(readable)}) | {used} | {drafted} | {len(loop['accepted'])} | {len(loop['dropped'])} | {r['revision_rounds']} | {'yes' if loop['publish'] else 'no'} | {basis} | {r['cost_usd']:.2f} |")
+        cov = loop.get("coverage") or {}
+        gaps = f"{len(cov.get('gaps') or [])} / {len(cov.get('added') or [])}" if cov else "-"
+        fixed = sum(1 for rnd in loop.get("rounds") or [] for p in rnd["points"] if p["status"] == "accepted_verifier_fix")
+        drafted = len(loop.get("draft") or []) or drafted
+        lines.append(f"| {r['slug']}{(' (' + r['tag'] + ')') if r.get('tag') else ''} | {len(docs)} ({len(graded)} / {len(readable)}) | {used} | {drafted} | {gaps} | {len(loop['accepted'])} ({fixed}) | {len(loop['dropped'])} | {r['revision_rounds']} | {'yes' if loop['publish'] else 'no'} | {basis} | {r['cost_usd']:.2f} |")
     return lines
 
 
@@ -110,7 +115,7 @@ def _caught_lines(r: dict) -> list[str]:
                 continue
             if p["status"] == "failed_check":
                 detail = p["check"]["message"] + (f"; nearest sentence: \"{_md(p['check']['nearest'])}\"" if p["check"].get("nearest") else "")
-            elif p["status"] == "failed_verifier":
+            elif p["status"] in ("failed_verifier", "accepted_verifier_fix"):
                 v = p["verdict"] or {}
                 fixes = "; ".join(f"{f['field']} → \"{_md(f['replacement'])}\" ({_md(f['reason'])})" for f in v.get("fixes") or [])
                 detail = f"{_md(v.get('reason', ''))}" + (f" Fixes: {fixes}" if fixes else "")
@@ -119,6 +124,14 @@ def _caught_lines(r: dict) -> list[str]:
             lines.append(f"- Round {rnd['round']}, {p['id']} ({_STATUS_WORD.get(p['status'], p['status'])}): quote \"{_md(p['point']['quote'])[:220]}\" — {detail}")
     for d in r["loop"].get("dropped") or []:
         lines.append(f"- Dropped {d['id']} (round {d['round']}): {_md(d['why'])}")
+    cov = r["loop"].get("coverage")
+    if cov:
+        if cov.get("error"):
+            lines.append(f"- Coverage review failed: {_md(cov['error'])}")
+        for gap in cov.get("gaps") or []:
+            lines.append(f"- Coverage gap ({gap['doc_id']}, § {_md(gap['section'])}): {_md(gap['topic'])} — {_md(gap['why'])}")
+        if cov.get("added"):
+            lines.append(f"- Points added for the gaps: {', '.join(cov['added'])}")
     if lines:
         return lines
     return ["Nothing: every drafted point passed on the first round."] if r["loop"].get("rounds") else ["Nothing was drafted, so nothing was checked."]
@@ -172,6 +185,18 @@ def _stability_section(results: dict[str, dict]) -> list[str]:
     return lines
 
 
+def _mas_section(results: dict[str, dict]) -> list[str]:
+    """Does the McCune-Albright block cover the endocrine work-up? Accepted points that name an endocrine topic."""
+    lines = []
+    for r in sorted((r for r in results.values() if r["slug"] == "mas"), key=lambda r: r.get("tag") or ""):
+        accepted = r["loop"]["accepted"]
+        hits = [p for p in accepted if any(k in (p["quote"] + " " + p["summary_en"]).lower() for k in _ENDOCRINE)]
+        lines.append(f"Run `mas{('-' + r['tag']) if r.get('tag') else ''}`: {len(hits)} of {len(accepted)} accepted points are about the endocrine work-up.")
+        lines += [f"- {p['id']} ({p['doc_id']}): {_md(p['summary_en'])}" for p in hits]
+        lines.append("")
+    return lines or ["No MAS result."]
+
+
 def write_report(snapshot: str, out: Path) -> Path:
     results = _results(out)
     order = [e["slug"] for e in load_catalog(snapshot)]
@@ -201,9 +226,12 @@ def write_report(snapshot: str, out: Path) -> Path:
         "",
         *_stability_section(results),
         "",
-        "## FD: generated block against the hand-written one",
+        "## FD: generated block against the hand-written one (the worked example held out)",
         "",
         *_fd_section(results),
+        "## MAS: endocrine work-up",
+        "",
+        *_mas_section(results),
         "## Per disease",
     ]
     for r in ordered:

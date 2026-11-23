@@ -158,7 +158,7 @@ class DocIndex:
 
 @dataclass(frozen=True)
 class QuoteCheck:
-    """The outcome of the deterministic check for one point. ``kind`` is ok, unknown_doc, too_short, malformed, wrong_doc or not_found."""
+    """The outcome of the deterministic check for one point. ``kind`` is ok, unknown_doc, too_short, too_long (a long quote from a source without an open licence), malformed, wrong_doc or not_found."""
 
     ok: bool
     kind: str
@@ -200,6 +200,9 @@ def check_point(point: DraftPoint, indexes: dict[str, DocIndex]) -> QuoteCheck:
     if index is None:
         return QuoteCheck(False, "unknown_doc", f"doc_id {point.doc_id!r} is not one of the documents provided ({', '.join(sorted(indexes))})")
     match = index.locate(point.quote)
+    limit = index.doc.quote_limit
+    if match is not None and limit is not None and len(point.quote) > limit:
+        return QuoteCheck(False, "too_long", f"the quote has {len(point.quote)} characters; {point.doc_id} has no open licence, so a quote from it may have at most {limit}", match=match)
     if match is not None:
         return QuoteCheck(True, "ok", "found verbatim", match=match)
     elsewhere = tuple(doc_id for doc_id, other in indexes.items() if doc_id != point.doc_id and other.locate(point.quote) is not None)

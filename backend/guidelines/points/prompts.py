@@ -1,16 +1,18 @@
-"""Prompts of the guideline-points generator and of its verifier, and the renderers that put documents, points and feedback into them.
+"""Prompts of the guideline-points generator, its coverage reviewer and its verifier, and the renderers that put documents, points and feedback into them.
 
-The two prompts are deliberately separate texts with separate rubrics: the verifier is not told how the generator was instructed beyond the rules a published point must meet, and it reads each quote inside the paragraph it came from, which the generator's output alone cannot show.
+The three prompts are separate texts with separate jobs: the generator writes, the coverage reviewer looks only for what a family needs and the draft leaves out, and the verifier judges each point inside the paragraph its quote came from, which the generator's output alone cannot show.
 
-The examples in these prompts are generic on purpose. The hand-written FD block is the calibration case for this pipeline; quoting it here would let the generator copy the answer the run is compared against.
+The hand-written FD block (``fd_worked_example.json``) is the generator's worked example and the verifier's calibrated PASS example (Darek, 2026-11-23: it is better than anything the generator wrote). When FD itself is generated or evaluated it is left out, so the comparison with it stays honest.
 """
 
 from __future__ import annotations
 
 import json
 from collections.abc import Iterable
+from functools import lru_cache
+from pathlib import Path
 
-from .models import DraftPoint, SourceDoc
+from .models import RESTRICTED_QUOTE_MAX_CHARS, CoverageOutput, DraftPoint, SourceDoc
 from .quote_check import DocIndex, QuoteCheck
 from .sources import GRADE_LABEL
 
@@ -21,13 +23,13 @@ The user message gives you documents about the disease, each in a <document> tag
 - grade B: GeneReviews chapter;
 - grade C: other clinical review.
 
-Choose 3 to 6 passages about diagnosis and the initial evaluation: how the diagnosis is made or confirmed, which tests are used and when, what a test result can and cannot show, what is assessed at or soon after diagnosis, and when a biopsy, genetic test or imaging study is or is not needed. Leave out treatment, long-term follow-up, prognosis, mechanism and research, unless the passage is about the initial evaluation. Order the points the way a family meets them: how the diagnosis is reached first, then confirming tests and what their results mean, then invasive procedures, then the evaluation that follows diagnosis.
+Choose 3 to 6 passages about diagnosis and the initial evaluation (up to 8 only when the disease needs more, for example a syndrome whose diagnosis involves several organ systems): how the diagnosis is made or confirmed, which tests are used and when, what a test result can and cannot show, what is assessed at or soon after diagnosis, and when a biopsy, genetic test or imaging study is or is not needed. Leave out treatment, long-term follow-up, prognosis, mechanism and research, unless the passage is about the initial evaluation. Order the points the way a family meets them: how the diagnosis is reached first, then confirming tests and what their results mean, then invasive procedures, then the evaluation that follows diagnosis.
 
 Prefer the strongest document. Take a passage from a grade A document whenever one says it; use B or C only for what no A document covers, and a newer document over an older one of the same grade when they say the same thing. Use only documents about this disease; ignore any document that turns out to be about another disease. Never write two points that say the same thing. Return fewer than 3 points rather than a weak or padded one; if the documents say nothing usable about diagnosis or the initial evaluation, return no points and say why in no_points_reason.
 
 Every point has these fields.
 
-quote: English text copied exactly, character for character, from one document: one sentence or several consecutive sentences. Drop citation markers such as [11], (3-5) or [Smith et al 2019]; change nothing else. Mark an omission with "…" only when the words left out do not change the meaning: never leave out a negation, a qualifier, a condition, an exception or a limit. Keep enough context that the quote is not misleading on its own: if the next sentence limits the claim (for example, that a test can give false negatives, or that a rule applies only to one subtype), include it. Never reword, correct, translate or join sentences that are not consecutive. A machine check compares the quote with the document word for word, and a point whose quote is not found there is discarded.
+quote: English text copied exactly, character for character, from one document: one sentence or several consecutive sentences. Drop citation markers such as [11], (3-5) or [Smith et al 2019]; change nothing else. Mark an omission with "…" only when the words left out do not change the meaning: never leave out a negation, a qualifier, a condition, an exception or a limit. Keep enough context that the quote is not misleading on its own: if the next sentence limits the claim (for example, that a test can give false negatives, or that a rule applies only to one subtype), include it. Never reword, correct, translate or join sentences that are not consecutive. A machine check compares the quote with the document word for word, and a point whose quote is not found there is discarded. A document whose tag says licence="restricted" allows only short quotes: at most {limit} characters from it.
 
 doc_id: the id of the document the quote is copied from. section: the heading the quote sits under.
 
@@ -44,6 +46,7 @@ question_en: one question the parent can ask the doctor about this point, in the
 question_pl: the same question in Polish, in the parent's voice ("u naszego dziecka", "u nas").
 
 withdrawn: false. note: empty."""
+GENERATOR_SYSTEM = GENERATOR_SYSTEM.replace("{limit}", str(RESTRICTED_QUOTE_MAX_CHARS))
 
 
 VERIFIER_SYSTEM = """You are the independent checker of a block on a web page for parents of a child with a rare disease, titled "What the guideline says about diagnosis – to show your doctor". You did not write it. Each point has a verbatim quote from a guideline-grade document, a plain-language summary in English and Polish, and one question in English and Polish that the parent can take to the doctor. The page orients and asks; it never advises, and nothing on it may sound approved, verified or official.
@@ -62,7 +65,79 @@ Check each point for these, in order.
 
 5. Nothing in the point says or implies that it is approved, verified, official, or that the guideline settles the child's case.
 
-Return PASS when the point can be published as it stands. Return FIX when any check fails, with the complete replacement text of every field that must change, ready to publish, and the reason. A replacement quote must be copied word for word from the paragraphs you were given (you may lengthen or shorten it, and you may drop citation markers). If no quote from this passage can make a fair point, return FIX on the quote field with the reason and leave the replacement empty. Differences of style that do not change the meaning are not a reason for FIX."""
+Some points come back after a revision with your previous verdict attached. For those, check that every problem you raised is solved, and raise a new problem only if it changes the meaning or breaks a rule outright; do not raise style issues you did not raise before.
+
+Return PASS when the point can be published as it stands. Return FIX when any check fails, with the complete replacement text of every field that must change, ready to publish, and the reason. A replacement quote must be copied word for word from the paragraphs you were given (you may lengthen or shorten it, and you may drop citation markers). Your replacements are published as they stand when the quote passes the word-for-word check, so make them complete: when you change the quote, give new summaries in both languages; when you change summary_en or question_en, give the matching Polish too. If no quote from this passage can make a fair point, return FIX on the quote field with the reason and leave the replacement empty. Differences of style that do not change the meaning are not a reason for FIX."""
+
+
+COVERAGE_SYSTEM = """You review the coverage of one block of a web page for parents of a child with a rare disease: "What the guideline says about diagnosis – to show your doctor". Each point puts a verbatim passage from a guideline-grade document next to a plain-language summary and one open question for the doctor. You did not write the draft. Your only job is to find what a family needs to know about diagnosis and the initial evaluation that the draft leaves out.
+
+Read the documents and the draft. List at most four gaps, most important first: statements in the documents about how the diagnosis is made or confirmed, which tests are used and what their results can and cannot show, which procedures are or are not needed, and what is evaluated at or soon after diagnosis. For a disease that affects several organ systems, include the evaluation of each system that the documents recommend at diagnosis. Prefer a statement from a consensus statement or practice guideline (grade A) over a review. Do not list what the draft already says, treatment, long-term follow-up, prognosis or research, and do not list a gap just to have one: an empty list is a good answer when nothing a family needs is missing.
+
+For each gap give the document id, the section, the passage copied verbatim from the document (complete sentences, enough to be fair on its own) and one sentence on why a family needs it. Also name the draft points (by id) that matter least, which would be dropped first if the block grew past eight points."""
+
+
+_EXAMPLE_FILE = Path(__file__).with_name("fd_worked_example.json")
+
+
+@lru_cache(maxsize=1)
+def worked_example() -> dict:
+    """The hand-written FD block: source, and six points with quote, summaries and questions."""
+    return json.loads(_EXAMPLE_FILE.read_text(encoding="utf-8"))
+
+
+def _example_points(example: dict) -> str:
+    lines = []
+    for n, p in enumerate(example["points"], 1):
+        lines.append(f'<example_point n="{n}">\n' + "\n".join(f"<{k}>{p[k]}</{k}>" for k in ("quote", "summary_en", "summary_pl", "question_en", "question_pl")) + "\n</example_point>")
+    return "\n".join(lines)
+
+
+def generator_system(example: dict | None) -> str:
+    """The generator's instructions, with the hand-written FD block as a worked example unless it is held out."""
+    if not example:
+        return GENERATOR_SYSTEM
+    return GENERATOR_SYSTEM + f"""
+
+A worked example follows: the block written by hand for {example['disease']}, from {example['source']}. Copy its standards, not its content: how much of the source each quote keeps, how closely each summary follows its quote in both languages, and how each question first asks whether something applies before asking about it. Your block is about another disease or uses other documents; never reuse these sentences unless they appear in your documents.
+
+<worked_example>
+{_example_points(example)}
+</worked_example>"""
+
+
+def verifier_calibration(example: dict | None) -> str:
+    """The verifier's calibrated PASS examples (the cached part of its prompt), unless held out."""
+    if not example:
+        return ""
+    return f"""Calibration. The six points below were written by hand for {example['disease']} from {example['source']} and checked twice against the full guideline. Every one of them is a PASS. Judge the points you are given by the same standard; in particular, a question that first asks whether something applies and then asks one follow-up ("…, and if so, what should it settle?") is one open question and passes, and a summary that says what the quote says in plainer words passes.
+
+<calibration_examples>
+{_example_points(example)}
+</calibration_examples>"""
+
+
+def coverage_task(disease_name: str, points: list[DraftPoint]) -> str:
+    lines = [f"Disease: {disease_name}", "", "The draft block:"]
+    for p in points:
+        lines.append(f'<point id="{p.id}" doc_id="{p.doc_id}">\n<quote>{p.quote}</quote>\n<summary_en>{p.summary_en}</summary_en>\n</point>')
+    lines.append("\nList what a family needs to know about diagnosis and the initial evaluation that this draft leaves out, following your instructions.")
+    return "\n".join(lines)
+
+
+def completion_task(disease_name: str, points: list[DraftPoint], coverage: CoverageOutput, max_points: int) -> str:
+    """The generator's turn after the coverage review: add points for the gaps and return the whole block."""
+    lines = [f"Disease: {disease_name}", "", "Your draft:"]
+    lines.extend(f'\n<point id="{p.id}">\n{json.dumps(_point_fields(p), ensure_ascii=False, indent=1)}\n</point>' for p in points)
+    lines.append("\nAn independent reviewer found that the draft leaves out these things a family needs at diagnosis:")
+    for n, gap in enumerate(coverage.gaps, 1):
+        lines.append(f'<gap n="{n}" doc_id="{gap.doc_id}" section="{gap.section}">\n<topic>{gap.topic}</topic>\n<passage>{gap.passage}</passage>\n<why>{gap.why}</why>\n</gap>')
+    if coverage.least_important:
+        lines.append(f"The reviewer named these draft points as mattering least: {', '.join(coverage.least_important)}.")
+    lines.append(
+        f"\nReturn the complete block, ordered the way a family meets them: your draft points (keep their ids, change them only if a gap shows a point is incomplete) and one new point for each gap a family needs, with new ids. Every point follows every rule in your instructions; a new quote must be copied exactly from a document above (the reviewer's passage may be used only where it is verbatim). Return at most {max_points} points; if you must drop some, drop those the reviewer named first. Leave no_points_reason empty."
+    )
+    return "\n".join(lines)
 
 
 def render_documents(docs: Iterable[SourceDoc]) -> str:
@@ -70,8 +145,9 @@ def render_documents(docs: Iterable[SourceDoc]) -> str:
     parts: list[str] = []
     for d in docs:
         ids = ", ".join(x for x in (f"PMID {d.pmid}" if d.pmid else "", d.pmcid or "", d.bookshelf or "") if x)
+        licence = "open" if d.open_licence else "restricted"
         lines = [
-            f'<document id="{d.doc_id}" grade="{d.grade}" kind="{GRADE_LABEL.get(d.grade, "")}" year="{d.year}">',
+            f'<document id="{d.doc_id}" grade="{d.grade}" kind="{GRADE_LABEL.get(d.grade, "")}" year="{d.year}" licence="{licence}">',
             f"<title>{d.title}</title>",
             f"<source>{d.authors} {d.journal} {d.year}. {ids}</source>".replace("  ", " "),
         ]
@@ -129,8 +205,9 @@ def revision_task(disease_name: str, accepted: list[DraftPoint], failed: list[tu
     return "\n".join(lines)
 
 
-def render_verifier_input(disease_name: str, items: list[tuple[DraftPoint, QuoteCheck, DocIndex]]) -> str:
-    """The verifier's user turn: each point with its document, section, the paragraphs around the quote and any omitted text."""
+def render_verifier_input(disease_name: str, items: list[tuple[DraftPoint, QuoteCheck, DocIndex]], previous: dict[str, dict] | None = None) -> str:
+    """The verifier's user turn: each point with its document, section, the paragraphs around the quote, any omitted text, and the verifier's own previous verdict when the point is a revision."""
+    previous = previous or {}
     lines = [f"Disease: {disease_name}", "", f"Check these {len(items)} points. Return one verdict per point, with the point's id."]
     for point, check, index in items:
         match = check.match
@@ -151,5 +228,9 @@ def render_verifier_input(disease_name: str, items: list[tuple[DraftPoint, Quote
             lines.append("<left_out_at_ellipsis>\n" + "\n".join(f"- {o}" for o in match.omitted) + "\n</left_out_at_ellipsis>")
         for name in ("quote", "summary_en", "summary_pl", "question_en", "question_pl"):
             lines.append(f"<{name}>{getattr(point, name)}</{name}>")
+        verdict = previous.get(point.id)
+        if verdict:
+            fixes = "\n".join(f"- {f.get('field')}: {f.get('reason', '')}" for f in verdict.get("fixes") or [])
+            lines.append(f"<your_previous_verdict>\n{verdict.get('verdict')}: {verdict.get('reason', '')}\n{fixes}\n</your_previous_verdict>")
         lines.append("</point>")
     return "\n".join(lines)
