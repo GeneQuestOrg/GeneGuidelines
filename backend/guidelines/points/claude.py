@@ -1,0 +1,120 @@
+"""The Claude calls of the guideline-points loop, made the way production calls Claude (ADR 006).
+
+The request is built by the production adapter (``backend.agents.anthropic_direct.build_request``: the Pydantic schema as a JSON-schema response format, a pinned effort, adaptive thinking by default, the server-side refusal fallback) and the answer is validated by its ``parse_message``. Two things are added here, because the adapter's one-shot ``call_structured`` has no room for them:
+
+- the documents go in their own content block with a cache breakpoint, so the revision rounds of one disease read the shelf from the prompt cache instead of paying for it again;
+- every call returns its full token usage (fresh, cache write, cache read, output) and passes through an optional budget, so a lab can cap spend and report cost per disease.
+
+An answer that fails is returned as a record with ``ok: False`` and the error; nothing is raised into the loop, which treats a failed call as a failed step, never as a pass.
+"""
+
+from __future__ import annotations
+
+import time
+from typing import Any, Protocol
+
+from pydantic import BaseModel
+
+from ...agents.anthropic_direct import ClaudeCallError, build_request, parse_message, parse_spec, reasoning_max_tokens
+
+GENERATOR_SPEC = "anthropic:claude-sonnet-5-5@high"
+VERIFIER_SPEC = "anthropic:claude-opus-5-5@high"
+# Node budgets before the reasoning rule (x4, floor 16000): the generator writes up to six points in two languages; the verifier one verdict per point.
+GENERATOR_NODE_TOKENS = 8_000
+VERIFIER_NODE_TOKENS = 6_000
+
+
+class Budget(Protocol):
+    def reserve(self, model: str, prompt_chars: int, max_tokens: int) -> Any: ...
+
+    def settle(self, ticket: Any, model: str, usage: dict, role: str, error: str | None) -> float | None: ...
+
+
+class PointsCaller(Protocol):
+    async def call(self, *, role: str, system: str, prefix: str, user: str, result_type: type[BaseModel]) -> tuple[BaseModel | None, dict]: ...
+
+
+def _usage(message: Any) -> dict:
+    u = getattr(message, "usage", None)
+    return {name: int(getattr(u, name, 0) or 0) for name in ("input_tokens", "cache_creation_input_tokens", "cache_read_input_tokens", "output_tokens")}
+
+
+class ClaudePointsCaller:
+    """One role (generator or verifier) bound to one Claude model spec."""
+
+    def __init__(self, spec: str, *, api_key: str, node_max_tokens: int, budget: Budget | None = None, timeout_sec: float = 900.0, client: Any = None, retries: int = 1) -> None:
+        self.spec = spec
+        self.model, self.effort = parse_spec(spec)
+        self.max_tokens = reasoning_max_tokens(node_max_tokens)
+        self.budget = budget
+        self.retries = retries
+        if client is None:
+            import anthropic
+
+            # The key is passed explicitly so the SDK never falls back to another credential in the environment.
+            client = anthropic.AsyncAnthropic(api_key=api_key, max_retries=2, timeout=timeout_sec)
+        self.client = client
+
+    def _request(self, system: str, prefix: str, user: str, result_type: type[BaseModel]) -> dict[str, Any]:
+        kwargs = build_request(model=self.model, effort=self.effort, system_prompt=system, user_prompt=user, result_type=result_type, max_tokens=self.max_tokens)
+        if prefix:
+            kwargs["messages"] = [{"role": "user", "content": [
+                {"type": "text", "text": prefix, "cache_control": {"type": "ephemeral"}},
+                {"type": "text", "text": user},
+            ]}]
+        return kwargs
+
+    async def call(self, *, role: str, system: str, prefix: str, user: str, result_type: type[BaseModel]) -> tuple[BaseModel | None, dict]:
+        attempts: list[dict] = []
+        output: BaseModel | None = None
+        for _ in range(1 + max(0, self.retries)):
+            output, attempt = await self._once(role, system, prefix, user, result_type)
+            attempts.append(attempt)
+            if output is not None or not attempt.get("retryable"):
+                break
+        record = dict(attempts[-1])
+        record["attempts"] = attempts
+        record["usage_total"] = {k: sum(int(a["usage"].get(k, 0)) for a in attempts) for k in ("input_tokens", "cache_creation_input_tokens", "cache_read_input_tokens", "output_tokens")}
+        costs = [a.get("cost_usd") for a in attempts]
+        record["cost_usd_total"] = None if any(c is None for c in costs) else sum(costs)
+        return output, record
+
+    async def _once(self, role: str, system: str, prefix: str, user: str, result_type: type[BaseModel]) -> tuple[BaseModel | None, dict]:
+        import anthropic
+
+        kwargs = self._request(system, prefix, user, result_type)
+        prompt_chars = len(system) + len(prefix) + len(user)
+        record: dict[str, Any] = {
+            "role": role, "model": self.model, "effort": self.effort, "max_tokens": self.max_tokens, "prompt_chars": prompt_chars,
+            "ok": False, "error": None, "retryable": False, "stop_reason": None, "served_by": None, "request_id": None,
+            "usage": {}, "cost_usd": None, "latency_ms": None, "output": None, "raw_text": None,
+        }
+        ticket = self.budget.reserve(self.model, prompt_chars, self.max_tokens) if self.budget else None
+        started = time.monotonic()
+        message = None
+        try:
+            async with self.client.messages.stream(**kwargs) as stream:
+                message = await stream.get_final_message()
+        except anthropic.APIStatusError as exc:
+            err = ClaudeCallError("api", f"{self.model} HTTP {exc.status_code}: {str(getattr(exc, 'message', exc))[:300]}", status_code=exc.status_code)
+            record["error"], record["retryable"] = {"kind": err.kind, "message": str(err), "status": exc.status_code}, err.retryable
+        except anthropic.APIConnectionError as exc:
+            record["error"], record["retryable"] = {"kind": "api", "message": f"connection error: {str(exc)[:300]}"}, True
+        except Exception as exc:  # noqa: BLE001 - recorded as a failed call; the reservation is settled below
+            record["error"] = {"kind": "other", "message": f"{type(exc).__name__}: {str(exc)[:300]}"}
+        record["latency_ms"] = round((time.monotonic() - started) * 1000)
+        output: BaseModel | None = None
+        if message is not None:
+            record["usage"] = _usage(message)
+            record["stop_reason"] = getattr(message, "stop_reason", None)
+            record["served_by"] = str(getattr(message, "model", "") or "") or None
+            record["request_id"] = getattr(message, "_request_id", None)
+            record["raw_text"] = "".join(getattr(b, "text", "") for b in (getattr(message, "content", None) or []) if getattr(b, "type", "") == "text")
+            try:
+                output = parse_message(message, result_type).output
+                record["ok"], record["output"] = True, output.model_dump()
+            except ClaudeCallError as exc:
+                record["error"], record["retryable"] = {"kind": exc.kind, "message": str(exc)}, exc.retryable
+        if self.budget:
+            record["cost_usd"] = self.budget.settle(ticket, self.model, record["usage"], role, (record["error"] or {}).get("kind"))
+        return output, record
