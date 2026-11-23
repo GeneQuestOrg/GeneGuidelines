@@ -153,6 +153,23 @@ def _fd_section(results: dict[str, dict]) -> list[str]:
     return lines
 
 
+def _stability_section(results: dict[str, dict]) -> list[str]:
+    """Each disease run twice: how many accepted points of the first run have a point in the repeat that quotes the same passage."""
+    first = {r["slug"]: r for r in results.values() if not r.get("tag")}
+    repeat = {r["slug"]: r for r in results.values() if r.get("tag")}
+    if not repeat:
+        return ["No repeat run in this folder."]
+    lines = ["| Disease | Accepted (run 1 / repeat) | Run-1 points whose passage the repeat also quotes | Publishes (run 1 / repeat) | Cost (run 1 / repeat) |", "|---|---|---|---|---|"]
+    for slug, r1 in first.items():
+        r2 = repeat.get(slug)
+        if r2 is None:
+            continue
+        a1, a2 = r1["loop"]["accepted"], r2["loop"]["accepted"]
+        same = sum(1 for p in a1 if any(_overlaps(p["quote"], q["quote"]) for q in a2))
+        lines.append(f"| {slug} | {len(a1)} / {len(a2)} | {same} of {len(a1)} | {'yes' if r1['loop']['publish'] else 'no'} / {'yes' if r2['loop']['publish'] else 'no'} | {r1['cost_usd']:.2f} / {r2['cost_usd']:.2f} |")
+    return lines
+
+
 def write_report(snapshot: str, out: Path) -> Path:
     results = _results(out)
     order = [e["slug"] for e in load_catalog(snapshot)]
@@ -177,6 +194,10 @@ def write_report(snapshot: str, out: Path) -> Path:
         "## Verifier calibration",
         "",
         *_verifier_section(out),
+        "",
+        "## Stability (the same inputs run twice)",
+        "",
+        *_stability_section(results),
         "",
         "## FD: generated block against the hand-written one",
         "",

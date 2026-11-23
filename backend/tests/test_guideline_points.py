@@ -76,6 +76,9 @@ def test_ellipsis_pieces_must_be_in_order_and_on_word_boundaries():
     assert ok is not None and ok.omitted == ("as fresh or fresh frozen material",)
     assert index.locate("to enable genetic testing for GNAS mutation … Diagnostic biopsies should be processed") is None
     assert index.locate("iagnostic biopsies should be processed as fresh or fresh frozen material") is None
+    glued = DocIndex(SourceDoc(doc_id="G", title="t", year="", grade="A", grade_reason="", text_status="ok", paragraphs=(Paragraph("S", "all elective procedures should be deferred until a definitive diagnosis is confirmed.Each patient should have a coordinator"),)))
+    assert glued.locate("all elective procedures should be deferred until a definitive diagnosis is confirmed.") is not None
+    assert glued.locate("all elective procedures should be deferred until a definitive diagnosis is confirmed.Each pat") is None
 
 
 def test_one_changed_word_fails_the_check():
@@ -94,6 +97,15 @@ def test_check_point_outcomes():
     assert missing.kind == "not_found" and missing.nearest and missing.nearest.startswith("In most cases, the diagnosis of FD/MAS can be made")
 
 
+def test_nearest_finds_one_item_inside_a_list_without_full_stops():
+    items = "If FOP is suspected, all elective procedures such as surgeries, biopsies, and IM immunizations should be deferred until a definitive diagnosis is confirmed Avoid intramuscular injections Avoid blunt muscle trauma Avoid falls and use protective helmets for toddlers Monitor respiratory function at least once a year"
+    doc = SourceDoc(doc_id="G", title="t", year="2025", grade="A", grade_reason="", text_status="ok", paragraphs=(Paragraph("General recommendations", items),))
+    index = DocIndex(doc)
+    quote = "If FOP is suspected, all elective procedures such as surgeries, biopsies, and IM immunizations should be deferred until a definitive diagnosis is confirmed."
+    assert index.locate(quote) is None
+    assert index.nearest(quote).startswith("If FOP is suspected, all elective procedures") and "confirmed" in index.nearest(quote)
+
+
 # --- grading and selection ----------------------------------------------------------------------------------------------
 
 
@@ -102,6 +114,10 @@ def test_grade_comes_from_metadata_not_from_the_shelf_role():
     assert grade_document(title="Medical guidelines for fibrodysplasia ossificans progressiva.", pubtypes=["Journal Article"])[0] == "A"
     assert grade_document(title="Clinical spectrum of ABCA4 disease", pubtypes=["Journal Article", "Review"])[0] == "C"
     assert grade_document(title="Anaesthetic management of a child with FOP", pubtypes=["Case Reports"])[0] is None
+    assert grade_document(title="Noonan syndrome: clinical features, diagnosis, and management guidelines.", pubtypes=["Journal Article", "Review"])[0] == "A"
+    assert grade_document(title="Ophthalmological screening guidelines for individuals with OI: a scoping review", pubtypes=["Journal Article", "Scoping Review"])[0] == "C"
+    assert grade_document(title="FOP: report of a case with guidelines for pediatric dentists", pubtypes=["Case Reports", "Journal Article"])[0] is None
+    assert grade_document(title="Cardiovascular disease in adults with OI: care recommendations", pubtypes=["Journal Article", "Systematic Review"])[0] == "C"
     assert grade_document(title="Schinzel-Giedion Syndrome", is_bookshelf=True, book_title="GeneReviews®")[0] == "B"
     assert grade_document(title="Noonan Syndrome", is_bookshelf=True, book_title="StatPearls")[0] == "C"
 
@@ -128,12 +144,14 @@ def test_parse_pmc_article_strips_citation_links_and_unwraps_boxes():
     xml = """<article xml:lang="en"><front/><body><sec><title>Diagnosis</title>
     <p>In most cases the diagnosis can be made clinically after a complete staging evaluation [<xref ref-type="bibr" rid="CR7">7</xref>, <xref ref-type="bibr" rid="CR8">8</xref>].</p>
     <boxed-text><p>Recommendation: genetic testing is recommended where the diagnosis is in question.</p></boxed-text>
+    <list><list-item><p>Defer elective procedures until the diagnosis is confirmed.</p></list-item><list-item><p>Avoid intramuscular injections.</p></list-item></list>
     </sec><sec><title>References</title><p>1. Someone et al. A paper title that is long enough to count.</p></sec></body></article>"""
     paragraphs, language, _ = parse_pmc_article(xml)
     assert language == "en"
     assert [p.text for p in paragraphs] == [
         "In most cases the diagnosis can be made clinically after a complete staging evaluation.",
         "Recommendation: genetic testing is recommended where the diagnosis is in question.",
+        "Defer elective procedures until the diagnosis is confirmed. Avoid intramuscular injections.",
     ]
 
 

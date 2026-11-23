@@ -65,9 +65,12 @@ def split_omissions(quote: str) -> list[str]:
 
 
 def _boundary_ok(text: str, start: int, end: int) -> bool:
+    """A piece may not start or end inside a word. A piece that ends on punctuation ends a word by itself, whatever follows (flattened list items often run on: "confirmed.Each")."""
     before = text[start - 1] if start > 0 else " "
     after = text[end] if end < len(text) else " "
-    return not before.isalnum() and not after.isalnum()
+    starts_word = text[start].isalnum() if start < len(text) else False
+    ends_word = text[end - 1].isalnum() if end > 0 else False
+    return not (starts_word and before.isalnum()) and not (ends_word and after.isalnum())
 
 
 def _find_in_order(pieces: list[str], window: str) -> list[tuple[int, int]] | None:
@@ -119,22 +122,31 @@ class DocIndex:
         return None
 
     def nearest(self, quote: str) -> str | None:
-        """The sentence of this document closest to a quote that was not found, so a revision can copy it exactly."""
+        """The passage of this document closest to a quote that was not found, so a revision can copy it exactly.
+
+        Candidates are sentences, and word windows the length of the quote inside sentences much longer than it: a run of list items without full stops reads as one "sentence", and a whole list never resembles the one item that was quoted.
+        """
         target = normalize(quote)
         words = set(target.split())
         if not words:
             return None
-        candidates: list[tuple[float, str]] = []
+        size = len(quote.split())
+        candidates: list[str] = []
         for paragraph in self.doc.paragraphs:
             for sentence in _SENTENCE.split(paragraph.text):
-                overlap = len(words & set(normalize(sentence).split())) / len(words)
-                if overlap >= 0.3:
-                    candidates.append((overlap, sentence))
-        best: tuple[float, str] | None = None
-        for _, sentence in sorted(candidates, reverse=True)[:25]:
-            ratio = difflib.SequenceMatcher(None, target, normalize(sentence), autojunk=False).ratio()
-            if best is None or ratio > best[0]:
-                best = (ratio, sentence)
+                if len(words & set(normalize(sentence).split())) / len(words) < 0.3:
+                    continue
+                tokens = sentence.split()
+                if len(tokens) <= 2 * size:
+                    candidates.append(sentence)
+                else:
+                    candidates.extend(" ".join(tokens[i:i + size]) for i in range(0, len(tokens) - size + 1))
+        scored = []
+        for text in candidates:
+            matcher = difflib.SequenceMatcher(None, target, normalize(text), autojunk=False)
+            if matcher.real_quick_ratio() >= 0.5 and matcher.quick_ratio() >= 0.5:
+                scored.append((matcher.ratio(), text))
+        best = max(scored, default=None)
         return best[1] if best and best[0] >= 0.5 else None
 
     def context(self, match: QuoteMatch, neighbours: int = 1) -> list[Paragraph]:
