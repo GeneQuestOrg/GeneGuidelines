@@ -69,14 +69,28 @@ def looks_english(text: str) -> bool:
     return sum(1 for w in words if w in _ENGLISH_MARKERS) / len(words) >= 0.08
 
 
-def select_documents(docs: Iterable[SourceDoc], max_chars: int = MAX_INPUT_CHARS) -> tuple[list[SourceDoc], list[str]]:
+def select_documents(docs: Iterable[SourceDoc], max_chars: int = MAX_INPUT_CHARS, *, identity=None, genereviews: dict | None = None) -> tuple[list[SourceDoc], list[str]]:
     """The documents the generator reads, strongest first, and notes on what was left out and why.
 
     Every readable guideline-grade document is offered, ordered A, B, C and newest first within a grade, until the character budget is reached. Reviews are not withheld when a guideline exists: a disease's only consensus statement can be about something else (Noonan's readable one is about cancer surveillance), and the generator is told to quote a stronger document whenever one says the same thing. Which grades the accepted points rest on is decided after the run (``block_basis``).
+
+    With the disease's ``identity`` (``backend.guidelines.relevance``), a document that is about another disease is left out: its full text never names the disease, or it is a GeneReviews chapter on other genes.
     """
+    from ..relevance import MISMATCH, assess
+
     docs = list(docs)
     notes = [f"{d.doc_id} (grade {d.grade}) left out: {d.text_status}" for d in docs if d.grade and not d.readable]
-    pool = sorted((d for d in docs if d.grade in GRADE_RANK and d.readable), key=lambda d: (GRADE_RANK[d.grade], -_year(d.year)))
+    readable = []
+    for d in docs:
+        if not (d.grade in GRADE_RANK and d.readable):
+            continue
+        if identity is not None:
+            verdict = assess(identity, title=d.title, bookshelf=d.bookshelf, text="\n".join(p.text for p in d.paragraphs), genereviews=genereviews)
+            if verdict.verdict == MISMATCH:
+                notes.append(f"{d.doc_id} (grade {d.grade}) left out: about another disease ({verdict.reason})")
+                continue
+        readable.append(d)
+    pool = sorted(readable, key=lambda d: (GRADE_RANK[d.grade], -_year(d.year)))
     selected: list[SourceDoc] = []
     used = 0
     for d in pool:

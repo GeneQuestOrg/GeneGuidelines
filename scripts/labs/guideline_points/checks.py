@@ -16,9 +16,13 @@ from .snapshot import load_catalog, load_disease
 
 
 def disease_inputs(snapshot: str, slug: str):
+    """The frozen shelf, and what the generator is shown: readable guideline-grade documents about this disease (the relevance check runs with the GeneReviews index)."""
+    from backend.guidelines.relevance import identity_from_disease
+    from backend.tools.genereviews_index import load_index
+
     data = load_disease(snapshot, slug)
     docs = [doc_from_dict(d) for d in data["docs"]]
-    selected, notes = select_documents(docs)
+    selected, notes = select_documents(docs, identity=identity_from_disease(data["disease"]), genereviews=load_index())
     return data, docs, selected, notes
 
 

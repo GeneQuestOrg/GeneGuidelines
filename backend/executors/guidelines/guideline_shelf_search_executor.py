@@ -18,6 +18,7 @@ import os
 import urllib.parse
 import urllib.request
 
+from ...guidelines.relevance import MATCH, assess
 from ..base import NodeExecutor, NodeInput, NodeOutput
 
 try:
@@ -156,23 +157,47 @@ def _book_candidates(disease_name: str, gene: str | None = None) -> list[dict]:
         return []
     qs = urllib.parse.urlencode({"db": "books", "id": ",".join(ids), "retmode": "json"})
     block = _http_get_json(f"{_EUTILS}/esummary.fcgi?{qs}").get("result", {})
+    identity = _identity_for(disease_name, gene)
+    index = _genereviews_index()
     out: list[dict] = []
+    seen_acc: set[str] = set()
     for bid in ids:
         rec = block.get(bid) or {}
         accession = _book_accession(rec)
-        if not accession:  # no real NBK id → not a citable compendium entry
+        if not accession or accession in seen_acc:  # no real NBK id → not a citable compendium entry
             continue
+        chapter = index.get(accession)
+        # A hit is often a section record ("Clinical Characteristics"); the chapter title is what the shelf must show.
+        title = chapter.title if chapter else (rec.get("title") or "").rstrip(".")
+        verdict = assess(identity, title=title, bookshelf=accession, genereviews=index)
+        if verdict.verdict != MATCH:
+            # A Bookshelf hit is a full-text match anywhere in a book, often a differential-diagnosis table; only a chapter that is about the disease is a candidate.
+            log.info("guideline_shelf_search: Bookshelf %s (%r) skipped for %s: %s", accession, title, disease_name, verdict.reason)
+            continue
+        seen_acc.add(accession)
         out.append(
             {
                 "bookshelf": accession,
-                "title": (rec.get("title") or "").rstrip("."),
+                "title": title,
                 "authors": ", ".join(a.get("name", "") for a in (rec.get("authors") or [])[:5]),
-                "journal": (rec.get("book") or "NCBI Bookshelf"),
+                "journal": "GeneReviews" if chapter else (rec.get("book") or "NCBI Bookshelf"),
                 "year": rec.get("pubdate") or "continuously updated",
                 "abstract": "",
             }
         )
     return out
+
+
+def _identity_for(disease_name: str, gene: str | None):
+    from ...guidelines.relevance import identity_from_disease
+
+    return identity_from_disease({"name": disease_name, "gene": gene or ""})
+
+
+def _genereviews_index() -> dict:
+    from ...tools.genereviews_index import load_index
+
+    return load_index()
 
 
 def _collect_shelf_candidates(disease_name: str, gene: str | None = None) -> list[dict]:

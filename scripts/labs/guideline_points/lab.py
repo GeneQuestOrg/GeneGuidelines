@@ -43,6 +43,17 @@ def cmd_snapshot(args) -> int:
     return 0
 
 
+def cmd_relevance(args) -> int:
+    from .relevance_scan import run_scan
+
+    out = Path(args.out)
+    out.mkdir(parents=True, exist_ok=True)
+    report = run_scan(args.snapshot, out)
+    bad = sum(1 for d in report["diseases"].values() for r in d["documents"] if r["verdict"] == "mismatch")
+    print(f"{bad} mismatched documents; written to {out / 'relevance_scan.json'}")
+    return 0
+
+
 def cmd_check(args) -> int:
     from .checks import run_check
 
@@ -78,6 +89,11 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--name", required=True)
     p.add_argument("--disease", action="append", help="limit to these slugs (repeatable)")
     p.set_defaults(func=cmd_snapshot)
+
+    p = sub.add_parser("relevance", help="no model: the shelf relevance check over every catalog shelf (public API, NCBI)")
+    p.add_argument("--snapshot", help="frozen snapshot whose full texts to use as evidence")
+    p.add_argument("--out", required=True)
+    p.set_defaults(func=cmd_relevance)
 
     p = sub.add_parser("check", help="no model: document grades, readable full text, selection, the FD gold quotes against the verbatim check")
     p.add_argument("--snapshot", required=True)

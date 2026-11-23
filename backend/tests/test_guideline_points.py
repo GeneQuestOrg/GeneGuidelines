@@ -132,6 +132,15 @@ def test_selection_orders_strongest_first_skips_unreadable_and_respects_budget()
     assert [d.doc_id for d in small] == ["31196103"] and any("budget" in n for n in notes)
 
 
+def test_selection_leaves_out_a_document_about_another_disease():
+    from backend.guidelines.relevance import identity_from_disease
+
+    fd = identity_from_disease({"slug": "fd", "name": "Fibrous Dysplasia", "nameShort": "FD", "gene": "GNAS"})
+    other = SourceDoc(doc_id="X", title="Schinzel-Giedion Syndrome", year="2024", grade="B", grade_reason="", text_status="ok", bookshelf="NBK601394", paragraphs=(Paragraph("Diagnosis", "Schinzel-Giedion syndrome is caused by SETBP1 variants and is diagnosed clinically."),))
+    selected, notes = select_documents([CONSENSUS, other], identity=fd)
+    assert [d.doc_id for d in selected] == ["31196103"] and any("about another disease" in n for n in notes)
+
+
 def test_block_basis_never_calls_a_review_the_guideline():
     assert block_basis(["A", "A"]) == "guideline"
     assert block_basis(["A", "B"]) == "guideline+genereviews"

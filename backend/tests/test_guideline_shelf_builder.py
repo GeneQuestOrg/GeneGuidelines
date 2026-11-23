@@ -28,6 +28,16 @@ from backend.guidelines.repository import SqlaGuidelinesRepo
 from backend.shared.persistence.schema import metadata
 
 
+@pytest.fixture(autouse=True)
+def _no_genereviews_network(monkeypatch):
+    """The shelf builder consults NCBI's GeneReviews index; these tests never reach the network."""
+    from backend.executors.guidelines import guideline_shelf_search_executor as se
+    from backend.executors.guidelines import guideline_shelf_write_executor as we
+
+    monkeypatch.setattr(se, "_genereviews_index", lambda: {})
+    monkeypatch.setattr(we, "_genereviews_index", lambda: {})
+
+
 @pytest.fixture
 def repo() -> SqlaGuidelinesRepo:
     engine = create_engine(

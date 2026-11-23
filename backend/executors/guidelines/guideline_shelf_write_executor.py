@@ -146,6 +146,10 @@ class GuidelineShelfWriteExecutor(NodeExecutor):
         try:
             repo = self._get_repo()
             docs, kept_ids = _merge_with_existing(repo, slug, docs, considered)
+            docs, off_disease = _drop_off_disease(slug, docs)
+            if not docs:
+                return NodeOutput(data={"ok": False, "error": "every shelf doc is about another disease.", "offDisease": off_disease})
+            considered = [*(c for c in considered or [] if isinstance(c, dict)), *off_disease]
             repo.replace_source_documents(slug, docs)
             # Store why each rejected candidate was rejected. Best-effort: the audit
             # snapshot is valuable, but never worth failing a shelf write over.
@@ -164,8 +168,43 @@ class GuidelineShelfWriteExecutor(NodeExecutor):
                 "docCount": len(docs),
                 "kinds": kinds,
                 "keptFromPreviousShelf": sorted(kept_ids),
+                "offDisease": off_disease,
             }
         )
+
+
+def _identity(slug: str):
+    from ...guidelines.relevance import identity_for_slug
+
+    return identity_for_slug(slug)
+
+
+def _genereviews_index() -> dict:
+    from ...tools.genereviews_index import load_index
+
+    return load_index()
+
+
+def _drop_off_disease(slug: str, docs: list[dict]) -> tuple[list[dict], list[dict]]:
+    """Remove documents that are about another disease (``backend.guidelines.relevance``), including ones carried forward from an earlier shelf.
+
+    Only a definite mismatch removes a document: a GeneReviews chapter whose genes and OMIM numbers do not include the disease's. A title that does not name the disease is not enough, because journal titles often do not. Each removal is returned as a ``considered`` entry with category "off-topic", so the audit shows why.
+    """
+    from ...guidelines.relevance import MISMATCH, assess
+
+    identity = _identity(slug)
+    if identity is None:
+        return docs, []
+    index = _genereviews_index() if any(d.get("bookshelf") for d in docs) else {}
+    kept, dropped = [], []
+    for d in docs:
+        verdict = assess(identity, title=str(d.get("title") or ""), bookshelf=d.get("bookshelf"), genereviews=index)
+        if verdict.verdict == MISMATCH:
+            log.warning("guideline_shelf_write: %s removed from the %s shelf: %s", d.get("id"), slug, verdict.reason)
+            dropped.append({"pmid": d.get("pmid") or "", "bookshelf": d.get("bookshelf") or "", "title": d.get("title") or "", "category": "off-topic", "reason": f"About another disease: {verdict.reason}"})
+        else:
+            kept.append(d)
+    return kept, dropped
 
 
 # Reasons that justify dropping a document that a previous run (or a human) had
