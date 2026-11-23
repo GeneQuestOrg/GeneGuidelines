@@ -404,6 +404,12 @@ The worker has **no ingress** (it never serves HTTP) and runs `python -m backend
 The deploy workflow rolls `gg-worker` to the same tag as `gg-public`, but only **if it
 already exists** — provisioning is the one-time manual step below.
 
+### GeneReviews chapters (`bookshelf_chapters`)
+
+NCBI Bookshelf answers automated requests for chapter pages with a reCAPTCHA page, so the worker reads GeneReviews from NCBI's official bulk archive instead (`gene_NBK1116.tar.gz` in the Literature Archive, about 640 MB, resolved through `https://ftp.ncbi.nlm.nih.gov/pub/litarch/file_list.csv`). Once a day it checks whether a shelf needs a chapter that is not stored, or whether the stored copies are older than `GENEREVIEWS_REFRESH_DAYS` (default 7; `0` disables); if so it streams the archive once, keeps only the shelf chapters, and stores their text in `bookshelf_chapters`. Nothing is written to disk. `backend/tools/bookshelf_fulltext.py` serves the stored text to the synthesis and to the guideline-points loop.
+
+Fill or refresh it by hand (superadmin) with `POST /api/pipeline/genereviews/refresh` (poll `GET` for the report), or from a shell with `DB_URL` exported: `python -m backend.services.genereviews_refresh`.
+
 ### Token budget guard
 
 The worker appends one `token_usage` row per successful LLM call (`backend/research_queue/token_budget.py`)

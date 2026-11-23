@@ -52,6 +52,21 @@ async def _retention_loop() -> None:
         await asyncio.sleep(RUN_EVERY.total_seconds())
 
 
+async def _genereviews_loop() -> None:
+    """Once a day, read NCBI's GeneReviews archive if a shelf needs a chapter that is not stored or the stored copies are due (backend.services.genereviews_refresh). A failed pass is logged and retried the next day."""
+    from backend.services.genereviews_refresh import due, refresh_genereviews_chapters
+
+    await asyncio.sleep(120)  # let the scheduler settle; the archive pass is a 640 MB download
+    while True:
+        try:
+            if await asyncio.to_thread(due):
+                report = await asyncio.to_thread(refresh_genereviews_chapters)
+                log.info("backend.worker: GeneReviews refresh: %s", {k: v for k, v in report.items() if k != "wanted"})
+        except Exception:  # noqa: BLE001 — chapter text is an upgrade; it must never take the research worker down
+            log.exception("backend.worker: GeneReviews refresh failed")
+        await asyncio.sleep(24 * 3600)
+
+
 async def _run() -> None:
     from backend.config import DB_URL
     from backend.research_queue import get_scheduler
@@ -69,6 +84,7 @@ async def _run() -> None:
     register_research_factories(scheduler)
     await scheduler.start()
     retention = asyncio.create_task(_retention_loop())
+    genereviews = asyncio.create_task(_genereviews_loop())
     log.info(
         "backend.worker: scheduler started (max_concurrent=%s) — waiting for jobs",
         scheduler.max_concurrent,
@@ -87,6 +103,7 @@ async def _run() -> None:
     finally:
         log.info("backend.worker: shutting down — cancelling worker pool")
         retention.cancel()
+        genereviews.cancel()
         await scheduler.shutdown()
 
 

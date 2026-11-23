@@ -245,8 +245,30 @@ class GuidelineSuggestionVoteRow(Base):
     )
 
 
+class BookshelfChapterRow(Base):
+    """The text of one NCBI Bookshelf chapter that a shelf needs, read from NCBI's bulk archive.
+
+    Bookshelf chapter pages refuse automated readers (a reCAPTCHA page), so GeneReviews chapters are read from NCBI's Literature Archive by a periodic job (``backend.services.genereviews_refresh``) and kept here; ``bookshelf_fulltext`` serves them to the synthesis and to the guideline-points loop. ``sections`` is a list of ``{"heading", "text"}``. ``licence`` and ``copyright`` are the chapter's own statements, kept because GeneReviews' terms ask for the source and copyright credit with every copy.
+    """
+
+    __tablename__ = "bookshelf_chapters"
+
+    accession: Mapped[str] = mapped_column(Text, primary_key=True)
+    book: Mapped[str] = mapped_column(Text, nullable=False)
+    shortname: Mapped[str] = mapped_column(Text, nullable=False)
+    title: Mapped[str] = mapped_column(Text, nullable=False)
+    sections: Mapped[list] = mapped_column(JSON, nullable=False)
+    licence: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    copyright: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    synonyms: Mapped[list] = mapped_column(JSON, nullable=False, default_factory=list)
+    source_url: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    source_last_modified: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    fetched_at: Mapped[str] = mapped_column(Text, nullable=False, default="")
+
+
 __all__ = [
     "Base",
+    "BookshelfChapterRow",
     "SourceDocumentRow",
     "GuidelineSynthesisRow",
     "GuidelineSynthesisTranslationRow",

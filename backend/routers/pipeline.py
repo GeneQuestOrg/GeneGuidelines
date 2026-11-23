@@ -878,6 +878,35 @@ async def bootstrap_disease(
     }
 
 
+_GENEREVIEWS_REFRESH: dict = {"running": False, "last": None}
+
+
+@router.post("/genereviews/refresh", status_code=202, dependencies=[Depends(require_superadmin)])
+async def start_genereviews_refresh(force: bool = False):
+    """Read NCBI's GeneReviews archive now and store the chapters shelves need (superadmin). Runs in the background; poll GET for the report."""
+    if _GENEREVIEWS_REFRESH["running"]:
+        return {"started": False, "reason": "a refresh is already running"}
+    from ..services.genereviews_refresh import refresh_genereviews_chapters
+
+    async def _run() -> None:
+        _GENEREVIEWS_REFRESH["running"] = True
+        try:
+            _GENEREVIEWS_REFRESH["last"] = await asyncio.to_thread(lambda: refresh_genereviews_chapters(force=force))
+        except Exception as exc:  # noqa: BLE001 — reported through GET, never raised into the event loop
+            _GENEREVIEWS_REFRESH["last"] = {"ok": False, "error": f"{type(exc).__name__}: {exc}"}
+        finally:
+            _GENEREVIEWS_REFRESH["running"] = False
+
+    asyncio.create_task(_run())
+    return {"started": True}
+
+
+@router.get("/genereviews/refresh", dependencies=[Depends(require_superadmin)])
+async def get_genereviews_refresh():
+    """The state of the last GeneReviews refresh started from this process."""
+    return dict(_GENEREVIEWS_REFRESH)
+
+
 @router.post("/pathway-run", dependencies=[Depends(require_superadmin)])
 async def start_pathway_run(body: PathwayRunBody):
     """Start the patient-chart pipeline for a catalog disease."""
