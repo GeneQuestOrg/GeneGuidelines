@@ -169,7 +169,8 @@ export function ParentDiseaseMap({ disease, hasGuideline, onNav }: ParentDisease
                       <details className="dmap-ask__src-q">
                         <summary className="dmap-ask__lbl">{t("askQuoteLabel")}</summary>
                         <p className="dmap-ask__s">
-                          <q>{t(sKey)}</q>
+                          {/* The quotation is English on every page; lang lets a screen reader pronounce it as English. */}
+                          <q lang="en">{t(sKey)}</q>
                         </p>
                       </details>
                     </li>

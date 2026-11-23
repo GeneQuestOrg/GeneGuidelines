@@ -128,7 +128,8 @@ describe("prerendered pages", () => {
     "%s carries every question with the sentence behind it",
     (path) => {
       const body = byPath[path].body;
-      expect((body.match(/<blockquote>/g) ?? []).length).toBe(6);
+      // Each quotation is marked as English, so a screen reader on the Polish page reads it as English.
+      expect((body.match(/<blockquote lang="en">/g) ?? []).length).toBe(6);
       expect(body).toContain("complete staging evaluation");
       expect(body).toContain("31196103");
     },

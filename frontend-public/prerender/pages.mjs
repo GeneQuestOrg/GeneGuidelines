@@ -207,7 +207,7 @@ function mapSection(map) {
   const questions = askPairs
     .map(
       ([question, sentence]) =>
-        `<li><p>${esc(map[question.replace("askQ", "askP")])}</p><p class="ggp-q">${esc(map[question])}</p><blockquote>${esc(map[sentence])}</blockquote></li>`,
+        `<li><p>${esc(map[question.replace("askQ", "askP")])}</p><p class="ggp-q">${esc(map[question])}</p><blockquote lang="en">${esc(map[sentence])}</blockquote></li>`,
     )
     .join("\n");
   const steps = [
