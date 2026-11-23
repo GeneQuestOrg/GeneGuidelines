@@ -147,9 +147,8 @@ class GuidelineShelfWriteExecutor(NodeExecutor):
             repo = self._get_repo()
             docs, kept_ids = _merge_with_existing(repo, slug, docs, considered)
             docs, off_disease = _drop_off_disease(slug, docs)
-            if not docs:
-                return NodeOutput(data={"ok": False, "error": "every shelf doc is about another disease.", "offDisease": off_disease})
             considered = [*(c for c in considered or [] if isinstance(c, dict)), *off_disease]
+            # Written even when every document turned out to be about another disease: an empty shelf is the honest state, and returning early would leave the wrong chapters stored and served.
             repo.replace_source_documents(slug, docs)
             # Store why each rejected candidate was rejected. Best-effort: the audit
             # snapshot is valuable, but never worth failing a shelf write over.
@@ -161,6 +160,8 @@ class GuidelineShelfWriteExecutor(NodeExecutor):
             log.warning("guideline_shelf_write: replace failed for %s: %s", slug, exc)
             return NodeOutput(data={"ok": False, "error": f"shelf write failed: {exc}"})
 
+        if not docs:
+            return NodeOutput(data={"ok": False, "error": "every shelf doc is about another disease; the shelf is now empty.", "slug": slug, "docCount": 0, "offDisease": off_disease})
         return NodeOutput(
             data={
                 "ok": True,

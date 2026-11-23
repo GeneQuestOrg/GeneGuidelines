@@ -92,3 +92,24 @@ def test_bookshelf_reader_serves_the_stored_chapter_before_trying_the_page(monke
     monkeypatch.setattr(bookshelf_fulltext, "_fetch_page_sections", lambda accession: calls.append(accession) or [])
     assert bookshelf_fulltext.fetch_chapter_sections("NBK1")[0][0] == "Diagnosis"
     assert bookshelf_fulltext.fetch_chapter_sections("NBK2") == [] and calls == ["NBK2"]
+
+
+def test_an_absent_chapter_is_recorded_so_the_archive_is_not_read_again_every_day(engine, tmp_path):
+    from sqlalchemy.orm import Session
+
+    with Session(engine) as session, session.begin():
+        session.add(SourceDocumentRow(disease_slug="fd", doc_id="NBK274564", role="r", title="t", authors="", journal="", year="", scope="", bookshelf="NBK274564"))
+    archive = tmp_path / "gene_NBK1116.tar.gz"
+    archive.write_bytes(_archive({"other.nxml": b"<book-part/>"}))
+    index = {"NBK274564": GeneReviewsChapter(accession="NBK274564", shortname="mccune-albright", title="Fibrous Dysplasia / McCune-Albright Syndrome", pmid="25719192", genes=("GNAS",), omim=("174800",))}
+    report = genereviews_refresh.refresh_genereviews_chapters(archive=str(archive), engine=engine, index=index)
+    assert report["not_in_archive"] == ["NBK274564"]
+    assert chapters.get_chapter("NBK274564", engine) is not None and chapters.stored_sections("NBK274564", engine) == []
+    import backend.tools.genereviews_index as gi
+
+    original = gi.load_index
+    gi.load_index = lambda *a, **k: index
+    try:
+        assert genereviews_refresh.due(engine) is False
+    finally:
+        gi.load_index = original

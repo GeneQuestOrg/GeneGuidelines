@@ -9,11 +9,9 @@ from fastapi import APIRouter, Depends, Header, HTTPException, Request
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 from .. import database as db
-from ..shared.rate_limit import check_rate_limit
 from ..account.deps import OptionalUser, require_superadmin
 from ..auth import require_api_key_if_set
 from ..config import DEFAULT_MODEL_PROFILE, MODEL_PROFILES
-from ..contracts.guidelines_v1 import SYNTHESIS_SECTIONS
 from ..content_db import (
     get_disease_by_slug,
     normalize_pr_id,
@@ -28,12 +26,14 @@ from ..content_models import (
     GuidelinePromptProfile,
     ParentPathwayResponse,
 )
+from ..contracts.guidelines_v1 import SYNTHESIS_SECTIONS
 from ..guideline_pr_publish import GuidelinePrPublishError
 from ..guideline_prompt_profile import (
     build_custom_disease_flow_initial_fields,
     normalize_guideline_prompt_profile,
 )
 from ..operator_settings import get_operator_settings
+from ..shared.rate_limit import check_rate_limit
 from . import agent as agent_router
 from . import doctor_finder as doctor_finder_router
 
@@ -886,6 +886,7 @@ class GuidelinePointsBackfillBody(BaseModel):
 
 
 _POINTS_BACKFILL: dict = {"running": False, "last": None}
+_BACKGROUND_TASKS: set[asyncio.Task] = set()
 
 
 @router.post("/guideline-points/backfill", status_code=202, dependencies=[Depends(require_superadmin)])
@@ -896,7 +897,6 @@ async def start_guideline_points_backfill(body: GuidelinePointsBackfillBody):
     from ..services.guideline_points_job import backfill
 
     async def _run() -> None:
-        _POINTS_BACKFILL["running"] = True
         try:
             _POINTS_BACKFILL["last"] = await backfill([s.strip().lower() for s in body.slugs if s.strip()] or None, force=body.force)
         except Exception as exc:  # noqa: BLE001 — reported through GET
@@ -904,7 +904,10 @@ async def start_guideline_points_backfill(body: GuidelinePointsBackfillBody):
         finally:
             _POINTS_BACKFILL["running"] = False
 
-    asyncio.create_task(_run())
+    # Set before the task is scheduled, so a second POST arriving meanwhile is refused; the task is kept so it cannot be garbage-collected mid-run.
+    _POINTS_BACKFILL["running"] = True
+    _BACKGROUND_TASKS.add(task := asyncio.create_task(_run()))
+    task.add_done_callback(_BACKGROUND_TASKS.discard)
     return {"started": True}
 
 
@@ -925,7 +928,6 @@ async def start_genereviews_refresh(force: bool = False):
     from ..services.genereviews_refresh import refresh_genereviews_chapters
 
     async def _run() -> None:
-        _GENEREVIEWS_REFRESH["running"] = True
         try:
             _GENEREVIEWS_REFRESH["last"] = await asyncio.to_thread(lambda: refresh_genereviews_chapters(force=force))
         except Exception as exc:  # noqa: BLE001 — reported through GET, never raised into the event loop
@@ -933,7 +935,9 @@ async def start_genereviews_refresh(force: bool = False):
         finally:
             _GENEREVIEWS_REFRESH["running"] = False
 
-    asyncio.create_task(_run())
+    _GENEREVIEWS_REFRESH["running"] = True
+    _BACKGROUND_TASKS.add(task := asyncio.create_task(_run()))
+    task.add_done_callback(_BACKGROUND_TASKS.discard)
     return {"started": True}
 
 
@@ -1080,7 +1084,7 @@ class GuidelinePrReviewBody(BaseModel):
     reviewer: str | None = Field(None, max_length=200)
 
     @model_validator(mode="after")
-    def publish_requires_reviewer(self) -> "GuidelinePrReviewBody":
+    def publish_requires_reviewer(self) -> GuidelinePrReviewBody:
         if self.action in ("publish", "approve") and not str(self.reviewer or "").strip():
             raise ValueError(
                 "reviewer is required when publishing — provide operator name or email."

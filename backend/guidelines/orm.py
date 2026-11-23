@@ -269,7 +269,7 @@ class BookshelfChapterRow(Base):
 class GuidelinePointsRow(Base):
     """The generated "What the guideline says about diagnosis – to show your doctor" block of one disease (``backend.guidelines.points``).
 
-    One row per disease, replaced by each run. ``publish`` is 0 when the loop found fewer than three points that passed both checks; such a row is kept (so an unchanged shelf is not paid for again) but never served. ``shelf_hash`` fingerprints the shelf and the loop version the block was built from; the job re-runs only when it changes. ``block`` is the published shape (``points.block.published_block``), ``record`` the loop's full record for audit.
+    One row per disease, replaced by each run. ``publish`` is 0 when the loop found fewer than three points that passed both checks; such a row is kept for audit but never served. ``shelf_hash`` fingerprints the shelf and the loop version a published block was built from, and is empty for an unpublished row, so the next synthesis or backfill tries that disease again; the job skips only a published block whose shelf is unchanged. ``block`` is the published shape (``points.block.published_block``), ``record`` the loop's full record for audit.
     """
 
     __tablename__ = "guideline_points"

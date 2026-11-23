@@ -465,3 +465,13 @@ def test_caller_reports_a_refusal_as_a_failed_call():
     out, record = asyncio.run(caller.call(role="verifier", system="sys", prefix="", user="points", result_type=VerifierOutput))
     assert out is None and record["error"]["kind"] == "refusal" and len(record["attempts"]) == 1
     assert isinstance(client.requests[0]["messages"][0]["content"], str)
+
+
+def test_over_the_limit_the_reviewers_least_important_go_first_and_gap_points_stay():
+    from backend.guidelines.points.loop import _trim_to_limit
+
+    pending = [_point(f"p{i}") for i in range(1, 6)] + [_point("gap1"), _point("gap2")]
+    record = {"coverage": {"added": ["gap1", "gap2"], "least_important": ["p2"]}, "dropped": []}
+    kept = _trim_to_limit(pending, 5, record)
+    assert [p.id for p in kept] == ["p1", "p3", "p4", "gap1", "gap2"]
+    assert [d["id"] for d in record["dropped"]] == ["p2", "p5"]

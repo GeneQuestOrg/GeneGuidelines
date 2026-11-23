@@ -7,10 +7,7 @@ export interface GuidelinePointsBlockProps {
 }
 
 /**
- * The generated "What the guideline says about diagnosis – to show your doctor" block, in the same shape as FD's
- * hand-written one: a plain summary, one open question, and the verbatim source sentence underneath. The quote stays
- * English on every page (a translation would stop being a quotation). The AI notice is fixed copy from the locale
- * files, never model text: nobody approved this block, and the page must always say so.
+ * The generated "What the guideline says about diagnosis – to show your doctor" block, in the same shape as FD's hand-written one: a plain summary, one open question, and the verbatim source sentence underneath. The quote stays English on every page (a translation would stop being a quotation). The AI notice is fixed copy from the locale files, never model text: nobody approved this block, and the page must always say so.
  */
 export function GuidelinePointsBlock({ block }: GuidelinePointsBlockProps) {
   const { t, i18n } = useTranslation("disease-map");

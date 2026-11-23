@@ -16,6 +16,8 @@ describe("disease facts in Polish", () => {
 
   it.each([
     ["Rare disease", "Choroba rzadka"],
+    ["Ultra-rare disease", "Choroba ultrarzadka"],
+    ["Very rare disease", "Choroba bardzo rzadka"],
     ["Ultra-rare (~1 in 2 million)", "Ultrarzadka (~1 na 2 mln)"],
     ["~1:16,500 diagnosed (Denmark, 2018) · true prevalence unknown", "~1:16,500 rozpoznanych (Denmark, 2018) · rzeczywista częstość nieznana"],
   ])("translates the prevalence %s", (en, pl) => {

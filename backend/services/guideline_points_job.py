@@ -8,7 +8,9 @@ Three ways in:
 
 FD is never generated: its page keeps the hand-written block, which is also the worked example for every other disease (``points/fd_worked_example.json``).
 
-The loop runs on Claude through the production adapter (ADR 006): generator Sonnet 5.5, verifier and coverage reviewer Opus 5.5. Each call's tokens go into the research token ledger, so the monthly budget guard sees them. A failed run stores nothing new and leaves the previous block in place.
+The loop runs on Claude through the production adapter (ADR 006): generator Sonnet 5.5, verifier and coverage reviewer Opus 5.5. Each call's tokens go into the research token ledger, and a run does not start while the monthly research budget is used up.
+
+What is stored: a run that publishes replaces the block and records the shelf it was built from, so the same shelf is not paid for twice. A run in which any model call failed stores nothing over an existing block, which stays live. A clean run that does not publish withdraws the block and records no shelf, so the next synthesis or backfill tries again; that is what keeps a disease from getting stuck on a passing outage or a GeneReviews chapter the worker has not stored yet.
 """
 
 from __future__ import annotations
@@ -24,9 +26,12 @@ log = logging.getLogger(__name__)
 
 HAND_WRITTEN = frozenset({"fd"})
 
+# One run per disease at a time within a process: a double-clicked backfill and the after-synthesis hook must not pay for the same disease twice. Across processes the store's upsert keeps the last write.
+_RUNNING: set[str] = set()
+
 
 class _LedgerBudget:
-    """Records each Claude call in the research token ledger (``token_usage``). It never refuses a call: the monthly guard lives in the scheduler."""
+    """Records each Claude call in the research token ledger (``token_usage``). It does not refuse single calls; :func:`run_guideline_points` checks the monthly guard once, before a run starts."""
 
     def __init__(self, slug: str, execution_id: str) -> None:
         self.slug, self.execution_id = slug, execution_id
@@ -77,6 +82,19 @@ def _callers(slug: str, execution_id: str):
 
 async def run_guideline_points(slug: str, *, force: bool = False, callers=None, engine=None) -> dict:
     """Build, check and store one disease's block. Returns what happened; never raises for a failed model call."""
+    slug = (slug or "").strip().lower()
+    if slug in HAND_WRITTEN:
+        return {"slug": slug, "status": "skipped", "reason": "this disease keeps its hand-written block"}
+    if slug in _RUNNING:
+        return {"slug": slug, "status": "skipped", "reason": "a run for this disease is already in progress"}
+    _RUNNING.add(slug)
+    try:
+        return await _run(slug, force=force, callers=callers, engine=engine)
+    finally:
+        _RUNNING.discard(slug)
+
+
+async def _run(slug: str, *, force: bool, callers, engine) -> dict:
     import uuid
 
     from ..guidelines.points.block import published_block
@@ -86,25 +104,27 @@ async def run_guideline_points(slug: str, *, force: bool = False, callers=None, 
     from ..guidelines.points.store import get_points, save_points, shelf_hash
     from ..guidelines.relevance import identity_for_slug
     from ..guidelines.repository import SqlaGuidelinesRepo
+    from ..research_queue.token_budget import budget_block_reason
     from ..tools.genereviews_index import load_index
 
-    slug = (slug or "").strip().lower()
-    if slug in HAND_WRITTEN:
-        return {"slug": slug, "status": "skipped", "reason": "this disease keeps its hand-written block"}
     loop = asyncio.get_running_loop()
     repo = SqlaGuidelinesRepo(engine=engine) if engine is not None else SqlaGuidelinesRepo()
     shelf = await loop.run_in_executor(None, lambda: repo.list_source_documents(slug))
     fingerprint = shelf_hash(shelf)
     existing = await loop.run_in_executor(None, lambda: get_points(slug, engine))
-    if existing is not None and existing.shelf_hash == fingerprint and not force:
-        return {"slug": slug, "status": "unchanged", "publish": bool(existing.publish)}
+    if existing is not None and existing.publish and existing.shelf_hash == fingerprint and not force:
+        return {"slug": slug, "status": "unchanged", "publish": True}
+    blocked = await loop.run_in_executor(None, budget_block_reason)
+    if blocked:
+        return {"slug": slug, "status": "skipped", "reason": f"the monthly research budget is used up ({blocked})"}
     identity = await loop.run_in_executor(None, lambda: identity_for_slug(slug))
     if identity is None:
         return {"slug": slug, "status": "skipped", "reason": "not a catalog disease"}
     api_key = (os.environ.get("NCBI_API_KEY") or "").strip() or None
     index = await loop.run_in_executor(None, load_index)
     docs = await loop.run_in_executor(None, lambda: load_shelf_documents(shelf, api_key=api_key, genereviews=index))
-    selected, notes = select_documents(docs, identity=identity, genereviews=index)
+    # Relevance matching runs regexes over up to ~700k characters: off the event loop, so public requests do not stall.
+    selected, notes = await loop.run_in_executor(None, lambda: select_documents(docs, identity=identity, genereviews=index))
     execution_id = f"gpt-{uuid.uuid4().hex[:12]}"
     if callers is None:
         generator, verifier, models = _callers(slug, execution_id)
@@ -113,13 +133,16 @@ async def run_guideline_points(slug: str, *, force: bool = False, callers=None, 
     record = await build_points_block(disease_name=identity.name, docs=selected, generator=generator, verifier=verifier, example=worked_example())
     record["selection_notes"] = notes
     record["documents_considered"] = [{"doc_id": d.doc_id, "grade": d.grade, "text_status": d.text_status, "licence": d.license} for d in docs]
-    failed_call = record["reason"].startswith("generator call failed")
-    if failed_call and existing is not None:
-        log.warning("guideline_points_job: %s generator failed; the previous block stays", slug)
-        return {"slug": slug, "status": "failed", "reason": record["reason"]}
     block = published_block(record, selected)
     cost = sum(float(c.get("cost_usd_total") or 0.0) for c in record.get("calls") or [])
-    await loop.run_in_executor(None, lambda: save_points(slug=slug, publish=bool(block), reason=record["reason"], shelf_hash=fingerprint, block=block, record=record, models=models, cost_usd=cost, engine=engine))
+    failed_calls = [c for c in record.get("calls") or [] if c.get("error")]
+    if not block and failed_calls and existing is not None and existing.publish:
+        # A passing outage must not take a published block off the page.
+        log.warning("guideline_points_job: %s had %d failed model call(s); the previous block stays", slug, len(failed_calls))
+        return {"slug": slug, "status": "failed", "reason": record["reason"] or "a model call failed", "cost_usd": round(cost, 4)}
+    # Only a published block records its shelf; anything else is retried by the next synthesis or backfill.
+    stored_hash = fingerprint if block else ""
+    await loop.run_in_executor(None, lambda: save_points(slug=slug, publish=bool(block), reason=record["reason"], shelf_hash=stored_hash, block=block, record=record, models=models, cost_usd=cost, engine=engine))
     log.info("guideline_points_job: %s stored (publish=%s, %d points, %.2f USD)", slug, bool(block), len(record["accepted"]), cost)
     return {"slug": slug, "status": "stored", "publish": bool(block), "points": len(record["accepted"]), "reason": record["reason"], "cost_usd": round(cost, 4)}
 

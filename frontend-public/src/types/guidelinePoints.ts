@@ -1,8 +1,5 @@
 /**
- * The generated "What the guideline says about diagnosis – to show your doctor" block of one disease
- * (`GET /api/diseases/{slug}/guideline-points`, backend/guidelines/points/). Served only when at least
- * three points passed the word-for-word quote check and an independent AI verifier; nobody approved it.
- * FD never has one: its page keeps the hand-written block.
+ * The generated "What the guideline says about diagnosis – to show your doctor" block of one disease (`GET /api/diseases/{slug}/guideline-points`, backend/guidelines/points/). Served only when at least three points passed the word-for-word quote check and an independent AI verifier; nobody approved it. FD never has one: its page keeps the hand-written block.
  */
 export interface GuidelinePoint {
   readonly id: string;

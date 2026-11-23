@@ -147,3 +147,41 @@ def test_crawler_page_carries_the_block_in_its_language():
     assert "Co mówi wytyczna o rozpoznaniu" in pl and "Wygenerowane przez AI" in pl and "<blockquote" in pl
     assert "What the guideline says about diagnosis" in en and "nobody has approved it" in en
     assert "ggp-points" not in pages.disease_hub(disease, labels, "en", None).body
+
+
+# --- review fixes (2026-11-24): failures keep a live block, unpublished runs retry --------------------------------------
+
+
+def test_a_failed_verifier_call_keeps_the_published_block(engine, offline):
+    asyncio.run(job.run_guideline_points("mas", callers=_callers(), engine=engine))
+    assert store.published_block("mas", engine) is not None
+    gen = FakeCaller([_draft(GOOD), None])  # the draft, then a revision call that fails too
+    ver = FakeCaller([NO_GAPS, None])  # the coverage review answers, the verifier call fails
+    result = asyncio.run(job.run_guideline_points("mas", force=True, callers=(gen, ver, "m"), engine=engine))
+    assert result["status"] == "failed"
+    assert store.published_block("mas", engine) is not None and len(store.published_block("mas", engine)["points"]) == 3
+
+
+def test_an_unpublished_run_records_no_shelf_so_the_next_run_tries_again(engine, offline):
+    gen = FakeCaller([_draft(GOOD[:2])])
+    ver = FakeCaller([NO_GAPS, _verdicts(("p1", "PASS", []), ("p2", "PASS", []))])
+    asyncio.run(job.run_guideline_points("mas", callers=(gen, ver, "m"), engine=engine))
+    assert store.get_points("mas", engine).shelf_hash == ""
+    again = asyncio.run(job.run_guideline_points("mas", callers=_callers(), engine=engine))
+    assert again["status"] == "stored" and again["publish"] is True
+
+
+def test_a_run_already_in_progress_for_the_disease_is_not_started_twice(engine, offline):
+    job._RUNNING.add("mas")
+    try:
+        result = asyncio.run(job.run_guideline_points("mas", callers=_callers(), engine=engine))
+    finally:
+        job._RUNNING.discard("mas")
+    assert result["status"] == "skipped" and "in progress" in result["reason"]
+
+
+def test_no_run_starts_while_the_monthly_budget_is_used_up(engine, offline, monkeypatch):
+    monkeypatch.setattr("backend.research_queue.token_budget.budget_block_reason", lambda **kw: "token_budget")
+    gen, ver, models = _callers()
+    result = asyncio.run(job.run_guideline_points("mas", callers=(gen, ver, models), engine=engine))
+    assert result["status"] == "skipped" and "budget" in result["reason"] and gen.calls == []

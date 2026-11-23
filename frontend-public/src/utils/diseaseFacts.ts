@@ -32,12 +32,14 @@ const INHERITANCE_PL: readonly Phrase[] = [
   [word("and"), "i"],
 ];
 
+/** Longest phrases first here too: "rare disease" before "ultra-rare disease" turned the latter into "Ultra-choroba rzadka". */
 const PREVALENCE_PL: readonly Phrase[] = [
   [word("true prevalence unknown"), "rzeczywista częstość nieznana"],
-  [word("rare disease"), "choroba rzadka"],
   [word("ultra-rare disease"), "choroba ultrarzadka"],
   [word("ultra-rare"), "ultrarzadka"],
+  [word("very rare disease"), "choroba bardzo rzadka"],
   [word("very rare"), "bardzo rzadka"],
+  [word("rare disease"), "choroba rzadka"],
   [word("rare"), "rzadka"],
   [word("live births"), "żywych urodzeń"],
   [word("births"), "urodzeń"],

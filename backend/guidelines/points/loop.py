@@ -13,6 +13,7 @@ Every step is recorded (draft, coverage, each check, each verdict, the calls and
 
 from __future__ import annotations
 
+import asyncio
 from typing import Any
 
 from .claude import PointsCaller
@@ -65,6 +66,23 @@ def _unique_ids(points: list[DraftPoint], taken: set[str] | None = None) -> list
     return out
 
 
+def _trim_to_limit(pending: list[DraftPoint], max_points: int, record: dict[str, Any]) -> list[DraftPoint]:
+    """Drop points until the block fits, in this order: the ones the coverage reviewer named least important, then draft points from the end, and only then the gap points the coverage pass added. Family order is kept for the rest."""
+    coverage = record.get("coverage") or {}
+    added = set(coverage.get("added") or [])
+    least = [i for i in coverage.get("least_important") or [] if i not in added]
+    draft_from_end = [p.id for p in reversed(pending) if p.id not in added and p.id not in least]
+    added_from_end = [p.id for p in reversed(pending) if p.id in added]
+    drop: list[str] = []
+    for pid in least + draft_from_end + added_from_end:
+        if len(pending) - len(drop) <= max_points:
+            break
+        if pid not in drop and any(p.id == pid for p in pending):
+            drop.append(pid)
+    record["dropped"].extend({"id": p.id, "round": 0, "why": f"over the limit of {max_points} points", "point": p.model_dump()} for p in pending if p.id in drop)
+    return [p for p in pending if p.id not in drop]
+
+
 def _verdict_is_pass(verdict: dict | None) -> bool:
     """PASS counts only when it comes with no proposed change; a PASS carrying fixes is read as FIX."""
     return bool(verdict) and verdict.get("verdict") == "PASS" and not (verdict.get("fixes") or [])
@@ -113,7 +131,8 @@ async def build_points_block(
         record["reason"] = "no readable guideline-grade document"
         return record
 
-    indexes = {d.doc_id: DocIndex(d) for d in readable}
+    # Normalising the documents and matching quotes is CPU work over long texts: it runs in a thread so the event loop keeps serving requests.
+    indexes = await asyncio.to_thread(lambda: {d.doc_id: DocIndex(d) for d in readable})
     prefix = render_documents(readable)
     gen_system = generator_system(example)
     draft, call = await generator.call(role="generator", system=gen_system, prefix=prefix, user=initial_task(disease_name), result_type=PointsDraft)
@@ -147,8 +166,7 @@ async def build_points_block(
             record["coverage"] = {"error": (ccall.get("error") or {}).get("message", "coverage call failed")}
 
     if len(pending) > max_points:
-        record["dropped"].extend({"id": p.id, "round": 0, "why": f"over the limit of {max_points} points", "point": p.model_dump()} for p in pending[max_points:])
-        pending = pending[:max_points]
+        pending = _trim_to_limit(pending, max_points, record)
     order = [p.id for p in pending]
     accepted: dict[str, DraftPoint] = {}
     previous: dict[str, dict] = {}
@@ -156,7 +174,7 @@ async def build_points_block(
 
     for round_no in range(max_revision_rounds + 1):
         round_rec: dict[str, Any] = {"round": round_no, "points": []}
-        checks: dict[str, QuoteCheck] = {p.id: check_point(p, indexes) for p in pending}
+        checks: dict[str, QuoteCheck] = await asyncio.to_thread(lambda: {p.id: check_point(p, indexes) for p in pending})
         to_verify = [p for p in pending if checks[p.id].ok]
         verdicts: dict[str, dict] = {}
         verifier_error: str | None = None
@@ -186,7 +204,7 @@ async def build_points_block(
                 status, final = "accepted", p
             else:
                 patched = apply_verifier_fixes(p, verdict)
-                fixed_check = check_point(patched, indexes) if patched is not None else None
+                fixed_check = await asyncio.to_thread(check_point, patched, indexes) if patched is not None else None
                 if patched is not None and fixed_check.ok:
                     status, final = "accepted_verifier_fix", patched
                 else:

@@ -146,3 +146,32 @@ def test_migration_removes_exactly_the_two_off_disease_chapters(engine):
         considered = conn.execute(text("SELECT doc_id, category FROM guideline_shelf_considered ORDER BY 1")).fetchall()
     assert [tuple(r) for r in left] == [("fd", "31196103"), ("fd", "NBK274564")]
     assert [tuple(r) for r in considered] == [("NBK601394", "off-topic"), ("NBK621299", "off-topic")]
+
+
+def test_shelf_write_empties_a_shelf_whose_every_document_is_about_another_disease(monkeypatch):
+    from backend.executors.base import NodeInput
+    from backend.executors.guidelines import guideline_shelf_write_executor as we
+
+    class Repo:
+        def __init__(self):
+            self.written, self.considered = None, None
+
+        def list_source_documents(self, slug):
+            from backend.guidelines.models import SourceDocument
+
+            return [SourceDocument(disease_slug=slug, doc_id="NBK601394", role="Reference compendium", title="Clinical Characteristics", authors="", journal="", year="continuously updated", scope="", covers=[], pmid=None, bookshelf="NBK601394", pmcid=None, free_full_text=False, is_new=False, updates_note=None)]
+
+        def replace_source_documents(self, slug, docs):
+            self.written = docs
+
+        def replace_considered(self, slug, items):
+            self.considered = items
+
+    repo = Repo()
+    monkeypatch.setattr(we, "_identity", lambda slug: PUS3)
+    monkeypatch.setattr(we, "_genereviews_index", lambda: INDEX)
+    monkeypatch.setattr(we, "_enrich_docs_from_pubmed", lambda docs: None)
+    context = {"gsb-classify": {"docs": [{"bookshelf": "NBK621299", "title": "Clinical Characteristics", "kind": "reference_compendium"}], "considered": []}}
+    out = asyncio.run(we.GuidelineShelfWriteExecutor(repo=repo).execute(NodeInput(node_config={"node_id": "gsb-write"}, context=context, initial_data={"disease_slug": PUS3.slug})))
+    assert out.data["ok"] is False and out.data["docCount"] == 0, out.data
+    assert repo.written == []  # the wrong chapters are no longer stored or served

@@ -150,14 +150,7 @@ export function ParentDiseaseMap({ disease, hasGuideline, onNav }: ParentDisease
               </div>
             ) : null}
 
-            {/* What the guideline says, to show the doctor — never advice. Each point
-                summarises a verbatim guideline sentence, which sits underneath, and ends
-                in one open question. The framing is deliberate: our own diagnosis went
-                wrong not because a doctor was careless but because one fact (tissue for
-                GNAS) was missing, so the parent brings the fact with the guideline's
-                authority instead of questioning the doctor. Hand-written for FD only — the
-                sentences are from the FD/MAS guideline (Javaid 2019) and say nothing about
-                any other disease. */}
+            {/* What the guideline says, to show the doctor — never advice. Each point summarises a verbatim guideline sentence, which sits underneath, and ends in one open question. The framing is deliberate: our own diagnosis went wrong not because a doctor was careless but because one fact (tissue for GNAS) was missing, so the parent brings the fact with the guideline's authority instead of questioning the doctor. Hand-written for FD only — the sentences are from the FD/MAS guideline (Javaid 2019) and say nothing about any other disease. */}
             {isFd ? (
               <div className="dmap-ask">
                 <div className="dmap-ask__hd">{t("askTitle")}</div>
@@ -180,9 +173,7 @@ export function ParentDiseaseMap({ disease, hasGuideline, onNav }: ParentDisease
                 <p className="dmap-ask__src">{t("askSource")}</p>
               </div>
             ) : (
-              // Every other disease shows the block the guideline-points loop generated and checked
-              // (backend/guidelines/points/), or nothing when none was published. FD keeps the
-              // hand-written block above, which is also the generator's worked example.
+              // Every other disease shows the block the guideline-points loop generated and checked (backend/guidelines/points/), or nothing when none was published. FD keeps the hand-written block above, which is also the generator's worked example.
               <GeneratedGuidelinePoints slug={slug} />
             )}
             <div className="dmap-actions">

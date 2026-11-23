@@ -1,9 +1,4 @@
-/* Materials for the family doctor (parent view of a disease page).
-   On screen: the compact source tiles and two buttons. On paper, when the
-   section's own Print button is used (utils/printOnly.ts puts
-   `print-family-doctor` on <html> for the length of the dialog): this section
-   alone, as a numbered citation list with every address written out. A plain
-   Ctrl+P still prints the whole page. */
+/* Materials for the family doctor (parent view of a disease page). On screen: the compact source tiles and two buttons. On paper, when the section's own Print button is used (utils/printOnly.ts puts `print-family-doctor` on <html> for the length of the dialog): this section alone, as a numbered citation list with every address written out. A plain Ctrl+P still prints the whole page. */
 .fdoc__actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .fdoc-print { display: none; }
 

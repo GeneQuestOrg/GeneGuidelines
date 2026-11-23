@@ -64,7 +64,7 @@ def refresh_genereviews_chapters(*, accessions: set[str] | None = None, archive:
             accession = by_shortname[chapter.shortname]
             if not chapter.sections:
                 log.warning("genereviews_refresh: %s (%s) has no text in the archive", accession, chapter.shortname)
-                continue
+                continue  # recorded below as absent, like a chapter the archive does not hold
             upsert_chapter(
                 accession=accession, book=BOOK, shortname=chapter.shortname, title=chapter.title or index[accession].title,
                 sections=list(chapter.sections), licence=chapter.licence, copyright=chapter.copyright, synonyms=list(chapter.synonyms),
@@ -74,11 +74,17 @@ def refresh_genereviews_chapters(*, accessions: set[str] | None = None, archive:
     not_found = sorted(set(report["wanted"]) - set(done))
     if not_found:
         log.warning("genereviews_refresh: not in the archive: %s", ", ".join(not_found))
+    # Record each absent chapter as an empty row. Without it due() counts the chapter as missing every day and the worker streams the whole 640 MB archive daily, for ever; with it the chapter is retried at the normal refresh interval. Readers ignore a row without text.
+    for accession in not_found:
+        upsert_chapter(
+            accession=accession, book=BOOK, shortname=index[accession].shortname, title=index[accession].title, sections=[],
+            licence="", copyright="", synonyms=[], source_url=source, source_last_modified=last_modified, engine=engine,
+        )
     return {"ok": True, **report, "stored": sorted(done), "not_in_archive": not_found, "archive": source, "archive_last_modified": last_modified, "seconds": round(time.monotonic() - started, 1)}
 
 
 def due(engine=None) -> bool:
-    """Whether the worker should read the archive now: a shelf needs a chapter that is not stored, or the stored copies are older than the refresh interval."""
+    """Whether the worker should read the archive now: a shelf needs a chapter with no stored row, or a chapter a shelf still needs was stored longer ago than the refresh interval. Chapters no shelf needs any more do not count, so they cannot make the worker download the archive every day."""
     from sqlalchemy import func, select
     from sqlalchemy.orm import Session
 
@@ -96,7 +102,7 @@ def due(engine=None) -> bool:
     if needed - set(stored_meta(engine)):
         return True
     with Session(_engine(engine)) as session:
-        oldest = session.execute(select(func.min(BookshelfChapterRow.fetched_at))).scalar() or ""
+        oldest = session.execute(select(func.min(BookshelfChapterRow.fetched_at)).where(BookshelfChapterRow.accession.in_(needed))).scalar() or ""
     try:
         return datetime.fromisoformat(oldest) < datetime.now(UTC) - timedelta(days=days)
     except ValueError:
