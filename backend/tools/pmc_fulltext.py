@@ -62,7 +62,7 @@ def _pmid_to_pmcid(pmids: list[str], api_key: str | None = None) -> dict[str, st
     #     PMC record; `pubmed_pmc_refs` is the ~150 articles that CITE it. Taking the
     #     first linksetdb silently returned a citing paper — for the FD consensus it
     #     yielded PMC11087144 (a different 2023 review) instead of PMC6567644.
-    params: list[tuple[str, str]] = [
+    params: list[tuple[str, str | int | float | bool | None]] = [
         ("dbfrom", "pubmed"),
         ("db", "pmc"),
         ("linkname", "pubmed_pmc"),

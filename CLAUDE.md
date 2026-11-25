@@ -65,7 +65,7 @@ npm run dev:admin                                    # http://localhost:5174
 ## Quality checks — run before any change is considered done
 
 ```bash
-npm run check:dev    # pytest + frontend-public lint/typecheck + ops typecheck
+npm run check:dev    # static analysis + pytest + frontend-public lint/typecheck + ops typecheck
 ```
 
 Or one-by-one:
@@ -81,9 +81,10 @@ npm run typecheck
 | Script | What it runs |
 |---|---|
 | `npm run check:backend` | pytest backend/tests |
+| `npm run check:static` | `scripts/static_analysis.sh`: ruff + mypy on the gated paths, F821 everywhere, import-linter contracts (pyproject). CI and the production deploy run it. |
 | `npm run check:public` | lint + typecheck frontend-public |
 | `npm run check:ops` | typecheck @gene-guidelines/ops |
-| `npm run check:dev` | all three above |
+| `npm run check:dev` | static, backend, public and ops checks above |
 | `npm run dev:public` / `dev:admin` | Vite dev servers |
 | `npm run build:public` / `build:admin` / `build:frontends` | Production builds |
 

@@ -18,6 +18,7 @@ import logging
 import re
 import xml.etree.ElementTree as ET
 from collections.abc import Iterable
+from typing import Any
 
 from .models import Paragraph, SourceDoc
 
@@ -227,7 +228,7 @@ def fetch_bookshelf_paragraphs(accession: str) -> tuple[list[Paragraph], str, st
 
 
 def doc_to_dict(doc: SourceDoc, with_text: bool = True) -> dict:
-    out = {
+    out: dict[str, Any] = {
         "doc_id": doc.doc_id, "title": doc.title, "year": doc.year, "grade": doc.grade, "grade_reason": doc.grade_reason,
         "text_status": doc.text_status, "pmid": doc.pmid, "pmcid": doc.pmcid, "bookshelf": doc.bookshelf, "journal": doc.journal,
         "authors": doc.authors, "role": doc.role, "license": doc.license, "copyright": doc.copyright, "book": doc.book, "pubtypes": list(doc.pubtypes), "chars": doc.chars, "paragraph_count": len(doc.paragraphs),

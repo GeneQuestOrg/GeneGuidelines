@@ -85,7 +85,7 @@ def _trim_to_limit(pending: list[DraftPoint], max_points: int, record: dict[str,
 
 def _verdict_is_pass(verdict: dict | None) -> bool:
     """PASS counts only when it comes with no proposed change; a PASS carrying fixes is read as FIX."""
-    return bool(verdict) and verdict.get("verdict") == "PASS" and not (verdict.get("fixes") or [])
+    return verdict is not None and verdict.get("verdict") == "PASS" and not (verdict.get("fixes") or [])
 
 
 def apply_verifier_fixes(point: DraftPoint, verdict: dict | None) -> DraftPoint | None:
@@ -205,7 +205,7 @@ async def build_points_block(
             else:
                 patched = apply_verifier_fixes(p, verdict)
                 fixed_check = await asyncio.to_thread(check_point, patched, indexes) if patched is not None else None
-                if patched is not None and fixed_check.ok:
+                if patched is not None and fixed_check is not None and fixed_check.ok:
                     status, final = "accepted_verifier_fix", patched
                 else:
                     status = "failed_verifier"

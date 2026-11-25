@@ -15,6 +15,7 @@ import threading
 import time
 import urllib.request
 from dataclasses import dataclass
+from typing import Any
 
 log = logging.getLogger(__name__)
 
@@ -25,7 +26,7 @@ OMIM_FILE = "NBKid_shortname_OMIM.txt"
 _USER_AGENT = "GeneQuestFoundation/1.0 (https://genequest.org)"
 _TTL_SEC = 24 * 3600
 _lock = threading.Lock()
-_cache: dict[str, object] = {"at": 0.0, "index": {}}
+_cache: dict[str, Any] = {"at": 0.0, "index": {}}
 
 
 @dataclass(frozen=True)
@@ -74,7 +75,7 @@ def load_index(timeout: float = 30.0, *, force: bool = False) -> dict[str, GeneR
     """The GeneReviews index, cached for a day. Empty when NCBI cannot be reached."""
     with _lock:
         if not force and _cache["index"] and time.monotonic() - float(_cache["at"]) < _TTL_SEC:
-            return dict(_cache["index"])  # type: ignore[arg-type]
+            return dict(_cache["index"])
     try:
         index = parse_index(_get(TITLES_FILE, timeout), _get(GENES_FILE, timeout), _get(OMIM_FILE, timeout))
     except Exception as exc:  # noqa: BLE001 - an index we cannot read means weaker evidence, never a failed run

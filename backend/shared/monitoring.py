@@ -13,9 +13,12 @@ from __future__ import annotations
 
 import logging
 import re
-from typing import Any
+from typing import TYPE_CHECKING, Any, cast
 
 from .. import config
+
+if TYPE_CHECKING:
+    from sentry_sdk.types import DataCollectionUserOptions, Event, Hint, Log
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +29,7 @@ _URL_PASSWORD = re.compile(r"([a-zA-Z][\w+.-]*://[^\s:/@'\"<>]+):[^\s'\"<>]+@")
 # The key=value form of a connection string ("host=… password=secret").
 _KV_PASSWORD = re.compile(r"\b(password|passwd|pwd)=([^\s;&'\"]+)", re.IGNORECASE)
 
-_DATA_COLLECTION: dict[str, Any] = {
+_DATA_COLLECTION: DataCollectionUserOptions = {
     "user_info": False,
     "cookies": {"mode": "off"},
     "http_headers": {"request": {"mode": "allowlist", "terms": ["content-type", "accept", "content-length"]}},
@@ -60,12 +63,12 @@ def scrub(value: Any) -> Any:
     return value
 
 
-def _before_send(event: dict[str, Any], hint: dict[str, Any]) -> dict[str, Any]:
-    return scrub(event)
+def _before_send(event: Event, hint: Hint) -> Event:
+    return cast("Event", scrub(event))
 
 
-def _before_send_log(log: dict[str, Any], hint: dict[str, Any]) -> dict[str, Any]:
-    return scrub(log)
+def _before_send_log(log: Log, hint: Hint) -> Log:
+    return cast("Log", scrub(log))
 
 
 def sentry_options(component: str) -> dict[str, Any]:

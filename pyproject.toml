@@ -41,6 +41,9 @@ known-first-party = ["backend"]
 
 [tool.mypy]
 python_version = "3.12"
+# CI runs mypy on an explicit path list (see .github/workflows/ci.yml); these two let it resolve backend.* and scripts.* from the repository root.
+explicit_package_bases = true
+mypy_path = "."
 # Phase 1 stance: lenient. Phase 2 raises ``strict = true`` once domain modules
 # have explicit Protocol boundaries and value objects.
 ignore_missing_imports = true
@@ -60,6 +63,48 @@ module = [
     "backend.agents.runner",
 ]
 ignore_errors = true
+
+[tool.importlinter]
+# Dependency rules for the guideline-points code (docs/produkty plan "cegiełki", step 1). `ignore_imports` lists today's violations; the refactor removes them one by one until the lists are empty.
+root_packages = ["backend"]
+
+[[tool.importlinter.contracts]]
+name = "Tools do not import the guidelines domain"
+type = "forbidden"
+source_modules = ["backend.tools"]
+forbidden_modules = ["backend.guidelines"]
+ignore_imports = [
+    "backend.tools.genereviews_archive -> backend.guidelines.points.sources",
+    "backend.tools.bookshelf_fulltext -> backend.guidelines.chapters",
+]
+
+[[tool.importlinter.contracts]]
+name = "Guideline points: layers"
+type = "layers"
+containers = ["backend.guidelines.points"]
+layers = [
+    "(api) | (cli)",
+    "(service)",
+    "(pipeline) | loop",
+    "(bricks)",
+    "prompts",
+    "block : quote_check : sources",
+    "models",
+]
+
+[[tool.importlinter.contracts]]
+name = "Routers and SEO read guideline points only through the store"
+type = "forbidden"
+source_modules = ["backend.routers", "backend.seo"]
+forbidden_modules = [
+    "backend.guidelines.points.loop",
+    "backend.guidelines.points.prompts",
+    "backend.guidelines.points.claude",
+    "backend.guidelines.points.quote_check",
+    "backend.guidelines.points.sources",
+    "backend.guidelines.points.block",
+]
+allow_indirect_imports = true
 
 [tool.pytest.ini_options]
 # Document the test invocation envelope so CI and contributors stay in sync.

@@ -14,3 +14,8 @@ vcrpy>=7.0
 
 # Local dev convenience: honcho runs the Procfile (`make dev`).
 honcho>=2.0
+
+# Static analysis (scripts/static_analysis.sh, run in CI). Pinned so a new release never turns CI red on its own; .pre-commit-config.yaml uses the same ruff.
+ruff==0.17.4
+mypy==2.4.1
+import-linter==2.16

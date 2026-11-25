@@ -123,7 +123,8 @@ def _doc_record(raw: dict, meta: dict, pmcids: dict[str, str], api_key: str | No
     else:
         pubtypes = (meta.get(pmid) or {}).get("pubtypes") or []
         grade, reason = grade_document(title=title, pubtypes=pubtypes)
-    paragraphs, status, licence, pmcid = [], "", "", None
+    paragraphs: list[Any] = []
+    status, licence, pmcid = "", "", None
     if not grade:
         status = "not_fetched: not guideline-grade"
     elif pmid:
@@ -132,7 +133,7 @@ def _doc_record(raw: dict, meta: dict, pmcids: dict[str, str], api_key: str | No
             status = "no_pmcid: not in PubMed Central, so no full text can be fetched"
         else:
             paragraphs, status, _language, licence = fetch_pmc_paragraphs(pmcid, api_key=api_key)
-    elif accession and accession in (chapters or {}):
+    elif accession and chapters and accession in chapters:
         from backend.guidelines.points.models import Paragraph
 
         chapter = chapters[accession]

@@ -154,7 +154,7 @@ def _fd_section(results: dict[str, dict]) -> list[str]:
     lines = []
     for r in fd:
         lines += [f"Run `{r['slug']}{('-' + r['tag']) if r.get('tag') else ''}`: {len(r['loop']['accepted'])} accepted points.", "", "| Hand-written point | Generated point(s) quoting the same passage |", "|---|---|"]
-        matched_ids = set()
+        matched_ids: set[str] = set()
         for row in fd_alignment(r):
             hits = row["hits"]
             matched_ids.update(p["id"] for p in hits)

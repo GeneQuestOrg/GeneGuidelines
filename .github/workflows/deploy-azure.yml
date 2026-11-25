@@ -68,6 +68,8 @@ jobs:
           cache: pip
 
       - run: pip install -r requirements-dev.txt
+      - name: Static analysis (ruff, mypy, import-linter)
+        run: bash scripts/static_analysis.sh
 
       - name: pytest
         env:

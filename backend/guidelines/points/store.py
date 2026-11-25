@@ -48,7 +48,7 @@ def published_block(slug: str, engine: Engine | None = None) -> dict | None:
 
 def save_points(*, slug: str, publish: bool, reason: str, shelf_hash: str, block: dict | None, record: dict, models: str, cost_usd: float | None, engine: Engine | None = None) -> None:
     now = datetime.now(UTC).isoformat(timespec="seconds")
-    payload = {"publish": int(bool(publish)), "reason": reason, "shelf_hash": shelf_hash, "block": block, "record": record, "models": models, "cost_usd": "" if cost_usd is None else f"{cost_usd:.4f}", "generated_at": now}
+    payload: dict[str, Any] = {"publish": int(bool(publish)), "reason": reason, "shelf_hash": shelf_hash, "block": block, "record": record, "models": models, "cost_usd": "" if cost_usd is None else f"{cost_usd:.4f}", "generated_at": now}
     with Session(_engine(engine)) as session, session.begin():
         row = session.get(GuidelinePointsRow, slug)
         if row is None:

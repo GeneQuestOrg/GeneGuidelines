@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 from datetime import UTC, datetime
+from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.engine import Engine
@@ -59,7 +60,7 @@ def upsert_chapter(*, accession: str, book: str, shortname: str, title: str, sec
     now = datetime.now(UTC).isoformat(timespec="seconds")
     with Session(_engine(engine)) as session, session.begin():
         row = session.get(BookshelfChapterRow, accession)
-        payload = {
+        payload: dict[str, Any] = {
             "book": book, "shortname": shortname, "title": title, "sections": [{"heading": h, "text": t} for h, t in sections],
             "licence": licence, "copyright": copyright, "synonyms": list(synonyms), "source_url": source_url,
             "source_last_modified": source_last_modified, "fetched_at": now,

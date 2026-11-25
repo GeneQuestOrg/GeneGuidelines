@@ -62,6 +62,6 @@ def run_check(snapshot: str) -> int:
             print(f"  {c['id']:<14} expect={c['expect']} check={result.kind}{omitted}")
             if not result.ok:
                 problems.append(f"control {c['id']} fails the verbatim check, so it can never reach the verifier: {result.message}")
-    for p in problems:
-        print(f"  problem: {p}")
+    for problem in problems:
+        print(f"  problem: {problem}")
     return 1 if problems else 0
