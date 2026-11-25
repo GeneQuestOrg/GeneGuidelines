@@ -173,8 +173,9 @@ def test_the_backfill_endpoints_keep_their_urls_and_need_a_superadmin():
     from backend.main import app
 
     client = TestClient(app)
-    assert client.get("/api/pipeline/guideline-points/backfill").status_code in (401, 403)
-    assert client.post("/api/pipeline/guideline-points/backfill", json={}).status_code in (401, 403)
+    # The route exists (not 404) and refuses an anonymous caller: 401/403 with Auth0 configured, 503 without it (as in CI).
+    assert client.get("/api/pipeline/guideline-points/backfill").status_code in (401, 403, 503)
+    assert client.post("/api/pipeline/guideline-points/backfill", json={}).status_code in (401, 403, 503)
 
 
 def test_crawler_page_carries_the_block_in_its_language():
