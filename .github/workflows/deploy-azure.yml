@@ -116,6 +116,7 @@ jobs:
             --registry "${{ env.AZURE_REGISTRY }}" \
             --image "${{ env.IMAGE_REPOSITORY }}:${{ steps.image.outputs.tag }}" \
             --image "${{ env.IMAGE_REPOSITORY }}:production" \
+            --build-arg "SENTRY_RELEASE=geneguidelines@${{ steps.image.outputs.tag }}" \
             --file Dockerfile.backend \
             .
 
