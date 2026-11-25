@@ -202,6 +202,27 @@ def test_a_failed_verifier_call_keeps_the_published_block(engine):
     assert published_block("mas", h.repo) is not None and len(published_block("mas", h.repo)["points"]) == 3
 
 
+def test_a_run_with_a_failed_call_never_replaces_a_published_block_even_when_it_publishes(engine):
+    h = Harness(engine)
+    h.run(_callers())
+    before = h.repo.get("mas")
+    gen = FakeCaller([_draft(GOOD)])
+    ver = FakeCaller([None, _verdicts(("p1", "PASS", []), ("p2", "PASS", []), ("p3", "PASS", []))])  # the coverage call fails, the points pass
+    result = h.run((gen, ver, "m"), force=True)
+    assert result["status"] == "failed" and "published block stays" in result["reason"]
+    assert h.repo.get("mas") == before
+
+
+def test_a_run_with_a_failed_call_that_publishes_a_first_block_records_no_shelf(engine):
+    h = Harness(engine)
+    gen = FakeCaller([_draft(GOOD)])
+    ver = FakeCaller([None, _verdicts(("p1", "PASS", []), ("p2", "PASS", []), ("p3", "PASS", []))])
+    assert h.run((gen, ver, "m"))["publish"] is True
+    stored = h.repo.get("mas")
+    assert stored.published_block is not None and stored.shelf_hash == ""
+    assert h.run(_callers())["status"] == "stored"  # the same shelf is tried again, not skipped as unchanged
+
+
 def test_an_unpublished_run_records_no_shelf_so_the_next_run_tries_again(engine):
     h = Harness(engine)
     gen = FakeCaller([_draft(GOOD[:2])])

@@ -8,7 +8,7 @@ Three ways in, all through :class:`PointsService` (production wiring in ``deps.d
 
 FD is never generated: its page keeps the hand-written block, which is also the worked example for every other disease (``fd_worked_example.json``).
 
-What is stored: a run that publishes replaces the block and records the shelf it was built from, so the same shelf is not paid for twice. A run in which a model call failed and that does not publish stores nothing over an existing block, which stays live. A run that does not publish otherwise withdraws the block and records no shelf, so the next synthesis or backfill tries again.
+What is stored. A run is clean when no model call failed (a refusal counts as a failure) and no cost cap stopped it. A run that is not clean never replaces or withdraws a published block, which stays live, and never records its shelf, so the next synthesis or backfill tries again even when it did publish for a disease that had no block. A clean run that publishes replaces the block and records the shelf it was built from, so the same shelf is not paid for twice; a clean run that does not publish withdraws the block and records no shelf.
 
 Every dependency comes in through the constructor (repository, shelf reader, model callers, budget guard, run lock), so tests pass fakes instead of patching module paths.
 """
@@ -126,12 +126,13 @@ class PointsService:
 
     async def _store(self, slug: str, record: BlockRecord, block: dict[str, Any] | None, fingerprint: str, existing: StoredPoints | None, models: str) -> dict[str, Any]:
         cost = round(record.cost_usd, 4)
-        if not block and record.failed_calls and existing is not None and existing.publish:
-            # A passing outage must not take a published block off the page.
+        if not record.clean and existing is not None and existing.publish:
+            # A run in which a model call failed never replaces or withdraws a published block: a passing outage must not change the page.
             log.warning("guideline points: %s had %d failed model call(s); the previous block stays", slug, record.failed_calls)
-            return {"slug": slug, "status": "failed", "reason": record.reason or "a model call failed", "cost_usd": cost}
-        # Only a published block records its shelf; anything else is retried by the next synthesis or backfill.
-        stored = StoredPoints(slug=slug, publish=bool(block), reason=record.reason, shelf_hash=fingerprint if block else "", block=block, record=record.stored_record, models=models)
+            reason = "a model call failed; the published block stays" if block else (record.reason or "a model call failed")
+            return {"slug": slug, "status": "failed", "reason": reason, "cost_usd": cost}
+        # Only a clean, published run records its shelf; anything else is retried by the next synthesis or backfill.
+        stored = StoredPoints(slug=slug, publish=bool(block), reason=record.reason, shelf_hash=fingerprint if block and record.clean else "", block=block, record=record.stored_record, models=models)
         await asyncio.to_thread(self.repo.save, stamped(stored, record.cost_usd))
         log.info("guideline points: %s stored (publish=%s, %d points, %.2f USD)", slug, bool(block), len(record.accepted), record.cost_usd)
         return {"slug": slug, "status": "stored", "publish": bool(block), "points": len(record.accepted), "reason": record.reason, "cost_usd": cost}
