@@ -5,8 +5,11 @@ The LLM-facing models are sent to Claude as a JSON-schema response format (``ant
 
 from __future__ import annotations
 
+import hashlib
+import json
 import re
 from dataclasses import dataclass, field
+from enum import StrEnum
 from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -185,3 +188,71 @@ def doc_from_dict(raw: dict[str, Any]) -> SourceDoc:
         authors=str(raw.get("authors") or ""), role=str(raw.get("role") or ""), license=str(raw.get("license") or ""), pubtypes=tuple(raw.get("pubtypes") or ()),
         copyright=str(raw.get("copyright") or ""), book=str(raw.get("book") or ""),
     )
+
+
+# Bump when the loop, its prompts or the block shape change enough that every stored block should be rebuilt on the next run.
+LOOP_VERSION = "2026-11-24"
+
+
+def shelf_hash(shelf: list[Any]) -> str:
+    """Fingerprint of a shelf (``SourceDocument`` rows) and the loop version: what a block is built from. Pinned by a test; the pipeline id is deliberately not part of it."""
+    rows = sorted((str(d.doc_id), str(d.pmid or ""), str(d.bookshelf or ""), str(d.pmcid or ""), str(d.title or "")) for d in shelf)
+    return hashlib.sha256(json.dumps([LOOP_VERSION, rows]).encode("utf-8")).hexdigest()
+
+
+# --- one run, typed -------------------------------------------------------------------------------------------------
+
+
+class BlockOutcome(StrEnum):
+    """How one run ended. The service decides on this, never on reason strings."""
+
+    PUBLISHED = "published"
+    TOO_FEW_POINTS = "too_few_points"
+    NO_READABLE_SOURCE = "no_readable_source"
+    NOTHING_SELECTED = "nothing_selected"
+    CALL_FAILED = "call_failed"
+    BUDGET_EXCEEDED = "budget_exceeded"
+
+
+LOOP_PIPELINE = "loop-1"
+
+
+@dataclass(frozen=True)
+class BlockRecord:
+    """One run of a pipeline for one disease, as the service sees it: the outcome, the accepted points, whether any model call failed, the cost, and the pipeline's own record (stored as the ``record`` JSON, with ``pipeline`` added)."""
+
+    pipeline: str
+    outcome: BlockOutcome
+    reason: str
+    accepted: tuple[dict[str, Any], ...]
+    failed_calls: int
+    cost_usd: float
+    raw: dict[str, Any]
+
+    @property
+    def clean(self) -> bool:
+        """No model call failed (a refusal counts as a failure) and the run was not stopped by the cost cap."""
+        return self.failed_calls == 0 and self.outcome is not BlockOutcome.BUDGET_EXCEEDED
+
+    @property
+    def stored_record(self) -> dict[str, Any]:
+        return {**self.raw, "pipeline": self.pipeline}
+
+    @classmethod
+    def from_loop(cls, record: dict[str, Any]) -> BlockRecord:
+        """Type the generator-verifier loop's record (``loop.build_points_block``). The bricks pipeline builds a BlockRecord directly."""
+        calls = record.get("calls") or []
+        failed = sum(1 for c in calls if c.get("error"))
+        accepted = tuple(record.get("accepted") or [])
+        if record.get("publish"):
+            outcome = BlockOutcome.PUBLISHED
+        elif not calls:
+            outcome = BlockOutcome.NO_READABLE_SOURCE
+        elif failed:
+            outcome = BlockOutcome.CALL_FAILED
+        elif record.get("no_points_reason") and not accepted:
+            outcome = BlockOutcome.NOTHING_SELECTED
+        else:
+            outcome = BlockOutcome.TOO_FEW_POINTS
+        cost = sum(float(c.get("cost_usd_total") or 0.0) for c in calls)
+        return cls(pipeline=LOOP_PIPELINE, outcome=outcome, reason=str(record.get("reason") or ""), accepted=accepted, failed_calls=failed, cost_usd=cost, raw=record)

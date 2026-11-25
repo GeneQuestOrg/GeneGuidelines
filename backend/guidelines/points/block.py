@@ -31,7 +31,7 @@ def citation(doc: SourceDoc) -> str:
     return f"{who}{doc.title.rstrip('.')}, {where} ({ids})" if where else f"{who}{doc.title.rstrip('.')} ({ids})"
 
 
-def published_block(record: dict[str, Any], docs: list[SourceDoc]) -> dict[str, Any] | None:
+def build_published_block(record: dict[str, Any], docs: list[SourceDoc]) -> dict[str, Any] | None:
     """The block as a page would render it, or None when the record may not be published."""
     by_id = {d.doc_id: d for d in docs}
     accepted = [p for p in record.get("accepted") or [] if p["doc_id"] in by_id]

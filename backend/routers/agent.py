@@ -420,9 +420,9 @@ _POINTS_TASKS: set[asyncio.Task] = set()
 
 
 async def _maybe_points_after_synthesis(execution_id: str, store: dict[str, Any]) -> None:
-    """Build the disease's guideline-points block once its synthesis has run (``backend.services.guideline_points_job``).
+    """Build the disease's guideline-points block once its synthesis has run (``backend.guidelines.points.service``).
 
-    Sibling of :func:`_maybe_translate_after_synthesis`. The job itself skips a disease whose stored block was built from the same shelf, and FD, which keeps its hand-written block. It takes minutes, so it is started as a background task and never holds up the synthesis run. Off when ``GUIDELINE_POINTS_AFTER_SYNTHESIS`` is "0".
+    Sibling of :func:`_maybe_translate_after_synthesis`. The service itself skips a disease whose stored block was built from the same shelf, and FD, which keeps its hand-written block. It takes minutes, so it is started as a background task and never holds up the synthesis run. Off when ``GUIDELINE_POINTS_AFTER_SYNTHESIS`` is "0".
     """
     if str(store.get("flow_key") or "") != "guideline_synthesis" or store.get("error"):
         return
@@ -433,11 +433,11 @@ async def _maybe_points_after_synthesis(execution_id: str, store: dict[str, Any]
     disease_slug = str(initial.get("disease_slug") or "").strip().lower()
     if not disease_slug:
         return
-    from ..services.guideline_points_job import run_guideline_points
+    from ..guidelines.points.deps import default_points_service
 
     async def _run() -> None:
         try:
-            result = await run_guideline_points(disease_slug)
+            result = await default_points_service().run(disease_slug)
             log.info("points-after-synthesis: %s after synthesis %s: %s", disease_slug, execution_id, result)
         except Exception:  # noqa: BLE001 — the block is an addition; it must never break anything else
             log.exception("points-after-synthesis: failed for %s after synthesis %s", disease_slug, execution_id)

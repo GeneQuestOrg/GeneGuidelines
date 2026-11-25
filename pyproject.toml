@@ -79,8 +79,9 @@ name = "Guideline points: layers"
 type = "layers"
 containers = ["backend.guidelines.points"]
 layers = [
-    "(api) | (cli)",
-    "(service)",
+    "api | cli",
+    "deps",
+    "service",
     "(pipeline) | loop",
     "(bricks)",
     "prompts",
@@ -89,7 +90,26 @@ layers = [
 ]
 
 [[tool.importlinter.contracts]]
-name = "Routers and SEO read guideline points only through the store"
+name = "Guideline points: the generating code gets model calls, IO and storage injected"
+type = "forbidden"
+source_modules = [
+    "backend.guidelines.points.loop",
+    "backend.guidelines.points.prompts",
+    "backend.guidelines.points.block",
+    "backend.guidelines.points.quote_check",
+    "backend.guidelines.points.sources",
+    "backend.guidelines.points.models",
+]
+forbidden_modules = [
+    "backend.guidelines.points.llm",
+    "backend.guidelines.points.loader",
+    "backend.guidelines.points.repository",
+    "backend.guidelines.points.run_lock",
+    "backend.guidelines.points.deps",
+]
+
+[[tool.importlinter.contracts]]
+name = "Routers and SEO read guideline points only through the repository or the service"
 type = "forbidden"
 source_modules = ["backend.routers", "backend.seo"]
 forbidden_modules = [

@@ -9,7 +9,6 @@ GATED=(
   backend/guidelines/points
   backend/guidelines/chapters.py
   backend/guidelines/relevance.py
-  backend/services/guideline_points_job.py
   backend/services/genereviews_refresh.py
   backend/executors/guidelines/guideline_shelf_load_executor.py
   backend/tools/jats.py

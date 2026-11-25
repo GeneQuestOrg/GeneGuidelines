@@ -11,10 +11,11 @@ A document whose text cannot be read keeps a ``text_status`` that says why and n
 from __future__ import annotations
 
 import logging
-import re
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
 from typing import Any
+
+import py3langid
 
 from ...tools.jats import XML_LANG, clean_text, flatten_section, space_blocks, strip_citation_links, unwrap_containers
 from .models import Paragraph, SourceDoc
@@ -22,14 +23,10 @@ from .sources import grade_document
 
 log = logging.getLogger(__name__)
 
-_ENGLISH_MARKERS = {"the", "and", "of", "is", "in", "with", "to", "for", "are", "be"}
-
-
 def looks_english(text: str) -> bool:
-    words = re.findall(r"[a-zA-Z]+", text[:20_000].lower())
-    if len(words) < 50:
-        return False
-    return sum(1 for w in words if w in _ENGLISH_MARKERS) / len(words) >= 0.08
+    """Whether a document's text is English, by py3langid (the langid.py n-gram model; deterministic). Used when the article XML does not name its language."""
+    language, _score = py3langid.classify(text)
+    return bool(language == "en")
 
 
 # --- one reader per kind of source ----------------------------------------------------------------------------------

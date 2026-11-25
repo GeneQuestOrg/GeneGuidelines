@@ -76,7 +76,7 @@ def production_data() -> SeoData:
 
 
 def _published_points(slug: str) -> dict | None:
-    from ..guidelines.points.store import published_block
+    from ..guidelines.points.repository import published_block
 
     try:
         return published_block(slug)

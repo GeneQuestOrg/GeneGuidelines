@@ -77,12 +77,14 @@ def test_report_limit_never_raises_when_sentry_fails(monkeypatch):
     monitoring.report_limit("model_refusal", "declined")
 
 
-def test_points_job_reports_each_kind_of_limit_once(monkeypatch):
-    from backend.services import guideline_points_job as job
+def test_points_service_reports_each_kind_of_limit_once(monkeypatch):
+    from backend.guidelines.points import service
+    from backend.guidelines.points.models import BlockRecord
 
     reports: list[tuple[str, dict]] = []
-    monkeypatch.setattr(job, "report_limit", lambda limit, message, **tags: reports.append((limit, tags)))
-    record = {
+    monkeypatch.setattr(service, "report_limit", lambda limit, message, **tags: reports.append((limit, tags)))
+    record = BlockRecord.from_loop({
+        "calls": [{"step": "draft"}],
         "selection_notes": ["d1 (grade C) left out: input budget of 700000 characters reached", "d2 (grade C) left out: input budget of 700000 characters reached", "d3 (grade A) left out: no_pmcid"],
         "dropped": [
             {"why": "over the limit of 8 points"},
@@ -90,8 +92,8 @@ def test_points_job_reports_each_kind_of_limit_once(monkeypatch):
             {"why": "still failing after the last revision round"},
             {"why": "withdrawn by the generator: duplicate"},
         ],
-    }
-    job._report_limits("noonan", record)
+    })
+    service._report_limits("noonan", record)
     assert reports == [
         ("input_budget", {"component": "guideline_points", "disease": "noonan", "documents": 2}),
         ("max_points", {"component": "guideline_points", "disease": "noonan", "points": 1}),

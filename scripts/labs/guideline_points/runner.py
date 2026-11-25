@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from backend.guidelines.points.block import published_block
+from backend.guidelines.points.block import build_published_block
 from backend.guidelines.points.llm import (
     GENERATOR_NODE_TOKENS,
     GENERATOR_SPEC,
@@ -148,7 +148,7 @@ async def run_all(snapshot: str, out: Path, *, api_key: str, cap: float, only: l
             "selected": [d.doc_id for d in selected],
             "selection_notes": notes,
             "loop": record,
-            "block": published_block(record, selected),
+            "block": build_published_block(record, selected),
             "revision_rounds": revision_rounds_used(record),
             "cost_usd": _cost(record["calls"]),
             "tokens": _tokens(record["calls"]),

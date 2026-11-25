@@ -31,6 +31,8 @@ from .contracts import (
     SynthSignalResponse,
 )
 from .deps import is_verified_doctor, provide_guidelines_service, require_rating_author
+from .points.deps import provide_points_repo
+from .points.repository import GuidelinePointsRepo
 from .service import GuidelinesService
 
 router = APIRouter(tags=["guidelines"])
@@ -71,17 +73,16 @@ def get_synthesis(
     "/diseases/{slug}/guideline-points",
     response_model=GuidelinePointsResponse,
 )
-def get_guideline_points(slug: str) -> GuidelinePointsResponse:
+def get_guideline_points(slug: str, repo: GuidelinePointsRepo = Depends(provide_points_repo)) -> GuidelinePointsResponse:
     """The generated "What the guideline says about diagnosis – to show your doctor" block; 404 when none is published (fewer than three checked points, not generated yet, or FD, whose page keeps its hand-written block). Both languages in one response; the page picks its own."""
-    from .points.store import get_points
-
     try:
-        row = get_points(slug.strip().lower())
+        stored = repo.get(slug.strip().lower())
     except Exception as exc:  # noqa: BLE001 - an unmigrated table reads as "no block"
         raise HTTPException(status_code=404, detail="No guideline points") from exc
-    if row is None or not row.publish or not row.block:
+    block = stored.published_block if stored is not None else None
+    if stored is None or block is None:
         raise HTTPException(status_code=404, detail="No guideline points")
-    return GuidelinePointsResponse.from_block(row.block, row.generated_at)
+    return GuidelinePointsResponse.from_block(block, stored.generated_at)
 
 
 @router.get(

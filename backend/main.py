@@ -204,6 +204,9 @@ app.include_router(content.router, prefix="/api")
 app.include_router(disease_index_router, prefix="/api/disease-index", tags=["disease_index"])
 app.include_router(doctor_finder.router, prefix="/api/doctor-finder", tags=["doctor_finder"])
 app.include_router(pipeline.router, prefix="/api/pipeline", tags=["pipeline"])
+from backend.guidelines.points.api import router as guideline_points_admin_router  # noqa: E402
+
+app.include_router(guideline_points_admin_router, prefix="/api/pipeline", tags=["pipeline"])
 app.include_router(geo.router, prefix="/api")
 app.include_router(feedback.router, prefix="/api")
 

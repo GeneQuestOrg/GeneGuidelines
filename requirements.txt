@@ -21,6 +21,8 @@ pydantic-ai[openai,mcp]==1.97.0
 anthropic==2.12.0
 # Error and limit monitoring (backend/shared/monitoring.py). 3.x collects personal data by default; the module turns every category off.
 sentry-sdk==3.0.0
+# Language of a full-text article when its XML does not say (backend/guidelines/points/loader.py): langid.py's model, deterministic, small.
+py3langid==0.4.0
 # Pin the transitive `mcp` too — pinning pydantic-ai alone is not enough. `mcp` 2.0
 # dropped `RequestContext` from `mcp.shared.context`, which pydantic-ai 1.97.0
 # imports, so a fresh CI install resolved mcp 2.1.1 and every test module that

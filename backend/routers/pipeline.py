@@ -878,44 +878,11 @@ async def bootstrap_disease(
     }
 
 
-class GuidelinePointsBackfillBody(BaseModel):
-    """Which diseases to (re)build; empty means every listed catalog disease. FD is always skipped (hand-written block)."""
-
-    slugs: list[str] = Field(default_factory=list)
-    force: bool = False
+# The guideline-points backfill endpoints (/guideline-points/backfill) live in backend.guidelines.points.api, mounted under the same prefix.
 
 
-_POINTS_BACKFILL: dict = {"running": False, "last": None}
+# Background tasks started by the endpoints below, kept so they cannot be garbage-collected mid-run.
 _BACKGROUND_TASKS: set[asyncio.Task] = set()
-
-
-@router.post("/guideline-points/backfill", status_code=202, dependencies=[Depends(require_superadmin)])
-async def start_guideline_points_backfill(body: GuidelinePointsBackfillBody):
-    """Build the guideline-points block for the catalog (superadmin). Runs in the background, one disease after another; an unchanged shelf is skipped unless ``force``. Poll GET for the results."""
-    if _POINTS_BACKFILL["running"]:
-        return {"started": False, "reason": "a backfill is already running"}
-    from ..services.guideline_points_job import backfill
-
-    async def _run() -> None:
-        try:
-            _POINTS_BACKFILL["last"] = await backfill([s.strip().lower() for s in body.slugs if s.strip()] or None, force=body.force)
-        except Exception as exc:  # noqa: BLE001 — reported through GET
-            _POINTS_BACKFILL["last"] = [{"status": "error", "reason": f"{type(exc).__name__}: {exc}"}]
-        finally:
-            _POINTS_BACKFILL["running"] = False
-
-    # Set before the task is scheduled, so a second POST arriving meanwhile is refused; the task is kept so it cannot be garbage-collected mid-run.
-    _POINTS_BACKFILL["running"] = True
-    _BACKGROUND_TASKS.add(task := asyncio.create_task(_run()))
-    task.add_done_callback(_BACKGROUND_TASKS.discard)
-    return {"started": True}
-
-
-@router.get("/guideline-points/backfill", dependencies=[Depends(require_superadmin)])
-async def get_guideline_points_backfill():
-    """The state and per-disease results of the last backfill started from this process."""
-    return dict(_POINTS_BACKFILL)
-
 
 _GENEREVIEWS_REFRESH: dict = {"running": False, "last": None}
 
