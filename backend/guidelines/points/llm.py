@@ -1,4 +1,4 @@
-"""The Claude calls of the guideline-points loop, made the way production calls Claude (ADR 006).
+"""The Claude adapter of the guideline-points pipeline (it implements ``ports.PointsCaller``), the model specs and the one price table, made the way production calls Claude (ADR 006).
 
 The request is built by the production adapter (``backend.agents.anthropic_direct.build_request``: the Pydantic schema as a JSON-schema response format, a pinned effort, adaptive thinking by default, the server-side refusal fallback) and the answer is validated by its ``parse_message``. Two things are added here, because the adapter's one-shot ``call_structured`` has no room for them:
 
@@ -11,11 +11,12 @@ An answer that fails is returned as a record with ``ok: False`` and the error; n
 from __future__ import annotations
 
 import time
-from typing import Any, Protocol
+from typing import Any
 
 from pydantic import BaseModel
 
 from ...agents.anthropic_direct import ClaudeCallError, build_request, parse_message, parse_spec, reasoning_max_tokens
+from .ports import Budget
 
 GENERATOR_SPEC = "anthropic:claude-sonnet-5-5@high"
 VERIFIER_SPEC = "anthropic:claude-opus-5-5@high"
@@ -24,14 +25,17 @@ GENERATOR_NODE_TOKENS = 8_000
 VERIFIER_NODE_TOKENS = 6_000
 
 
-class Budget(Protocol):
-    def reserve(self, model: str, prompt_chars: int, max_tokens: int) -> Any: ...
-
-    def settle(self, ticket: Any, model: str, usage: dict, role: str, error: str | None) -> float | None: ...
+# USD per million tokens: (input, output, cache read, cache write).
+PRICES: dict[str, tuple[float, float, float, float]] = {"claude-opus-5-5": (4.0, 20.0, 0.20, 5.0), "claude-sonnet-5-5": (2.0, 10.0, 0.10, 2.5)}
 
 
-class PointsCaller(Protocol):
-    async def call(self, *, role: str, system: str, prefix: str, user: str, result_type: type[BaseModel], cache: bool = True) -> tuple[BaseModel | None, dict]: ...
+def call_cost(model: str, usage: dict[str, Any]) -> float | None:
+    """What one call cost in USD, from its token usage; None for a model without a price."""
+    price = PRICES.get(model)
+    if price is None:
+        return None
+    pin, pout, pread, pwrite = price
+    return (int(usage.get("input_tokens", 0) or 0) * pin + int(usage.get("cache_creation_input_tokens", 0) or 0) * pwrite + int(usage.get("cache_read_input_tokens", 0) or 0) * pread + int(usage.get("output_tokens", 0) or 0) * pout) / 1_000_000
 
 
 def _usage(message: Any) -> dict:

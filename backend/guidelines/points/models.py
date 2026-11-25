@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -163,3 +163,25 @@ class SourceDoc:
     @property
     def chars(self) -> int:
         return sum(len(p.text) for p in self.paragraphs)
+
+
+def doc_to_dict(doc: SourceDoc, with_text: bool = True) -> dict[str, Any]:
+    out: dict[str, Any] = {
+        "doc_id": doc.doc_id, "title": doc.title, "year": doc.year, "grade": doc.grade, "grade_reason": doc.grade_reason,
+        "text_status": doc.text_status, "pmid": doc.pmid, "pmcid": doc.pmcid, "bookshelf": doc.bookshelf, "journal": doc.journal,
+        "authors": doc.authors, "role": doc.role, "license": doc.license, "copyright": doc.copyright, "book": doc.book, "pubtypes": list(doc.pubtypes), "chars": doc.chars, "paragraph_count": len(doc.paragraphs),
+    }
+    if with_text:
+        out["paragraphs"] = [{"section": p.section, "text": p.text} for p in doc.paragraphs]
+    return out
+
+
+def doc_from_dict(raw: dict[str, Any]) -> SourceDoc:
+    return SourceDoc(
+        doc_id=str(raw["doc_id"]), title=str(raw.get("title") or ""), year=str(raw.get("year") or ""), grade=raw.get("grade") or "",
+        grade_reason=str(raw.get("grade_reason") or ""), text_status=str(raw.get("text_status") or ""),
+        paragraphs=tuple(Paragraph(section=str(p.get("section") or ""), text=str(p["text"])) for p in raw.get("paragraphs") or []),
+        pmid=raw.get("pmid"), pmcid=raw.get("pmcid"), bookshelf=raw.get("bookshelf"), journal=str(raw.get("journal") or ""),
+        authors=str(raw.get("authors") or ""), role=str(raw.get("role") or ""), license=str(raw.get("license") or ""), pubtypes=tuple(raw.get("pubtypes") or ()),
+        copyright=str(raw.get("copyright") or ""), book=str(raw.get("book") or ""),
+    )

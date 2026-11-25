@@ -5,10 +5,11 @@ Per disease: each shelf document's grade and whether its full text could be read
 
 from __future__ import annotations
 
-from backend.guidelines.points.claude import GENERATOR_NODE_TOKENS, GENERATOR_SPEC
+from backend.guidelines.points.llm import GENERATOR_NODE_TOKENS, GENERATOR_SPEC
+from backend.guidelines.points.models import doc_from_dict
 from backend.guidelines.points.prompts import GENERATOR_SYSTEM, render_documents
 from backend.guidelines.points.quote_check import DocIndex, check_point
-from backend.guidelines.points.sources import doc_from_dict, select_documents
+from backend.guidelines.points.sources import select_documents
 
 from .common import worst_case_cost
 from .gold import FD_GUIDELINE_DOC, gold_points, verifier_controls

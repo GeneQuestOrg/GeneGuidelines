@@ -8,7 +8,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from backend.guidelines.points.block import published_block
-from backend.guidelines.points.claude import (
+from backend.guidelines.points.llm import (
     GENERATOR_NODE_TOKENS,
     GENERATOR_SPEC,
     VERIFIER_NODE_TOKENS,
@@ -16,10 +16,9 @@ from backend.guidelines.points.claude import (
     ClaudePointsCaller,
 )
 from backend.guidelines.points.loop import build_points_block, revision_rounds_used
-from backend.guidelines.points.models import VerifierOutput
+from backend.guidelines.points.models import VerifierOutput, doc_to_dict
 from backend.guidelines.points.prompts import VERIFIER_SYSTEM, render_verifier_input, worked_example
 from backend.guidelines.points.quote_check import DocIndex, check_point
-from backend.guidelines.points.sources import doc_to_dict
 
 from .checks import disease_inputs
 from .common import LabBudget, LabError, git_state, now_iso, read_json, sha256_file, source_hashes, write_json

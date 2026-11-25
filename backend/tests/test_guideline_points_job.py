@@ -33,7 +33,7 @@ def engine():
 def offline(monkeypatch):
     """No catalog, no NCBI: the disease identity and the shelf's documents are handed in."""
     monkeypatch.setattr("backend.guidelines.relevance.identity_for_slug", lambda slug: MAS)
-    monkeypatch.setattr("backend.guidelines.points.sources.load_shelf_documents", lambda shelf, **kw: [CONSENSUS])
+    monkeypatch.setattr("backend.guidelines.points.loader.load_shelf_documents", lambda shelf, **kw: [CONSENSUS])
     monkeypatch.setattr("backend.tools.genereviews_index.load_index", lambda *a, **k: {})
 
 

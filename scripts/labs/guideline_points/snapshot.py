@@ -4,7 +4,7 @@ Sources, all public and read-only:
 
 - the disease catalog and each shelf from the production API (``GET /api/diseases``, ``/api/diseases/{slug}``, ``/api/diseases/{slug}/source-documents``): the shelf in the production database is what a phase-2 run would read;
 - PubMed publication types (E-utilities esummary) and, for Bookshelf chapters, the book and the chapter's real title (Europe PMC), which decide a document's grade;
-- full text through the product's own readers (``backend.tools.pmc_fulltext``, ``backend.tools.bookshelf_fulltext``) via ``backend.guidelines.points.sources``.
+- full text through the product's own readers (``backend.tools.pmc_fulltext``, ``backend.tools.bookshelf_fulltext``) via ``backend.guidelines.points.loader``.
 
 A document whose full text cannot be read keeps an empty paragraph list and a ``text_status`` saying why; for a Bookshelf chapter the page is fetched once more to tell a reCAPTCHA wall from a parse failure. Nothing is ever filled in from an abstract.
 """
@@ -102,13 +102,9 @@ def genereviews_from_archive(archive: str, accessions: set[str], index: dict) ->
 
 
 def _doc_record(raw: dict, meta: dict, pmcids: dict[str, str], api_key: str | None, chapters: dict | None = None) -> dict:
-    from backend.guidelines.points.models import SourceDoc
-    from backend.guidelines.points.sources import (
-        doc_to_dict,
-        fetch_bookshelf_paragraphs,
-        fetch_pmc_paragraphs,
-        grade_document,
-    )
+    from backend.guidelines.points.loader import fetch_bookshelf_paragraphs, fetch_pmc_paragraphs
+    from backend.guidelines.points.models import SourceDoc, doc_to_dict
+    from backend.guidelines.points.sources import grade_document
 
     pmid = str(raw.get("pmid") or "").strip() or None
     accession = str(raw.get("bookshelf") or "").strip() or None
@@ -157,7 +153,7 @@ def _doc_record(raw: dict, meta: dict, pmcids: dict[str, str], api_key: str | No
 
 
 def build(name: str, only: list[str] | None = None, genereviews_archive: str | None = None) -> dict:
-    from backend.guidelines.points.sources import doc_from_dict
+    from backend.guidelines.points.models import doc_from_dict
     from backend.guidelines.relevance import assess, identity_from_disease
     from backend.tools.genereviews_index import load_index
     from backend.tools.pmc_fulltext import pmid_to_pmcid

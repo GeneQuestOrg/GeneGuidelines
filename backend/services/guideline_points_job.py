@@ -50,22 +50,13 @@ class _LedgerBudget:
             record_usage(execution_id=self.execution_id, model_spec=f"anthropic:{model}", prompt_tokens=prompt, completion_tokens=completion, total_tokens=prompt + completion, disease_slug=self.slug)
         except Exception:  # noqa: BLE001 — token capture must never break a run
             log.debug("guideline_points_job: token usage not recorded", exc_info=True)
-        return _cost(model, usage)
+        from ..guidelines.points.llm import call_cost
 
-
-_PRICES = {"claude-opus-5-5": (4.0, 20.0, 0.20, 5.0), "claude-sonnet-5-5": (2.0, 10.0, 0.10, 2.5)}
-
-
-def _cost(model: str, usage: dict) -> float | None:
-    price = _PRICES.get(model)
-    if price is None:
-        return None
-    pin, pout, pread, pwrite = price
-    return (int(usage.get("input_tokens", 0) or 0) * pin + int(usage.get("cache_creation_input_tokens", 0) or 0) * pwrite + int(usage.get("cache_read_input_tokens", 0) or 0) * pread + int(usage.get("output_tokens", 0) or 0) * pout) / 1_000_000
+        return call_cost(model, usage)
 
 
 def _callers(slug: str, execution_id: str):
-    from ..guidelines.points.claude import (
+    from ..guidelines.points.llm import (
         GENERATOR_NODE_TOKENS,
         GENERATOR_SPEC,
         VERIFIER_NODE_TOKENS,
@@ -118,9 +109,10 @@ async def _run(slug: str, *, force: bool, callers, engine) -> dict:
     import uuid
 
     from ..guidelines.points.block import published_block
+    from ..guidelines.points.loader import load_shelf_documents
     from ..guidelines.points.loop import build_points_block
     from ..guidelines.points.prompts import worked_example
-    from ..guidelines.points.sources import load_shelf_documents, select_documents
+    from ..guidelines.points.sources import select_documents
     from ..guidelines.points.store import get_points, save_points, shelf_hash
     from ..guidelines.relevance import identity_for_slug
     from ..guidelines.repository import SqlaGuidelinesRepo

@@ -16,7 +16,6 @@ from __future__ import annotations
 import asyncio
 from typing import Any
 
-from .claude import PointsCaller
 from .models import (
     MAX_POINTS,
     MAX_REVISION_ROUNDS,
@@ -27,6 +26,7 @@ from .models import (
     SourceDoc,
     VerifierOutput,
 )
+from .ports import PointsCaller
 from .prompts import (
     COVERAGE_SYSTEM,
     VERIFIER_SYSTEM,

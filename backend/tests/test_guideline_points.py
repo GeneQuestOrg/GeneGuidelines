@@ -8,15 +8,14 @@ from types import SimpleNamespace
 import pytest
 
 from backend.guidelines.points.block import published_block
-from backend.guidelines.points.claude import ClaudePointsCaller
+from backend.guidelines.points.llm import ClaudePointsCaller
+from backend.guidelines.points.loader import looks_english, parse_pmc_article
 from backend.guidelines.points.loop import build_points_block, revision_rounds_used
 from backend.guidelines.points.models import DraftPoint, Paragraph, PointsDraft, SourceDoc, VerifierOutput
 from backend.guidelines.points.quote_check import DocIndex, check_point, normalize, split_omissions
 from backend.guidelines.points.sources import (
     block_basis,
     grade_document,
-    looks_english,
-    parse_pmc_article,
     select_documents,
 )
 

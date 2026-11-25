@@ -95,7 +95,8 @@ source_modules = ["backend.routers", "backend.seo"]
 forbidden_modules = [
     "backend.guidelines.points.loop",
     "backend.guidelines.points.prompts",
-    "backend.guidelines.points.claude",
+    "backend.guidelines.points.llm",
+    "backend.guidelines.points.loader",
     "backend.guidelines.points.quote_check",
     "backend.guidelines.points.sources",
     "backend.guidelines.points.block",
