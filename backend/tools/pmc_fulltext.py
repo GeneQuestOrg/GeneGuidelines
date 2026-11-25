@@ -27,10 +27,11 @@ raise into the flow.
 from __future__ import annotations
 
 import logging
-import re
 import xml.etree.ElementTree as ET
 
 import httpx
+
+from .jats import flatten_section
 
 log = logging.getLogger(__name__)
 
@@ -38,19 +39,8 @@ _ELINK = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/elink.fcgi"
 _EUROPE_PMC = "https://www.ebi.ac.uk/europepmc/webservices/rest"
 _TIMEOUT = 30.0
 
-# Sections that carry clinical guidance. The reference list, competing interests
-# and acknowledgements are pure noise in a prompt and would crowd out real content
-# under the token cap.
-_SKIP_SECTION_RE = re.compile(
-    r"^(references?|bibliograph|acknowledge?ments?|competing interests|"
-    r"conflicts? of interest|author.?s? contributions?|funding|"
-    r"abbreviations|supplementary|additional file|ethics|consent|"
-    r"publisher.?s note|about this article)",
-    re.I,
-)
 
-
-def _pmid_to_pmcid(pmids: list[str], api_key: str | None = None) -> dict[str, str]:
+def pmid_to_pmcid(pmids: list[str], api_key: str | None = None) -> dict[str, str]:
     """PMID → PMCID for the ones that have an open-access record. Soft-fails to {}."""
     if not pmids:
         return {}
@@ -94,33 +84,7 @@ def _pmid_to_pmcid(pmids: list[str], api_key: str | None = None) -> dict[str, st
     return out
 
 
-def _section_title(sec: ET.Element) -> str:
-    title = sec.find("title")
-    if title is None:
-        return ""
-    return " ".join("".join(title.itertext()).split())
-
-
-def _flatten_section(sec: ET.Element, inherited: str = "") -> list[tuple[str, str]]:
-    """(section title, paragraph text) pairs, recursing into nested <sec>."""
-    title = _section_title(sec) or inherited
-    if _SKIP_SECTION_RE.match(title):
-        return []
-
-    out: list[tuple[str, str]] = []
-    for child in sec:
-        if child.tag == "sec":
-            out.extend(_flatten_section(child, title))
-        elif child.tag in ("p", "list", "table-wrap", "fig"):
-            # Figure and table captions matter here: the scintigraphy evidence in
-            # the FD consensus lives in a figure caption, not in body prose.
-            text = " ".join("".join(child.itertext()).split())
-            if len(text) >= 40:
-                out.append((title, text))
-    return out
-
-
-def _fetch_xml(pmcid: str, api_key: str | None = None) -> str:
+def fetch_xml(pmcid: str, api_key: str | None = None) -> str:
     """Article XML from Europe PMC, falling back to NCBI efetch.
 
     The two sources do not carry the same articles. Europe PMC 404s on records it
@@ -158,7 +122,7 @@ def fetch_fulltext_sections(
     pmid: str, pmcid: str, api_key: str | None = None
 ) -> list[tuple[str, str]]:
     """Section-tagged paragraphs of an open-access article. [] when unavailable."""
-    xml = _fetch_xml(pmcid, api_key=api_key)
+    xml = fetch_xml(pmcid, api_key=api_key)
     if not xml:
         log.info("pmc_fulltext: no full text for %s (%s)", pmid, pmcid)
         return []
@@ -174,7 +138,7 @@ def fetch_fulltext_sections(
 
     out: list[tuple[str, str]] = []
     for sec in body.findall("sec"):
-        out.extend(_flatten_section(sec))
+        out.extend(flatten_section(sec))
     if not out:
         # Some deposits put paragraphs straight in <body> with no <sec> wrapper.
         for para in body.findall("p"):
@@ -215,7 +179,7 @@ def fetch_fulltext_by_pmid(
     which is what we do — a fixed per-article number throws away text we have room
     for.
     """
-    pmcid_by_pmid = _pmid_to_pmcid(pmids, api_key=api_key)
+    pmcid_by_pmid = pmid_to_pmcid(pmids, api_key=api_key)
     out: dict[str, str] = {}
     for pmid, pmcid in pmcid_by_pmid.items():
         sections = fetch_fulltext_sections(pmid, pmcid, api_key=api_key)
@@ -270,5 +234,6 @@ __all__ = [
     "fetch_fulltext_sections",
     "render_for_prompt",
     "pmc_url",
-    "_pmid_to_pmcid",
+    "pmid_to_pmcid",
+    "fetch_xml",
 ]

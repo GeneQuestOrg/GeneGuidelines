@@ -85,11 +85,7 @@ def refresh_genereviews_chapters(*, accessions: set[str] | None = None, archive:
 
 def due(engine=None) -> bool:
     """Whether the worker should read the archive now: a shelf needs a chapter with no stored row, or a chapter a shelf still needs was stored longer ago than the refresh interval. Chapters no shelf needs any more do not count, so they cannot make the worker download the archive every day."""
-    from sqlalchemy import func, select
-    from sqlalchemy.orm import Session
-
-    from ..guidelines.chapters import _engine, shelf_accessions, stored_meta
-    from ..guidelines.orm import BookshelfChapterRow
+    from ..guidelines.chapters import oldest_fetch, shelf_accessions, stored_meta
     from ..tools.genereviews_index import load_index
 
     days = refresh_days()
@@ -101,8 +97,7 @@ def due(engine=None) -> bool:
         return False
     if needed - set(stored_meta(engine)):
         return True
-    with Session(_engine(engine)) as session:
-        oldest = session.execute(select(func.min(BookshelfChapterRow.fetched_at)).where(BookshelfChapterRow.accession.in_(needed))).scalar() or ""
+    oldest = oldest_fetch(needed, engine)
     try:
         return datetime.fromisoformat(oldest) < datetime.now(UTC) - timedelta(days=days)
     except ValueError:

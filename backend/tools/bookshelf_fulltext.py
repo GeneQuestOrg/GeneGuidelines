@@ -1,6 +1,6 @@
 """Read NCBI Bookshelf chapters (GeneReviews) as section text.
 
-Since 2026-11-23 the text comes from ``bookshelf_chapters`` first (filled from NCBI's bulk archive, see ``backend.tools.genereviews_archive``): the chapter pages below now answer automated readers with a reCAPTCHA page, so the page parser alone read nothing. The rest of this docstring describes the page reader, which remains the fallback.
+Since 2026-11-23 the text comes from ``bookshelf_chapters`` first (filled from NCBI's bulk archive, see ``backend.tools.genereviews_archive``; read through ``backend.guidelines.chapters.read_chapter_sections``): the chapter pages below now answer automated readers with a reCAPTCHA page, so the page parser alone read nothing. This module is only the page reader, which remains the fallback; it does not import the guidelines domain.
 
 GeneReviews chapters are often the best-maintained clinical summary a rare disease
 has, and for some diseases they are the only source that exists. They were on the
@@ -140,24 +140,10 @@ def bookshelf_url(accession: str) -> str:
     return _BOOKSHELF_URL.format(accession=accession)
 
 
-def fetch_chapter_sections(accession: str) -> list[tuple[str, str]]:
-    """One Bookshelf chapter as (heading, text) pairs, or [] when it cannot be read.
+def fetch_page_sections(accession: str) -> list[tuple[str, str]]:
+    """The chapter page itself, as (heading, text) pairs; [] when it cannot be read. NCBI often serves a reCAPTCHA page instead, which parses to [].
 
-    The stored copy comes first: GeneReviews chapters are read from NCBI's bulk archive into ``bookshelf_chapters`` by ``backend.services.genereviews_refresh``, because the chapter pages answer automated readers with a reCAPTCHA page. The page is tried only for a chapter that is not stored (another book, or a chapter added since the last refresh).
-
-    Never raises: a source that fails to load must leave the shelf thinner, never
-    fail the run that was building it.
-    """
-    from ..guidelines.chapters import stored_sections
-
-    stored = stored_sections(accession)
-    if stored:
-        return stored
-    return _fetch_page_sections(accession)
-
-
-def _fetch_page_sections(accession: str) -> list[tuple[str, str]]:
-    """The chapter page itself. NCBI often serves a reCAPTCHA page instead, which parses to []."""
+    For GeneReviews the stored copy comes first (``backend.guidelines.chapters.read_chapter_sections``); this is the fallback for chapters that are not stored. Never raises."""
     request = urllib.request.Request(
         bookshelf_url(accession), headers={"User-Agent": _USER_AGENT}
     )

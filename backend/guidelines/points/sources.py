@@ -20,6 +20,7 @@ import xml.etree.ElementTree as ET
 from collections.abc import Iterable
 from typing import Any
 
+from ...tools.jats import XML_LANG, clean_text, flatten_section, space_blocks, strip_citation_links, unwrap_containers
 from .models import Paragraph, SourceDoc
 
 log = logging.getLogger(__name__)
@@ -33,8 +34,6 @@ _REVIEW_TITLE = re.compile(r"\b(scoping|systematic|narrative|literature) review\
 _A_TITLE = re.compile(r"\b(guidelines?|consensus|best[- ]practices?|recommendations?|delphi|position statement|practice parameters?|standards? of care|expert guidance)\b", re.I)
 # Prompt budget for the documents shown to the generator: ~175k tokens, well inside a 1M-token context and leaving the cost of one call under ~0.40 USD on Sonnet.
 MAX_INPUT_CHARS = 700_000
-_XML_LANG = "{http://www.w3.org/XML/1998/namespace}lang"
-_UNWRAP = {"boxed-text", "disp-quote", "def-list"}
 _ENGLISH_MARKERS = {"the", "and", "of", "is", "in", "with", "to", "for", "are", "be"}
 
 
@@ -121,58 +120,10 @@ def _year(value: str) -> int:
 # --- full text ----------------------------------------------------------------------------------------------------------
 
 
-def _strip_citation_links(root: ET.Element) -> None:
-    """Remove bibliography links (``<xref ref-type="bibr">``) and keep the text around them, so "[7, 8]" becomes "[, ]" and is dropped by normalisation."""
-    for parent in list(root.iter()):
-        for child in list(parent):
-            if child.tag != "xref" or child.get("ref-type") != "bibr":
-                continue
-            siblings = list(parent)
-            i = siblings.index(child)
-            tail = child.tail or ""
-            if i > 0:
-                siblings[i - 1].tail = (siblings[i - 1].tail or "") + tail
-            else:
-                parent.text = (parent.text or "") + tail
-            parent.remove(child)
-
-
-def _unwrap_containers(root: ET.Element) -> None:
-    """Replace boxes and block quotes by their children, so the product's section flattener (which reads p, list, table-wrap and fig) does not skip recommendation boxes."""
-    changed = True
-    while changed:
-        changed = False
-        for parent in list(root.iter()):
-            for child in list(parent):
-                if child.tag not in _UNWRAP:
-                    continue
-                i = list(parent).index(child)
-                parent.remove(child)
-                for j, grandchild in enumerate(list(child)):
-                    parent.insert(i + j, grandchild)
-                changed = True
-
-
-def _space_blocks(root: ET.Element) -> None:
-    """End every list item, paragraph and table cell with a space, so flattening a list does not glue its items together ("confirmed.Each patient")."""
-    for el in root.iter():
-        if el.tag in ("list-item", "p", "td", "th", "title", "label"):
-            el.tail = (el.tail or "") + " "
-
-
-def _clean(text: str) -> str:
-    text = re.sub(r"\[[\s,;–-]*\]", "", text)
-    text = re.sub(r"\([\s,;–-]*\)", "", text)
-    text = re.sub(r"\s+([.,;:])", r"\1", text)
-    return " ".join(text.split())
-
-
 def parse_pmc_article(xml: str) -> tuple[list[Paragraph], str, str]:
     """(paragraphs, language, licence) of a JATS article, using the product's section flattener after removing citation links."""
-    from ...tools.pmc_fulltext import _flatten_section
-
     root = ET.fromstring(xml)
-    language = (root.get(_XML_LANG) or "").lower()
+    language = (root.get(XML_LANG) or "").lower()
     licence_el = root.find(".//license")
     licence = ""
     if licence_el is not None:
@@ -181,23 +132,23 @@ def parse_pmc_article(xml: str) -> tuple[list[Paragraph], str, str]:
     body = root.find(".//body")
     if body is None:
         return [], language, licence
-    _strip_citation_links(body)
-    _unwrap_containers(body)
-    _space_blocks(body)
+    strip_citation_links(body)
+    unwrap_containers(body)
+    space_blocks(body)
     pairs: list[tuple[str, str]] = []
     for sec in body.findall("sec"):
-        pairs.extend(_flatten_section(sec))
+        pairs.extend(flatten_section(sec))
     if not pairs:
         pairs = [("", " ".join("".join(p.itertext()).split())) for p in body.findall("p")]
-    paragraphs = [Paragraph(section=title, text=_clean(text)) for title, text in pairs]
+    paragraphs = [Paragraph(section=title, text=clean_text(text)) for title, text in pairs]
     return [p for p in paragraphs if len(p.text) >= 40], language, licence
 
 
 def fetch_pmc_paragraphs(pmcid: str, api_key: str | None = None) -> tuple[list[Paragraph], str, str, str]:
     """(paragraphs, status, language, licence). Status is ok, no_body (abstract-only deposit or not served), unparseable or not_english."""
-    from ...tools.pmc_fulltext import _fetch_xml
+    from ...tools.pmc_fulltext import fetch_xml
 
-    xml = _fetch_xml(pmcid, api_key=api_key)
+    xml = fetch_xml(pmcid, api_key=api_key)
     if not xml:
         return [], "no_body: neither Europe PMC nor NCBI serves a full-text body", "", ""
     try:
@@ -213,10 +164,9 @@ def fetch_pmc_paragraphs(pmcid: str, api_key: str | None = None) -> tuple[list[P
 
 def fetch_bookshelf_paragraphs(accession: str) -> tuple[list[Paragraph], str, str, str]:
     """(paragraphs, status, licence, copyright) of a Bookshelf chapter through the product's reader, which serves the stored copy read from NCBI's archive first. An empty result is reported, never papered over with the abstract."""
-    from ...tools.bookshelf_fulltext import fetch_chapter_sections
-    from ..chapters import get_chapter
+    from ..chapters import get_chapter, read_chapter_sections
 
-    sections = fetch_chapter_sections(accession)
+    sections = read_chapter_sections(accession)
     paragraphs = [Paragraph(section=heading, text=" ".join(block.split())) for heading, text in sections for block in text.split("\n") if len(block.strip()) >= 40]
     if not paragraphs:
         return [], "bookshelf_unreadable: the chapter is not stored and its page gave no text", "", ""
@@ -278,13 +228,13 @@ def pubmed_pubtypes(pmids: list[str], api_key: str | None = None) -> dict[str, l
 
 def load_shelf_documents(shelf: list, *, api_key: str | None = None, genereviews: dict | None = None) -> list[SourceDoc]:
     """Grade every document on a stored shelf (``SourceDocument`` rows) and read the full text of the guideline-grade ones: open-access articles through Europe PMC / NCBI, Bookshelf chapters through the stored copy (``bookshelf_chapters``). Network calls; never raises for one document."""
-    from ...tools.pmc_fulltext import _pmid_to_pmcid
+    from ...tools.pmc_fulltext import pmid_to_pmcid
 
     genereviews = genereviews or {}
     pmids = [str(d.pmid).strip() for d in shelf if str(d.pmid or "").strip()]
     pubtypes = pubmed_pubtypes(pmids, api_key) if pmids else {}
     missing_pmc = [str(d.pmid).strip() for d in shelf if str(d.pmid or "").strip() and not d.pmcid]
-    pmcids = _pmid_to_pmcid(missing_pmc, api_key=api_key) if missing_pmc else {}
+    pmcids = pmid_to_pmcid(missing_pmc, api_key=api_key) if missing_pmc else {}
     out: list[SourceDoc] = []
     for d in shelf:
         pmid = str(d.pmid or "").strip() or None

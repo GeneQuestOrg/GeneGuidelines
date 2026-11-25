@@ -13,11 +13,11 @@ a transient E-utilities outage.
 from __future__ import annotations
 
 import asyncio
+import functools
 import logging
 import os
 
 from ...config import NCBI_API_KEY
-from ...config import LLM_PROMPT_TOKEN_CAP
 from ...tools.pmc_fulltext import fit_shelf_to_budget, pmc_url
 from ..base import NodeExecutor, NodeInput, NodeOutput
 
@@ -212,7 +212,7 @@ class GuidelineShelfLoadExecutor(NodeExecutor):
         accessions = accessions or []
         if not pmids and not accessions:
             return {}, {}
-        from ...tools.pmc_fulltext import _pmid_to_pmcid, fetch_fulltext_by_pmid
+        from ...tools.pmc_fulltext import fetch_fulltext_by_pmid, pmid_to_pmcid
 
         loop = asyncio.get_event_loop()
         try:
@@ -236,7 +236,7 @@ class GuidelineShelfLoadExecutor(NodeExecutor):
                 )
             pmcids = (
                 await loop.run_in_executor(
-                    None, lambda: _pmid_to_pmcid(pmids, api_key=NCBI_API_KEY or None)
+                    None, lambda: pmid_to_pmcid(pmids, api_key=NCBI_API_KEY or None)
                 )
                 if pmids
                 else {}
@@ -255,7 +255,7 @@ class GuidelineShelfLoadExecutor(NodeExecutor):
         """accession → prompt-ready chapter text. Soft-fails per chapter."""
         if not accessions:
             return {}
-        from ...tools.bookshelf_fulltext import fetch_chapter_sections
+        from ...guidelines.chapters import read_chapter_sections
         from ...tools.pmc_fulltext import render_for_prompt
 
         loop = asyncio.get_event_loop()
@@ -263,7 +263,7 @@ class GuidelineShelfLoadExecutor(NodeExecutor):
         for accession in accessions:
             try:
                 sections = await loop.run_in_executor(
-                    None, lambda a=accession: fetch_chapter_sections(a)
+                    None, functools.partial(read_chapter_sections, accession)
                 )
             except Exception as exc:  # noqa: BLE001 — one bad chapter is not a failed run
                 log.warning("guideline_shelf_load: bookshelf %s failed: %s", accession, exc)

@@ -65,7 +65,7 @@ module = [
 ignore_errors = true
 
 [tool.importlinter]
-# Dependency rules for the guideline-points code (docs/produkty plan "cegiełki", step 1). `ignore_imports` lists today's violations; the refactor removes them one by one until the lists are empty.
+# Dependency rules for the guideline-points code (docs/produkty plan "cegiełki", step 1). A contract that needs an exception lists it in `ignore_imports` with the step that removes it.
 root_packages = ["backend"]
 
 [[tool.importlinter.contracts]]
@@ -73,10 +73,6 @@ name = "Tools do not import the guidelines domain"
 type = "forbidden"
 source_modules = ["backend.tools"]
 forbidden_modules = ["backend.guidelines"]
-ignore_imports = [
-    "backend.tools.genereviews_archive -> backend.guidelines.points.sources",
-    "backend.tools.bookshelf_fulltext -> backend.guidelines.chapters",
-]
 
 [[tool.importlinter.contracts]]
 name = "Guideline points: layers"

@@ -69,8 +69,8 @@ def load_shelf(slug: str = "fd", refresh: bool = False, from_prod: bool = False)
 
     from backend.guidelines.deps import provide_guidelines_repo  # noqa: PLC0415
     from backend.tools.pmc_fulltext import (  # noqa: PLC0415
-        _pmid_to_pmcid,
         fetch_fulltext_sections,
+        pmid_to_pmcid,
         render_for_prompt,
     )
     from backend.tools.pubmed_runtime import fetch_article_details_impl  # noqa: PLC0415
@@ -106,7 +106,7 @@ def load_shelf(slug: str = "fd", refresh: bool = False, from_prod: bool = False)
         str(a.get("pmid")): a.get("abstract") or ""
         for a in (fetch_article_details_impl(pmids, include_abstracts=True).get("articles") or [])
     }
-    pmcids = _pmid_to_pmcid(pmids)
+    pmcids = pmid_to_pmcid(pmids)
 
     out = []
     for d in docs:

@@ -84,7 +84,7 @@ def test_pmid_to_pmcid_ignores_the_citing_articles_linkset(monkeypatch: pytest.M
         lambda **kw: _FakeClient(_FakeResponse(json_data=_elink_payload()), sink),
     )
 
-    out = pmc_fulltext._pmid_to_pmcid(["31196103", "36849642"])
+    out = pmc_fulltext.pmid_to_pmcid(["31196103", "36849642"])
 
     assert out == {"31196103": "PMC6567644", "36849642": "PMC11087144"}
 
@@ -99,7 +99,7 @@ def test_pmid_to_pmcid_sends_one_id_param_per_pmid(monkeypatch: pytest.MonkeyPat
         lambda **kw: _FakeClient(_FakeResponse(json_data=_elink_payload()), sink),
     )
 
-    pmc_fulltext._pmid_to_pmcid(["31196103", "36849642"])
+    pmc_fulltext.pmid_to_pmcid(["31196103", "36849642"])
 
     params = sink["params"]
     assert [v for k, v in params if k == "id"] == ["31196103", "36849642"]
@@ -114,7 +114,7 @@ def test_pmid_to_pmcid_soft_fails(monkeypatch: pytest.MonkeyPatch) -> None:
 
     monkeypatch.setattr(pmc_fulltext.httpx, "Client", _boom)
 
-    assert pmc_fulltext._pmid_to_pmcid(["31196103"]) == {}
+    assert pmc_fulltext.pmid_to_pmcid(["31196103"]) == {}
 
 
 _JATS = """<article><body>
@@ -178,7 +178,7 @@ def test_fetch_fulltext_by_pmid_skips_documents_without_open_access(
     """A closed-access document simply has no key — the caller falls back to its
     abstract, which is exactly what the pipeline did before full text existed."""
     monkeypatch.setattr(
-        pmc_fulltext, "_pmid_to_pmcid", lambda pmids, api_key=None: {"31196103": "PMC6567644"}
+        pmc_fulltext, "pmid_to_pmcid", lambda pmids, api_key=None: {"31196103": "PMC6567644"}
     )
     monkeypatch.setattr(
         pmc_fulltext,
@@ -262,9 +262,10 @@ def test_fit_shelf_handles_an_empty_shelf() -> None:
 
 def test_shelf_budget_is_derived_from_the_token_cap() -> None:
     """The budget must follow LLM_PROMPT_TOKEN_CAP, not a magic constant."""
+    from backend.config import LLM_PROMPT_TOKEN_CAP
     from backend.executors.guidelines import guideline_shelf_load_executor as loader
 
     budget = loader._shelf_char_budget()
 
     assert budget > 100_000  # a real guideline shelf must fit whole
-    assert budget < loader.LLM_PROMPT_TOKEN_CAP * loader._CHARS_PER_TOKEN
+    assert budget < LLM_PROMPT_TOKEN_CAP * loader._CHARS_PER_TOKEN

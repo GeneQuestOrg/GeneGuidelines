@@ -4,7 +4,7 @@ Why. NCBI Bookshelf answers automated requests for chapter pages with a reCAPTCH
 
 How. The archive has no index, so it is read as a stream (``tarfile`` mode ``r|gz``): nothing is written to disk, memory stays at one chapter, and only the chapters asked for are parsed. A full pass is a 640 MB download; it is run by a periodic job that stores the chapters a shelf needs in the database (``backend.services.genereviews_refresh``), never on a page request.
 
-The chapter is flattened with the product's own section flattener (``pmc_fulltext._flatten_section``), after the same clean-up as open-access articles: citation links removed, boxes unwrapped, block elements spaced. The licence and copyright statements in the chapter are kept, because GeneReviews' terms ask for the source and copyright credit with every copy.
+The chapter is flattened with the product's own section flattener (``backend.tools.jats``), after the same clean-up as open-access articles: citation links removed, boxes unwrapped, block elements spaced. The licence and copyright statements in the chapter are kept, because GeneReviews' terms ask for the source and copyright credit with every copy.
 """
 
 from __future__ import annotations
@@ -17,6 +17,8 @@ import urllib.request
 import xml.etree.ElementTree as ET
 from collections.abc import Iterator
 from dataclasses import dataclass, field
+
+from .jats import clean_text, flatten_section, space_blocks, strip_citation_links, unwrap_containers
 
 log = logging.getLogger(__name__)
 
@@ -81,9 +83,6 @@ def _text(el: ET.Element | None) -> str:
 
 def parse_chapter_xml(xml: str | bytes, shortname: str = "") -> ChapterText:
     """Sections of one GeneReviews chapter (BITS ``book-part-wrapper``), with its title, synonyms, licence and copyright."""
-    from ..guidelines.points.sources import _clean, _space_blocks, _strip_citation_links, _unwrap_containers
-    from .pmc_fulltext import _flatten_section
-
     root = ET.fromstring(xml)
     part = root.find(".//book-part") if root.tag != "book-part" else root
     meta = part.find("book-part-meta") if part is not None else None
@@ -98,12 +97,12 @@ def parse_chapter_xml(xml: str | bytes, shortname: str = "") -> ChapterText:
     body = part.find("body") if part is not None else None
     sections: list[tuple[str, str]] = []
     if body is not None:
-        _strip_citation_links(body)
-        _unwrap_containers(body)
-        _space_blocks(body)
+        strip_citation_links(body)
+        unwrap_containers(body)
+        space_blocks(body)
         for sec in body.findall("sec"):
-            sections.extend(_flatten_section(sec))
-    cleaned = tuple((heading, _clean(text)) for heading, text in sections if len(_clean(text)) >= 40)
+            sections.extend(flatten_section(sec))
+    cleaned = tuple((heading, clean_text(text)) for heading, text in sections if len(clean_text(text)) >= 40)
     return ChapterText(shortname=shortname or root.get("id", ""), title=title, sections=cleaned, synonyms=synonyms, licence=licence, copyright=copyright_)
 
 

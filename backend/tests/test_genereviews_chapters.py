@@ -86,12 +86,12 @@ def test_refresh_stores_the_shelf_chapters_and_reports_the_rest(engine, tmp_path
     assert row.book == "GeneReviews" and "University of Washington" in row.copyright
 
 
-def test_bookshelf_reader_serves_the_stored_chapter_before_trying_the_page(monkeypatch):
+def test_chapter_reader_serves_the_stored_chapter_before_trying_the_page(monkeypatch):
     calls = []
     monkeypatch.setattr(chapters, "stored_sections", lambda accession, engine=None: [("Diagnosis", "Stored text that is long enough to count as a paragraph.")] if accession == "NBK1" else [])
-    monkeypatch.setattr(bookshelf_fulltext, "_fetch_page_sections", lambda accession: calls.append(accession) or [])
-    assert bookshelf_fulltext.fetch_chapter_sections("NBK1")[0][0] == "Diagnosis"
-    assert bookshelf_fulltext.fetch_chapter_sections("NBK2") == [] and calls == ["NBK2"]
+    monkeypatch.setattr(bookshelf_fulltext, "fetch_page_sections", lambda accession: calls.append(accession) or [])
+    assert chapters.read_chapter_sections("NBK1")[0][0] == "Diagnosis"
+    assert chapters.read_chapter_sections("NBK2") == [] and calls == ["NBK2"]
 
 
 def test_an_absent_chapter_is_recorded_so_the_archive_is_not_read_again_every_day(engine, tmp_path):
@@ -113,3 +113,18 @@ def test_an_absent_chapter_is_recorded_so_the_archive_is_not_read_again_every_da
         assert genereviews_refresh.due(engine) is False
     finally:
         gi.load_index = original
+
+
+def test_shelf_loader_reads_genereviews_through_the_stored_copy(monkeypatch):
+    """The synthesis shelf loader reads a GeneReviews chapter from bookshelf_chapters, and goes to the page only for a chapter that is not stored."""
+    import asyncio
+
+    from backend.executors.guidelines import guideline_shelf_load_executor as loader
+
+    pages = []
+    monkeypatch.setattr(chapters, "stored_sections", lambda accession, engine=None: [("Diagnosis", "The diagnosis is established by molecular genetic testing of the stored chapter.")] if accession == "NBK1" else [])
+    monkeypatch.setattr(bookshelf_fulltext, "fetch_page_sections", lambda accession: pages.append(accession) or [])
+    executor = loader.GuidelineShelfLoadExecutor.__new__(loader.GuidelineShelfLoadExecutor)
+    out = asyncio.run(executor._fetch_bookshelf(["NBK1", "NBK2"]))
+    assert list(out) == ["NBK1"] and "stored chapter" in out["NBK1"]
+    assert pages == ["NBK2"]

@@ -6,10 +6,11 @@ import logging
 from datetime import UTC, datetime
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
 
+from ..tools import bookshelf_fulltext
 from .orm import BookshelfChapterRow, SourceDocumentRow
 
 log = logging.getLogger(__name__)
@@ -41,6 +42,26 @@ def stored_sections(accession: str, engine: Engine | None = None) -> list[tuple[
     if row is None:
         return []
     return [(str(s.get("heading") or ""), str(s.get("text") or "")) for s in row.sections or [] if s.get("text")]
+
+
+def read_chapter_sections(accession: str, engine: Engine | None = None) -> list[tuple[str, str]]:
+    """One Bookshelf chapter as (heading, text) pairs, or [] when it cannot be read.
+
+    The stored copy comes first: GeneReviews chapters are read from NCBI's bulk archive into ``bookshelf_chapters`` by ``backend.services.genereviews_refresh``, because the chapter pages answer automated readers with a reCAPTCHA page. The page is tried only for a chapter that is not stored (another book, or a chapter added since the last refresh).
+
+    Never raises: a source that fails to load must leave the shelf thinner, never fail the run that was building it.
+    """
+    stored = stored_sections(accession, engine)
+    if stored:
+        return stored
+    return bookshelf_fulltext.fetch_page_sections(accession)
+
+
+def oldest_fetch(accessions: set[str], engine: Engine | None = None) -> str:
+    """The earliest ``fetched_at`` among the stored rows of these chapters; "" when none is stored."""
+    with Session(_engine(engine)) as session:
+        oldest = session.execute(select(func.min(BookshelfChapterRow.fetched_at)).where(BookshelfChapterRow.accession.in_(accessions))).scalar()
+        return str(oldest or "")
 
 
 def stored_meta(engine: Engine | None = None) -> dict[str, str]:

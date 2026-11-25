@@ -160,7 +160,7 @@ def build(name: str, only: list[str] | None = None, genereviews_archive: str | N
     from backend.guidelines.points.sources import doc_from_dict
     from backend.guidelines.relevance import assess, identity_from_disease
     from backend.tools.genereviews_index import load_index
-    from backend.tools.pmc_fulltext import _pmid_to_pmcid
+    from backend.tools.pmc_fulltext import pmid_to_pmcid
 
     folder = snapshot_path(name)
     if (folder / "manifest.json").is_file():
@@ -172,7 +172,7 @@ def build(name: str, only: list[str] | None = None, genereviews_archive: str | N
     details = {slug: _get_json(f"{API_BASE}/diseases/{slug}") for slug in slugs}
     pmids = sorted({str(d["pmid"]).strip() for shelf in shelves.values() for d in shelf if d.get("pmid")})
     meta = pubmed_metadata(pmids, api_key)
-    pmcids = _pmid_to_pmcid(pmids, api_key=api_key)
+    pmcids = pmid_to_pmcid(pmids, api_key=api_key)
     index = load_index()
     shelf_books = {str(d["bookshelf"]) for shelf in shelves.values() for d in shelf if d.get("bookshelf")}
     chapters = genereviews_from_archive(genereviews_archive, shelf_books, index) if genereviews_archive else {}
