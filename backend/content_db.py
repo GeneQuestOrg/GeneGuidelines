@@ -718,15 +718,16 @@ def publish_content_pr(
     normalized = normalize_pr_id(pr_id)
     if normalized is None:
         return None
-    if not str(reviewer or "").strip():
-        raise GuidelinePrPublishError(
-            "reviewer is required to publish a guideline PR — provide operator name or email."
-        )
-
+    # Imported here, not at module level: guideline_pr_publish imports this module. It must come before the reviewer check, which raises its error class.
     try:
         from .guideline_pr_publish import GuidelinePrPublishError, publish_pr_to_stored_document
     except ImportError:
         from guideline_pr_publish import GuidelinePrPublishError, publish_pr_to_stored_document
+
+    if not str(reviewer or "").strip():
+        raise GuidelinePrPublishError(
+            "reviewer is required to publish a guideline PR — provide operator name or email."
+        )
 
     conn = get_connection()
     cur = conn.cursor()
