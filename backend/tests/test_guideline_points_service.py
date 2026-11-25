@@ -15,15 +15,21 @@ from sqlalchemy.pool import StaticPool
 import backend.guidelines.orm  # noqa: F401 — registers the tables
 from backend.guidelines.orm import SourceDocumentRow
 from backend.guidelines.points.block import build_published_block
-from backend.guidelines.points.models import BlockOutcome, BlockRecord, shelf_hash
-from backend.guidelines.points.repository import InMemoryGuidelinePointsRepo, SqlaGuidelinePointsRepo, StoredPoints, published_block
-from backend.guidelines.points.run_lock import InProcessRunLock, PostgresRunLock
 from backend.guidelines.points.loop import run_loop_pipeline
+from backend.guidelines.points.models import BlockOutcome, BlockRecord, shelf_hash
+from backend.guidelines.points.repository import (
+    InMemoryGuidelinePointsRepo,
+    SqlaGuidelinePointsRepo,
+    StoredPoints,
+    published_block,
+)
+from backend.guidelines.points.run_lock import InProcessRunLock, PostgresRunLock
 from backend.guidelines.points.service import Generation, PointsService, RunGuards, ShelfReader
 from backend.guidelines.relevance import identity_from_disease
 from backend.guidelines.repository import SqlaGuidelinesRepo
 from backend.shared.persistence.schema import metadata
 from backend.tests.test_guideline_points import CONSENSUS, GOOD, NO_GAPS, FakeCaller, _draft, _verdicts
+
 
 class BlockRecordProbe(BaseModel):
     answer: str
