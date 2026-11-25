@@ -105,8 +105,8 @@ layers = [
     "api | cli",
     "deps",
     "service",
-    "(pipeline) | loop",
-    "(bricks)",
+    "pipeline | loop",
+    "bricks",
     "prompts",
     "block : quote_check : sources",
     "models",
@@ -116,6 +116,8 @@ layers = [
 name = "Guideline points: the generating code gets model calls, IO and storage injected"
 type = "forbidden"
 source_modules = [
+    "backend.guidelines.points.pipeline",
+    "backend.guidelines.points.bricks",
     "backend.guidelines.points.loop",
     "backend.guidelines.points.prompts",
     "backend.guidelines.points.block",

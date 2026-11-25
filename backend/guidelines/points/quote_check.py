@@ -211,3 +211,71 @@ def check_point(point: DraftPoint, indexes: dict[str, DocIndex]) -> QuoteCheck:
     if elsewhere:
         return QuoteCheck(False, "wrong_doc", f"the quote is not in {point.doc_id} but is in {', '.join(elsewhere)}", found_in=elsewhere)
     return QuoteCheck(False, "not_found", f"the quote is not found verbatim in {point.doc_id}", nearest=index.nearest(point.quote))
+
+
+# --- the bricks' location and passage checks ------------------------------------------------------------------------
+
+_CLAUSE_END = ".!?;:"
+
+
+def _occurrences(needle: str, haystack: str) -> list[int]:
+    """Start positions of ``needle`` in ``haystack`` that begin and end on word boundaries."""
+    found, pos = [], haystack.find(needle)
+    while pos != -1:
+        if _boundary_ok(haystack, pos, pos + len(needle)):
+            found.append(pos)
+        pos = haystack.find(needle, pos + 1)
+    return found
+
+
+def anchor_problem(doc: SourceDoc, paragraph: int, anchor: str) -> str | None:
+    """None when ``anchor`` is a phrase found word for word exactly once in that paragraph of the document; otherwise what is wrong."""
+    if not 0 <= paragraph < len(doc.paragraphs):
+        return f"paragraph {paragraph + 1} does not exist in {doc.doc_id}"
+    needle = normalize(anchor)
+    if not needle:
+        return "the anchor is empty"
+    hits = _occurrences(needle, normalize(doc.paragraphs[paragraph].text))
+    if not hits:
+        return f"the anchor is not found word for word in paragraph {paragraph + 1} of {doc.doc_id}"
+    if len(hits) > 1:
+        return f"the anchor occurs {len(hits)} times in paragraph {paragraph + 1}; give a phrase that occurs once"
+    return None
+
+
+def passage_problem(doc: SourceDoc, paragraph: int, anchor: str, quote: str) -> str | None:
+    """None when ``quote`` is consecutive whole sentences of that paragraph, word for word, containing the anchor, within the licence's limit; otherwise what is wrong.
+
+    A sentence boundary is the start or end of the paragraph or a clause-ending mark (. ! ? ; :), so a list item that ends with a semicolon counts as one.
+    """
+    if not 0 <= paragraph < len(doc.paragraphs):
+        return f"paragraph {paragraph + 1} does not exist in {doc.doc_id}"
+    limit = doc.quote_limit
+    if limit is not None and len(quote) > limit:
+        return f"the quote has {len(quote)} characters; {doc.doc_id} has no open licence, so a quote from it may have at most {limit}"
+    if "…" in quote or "..." in quote:
+        return "a quote may not leave anything out: give consecutive whole sentences without '…'"
+    text, needle = normalize(doc.paragraphs[paragraph].text), normalize(quote)
+    starts = _occurrences(needle, text) if needle else []
+    if not starts:
+        return f"the quote is not found word for word in paragraph {paragraph + 1} of {doc.doc_id}"
+    anchor_norm = normalize(anchor)
+    for start in starts:
+        end = start + len(needle)
+        if anchor_norm not in needle:
+            return "the quote does not contain the anchor of its location"
+        if _starts_sentence(text, start) and _ends_sentence(text, end):
+            return None
+    return "the quote must start where a sentence starts and end where a sentence ends"
+
+
+def _starts_sentence(text: str, start: int) -> bool:
+    before = text[:start].rstrip()
+    return not before or before[-1] in _CLAUSE_END
+
+
+def _ends_sentence(text: str, end: int) -> bool:
+    if text[end - 1] in _CLAUSE_END:
+        return True
+    after = text[end:].lstrip()
+    return not after or after[0] in _CLAUSE_END

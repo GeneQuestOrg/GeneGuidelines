@@ -1,0 +1,1 @@
+"""The bricks of the guideline-points pipeline (``pipeline.build_bricks_block``): select, quote, summary_en, question_en, translate_pl. Each is a writer with its own short checker; ``base.run_brick`` is what they share."""

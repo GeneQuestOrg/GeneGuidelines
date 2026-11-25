@@ -16,6 +16,7 @@ from .llm import claude_callers
 from .loader import load_shelf_documents
 from .loop import run_loop_pipeline
 from .models import SourceDoc
+from .pipeline import build_bricks_block
 from .repository import SqlaGuidelinePointsRepo
 from .run_lock import PostgresRunLock
 from .service import Generation, Pipeline, PointsService, RunGuards, ShelfReader
@@ -23,7 +24,7 @@ from .service import Generation, Pipeline, PointsService, RunGuards, ShelfReader
 log = logging.getLogger(__name__)
 
 # GUIDELINE_POINTS_PIPELINE picks the pipeline (set on both apps by deploy/set-points-pipeline.sh); "loop" until Darek approves the bricks.
-PIPELINES: dict[str, Pipeline] = {"loop": run_loop_pipeline}
+PIPELINES: dict[str, Pipeline] = {"loop": run_loop_pipeline, "bricks": build_bricks_block}
 
 
 def selected_pipeline() -> Pipeline:

@@ -43,6 +43,7 @@ MAX_ATTEMPTS_PER_SHELF = 2
 _DROP_LIMITS = (
     ("over the limit of", "max_points", "points dropped over the point limit"),
     ("still failing after the last revision round", "revision_rounds", "points dropped after the last revision round"),
+    ("still rejected after one retry", "brick_retry", "points dropped by a brick after its one retry"),
 )
 
 Callers = tuple[PointsCaller, PointsCaller, str]
