@@ -231,8 +231,8 @@ class BlockRecord:
 
     @property
     def clean(self) -> bool:
-        """No model call failed (a refusal counts as a failure) and the run was not stopped by the cost cap."""
-        return self.failed_calls == 0 and self.outcome is not BlockOutcome.BUDGET_EXCEEDED
+        """No model call failed (a refusal counts as a failure), the run was not stopped by the cost cap, and some source could be read (an outage of NCBI or Europe PMC looks exactly like a shelf with nothing readable)."""
+        return self.failed_calls == 0 and self.outcome not in (BlockOutcome.BUDGET_EXCEEDED, BlockOutcome.NO_READABLE_SOURCE)
 
     @property
     def stored_record(self) -> dict[str, Any]:

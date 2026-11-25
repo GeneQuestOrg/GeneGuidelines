@@ -14,14 +14,9 @@ from ..repository import SqlaGuidelinesRepo
 from .llm import claude_callers
 from .loader import load_shelf_documents
 from .models import SourceDoc
-from .repository import GuidelinePointsRepo, SqlaGuidelinePointsRepo
+from .repository import SqlaGuidelinePointsRepo
 from .run_lock import PostgresRunLock
 from .service import PointsService, RunGuards, ShelfReader
-
-
-def provide_points_repo() -> GuidelinePointsRepo:
-    """FastAPI ``Depends`` provider; tests override it with ``InMemoryGuidelinePointsRepo``."""
-    return SqlaGuidelinePointsRepo()
 
 
 def _list_shelf(slug: str) -> list[Any]:
@@ -52,4 +47,4 @@ def default_points_service() -> PointsService:
     )
 
 
-__all__ = ["default_points_service", "provide_points_repo"]
+__all__ = ["default_points_service"]

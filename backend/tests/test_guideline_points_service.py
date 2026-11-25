@@ -44,19 +44,20 @@ def _callers():
 class Harness:
     """A service over a real (SQLite) shelf and repository, with no catalog, no NCBI and scripted models: each run takes the next scripted callers."""
 
-    def __init__(self, engine, budget_block_reason=lambda: None):
+    def __init__(self, engine, budget_block_reason=lambda: None, lock=None):
         self.repo = SqlaGuidelinePointsRepo(engine)
         self.callers: list = []
+        self.docs = [CONSENSUS]
         self.service = PointsService(
             repo=self.repo,
             reader=ShelfReader(
                 list_shelf=SqlaGuidelinesRepo(engine=engine).list_source_documents,
                 identity_for=lambda slug: MAS,
                 load_index=dict,
-                load_documents=lambda shelf, index: [CONSENSUS],
+                load_documents=lambda shelf, index: list(self.docs),
             ),
             make_callers=lambda slug, execution_id: self.callers.pop(0),
-            guards=RunGuards(lock=InProcessRunLock(), budget_block_reason=budget_block_reason),
+            guards=RunGuards(lock=lock or InProcessRunLock(), budget_block_reason=budget_block_reason),
         )
 
     def run(self, callers, *, force=False):
@@ -144,7 +145,7 @@ def test_points_run_after_a_synthesis_only(monkeypatch):
 def test_api_serves_only_a_published_block():
     from fastapi.testclient import TestClient
 
-    from backend.guidelines.points.deps import provide_points_repo
+    from backend.guidelines.points.repository import provide_points_repo
     from backend.main import app
 
     block = build_published_block({"publish": True, "accepted": [p.model_dump() for p in GOOD]}, [CONSENSUS])
@@ -166,11 +167,14 @@ def test_api_serves_only_a_published_block():
         app.dependency_overrides.pop(provide_points_repo, None)
 
 
-def test_the_backfill_endpoints_keep_their_urls():
+def test_the_backfill_endpoints_keep_their_urls_and_need_a_superadmin():
+    from fastapi.testclient import TestClient
+
     from backend.main import app
 
-    paths = {(route.path, method) for route in app.routes for method in getattr(route, "methods", set())}
-    assert ("/api/pipeline/guideline-points/backfill", "POST") in paths and ("/api/pipeline/guideline-points/backfill", "GET") in paths
+    client = TestClient(app)
+    assert client.get("/api/pipeline/guideline-points/backfill").status_code in (401, 403)
+    assert client.post("/api/pipeline/guideline-points/backfill", json={}).status_code in (401, 403)
 
 
 def test_crawler_page_carries_the_block_in_its_language():
@@ -209,7 +213,9 @@ def test_a_run_with_a_failed_call_never_replaces_a_published_block_even_when_it_
     ver = FakeCaller([None, _verdicts(("p1", "PASS", []), ("p2", "PASS", []), ("p3", "PASS", []))])  # the coverage call fails, the points pass
     result = h.run((gen, ver, "m"), force=True)
     assert result["status"] == "failed" and "published block stays" in result["reason"]
-    assert h.repo.get("mas") == before
+    after = h.repo.get("mas")
+    assert (after.block, after.shelf_hash, after.publish) == (before.block, before.shelf_hash, before.publish)
+    assert after.record["attempts"]["count"] == 1  # the attempt is counted on the row, the block is untouched
 
 
 def test_a_run_with_a_failed_call_that_publishes_a_first_block_records_no_shelf(engine):
@@ -281,7 +287,7 @@ def test_the_advisory_lock_key_is_stable_and_signed_64_bit():
 def test_the_loop_record_is_typed_by_outcome(record, outcome):
     typed = BlockRecord.from_loop(record)
     assert typed.outcome is outcome and typed.pipeline == "loop-1"
-    assert typed.clean is (outcome is not BlockOutcome.CALL_FAILED)
+    assert typed.clean is (outcome not in (BlockOutcome.CALL_FAILED, BlockOutcome.NO_READABLE_SOURCE))
 
 
 def test_the_advisory_lock_stops_a_second_process_on_postgres():
@@ -313,3 +319,107 @@ def test_the_published_block_shape_is_the_contract_the_page_reads():
     assert build_published_block({"publish": True, "accepted": [p.model_dump() for p in GOOD]}, [CONSENSUS]) == frozen
     response = GuidelinePointsResponse.from_block(frozen, "2026-11-25T00:00:00+00:00")
     assert len(response.points) == 3 and response.titlePl.startswith("Co mówi")
+
+
+
+# --- review fixes (2026-11-25): attempt cap, unreadable sources, the lock inside a run, the backfill endpoint, the loader ---
+
+
+def test_the_same_shelf_is_tried_at_most_twice_without_a_recorded_result(engine):
+    h = Harness(engine)
+
+    def two_points():
+        return FakeCaller([_draft(GOOD[:2])]), FakeCaller([NO_GAPS, _verdicts(("p1", "PASS", []), ("p2", "PASS", []))]), "m"
+
+    assert h.run(two_points())["publish"] is False
+    assert h.run(two_points())["publish"] is False
+    third = h.run(two_points())
+    assert third["status"] == "skipped" and "tried 2 times" in third["reason"]
+    h.callers.clear()
+    assert h.run(_callers(), force=True)["publish"] is True
+
+
+def test_no_readable_source_never_withdraws_a_published_block(engine):
+    h = Harness(engine)
+    h.run(_callers())
+    before = h.repo.get("mas").published_block
+    h.docs = []  # NCBI and Europe PMC down: nothing can be read
+    result = h.run(_callers(), force=True)
+    assert result["status"] == "failed"
+    assert h.repo.get("mas").published_block == before
+
+
+def test_a_run_skips_while_another_process_holds_the_disease_on_postgres(engine):
+    from backend.config import DB_URL as url
+
+    if not url.startswith("postgresql"):
+        pytest.skip("needs Postgres (DB_URL)")
+    pg = create_engine(url.replace("postgresql://", "postgresql+psycopg://", 1), future=True)
+    try:
+        h = Harness(engine, lock=PostgresRunLock(pg))
+        with PostgresRunLock(pg).hold("mas") as held_elsewhere:
+            assert held_elsewhere is True
+            result = h.run(_callers())
+        assert result["status"] == "skipped" and "in progress" in result["reason"]
+        assert h.run(_callers())["status"] == "stored"
+    finally:
+        pg.dispose()
+
+
+def test_the_backfill_endpoint_runs_in_the_background_and_reports_through_get(monkeypatch):
+    import time
+
+    from fastapi.testclient import TestClient
+
+    from backend.account.deps import require_superadmin
+    from backend.guidelines.points import api as points_api
+    from backend.main import app
+
+    async def fake_backfill(slugs=None, force=False):
+        return [{"slug": s, "status": "stored", "force": force} for s in slugs or ["fop"]]
+
+    monkeypatch.setattr(points_api, "default_points_service", lambda: SimpleNamespace(backfill=fake_backfill))
+    monkeypatch.setitem(points_api._POINTS_BACKFILL, "running", False)
+    app.dependency_overrides[require_superadmin] = lambda: None
+    try:
+        with TestClient(app) as client:
+            assert client.post("/api/pipeline/guideline-points/backfill", json={"slugs": [" MAS "], "force": True}).json() == {"started": True}
+            for _ in range(50):
+                state = client.get("/api/pipeline/guideline-points/backfill").json()
+                if not state["running"]:
+                    break
+                time.sleep(0.02)
+            assert state == {"running": False, "last": [{"slug": "mas", "status": "stored", "force": True}]}
+    finally:
+        app.dependency_overrides.pop(require_superadmin, None)
+
+
+def test_the_loader_grades_and_reads_each_kind_of_document(monkeypatch):
+    from backend.guidelines.points import loader
+
+    paragraph = SimpleNamespace(section="Diagnosis", text="x" * 60)
+    monkeypatch.setattr(loader, "pubmed_pubtypes", lambda pmids, api_key=None: {"1": ["Practice Guideline"], "2": ["Practice Guideline"], "3": ["Journal Article"], "6": ["Review"]})
+    monkeypatch.setattr(loader.pmc_fulltext, "pmid_to_pmcid", lambda pmids, api_key=None: {"1": "PMC1", "6": "PMC6"})
+
+    def pmc(pmcid, api_key=None):
+        if pmcid == "PMC6":
+            raise TimeoutError("NCBI timed out")
+        return [paragraph], "ok", "en", "CC BY"
+
+    monkeypatch.setattr(loader, "fetch_pmc_paragraphs", pmc)
+    monkeypatch.setattr(loader, "fetch_bookshelf_paragraphs", lambda accession: ([paragraph], "ok", "GeneReviews terms", "Copyright UW"))
+    shelf = [
+        SimpleNamespace(doc_id="1", pmid="1", pmcid=None, bookshelf=None, title="Guidelines for X", year="2020", journal="J", authors="A", role="r"),
+        SimpleNamespace(doc_id="2", pmid="2", pmcid=None, bookshelf=None, title="Guidelines for X", year="2020", journal="J", authors="A", role="r"),
+        SimpleNamespace(doc_id="3", pmid="3", pmcid=None, bookshelf=None, title="A case of X", year="2020", journal="J", authors="A", role="r"),
+        SimpleNamespace(doc_id="NBK1", pmid=None, pmcid=None, bookshelf="NBK1", title="old title", year="2021", journal="", authors="", role="r"),
+        SimpleNamespace(doc_id="NBK9", pmid=None, pmcid=None, bookshelf="NBK9", title="StatPearls: X", year="2022", journal="", authors="", role="r"),
+        SimpleNamespace(doc_id="6", pmid="6", pmcid=None, bookshelf=None, title="X: a review", year="2023", journal="J", authors="A", role="r"),
+    ]
+    docs = {d.doc_id: d for d in loader.load_shelf_documents(shelf, genereviews={"NBK1": SimpleNamespace(title="X (GeneReviews)")})}
+    assert docs["1"].grade == "A" and docs["1"].text_status == "ok" and docs["1"].pmcid == "PMC1" and docs["1"].license == "CC BY"
+    assert docs["2"].text_status.startswith("no_pmcid") and not docs["2"].readable
+    assert docs["3"].text_status.startswith("not_fetched") and docs["3"].grade == ""
+    assert docs["NBK1"].grade == "B" and docs["NBK1"].title == "X (GeneReviews)" and docs["NBK1"].book == "GeneReviews" and docs["NBK1"].copyright == "Copyright UW"
+    assert docs["NBK9"].grade == "C" and docs["NBK9"].grade_reason == "Bookshelf chapter outside GeneReviews"
+    assert docs["6"].text_status == "unreadable: TimeoutError: NCBI timed out" and not docs["6"].readable

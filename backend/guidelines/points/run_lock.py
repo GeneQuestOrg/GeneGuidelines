@@ -81,8 +81,10 @@ class PostgresRunLock:
                 finally:
                     try:
                         conn.execute(text("SELECT pg_advisory_unlock(:key)"), {"key": key})
-                    except Exception:  # closing the connection releases a session lock anyway
-                        log.warning("guideline points: advisory unlock failed for %s", slug, exc_info=True)
+                    except Exception:
+                        # Returned to the pool, the connection would keep its session lock; invalidating it closes it for real, and the server releases the lock.
+                        log.warning("guideline points: advisory unlock failed for %s; closing the connection", slug, exc_info=True)
+                        conn.invalidate()
 
 
 __all__ = ["InProcessRunLock", "PostgresRunLock", "RunLock"]

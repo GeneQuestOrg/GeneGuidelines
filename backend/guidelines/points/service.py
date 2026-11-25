@@ -19,7 +19,7 @@ import asyncio
 import logging
 import uuid
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Any
 
 from ...shared.monitoring import report_limit
@@ -36,6 +36,9 @@ from .sources import select_documents
 log = logging.getLogger(__name__)
 
 HAND_WRITTEN = frozenset({"fd"})
+
+# A run that records no shelf (it did not publish, or it was not clean) is tried again on the next synthesis or backfill. Budget: a failure that repeats on every attempt (a refusal, an answer cut at max_tokens) would otherwise buy the whole run again each time, so the same shelf is tried this many times, then only with ``force``; Sentry reports it.
+MAX_ATTEMPTS_PER_SHELF = 2
 
 # The limits a run can hit, as the loop records them on a dropped point: (start of the reason, limit name, message).
 _DROP_LIMITS = (
@@ -87,10 +90,15 @@ class PointsService:
         slug = (slug or "").strip().lower()
         if slug in HAND_WRITTEN:
             return {"slug": slug, "status": "skipped", "reason": "this disease keeps its hand-written block"}
-        with self.guards.lock.hold(slug) as held:
+        # Taking and releasing the lock talk to the database, so they run off the event loop.
+        hold = self.guards.lock.hold(slug)
+        held = await asyncio.to_thread(hold.__enter__)
+        try:
             if not held:
                 return {"slug": slug, "status": "skipped", "reason": "a run for this disease is already in progress"}
             return await self._run(slug, force=force)
+        finally:
+            await asyncio.to_thread(hold.__exit__, None, None, None)
 
     async def backfill(self, slugs: list[str] | None = None, *, force: bool = False) -> list[dict[str, Any]]:
         """Run the given diseases, or every listed catalog disease, one after another; one failure does not stop the rest."""
@@ -111,6 +119,10 @@ class PointsService:
         existing = await asyncio.to_thread(self.repo.get, slug)
         if existing is not None and existing.publish and existing.shelf_hash == fingerprint and not force:
             return {"slug": slug, "status": "unchanged", "publish": True}
+        attempts = _attempts_on(existing, fingerprint)
+        if attempts >= MAX_ATTEMPTS_PER_SHELF and not force:
+            report_limit("shelf_attempts", "the same shelf was tried the maximum number of times without a stored result", component="guideline_points", disease=slug, attempts=attempts)
+            return {"slug": slug, "status": "skipped", "reason": f"this shelf was tried {attempts} times without a recorded result; run with force to try again"}
         blocked = await asyncio.to_thread(self.guards.budget_block_reason)
         if blocked:
             report_limit("monthly_research_budget", "the guideline-points run did not start", component="guideline_points", disease=slug, reason=blocked)
@@ -132,16 +144,26 @@ class PointsService:
 
     async def _store(self, slug: str, record: BlockRecord, block: dict[str, Any] | None, fingerprint: str, existing: StoredPoints | None, models: str) -> dict[str, Any]:
         cost = round(record.cost_usd, 4)
+        recorded = bool(block) and record.clean
+        attempts = {"shelf": fingerprint, "count": _attempts_on(existing, fingerprint) + 1}
         if not record.clean and existing is not None and existing.publish:
-            # A run in which a model call failed never replaces or withdraws a published block: a passing outage must not change the page.
-            log.warning("guideline points: %s had %d failed model call(s); the previous block stays", slug, record.failed_calls)
-            reason = "a model call failed; the published block stays" if block else (record.reason or "a model call failed")
+            # A run that is not clean (a failed model call, no readable source) never replaces or withdraws a published block: a passing outage must not change the page.
+            log.warning("guideline points: %s had %d failed model call(s), outcome %s; the previous block stays", slug, record.failed_calls, record.outcome)
+            await asyncio.to_thread(self.repo.save, replace(existing, record={**existing.record, "attempts": attempts}))
+            reason = "a model call failed; the published block stays" if block else (record.reason or "the run was not clean; the published block stays")
             return {"slug": slug, "status": "failed", "reason": reason, "cost_usd": cost}
-        # Only a clean, published run records its shelf; anything else is retried by the next synthesis or backfill.
-        stored = StoredPoints(slug=slug, publish=bool(block), reason=record.reason, shelf_hash=fingerprint if block and record.clean else "", block=block, record=record.stored_record, models=models)
+        # Only a clean, published run records its shelf; anything else is retried by the next synthesis or backfill, up to MAX_ATTEMPTS_PER_SHELF times.
+        stored_record = record.stored_record if recorded else {**record.stored_record, "attempts": attempts}
+        stored = StoredPoints(slug=slug, publish=bool(block), reason=record.reason, shelf_hash=fingerprint if recorded else "", block=block, record=stored_record, models=models)
         await asyncio.to_thread(self.repo.save, stamped(stored, record.cost_usd))
         log.info("guideline points: %s stored (publish=%s, %d points, %.2f USD)", slug, bool(block), len(record.accepted), record.cost_usd)
         return {"slug": slug, "status": "stored", "publish": bool(block), "points": len(record.accepted), "reason": record.reason, "cost_usd": cost}
+
+
+def _attempts_on(existing: StoredPoints | None, fingerprint: str) -> int:
+    """How many runs on this very shelf ended without recording it."""
+    attempts = (existing.record.get("attempts") if existing is not None else None) or {}
+    return int(attempts.get("count") or 0) if attempts.get("shelf") == fingerprint else 0
 
 
 def _report_limits(slug: str, record: BlockRecord) -> None:

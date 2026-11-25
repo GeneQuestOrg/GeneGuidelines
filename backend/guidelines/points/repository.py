@@ -97,10 +97,15 @@ class InMemoryGuidelinePointsRepo:
         self.rows[points.slug] = points
 
 
+def provide_points_repo() -> GuidelinePointsRepo:
+    """FastAPI ``Depends`` provider; tests override it with ``InMemoryGuidelinePointsRepo``."""
+    return SqlaGuidelinePointsRepo()
+
+
 def published_block(slug: str, repo: GuidelinePointsRepo | None = None) -> dict[str, Any] | None:
     """The block a page may show for a disease, or None: no row, a row that did not publish."""
     stored = (repo or SqlaGuidelinePointsRepo()).get(slug)
     return stored.published_block if stored is not None else None
 
 
-__all__ = ["GuidelinePointsRepo", "InMemoryGuidelinePointsRepo", "SqlaGuidelinePointsRepo", "StoredPoints", "published_block", "stamped"]
+__all__ = ["GuidelinePointsRepo", "InMemoryGuidelinePointsRepo", "SqlaGuidelinePointsRepo", "StoredPoints", "provide_points_repo", "published_block", "stamped"]

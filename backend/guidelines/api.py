@@ -31,8 +31,7 @@ from .contracts import (
     SynthSignalResponse,
 )
 from .deps import is_verified_doctor, provide_guidelines_service, require_rating_author
-from .points.deps import provide_points_repo
-from .points.repository import GuidelinePointsRepo
+from .points.repository import GuidelinePointsRepo, provide_points_repo
 from .service import GuidelinesService
 
 router = APIRouter(tags=["guidelines"])
