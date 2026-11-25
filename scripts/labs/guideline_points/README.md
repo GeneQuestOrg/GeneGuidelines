@@ -37,6 +37,19 @@ Darek approved four changes after the first run; the second run measures them, o
 - **Verifier calibration** is re-run with the new verifier prompt and the calibration examples held out (they are the gold), under the same rule as before.
 - **Rules for this run** (descriptive, n = 1): the FD comparison as before; MAS passes its new requirement if at least one accepted point is about the endocrine work-up; publication follows the loop's rule only. Budget: up to 25 USD more, enforced by the same ledger (`--cap 32`, the first run having spent 6.54 USD).
 
+## Amendment of 2026-11-25: the bricks pipeline (registered before any paid call)
+
+Darek agreed to replace the one generator and one verifier with small bricks, each a writer (Sonnet 5.5) with its own short checker (Opus 5.5): select, quote, summary_en, question_en, translate_pl, then assembly by code (`backend/guidelines/points/bricks/`, `pipeline.py`; docs plan `docs/produkty/geneguidelines/realizacja/plan-cegielki-punkty-wytycznych-2026-11.md`). No prompt or check sets a number of points, words or sentences. The kept limits: a quote from a document without an open licence at most 400 characters (the point is dropped, never cut); one retry of the items a brick rejects; the run's cost cap.
+
+What is measured (`bricks-calibrate`, `bricks-run`, `bricks-report`; snapshot `2026-11-24`; budget up to 30 USD, enforced by the ledger):
+
+1. **Checker calibration** (`bricks-calibrate`, 2 repeats): each checker sees the six hand-written FD points and the controls of its kind: quote checker `c-truncated`, `c-omission`; summary checker `c-modality`, `c-added`, `c-official`, `c-qualifier`; question checker `c-audit`, `c-advice`, `c-presuppose`; Polish checker `c-polish`. A batch never holds two versions of one point. Code checks come first: a quote with "…" is rejected by code (the bricks quote whole sentences), so hand-written point 3 counts as not passing the quote checker and `c-omission` as caught. **Rule, in every repeat:** each checker passes at least 5 of the 6 hand-written points, and at least 9 of the 10 controls are caught. An effort arm (`--effort medium`) runs the same rule; a checker moves to medium only if it passes.
+2. **Runs** (`bricks-run`, 3 repeats each on FD, MAS, FOP, OI). The FD worked example is held out for FD and for MAS (it quotes MAS's guideline).
+   - **FD:** a hand-written point is found when the anchor of an accepted point lies inside its quote (after normalisation). **Gate:** at least 5 of 6 found in the final block, in each of the 3 runs. Found at selection is reported too.
+   - **Regression points** (`cases/regression_points.json`): FOP avoid biopsy, FOP genetic confirmation, OI family history, OI molecular testing; found when an accepted point quotes the listed paragraph and contains the phrase. MAS: at least one accepted point about the endocrine work-up. **Gate:** each found in at least 2 of 3 runs.
+   - **Cost:** per run; the production cap becomes 1.3 times the measured maximum.
+3. **Then** a side-by-side on production data (`python -m backend.guidelines.points.cli --dry-run --yes`) for Darek. Nothing changes on the live pages until he approves it.
+
 ## Commands
 
 From the repository root, with the product's requirements installed (Python 3.12, `anthropic==2.12.0`) and the product's `.env` (the Anthropic key is read from that file only):

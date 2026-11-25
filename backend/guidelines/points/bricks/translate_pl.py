@@ -53,6 +53,11 @@ def _extract(output: BaseModel) -> dict[str, Any]:
     return {i.id: (i.summary_pl, i.question_pl) for i in output.items} if isinstance(output, PolishOutput) else {}
 
 
+def render_polish_check(items: dict[str, tuple[str, str, str, str]]) -> str:
+    """The checker's input: id → (summary_en, question_en, summary_pl, question_pl)."""
+    return "\n\n".join(f'<item id="{i}">\n<summary_en>{s_en}</summary_en>\n<summary_pl>{s_pl}</summary_pl>\n<question_en>{q_en}</question_en>\n<question_pl>{q_pl}</question_pl>\n</item>' for i, (s_en, q_en, s_pl, q_pl) in items.items())
+
+
 async def translate(*, points: dict[str, tuple[str, str]], writer: PointsCaller, checker: PointsCaller, example: dict[str, Any] | None) -> BrickRun:
     """``points``: id → (summary_en, question_en). Accepted outputs are (summary_pl, question_pl)."""
 
@@ -60,7 +65,7 @@ async def translate(*, points: dict[str, tuple[str, str]], writer: PointsCaller,
         return "\n\n".join(f'<point id="{i}">\n<summary_en>{points[i][0]}</summary_en>\n<question_en>{points[i][1]}</question_en>{feedback_note(i, feedback)}\n</point>' for i in ids)
 
     def render_check(outputs: dict[str, Any]) -> str:
-        return "\n\n".join(f'<item id="{i}">\n<summary_en>{points[i][0]}</summary_en>\n<summary_pl>{pl[0]}</summary_pl>\n<question_en>{points[i][1]}</question_en>\n<question_pl>{pl[1]}</question_pl>\n</item>' for i, pl in outputs.items())
+        return render_polish_check({i: (points[i][0], points[i][1], str(pl[0]), str(pl[1])) for i, pl in outputs.items()})
 
     def code_check(item_id: str, polish: Any) -> str | None:
         summary_pl, question_pl = polish
@@ -73,4 +78,4 @@ async def translate(*, points: dict[str, tuple[str, str]], writer: PointsCaller,
     return await run_brick("translate_pl", list(points), write, code_check, check)
 
 
-__all__ = ["POLISH_CHECK_SYSTEM", "PolishOutput", "polish_system", "translate"]
+__all__ = ["POLISH_CHECK_SYSTEM", "PolishOutput", "polish_system", "render_polish_check", "translate"]

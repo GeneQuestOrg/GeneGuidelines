@@ -57,15 +57,18 @@ def _extract(output: BaseModel) -> dict[str, Any]:
     return {q.id: q.quote for q in output.quotes}
 
 
+def render_quote_check(items: dict[str, tuple[SourceDoc, str, str, str, str]]) -> str:
+    """The checker's input: id → (document, section heading, anchor, reason, quote); the whole section is shown with numbered paragraphs."""
+    parts = []
+    for item_id, (doc, heading, anchor, reason, quote) in items.items():
+        section = "\n".join(f"¶{n} {para.text}" for n, para in enumerate(doc.paragraphs, 1) if para.section == heading)
+        parts.append(f'<item id="{item_id}">\n<document>{doc.title} ({doc.year}; grade {doc.grade})</document>\n<section heading="{heading}">\n{section}\n</section>\n<anchor>{anchor}</anchor>\n<reason>{reason}</reason>\n<quote>{quote}</quote>\n</item>')
+    return "\n\n".join(parts)
+
+
 def _render_check(passages: dict[str, Selected], docs: dict[str, SourceDoc]) -> Callable[[dict[str, Any]], str]:
     def render(quotes: dict[str, Any]) -> str:
-        items = []
-        for item_id, quote in quotes.items():
-            p = passages[item_id]
-            doc = docs[p.doc_id]
-            section = "\n".join(f"¶{n} {para.text}" for n, para in enumerate(doc.paragraphs, 1) if para.section == p.section)
-            items.append(f'<item id="{item_id}">\n<document>{doc.title} ({doc.year}; grade {doc.grade})</document>\n<section heading="{p.section}">\n{section}\n</section>\n<anchor>{p.anchor}</anchor>\n<reason>{p.reason}</reason>\n<quote>{quote}</quote>\n</item>')
-        return "\n\n".join(items)
+        return render_quote_check({i: (docs[passages[i].doc_id], passages[i].section, passages[i].anchor, passages[i].reason, str(q)) for i, q in quotes.items()})
 
     return render
 
@@ -83,4 +86,4 @@ async def quote_passages(*, disease: str, passages: list[Selected], docs: list[S
     return await run_brick("quote", list(by_id), write, code_check, check)
 
 
-__all__ = ["QUOTE_CHECK_SYSTEM", "QUOTE_TASK", "quote_passages"]
+__all__ = ["QUOTE_CHECK_SYSTEM", "QUOTE_TASK", "quote_passages", "render_quote_check"]

@@ -43,6 +43,8 @@ _CITATIONS = (
     re.compile(r"\[[\s,;-]*\]"),
     re.compile(r"\([\s,;-]*\)"),
 )
+# Bare commas left after a sentence's full stop where citation links were stripped without their brackets ("variant.,,,, If FOP is suspected").
+_STRAY_COMMAS = re.compile(r"([.!?;:])(?:\s*,)+")
 _SPACE_BEFORE = re.compile(r"\s+([.,;:!?)\]])")
 _SPACE_AFTER = re.compile(r"([(\[])\s+")
 _WS = re.compile(r"\s+")
@@ -56,6 +58,7 @@ def normalize(text: str) -> str:
         s = pattern.sub(" ", s)
     s = _WS.sub(" ", s)
     s = _SPACE_BEFORE.sub(r"\1", s)
+    s = _STRAY_COMMAS.sub(r"\1", s)
     s = _SPACE_AFTER.sub(r"\1", s)
     return s.strip().casefold()
 

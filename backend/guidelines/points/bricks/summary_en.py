@@ -58,12 +58,17 @@ def _extract(output: BaseModel) -> dict[str, Any]:
     return {i.id: i.summary_en for i in output.items} if isinstance(output, SummaryOutput) else {}
 
 
+def render_summary_check(items: dict[str, tuple[str, str]]) -> str:
+    """The checker's input: id → (quote, summary_en)."""
+    return "\n\n".join(f'<item id="{i}">\n<quote>{quote}</quote>\n<summary_en>{summary}</summary_en>\n</item>' for i, (quote, summary) in items.items())
+
+
 async def summarise(*, quotes: dict[str, str], writer: PointsCaller, checker: PointsCaller, example: dict[str, Any] | None) -> BrickRun:
     def render(ids: list[str], feedback: dict[str, str]) -> str:
         return "\n".join(f'<quote id="{i}">{quotes[i]}{feedback_note(i, feedback)}</quote>' for i in ids)
 
     def render_check(outputs: dict[str, Any]) -> str:
-        return "\n\n".join(f'<item id="{i}">\n<quote>{quotes[i]}</quote>\n<summary_en>{summary}</summary_en>\n</item>' for i, summary in outputs.items())
+        return render_summary_check({i: (quotes[i], str(summary)) for i, summary in outputs.items()})
 
     def code_check(item_id: str, summary: Any) -> str | None:
         return None if str(summary).strip() else "the summary is empty"
@@ -73,4 +78,4 @@ async def summarise(*, quotes: dict[str, str], writer: PointsCaller, checker: Po
     return await run_brick("summary_en", list(quotes), write, code_check, check)
 
 
-__all__ = ["SUMMARY_CHECK_SYSTEM", "SummaryOutput", "summarise", "summary_system"]
+__all__ = ["SUMMARY_CHECK_SYSTEM", "SummaryOutput", "render_summary_check", "summarise", "summary_system"]

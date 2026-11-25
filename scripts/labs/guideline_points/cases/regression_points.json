@@ -1,0 +1,12 @@
+{
+  "about": "Pre-registered 2026-11-25, before any paid call of the bricks pipeline: statements outside FD that a block for the disease must contain, so the pipeline is not tuned to FD alone. Each point is found when an accepted point's quote, from one of the listed documents, contains the phrase (compared after normalisation). The locations were checked by code against snapshot 2026-11-24. Paragraphs are 1-based, as the pipeline shows them.",
+  "points": [
+    {"id": "fop-avoid-biopsy", "disease": "fop", "what": "with suspected FOP, avoid biopsies and other elective procedures", "where": [{"doc_id": "41143155", "paragraph": 11, "phrase": "biopsies"}, {"doc_id": "NBK558090", "paragraph": 5, "phrase": "avoid biopsy"}]},
+    {"id": "fop-genetic-confirmation", "disease": "fop", "what": "the diagnosis is clinical but needs genetic confirmation of an ACVR1 variant", "where": [{"doc_id": "41143155", "paragraph": 11, "phrase": "requires genetic confirmation"}]},
+    {"id": "oi-family-history", "disease": "osteogenesis-imperfecta", "what": "the absence of a known family history does not rule OI out", "where": [{"doc_id": "NBK1295", "paragraph": 8, "phrase": "Absence of a known family history does not preclude the diagnosis"}]},
+    {"id": "oi-molecular-testing", "disease": "osteogenesis-imperfecta", "what": "the diagnosis is established by molecular genetic testing of COL1A1/COL1A2", "where": [{"doc_id": "NBK1295", "paragraph": 9, "phrase": "by molecular genetic testing"}]}
+  ],
+  "topics": [
+    {"id": "mas-endocrine", "disease": "mas", "what": "at least one accepted point is about the endocrine work-up at or after diagnosis", "rule": "the point's section heading or quote matches: endocrin|thyroid|pituitar|growth hormone|gonad|pubert|adrenal|cortisol|phosphat|FGF23"}
+  ]
+}

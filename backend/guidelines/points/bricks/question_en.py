@@ -58,6 +58,11 @@ def _extract(output: BaseModel) -> dict[str, Any]:
     return {i.id: i.question_en for i in output.items} if isinstance(output, QuestionOutput) else {}
 
 
+def render_question_check(items: dict[str, tuple[str, str, str]]) -> str:
+    """The checker's input: id → (quote, summary_en, question_en)."""
+    return "\n\n".join(f'<item id="{i}">\n<quote>{quote}</quote>\n<summary_en>{summary}</summary_en>\n<question_en>{question}</question_en>\n</item>' for i, (quote, summary, question) in items.items())
+
+
 async def ask(*, points: dict[str, tuple[str, str]], writer: PointsCaller, checker: PointsCaller, example: dict[str, Any] | None) -> BrickRun:
     """``points``: id → (quote, summary_en)."""
 
@@ -65,7 +70,7 @@ async def ask(*, points: dict[str, tuple[str, str]], writer: PointsCaller, check
         return "\n\n".join(f'<point id="{i}">\n<quote>{points[i][0]}</quote>\n<summary_en>{points[i][1]}</summary_en>{feedback_note(i, feedback)}\n</point>' for i in ids)
 
     def render_check(outputs: dict[str, Any]) -> str:
-        return "\n\n".join(f'<item id="{i}">\n<quote>{points[i][0]}</quote>\n<summary_en>{points[i][1]}</summary_en>\n<question_en>{q}</question_en>\n</item>' for i, q in outputs.items())
+        return render_question_check({i: (points[i][0], points[i][1], str(q)) for i, q in outputs.items()})
 
     def code_check(item_id: str, question: Any) -> str | None:
         return None if str(question).strip().endswith("?") else "the question must be one question ending with a question mark"
@@ -75,4 +80,4 @@ async def ask(*, points: dict[str, tuple[str, str]], writer: PointsCaller, check
     return await run_brick("question_en", list(points), write, code_check, check)
 
 
-__all__ = ["QUESTION_CHECK_SYSTEM", "QuestionOutput", "ask", "question_system"]
+__all__ = ["QUESTION_CHECK_SYSTEM", "QuestionOutput", "ask", "question_system", "render_question_check"]

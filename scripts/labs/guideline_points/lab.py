@@ -72,6 +72,25 @@ def cmd_run(args) -> int:
     return asyncio.run(run_all(args.snapshot, Path(args.out), api_key=_api_key(args), cap=args.cap, only=args.disease or None, tag=args.tag))
 
 
+def cmd_bricks_calibrate(args) -> int:
+    from .bricks_lab import calibrate
+
+    return asyncio.run(calibrate(args.snapshot, Path(args.out), api_key=_api_key(args), cap=args.cap, repeats=args.repeats, effort=args.effort))
+
+
+def cmd_bricks_run(args) -> int:
+    from .bricks_lab import run
+
+    return asyncio.run(run(args.snapshot, Path(args.out), api_key=_api_key(args), cap=args.cap, repeats=args.repeats, only=args.disease or None))
+
+
+def cmd_bricks_report(args) -> int:
+    from .bricks_lab import report
+
+    print(f"report: {report(Path(args.out))}")
+    return 0
+
+
 def cmd_report(args) -> int:
     from .report import write_report
 
@@ -114,6 +133,26 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--tag", default="", help="suffix for a repeat run's files, e.g. r2")
     p.add_argument("--cap", type=float, default=DEFAULT_CAP_USD)
     p.set_defaults(func=cmd_run)
+
+    p = sub.add_parser("bricks-calibrate", help="paid (Opus): each brick's checker on the FD gold points and the controls mapped to it")
+    p.add_argument("--snapshot", required=True)
+    p.add_argument("--out", required=True)
+    p.add_argument("--repeats", type=int, default=2)
+    p.add_argument("--effort", choices=["low", "medium", "high"], help="the checker's effort, for the effort arm (default: the product's)")
+    p.add_argument("--cap", type=float, default=DEFAULT_CAP_USD)
+    p.set_defaults(func=cmd_bricks_calibrate)
+
+    p = sub.add_parser("bricks-run", help="paid: the bricks pipeline on FD, MAS, FOP and OI, repeated (resumable)")
+    p.add_argument("--snapshot", required=True)
+    p.add_argument("--out", required=True)
+    p.add_argument("--disease", action="append")
+    p.add_argument("--repeats", type=int, default=3)
+    p.add_argument("--cap", type=float, default=DEFAULT_CAP_USD)
+    p.set_defaults(func=cmd_bricks_run)
+
+    p = sub.add_parser("bricks-report", help="no model: the registered gates, cost and blocks of saved bricks runs")
+    p.add_argument("--out", required=True)
+    p.set_defaults(func=cmd_bricks_report)
 
     p = sub.add_parser("report", help="no model: per-disease JSON and the Markdown report from saved results")
     p.add_argument("--snapshot", required=True)
