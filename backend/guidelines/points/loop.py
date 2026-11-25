@@ -20,6 +20,7 @@ from .models import (
     MAX_POINTS,
     MAX_REVISION_ROUNDS,
     MIN_POINTS_TO_PUBLISH,
+    BlockRecord,
     CoverageOutput,
     DraftPoint,
     PointsDraft,
@@ -255,6 +256,11 @@ async def build_points_block(
         else f"only {len(record['accepted'])} points passed both checks; at least {min_points} are needed"
     )
     return record
+
+
+async def run_loop_pipeline(*, disease_name: str, docs: list[SourceDoc], writer: PointsCaller, checker: PointsCaller, example: dict | None) -> BlockRecord:
+    """The loop as a pipeline (``loop-1``): the generator writes, the verifier checks and reviews coverage."""
+    return BlockRecord.from_loop(await build_points_block(disease_name=disease_name, docs=docs, generator=writer, verifier=checker, example=example))
 
 
 def revision_rounds_used(record: dict[str, Any]) -> int:

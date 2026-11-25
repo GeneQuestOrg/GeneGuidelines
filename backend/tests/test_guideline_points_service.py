@@ -7,6 +7,7 @@ import hashlib
 from types import SimpleNamespace
 
 import pytest
+from pydantic import BaseModel
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from sqlalchemy.pool import StaticPool
@@ -17,11 +18,16 @@ from backend.guidelines.points.block import build_published_block
 from backend.guidelines.points.models import BlockOutcome, BlockRecord, shelf_hash
 from backend.guidelines.points.repository import InMemoryGuidelinePointsRepo, SqlaGuidelinePointsRepo, StoredPoints, published_block
 from backend.guidelines.points.run_lock import InProcessRunLock, PostgresRunLock
-from backend.guidelines.points.service import PointsService, RunGuards, ShelfReader
+from backend.guidelines.points.loop import run_loop_pipeline
+from backend.guidelines.points.service import Generation, PointsService, RunGuards, ShelfReader
 from backend.guidelines.relevance import identity_from_disease
 from backend.guidelines.repository import SqlaGuidelinesRepo
 from backend.shared.persistence.schema import metadata
 from backend.tests.test_guideline_points import CONSENSUS, GOOD, NO_GAPS, FakeCaller, _draft, _verdicts
+
+class BlockRecordProbe(BaseModel):
+    answer: str
+
 
 MAS = identity_from_disease({"slug": "mas", "name": "McCune-Albright Syndrome", "nameShort": "MAS", "omim": "174800", "gene": "GNAS"})
 
@@ -56,7 +62,7 @@ class Harness:
                 load_index=dict,
                 load_documents=lambda shelf, index: list(self.docs),
             ),
-            make_callers=lambda slug, execution_id: self.callers.pop(0),
+            generation=Generation(pipeline=run_loop_pipeline, make_callers=lambda slug, execution_id: self.callers.pop(0)),
             guards=RunGuards(lock=lock or InProcessRunLock(), budget_block_reason=budget_block_reason),
         )
 
@@ -424,3 +430,32 @@ def test_the_loader_grades_and_reads_each_kind_of_document(monkeypatch):
     assert docs["NBK1"].grade == "B" and docs["NBK1"].title == "X (GeneReviews)" and docs["NBK1"].book == "GeneReviews" and docs["NBK1"].copyright == "Copyright UW"
     assert docs["NBK9"].grade == "C" and docs["NBK9"].grade_reason == "Bookshelf chapter outside GeneReviews"
     assert docs["6"].text_status == "unreadable: TimeoutError: NCBI timed out" and not docs["6"].readable
+
+
+# --- step 4 groundwork: the per-run cost cap and the pipeline switch ------------------------------------------------
+
+
+def test_the_run_cost_cap_refuses_a_call_and_the_run_is_budget_exceeded(monkeypatch):
+    from backend.guidelines.points import llm, service
+
+    budget = llm.LedgerBudget("mas", "e1", cap_usd=0.01)
+    monkeypatch.setattr(llm, "record_usage", lambda **kw: None)
+    caller = llm.ClaudePointsCaller("anthropic:claude-opus-5-5@high", api_key="test", node_max_tokens=6000, budget=budget, client=SimpleNamespace())
+    output, call = asyncio.run(caller.call(role="verifier", system="s", prefix="", user="u", result_type=BlockRecordProbe))
+    assert output is None and call["error"]["kind"] == "budget"
+    record = BlockRecord.from_loop({"publish": False, "calls": [{"step": "draft", **call}]})
+    assert record.outcome is BlockOutcome.BUDGET_EXCEEDED and record.budget_hit and not record.clean
+    reports = []
+    monkeypatch.setattr(service, "report_limit", lambda limit, message, **tags: reports.append(limit))
+    service._report_limits("mas", record)
+    assert reports == ["run_cost_cap"]
+
+
+def test_the_pipeline_comes_from_the_environment(monkeypatch):
+    from backend.guidelines.points import deps
+    from backend.guidelines.points.loop import run_loop_pipeline
+
+    monkeypatch.delenv("GUIDELINE_POINTS_PIPELINE", raising=False)
+    assert deps.selected_pipeline() is run_loop_pipeline
+    monkeypatch.setenv("GUIDELINE_POINTS_PIPELINE", "no-such-pipeline")
+    assert deps.selected_pipeline() is run_loop_pipeline

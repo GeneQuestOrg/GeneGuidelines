@@ -20,12 +20,11 @@ import logging
 import uuid
 from collections.abc import Callable
 from dataclasses import dataclass, replace
-from typing import Any
+from typing import Any, Protocol
 
 from ...shared.monitoring import report_limit
 from ..relevance import DiseaseIdentity
 from .block import build_published_block
-from .loop import build_points_block
 from .models import BlockOutcome, BlockRecord, SourceDoc, shelf_hash
 from .ports import PointsCaller
 from .prompts import worked_example
@@ -47,6 +46,21 @@ _DROP_LIMITS = (
 )
 
 Callers = tuple[PointsCaller, PointsCaller, str]
+
+
+class Pipeline(Protocol):
+    """Builds one disease's block from its selected documents with a writer and a checker model; ``loop.run_loop_pipeline`` (loop-1) or ``pipeline.build_bricks_block`` (bricks-1)."""
+
+    async def __call__(self, *, disease_name: str, docs: list[SourceDoc], writer: PointsCaller, checker: PointsCaller, example: dict[str, Any] | None) -> BlockRecord: ...
+
+
+@dataclass(frozen=True)
+class Generation:
+    """How a block is generated: the pipeline, the model callers of one run, and the worked example."""
+
+    pipeline: Pipeline
+    make_callers: Callable[[str, str], Callers]
+    example: Callable[[], dict[str, Any] | None] = worked_example
 
 
 @dataclass(frozen=True)
@@ -73,17 +87,15 @@ class PointsService:
         *,
         repo: GuidelinePointsRepo,
         reader: ShelfReader,
-        make_callers: Callable[[str, str], Callers],
+        generation: Generation,
         guards: RunGuards,
         list_slugs: Callable[[], list[str]] = list,
-        example: Callable[[], dict[str, Any] | None] = worked_example,
     ) -> None:
         self.repo = repo
         self.reader = reader
-        self.make_callers = make_callers
+        self.generation = generation
         self.guards = guards
         self.list_slugs = list_slugs
-        self.example = example
 
     async def run(self, slug: str, *, force: bool = False) -> dict[str, Any]:
         """Build, check and store one disease's block. Returns what happened; never raises for a failed model call."""
@@ -134,13 +146,13 @@ class PointsService:
         docs = await asyncio.to_thread(self.reader.load_documents, shelf, index)
         # Relevance matching runs regexes over up to ~700k characters: off the event loop, so public requests do not stall.
         selected, notes = await asyncio.to_thread(lambda: select_documents(docs, identity=identity, genereviews=index))
-        generator, verifier, models = self.make_callers(slug, f"gpt-{uuid.uuid4().hex[:12]}")
-        raw = await build_points_block(disease_name=identity.name, docs=selected, generator=generator, verifier=verifier, example=self.example())
-        raw["selection_notes"] = notes
-        raw["documents_considered"] = [{"doc_id": d.doc_id, "grade": d.grade, "text_status": d.text_status, "licence": d.license} for d in docs]
-        record = BlockRecord.from_loop(raw)
+        writer, checker, models = self.generation.make_callers(slug, f"gpt-{uuid.uuid4().hex[:12]}")
+        record = await self.generation.pipeline(disease_name=identity.name, docs=selected, writer=writer, checker=checker, example=self.generation.example())
+        considered = [{"doc_id": d.doc_id, "grade": d.grade, "text_status": d.text_status, "licence": d.license} for d in docs]
+        record = replace(record, raw={**record.raw, "selection_notes": notes, "documents_considered": considered})
         _report_limits(slug, record)
-        return await self._store(slug, record, build_published_block(raw, selected), fingerprint, existing, models)
+        block = build_published_block({"publish": record.outcome is BlockOutcome.PUBLISHED, "accepted": list(record.accepted)}, selected)
+        return await self._store(slug, record, block, fingerprint, existing, models)
 
     async def _store(self, slug: str, record: BlockRecord, block: dict[str, Any] | None, fingerprint: str, existing: StoredPoints | None, models: str) -> dict[str, Any]:
         cost = round(record.cost_usd, 4)
@@ -176,8 +188,8 @@ def _report_limits(slug: str, record: BlockRecord) -> None:
         count = sum(1 for why in dropped if why.startswith(marker))
         if count:
             report_limit(limit, message, component="guideline_points", disease=slug, points=count)
-    if record.outcome is BlockOutcome.BUDGET_EXCEEDED:
+    if record.budget_hit:
         report_limit("run_cost_cap", "a guideline-points run stopped at its cost cap", component="guideline_points", disease=slug)
 
 
-__all__ = ["HAND_WRITTEN", "PointsService", "RunGuards", "ShelfReader"]
+__all__ = ["HAND_WRITTEN", "Generation", "Pipeline", "PointsService", "RunGuards", "ShelfReader"]

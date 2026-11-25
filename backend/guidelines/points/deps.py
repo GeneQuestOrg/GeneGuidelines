@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import os
 from functools import cache
 from typing import Any
@@ -13,10 +14,25 @@ from ..relevance import identity_for_slug
 from ..repository import SqlaGuidelinesRepo
 from .llm import claude_callers
 from .loader import load_shelf_documents
+from .loop import run_loop_pipeline
 from .models import SourceDoc
 from .repository import SqlaGuidelinePointsRepo
 from .run_lock import PostgresRunLock
-from .service import PointsService, RunGuards, ShelfReader
+from .service import Generation, Pipeline, PointsService, RunGuards, ShelfReader
+
+log = logging.getLogger(__name__)
+
+# GUIDELINE_POINTS_PIPELINE picks the pipeline (set on both apps by deploy/set-points-pipeline.sh); "loop" until Darek approves the bricks.
+PIPELINES: dict[str, Pipeline] = {"loop": run_loop_pipeline}
+
+
+def selected_pipeline() -> Pipeline:
+    name = (os.environ.get("GUIDELINE_POINTS_PIPELINE") or "loop").strip().lower()
+    if name not in PIPELINES:
+        log.error("guideline points: unknown GUIDELINE_POINTS_PIPELINE %r; using the loop", name)
+        return run_loop_pipeline
+    log.info("guideline points: pipeline %s", name)
+    return PIPELINES[name]
 
 
 def _list_shelf(slug: str) -> list[Any]:
@@ -41,7 +57,7 @@ def default_points_service() -> PointsService:
     return PointsService(
         repo=SqlaGuidelinePointsRepo(),
         reader=ShelfReader(list_shelf=_list_shelf, identity_for=identity_for_slug, load_index=load_index, load_documents=_load_documents),
-        make_callers=claude_callers,
+        generation=Generation(pipeline=selected_pipeline(), make_callers=claude_callers),
         guards=RunGuards(lock=PostgresRunLock(), budget_block_reason=_budget_block_reason),
         list_slugs=_list_catalog_slugs,
     )

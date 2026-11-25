@@ -228,11 +228,12 @@ class BlockRecord:
     failed_calls: int
     cost_usd: float
     raw: dict[str, Any]
+    budget_hit: bool = False
 
     @property
     def clean(self) -> bool:
         """No model call failed (a refusal counts as a failure), the run was not stopped by the cost cap, and some source could be read (an outage of NCBI or Europe PMC looks exactly like a shelf with nothing readable)."""
-        return self.failed_calls == 0 and self.outcome not in (BlockOutcome.BUDGET_EXCEEDED, BlockOutcome.NO_READABLE_SOURCE)
+        return self.failed_calls == 0 and not self.budget_hit and self.outcome is not BlockOutcome.NO_READABLE_SOURCE
 
     @property
     def stored_record(self) -> dict[str, Any]:
@@ -243,9 +244,12 @@ class BlockRecord:
         """Type the generator-verifier loop's record (``loop.build_points_block``). The bricks pipeline builds a BlockRecord directly."""
         calls = record.get("calls") or []
         failed = sum(1 for c in calls if c.get("error"))
+        budget_hit = any((c.get("error") or {}).get("kind") == "budget" for c in calls)
         accepted = tuple(record.get("accepted") or [])
         if record.get("publish"):
             outcome = BlockOutcome.PUBLISHED
+        elif budget_hit:
+            outcome = BlockOutcome.BUDGET_EXCEEDED
         elif not calls:
             outcome = BlockOutcome.NO_READABLE_SOURCE
         elif failed:
@@ -255,4 +259,4 @@ class BlockRecord:
         else:
             outcome = BlockOutcome.TOO_FEW_POINTS
         cost = sum(float(c.get("cost_usd_total") or 0.0) for c in calls)
-        return cls(pipeline=LOOP_PIPELINE, outcome=outcome, reason=str(record.get("reason") or ""), accepted=accepted, failed_calls=failed, cost_usd=cost, raw=record)
+        return cls(pipeline=LOOP_PIPELINE, outcome=outcome, reason=str(record.get("reason") or ""), accepted=accepted, failed_calls=failed, cost_usd=cost, raw=record, budget_hit=budget_hit)

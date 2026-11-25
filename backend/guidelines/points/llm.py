@@ -31,8 +31,24 @@ GENERATOR_NODE_TOKENS = 8_000
 VERIFIER_NODE_TOKENS = 6_000
 
 
+# The most one run for one disease may spend. Budget: the lab measures the real maximum and this becomes 1.3 times it (docs plan "cegiełki"); until then a provisional 3 USD.
+RUN_CAP_USD = float(os.environ.get("GUIDELINE_POINTS_RUN_CAP_USD") or 3.0)
+
 # USD per million tokens: (input, output, cache read, cache write).
 PRICES: dict[str, tuple[float, float, float, float]] = {"claude-opus-5-5": (4.0, 20.0, 0.20, 5.0), "claude-sonnet-5-5": (2.0, 10.0, 0.10, 2.5)}
+
+
+class BudgetExceeded(RuntimeError):
+    """A call refused because its worst case would take the run past its cost cap."""
+
+
+def worst_case_cost(model: str, prompt_chars: int, max_tokens: int) -> float:
+    """Upper bound of one call before it is made: about three characters per token, the whole prompt priced as a cache write, and the whole max_tokens as output."""
+    price = PRICES.get(model)
+    if price is None:
+        return 0.0
+    _pin, pout, _pread, pwrite = price
+    return (prompt_chars / 3.0 * pwrite + max_tokens * pout) / 1_000_000
 
 
 def call_cost(model: str, usage: dict[str, Any]) -> float | None:
@@ -99,7 +115,11 @@ class ClaudePointsCaller:
             "ok": False, "error": None, "retryable": False, "stop_reason": None, "served_by": None, "request_id": None,
             "usage": {}, "cost_usd": None, "latency_ms": None, "output": None, "raw_text": None,
         }
-        ticket = self.budget.reserve(self.model, prompt_chars, self.max_tokens) if self.budget else None
+        try:
+            ticket = self.budget.reserve(self.model, prompt_chars, self.max_tokens) if self.budget else None
+        except BudgetExceeded as exc:
+            record["error"] = {"kind": "budget", "message": str(exc)}
+            return None, record
         started = time.monotonic()
         message = None
         try:
@@ -131,13 +151,17 @@ class ClaudePointsCaller:
 
 
 class LedgerBudget:
-    """Production ``Budget``: records each Claude call in the research token ledger (``token_usage``) and returns its cost. It refuses no single call; the service checks the monthly guard once, before a run starts."""
+    """Production ``Budget``: records each Claude call in the research token ledger (``token_usage``) and returns its cost. With a cap, it refuses a call whose worst case would take the run past it (the monthly guard is checked once, before a run starts)."""
 
-    def __init__(self, slug: str, execution_id: str) -> None:
-        self.slug, self.execution_id = slug, execution_id
+    def __init__(self, slug: str, execution_id: str, cap_usd: float | None = None) -> None:
+        self.slug, self.execution_id, self.cap_usd = slug, execution_id, cap_usd
+        self.spent = 0.0
 
-    def reserve(self, model: str, prompt_chars: int, max_tokens: int) -> None:
-        return None
+    def reserve(self, model: str, prompt_chars: int, max_tokens: int) -> float:
+        worst = worst_case_cost(model, prompt_chars, max_tokens)
+        if self.cap_usd is not None and self.spent + worst > self.cap_usd:
+            raise BudgetExceeded(f"this call could cost {worst:.2f} USD; the run has spent {self.spent:.2f} of its {self.cap_usd:.2f} USD cap")
+        return worst
 
     def settle(self, ticket: Any, model: str, usage: dict[str, Any], role: str, error: str | None) -> float | None:
         try:
@@ -146,7 +170,9 @@ class LedgerBudget:
             record_usage(execution_id=self.execution_id, model_spec=f"anthropic:{model}", prompt_tokens=prompt, completion_tokens=completion, total_tokens=prompt + completion, disease_slug=self.slug)
         except Exception:  # token capture must never break a run
             log.debug("guideline points: token usage not recorded", exc_info=True)
-        return call_cost(model, usage)
+        cost = call_cost(model, usage)
+        self.spent += cost or 0.0
+        return cost
 
 
 def claude_callers(slug: str, execution_id: str) -> tuple[ClaudePointsCaller, ClaudePointsCaller, str]:
@@ -154,7 +180,7 @@ def claude_callers(slug: str, execution_id: str) -> tuple[ClaudePointsCaller, Cl
     key = (os.environ.get("ANTHROPIC_API_KEY") or "").strip()
     if not key:
         raise RuntimeError("ANTHROPIC_API_KEY is not set; guideline points run on Claude only (ADR 006)")
-    budget = LedgerBudget(slug, execution_id)
+    budget = LedgerBudget(slug, execution_id, cap_usd=RUN_CAP_USD)
     generator = ClaudePointsCaller(GENERATOR_SPEC, api_key=key, node_max_tokens=GENERATOR_NODE_TOKENS, budget=budget)
     verifier = ClaudePointsCaller(VERIFIER_SPEC, api_key=key, node_max_tokens=VERIFIER_NODE_TOKENS, budget=budget)
     return generator, verifier, f"generator {GENERATOR_SPEC}; verifier and coverage {VERIFIER_SPEC}"
