@@ -5,13 +5,14 @@ One row per disease, replaced by each stored run. A row that did not publish is 
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime
 from typing import Any, Protocol
 
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
 
+from ...shared.persistence.engine import get_engine
 from ..orm import GuidelinePointsRow
 
 
@@ -50,8 +51,6 @@ def _from_row(row: GuidelinePointsRow) -> StoredPoints:
 
 def stamped(points: StoredPoints, cost_usd: float | None) -> StoredPoints:
     """The run as it is stored: its cost as text and the time it is written."""
-    from dataclasses import replace
-
     return replace(points, cost_usd="" if cost_usd is None else f"{cost_usd:.4f}", generated_at=datetime.now(UTC).isoformat(timespec="seconds"))
 
 
@@ -63,8 +62,6 @@ class SqlaGuidelinePointsRepo:
 
     def _get_engine(self) -> Engine:
         if self._engine is None:
-            from ...shared.persistence.engine import get_engine
-
             self._engine = get_engine()
         return self._engine
 

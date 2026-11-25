@@ -11,12 +11,15 @@ An answer that fails is returned as a record with ``ok: False`` and the error; n
 from __future__ import annotations
 
 import logging
+import os
 import time
 from typing import Any
 
+import anthropic
 from pydantic import BaseModel
 
 from ...agents.anthropic_direct import ClaudeCallError, build_request, parse_message, parse_spec, reasoning_max_tokens
+from ...research_queue.token_budget import record_usage
 from .ports import Budget
 
 log = logging.getLogger(__name__)
@@ -41,7 +44,7 @@ def call_cost(model: str, usage: dict[str, Any]) -> float | None:
     return (int(usage.get("input_tokens", 0) or 0) * pin + int(usage.get("cache_creation_input_tokens", 0) or 0) * pwrite + int(usage.get("cache_read_input_tokens", 0) or 0) * pread + int(usage.get("output_tokens", 0) or 0) * pout) / 1_000_000
 
 
-def _usage(message: Any) -> dict:
+def _usage(message: Any) -> dict[str, int]:
     u = getattr(message, "usage", None)
     return {name: int(getattr(u, name, 0) or 0) for name in ("input_tokens", "cache_creation_input_tokens", "cache_read_input_tokens", "output_tokens")}
 
@@ -49,17 +52,19 @@ def _usage(message: Any) -> dict:
 class ClaudePointsCaller:
     """One role (generator or verifier) bound to one Claude model spec."""
 
-    def __init__(self, spec: str, *, api_key: str, node_max_tokens: int, budget: Budget | None = None, timeout_sec: float = 900.0, client: Any = None, retries: int = 1) -> None:
+    # Seconds a call may take, and how many times a retryable failure is retried, on top of the SDK's own two retries.
+    TIMEOUT_SEC = 900.0
+    RETRIES = 1
+
+    def __init__(self, spec: str, *, api_key: str, node_max_tokens: int, budget: Budget | None = None, client: Any = None) -> None:
         self.spec = spec
         self.model, self.effort = parse_spec(spec)
         self.max_tokens = reasoning_max_tokens(node_max_tokens)
         self.budget = budget
-        self.retries = retries
+        self.retries = self.RETRIES
         if client is None:
-            import anthropic
-
             # The key is passed explicitly so the SDK never falls back to another credential in the environment.
-            client = anthropic.AsyncAnthropic(api_key=api_key, max_retries=2, timeout=timeout_sec)
+            client = anthropic.AsyncAnthropic(api_key=api_key, max_retries=2, timeout=self.TIMEOUT_SEC)
         self.client = client
 
     def _request(self, system: str, prefix: str, user: str, result_type: type[BaseModel], cache: bool = True) -> dict[str, Any]:
@@ -71,8 +76,8 @@ class ClaudePointsCaller:
             kwargs["messages"] = [{"role": "user", "content": [first, {"type": "text", "text": user}]}]
         return kwargs
 
-    async def call(self, *, role: str, system: str, prefix: str, user: str, result_type: type[BaseModel], cache: bool = True) -> tuple[BaseModel | None, dict]:
-        attempts: list[dict] = []
+    async def call(self, *, role: str, system: str, prefix: str, user: str, result_type: type[BaseModel], cache: bool = True) -> tuple[BaseModel | None, dict[str, Any]]:
+        attempts: list[dict[str, Any]] = []
         output: BaseModel | None = None
         for _ in range(1 + max(0, self.retries)):
             output, attempt = await self._once(role, system, prefix, user, result_type, cache)
@@ -86,9 +91,7 @@ class ClaudePointsCaller:
         record["cost_usd_total"] = None if any(c is None for c in costs) else sum(costs)
         return output, record
 
-    async def _once(self, role: str, system: str, prefix: str, user: str, result_type: type[BaseModel], cache: bool = True) -> tuple[BaseModel | None, dict]:
-        import anthropic
-
+    async def _once(self, role: str, system: str, prefix: str, user: str, result_type: type[BaseModel], cache: bool = True) -> tuple[BaseModel | None, dict[str, Any]]:
         kwargs = self._request(system, prefix, user, result_type, cache)
         prompt_chars = len(system) + len(prefix) + len(user)
         record: dict[str, Any] = {
@@ -138,20 +141,16 @@ class LedgerBudget:
 
     def settle(self, ticket: Any, model: str, usage: dict[str, Any], role: str, error: str | None) -> float | None:
         try:
-            from ...research_queue.token_budget import record_usage
-
             prompt = sum(int(usage.get(k, 0) or 0) for k in ("input_tokens", "cache_creation_input_tokens", "cache_read_input_tokens"))
             completion = int(usage.get("output_tokens", 0) or 0)
             record_usage(execution_id=self.execution_id, model_spec=f"anthropic:{model}", prompt_tokens=prompt, completion_tokens=completion, total_tokens=prompt + completion, disease_slug=self.slug)
-        except Exception:  # noqa: BLE001 — token capture must never break a run
+        except Exception:  # token capture must never break a run
             log.debug("guideline points: token usage not recorded", exc_info=True)
         return call_cost(model, usage)
 
 
 def claude_callers(slug: str, execution_id: str) -> tuple[ClaudePointsCaller, ClaudePointsCaller, str]:
     """The production generator and verifier for one run, spending into the research ledger, and a label of the models for the stored row."""
-    import os
-
     key = (os.environ.get("ANTHROPIC_API_KEY") or "").strip()
     if not key:
         raise RuntimeError("ANTHROPIC_API_KEY is not set; guideline points run on Claude only (ADR 006)")

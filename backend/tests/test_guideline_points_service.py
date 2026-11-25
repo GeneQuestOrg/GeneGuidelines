@@ -17,7 +17,7 @@ from backend.guidelines.points.block import build_published_block
 from backend.guidelines.points.models import BlockOutcome, BlockRecord, shelf_hash
 from backend.guidelines.points.repository import InMemoryGuidelinePointsRepo, SqlaGuidelinePointsRepo, StoredPoints, published_block
 from backend.guidelines.points.run_lock import InProcessRunLock, PostgresRunLock
-from backend.guidelines.points.service import PointsService, ShelfReader
+from backend.guidelines.points.service import PointsService, RunGuards, ShelfReader
 from backend.guidelines.relevance import identity_from_disease
 from backend.guidelines.repository import SqlaGuidelinesRepo
 from backend.shared.persistence.schema import metadata
@@ -56,8 +56,7 @@ class Harness:
                 load_documents=lambda shelf, index: [CONSENSUS],
             ),
             make_callers=lambda slug, execution_id: self.callers.pop(0),
-            budget_block_reason=budget_block_reason,
-            lock=InProcessRunLock(),
+            guards=RunGuards(lock=InProcessRunLock(), budget_block_reason=budget_block_reason),
         )
 
     def run(self, callers, *, force=False):
@@ -235,7 +234,7 @@ def test_an_unpublished_run_records_no_shelf_so_the_next_run_tries_again(engine)
 
 def test_a_run_already_in_progress_for_the_disease_is_not_started_twice(engine):
     h = Harness(engine)
-    with h.service.lock.hold("mas"):
+    with h.service.guards.lock.hold("mas"):
         result = h.run(_callers())
     assert result["status"] == "skipped" and "in progress" in result["reason"]
 
@@ -301,3 +300,16 @@ def test_the_advisory_lock_stops_a_second_process_on_postgres():
             assert after_release is True
     finally:
         eng.dispose()
+
+
+def test_the_published_block_shape_is_the_contract_the_page_reads():
+    """The block JSON is what the page and the API response read. Built by today's code and frozen here, so a new pipeline (the bricks) must produce the same shape."""
+    import json
+    from pathlib import Path
+
+    from backend.guidelines.contracts import GuidelinePointsResponse
+
+    frozen = json.loads((Path(__file__).parent / "fixtures" / "guideline_points_block.json").read_text())
+    assert build_published_block({"publish": True, "accepted": [p.model_dump() for p in GOOD]}, [CONSENSUS]) == frozen
+    response = GuidelinePointsResponse.from_block(frozen, "2026-11-25T00:00:00+00:00")
+    assert len(response.points) == 3 and response.titlePl.startswith("Co mówi")

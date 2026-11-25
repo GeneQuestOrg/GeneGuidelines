@@ -21,9 +21,9 @@ GATED=(
 )
 
 echo "== ruff (gated paths)"
-ruff check "${GATED[@]}"
+ruff check --no-cache "${GATED[@]}"
 echo "== ruff F821 undefined names (whole backend and scripts)"
-ruff check backend scripts --select F821
+ruff check --no-cache backend scripts --select F821
 echo "== mypy (gated paths)"
 mypy "${GATED[@]}"
 echo "== import-linter"

@@ -14,7 +14,9 @@ from __future__ import annotations
 
 import re
 from collections.abc import Iterable
+from typing import Any
 
+from ..relevance import MISMATCH, DiseaseIdentity, assess
 from .models import SourceDoc
 
 GRADE_RANK = {"A": 0, "B": 1, "C": 2}
@@ -53,15 +55,13 @@ def grade_document(*, title: str, pubtypes: Iterable[str] = (), book_title: str 
     return None, "not a guideline, consensus statement or review by PubMed type or title"
 
 
-def select_documents(docs: Iterable[SourceDoc], max_chars: int = MAX_INPUT_CHARS, *, identity=None, genereviews: dict | None = None) -> tuple[list[SourceDoc], list[str]]:
+def select_documents(docs: Iterable[SourceDoc], max_chars: int = MAX_INPUT_CHARS, *, identity: DiseaseIdentity | None = None, genereviews: dict[str, Any] | None = None) -> tuple[list[SourceDoc], list[str]]:
     """The documents the generator reads, strongest first, and notes on what was left out and why.
 
     Every readable guideline-grade document is offered, ordered A, B, C and newest first within a grade, until the character budget is reached. Reviews are not withheld when a guideline exists: a disease's only consensus statement can be about something else (Noonan's readable one is about cancer surveillance), and the generator is told to quote a stronger document whenever one says the same thing. Which grades the accepted points rest on is decided after the run (``block_basis``).
 
     With the disease's ``identity`` (``backend.guidelines.relevance``), a document that is about another disease is left out: its full text never names the disease, or it is a GeneReviews chapter on other genes.
     """
-    from ..relevance import MISMATCH, assess
-
     docs = list(docs)
     notes = [f"{d.doc_id} (grade {d.grade}) left out: {d.text_status}" for d in docs if d.grade and not d.readable]
     readable = []

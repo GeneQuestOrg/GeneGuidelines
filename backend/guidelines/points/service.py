@@ -56,6 +56,14 @@ class ShelfReader:
     load_documents: Callable[[list[Any], dict[str, Any]], list[SourceDoc]]
 
 
+@dataclass(frozen=True)
+class RunGuards:
+    """What decides whether a run may start: one run per disease at a time, and the monthly research budget."""
+
+    lock: RunLock
+    budget_block_reason: Callable[[], str | None]
+
+
 class PointsService:
     def __init__(
         self,
@@ -63,16 +71,14 @@ class PointsService:
         repo: GuidelinePointsRepo,
         reader: ShelfReader,
         make_callers: Callable[[str, str], Callers],
-        budget_block_reason: Callable[[], str | None],
-        lock: RunLock,
+        guards: RunGuards,
         list_slugs: Callable[[], list[str]] = list,
         example: Callable[[], dict[str, Any] | None] = worked_example,
     ) -> None:
         self.repo = repo
         self.reader = reader
         self.make_callers = make_callers
-        self.budget_block_reason = budget_block_reason
-        self.lock = lock
+        self.guards = guards
         self.list_slugs = list_slugs
         self.example = example
 
@@ -81,7 +87,7 @@ class PointsService:
         slug = (slug or "").strip().lower()
         if slug in HAND_WRITTEN:
             return {"slug": slug, "status": "skipped", "reason": "this disease keeps its hand-written block"}
-        with self.lock.hold(slug) as held:
+        with self.guards.lock.hold(slug) as held:
             if not held:
                 return {"slug": slug, "status": "skipped", "reason": "a run for this disease is already in progress"}
             return await self._run(slug, force=force)
@@ -94,7 +100,7 @@ class PointsService:
         for slug in slugs:
             try:
                 results.append(await self.run(slug, force=force))
-            except Exception as exc:  # noqa: BLE001 — one disease must not stop the backfill
+            except Exception as exc:  # one disease must not stop the backfill
                 log.exception("guideline points: %s failed", slug)
                 results.append({"slug": slug, "status": "error", "reason": f"{type(exc).__name__}: {exc}"})
         return results
@@ -105,7 +111,7 @@ class PointsService:
         existing = await asyncio.to_thread(self.repo.get, slug)
         if existing is not None and existing.publish and existing.shelf_hash == fingerprint and not force:
             return {"slug": slug, "status": "unchanged", "publish": True}
-        blocked = await asyncio.to_thread(self.budget_block_reason)
+        blocked = await asyncio.to_thread(self.guards.budget_block_reason)
         if blocked:
             report_limit("monthly_research_budget", "the guideline-points run did not start", component="guideline_points", disease=slug, reason=blocked)
             return {"slug": slug, "status": "skipped", "reason": f"the monthly research budget is used up ({blocked})"}
@@ -152,4 +158,4 @@ def _report_limits(slug: str, record: BlockRecord) -> None:
         report_limit("run_cost_cap", "a guideline-points run stopped at its cost cap", component="guideline_points", disease=slug)
 
 
-__all__ = ["HAND_WRITTEN", "PointsService", "ShelfReader"]
+__all__ = ["HAND_WRITTEN", "PointsService", "RunGuards", "ShelfReader"]

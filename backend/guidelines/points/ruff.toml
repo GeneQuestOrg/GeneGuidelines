@@ -1,0 +1,17 @@
+# Stricter rules for the guideline-points package (docs plan "cegiełki", step 3). loop.py and prompts.py, the current loop, are exempt from the complexity rules until they are deleted with it (step 6).
+extend = "../../../pyproject.toml"
+
+[lint]
+extend-select = ["B", "SIM", "C90", "RUF", "PLR", "PLC0415", "BLE"]
+ignore = ["E501", "UP007", "PLR2004", "RUF001", "RUF002", "RUF003"]
+
+[lint.mccabe]
+max-complexity = 10
+
+[lint.pylint]
+max-args = 6
+max-returns = 10
+
+[lint.per-file-ignores]
+"loop.py" = ["C901", "PLR0911", "PLR0912", "PLR0913", "PLR0915", "B023"]
+"prompts.py" = ["C901", "PLR0912", "PLR0913", "PLR0915"]

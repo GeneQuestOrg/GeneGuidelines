@@ -14,6 +14,8 @@ from typing import Protocol
 from sqlalchemy import text
 from sqlalchemy.engine import Engine
 
+from ...shared.persistence.engine import get_engine
+
 log = logging.getLogger(__name__)
 
 
@@ -56,8 +58,6 @@ class PostgresRunLock:
 
     def _get_engine(self) -> Engine:
         if self._engine is None:
-            from ...shared.persistence.engine import get_engine
-
             self._engine = get_engine()
         return self._engine
 
@@ -81,7 +81,7 @@ class PostgresRunLock:
                 finally:
                     try:
                         conn.execute(text("SELECT pg_advisory_unlock(:key)"), {"key": key})
-                    except Exception:  # noqa: BLE001 — closing the connection releases a session lock anyway
+                    except Exception:  # closing the connection releases a session lock anyway
                         log.warning("guideline points: advisory unlock failed for %s", slug, exc_info=True)
 
 

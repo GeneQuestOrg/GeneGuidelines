@@ -10,14 +10,19 @@ A document whose text cannot be read keeps a ``text_status`` that says why and n
 
 from __future__ import annotations
 
+import json
 import logging
+import urllib.parse
+import urllib.request
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
 from typing import Any
 
 import py3langid
 
+from ...tools import pmc_fulltext
 from ...tools.jats import XML_LANG, clean_text, flatten_section, space_blocks, strip_citation_links, unwrap_containers
+from .. import chapters
 from .models import Paragraph, SourceDoc
 from .sources import grade_document
 
@@ -58,9 +63,7 @@ def parse_pmc_article(xml: str) -> tuple[list[Paragraph], str, str]:
 
 def fetch_pmc_paragraphs(pmcid: str, api_key: str | None = None) -> tuple[list[Paragraph], str, str, str]:
     """(paragraphs, status, language, licence). Status is ok, no_body (abstract-only deposit or not served), unparseable or not_english."""
-    from ...tools.pmc_fulltext import fetch_xml
-
-    xml = fetch_xml(pmcid, api_key=api_key)
+    xml = pmc_fulltext.fetch_xml(pmcid, api_key=api_key)
     if not xml:
         return [], "no_body: neither Europe PMC nor NCBI serves a full-text body", "", ""
     try:
@@ -76,14 +79,12 @@ def fetch_pmc_paragraphs(pmcid: str, api_key: str | None = None) -> tuple[list[P
 
 def fetch_bookshelf_paragraphs(accession: str) -> tuple[list[Paragraph], str, str, str]:
     """(paragraphs, status, licence, copyright) of a Bookshelf chapter through the product's reader, which serves the stored copy read from NCBI's archive first. An empty result is reported, never papered over with the abstract."""
-    from ..chapters import get_chapter, read_chapter_sections
-
-    sections = read_chapter_sections(accession)
+    sections = chapters.read_chapter_sections(accession)
     paragraphs = [Paragraph(section=heading, text=" ".join(block.split())) for heading, text in sections for block in text.split("\n") if len(block.strip()) >= 40]
     if not paragraphs:
         return [], "bookshelf_unreadable: the chapter is not stored and its page gave no text", "", ""
     try:
-        row = get_chapter(accession)
+        row = chapters.get_chapter(accession)
     except Exception:  # noqa: BLE001 - text from the page has no stored licence; the chapter is then treated as restricted
         row = None
     return paragraphs, "ok", (row.licence if row else ""), (row.copyright if row else "")
@@ -94,10 +95,6 @@ def fetch_bookshelf_paragraphs(accession: str) -> tuple[list[Paragraph], str, st
 
 def pubmed_pubtypes(pmids: list[str], api_key: str | None = None) -> dict[str, list[str]]:
     """PMID → PubMed publication types (E-utilities esummary). Missing on any failure: such a document is then graded by its title alone."""
-    import json as _json
-    import urllib.parse
-    import urllib.request
-
     out: dict[str, list[str]] = {}
     for i in range(0, len(pmids), 150):
         params = {"db": "pubmed", "retmode": "json", "id": ",".join(pmids[i:i + 150])}
@@ -107,7 +104,7 @@ def pubmed_pubtypes(pmids: list[str], api_key: str | None = None) -> dict[str, l
         try:
             request = urllib.request.Request(url, headers={"User-Agent": "GeneQuestFoundation/1.0 (https://genequest.org)"})
             with urllib.request.urlopen(request, timeout=60) as response:
-                result = _json.load(response).get("result") or {}
+                result = json.load(response).get("result") or {}
         except Exception as exc:  # noqa: BLE001 - grading falls back to titles
             log.warning("points.sources: esummary failed: %s", exc)
             continue
@@ -136,15 +133,13 @@ class _Text:
 
 def load_shelf_documents(shelf: list[Any], *, api_key: str | None = None, genereviews: dict[str, Any] | None = None) -> list[SourceDoc]:
     """Grade every document on a stored shelf (``SourceDocument`` rows) and read the full text of the guideline-grade ones: open-access articles through Europe PMC / NCBI, Bookshelf chapters through the stored copy (``bookshelf_chapters``). Network calls; never raises for one document."""
-    from ...tools.pmc_fulltext import pmid_to_pmcid
-
     pmids = [str(d.pmid).strip() for d in shelf if str(d.pmid or "").strip()]
     missing_pmc = [str(d.pmid).strip() for d in shelf if str(d.pmid or "").strip() and not d.pmcid]
     lookups = _ShelfLookups(
         api_key=api_key,
         genereviews=genereviews or {},
         pubtypes=pubmed_pubtypes(pmids, api_key) if pmids else {},
-        pmcids=pmid_to_pmcid(missing_pmc, api_key=api_key) if missing_pmc else {},
+        pmcids=pmc_fulltext.pmid_to_pmcid(missing_pmc, api_key=api_key) if missing_pmc else {},
     )
     return [_load_one(d, lookups) for d in shelf]
 

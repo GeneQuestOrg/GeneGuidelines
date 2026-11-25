@@ -15,9 +15,11 @@ An omission is allowed only where the quote marks it with "…" (or "...", "[…
 from __future__ import annotations
 
 import difflib
+import itertools
 import re
 import unicodedata
 from dataclasses import dataclass, field
+from typing import Any
 
 from .models import DraftPoint, Paragraph, SourceDoc
 
@@ -117,7 +119,7 @@ class DocIndex:
                 window = " ".join(self.normalized[i:i + span])
                 spans = _find_in_order(pieces, window)
                 if spans is not None:
-                    omitted = tuple(window[a_end:b_start].strip() for (_, a_end), (b_start, _) in zip(spans, spans[1:]))
+                    omitted = tuple(window[a_end:b_start].strip() for (_, a_end), (b_start, _) in itertools.pairwise(spans))
                     return QuoteMatch(self.doc.doc_id, i, span, paragraphs[i].section, tuple(o for o in omitted if o))
         return None
 
@@ -167,7 +169,7 @@ class QuoteCheck:
     nearest: str | None = None
     found_in: tuple[str, ...] = field(default_factory=tuple)
 
-    def as_dict(self) -> dict:
+    def as_dict(self) -> dict[str, Any]:
         m = self.match
         return {
             "ok": self.ok,
