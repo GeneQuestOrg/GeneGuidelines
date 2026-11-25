@@ -46,12 +46,14 @@ def _build_engine() -> Engine:
     # administrator command" on the first request after the drop.
     # pool_recycle: proactively retire connections older than 5 min so we never hand out
     # one the server has already silently closed.
+    # hide_parameters: an error's text never carries the bound values (an email, a typed place), wherever it is logged or reported.
     return create_engine(
         url,
         future=True,
         echo=False,
         pool_pre_ping=True,
         pool_recycle=300,
+        hide_parameters=True,
     )
 
 

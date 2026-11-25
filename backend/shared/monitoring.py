@@ -4,10 +4,10 @@ Optional by design, like the Telegram ping: with SENTRY_DSN unset, ``init_monito
 
 Two jobs:
 
-- **Errors.** Unhandled exceptions in the API and the worker, and every log record at ERROR or above, become Sentry issues; WARNING and above also go to Sentry logs.
+- **Errors.** Unhandled exceptions in the API and the worker, and every log record at ERROR or above, become Sentry issues. Warnings, logs and traces are not sent.
 - **Limits.** Every time a run hits one of the limits we keep on purpose (the monthly research budget, the input budget of the guideline points, a model answer cut off or refused, points dropped at a limit), ``report_limit`` sends one warning named after the limit, so Darek learns that someone started something and it ran into a limit.
 
-Nothing personal leaves. The site serves parents and clinicians, and the worker calls APIs whose URLs carry the NCBI api_key and the clinician names and states sent to NPPES and ClinicalTrials.gov. So the SDK collects no user identity, cookies, request bodies, query strings, local variables or LLM prompts and answers, and every URL in an event or a log line loses its query string and any password before it is sent. The Sentry project additionally scrubs IP addresses and sensitive-looking values on the server.
+Nothing personal leaves. The site serves parents and clinicians, and the worker calls APIs whose URLs carry the NCBI api_key and the clinician names and states sent to NPPES and ClinicalTrials.gov. So the SDK collects no user identity, cookies, request bodies, query strings, SQL query data, local variables or LLM prompts and answers, and every URL in an event or a log line loses its query string and any password before it is sent. The Sentry project additionally scrubs IP addresses and sensitive-looking values on the server.
 """
 from __future__ import annotations
 
@@ -21,8 +21,10 @@ logger = logging.getLogger(__name__)
 
 _URL_QUERY = re.compile(r"(https?://[^\s?#'\"<>]+)\?[^\s'\"<>]*")
 _FILTERED = r"\1?[filtered]"
-# A password inside a connection string or URL ("postgresql://user:secret@host/db"), as a database driver may quote it in an error.
-_URL_PASSWORD = re.compile(r"([a-zA-Z][\w+.-]*://[^\s:/@'\"<>]+):[^\s@/'\"<>]+@")
+# A password inside a connection string or URL ("postgresql://user:secret@host/db"), as a database driver may quote it in an error. The password runs to the last "@" before the host, so one containing "/" or "@" is caught whole.
+_URL_PASSWORD = re.compile(r"([a-zA-Z][\w+.-]*://[^\s:/@'\"<>]+):[^\s'\"<>]+@")
+# The key=value form of a connection string ("host=… password=secret").
+_KV_PASSWORD = re.compile(r"\b(password|passwd|pwd)=([^\s;&'\"]+)", re.IGNORECASE)
 
 _DATA_COLLECTION: dict[str, Any] = {
     "user_info": False,
@@ -34,6 +36,8 @@ _DATA_COLLECTION: dict[str, Any] = {
     "mcp": {"inputs": False, "outputs": False},
     "queues": False,
     "stack_frame_variables": False,
+    # The SQLAlchemy integration would otherwise record each query's bound values (an email, a typed place) as breadcrumbs on every later event.
+    "database_query_data": False,
 }
 
 _state = {"enabled": False}
@@ -41,7 +45,8 @@ _state = {"enabled": False}
 
 def strip_query_strings(text: str) -> str:
     """``https://host/path?api_key=…&term=…`` becomes ``https://host/path?[filtered]`` and ``scheme://user:secret@host`` becomes ``scheme://user:[filtered]@host``; the rest of the text is unchanged."""
-    return _URL_PASSWORD.sub(r"\1:[filtered]@", _URL_QUERY.sub(_FILTERED, text))
+    text = _URL_PASSWORD.sub(r"\1:[filtered]@", _URL_QUERY.sub(_FILTERED, text))
+    return _KV_PASSWORD.sub(r"\1=[filtered]", text)
 
 
 def scrub(value: Any) -> Any:
@@ -63,6 +68,30 @@ def _before_send_log(log: dict[str, Any], hint: dict[str, Any]) -> dict[str, Any
     return scrub(log)
 
 
+def sentry_options(component: str) -> dict[str, Any]:
+    """The ``sentry_sdk.init`` options of one process, apart from the DSN; a test runs them with a capturing transport."""
+    from sentry_sdk.integrations.fastapi import FastApiIntegration
+    from sentry_sdk.integrations.logging import LoggingIntegration
+    from sentry_sdk.integrations.starlette import StarletteIntegration
+
+    return {
+        "environment": config.SENTRY_ENVIRONMENT,
+        "release": config.SENTRY_RELEASE or None,
+        # Tracing is off unless SENTRY_TRACES_SAMPLE_RATE asks for it: spans carry request paths and the user agent, and errors and limits are what this is for.
+        "traces_sample_rate": config.SENTRY_TRACES_SAMPLE_RATE,
+        # No sentry-trace or baggage headers on outgoing requests to NCBI, Europe PMC, Anthropic or anyone else.
+        "trace_propagation_targets": [],
+        "data_collection": _DATA_COLLECTION,
+        # Only ERROR log records become events. Warnings and lower are neither sent as Sentry logs nor kept as breadcrumbs: their text can carry what a user typed.
+        "integrations": [LoggingIntegration(level=None, breadcrumb_level=None, event_level=logging.ERROR), StarletteIntegration(), FastApiIntegration()],
+        # Only the integrations listed here: the SDK would otherwise hook every library it finds installed (HTTP clients, SQLAlchemy, AI SDKs), each one more data and more code to trust.
+        "auto_enabling_integrations": False,
+        "before_send": _before_send,
+        "before_send_log": _before_send_log,
+        "server_name": component,
+    }
+
+
 def init_monitoring(component: str) -> bool:
     """Start Sentry for one process ("api" or "worker"). Idempotent; False when SENTRY_DSN is unset."""
     if _state["enabled"]:
@@ -71,19 +100,8 @@ def init_monitoring(component: str) -> bool:
         logger.info("Sentry not configured — monitoring off")
         return False
     import sentry_sdk
-    from sentry_sdk.integrations.logging import LoggingIntegration
 
-    sentry_sdk.init(
-        dsn=config.SENTRY_DSN,
-        environment=config.SENTRY_ENVIRONMENT,
-        release=config.SENTRY_RELEASE or None,
-        traces_sample_rate=config.SENTRY_TRACES_SAMPLE_RATE,
-        data_collection=_DATA_COLLECTION,
-        # INFO lines name diseases, genes and sometimes clinicians, so only WARNING and above leave the process.
-        integrations=[LoggingIntegration(level=logging.WARNING, breadcrumb_level=logging.WARNING, event_level=logging.ERROR)],
-        before_send=_before_send,
-        before_send_log=_before_send_log,
-    )
+    sentry_sdk.init(dsn=config.SENTRY_DSN, **sentry_options(component))
     sentry_sdk.get_global_scope().set_tag("component", component)
     _state["enabled"] = True
     logger.info("Sentry monitoring on (%s, %s)", component, config.SENTRY_ENVIRONMENT)

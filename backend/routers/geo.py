@@ -89,8 +89,9 @@ async def geo_search(
     except httpx.TimeoutException:
         raise HTTPException(status_code=504, detail="Geocoding service timed out")
     except httpx.HTTPError:
-        logger.warning("Nominatim HTTP error for query %r", q)
+        # The query is what a user typed (a place), so it is never logged.
+        logger.warning("Nominatim HTTP error")
         raise HTTPException(status_code=502, detail="Geocoding service unavailable")
     except Exception:
-        logger.exception("Unexpected geocoding error for query %r", q)
+        logger.exception("Unexpected geocoding error")
         raise HTTPException(status_code=502, detail="Geocoding failed")

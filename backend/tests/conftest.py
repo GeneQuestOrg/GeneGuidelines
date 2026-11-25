@@ -1,7 +1,12 @@
 """Ensure optional API key env does not leak into unrelated tests."""
 from __future__ import annotations
 
+import os
+
 import pytest
+
+# Tests never report to Sentry, whatever a local .env says (config reads the environment first and .env does not override it).
+os.environ["SENTRY_DSN"] = ""
 
 
 @pytest.fixture(autouse=True)
