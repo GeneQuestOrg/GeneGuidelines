@@ -52,6 +52,7 @@ import uuid
 from collections.abc import Callable
 from datetime import datetime, timedelta, timezone
 
+from ..shared.monitoring import report_limit
 from .models import AdmissionResult, JobClass, JobCoro, RunnableFactory
 from .repository import ResearchJob, ResearchJobRepo, SqlaResearchJobRepo
 
@@ -352,6 +353,7 @@ class ResearchScheduler:
                         "research_queue: worker pausing claims — budget blocked (%s)",
                         reason,
                     )
+                    report_limit("monthly_research_budget", "the research worker stopped claiming jobs", component="research_queue", reason=reason)
                     self._budget_blocked_logged = True
                 self._wake.clear()
                 try:

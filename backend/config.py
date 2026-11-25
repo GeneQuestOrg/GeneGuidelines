@@ -617,6 +617,15 @@ FEEDBACK_TO = (os.environ.get("FEEDBACK_TO") or "kontakt@genequest.org").strip()
 TELEGRAM_BOT_TOKEN = (os.environ.get("TELEGRAM_BOT_TOKEN") or "").strip()
 TELEGRAM_CHAT_ID = (os.environ.get("TELEGRAM_CHAT_ID") or "").strip()
 
+# -- Error and limit monitoring (Sentry, EU data region) --------------------------
+# Unset SENTRY_DSN = no monitoring; nothing else depends on it (backend/shared/monitoring.py). Production sets SENTRY_ENVIRONMENT=production, which samples 10% of traces; anywhere else every trace is kept, so a local test shows one.
+#   SENTRY_DSN=https://<key>@o<org>.ingest.de.sentry.io/<project>
+#   SENTRY_ENVIRONMENT=production
+SENTRY_DSN = (os.environ.get("SENTRY_DSN") or "").strip()
+SENTRY_ENVIRONMENT = (os.environ.get("SENTRY_ENVIRONMENT") or "development").strip()
+SENTRY_RELEASE = (os.environ.get("SENTRY_RELEASE") or "").strip()
+SENTRY_TRACES_SAMPLE_RATE = float(os.environ.get("SENTRY_TRACES_SAMPLE_RATE") or (0.1 if SENTRY_ENVIRONMENT == "production" else 1.0))
+
 # -- Analytics (Umami, cookieless, self-hosted in Azure Poland Central) -----------
 # The public SPA loads the tracker from this origin when the build sets VITE_UMAMI_WEBSITE_ID; the Content-Security-Policy must allow it as a script source and as the beacon target, or the browser silently drops both.
 UMAMI_ORIGIN = (

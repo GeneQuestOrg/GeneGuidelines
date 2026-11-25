@@ -17,6 +17,8 @@ from typing import Any, Type
 
 from pydantic import BaseModel, ValidationError
 
+from ..shared.monitoring import report_limit
+
 log = logging.getLogger(__name__)
 
 SPEC_PREFIX = "anthropic:"
@@ -168,8 +170,11 @@ def parse_message(message: Any, result_type: Type[BaseModel]) -> ClaudeResult:
     if stop_reason == "refusal":
         details = getattr(message, "stop_details", None)
         category = getattr(details, "category", None)
+        report_limit("model_refusal", "Claude declined a request even after the server-side fallback", model=served_by or "unknown", category=category or "unspecified")
         raise ClaudeCallError("refusal", f"{served_by or 'Claude'} declined the request (category: {category or 'unspecified'})")
     text = "".join(getattr(block, "text", "") for block in (getattr(message, "content", None) or []) if getattr(block, "type", "") == "text")
+    if stop_reason == "max_tokens":
+        report_limit("model_output_cut", "a Claude answer reached max_tokens", model=served_by or "unknown")
     if not text.strip():
         kind = "truncated" if stop_reason == "max_tokens" else "invalid_output"
         raise ClaudeCallError(kind, f"{served_by or 'Claude'} returned no text (stop_reason={stop_reason})")

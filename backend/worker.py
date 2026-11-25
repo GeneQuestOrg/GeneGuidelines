@@ -36,8 +36,10 @@ log = logging.getLogger("backend.worker")
 
 # INFO here would log every outbound URL — the NCBI api_key, and the clinician names and states sent to NPPES and ClinicalTrials.gov.
 from backend.shared.log_privacy import install_log_privacy  # noqa: E402
+from backend.shared.monitoring import init_monitoring  # noqa: E402
 
 install_log_privacy()
+init_monitoring("worker")
 
 
 async def _retention_loop() -> None:

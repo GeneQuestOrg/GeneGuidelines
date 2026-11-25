@@ -16,8 +16,11 @@ logger = logging.getLogger(__name__)
 
 # The access log must not record query strings (emails, typed places, coordinates, tokens). Installed at import and again at startup, in case the server reconfigured logging in between; it is idempotent.
 from backend.shared.log_privacy import install_log_privacy  # noqa: E402
+from backend.shared.monitoring import init_monitoring  # noqa: E402
 
 install_log_privacy()
+# Before the app is built, so the FastAPI integration wraps it.
+init_monitoring("api")
 
 
 @asynccontextmanager

@@ -52,6 +52,10 @@ COPY frontend-public/dist /app/static
 ENV DB_PATH=/data/tickets.db
 RUN mkdir -p /data
 
+# The commit this image was built from, so Sentry ties each error to a deploy (backend/shared/monitoring.py). Set by deploy-azure.yml; empty in local builds.
+ARG SENTRY_RELEASE=""
+ENV SENTRY_RELEASE=${SENTRY_RELEASE}
+
 EXPOSE 8000
 
 # Reasonable production defaults; --workers 1 because the engine keeps

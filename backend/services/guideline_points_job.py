@@ -22,6 +22,8 @@ import os
 import sys
 from typing import Any
 
+from ..shared.monitoring import report_limit
+
 log = logging.getLogger(__name__)
 
 HAND_WRITTEN = frozenset({"fd"})
@@ -80,6 +82,24 @@ def _callers(slug: str, execution_id: str):
     return generator, verifier, f"generator {GENERATOR_SPEC}; verifier and coverage {VERIFIER_SPEC}"
 
 
+_DROP_LIMITS = (
+    ("over the limit of", "max_points", "points dropped over the point limit"),
+    ("still failing after the last revision round", "revision_rounds", "points dropped after the last revision round"),
+)
+
+
+def _report_limits(slug: str, record: dict[str, Any]) -> None:
+    """One limit report per kind of limit this run hit: documents left out for the input budget, points dropped at a limit. Answers cut off or refused are reported by the Claude adapter itself."""
+    over_budget = [note for note in record.get("selection_notes") or [] if "input budget" in note]
+    if over_budget:
+        report_limit("input_budget", "documents left out of the guideline-points input", component="guideline_points", disease=slug, documents=len(over_budget))
+    dropped = [str(d.get("why") or "") for d in record.get("dropped") or []]
+    for marker, limit, message in _DROP_LIMITS:
+        count = sum(1 for why in dropped if why.startswith(marker))
+        if count:
+            report_limit(limit, message, component="guideline_points", disease=slug, points=count)
+
+
 async def run_guideline_points(slug: str, *, force: bool = False, callers=None, engine=None) -> dict:
     """Build, check and store one disease's block. Returns what happened; never raises for a failed model call."""
     slug = (slug or "").strip().lower()
@@ -116,6 +136,7 @@ async def _run(slug: str, *, force: bool, callers, engine) -> dict:
         return {"slug": slug, "status": "unchanged", "publish": True}
     blocked = await loop.run_in_executor(None, budget_block_reason)
     if blocked:
+        report_limit("monthly_research_budget", "the guideline-points run did not start", component="guideline_points", disease=slug, reason=blocked)
         return {"slug": slug, "status": "skipped", "reason": f"the monthly research budget is used up ({blocked})"}
     identity = await loop.run_in_executor(None, lambda: identity_for_slug(slug))
     if identity is None:
@@ -133,6 +154,7 @@ async def _run(slug: str, *, force: bool, callers, engine) -> dict:
     record = await build_points_block(disease_name=identity.name, docs=selected, generator=generator, verifier=verifier, example=worked_example())
     record["selection_notes"] = notes
     record["documents_considered"] = [{"doc_id": d.doc_id, "grade": d.grade, "text_status": d.text_status, "licence": d.license} for d in docs]
+    _report_limits(slug, record)
     block = published_block(record, selected)
     cost = sum(float(c.get("cost_usd_total") or 0.0) for c in record.get("calls") or [])
     failed_calls = [c for c in record.get("calls") or [] if c.get("error")]

@@ -19,6 +19,8 @@ itsdangerous>=2.1
 pydantic-ai[openai,mcp]==1.97.0
 # Claude runs on its own direct adapter (backend/agents/anthropic_direct.py), not through pydantic-ai; 2.12.0 is the version the FD model-choice lab measured with (output_config effort + JSON-schema format, server-side refusal fallback).
 anthropic==2.12.0
+# Error and limit monitoring (backend/shared/monitoring.py). 3.x collects personal data by default; the module turns every category off.
+sentry-sdk==3.0.0
 # Pin the transitive `mcp` too — pinning pydantic-ai alone is not enough. `mcp` 2.0
 # dropped `RequestContext` from `mcp.shared.context`, which pydantic-ai 1.97.0
 # imports, so a fresh CI install resolved mcp 2.1.1 and every test module that
