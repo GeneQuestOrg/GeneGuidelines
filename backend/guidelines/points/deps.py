@@ -52,16 +52,21 @@ def _budget_block_reason() -> str | None:
     return budget_block_reason()
 
 
+def production_reader() -> ShelfReader:
+    """The production shelf reader: the stored shelf, the catalog identity, the GeneReviews index, the documents' full text."""
+    return ShelfReader(list_shelf=_list_shelf, identity_for=identity_for_slug, load_index=load_index, load_documents=_load_documents)
+
+
 @cache
 def default_points_service() -> PointsService:
     """One service per process, so its run lock covers every caller in the process (the backfill endpoint, the after-synthesis hook)."""
     return PointsService(
         repo=SqlaGuidelinePointsRepo(),
-        reader=ShelfReader(list_shelf=_list_shelf, identity_for=identity_for_slug, load_index=load_index, load_documents=_load_documents),
+        reader=production_reader(),
         generation=Generation(pipeline=selected_pipeline(), make_callers=claude_callers),
         guards=RunGuards(lock=PostgresRunLock(), budget_block_reason=_budget_block_reason),
         list_slugs=_list_catalog_slugs,
     )
 
 
-__all__ = ["default_points_service"]
+__all__ = ["PIPELINES", "default_points_service", "production_reader", "selected_pipeline"]

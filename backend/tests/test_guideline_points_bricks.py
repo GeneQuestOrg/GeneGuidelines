@@ -216,3 +216,43 @@ def test_the_service_stores_a_bricks_block_in_the_shape_the_page_reads():
     frozen = json.loads((Path(__file__).parent / "fixtures" / "guideline_points_block.json").read_text())
     block = stored.published_block
     assert set(block) == set(frozen) and set(block["points"][0]) == set(frozen["points"][0])
+
+
+def test_a_dry_run_writes_local_files_and_nothing_to_the_database(monkeypatch, tmp_path):
+    from types import SimpleNamespace
+
+    from backend.guidelines.points import cli, dry_run
+    from backend.guidelines.points.models import BlockRecord
+    from backend.guidelines.points.repository import InMemoryGuidelinePointsRepo, StoredPoints
+    from backend.guidelines.relevance import identity_from_disease
+
+    live = build_published_block({"publish": True, "accepted": [{"id": "p1", "doc_id": CONSENSUS.doc_id, "section": "Diagnosis", "quote": S1, "summary_en": "e", "summary_pl": "Stare.", "question_en": "q?", "question_pl": "Stare?"}]}, [CONSENSUS])
+    repo = InMemoryGuidelinePointsRepo({"mas": StoredPoints(slug="mas", publish=True, reason="", shelf_hash="h", block=live)})
+    saved_before = dict(repo.rows)
+    mas = identity_from_disease({"slug": "mas", "name": "McCune-Albright Syndrome", "nameShort": "MAS", "omim": "174800", "gene": "GNAS"})
+    reader = SimpleNamespace(identity_for=lambda slug: mas, list_shelf=lambda slug: [], load_index=dict, load_documents=lambda shelf, index: [CONSENSUS])
+
+    async def fake_pipeline(*, disease_name, docs, writer, checker, example):
+        point = {"id": "p1", "doc_id": CONSENSUS.doc_id, "section": "Diagnosis", "quote": S1, "summary_en": "e", "summary_pl": "Nowe.", "question_en": "q?", "question_pl": "Nowe?"}
+        return BlockRecord(pipeline="bricks-1", outcome=BlockOutcome.PUBLISHED, reason="", accepted=(point,), failed_calls=0, cost_usd=0.0, raw={"accepted": [point]})
+
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test")
+    monkeypatch.setattr(dry_run, "production_reader", lambda: reader)
+    monkeypatch.setattr(dry_run, "SqlaGuidelinePointsRepo", lambda: repo)
+    monkeypatch.setitem(dry_run.PIPELINES, "bricks", fake_pipeline)
+    assert cli.main(["--dry-run", "mas", "--out", str(tmp_path)]) == 2  # no --yes, no call
+    assert cli.main(["--dry-run", "--yes", "mas", "--out", str(tmp_path)]) == 0
+    side = (tmp_path / "side-by-side.md").read_text()
+    assert "Stare." in side and "Nowe." in side and (tmp_path / "mas.json").is_file()
+    assert repo.rows == saved_before
+
+
+def test_the_local_budget_refuses_past_its_cap():
+    import pytest
+
+    from backend.guidelines.points.dry_run import LocalBudget
+    from backend.guidelines.points.llm import BudgetExceeded
+
+    budget = LocalBudget(0.01)
+    with pytest.raises(BudgetExceeded):
+        budget.reserve("claude-opus-5-5", 100_000, 24_000)
