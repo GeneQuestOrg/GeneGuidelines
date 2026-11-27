@@ -50,6 +50,12 @@ What is measured (`bricks-calibrate`, `bricks-run`, `bricks-report`; snapshot `2
    - **Cost:** per run; the production cap becomes 1.3 times the measured maximum.
 3. **Then** a side-by-side on production data (`python -m backend.guidelines.points.cli --dry-run --yes`) for Darek. Nothing changes on the live pages until he approves it.
 
+### Calibration of 2026-11-28 and the one revision it led to (recorded before the re-run)
+
+First calibration (`results/bricks-2026-11-28/calibration.json`, `calibration-medium.json`; 0.69 USD for both arms; ledger cap raised to 43 USD, the earlier labs having spent 13.14 of it): all 10 controls caught in every repeat at both efforts; the question and Polish checkers passed 6 of 6 hand-written points, the quote checker 5 of 6 (point 3 has "…", rejected by code, as registered). **The summary checker passed 4 of 6 at high effort in both repeats (medium: 4 and 5), so the rule was not met.** It rejected point 3 (its summary names GNAS, which the quoted sentences do not: the finding of both earlier labs, and a correct one) and point 6 ("A biopsy is usually needed only…" for "Biopsy with histological evaluation of suspected bone disease is usually only necessary…": it called the shorter subject a dropped limit).
+
+Revision, once, as the rule of 2026-11-23 allows: the summary checker's prompt now says what a qualifier is (a word or clause that says when, how often, for whom or under what condition the statement holds) and that a summary may name the quote's subject more briefly when what is said about it stays the same. Nothing else changes. The whole calibration is re-run at both efforts under the same rule; the runs proceed either way and the report says whether the summary checker was calibrated.
+
 ## Commands
 
 From the repository root, with the product's requirements installed (Python 3.12, `anthropic==2.12.0`) and the product's `.env` (the Anthropic key is read from that file only):

@@ -31,6 +31,7 @@ For each item compare summary_en with the quote. It passes only if:
 3. nothing is added: no reason, number, test, consequence or advice the quote does not contain;
 4. nothing of substance is dropped;
 5. a plain word that replaces a technical one means the same.
+A qualifier, condition or limit is a word or clause that says when, how often, for whom or under what condition the statement holds. The summary stands directly under its quote, so it may name what the quote is about more briefly or more plainly, as long as what is said about it stays the same; that alone is not a reason to reject.
 Return ok=true when all hold; otherwise ok=false and say exactly what is wrong. Style and length are never a reason to reject."""
 
 
