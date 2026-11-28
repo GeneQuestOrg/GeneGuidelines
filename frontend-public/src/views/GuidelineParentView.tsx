@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@gene-guidelines/ui";
 import type { Disease } from "../types/disease";
@@ -10,7 +10,8 @@ import type { ViewRole } from "../auth/resolveRole";
 import { ShareWithDoctorActions } from "../components/ShareWithDoctorActions";
 import { SectionNoSource } from "../components/guidelines/SectionNoSource";
 import { SourceShelf } from "../components/guidelines/SourceShelf";
-import { GUIDELINE_PAGE_ANCHORS } from "../components/parentPageAnchors";
+import { GUIDELINE_PAGE_ANCHORS, PARENT_PAGE_ANCHORS } from "../components/parentPageAnchors";
+import { useOpenDetailsForPrint } from "../hooks/useOpenDetailsForPrint";
 import { SynthDisclaimer } from "../components/guidelines/SynthDisclaimer";
 
 export interface GuidelineParentViewProps {
@@ -83,6 +84,9 @@ export function GuidelineParentView({
   );
   const readState =
     baseline?.readState ?? { read: false, note: t("gateNoReadYet") };
+  // The clinical summary is collapsed on screen and printed open: the print-out is what a doctor is handed.
+  const clinical = useRef<HTMLDivElement>(null);
+  useOpenDetailsForPrint(clinical);
 
   // Level (c): no agreed guideline — the parent is the bridge to a clinician,
   // never the recipient of a raw AI baseline (wizja 02/04). Safety gate only.
@@ -196,59 +200,81 @@ export function GuidelineParentView({
           dropped rather than rendered as an empty shell. A derived,
           source-grounded "what to do now" projection may return later. */}
 
-      <article className="gx-doc">
-        {doc.sections.map((sec) => (
-          <section key={sec.id} className="gx-sec">
-            <h2 className="gx-sec__h">
-              {sec.title}
-              {/* "From sources" would be a lie on a section with no shelf basis. */}
-              {sec.noSource ? null : (
-                <span className="epi epi--official">
-                  <span className="epi__d" aria-hidden="true" />
-                  {t("fromSourcesBadge")}
-                </span>
-              )}
-            </h2>
-            {sec.noSource ? <SectionNoSource /> : null}
-            {sec.intro != null ? <p className="gx-sec__intro">{sec.intro}</p> : null}
-            {/* Condensed projection: the first two paragraphs of each section. */}
-            {sec.paragraphs.slice(0, 2).map((p) => {
-              const cited = p.source?.doc ? sourceByDocId.get(p.source.doc) : undefined;
-              return (
-                <div key={p.id} className="gx-para">
-                  <p>
-                    {p.text}
-                    {cited ? (
-                      <a
-                        className="gx-cit"
-                        href={sourceDocUrl(cited.doc)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        title={cited.doc.title}
-                      >
-                        [{cited.number}]
-                      </a>
-                    ) : null}
-                  </p>
-                </div>
-              );
-            })}
-            {promoted
-              .filter((s) => s.targetSection === sec.id)
-              .map((s) => (
-                <div key={s.id} className="gx-discuss">
-                  <span className="gx-discuss__l" aria-hidden="true">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                    </svg>
-                    {t("discussWithDoctor")}
-                  </span>
-                  <p>{s.parentText ?? s.summary}</p>
-                </div>
-              ))}
-          </section>
-        ))}
-      </article>
+      {/* The summary is written for clinicians: it describes management, names drugs and procedures, and often reads as instructions. Put in front of a parent as their own reading, it is advice, which this page never gives (kryteria-tresci R1, R2; wizja 02 "orientacja, nie porada"). So the parent's page leads with what is theirs, the questions and the sources, and keeps the summary one click away, named as the doctor's text and shown whole: a slice of it, as before, drops the sentences that qualify the others. */}
+      <p className="gx-parentlead">
+        {t("parentLead")}{" "}
+        <a
+          href={`/diseases/${disease.slug}#${PARENT_PAGE_ANCHORS.questions}`}
+          onClick={(event) => {
+            event.preventDefault();
+            onNav(`/diseases/${disease.slug}#${PARENT_PAGE_ANCHORS.questions}`);
+          }}
+        >
+          {t("parentLeadQuestionsLink")}
+        </a>
+      </p>
+
+      <div ref={clinical}>
+        <details className="gx-clin">
+          <summary className="gx-clin__s">
+            <span className="gx-clin__t">{t("clinicalSummaryToggle")}</span>
+            <span className="gx-clin__h">{t("clinicalSummaryHint")}</span>
+          </summary>
+          <p className="gx-clin__note">{t("clinicalSummaryNote")}</p>
+          <article className="gx-doc">
+            {doc.sections.map((sec) => (
+              <section key={sec.id} className="gx-sec">
+                <h2 className="gx-sec__h">
+                  {sec.title}
+                  {/* "From sources" would be a lie on a section with no shelf basis. */}
+                  {sec.noSource ? null : (
+                    <span className="epi epi--official">
+                      <span className="epi__d" aria-hidden="true" />
+                      {t("fromSourcesBadge")}
+                    </span>
+                  )}
+                </h2>
+                {sec.noSource ? <SectionNoSource /> : null}
+                {sec.intro != null ? <p className="gx-sec__intro">{sec.intro}</p> : null}
+                {sec.paragraphs.map((p) => {
+                  const cited = p.source?.doc ? sourceByDocId.get(p.source.doc) : undefined;
+                  return (
+                    <div key={p.id} className="gx-para">
+                      <p>
+                        {p.text}
+                        {cited ? (
+                          <a
+                            className="gx-cit"
+                            href={sourceDocUrl(cited.doc)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title={cited.doc.title}
+                          >
+                            [{cited.number}]
+                          </a>
+                        ) : null}
+                      </p>
+                    </div>
+                  );
+                })}
+                {promoted
+                  .filter((s) => s.targetSection === sec.id)
+                  .map((s) => (
+                    <div key={s.id} className="gx-discuss">
+                      <span className="gx-discuss__l" aria-hidden="true">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                        </svg>
+                        {t("discussWithDoctor")}
+                      </span>
+                      <p>{s.parentText ?? s.summary}</p>
+                    </div>
+                  ))}
+              </section>
+            ))}
+          </article>
+        </details>
+      </div>
 
       <SourceShelf docs={docs} parent id={GUIDELINE_PAGE_ANCHORS.sourceShelf} />
 

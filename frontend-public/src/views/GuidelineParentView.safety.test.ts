@@ -158,3 +158,64 @@ describe("no-draft gate: what it promises is what renders", () => {
     expect(copy.sourceShelfLeadUnsummarised).not.toMatch(/above|powyżej/i);
   });
 });
+
+/**
+ * The summary is written for clinicians and reads as instructions (drugs, procedures, "start a course within 24 hours"). The content audit of 2026-11-28 found that almost no paragraph of it is free of a treatment suggestion, and that the parent page showed the first two paragraphs of every section as the parent's own reading. The page must not hand a parent advice: the summary stays reachable, closed, named as the doctor's text, and whole.
+ */
+describe("the clinical summary is the doctor's text, not the parent's reading", () => {
+  const synthesis = {
+    slug: "noonan",
+    kind: "synthesis",
+    title: "Noonan syndrome",
+    version: "1",
+    lastUpdated: "2026-11-01",
+    sourceIds: ["d1"],
+    basedOn: "one review",
+    synthDisclaimer: "AI summary.",
+    status: "draft",
+    hasFlowchart: false,
+    sections: [
+      {
+        id: "therapy",
+        title: "Therapy",
+        intro: "INTRO-TEXT",
+        paragraphs: [
+          { id: "p1", text: "FIRST-PARAGRAPH", source: { doc: "d1", loc: "§1" } },
+          { id: "p2", text: "SECOND-PARAGRAPH", source: { doc: "d1", loc: "§2" } },
+          { id: "p3", text: "THIRD-PARAGRAPH-THAT-QUALIFIES-THE-OTHERS", source: { doc: "d1", loc: "§3" } },
+        ],
+      },
+    ],
+  } as unknown as GuidelineParentViewProps["synthesis"];
+
+  const page = () => gate({ synthesis, hasOfficial: true, docs: [doc] });
+
+  it("keeps every paragraph inside one closed disclosure", () => {
+    const html = page();
+    const opening = html.indexOf('<details class="gx-clin">');
+    const closing = html.indexOf("</details>", opening);
+    expect(opening).toBeGreaterThan(-1);
+    expect(html.slice(opening, closing)).not.toMatch(/<details[^>]* open/);
+    for (const text of ["INTRO-TEXT", "FIRST-PARAGRAPH", "SECOND-PARAGRAPH", "THIRD-PARAGRAPH-THAT-QUALIFIES-THE-OTHERS"]) {
+      const at = html.indexOf(text);
+      expect(at).toBeGreaterThan(opening);
+      expect(at).toBeLessThan(closing);
+    }
+  });
+
+  it("says in both languages whose text it is and that it is not advice", () => {
+    for (const copy of [enGuidelines, plGuidelines]) {
+      expect(copy.clinicalSummaryToggle).toMatch(/doctor|lekarz/i);
+      expect(copy.clinicalSummaryNote).toMatch(/not advice|nie są zalecenia/i);
+      expect(copy.parentLead).toMatch(/doctor|lekarz/i);
+    }
+  });
+
+  it("no longer shows a slice of the sections", () => {
+    expect(source).not.toMatch(/paragraphs\.slice\(/);
+  });
+
+  it("sends the parent to the questions first", () => {
+    expect(page()).toContain('href="/diseases/noonan#disease-questions"');
+  });
+});
