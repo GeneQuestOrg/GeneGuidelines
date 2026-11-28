@@ -67,7 +67,7 @@ def _rows_with_live_doctor_counts(rows: list[dict]) -> list[dict]:
 
 
 def _disease_payload_with_live_doctor_count(row: dict) -> dict:
-    """API diseases carry doctorsCount aligned with GET /diseases/{slug}/doctors (finder merge)."""
+    """API diseases carry doctorsCount = the directory entries listed under the disease (doctor_catalog.public_doctors_for_disease), which is also what GET /diseases/{slug}/doctors returns."""
     enriched = _rows_with_live_doctor_counts([row])
     return enriched[0] if enriched else dict(row)
 

@@ -9,6 +9,7 @@ pattern as :mod:`backend.content.repository` and
 from __future__ import annotations
 
 import json
+import re
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, replace
 from typing import Literal, Protocol
@@ -55,6 +56,53 @@ def therapy_from_row(row: Mapping[str, object]) -> Therapy:
         sort_order=int(row.get("sort_order") or 0),  # type: ignore[arg-type]
         pmids=pmids,
     )
+
+
+# A name ending in one parenthetical qualifier: "Bisphosphonates (pamidronate, zoledronate)".
+_QUALIFIED_NAME_RE = re.compile(r"^(?P<base>.*\S)\s*\((?P<qualifier>[^()]*)\)\s*$")
+
+
+def _name_key(text: str) -> str:
+    return " ".join(text.split()).casefold()
+
+
+def _base_and_qualifier(name: str) -> tuple[str, str]:
+    """``("bisphosphonates", "pamidronate, zoledronate")`` for the name above; ``(name, "")`` for a name with no trailing qualifier."""
+    match = _QUALIFIED_NAME_RE.match(name.strip())
+    if match is None:
+        return _name_key(name), ""
+    return _name_key(match.group("base")), _name_key(match.group("qualifier"))
+
+
+def merge_qualified_duplicates(therapies: list[Therapy]) -> list[Therapy]:
+    """One entry per therapy where the same line is stored under its base name with and without a parenthetical qualifier.
+
+    The seed and the therapies finder are both written to the ``therapies`` table, and before the finder learned to leave a seeded disease alone it inserted its own names next to the seed's, so production FD holds "Bisphosphonates (pamidronate, zoledronate)" (seed) and "Bisphosphonates" (finder) as two rows. Merged here, on read, so the page shows each line once without a data migration: the fuller (qualified) name with its note, id (its translations follow it) and stored status, the union of the PMIDs (so the served status is ``sourced`` when either row cites a source), at the first row's position.
+
+    Only that exact relation merges. Names that are merely similar ("Surgery", "Surgical correction") stay separate, and so does a base name stored with two different qualifiers, where the bare row could belong to either.
+    """
+    groups: dict[str, list[Therapy]] = {}
+    for therapy in therapies:
+        groups.setdefault(_base_and_qualifier(therapy.name)[0], []).append(therapy)
+
+    merged_by_first_id: dict[int, Therapy] = {}
+    absorbed: set[int] = set()
+    for members in groups.values():
+        if len(members) < 2:
+            continue
+        qualifiers = {_base_and_qualifier(t.name)[1] for t in members} - {""}
+        if len(qualifiers) > 1:
+            continue
+        keeper = next((t for t in members if _base_and_qualifier(t.name)[1]), members[0])
+        pmids = tuple(dict.fromkeys(p for t in [keeper, *members] for p in t.pmids))
+        merged_by_first_id[members[0].id] = replace(keeper, pmids=pmids, sort_order=members[0].sort_order)
+        absorbed.update(t.id for t in members[1:])
+
+    return [
+        merged_by_first_id.get(therapy.id, therapy)
+        for therapy in therapies
+        if therapy.id not in absorbed
+    ]
 
 
 class TherapyRepo(Protocol):
@@ -109,7 +157,8 @@ class TherapyService:
             return None
         if self.disease_repo.get(normalized) is None:
             return None
-        therapies = self.therapy_repo.list_for_disease(normalized)
+        # Merged before localising: the base-name match is made on the stored (English) names.
+        therapies = merge_qualified_duplicates(self.therapy_repo.list_for_disease(normalized))
         if locale == DEFAULT_LOCALE or self.translation_repo is None:
             return therapies
         return [self._localize(t, locale) for t in therapies]
@@ -141,5 +190,6 @@ __all__ = [
     "SqlaTherapyRepo",
     "InMemoryTherapyRepo",
     "TherapyService",
+    "merge_qualified_duplicates",
     "therapy_from_row",
 ]
