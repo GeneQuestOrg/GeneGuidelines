@@ -8,7 +8,6 @@ import type { SubscriptionUiStatus } from "../utils/diseaseSubscriptionStorage";
 import { withCurrentLocale } from "../router/locale";
 import { useGuidelineSynthesis } from "../hooks/useGuidelineSynthesis";
 import { useDiseaseFoundations } from "../hooks/useDiseaseFoundations";
-import { useDiseaseTherapies } from "../hooks/useDiseaseTherapies";
 import { useGuidelinePoints } from "../hooks/useGuidelinePoints";
 import { useListingLinks } from "../hooks/useListingLinks";
 import { useScrollToHash } from "../hooks/useScrollToHash";
@@ -24,7 +23,6 @@ import { MyCaseCta } from "./MyCaseCta";
 import { MachineTranslationNote } from "./MachineTranslationNote";
 import { OfficialGuidelineBlock } from "./OfficialGuidelineBlock";
 import { FoundationsList } from "./FoundationsList";
-import { TherapiesList } from "./TherapiesList";
 import { FamilyDoctorMaterials } from "./FamilyDoctorMaterials";
 import "../styles/disease-map.css";
 import "../styles/fd-tests.css";
@@ -62,7 +60,7 @@ function MoreSection({ id, title, count, children }: MoreSectionProps) {
 }
 
 /**
- * The Start tab of a disease page for parents and anonymous visitors (design 1, chosen 2026-11-27): the disease card with the tab strip, the orientation map beside the questions for the doctor, then — collapsed, and only when there is something in them — foundations, therapies and the materials for the family doctor, and last the way to write to the foundation about a case that does not fit, next to the note that all of this is a starting point for a conversation with a doctor.
+ * The Start tab of a disease page for parents and anonymous visitors (design 1, chosen 2026-11-27): the disease card with the tab strip, the orientation map beside the questions for the doctor, then — collapsed, and only when there is something in them — foundations and the materials for the family doctor, and last the way to write to the foundation about a case that does not fit, next to the note that all of this is a starting point for a conversation with a doctor.
  *
  * Every disease gets the same order; the FD-only parts (the list of tests, the hand-written questions) are simply absent elsewhere. The list of tests has its own tab; the copy kept here, hidden, is what the card's print button puts on paper.
  */
@@ -77,7 +75,6 @@ export function ParentDiseasePage({
   onNav,
 }: ParentDiseasePageProps) {
   const { t } = useTranslation("disease-map");
-  const { t: tCommon } = useTranslation("common");
   const slug = disease.slug;
   const isFd = slug === "fd";
   const withTests = hasTestsSheet(slug);
@@ -85,10 +82,10 @@ export function ParentDiseasePage({
   // FD's questions are written into the page; every other disease's come from the guideline-points loop.
   const { points: pointsBlock, loading: pointsLoading } = useGuidelinePoints(slug, !isFd);
   const { foundations, loading: foundationsLoading } = useDiseaseFoundations(slug);
-  const { therapies, loading: therapiesLoading } = useDiseaseTherapies(slug);
+  // Therapies are not shown to parents and guests. The list is an AI draft nobody has checked against the disease's guideline, and it has been wrong in a way that can hurt: for FOP it named stretching exercises and surgery, which the FOP guideline tells families to avoid (independent review, 2026-11-28). Clinicians still see it in their own view (DiseaseTabs).
   const listings = useListingLinks(disease);
-  // Old links to #disease-foundations / #disease-therapies open their section once it exists.
-  useScrollToHash(!foundationsLoading && !therapiesLoading);
+  // Old links to #disease-foundations open the section once it exists.
+  useScrollToHash(!foundationsLoading);
 
   const hasSources = sourceDocs.length > 0;
   const hasGuideline = hasSources || officialPointer != null;
@@ -170,7 +167,7 @@ export function ParentDiseasePage({
       ) : null}
 
       <div className="dmap dmap--embedded dmap-mores">
-        {/* Foundation and therapy entries are machine-translated on a translated page. */}
+        {/* Foundation entries are machine-translated on a translated page. */}
         <MachineTranslationNote />
         {foundations.length > 0 ? (
           <MoreSection
@@ -179,16 +176,6 @@ export function ParentDiseasePage({
             count={foundations.length}
           >
             <FoundationsList foundations={foundations} diseaseName={disease.name} />
-          </MoreSection>
-        ) : null}
-        {therapies.length > 0 ? (
-          <MoreSection
-            id={PARENT_PAGE_ANCHORS.therapies}
-            title={t("therapiesTitle")}
-            count={therapies.length}
-          >
-            <p className="d-panel-note">{tCommon("diseaseTabs.therapiesNote")}</p>
-            <TherapiesList therapies={therapies} />
           </MoreSection>
         ) : null}
         {orientation != null && hasSources ? (
