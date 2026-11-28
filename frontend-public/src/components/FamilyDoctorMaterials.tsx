@@ -15,12 +15,22 @@ export interface FamilyDoctorMaterialsProps {
   readonly copy: ParentOrientationCopy;
   readonly diseaseName: string;
   readonly onSeeAll: () => void;
+  /**
+   * `disclosure`: the section sits inside a collapsed block whose summary already names it (the parent disease page), so its own heading is shown on paper only.
+   */
+  readonly variant?: "section" | "disclosure";
 }
 
 /**
  * "Materials for the family doctor": the disease's source shelf, which a parent can print or e-mail to a doctor who has never seen the disease. Print puts only this list on paper, with every address written out, because a link cannot be clicked on paper; the rest of the page stays on screen. E-mail opens the parent's own mail program with the same list.
  */
-export function FamilyDoctorMaterials({ docs, copy, diseaseName, onSeeAll }: FamilyDoctorMaterialsProps) {
+export function FamilyDoctorMaterials({
+  docs,
+  copy,
+  diseaseName,
+  onSeeAll,
+  variant = "section",
+}: FamilyDoctorMaterialsProps) {
   const { t } = useTranslation("parent");
   if (docs.length === 0) {
     return null;
@@ -34,7 +44,7 @@ export function FamilyDoctorMaterials({ docs, copy, diseaseName, onSeeAll }: Fam
   );
 
   return (
-    <div className="fdoc">
+    <div className={variant === "disclosure" ? "fdoc fdoc--disclosure" : "fdoc"}>
       <Section
         title={copy.familyDoctorTitle}
         sub={copy.familyDoctorSub}
@@ -48,7 +58,7 @@ export function FamilyDoctorMaterials({ docs, copy, diseaseName, onSeeAll }: Fam
             </Button>
           </div>
         }
-        divider
+        divider={variant === "section"}
       >
         <CompactSourceShelf docs={docs} onSeeAll={onSeeAll} />
         <ol className="fdoc-print">

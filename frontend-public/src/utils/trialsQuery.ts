@@ -1,5 +1,6 @@
 import type { UserLocation } from "../router/types";
-import type { TrialWithDistance } from "../api/trials";
+import { attachTrialDistances, type TrialWithDistance } from "../api/trials";
+import type { Trial } from "../types/trial";
 import { normalizeDiseaseSlug } from "../router/slug";
 
 /**
@@ -192,6 +193,23 @@ export function filterTrials(
     }
     return true;
   });
+}
+
+/** The browser filter a query asks for. {@link TrialsBrowserView} filters with exactly this, so a count computed with it is the count the browser shows. */
+export function trialFilterCriteria(query: TrialsQuery): TrialFilterCriteria {
+  return {
+    diseaseSlug: query.disease,
+    status: query.status,
+    phase: query.phase,
+    maxKm: query.maxKm,
+  };
+}
+
+/**
+ * How many trials the browser lists when it opens on `query` — the only number a link to it may promise. A distance cap needs a place chosen in the query, so the visitor's ambient location never changes the count.
+ */
+export function listedTrialCount(trials: readonly Trial[], query: TrialsQuery): number {
+  return filterTrials(attachTrialDistances(trials, query.loc), trialFilterCriteria(query)).length;
 }
 
 function byTitleAsc(a: TrialWithDistance, b: TrialWithDistance): number {

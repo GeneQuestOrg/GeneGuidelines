@@ -146,29 +146,64 @@ describe("prerendered pages", () => {
   );
 
   it.each([
-    ["/diseases/fd", "/diseases/fd/guidelines"],
-    ["/pl/diseases/fd", "/pl/diseases/fd/guidelines"],
+    ["/diseases/fd", ""],
+    ["/pl/diseases/fd", "/pl"],
   ])(
-    "%s carries the parent view in the app's order: map, list of tests, summary link, contact",
-    (path, guidelinesHref) => {
+    "%s carries the Start tab in the app's order: card, tabs, map, questions, contact",
+    (path, prefix) => {
       const body = byPath[path].body;
       const at = (needle) => {
         const index = body.indexOf(needle);
         expect(index, needle).toBeGreaterThan(-1);
         return index;
       };
+      const card = at("<dd>GNAS</dd>");
+      const tabs = at('aria-current="page"');
+      const map = at('<ol class="ggp-steps">');
       const questions = at("complete staging evaluation");
-      const tests = at('<ul class="ggp-rows">');
-      const summary = at(`href="${guidelinesHref}"`);
       const contact = at('href="mailto:kontakt@genequest.org"');
-      expect(questions).toBeLessThan(tests);
-      expect(tests).toBeLessThan(summary);
-      expect(summary).toBeLessThan(contact);
+      expect(card).toBeLessThan(tabs);
+      expect(tabs).toBeLessThan(map);
+      expect(map).toBeLessThan(questions);
+      expect(questions).toBeLessThan(contact);
+
+      // Each of the five steps carries the one link its button follows, to a real address.
+      const steps = body.slice(map, body.indexOf("</ol>", map));
+      expect((steps.match(/<li>/g) ?? []).length).toBe(5);
+      for (const href of [
+        `${prefix}/diseases/fd/tests`,
+        `${prefix}/doctors?disease=fd`,
+        `${prefix}/diseases/fd/guidelines`,
+        "#disease-foundations",
+        `${prefix}/trials?disease=fd`,
+      ]) {
+        expect(steps).toContain(`href="${href}"`);
+      }
+
+      // Every question keeps the sentence behind it, quoted as English, and the summary a closed row holds in the app.
+      expect((body.match(/<blockquote lang="en">/g) ?? []).length).toBe(6);
+      expect(body).not.toContain("<details");
+      // Each point: the question, then the summary, then the quote — the full text a closed row holds, readable without opening anything.
+      expect((body.match(/<li><p class="ggp-q">[^<]+<\/p><p>[^<]+<\/p><blockquote lang="en">/g) ?? []).length).toBe(6);
+      // The list of tests is a tab of its own; the Start page links to it and does not repeat it.
+      expect(body).not.toContain('<ul class="ggp-rows">');
       expect(body).toContain("31196103");
       expect(body.toLowerCase()).toMatch(/nie przeglądali|have not reviewed/);
       expect(body.toLowerCase()).toMatch(/nie stawiamy diagnoz|we don't diagnose/);
+      expect(body.toLowerCase()).toMatch(/nie rekomendacja|not a recommendation/);
     },
   );
+
+  it.each([
+    ["/diseases/fd/tests", ""],
+    ["/pl/diseases/fd/tests", "/pl"],
+  ])("%s carries the disease card and tabs above the sheet, whose title is the page's one h1", (path, prefix) => {
+    const body = byPath[path].body;
+    expect((body.match(/<h1>/g) ?? []).length).toBe(1);
+    expect(body.indexOf("<dd>GNAS</dd>")).toBeLessThan(body.indexOf("<h1>"));
+    expect(body).toContain(`<a href="${prefix}/diseases/fd/tests" aria-current="page">`);
+    expect(body).toContain(`<a href="${prefix}/diseases/fd">`);
+  });
 
   it("leaves the guideline page to the server, which has the synthesis", () => {
     // The build has no database; backend/seo renders /diseases/fd/guidelines from the real synthesis.

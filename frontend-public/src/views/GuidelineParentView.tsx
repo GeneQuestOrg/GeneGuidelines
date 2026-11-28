@@ -10,6 +10,7 @@ import type { ViewRole } from "../auth/resolveRole";
 import { ShareWithDoctorActions } from "../components/ShareWithDoctorActions";
 import { SectionNoSource } from "../components/guidelines/SectionNoSource";
 import { SourceShelf } from "../components/guidelines/SourceShelf";
+import { GUIDELINE_PAGE_ANCHORS } from "../components/parentPageAnchors";
 import { SynthDisclaimer } from "../components/guidelines/SynthDisclaimer";
 
 export interface GuidelineParentViewProps {
@@ -238,7 +239,7 @@ export function GuidelineParentView({
         ))}
       </article>
 
-      <SourceShelf docs={docs} parent />
+      <SourceShelf docs={docs} parent id={GUIDELINE_PAGE_ANCHORS.sourceShelf} />
 
       <p className="gx-parentfoot">
         {t("parentFooter", { date: doc.lastUpdated.slice(0, 7) })}

@@ -1,9 +1,10 @@
 import type { UserLocation } from "../router/types";
-import type { PubmedRole, RecencyBand } from "../types/doctor";
+import type { PublicDoctor, PubmedRole, RecencyBand } from "../types/doctor";
 import { normalizeDiseaseSlug } from "../router/slug";
-import type { SourceFilter } from "./doctorFilters";
+import { filterDoctors, type DoctorFilterCriteria, type SourceFilter } from "./doctorFilters";
 import { WORK_TYPE_ORDER, type WorkType } from "./doctorLabels";
 import {
+  attachDoctorDistances,
   sortDoctorsByDistanceThenScore,
   type DoctorWithDistance,
 } from "./doctorSort";
@@ -238,6 +239,29 @@ export function serializeDoctorsQuery(query: DoctorsQuery): string {
   if (query.page > 1) add("page", String(query.page));
 
   return params.length > 0 ? `/doctors?${params.join("&")}` : "/doctors";
+}
+
+/** The directory filter a query asks for. {@link DoctorsView} filters with exactly this, so a count computed with it is the count the directory shows. */
+export function doctorFilterCriteria(query: DoctorsQuery): DoctorFilterCriteria {
+  return {
+    diseaseSlug: query.disease,
+    role: query.role,
+    source: query.source,
+    parentOnly: query.parentOnly,
+    maxKm: query.maxKm,
+    workTypes: query.workTypes,
+    recency: query.recency,
+    specialtyGroup: query.specialtyGroup,
+    country: query.country,
+    seesPatientsOnly: query.seesPatients,
+  };
+}
+
+/**
+ * How many doctors the directory lists when it opens on `query` — the only number a link to it may promise. Location comes from the query alone, as in the directory (the visitor's ambient location never filters).
+ */
+export function listedDoctorCount(doctors: readonly PublicDoctor[], query: DoctorsQuery): number {
+  return filterDoctors(attachDoctorDistances(doctors, query.loc), doctorFilterCriteria(query)).length;
 }
 
 function byNameAsc(a: DoctorWithDistance, b: DoctorWithDistance): number {

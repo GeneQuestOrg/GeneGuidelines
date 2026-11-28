@@ -202,31 +202,75 @@ function privacyBody(locale, { privacy }) {
   ].join("\n");
 }
 
-/** The orientation map as text: the five steps, then the guideline points, each with its question and the sentence behind it. */
-function mapSection(map) {
+/**
+ * The disease card as text: the name, the facts the build knows (gene, OMIM and the official guideline are the ones already written into this file and seo.json; the rest of the record lives in the database), and the tab strip. On the Start tab the name is the page's h1; on another tab that tab's own content carries the h1, so the name is a paragraph.
+ */
+function fdCard(locale, { seo, map }, { heading, current }) {
+  const name = heading ? `<h1>${esc(seo.fd.title)}</h1>` : `<p class="ggp-q">${esc(seo.fd.title)}</p>`;
+  const tabs = [
+    ["/diseases/fd", map.tabStart],
+    ["/diseases/fd/tests", map.tabTests],
+    ["/diseases/fd/guidelines", map.tabGuidelines],
+  ]
+    .map(([path, label]) => {
+      const here = path === current ? ' aria-current="page"' : "";
+      return `<a href="${esc(withLocale(path, locale))}"${here}>${esc(label)}</a>`;
+    })
+    .join(" · ");
+  return [
+    name,
+    heading ? p(map.cardLead) : "",
+    `<dl class="ggp-facts">`,
+    `<dt>${esc(map.factGene)}</dt><dd>GNAS</dd>`,
+    `<dt>${esc(map.factOmim)}</dt><dd>174800</dd>`,
+    `<dt>${esc(map.factGuideline)}</dt><dd>${esc(seo.citation)} <a href="${esc(withLocale("/diseases/fd/guidelines", locale))}">${esc(map.linkSummary)} →</a></dd>`,
+    `</dl>`,
+    `<nav class="ggp-links" aria-label="${esc(map.tabsAriaLabel)}">${tabs}</nav>`,
+  ].filter((line) => line.length > 0);
+}
+
+/**
+ * The Start tab's content as text: the orientation map (each step's lead-in, statement and the one link its button follows) and the questions for the doctor. Each question is written out in full with what its row holds when opened in the app — the summary, then the guideline sentence — because a reader without JavaScript cannot open a row. The FD list of tests is a tab of its own and is not repeated here.
+ */
+function startSection(locale, map) {
+  const steps = [
+    [map.step1Hook, map.step1Title, "/diseases/fd/tests", map.tabTests],
+    [map.step2Hook, map.step2Title, "/doctors?disease=fd", map.step2CtaFind],
+    [map.step3HookExists, map.step3TitleExists, "/diseases/fd/guidelines", map.tabGuidelines],
+    [map.step4Hook, map.step4Title, "#disease-foundations", map.step4Cta],
+    [map.step5Hook, map.step5Title, "/trials?disease=fd", map.step5CtaTrials],
+  ]
+    .map(([hook, title, path, label]) => {
+      const href = path.startsWith("#") ? path : withLocale(path, locale);
+      return `<li><p class="ggp-note">${esc(hook)}</p><p class="ggp-q">${esc(title.replace("{{name}}", "FD"))}</p><p><a href="${esc(href)}">${esc(label.replace("{{name}}", "FD"))} →</a></p></li>`;
+    })
+    .join("\n");
   const questions = askPairs
     .map(
       ([question, sentence]) =>
-        `<li><p>${esc(map[question.replace("askQ", "askP")])}</p><p class="ggp-q">${esc(map[question])}</p><blockquote lang="en">${esc(map[sentence])}</blockquote></li>`,
+        `<li><p class="ggp-q">${esc(map[question])}</p><p>${esc(map[question.replace("askQ", "askP")])}</p><blockquote lang="en">${esc(map[sentence])}</blockquote></li>`,
     )
-    .join("\n");
-  const steps = [
-    map.step1Title,
-    map.step2Title.replace("{{name}}", "FD"),
-    map.step3TitleExists.replace("{{name}}", "FD"),
-    map.step4Title,
-    map.step5Title,
-  ]
-    .map((title) => `<li>${esc(title)}</li>`)
     .join("\n");
   return [
     `<h2>${esc(map.introTitle)}</h2>`,
     `<ol class="ggp-steps">${steps}</ol>`,
-    `<h2>${esc(map.askTitle)}</h2>`,
+    `<h2>${esc(map.askHeading)}</h2>`,
+    `<p class="ggp-q">${esc(map.askTitle)}</p>`,
     p(map.askNote),
     `<ul class="ggp-asks">${questions}</ul>`,
     note(map.askSource),
-    note(map.safetyBold),
+  ];
+}
+
+/** The closing row: the address for a case that does not fit, and what all of this is. */
+function closingSection(map) {
+  const contact = "kontakt@genequest.org";
+  return [
+    `<h2>${esc(map.unusualTitle)}</h2>`,
+    p(map.unusualBody),
+    `<p class="ggp-note">${esc(map.unusualNote.replace("{{email}}", contact))}</p>`,
+    `<p><a href="mailto:${contact}">${esc(map.unusualCta)} — ${contact}</a></p>`,
+    `<p><b>${esc(map.safetyBold)}</b> ${esc(map.safetyBody)}</p>`,
   ];
 }
 
@@ -252,50 +296,38 @@ function testRows(tests) {
 }
 
 /**
- * /diseases/fd — the parent view, in the order the app renders it: the orientation map, the printable list of tests, the AI summary as one link (the summary itself lives in the database), and the address for a case that does not fit.
+ * /diseases/fd — the Start tab, in the order the app renders it for a parent or a guest: the disease card with its tabs, the orientation map, the questions for the doctor, and the closing row.
  */
-function fdBody(locale, { seo, map, tests, common }) {
-  const contact = "kontakt@genequest.org";
+function fdBody(locale, bundle) {
+  const { seo, map, common } = bundle;
   return [
-    `<h1>${esc(seo.fd.title)}</h1>`,
-    p(seo.fd.description),
-    `<dl class="ggp-facts">`,
-    `<dt>${esc(map.factGene)}</dt><dd>GNAS</dd>`,
-    `<dt>${esc(map.factOmim)}</dt><dd>174800</dd>`,
-    `</dl>`,
-    ...mapSection(map),
-    `<h2>${esc(tests.title)}</h2>`,
-    p(tests.lede),
-    `<ul class="ggp-rows">${testRows(tests)}</ul>`,
-    note(tests.sourceLine),
-    note(tests.authorshipLine),
-    `<h2>${esc(map.summaryTitle)}</h2>`,
-    p(map.summarySub),
-    `<p><a href="${esc(withLocale("/diseases/fd/guidelines", locale))}">${esc(seo.linkGuidelines)}</a></p>`,
-    `<h2>${esc(map.unusualTitle)}</h2>`,
-    p(map.unusualBody),
-    `<p class="ggp-note">${esc(map.unusualNote.replace("{{email}}", contact))}</p>`,
-    `<p><a href="mailto:${contact}">${esc(map.unusualCta)} — ${contact}</a></p>`,
-    note(seo.citation),
+    ...fdCard(locale, bundle, { heading: true, current: "/diseases/fd" }),
+    ...startSection(locale, map),
+    ...closingSection(map),
     note(common.footer.desc),
     links(locale, seo, "/diseases/fd"),
   ].join("\n");
 }
 
-/** /diseases/fd/map — the orientation map, questions and all (the old address of the map, kept for links already shared). */
-function fdMapBody(locale, { seo, map, common }) {
+/** /diseases/fd/map — the old address of the map, kept for links already shared; the app shows the Start tab there. */
+function fdMapBody(locale, bundle) {
+  const { seo, map, common } = bundle;
   return [
     `<h1>${esc(seo.fdMap.title)}</h1>`,
     p(seo.fdMap.description),
-    ...mapSection(map),
+    ...fdCard(locale, bundle, { heading: false, current: "/diseases/fd" }),
+    ...startSection(locale, map),
+    ...closingSection(map),
     note(common.footer.desc),
     links(locale, seo, "/diseases/fd/map"),
   ].join("\n");
 }
 
-/** /diseases/fd/tests — the printable sheet, as text. */
-function fdTestsBody(locale, { seo, tests, common }) {
+/** /diseases/fd/tests — the "Baseline tests" tab: the disease card and tabs, then the printable sheet as text. */
+function fdTestsBody(locale, bundle) {
+  const { seo, tests, common } = bundle;
   return [
+    ...fdCard(locale, bundle, { heading: false, current: "/diseases/fd/tests" }),
     `<h1>${esc(tests.title)}</h1>`,
     p(seo.fdTests.description),
     p(tests.lede),

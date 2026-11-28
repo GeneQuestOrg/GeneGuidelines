@@ -3,6 +3,8 @@ import type { PublicDoctor } from "../types/doctor";
 import type { DoctorWithDistance } from "./doctorSort";
 import {
   DEFAULT_DOCTORS_QUERY,
+  doctorFilterCriteria,
+  listedDoctorCount,
   parseDoctorsQuery,
   queryRecordFromSearch,
   serializeDoctorsQuery,
@@ -235,5 +237,35 @@ describe("sortDoctors", () => {
       "old",
       "none",
     ]);
+  });
+});
+
+describe("listedDoctorCount", () => {
+  // What the disease page's "Doctors who know …" button may promise: the number the directory opens with for the same query, not a count kept anywhere else.
+  const doctors: PublicDoctor[] = [
+    { ...makeDoctor("a", "A", 1, null), diseases: ["fd"] },
+    { ...makeDoctor("b", "B", 1, null), diseases: ["fd", "mas"] },
+    { ...makeDoctor("c", "C", 1, null), diseases: ["mas"] },
+  ];
+
+  it("counts the doctors the directory lists for a disease link", () => {
+    expect(listedDoctorCount(doctors, parseDoctorsQuery({ disease: "fd" }))).toBe(2);
+    expect(listedDoctorCount(doctors, parseDoctorsQuery({ disease: "mas" }))).toBe(2);
+  });
+
+  it("applies every facet the link carries, as the directory does", () => {
+    const query = parseDoctorsQuery({ disease: "fd", parent: "1" });
+    expect(listedDoctorCount(doctors, query)).toBe(0);
+  });
+
+  it("builds its filter from the query alone", () => {
+    expect(doctorFilterCriteria(parseDoctorsQuery({ disease: "fd" }))).toMatchObject({
+      diseaseSlug: "fd",
+      role: null,
+      source: "all",
+      parentOnly: false,
+      maxKm: null,
+      workTypes: [],
+    });
   });
 });

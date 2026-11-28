@@ -4,10 +4,12 @@ import type { Trial } from "../types/trial";
 import {
   DEFAULT_TRIALS_QUERY,
   filterTrials,
+  listedTrialCount,
   parseTrialsQuery,
   queryRecordFromSearch,
   serializeTrialsQuery,
   sortTrials,
+  trialFilterCriteria,
   trialMatchesPhase,
   type TrialsQuery,
 } from "./trialsQuery";
@@ -219,5 +221,33 @@ describe("sortTrials", () => {
     const before = rows.map((t) => t.nct);
     sortTrials(rows, "status");
     expect(rows.map((t) => t.nct)).toEqual(before);
+  });
+});
+
+describe("listedTrialCount", () => {
+  // What the disease page's "Clinical trials" button may promise: the number the browser opens with for the same link. It opens on recruiting trials, so a count of every catalogued trial would promise more than the list shows.
+  const trials: Trial[] = [
+    makeTrial("a", { status: "recruiting", diseases: ["fd"] }),
+    makeTrial("b", { status: "completed", diseases: ["fd"] }),
+    makeTrial("c", { status: "recruiting", diseases: ["mas"] }),
+  ];
+
+  it("counts what a plain disease link opens with: recruiting trials for that disease", () => {
+    const query = parseTrialsQuery({ disease: "fd" });
+    expect(serializeTrialsQuery(query)).toBe("/trials?disease=fd");
+    expect(listedTrialCount(trials, query)).toBe(1);
+  });
+
+  it("counts every status when the link asks for every status", () => {
+    expect(listedTrialCount(trials, parseTrialsQuery({ disease: "fd", status: "all" }))).toBe(2);
+  });
+
+  it("builds its filter from the query alone", () => {
+    expect(trialFilterCriteria(parseTrialsQuery({ disease: "fd" }))).toEqual({
+      diseaseSlug: "fd",
+      status: "recruiting",
+      phase: null,
+      maxKm: null,
+    });
   });
 });

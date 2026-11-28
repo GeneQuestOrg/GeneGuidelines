@@ -1,12 +1,15 @@
 /* Materials for the family doctor (parent view of a disease page). On screen: the compact source tiles and two buttons. On paper, when the section's own Print button is used (utils/printOnly.ts puts `print-family-doctor` on <html> for the length of the dialog): this section alone, as a numbered citation list with every address written out. A plain Ctrl+P still prints the whole page. */
 .fdoc__actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .fdoc-print { display: none; }
+/* Inside a collapsed block whose summary names the section: the heading would say it twice on screen. */
+.fdoc--disclosure .section__title { display: none; }
 
 @media print {
   html.print-family-doctor body *:not(:has(.fdoc)):not(.fdoc):not(.fdoc *) { display: none !important; }
   html.print-family-doctor .fdoc .section__action,
   html.print-family-doctor .fdoc .srctiles { display: none !important; }
   html.print-family-doctor .fdoc .section { margin: 0; padding: 0; border: 0; }
+  html.print-family-doctor .fdoc--disclosure .section__title { display: block; }
   html.print-family-doctor .fdoc-print {
     display: block;
     margin: 12px 0 0;

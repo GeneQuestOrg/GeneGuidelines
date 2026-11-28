@@ -9,6 +9,10 @@ import { useGuidelineSuggestions } from "../hooks/useGuidelineSuggestions";
 import { useSynthSignals } from "../hooks/useSynthSignals";
 import { useGuidelineBaseline } from "../hooks/useGuidelineBaseline";
 import { useSourceShelf } from "../hooks/useSourceShelf";
+import { useOfficialGuideline } from "../hooks/useOfficialGuideline";
+import { useScrollToHash } from "../hooks/useScrollToHash";
+import { DiseaseHeader } from "../components/DiseaseHeader";
+import { hasGuidelineSummary } from "../components/diseaseSections";
 import { RolePill } from "../components/guidelines/RolePill";
 import { MachineTranslationNote } from "../components/MachineTranslationNote";
 import { GuidelineParentView } from "./GuidelineParentView";
@@ -59,10 +63,13 @@ export function GuidelinesView({
   // A baseline (level (c)) only exists when there is no official guideline.
   // Skip the fetch once synthesis has loaded with an official guideline — an
   // ungated call 404s on every disease (no backend route) and spams the console.
-  const hasOfficialSynthesis = synthesis != null && synthesis.status !== "pending";
+  const hasOfficialSynthesis = hasGuidelineSummary(synthesis);
   const baselineEnabled = !synthLoading && !hasOfficialSynthesis;
   const { baseline, loading: baselineLoading } = useGuidelineBaseline(slug, baselineEnabled);
   const { docs, loading: shelfLoading } = useSourceShelf(slug);
+  // For the disease card above the parent projection (its "Guideline" fact).
+  const { pointer, loading: pointerLoading } = useOfficialGuideline(slug);
+  const parentSide = isParentSide(role);
 
   const loading =
     diseaseLoading ||
@@ -70,7 +77,10 @@ export function GuidelinesView({
     suggLoading ||
     signalsLoading ||
     baselineLoading ||
-    shelfLoading;
+    shelfLoading ||
+    (parentSide && pointerLoading);
+  // A link to #source-shelf (the disease card's "Source shelf" link) lands on the shelf once it is rendered.
+  useScrollToHash(!loading);
 
   if (loading) {
     return (
@@ -136,7 +146,6 @@ export function GuidelinesView({
   }
 
   const hasOfficial = hasOfficialSynthesis;
-  const parentSide = isParentSide(role);
 
   const versionLabel = hasOfficial ? synthesis!.version : t("versionNoGuideline");
   const title = hasOfficial
@@ -147,6 +156,17 @@ export function GuidelinesView({
 
   return (
     <section className="page page--gl2">
+      {/* Families and guests (and a doctor who opens a link a parent sent) get the disease card and its tabs, so the rest of the disease is one click away. Signed-in clinicians keep their own reader. */}
+      {parentSide ? (
+        <DiseaseHeader
+          disease={disease}
+          pointer={pointer}
+          shelfCount={docs.length}
+          synthesis={synthesis}
+          active="guidelines"
+          variant="compact"
+        />
+      ) : null}
       <header className="gx-bar">
         <div className="gx-bar__left">
           <Button

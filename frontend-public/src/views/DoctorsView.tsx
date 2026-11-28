@@ -20,6 +20,7 @@ import { filterDoctors, hasParentSignal, type SourceFilter } from "../utils/doct
 import {
   DOCTOR_PRESETS,
   PAGE_SIZE,
+  doctorFilterCriteria,
   parseDoctorsQuery,
   queryRecordFromSearch,
   serializeDoctorsQuery,
@@ -128,35 +129,13 @@ export function DoctorsView({ search, onNav }: DoctorsViewProps) {
     if (unknownDisease != null) {
       return [];
     }
-    const rows = filterDoctors(attachDoctorDistances(doctors, effectiveUserLoc), {
-      diseaseSlug: activeDiseaseSlug,
-      role: query.role,
-      source: query.source,
-      parentOnly: query.parentOnly,
-      maxKm: query.maxKm,
-      workTypes: query.workTypes,
-      recency: query.recency,
-      specialtyGroup: query.specialtyGroup,
-      country: query.country,
-      seesPatientsOnly: query.seesPatients,
-    });
+    // The same criteria the disease page counts with (doctorFilterCriteria), so the number on its "Doctors who know …" button is the number this list opens with.
+    const rows = filterDoctors(
+      attachDoctorDistances(doctors, effectiveUserLoc),
+      doctorFilterCriteria(query),
+    );
     return sortDoctors(rows, query.sort);
-  }, [
-    doctors,
-    effectiveUserLoc,
-    activeDiseaseSlug,
-    query.role,
-    query.source,
-    query.parentOnly,
-    query.maxKm,
-    query.workTypes,
-    query.recency,
-    query.specialtyGroup,
-    query.country,
-    query.seesPatients,
-    query.sort,
-    unknownDisease,
-  ]);
+  }, [doctors, effectiveUserLoc, query, unknownDisease]);
 
   const pageCount = Math.max(1, Math.ceil(items.length / PAGE_SIZE));
   const safePage = Math.min(Math.max(1, query.page), pageCount);
