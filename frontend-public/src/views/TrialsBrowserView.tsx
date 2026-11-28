@@ -18,6 +18,7 @@ import {
   queryRecordFromSearch,
   serializeTrialsQuery,
   sortTrials,
+  trialFilterCriteria,
   type TrialsQuery,
   type TrialPhase,
   type TrialStatusFilter,
@@ -118,23 +119,13 @@ export function TrialsBrowserView({ userLoc, search, onNav }: TrialsBrowserViewP
     if (unknownDisease != null) {
       return [];
     }
-    const rows = filterTrials(attachTrialDistances(trials, effectiveUserLoc), {
-      diseaseSlug: activeDiseaseSlug,
-      status: query.status,
-      phase: query.phase,
-      maxKm: query.maxKm,
-    });
+    // The same criteria the disease page counts with (trialFilterCriteria), so the number on its "Clinical trials" button is the number this list opens with.
+    const rows = filterTrials(
+      attachTrialDistances(trials, effectiveUserLoc),
+      trialFilterCriteria(query),
+    );
     return sortTrials(rows, query.sort);
-  }, [
-    trials,
-    effectiveUserLoc,
-    activeDiseaseSlug,
-    query.status,
-    query.phase,
-    query.maxKm,
-    query.sort,
-    unknownDisease,
-  ]);
+  }, [trials, effectiveUserLoc, query, unknownDisease]);
 
   const pageCount = Math.max(1, Math.ceil(items.length / PAGE_SIZE));
   const safePage = Math.min(Math.max(1, query.page), pageCount);

@@ -33,7 +33,7 @@ export interface DiseaseViewProps {
   onNav: (path: string) => void;
   alert?: string;
   /**
-   * `auto` (the default): parents and anonymous visitors get the parent layout (map → tests → summary card → data), clinicians the data hub. `parent` forces the parent layout for everyone — the old /diseases/{slug}/map address, kept for links already shared.
+   * `auto` (the default): parents and anonymous visitors get the parent layout (the disease card with its tabs, then the Start tab: map and questions), clinicians the data hub. `parent` forces the parent layout for everyone — the old /diseases/{slug}/map address, kept for links already shared.
    */
   layout?: "auto" | "parent";
 }
@@ -171,12 +171,9 @@ export function DiseaseView({ slug, role, userLoc, onNav, alert, layout = "auto"
         <ParentDiseasePage
           disease={disease}
           copy={copy}
-          isClinician={isClinician}
-          sourceCount={sourceDocs.length}
+          sourceDocs={sourceDocs}
           officialPointer={officialPointer}
           related={related}
-          relatedLoading={relatedLoading}
-          userLoc={userLoc}
           subscriptionStatus={subscriptionStatus}
           onSubscribe={() => setShowSubscribe(true)}
           onNav={onNav}

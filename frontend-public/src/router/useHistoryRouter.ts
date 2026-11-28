@@ -104,9 +104,10 @@ export function useHistoryRouter(): HistoryRouter {
   const { locale, pathname: barePath } = splitLocale(loc.pathname);
   const route = parsePath(barePath, loc.search);
 
-  const applyLocation = useCallback((fullPathname: string, search: string) => {
-    const next = fullPathname + search;
-    if (window.location.pathname + window.location.search !== next) {
+  const applyLocation = useCallback((fullPathname: string, search: string, hash = "") => {
+    // The fragment travels with the address (a link to a section of another page, e.g. the guideline page's source shelf); the route ignores it and the page scrolls to it once its content has loaded (hooks/useScrollToHash).
+    const next = fullPathname + search + hash;
+    if (window.location.pathname + window.location.search + window.location.hash !== next) {
       window.history.pushState(null, "", next);
     }
     setLoc({ pathname: fullPathname, search });
@@ -125,7 +126,7 @@ export function useHistoryRouter(): HistoryRouter {
       // stay in the visitor's chosen language.
       const { pathname: bare } = splitLocale(canonicalizePath(url.pathname));
       const activeLocale = splitLocale(window.location.pathname).locale;
-      applyLocation(withLocalePrefix(bare, activeLocale), url.search);
+      applyLocation(withLocalePrefix(bare, activeLocale), url.search, url.hash);
     },
     [applyLocation],
   );
@@ -158,7 +159,7 @@ export function useHistoryRouter(): HistoryRouter {
         return;
       }
       e.preventDefault();
-      navigate(url.pathname + url.search);
+      navigate(url.pathname + url.search + url.hash);
     };
     // Re-read once on mount in case the location changed between the initial
     // render and this effect (e.g. the legacy-hash shim in main.tsx).

@@ -42,9 +42,7 @@ export interface FdTestsSheetProps {
   readonly headingLevel: "h1" | "h2";
   /** Where the print happened, for the parent-test count (`print-fd-tests`). */
   readonly place: "tests-page" | "disease-page";
-  /** Screen-only buttons shown next to Print (e.g. back to the map). */
-  readonly extraActions?: ReactNode;
-  /** Shown above the sheet's heading inside its column (the breadcrumb on /tests). */
+  /** Shown above the sheet's heading inside its column (the disease card and tabs on /tests); never printed. */
   readonly before?: ReactNode;
 }
 
@@ -55,10 +53,9 @@ export interface FdTestsSheetProps {
  * works on screen — but never the source line or the note that the foundation
  * wrote it and the guideline authors did not review it.
  *
- * On the disease page the sheet shares the page with the map, so Print there
- * prints the sheet alone instead of the whole page.
+ * The disease page keeps a hidden copy for the print button on its card, so Print there prints the sheet alone instead of the whole page.
  */
-export function FdTestsSheet({ headingLevel, place, extraActions, before }: FdTestsSheetProps) {
+export function FdTestsSheet({ headingLevel, place, before }: FdTestsSheetProps) {
   const { t } = useTranslation("fd-tests");
   const Heading = headingLevel;
 
@@ -82,7 +79,6 @@ export function FdTestsSheet({ headingLevel, place, extraActions, before }: FdTe
           <button type="button" className="fdtests-btn fdtests-btn--accent" onClick={print}>
             {t("printCta")}
           </button>
-          {extraActions}
         </div>
       </header>
 

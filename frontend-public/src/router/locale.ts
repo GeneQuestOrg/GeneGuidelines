@@ -56,3 +56,10 @@ export function readLocaleFromLocation(): Locale {
   }
   return splitLocale(window.location.pathname).locale;
 }
+
+/**
+ * An in-app path with the language prefix of the page being viewed, for an `<a href>`: a link a visitor copies, opens in a new tab or a crawler follows stays in the page's language. (An in-app click re-applies the prefix anyway; see useHistoryRouter.)
+ */
+export function withCurrentLocale(path: string): string {
+  return withLocalePrefix(path, readLocaleFromLocation());
+}

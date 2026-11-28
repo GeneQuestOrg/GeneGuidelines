@@ -7,15 +7,17 @@ export interface SourceShelfProps {
   docs: readonly SourceDoc[];
   /** Parent projection: secondary framing ("what this summary is based on"). */
   parent?: boolean;
+  /** Anchor id, for links that open the page at the shelf. */
+  id?: string;
 }
 
-export function SourceShelf({ docs, parent = false }: SourceShelfProps) {
+export function SourceShelf({ docs, parent = false, id }: SourceShelfProps) {
   const { t } = useTranslation("guidelines");
   if (docs.length === 0) {
     return null;
   }
   return (
-    <section className="srcshelf">
+    <section className="srcshelf" id={id}>
       <div className="srcshelf__head">
         <div className="srcshelf__tag">{t("sourceDocsTag", { count: docs.length })}</div>
         <h3 className="srcshelf__title">

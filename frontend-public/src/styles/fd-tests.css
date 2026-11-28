@@ -17,20 +17,6 @@
   text-decoration: none;
 }
 
-/* ── Breadcrumb ──────────────────────────────────────────────── */
-.fdtests-crumb {
-  padding: 18px 0 0;
-  font-size: var(--fs-sm);
-  color: var(--ink-3);
-  display: flex;
-  gap: 6px;
-  align-items: center;
-  flex-wrap: wrap;
-}
-.fdtests-crumb a { color: var(--ink-2); }
-.fdtests-crumb a:hover { color: var(--accent-ink); }
-.fdtests-crumb__sep { color: var(--ink-4); }
-
 /* ── Head ────────────────────────────────────────────────────── */
 .fdtests-head { padding: 32px 0 24px; }
 .fdtests-eyebrow {
@@ -258,14 +244,13 @@
   .fdtests-foot p { margin: 0 0 0.6mm; }
 }
 
-/* ── The sheet inside the parent disease page ────────────────── */
-.fdtests-embed { margin: 56px 0 0; padding-top: 8px; border-top: 1px solid var(--line); }
+/* ── The copy the disease page prints ────────────────────────── */
+/* The Start tab keeps the sheet in the page, hidden, for the print button on the disease card: never on screen, and not in a plain Ctrl+P either. */
+.fdtests-embed--print { display: none; }
 .fdtests-embed .fdtests { max-width: none; padding: 0; }
 
-/* Print from the disease page: the sheet alone, as on /diseases/fd/tests.
-   `print-fd-tests` sits on <html> only while the sheet's own Print button
-   has the dialog open (utils/printOnly.ts); a plain Ctrl+P prints the page. */
+/* Print from the disease page: the sheet alone, as on /diseases/fd/tests. `print-fd-tests` sits on <html> only while the card's print button has the dialog open (utils/printOnly.ts); a plain Ctrl+P prints the page. */
 @media print {
   html.print-fd-tests .page--disease > :not(.fdtests-embed) { display: none !important; }
-  html.print-fd-tests .fdtests-embed { margin: 0; padding: 0; border: 0; }
+  html.print-fd-tests .fdtests-embed { display: block; margin: 0; padding: 0; border: 0; }
 }

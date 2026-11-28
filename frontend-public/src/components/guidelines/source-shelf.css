@@ -5,6 +5,8 @@
   margin: 22px 0 4px;
   padding-top: 18px;
   border-top: 1px solid var(--line);
+  /* A link to #source-shelf lands below the sticky header, not under it. */
+  scroll-margin-top: 5.5rem;
 }
 .srcshelf__tag {
   font-family: var(--font-mono);
