@@ -216,6 +216,8 @@ def guidelines_page(d: Disease, synthesis: GuidelineSynthesis | None, docs: list
         _note(synthesis.synth_disclaimer or L["footerDesc"]),
         _note(f"{L['basedOn']} {synthesis.based_on}") if synthesis.based_on else "",
         _note(fill(L["lastUpdated"], date=synthesis.last_updated)) if synthesis.last_updated else "",
+        # The summary is written for clinicians. A crawler, a link preview or a language model reading this copy passes it on to a parent, so the copy says whose text it is, as the page does (the app keeps it closed under this label).
+        _note(f"{L['clinicalSummaryHeading']}. {L['clinicalSummaryNote']}"),
         *_sections(synthesis.sections, by_id, L),
         *_shelf(docs, L),
         _site_links(L, locale, back),

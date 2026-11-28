@@ -168,6 +168,9 @@ def test_guidelines_page_carries_the_synthesis_and_its_sources(client) -> None:
     assert "§ Diagnosis" in html and "Best practice management guidelines for FD/MAS" in html
     # A section with no source says so instead of being padded.
     assert "No document on this disease" in html
+    # The summary is the doctor's text: the copy a crawler or a language model reads says so before the first section, as the page does.
+    assert "Clinical summary, written for the doctor" in html and "It is not advice for you" in html
+    assert html.index("It is not advice for you") < html.index("Diagnosis rests on clinical features.")
     # One disclaimer: the synthesis's own, not the site-wide sentence next to it.
     assert "not an official guideline" in html and "Living guidelines for rare genetic diseases — an AI-drafted" not in html
     for word in ("approved", "verified", "expert-reviewed"):

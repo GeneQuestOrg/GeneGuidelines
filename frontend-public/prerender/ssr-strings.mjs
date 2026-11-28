@@ -30,6 +30,8 @@ const SOURCES = {
   noGuidelineTitle: ["guidelines", "gateNoSourcesTitle"],
   noGuidelineBody: ["guidelines", "gateNoSourcesBody"],
   sectionNoSourceNote: ["guidelines", "sectionNoSourceNote"],
+  clinicalSummaryHeading: ["guidelines", "clinicalSummaryToggle"],
+  clinicalSummaryNote: ["guidelines", "clinicalSummaryNote"],
   shelfTitle: ["guidelines", "sourceShelfTitleParent"],
   basedOn: ["guidelines", "basedOnLabel"],
   pmidLabel: ["guidelines", "pmidLabel"],
