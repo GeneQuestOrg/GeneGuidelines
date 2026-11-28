@@ -69,6 +69,12 @@ Changed before any registered run:
 
 **Agent-operated runs.** Darek asked (2026-11-28) for no further API spend on the foundation's key for now. `bricks-agent-step` runs the same pipeline code with Claude Code subagents as the models (Sonnet for the writers, Opus for the checkers; `agent_caller.py`): each call is a request file an agent answers with a JSON file, and the run is replayed to the next unanswered call. It is not the production request (no pinned effort, no response schema enforced by the API, no cache), so it measures what the prompts select and write, not cost. The registered API runs (3 each on FD, MAS, FOP, OI) and the dry run on production data are still to be done with the real adapter before the switch; this session's API spend on the bricks stands at 4.19 USD.
 
+### Agent-operated pilot of 2026-11-28 and the second scope revision (recorded before the runs it applies to)
+
+Under the first narrowed scope the selector chose 21 (FD), 21 (MAS), 10 (FOP) and 31 (OI) locations, and the coverage checker still added more than it removed (FD +5 −2, MAS +9 −1, OI +5 −3, FOP +1 −2). Two causes showed in the lists: one paragraph split into a location for each sentence (six for ¶15 of the FD/MAS consensus), and choices only a laboratory makes (which sequencing method, MLPA on fibroblast DNA, how a report is worded: most of the OI list, from the EMQN laboratory guideline). FOP ran to the end as the test of the agent-operated mode (`results/bricks-2026-11-28/pilot-agent-scope2/`): published, 8 points, both FOP regression points found; the question checker rejected 5 of 9 first drafts and the Polish checker 4 of 8, and all but one passed on the retry.
+
+Revision: a statement belongs only when a parent could ask the doctor about it and the answer could change what is done; a choice between techniques that the laboratory or the specialist makes does not belong; one location for each decision, not for each sentence; the checker removes a statement that serves a decision another one already serves. In code, a point whose quote is part of another point's quote from the same document is dropped (`pipeline._without_contained`). The runs below (`results/bricks-2026-11-28/*-r1.json`, agent-operated) use this version.
+
 ## Commands
 
 From the repository root, with the product's requirements installed (Python 3.12, `anthropic==2.12.0`) and the product's `.env` (the Anthropic key is read from that file only):

@@ -291,3 +291,18 @@ def test_the_stricter_fd_reading_gives_each_hand_written_point_a_point_of_its_ow
     assert _matched({1: {"a"}, 2: {"a"}, 3: {"b", "a"}}) in ([1, 3], [2, 3])  # one point cannot count for two
     assert _matched({1: {"a", "b"}, 2: {"a"}}) == [1, 2]
     assert _gold_sentences("First one. Second cut short…") == ["first one."]
+
+
+def test_a_quote_that_is_part_of_another_points_quote_is_dropped():
+    from backend.guidelines.points.bricks.select import Selected
+    from backend.guidelines.points.pipeline import _without_contained
+
+    def at(point_id: str, doc_id: str) -> Selected:
+        return Selected(id=point_id, doc_id=doc_id, paragraph=0, anchor="a", reason="r", section="s")
+
+    passages = {"p1": at("p1", "d1"), "p2": at("p2", "d1"), "p3": at("p3", "d1"), "p4": at("p4", "d2"), "p5": at("p5", "d1")}
+    quotes = {"p1": "A test is recommended. A negative result cannot rule the disease out.", "p2": "A negative result cannot rule the disease out.", "p3": "Another statement.", "p4": "A negative result cannot rule the disease out.", "p5": "Another statement."}
+    raw: dict = {"dropped": []}
+    kept = _without_contained(raw, quotes, passages)
+    assert list(kept) == ["p1", "p3", "p4"]  # p2 is inside p1; p4 is in another document; of the identical p3 and p5 the earlier stays
+    assert {d["id"] for d in raw["dropped"]} == {"p2", "p5"} and all(d["brick"] == "quote" for d in raw["dropped"])

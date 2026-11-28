@@ -16,6 +16,7 @@ from .bricks.summary_en import summarise
 from .bricks.translate_pl import translate
 from .models import BlockOutcome, BlockRecord, SourceDoc
 from .ports import PointsCaller
+from .quote_check import normalize
 
 BRICKS_PIPELINE = "bricks-1"
 
@@ -35,7 +36,7 @@ async def build_bricks_block(*, disease_name: str, docs: list[SourceDoc], writer
         return _record(raw, outcome, "nothing about diagnosis or the initial evaluation was selected")
     passages = {p.id: p for p in selection.passages}
 
-    quotes = _note(raw, await quote_passages(disease=disease_name, passages=selection.passages, docs=readable, documents_block=documents_block, writer=writer, checker=checker))
+    quotes = _without_contained(raw, _note(raw, await quote_passages(disease=disease_name, passages=selection.passages, docs=readable, documents_block=documents_block, writer=writer, checker=checker)), passages)
     summaries = _note(raw, await summarise(quotes={i: str(q) for i, q in quotes.items()}, writer=writer, checker=checker, example=example))
     questions = _note(raw, await ask(points={i: (str(quotes[i]), str(s)) for i, s in summaries.items()}, writer=writer, checker=checker, example=example))
     polish = _note(raw, await translate(points={i: (str(summaries[i]), str(q)) for i, q in questions.items()}, writer=writer, checker=checker, example=example))
@@ -51,6 +52,23 @@ def _note(raw: dict[str, Any], run: BrickRun) -> dict[str, Any]:
     raw["calls"].extend(run.calls)
     raw["dropped"].extend({"id": item_id, "brick": run.name, "why": why} for item_id, why in run.rejected.items())
     return run.accepted
+
+
+def _without_contained(raw: dict[str, Any], quotes: dict[str, Any], passages: dict[str, Selected]) -> dict[str, Any]:
+    """The quotes without those that are part of another point's quote from the same document: the longer quote already puts those sentences on the page (of two identical quotes the earlier stays)."""
+    order = {item_id: n for n, item_id in enumerate(quotes)}
+    text = {item_id: normalize(str(quote)) for item_id, quote in quotes.items()}
+    kept: dict[str, Any] = {}
+    for item_id, quote in quotes.items():
+        inside = next(
+            (other for other in quotes if other != item_id and passages[other].doc_id == passages[item_id].doc_id and text[item_id] in text[other] and (len(text[item_id]) < len(text[other]) or order[other] < order[item_id])),
+            None,
+        )
+        if inside is None:
+            kept[item_id] = quote
+        else:
+            raw["dropped"].append({"id": item_id, "brick": "quote", "why": f"its quote is part of the quote of {inside}"})
+    return kept
 
 
 def _point(passage: Selected, quote: Any, summary_en: Any, question_en: Any, polish: Any) -> dict[str, Any]:

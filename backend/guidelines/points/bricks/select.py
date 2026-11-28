@@ -2,7 +2,7 @@
 
 The writer (Sonnet) reads the whole documents and points at places: a paragraph and a short phrase that occurs once in it, with the reason the family needs it. It copies no passage; code reads the text from the location, so a quote can never be invented here. Code checks each location. The checker (Opus, a different model on purpose: selection is where generated blocks have failed before) reads the documents too and names what is missing and what should go.
 
-No number of points is asked for or enforced: a statement belongs when the writer can name the decision about the diagnosis it changes, and the checker agrees. The checker removes as readily as it adds: the first run of this brick, with a wider scope, put 57 points in the FD block (lab README, 2026-11-28).
+No number of points is asked for or enforced: a statement belongs when the writer can name the decision about the diagnosis it changes, and the checker agrees. The checker removes as readily as it adds, and a location stands for a decision, not for a sentence: the first run of this brick, with a wider scope, put 57 points in the FD block (lab README, 2026-11-28).
 """
 
 from __future__ import annotations
@@ -25,13 +25,13 @@ SCOPE = """The block is about establishing the diagnosis, and nothing else:
 - which test confirms it when it is not certain, and what a result can and cannot show (a negative result that does not rule the disease out, a result that depends on the tissue tested or on how the sample was handled);
 - whether a procedure (a biopsy, an operation, an invasive test) is needed to make the diagnosis, when it is not needed, when it must be avoided, and how it must be done for the test to be possible;
 - what has to be established together with the diagnosis for it to be complete (the subtype, or how far the disease extends), where a document states that as part of making the diagnosis.
-A statement belongs only when it changes a decision of this kind. The work-up that follows a diagnosis (each organ system's tests, imaging protocols, reference values), monitoring, treatment, prognosis, mechanism, family counselling and research do not belong, even when they are done soon after the diagnosis. Most of any guideline does not belong in this block."""
+A statement belongs only when a parent could ask the doctor about it and the answer could change what is done: whether to take the diagnosis as certain, whether to agree to a procedure, which test to ask about, where a sample goes, what a result means for the child. A choice the laboratory or the specialist makes between techniques (which sequencing method, which stain, which imaging sequence, how a report is worded) does not belong. Neither does the work-up that follows a diagnosis (each organ system's tests, imaging protocols, reference values), monitoring, treatment, prognosis, mechanism, family counselling or research, even when it is done soon after the diagnosis. Most of any guideline does not belong in this block."""
 
 SELECT_TASK = """Task: selection. Disease: {disease}.
 
 {scope}
 
-Find every statement in the documents that belongs in this block. For each, give its location: the document id, the paragraph number (¶n), and an anchor: the shortest phrase, copied word for word from that paragraph, that occurs only once in it and picks out the statement. A paragraph can hold several statements; give one location for each. Give the reason: the decision about the diagnosis that the statement changes, and what goes wrong for the family if they do not know it. If you cannot name the decision, the statement does not belong.
+Find every statement in the documents that belongs in this block. For each, give its location: the document id, the paragraph number (¶n), and an anchor: the shortest phrase, copied word for word from that paragraph, that occurs only once in it and picks out the statement. Give one location for each decision, not for each sentence: when neighbouring sentences of a paragraph serve the same decision (a rule and its exception, a test and what its result cannot show, a sample and how it must be handled), give one location for them, and the quote will carry those sentences. Give separate locations in one paragraph only for statements that change different decisions. Give the reason: the decision about the diagnosis that the statement changes, and what goes wrong for the family if they do not know it. If you cannot name the decision, the statement does not belong.
 
 Prefer the strongest document: when a grade A document says it, locate it there; use grade B or C only for what no grade A document covers, and a newer document over an older one of the same grade. Locate each statement once. Use only documents about this disease.
 
@@ -46,8 +46,8 @@ COVERAGE_SYSTEM = """You check the selection for one block of a web page for par
 The documents come first, with numbered paragraphs (¶n); then the selected statements, each with its id, location, the paragraph's text and the reason given.
 
 Return:
-1. missing: every statement in the documents that belongs by the scope above and is not selected, each as a location (document id, paragraph number, an anchor copied word for word that occurs only once in that paragraph) with the reason: the decision about the diagnosis it changes, and what goes wrong for the family without it. Prefer a grade A document. Do not repeat a selected statement. An empty list is a good answer when nothing is missing; do not add a statement just to have one.
-2. unsupported: selected statements to remove, with the id and why: the statement changes no decision about the diagnosis (an item of the work-up, a technique or a reference value, follow-up, treatment), the paragraph does not say what the reason claims, the document is about another disease, or the same statement is selected twice (remove the weaker location)."""
+1. missing: every statement in the documents that belongs by the scope above and is not selected, each as a location (document id, paragraph number, an anchor copied word for word that occurs only once in that paragraph) with the reason: the decision about the diagnosis it changes, and what goes wrong for the family without it. Prefer a grade A document. Do not repeat a selected statement, and do not add one that serves a decision a selected statement already serves. An empty list is a good answer when nothing is missing; do not add a statement just to have one.
+2. unsupported: selected statements to remove, with the id and why: the statement changes no decision about the diagnosis (an item of the work-up, a technique or a reference value, follow-up, treatment), the paragraph does not say what the reason claims, the document is about another disease, or it serves the same decision as another selected statement (remove the one in the weaker document, or the one whose sentences the other's quote will carry anyway)."""
 
 
 class Unsupported(BaseModel):
