@@ -75,6 +75,18 @@ Under the first narrowed scope the selector chose 21 (FD), 21 (MAS), 10 (FOP) an
 
 Revision: a statement belongs only when a parent could ask the doctor about it and the answer could change what is done; a choice between techniques that the laboratory or the specialist makes does not belong; one location for each decision, not for each sentence; the checker removes a statement that serves a decision another one already serves. In code, a point whose quote is part of another point's quote from the same document is dropped (`pipeline._without_contained`). The runs below (`results/bricks-2026-11-28/*-r1.json`, agent-operated) use this version.
 
+### Agent-operated runs under the second revision, and the third revision (2026-11-28, recorded before the runs it applies to)
+
+Six runs under the second revision (`results/bricks-2026-11-28/pilot-agent-scope3/`; the four measured diseases plus Noonan and Stargardt, for the side-by-side with the live blocks). All published: FD 6 points, MAS 6, FOP 5, OI 12, Noonan 4, Stargardt 7.
+
+- **FD: 4 of 6 by both readings, so the gate is not met**, yet the text of all six hand-written points is in the block: the quote for "the diagnosis can be made clinically" also carries "isolated monostotic lesions usually require histological confirmation", and the quote on handling the sample also carries "blood cannot exclude monostotic FD". Two statements a parent would ask about separately share a point, and so a question.
+- **MAS:** the endocrine topic is met by both readings; the point on single lesions was dropped by code because another point's quote had taken its sentence.
+- **FOP:** genetic confirmation found; "avoid biopsy" not found at its registered locations. The block has "Biopsies of lesions are never indicated" (GeneReviews ¶49, not a registered location), and it lost the consensus statement on deferring elective procedures while FOP is suspected: its question was rejected twice.
+- **OI:** family history found, molecular testing not; several points are still rules for the laboratory's report.
+- **Checkers on first drafts:** the question checker rejected 19 of 44 (it allowed only "Is X…, and if so…", and refused conditional openings that the hand-written questions use: "If the blood test was negative, what does that mean for us?"); the Polish checker 10 of 43, mostly terms and calques; the summary checker 2 of 44.
+
+Third revision: a location stands for one question a parent would take to the doctor, and two statements that lead to different questions stay two locations; quotes of different locations do not overlap; from a document written for laboratories only what a result can mean for the child belongs. The question writer and checker accept a conditional opening as well as asking whether it applies first, and the checker rejects for its five reasons only. Because the question checker's prompt changed, it is calibrated again on the six hand-written questions and its three controls, with an agent as the checker (`bricks-agent-calibrate`, one repeat). The runs in `results/bricks-2026-11-28/*-r1.json` use this version.
+
 ## Commands
 
 From the repository root, with the product's requirements installed (Python 3.12, `anthropic==2.12.0`) and the product's `.env` (the Anthropic key is read from that file only):

@@ -24,6 +24,7 @@ For each location below, give the quote that will stand on the page for it: cons
 - If a nearby sentence in the paragraph limits, qualifies or reverses the statement (a test that can be falsely negative, a rule for one subtype only, "usually", "unless"), include it.
 - Copy exactly, character for character. Drop citation markers such as [11] or (3-5); change nothing else and leave nothing out in the middle (no "…").
 - Stop where the statement and its limits end; do not run on into another topic.
+- Quotes of different locations do not overlap: a sentence that another location in this list points at belongs to that location's quote, not to this one.
 - A document whose licence is restricted allows quotes only up to the length its tag gives.
 
 Fill `quotes` with one entry for each location id; leave `locations` empty.

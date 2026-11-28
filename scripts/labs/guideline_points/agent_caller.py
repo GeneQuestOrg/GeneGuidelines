@@ -93,8 +93,9 @@ def _wrapped(text: str) -> str:
 class AgentFileCaller:
     """One model role answered through files in ``work``; ``model`` is the agent's model name (``sonnet`` or ``opus``)."""
 
-    def __init__(self, model: str, work: Path) -> None:
-        self.model, self.work = model, work
+    def __init__(self, model: str, work: Path, pending: list[NeedAnswer] | None = None) -> None:
+        # With ``pending`` given, an unanswered call is noted there and reported as a failed call instead of stopping the run: for callers whose calls do not depend on one another (the calibration), so every request is written in one pass.
+        self.model, self.work, self.pending = model, work, pending
         for sub in ("requests", "answers"):
             (work / sub).mkdir(parents=True, exist_ok=True)
 
@@ -110,7 +111,12 @@ class AgentFileCaller:
             else:
                 record["ok"], record["output"] = True, output.model_dump()
                 return output, record
-        raise NeedAnswer(key, self.model, role, self._write_request(key, role, system, prefix, user, result_type, answer_path))
+        need = NeedAnswer(key, self.model, role, self._write_request(key, role, system, prefix, user, result_type, answer_path))
+        if self.pending is None:
+            raise need
+        self.pending.append(need)
+        record["error"] = {"kind": "pending", "message": str(need)}
+        return None, record
 
     def _write_request(self, key: str, role: str, system: str, prefix: str, user: str, result_type: type[BaseModel], answer_path: Path) -> Path:
         documents = "(this call has no documents)"

@@ -93,30 +93,67 @@ def _batches(entries: list[dict[str, Any]]) -> list[list[dict[str, Any]]]:
     return batches
 
 
+async def _calibrate_family(family: str, repeat: int, checker: Any, doc: Any, controls: dict[str, Any]) -> list[dict[str, Any]]:
+    """One checker on the six hand-written points and its controls: a row per item with the verdict and who gave it (code or the checker)."""
+    golds = [c for c in controls.values() if c["expect"] == "PASS"]
+    rows: list[dict[str, Any]] = []
+    ready: list[dict[str, Any]] = []
+    for entry in golds + [controls[i] for i in CHECKER_CONTROLS[family]]:
+        item = _quote_item(doc, entry["point"]) if family == "quote" else entry["point"]
+        if isinstance(item, str):
+            rows.append({"repeat": repeat, "family": family, "id": entry["id"], "expect": entry["expect"], "verdict": "FIX", "by": "code", "why": item})
+        else:
+            ready.append({**entry, "item": item})
+    for batch in _batches(ready):
+        check = batch_checker(checker, role=f"calibrate_{family}", system=CHECKER_SYSTEMS[family], render=functools.partial(_render, family))
+        problems, call = await check({e["id"]: e["item"] for e in batch})
+        for e in batch:
+            problem = "the checker call failed" if problems is None else problems.get(e["id"])
+            rows.append({"repeat": repeat, "family": family, "id": e["id"], "expect": e["expect"], "verdict": "PASS" if problem is None else "FIX", "by": "checker", "why": problem or "", "cost_usd": call.get("cost_usd_total")})
+    return rows
+
+
+async def calibrate_agent(snapshot: str, out: Path, *, families: list[str]) -> int:
+    """The calibration of the named checkers with an agent as the checker (agent_caller.py): the first pass writes every request, a later one reads the answers. One repeat: an agent's answer to a request is kept, so a second repeat would only read it again."""
+    out = out.resolve()
+    pending: list[NeedAnswer] = []
+    checker = AgentFileCaller("opus", out / "agent" / "calibration", pending)
+    doc = _fd_document(snapshot)
+    controls = {c["id"]: c for c in verifier_controls()}
+    rows: list[dict[str, Any]] = []
+    for family in families:
+        rows.extend(await _calibrate_family(family, 1, checker, doc, controls))
+    if pending:
+        for need in pending:
+            print(f"REQUEST calibration {need.model} {need.role} {need.request_path}")
+        return 3
+    summary = {
+        family: {
+            "gold_pass": sum(1 for r in rows if r["family"] == family and r["expect"] == "PASS" and r["verdict"] == "PASS"),
+            "controls_caught": sum(1 for r in rows if r["family"] == family and r["expect"] == "FIX" and r["verdict"] == "FIX"),
+            "controls": len(CHECKER_CONTROLS[family]),
+        }
+        for family in families
+    }
+    commit, dirty = git_state()
+    write_json(out / f"calibration-agent-{'-'.join(families)}.json", {"finished_at": now_iso(), "checker": "agent:opus", "git": {"commit": commit, "dirty": dirty}, "rows": rows, "summary": summary})
+    print(json.dumps(summary, indent=1))
+    for r in rows:
+        if r["verdict"] != r["expect"]:
+            print(f"  {r['family']} {r['id']}: expected {r['expect']}, got {r['verdict']} by {r['by']}: {r['why'][:300]}")
+    return 0
+
+
 async def calibrate(snapshot: str, out: Path, *, api_key: str, cap: float, repeats: int, effort: str | None) -> int:
     out.mkdir(parents=True, exist_ok=True)
     budget = LabBudget(f"bricks-calibrate{('-' + effort) if effort else ''}", cap)
     checker = ClaudePointsCaller(_spec(VERIFIER_SPEC, effort), api_key=api_key, node_max_tokens=VERIFIER_NODE_TOKENS, budget=budget)
     doc = _fd_document(snapshot)
     controls = {c["id"]: c for c in verifier_controls()}
-    golds = [c for c in controls.values() if c["expect"] == "PASS"]
     rows: list[dict[str, Any]] = []
     for repeat in range(1, repeats + 1):
-        for family, control_ids in CHECKER_CONTROLS.items():
-            entries = golds + [controls[i] for i in control_ids]
-            ready: list[dict[str, Any]] = []
-            for entry in entries:
-                item = _quote_item(doc, entry["point"]) if family == "quote" else entry["point"]
-                if isinstance(item, str):
-                    rows.append({"repeat": repeat, "family": family, "id": entry["id"], "expect": entry["expect"], "verdict": "FIX", "by": "code", "why": item})
-                else:
-                    ready.append({**entry, "item": item})
-            for batch in _batches(ready):
-                check = batch_checker(checker, role=f"calibrate_{family}", system=CHECKER_SYSTEMS[family], render=functools.partial(_render, family))
-                problems, call = await check({e["id"]: e["item"] for e in batch})
-                for e in batch:
-                    problem = "the checker call failed" if problems is None else problems.get(e["id"])
-                    rows.append({"repeat": repeat, "family": family, "id": e["id"], "expect": e["expect"], "verdict": "PASS" if problem is None else "FIX", "by": "checker", "why": problem or "", "cost_usd": call.get("cost_usd_total")})
+        for family in CHECKER_CONTROLS:
+            rows.extend(await _calibrate_family(family, repeat, checker, doc, controls))
     summary = calibration_summary(rows, repeats)
     write_json(out / f"calibration{('-' + effort) if effort else ''}.json", {"finished_at": now_iso(), "checker": _spec(VERIFIER_SPEC, effort), "rows": rows, "summary": summary, "ledger_usd": budget.spent})
     print(json.dumps(summary, indent=1))
@@ -238,7 +275,7 @@ async def agent_step(snapshot: str, out: Path, *, only: list[str] | None, repeat
     out = out.resolve()  # the request files name their paths for an agent that may run from another directory
     out.mkdir(parents=True, exist_ok=True)
     waiting = 0
-    for slug in [s for s in BRICK_DISEASES if not only or s in only]:
+    for slug in only or BRICK_DISEASES:  # any catalog disease in the snapshot can be named; the measured four are the default
         path = out / f"{slug}-r{repeat}.json"
         if path.is_file():
             print(f"DONE {slug} r{repeat}")

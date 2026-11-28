@@ -90,6 +90,12 @@ def cmd_bricks_agent_step(args) -> int:
     return asyncio.run(agent_step(args.snapshot, Path(args.out), only=args.disease or None, repeat=args.repeat))
 
 
+def cmd_bricks_agent_calibrate(args) -> int:
+    from .bricks_lab import calibrate_agent
+
+    return asyncio.run(calibrate_agent(args.snapshot, Path(args.out), families=args.family))
+
+
 def cmd_bricks_agent_check(args) -> int:
     from .agent_caller import check_answer
 
@@ -170,6 +176,12 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--disease", action="append")
     p.add_argument("--repeat", type=int, default=1)
     p.set_defaults(func=cmd_bricks_agent_step)
+
+    p = sub.add_parser("bricks-agent-calibrate", help="no API: the named checkers on the FD gold points and their controls, an agent as the checker")
+    p.add_argument("--snapshot", required=True)
+    p.add_argument("--out", required=True)
+    p.add_argument("--family", action="append", required=True, choices=["quote", "summary_en", "question_en", "translate_pl"])
+    p.set_defaults(func=cmd_bricks_agent_calibrate)
 
     p = sub.add_parser("bricks-agent-check", help="no model: does an agent's answer file parse as the call's result type")
     p.add_argument("--request", required=True)
