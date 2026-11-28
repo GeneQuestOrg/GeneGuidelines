@@ -104,6 +104,7 @@ Third revision: a location stands for one question a parent would take to the do
 - **Other checkers on first drafts:** quote 15 of 60, Polish 15 of 48 (terms and calques: "przezierność karkowa", the pattern ERG), summary 4 of 48.
 - **Points lost:** 12 to the quote brick across the six diseases, mostly a caveat the checker wanted that does not fit the 400 characters a restricted document allows (the point is dropped, never cut); 2 to the Polish checker after the retry.
 - **Open:** OI is long and leans on the grade A document, which is a laboratory guideline (11 of its 15 points); the preference for grade A works against "what a parent can ask" there. FD has two imaging points the hand-written block does not (a specialist radiologist, a soft tissue mass). Whether 10 points for FD is the right size is Darek's call on the side-by-side (`docs/produkty/geneguidelines/eksperymenty/guideline-points-cegielki-obok-siebie-2026-11-28.md` in the docs repository).
+- **FD, three runs** (agent-operated, same commit): 10, 12 and 13 points; 5 of 6 hand-written points in every run, by both readings, so the FD gate is met in this mode. The sixth (a single lesion usually needs histology) is never a point of its own: in all three runs its sentence is inside the first point's quote.
 - **Not measured here:** cost, latency, the prompt cache, pinned effort, the API's response schema. The registered API runs and the dry run on production data remain.
 
 ## Commands
