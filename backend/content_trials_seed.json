@@ -1,48 +1,6 @@
 {
   "trials": [
     {
-      "nct": "NCT05998877",
-      "title": "GαS inhibitor pilot in McCune-Albright syndrome",
-      "phase": "Phase 1",
-      "status": "recruiting",
-      "sponsor": "UCSF FD/MAS Clinic",
-      "city": "San Francisco",
-      "country": "US",
-      "lat": 37.763,
-      "lng": -122.458,
-      "diseases": [
-        "mas"
-      ],
-      "ageRange": "18+",
-      "principalInvestigator": "Dr. E. Hsiao",
-      "eligibilitySummary": "Adult MAS with documented endocrinopathy and FD lesions, GNAS-confirmed.",
-      "enrollmentTarget": 24,
-      "enrolled": 7,
-      "contact": "mas-trial@ucsf.edu",
-      "lastSeen": "2026-05-05"
-    },
-    {
-      "nct": "NCT06334455",
-      "title": "MEK inhibitor in cardiovascular complications of Noonan syndrome",
-      "phase": "Phase 2",
-      "status": "recruiting",
-      "sponsor": "Erasmus MC",
-      "city": "Rotterdam",
-      "country": "NL",
-      "lat": 51.923,
-      "lng": 4.469,
-      "diseases": [
-        "noonan"
-      ],
-      "ageRange": "5-17",
-      "principalInvestigator": "Prof. de Graaf-Schoenmakers",
-      "eligibilitySummary": "Noonan syndrome with hypertrophic cardiomyopathy and PTPN11 or RIT1 mutation.",
-      "enrollmentTarget": 40,
-      "enrolled": 12,
-      "contact": "noonan-trials@erasmusmc.nl",
-      "lastSeen": "2026-05-09"
-    },
-    {
       "nct": "NCT04125862",
       "title": "Pain in Fibrous Dysplasia",
       "phase": "Observational",

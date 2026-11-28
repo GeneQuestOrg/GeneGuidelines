@@ -36,6 +36,8 @@ FALLBACK_EN: dict[str, str] = {
     "noGuidelineTitle": "We don't have a guideline for this disease yet.",
     "noGuidelineBody": "There is no agreed clinical guideline for {{disease}}, and the literature we could gather is not enough to build anything honest from. We would rather tell you that plainly than show you generalities.",
     "sectionNoSourceNote": "No document on this disease's source shelf addresses this section. We would rather say so than fill the space with text drawn from elsewhere in the guideline.",
+    "clinicalSummaryHeading": "Clinical summary, written for the doctor",
+    "clinicalSummaryNote": "This text describes management in the language of clinicians and names medicines and procedures. It is not advice for you and not a plan for your child. It is here so that your doctor can read it and go to the sources.",
     "shelfTitle": "What this summary is based on",
     "basedOn": "Based on:",
     "pmidLabel": "PMID {{pmid}}",
