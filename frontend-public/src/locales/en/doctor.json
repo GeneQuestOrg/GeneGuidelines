@@ -42,7 +42,7 @@
   "doctorsSub_one": "{{count}} author with scored relevance to this disease.",
   "doctorsSub_other": "{{count}} authors with scored relevance to this disease.",
   "doctorsEmpty": "Run Doctor Finder to populate experts.",
-  "trialsTitle": "Recruiting trials",
+  "trialsTitle": "Clinical trials",
   "trialsSub_one": "{{count}} trial with recruitment status tracked.",
   "trialsSub_other": "{{count}} trials with recruitment status tracked.",
   "trialsEmpty": "No trials indexed.",

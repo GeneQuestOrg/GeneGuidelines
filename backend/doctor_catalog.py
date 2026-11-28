@@ -542,7 +542,8 @@ def _merge_public_doctor_rows(
         "endorsements": endorsements,
         "contact": str(seed.get("contact") or finder.get("contact") or "form"),
         "source": "merged",
-        "executionId": finder.get("executionId"),
+        # The directory merges one profile once per disease; a disease whose rows carry no run must not erase the run another disease's rows came from.
+        "executionId": finder.get("executionId") or seed.get("executionId"),
         # Best of the two inputs: a curated seed verifies identity (high), but two
         # name-matched finder rows stay name-matched — never falsely "verified".
         "identityConfidence": _IDENTITY_RANK_CONF[
@@ -1088,17 +1089,51 @@ def _doctors_from_live_doctor_finder(disease_slug: str) -> list[dict[str, Any]] 
     return _finder_docs_index().get(normalized)
 
 
+def _listed_under(normalized: str, directory: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """The entries of ``directory`` listed under ``normalized`` — the test the directory's own disease filter applies (``doctor.diseases.includes(slug)`` in frontend-public)."""
+    return [row for row in directory if normalized in (row.get("diseases") or [])]
+
+
+def public_doctors_for_disease(disease_slug: str) -> list[dict[str, Any]]:
+    """The directory entries listed under one disease: what ``/doctors?disease=<slug>`` shows.
+
+    The single definition of "the doctors who know this disease". The disease record's ``doctorsCount``, the stored ``diseases.doctors_count`` column and ``GET /api/diseases/{slug}/doctors`` are all this list (or its length), so none of them can disagree with the directory a family is sent to.
+
+    The clinician gate (``doctor_axis``) is the directory's: it is applied to a person's profile merged across every disease, so a doctor whose verified specialty was found under another disease's research is still a clinician here. Gating each disease's own rows instead gave the disease 33 doctors over a directory listing 40 for it.
+
+    Returns the cached directory rows themselves; callers must copy a row before changing it.
+    """
+    normalized = normalize_disease_slug(disease_slug)
+    if normalized is None:
+        return []
+    return _listed_under(normalized, list_public_doctors())
+
+
+def _catalog_source_for_slug(normalized: str, finder_index: dict[str, list[dict[str, Any]] | None]) -> str:
+    """Where a disease's doctors come from, named as :func:`_merged_doctors_for_catalog_slug_unfiltered` names it, without doing the merge."""
+    seeded = any(normalized in (doc.get("diseases") or []) for doc in _load_content_doctors_file())
+    live = bool(finder_index.get(normalized))
+    if live and seeded:
+        return "merged"
+    if live:
+        return "doctor_finder"
+    if seeded or _approved_submission_rows_for_disease(normalized):
+        return "content_seed"
+    return "none"
+
+
 def get_doctors_for_disease(disease_slug: str) -> dict[str, Any]:
-    """Doctors for a disease: merge latest doctor_finder with curated seed when both exist."""
+    """Doctors for a disease: the directory entries listed under it (:func:`public_doctors_for_disease`), best evidence first, each described for a family."""
     normalized = normalize_disease_slug(disease_slug)
     if normalized is None:
         return {"diseaseSlug": disease_slug, "source": "none", "doctors": []}
 
-    source, doctors = _merged_doctors_for_catalog_slug(normalized, _finder_docs_index())
-    # A publication co-author is not a doctor to send a family to (see doctor_axis).
-    # Applied before the enrichment below, which is per-row work we owe only to rows
-    # that will actually be shown.
-    doctors = clinical_entries(doctors)
+    source = _catalog_source_for_slug(normalized, _finder_docs_index())
+    # Copies: the directory rows are a process-wide cache and the enrichment below adds keys.
+    doctors = sorted(
+        (dict(row) for row in public_doctors_for_disease(normalized)),
+        key=lambda d: -int(d.get("score") or 0),
+    )
     # Which presentation each doctor handles, derived from what the record already
     # holds. Computed here, after the merge, so seeded and pipeline-found doctors are
     # described the same way — and so it stays a pure function of stored data rather
@@ -1141,38 +1176,26 @@ def get_doctors_for_disease(disease_slug: str) -> dict[str, Any]:
 
 
 def effective_public_doctor_count_for_disease(disease_slug: str) -> int:
-    """Public directory size for one disease (seed + merged doctor_finder when present)."""
-    normalized = normalize_disease_slug(disease_slug)
-    if normalized is None:
-        return 0
-    counts = public_doctor_counts_by_slug([normalized])
-    return counts.get(normalized, 0)
+    """How many doctors the directory lists under one disease (:func:`public_doctors_for_disease`)."""
+    return len(public_doctors_for_disease(disease_slug))
 
 
 def public_doctor_counts_by_slug(slugs: list[str] | tuple[str, ...]) -> dict[str, int]:
-    """Live public doctor counts for many catalog slugs in one pass.
+    """How many doctors the directory lists under each of many diseases, from one read of the directory.
 
-    Used by GET /api/diseases so listing the catalog does not re-read the seed
-    file and rebuild the finder index once per disease row.
+    Used by GET /api/diseases so listing the catalog reads the (cached) directory once rather than once per disease row.
 
-    Counts exactly what GET /api/diseases/{slug}/doctors will return — clinical-axis rows
-    only. A disease card promising hundreds of specialists over a tab that lists a dozen
-    would be its own lie, and the two numbers come from the same merge for that reason.
+    Each count is the length of :func:`public_doctors_for_disease` — the same entries GET /api/diseases/{slug}/doctors returns and ``/doctors?disease=<slug>`` lists. A disease card promising more specialists than the directory shows, or fewer, would be its own lie, and the numbers come from one filter for that reason.
     """
-    finder_index = _finder_docs_index()
-    seeded_docs = _load_content_doctors_file()
-    counts: dict[str, int] = {}
+    wanted: list[str] = []
     for raw in slugs:
         normalized = normalize_disease_slug(str(raw or ""))
-        if normalized is None or normalized in counts:
-            continue
-        _src, doctors = _merged_doctors_for_catalog_slug(
-            normalized,
-            finder_index,
-            seeded_docs=seeded_docs,
-        )
-        counts[normalized] = len(clinical_entries(doctors))
-    return counts
+        if normalized is not None and normalized not in wanted:
+            wanted.append(normalized)
+    if not wanted:
+        return {}
+    directory = list_public_doctors()
+    return {slug: len(_listed_under(slug, directory)) for slug in wanted}
 
 
 def total_distinct_public_doctor_profiles() -> int:
@@ -1224,7 +1247,8 @@ def list_all_doctors() -> list[dict[str, Any]]:
                 if dslug:
                     catalog_slugs.add(dslug)
 
-        for normalized in catalog_slugs:
+        # Sorted, so a profile merged across several diseases comes out the same in every process (set order varies with the hash seed).
+        for normalized in sorted(catalog_slugs):
             source, doctors = _merged_doctors_for_catalog_slug(normalized, finder_index)
             if source == "none":
                 continue

@@ -1,6 +1,5 @@
 import { useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { useGuidelinePoints } from "../hooks/useGuidelinePoints";
 import { useOpenDetailsForPrint } from "../hooks/useOpenDetailsForPrint";
 import type { GuidelinePoints } from "../types/guidelinePoints";
 
@@ -53,15 +52,4 @@ export function GuidelinePointsBlock({ block }: GuidelinePointsBlockProps) {
       <p className="dmap-ask__src">{pl ? block.sourcePl : block.sourceEn}</p>
     </div>
   );
-}
-
-export interface GeneratedGuidelinePointsProps {
-  readonly slug: string;
-}
-
-/** Fetches and shows the block; renders nothing while loading, when none is published, or on an error. */
-export function GeneratedGuidelinePoints({ slug }: GeneratedGuidelinePointsProps) {
-  const block = useGuidelinePoints(slug);
-  if (!block || block.points.length === 0) return null;
-  return <GuidelinePointsBlock block={block} />;
 }

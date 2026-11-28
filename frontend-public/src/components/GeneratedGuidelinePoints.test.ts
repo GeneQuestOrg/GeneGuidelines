@@ -81,6 +81,6 @@ describe("generated guideline points", () => {
   it("FD keeps its hand-written block; every other disease gets the generated one", () => {
     const source = readFileSync(fileURLToPath(new URL("./ParentDiseaseMap.tsx", import.meta.url)), "utf8");
     expect(source).toMatch(/\{isFd \? \(\s*<div className="dmap-ask">/);
-    expect(source).toContain("<GeneratedGuidelinePoints slug={slug} />");
+    expect(source).toContain("<GuidelinePointsBlock block={generated} />");
   });
 });

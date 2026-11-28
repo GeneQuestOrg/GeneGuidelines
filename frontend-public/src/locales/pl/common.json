@@ -130,10 +130,10 @@
     "specialists_few": "{{count}} specjalistów",
     "specialists_many": "{{count}} specjalistów",
     "specialists_other": "{{count}} specjalistów",
-    "trials_one": "{{count}} badanie kliniczne",
-    "trials_few": "{{count}} badania kliniczne",
-    "trials_many": "{{count}} badań klinicznych",
-    "trials_other": "{{count}} badań klinicznych"
+    "trials_one": "{{count}} badanie kliniczne (każdy status)",
+    "trials_few": "{{count}} badania kliniczne (każdy status)",
+    "trials_many": "{{count}} badań klinicznych (każdy status)",
+    "trials_other": "{{count}} badań klinicznych (każdy status)"
   },
   "distancePill": {
     "title": "Odległość od wybranej lokalizacji referencyjnej (miasto w ustawieniach)"

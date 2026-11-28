@@ -202,10 +202,73 @@ describe("orientation map", () => {
     );
   });
 
-  it("points step 1 of a disease without a list of tests at its summary until its questions load", () => {
+  it("points step 1 of a disease without a list of tests at its summary when it has no questions", () => {
     const html = map({ disease: noonan });
     const [step1] = cards(html);
     expect(step1).toContain('href="/diseases/noonan/guidelines"');
     expect(html).not.toContain('id="disease-questions"');
+    expect(html).toContain('class="dmap-cols dmap-cols--single"');
+  });
+
+  it("points step 1 at the generated questions beside the map once they are in", () => {
+    const html = map({ disease: noonan, pointsBlock: pointsBlock() });
+    const [step1] = cards(html);
+    expect(step1).toContain('href="#disease-questions"');
+    expect(html).toContain('id="disease-questions"');
+    expect(html).toContain('data-testid="generated-guideline-points"');
+    // An empty block is no block: no column, no button to it.
+    const empty = map({ disease: noonan, pointsBlock: { ...pointsBlock(), points: [] } });
+    expect(empty).not.toContain('id="disease-questions"');
+  });
+
+  it("holds the questions column and the buttons in their place while what decides them loads", () => {
+    const html = map({ disease: noonan, pointsLoading: true, summaryLoading: true, foundationsCount: null });
+    // Two columns from the first paint, the second saying only that it is loading.
+    expect(html).toContain('class="dmap-cols"');
+    expect(html).toContain('<section class="dmap-col dmap-col--ask dmap-col--pending" aria-busy="true"><p class="dmap-pending">Loading…</p></section>');
+    expect(html).not.toContain("Ask your doctor");
+    const [step1, , step3, step4] = cards(html);
+    for (const step of [step1, step3, step4]) {
+      expect(step).toContain('dmap-mcard__btn--pending" aria-hidden="true">');
+      expect(step).not.toContain("<a ");
+    }
+  });
+
+  it("draws the tab strip while the summary loads, and only the tabs already known", () => {
+    const html = header({ disease: noonan, synthesis: null, pointer: null, summaryLoading: true });
+    expect(html).toContain('<nav class="dmap-tabs"');
+    expect(html).toContain('href="/diseases/noonan"');
+    expect(html).not.toContain("/guidelines");
   });
 });
+
+function pointsBlock(): NonNullable<ParentDiseaseMapProps["pointsBlock"]> {
+  return {
+    basis: "reviews",
+    titleEn: "What reviews say about diagnosis – to show your doctor",
+    titlePl: "Co mówią przeglądy o rozpoznaniu – do pokazania lekarzowi",
+    noticeEn: "",
+    noticePl: "",
+    sourceEn: "Quotations are from the sources named under each point.",
+    sourcePl: "Cytaty pochodzą ze źródeł podanych przy punktach.",
+    credits: [],
+    generatedAt: "2026-11-24T00:00:00+00:00",
+    points: ["p1", "p2", "p3"].map((id) => ({
+      id,
+      quote: `Verbatim sentence ${id}.`,
+      summaryEn: `Summary ${id}.`,
+      summaryPl: `Streszczenie ${id}.`,
+      questionEn: `Question ${id}?`,
+      questionPl: `Pytanie ${id}?`,
+      section: "",
+      docId: "NBK1",
+      docTitle: "A review",
+      docYear: "2024",
+      docCitation: "Author A et al., A review",
+      docUrl: "https://www.ncbi.nlm.nih.gov/books/NBK1/",
+      docGrade: "B",
+      licence: "restricted",
+      credit: "",
+    })),
+  };
+}

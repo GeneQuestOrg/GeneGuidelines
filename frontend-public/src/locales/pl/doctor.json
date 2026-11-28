@@ -44,7 +44,7 @@
   "doctorsSub_many": "{{count}} autorów z ocenioną trafnością dla tej choroby.",
   "doctorsSub_other": "{{count}} autorów z ocenioną trafnością dla tej choroby.",
   "doctorsEmpty": "Uruchom Doctor Finder, aby wypełnić listę ekspertów.",
-  "trialsTitle": "Rekrutujące badania",
+  "trialsTitle": "Badania kliniczne",
   "trialsSub_one": "{{count}} badanie ze śledzonym statusem rekrutacji.",
   "trialsSub_few": "{{count}} badania ze śledzonym statusem rekrutacji.",
   "trialsSub_many": "{{count}} badań ze śledzonym statusem rekrutacji.",

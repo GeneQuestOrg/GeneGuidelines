@@ -83,7 +83,9 @@
 
   "noOfficialGuidelineYet": "No agreed guideline for {{disease}} yet.",
   "gateNoSourcesTitle": "We don't have a guideline for this disease yet.",
-  "gateNoSourcesBody": "There is no agreed clinical guideline for {{disease}}, and the literature we could gather is not enough to build anything honest from. We would rather tell you that plainly than show you generalities. Below are the sources we do have — and the doctors who work on this disease.",
+  "gateNoSourcesBody": "There is no agreed clinical guideline for {{disease}}, and the literature we could gather is not enough to build anything honest from. We would rather tell you that plainly than show you generalities.",
+  "gateNoSourcesBelowShelf": "Below are the sources we do have — and the doctors who work on this disease.",
+  "gateNoSourcesBelowDoctors": "Below is the way to the doctors who work on this disease.",
   "noBaselinePrefix": "No AI baseline has been assembled for this disease yet. For now,",
   "returnToOverviewLink": "return to the disease overview",
   "unverifiedBannerTitle": "You can read everything — your signal is held for now.",
@@ -119,6 +121,8 @@
   "sourceShelfTitleParent": "What this summary is based on",
   "sourceShelfTitleDefault": "Source shelf — there is no single document",
   "sourceShelfLeadParent": "The summary above combines these papers. If you prefer, read straight from the source — each opens its original.",
+  "sourceShelfTitleUnsummarised": "The sources we have",
+  "sourceShelfLeadUnsummarised": "We have not built a summary from them. Each one opens its original, so you or your doctor can read it directly.",
   "sourceShelfLeadDefault": "There is rarely a single “guideline.” This is a curated set of real documents; the synthesis summarizes them together, and every claim links to its source.",
 
   "newBadge": "NEWER",

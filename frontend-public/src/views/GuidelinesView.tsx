@@ -13,6 +13,7 @@ import { useOfficialGuideline } from "../hooks/useOfficialGuideline";
 import { useScrollToHash } from "../hooks/useScrollToHash";
 import { DiseaseHeader } from "../components/DiseaseHeader";
 import { hasGuidelineSummary } from "../components/diseaseSections";
+import { localizedDiseaseName } from "../utils/diseaseName";
 import { RolePill } from "../components/guidelines/RolePill";
 import { MachineTranslationNote } from "../components/MachineTranslationNote";
 import { GuidelineParentView } from "./GuidelineParentView";
@@ -50,6 +51,7 @@ export function GuidelinesView({
   onNav,
 }: GuidelinesViewProps) {
   const { t } = useTranslation("guidelines");
+  const { t: tSeo } = useTranslation("seo");
   const { signInAvailable, login, account } = useAccountContext();
   const { disease, loading: diseaseLoading, error: diseaseError } = useDisease(slug);
   const { synthesis, loading: synthLoading } = useGuidelineSynthesis(slug);
@@ -148,11 +150,13 @@ export function GuidelinesView({
   const hasOfficial = hasOfficialSynthesis;
 
   const versionLabel = hasOfficial ? synthesis!.version : t("versionNoGuideline");
+  // The name in the page's language where the app has one (seo.json), as the disease card above says it; otherwise the database name.
+  const diseaseName = localizedDiseaseName(slug, tSeo) ?? disease.name;
   const title = hasOfficial
     ? parentSide
-      ? t("titleWhatGuidelinesSay", { disease: disease.name })
+      ? t("titleWhatGuidelinesSay", { disease: diseaseName })
       : synthesis!.title
-    : t("titleGuidelines", { disease: disease.name });
+    : t("titleGuidelines", { disease: diseaseName });
 
   return (
     <section className="page page--gl2">
