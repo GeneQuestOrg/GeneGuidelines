@@ -83,7 +83,9 @@
 
   "noOfficialGuidelineYet": "Jeszcze nie ma uzgodnionych wytycznych dla {{disease}}.",
   "gateNoSourcesTitle": "Nie mamy jeszcze wytycznych dla tej choroby.",
-  "gateNoSourcesBody": "Nie ma uzgodnionych wytycznych klinicznych dla {{disease}}, a piśmiennictwo, które udało nam się zebrać, nie wystarcza, żeby cokolwiek rzetelnie z niego zbudować. Wolimy powiedzieć to wprost, niż pokazać Ci ogólniki. Poniżej znajdziesz źródła, które mamy — i lekarzy zajmujących się tą chorobą.",
+  "gateNoSourcesBody": "Nie ma uzgodnionych wytycznych klinicznych dla {{disease}}, a piśmiennictwo, które udało nam się zebrać, nie wystarcza, żeby cokolwiek rzetelnie z niego zbudować. Wolimy powiedzieć to wprost, niż pokazać Ci ogólniki.",
+  "gateNoSourcesBelowShelf": "Poniżej znajdziesz źródła, które mamy — i lekarzy zajmujących się tą chorobą.",
+  "gateNoSourcesBelowDoctors": "Poniżej znajdziesz drogę do lekarzy zajmujących się tą chorobą.",
   "noBaselinePrefix": "Dla tej choroby jeszcze nie zbudowano szkicu AI. Na razie",
   "returnToOverviewLink": "wróć do przeglądu choroby",
   "unverifiedBannerTitle": "Możesz czytać wszystko — Twój sygnał jest na razie wstrzymany.",
@@ -119,6 +121,8 @@
   "sourceShelfTitleParent": "Na czym oparte jest to podsumowanie",
   "sourceShelfTitleDefault": "Półka źródeł — nie ma jednego dokumentu",
   "sourceShelfLeadParent": "Podsumowanie powyżej łączy te prace. Jeśli chcesz, przeczytaj bezpośrednio źródło — każde otwiera oryginał.",
+  "sourceShelfTitleUnsummarised": "Źródła, które mamy",
+  "sourceShelfLeadUnsummarised": "Nie zbudowaliśmy z nich podsumowania. Każde otwiera oryginał, więc Ty albo Twój lekarz możecie przeczytać je bezpośrednio.",
   "sourceShelfLeadDefault": "Rzadko istnieją jedne „wytyczne”. To wyselekcjonowany zestaw prawdziwych dokumentów; synteza podsumowuje je razem, a każde stwierdzenie odsyła do swojego źródła.",
 
   "newBadge": "NOWSZE",

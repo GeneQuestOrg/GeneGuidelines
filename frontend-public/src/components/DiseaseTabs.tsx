@@ -26,6 +26,7 @@ import {
   sortDoctorsByDistanceThenScore,
 } from "../utils/doctorSort";
 import { formatDataDate, newestDataAsOf } from "../utils/dataFreshness";
+import { parseTrialsQuery, serializeTrialsQuery } from "../utils/trialsQuery";
 import "../styles/disease-page.css";
 import "../styles/doctors.css";
 
@@ -119,6 +120,10 @@ export function DiseaseTabs({
   // trials (the hook already returns active-first) and link out to the faceted
   // /trials browser for the complete, filterable set.
   const previewTrials = useMemo(() => trials.slice(0, TRIALS_PREVIEW_COUNT), [trials]);
+  const allTrialsPath = serializeTrialsQuery({
+    ...parseTrialsQuery({ disease: slug }),
+    status: "all",
+  });
 
   return (
     <>
@@ -185,10 +190,11 @@ export function DiseaseTabs({
                 <>
                   <TrialsList trials={previewTrials} />
                   <div className="page__actions">
+                    {/* The count is every trial on record for the disease, so the link opens the browser on every status; its default (recruiting) would list fewer than the button promises. */}
                     <Button
                       type="button"
                       variant="ghost"
-                      onClick={() => onNav(`/trials?disease=${slug}`)}
+                      onClick={() => onNav(allTrialsPath)}
                     >
                       {t("diseaseTabs.seeAllTrialsCount", { count: trials.length })}
                     </Button>

@@ -67,6 +67,8 @@ export interface DiseaseHeaderProps {
   /** Documents on the source shelf; the guideline page lists exactly these. */
   readonly shelfCount: number;
   readonly synthesis: GuidelineSynthesis | null;
+  /** True while `synthesis` is still loading: the tab strip is drawn with the tabs known so far, so it does not appear only once the summary's tab is known. */
+  readonly summaryLoading?: boolean;
   /** The tab of the page this header sits on; null when that page has no tab (e.g. the guideline page without a summary). */
   readonly active: DiseaseSectionId | null;
   /** `full` on the Start tab (the page's h1, lead and actions); `compact` above another tab's own content, which carries the page's h1. */
@@ -83,6 +85,7 @@ export function DiseaseHeader({
   pointer,
   shelfCount,
   synthesis,
+  summaryLoading = false,
   active,
   variant,
   actions,
@@ -205,8 +208,8 @@ export function DiseaseHeader({
         ) : null}
       </section>
 
-      {/* One tab says nothing a reader can act on, so the strip appears only once there is a second part to go to. */}
-      {tabs.length > 1 ? (
+      {/* One tab says nothing a reader can act on, so the strip appears only once there is a second part to go to — or while the summary that may add one is loading, so the page below does not move down when it arrives. */}
+      {tabs.length > 1 || summaryLoading ? (
         <nav className="dmap-tabs" aria-label={t("tabsAriaLabel")}>
           {tabs.map((tab) => {
             const current = tab.id === active;
@@ -238,7 +241,7 @@ export function DiseaseHeaderForSlug({ slug, active }: DiseaseHeaderForSlugProps
   const { disease } = useDisease(slug);
   const { pointer } = useOfficialGuideline(slug);
   const { docs } = useSourceShelf(slug);
-  const { synthesis } = useGuidelineSynthesis(slug);
+  const { synthesis, loading: synthesisLoading } = useGuidelineSynthesis(slug);
   if (disease == null) {
     return null;
   }
@@ -248,6 +251,7 @@ export function DiseaseHeaderForSlug({ slug, active }: DiseaseHeaderForSlugProps
       pointer={pointer}
       shelfCount={docs.length}
       synthesis={synthesis}
+      summaryLoading={synthesisLoading}
       active={active}
       variant="compact"
     />

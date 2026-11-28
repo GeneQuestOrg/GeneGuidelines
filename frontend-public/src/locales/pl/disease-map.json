@@ -58,6 +58,7 @@
   "askGeneratedNotice": "Wygenerowane przez AI i sprawdzone przez drugi model AI z tekstem źródła. Nikt – ani autorzy źródeł, ani lekarz – tego nie zatwierdził.",
   "askGeneratedQuoteLabel": "Ze źródła (oryginał)",
   "askKicker": "Na pierwszą rozmowę",
+  "askLoading": "Wczytywanie…",
   "askHeading": "Zapytaj lekarza",
   "step2Hook": "Nie każdy chirurg czy endokrynolog zna tę chorobę",
   "step2Title": "Tę chorobę ({{name}}) naprawdę zna tylko kilku lekarzy. Znajdź ich.",

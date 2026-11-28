@@ -1,8 +1,14 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { describe, expect, it } from "vitest";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import { afterAll, describe, expect, it } from "vitest";
+import i18n from "../i18n";
 import enGuidelines from "../locales/en/guidelines.json";
 import plGuidelines from "../locales/pl/guidelines.json";
+import type { Disease } from "../types/disease";
+import type { SourceDoc } from "../types/sourceDoc";
+import { GuidelineParentView, type GuidelineParentViewProps } from "./GuidelineParentView";
 
 /**
  * Medical-honesty guard for the family-facing guideline gate.
@@ -51,5 +57,104 @@ describe("parent guideline gate honesty", () => {
     expect(copy.gateNoSourcesBody).toMatch(/wystarcz|enough/i);
     // And it must not repeat the draft promise this test exists to remove.
     expect(copy.gateNoSourcesBody).not.toMatch(/szkic|draft/i);
+  });
+});
+
+/**
+ * The no-draft gate says what lies below it, and the page renders exactly that: the source shelf when there is one, otherwise only the way to the doctors. It said "Below are the sources we do have" over a page that rendered none.
+ */
+const noonan: Disease = {
+  slug: "noonan",
+  name: "Noonan Syndrome",
+  nameShort: "Noonan",
+  omim: "163950",
+  gene: "PTPN11",
+  inheritance: "",
+  summary: "",
+  types: [],
+  related: [],
+  prevalenceText: "",
+  status: "pending",
+  statusDate: null,
+  aiDraftDate: null,
+  openPRs: 0,
+  doctorsCount: 0,
+  trialsCount: 0,
+  coverage: "skeleton",
+  accent: "teal",
+  listed: true,
+};
+
+const doc: SourceDoc = {
+  id: "d1",
+  role: "Review",
+  pmid: "12345678",
+  title: "A review of Noonan syndrome",
+  authors: "Author A",
+  journal: "Some Journal",
+  year: 2024,
+  scope: "Diagnosis and management.",
+  covers: [],
+};
+
+function gate(props: Partial<GuidelineParentViewProps> = {}): string {
+  return renderToStaticMarkup(
+    createElement(GuidelineParentView, {
+      disease: noonan,
+      synthesis: null,
+      suggestions: [],
+      baseline: null,
+      hasOfficial: false,
+      role: "parent",
+      docs: [],
+      signInAvailable: false,
+      onSignIn: () => {},
+      onNav: () => {},
+      ...props,
+    }),
+  );
+}
+
+afterAll(async () => {
+  await i18n.changeLanguage("en");
+});
+
+describe("no-draft gate: what it promises is what renders", () => {
+  it("with shelf documents, says the sources are below and renders them, framed as unsummarised", async () => {
+    await i18n.changeLanguage("en");
+    const html = gate({ docs: [doc] });
+    expect(html).toContain(enGuidelines.gateNoSourcesBelowShelf);
+    expect(html).toContain('<section class="srcshelf" id="source-shelf">');
+    expect(html).toContain("A review of Noonan syndrome");
+    expect(html).toContain(enGuidelines.sourceShelfTitleUnsummarised);
+    // The parent framing speaks of a summary above, which this page does not have.
+    expect(html).not.toContain(enGuidelines.sourceShelfTitleParent);
+    expect(html).not.toContain(enGuidelines.sourceShelfLeadParent);
+  });
+
+  it("without shelf documents, promises only the doctors and renders no shelf", async () => {
+    await i18n.changeLanguage("en");
+    const html = gate();
+    expect(html).toContain(enGuidelines.gateNoSourcesBelowDoctors);
+    expect(html).not.toContain(enGuidelines.gateNoSourcesBelowShelf);
+    expect(html).not.toContain("srcshelf");
+    expect(html).toContain("Find a specialist");
+  });
+
+  it("with a draft, keeps the draft gate and no shelf below it", async () => {
+    await i18n.changeLanguage("en");
+    const html = gate({ docs: [doc], baseline: { readState: { read: false, note: "x" } } as GuidelineParentViewProps["baseline"] });
+    expect(html).not.toContain("srcshelf");
+    expect(html).not.toContain(enGuidelines.gateNoSourcesBelowShelf);
+  });
+
+  it.each([
+    ["en", enGuidelines as Record<string, string>, /below/i, /source/i],
+    ["pl", plGuidelines as Record<string, string>, /poniżej/i, /źródł/i],
+  ])("%s: the reason promises nothing below, and the doctors-only line names no sources", (_lang, copy, below, sources) => {
+    expect(copy.gateNoSourcesBody).not.toMatch(below);
+    expect(copy.gateNoSourcesBelowShelf).toMatch(sources);
+    expect(copy.gateNoSourcesBelowDoctors).not.toMatch(sources);
+    expect(copy.sourceShelfLeadUnsummarised).not.toMatch(/above|powyżej/i);
   });
 });

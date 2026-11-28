@@ -124,8 +124,8 @@
   "diseaseCard": {
     "specialists_one": "{{count}} specialist",
     "specialists_other": "{{count}} specialists",
-    "trials_one": "{{count}} trial",
-    "trials_other": "{{count}} trials"
+    "trials_one": "{{count}} trial (any status)",
+    "trials_other": "{{count}} trials (any status)"
   },
   "distancePill": {
     "title": "Distance from your selected reference location (city in settings)"

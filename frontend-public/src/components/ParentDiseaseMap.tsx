@@ -3,10 +3,10 @@ import { useTranslation } from "react-i18next";
 import type { Disease } from "../types";
 import { PRE_DIAGNOSIS_INTERVIEW_ENABLED } from "../config/features";
 import { withCurrentLocale } from "../router/locale";
-import { useGuidelinePoints } from "../hooks/useGuidelinePoints";
 import { useOpenDetailsForPrint } from "../hooks/useOpenDetailsForPrint";
 import type { ListingLink } from "../hooks/useListingLinks";
-import { GeneratedGuidelinePoints } from "./GeneratedGuidelinePoints";
+import type { GuidelinePoints } from "../types/guidelinePoints";
+import { GuidelinePointsBlock } from "./GeneratedGuidelinePoints";
 import { PARENT_PAGE_ANCHORS } from "./parentPageAnchors";
 import { FD_TEST_ROW_COUNT, diseaseSectionPath, hasTestsSheet } from "./diseaseSections";
 import "../styles/disease-map.css";
@@ -33,11 +33,14 @@ interface StepAction {
   readonly onClick?: () => void;
 }
 
+/** A step whose button depends on data still loading: its place is held, empty, so the cards below do not move when the button arrives. */
+const PENDING = "pending";
+
 interface MapStepProps {
   readonly n: number;
   readonly hook: string;
   readonly title: string;
-  readonly action: StepAction | null;
+  readonly action: StepAction | typeof PENDING | null;
   readonly id?: string;
 }
 
@@ -50,7 +53,11 @@ function MapStep({ n, hook, title, action, id }: MapStepProps) {
       <div className="dmap-mcard__body">
         <p className="dmap-mcard__hook">{hook}</p>
         <h3 className="dmap-mcard__title">{title}</h3>
-        {action != null ? (
+        {action === PENDING ? (
+          <span className="dmap-btn dmap-mcard__btn dmap-mcard__btn--pending" aria-hidden="true">
+            {"\u00a0"}
+          </span>
+        ) : action != null ? (
           <a className="dmap-btn dmap-mcard__btn" href={action.href} onClick={action.onClick}>
             {action.label}
             {action.count != null && action.count > 0 ? (
@@ -88,6 +95,12 @@ export interface ParentDiseaseMapProps {
   readonly trials: ListingLink;
   /** Foundations listed in their section below the map; null while loading, 0 when none (no section, no button). */
   readonly foundationsCount: number | null;
+  /** True while the AI summary is still loading: the buttons that point at it hold their place. */
+  readonly summaryLoading?: boolean;
+  /** The generated questions block (every disease but FD); null while it loads or when none is published. */
+  readonly pointsBlock?: GuidelinePoints | null;
+  /** True while the generated questions block is loading: its column is held at its final width. */
+  readonly pointsLoading?: boolean;
 }
 
 /**
@@ -103,19 +116,24 @@ export function ParentDiseaseMap({
   doctors,
   trials,
   foundationsCount,
+  summaryLoading = false,
+  pointsBlock = null,
+  pointsLoading = false,
 }: ParentDiseaseMapProps) {
   const { t } = useTranslation("disease-map");
   const slug = disease.slug;
   const isFd = slug === "fd";
   const nameShort = disease.nameShort || disease.name;
-  const pointsBlock = useGuidelinePoints(slug, !isFd);
   const askColumn = useRef<HTMLElement>(null);
   useOpenDetailsForPrint(askColumn);
-  const hasQuestions = isFd || pointsBlock != null;
+  const generated = !isFd && pointsBlock != null && pointsBlock.points.length > 0 ? pointsBlock : null;
+  const hasQuestions = isFd || generated != null;
+  // FD's questions are written into the page; another disease's arrive with their request, and until then their column is held rather than added later.
+  const questionsPending = !isFd && pointsLoading;
   const guidelinesPath = withCurrentLocale(diseaseSectionPath(slug, "guidelines"));
 
   // Step 1 leads to what settles a diagnosis: FD's list of tests; elsewhere the questions beside the map, or the summary when there are none.
-  const step1: StepAction | null = hasTestsSheet(slug)
+  const step1: StepAction | typeof PENDING | null = hasTestsSheet(slug)
     ? {
         href: withCurrentLocale(diseaseSectionPath(slug, "tests")),
         label: t("tabTests"),
@@ -123,29 +141,35 @@ export function ParentDiseaseMap({
       }
     : hasQuestions
       ? { href: `#${PARENT_PAGE_ANCHORS.questions}`, label: t("step1CtaQuestions") }
-      : hasSummary
-        ? { href: guidelinesPath, label: t("step1CtaConfirm") }
+      : questionsPending || summaryLoading
+        ? PENDING
+        : hasSummary
+          ? { href: guidelinesPath, label: t("step1CtaConfirm") }
+          : null;
+
+  const step3: StepAction | typeof PENDING = summaryLoading
+    ? PENDING
+    : hasSummary
+      ? { href: guidelinesPath, label: t("tabGuidelines") }
+      : officialOnPage
+        ? { href: `#${PARENT_PAGE_ANCHORS.guideline}`, label: t("step3CtaOfficial"), below: true }
+        : { href: guidelinesPath, label: t("step3CtaSeeFar") };
+
+  const step4: StepAction | typeof PENDING | null =
+    foundationsCount == null
+      ? PENDING
+      : foundationsCount > 0
+        ? {
+            href: `#${PARENT_PAGE_ANCHORS.foundations}`,
+            label: t("step4Cta"),
+            count: foundationsCount,
+            below: true,
+            onClick: openSection(PARENT_PAGE_ANCHORS.foundations),
+          }
         : null;
 
-  const step3: StepAction = hasSummary
-    ? { href: guidelinesPath, label: t("tabGuidelines") }
-    : officialOnPage
-      ? { href: `#${PARENT_PAGE_ANCHORS.guideline}`, label: t("step3CtaOfficial"), below: true }
-      : { href: guidelinesPath, label: t("step3CtaSeeFar") };
-
-  const step4: StepAction | null =
-    foundationsCount != null && foundationsCount > 0
-      ? {
-          href: `#${PARENT_PAGE_ANCHORS.foundations}`,
-          label: t("step4Cta"),
-          count: foundationsCount,
-          below: true,
-          onClick: openSection(PARENT_PAGE_ANCHORS.foundations),
-        }
-      : null;
-
   return (
-    <div className={`dmap-cols${hasQuestions ? "" : " dmap-cols--single"}`}>
+    <div className={`dmap-cols${hasQuestions || questionsPending ? "" : " dmap-cols--single"}`}>
       <section className="dmap-col" aria-labelledby="dmap-map-title">
         <p className="dmap-kicker">{t("introKicker")}</p>
         <h2 id="dmap-map-title" className="dmap-h2">
@@ -254,10 +278,15 @@ export function ParentDiseaseMap({
               </ol>
               <p className="dmap-ask__src">{t("askSource")}</p>
             </div>
-          ) : (
+          ) : generated != null ? (
             // Every other disease shows the block the guideline-points loop generated and checked (backend/guidelines/points/), or nothing when none was published. FD keeps the hand-written block above, which is also the generator's worked example.
-            <GeneratedGuidelinePoints slug={slug} />
-          )}
+            <GuidelinePointsBlock block={generated} />
+          ) : null}
+        </section>
+      ) : questionsPending ? (
+        // Held at the column's final width while the block loads; says nothing about what will be in it, since there may be nothing.
+        <section className="dmap-col dmap-col--ask dmap-col--pending" aria-busy="true">
+          <p className="dmap-pending">{t("askLoading")}</p>
         </section>
       ) : null}
     </div>

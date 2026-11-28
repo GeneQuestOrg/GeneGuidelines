@@ -4,10 +4,12 @@ test.describe("public home → disease flow", () => {
   test("opens FD: disease card, tab links, map beside the questions, tests tab", async ({ page }) => {
     await page.goto("/");
 
-    await expect(page.getByRole("heading", { level: 1 })).toContainText(/families|guidelines/i);
+    await expect(page.getByRole("heading", { level: 1 })).toContainText(/knowledge already exists/i);
 
-    const fdCard = page.getByRole("link", { name: /Fibrous Dysplasia/i });
+    // The FD card by its href: MAS's card also says "fibrous dysplasia" in its summary.
+    const fdCard = page.locator('a.d-card[href="/diseases/fd"]');
     await expect(fdCard).toBeVisible();
+    await expect(fdCard.getByRole("heading", { level: 3 })).toHaveText(/Fibrous Dysplasia/i);
     await fdCard.click();
 
     await expect(page).toHaveURL(/\/diseases\/fd$/);

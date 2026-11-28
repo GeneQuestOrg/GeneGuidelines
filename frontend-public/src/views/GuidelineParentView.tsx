@@ -92,6 +92,8 @@ export function GuidelineParentView({
   // to prevent, just moved one screen along. `baseline` is settled by here — the
   // parent view waits on baselineLoading — so null means genuinely absent.
   const noDraft = baseline == null;
+  // With no draft, the gate says what lies below it, and that is exactly what renders: the shelf when there is one, else only the way to the doctors.
+  const shelfBelowGate = noDraft && docs.length > 0;
   if (!hasOfficial) {
     return (
       <>
@@ -119,6 +121,12 @@ export function GuidelineParentView({
             {noDraft
               ? t("gateNoSourcesBody", { disease: disease.name.toLowerCase() })
               : t("gateBody", { disease: disease.name.toLowerCase() })}
+            {noDraft ? (
+              <>
+                {" "}
+                {shelfBelowGate ? t("gateNoSourcesBelowShelf") : t("gateNoSourcesBelowDoctors")}
+              </>
+            ) : null}
           </p>
           {noDraft ? null : (
             <span className={`gx-gate__read${readState.read ? " read" : ""}`}>
@@ -136,6 +144,9 @@ export function GuidelineParentView({
             </Button>
           </div>
         </div>
+        {shelfBelowGate ? (
+          <SourceShelf docs={docs} parent unsummarised id={GUIDELINE_PAGE_ANCHORS.sourceShelf} />
+        ) : null}
       </>
     );
   }

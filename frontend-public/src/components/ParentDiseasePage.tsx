@@ -9,6 +9,7 @@ import { withCurrentLocale } from "../router/locale";
 import { useGuidelineSynthesis } from "../hooks/useGuidelineSynthesis";
 import { useDiseaseFoundations } from "../hooks/useDiseaseFoundations";
 import { useDiseaseTherapies } from "../hooks/useDiseaseTherapies";
+import { useGuidelinePoints } from "../hooks/useGuidelinePoints";
 import { useListingLinks } from "../hooks/useListingLinks";
 import { useScrollToHash } from "../hooks/useScrollToHash";
 import { trackEvent } from "../utils/analytics";
@@ -80,18 +81,20 @@ export function ParentDiseasePage({
   const slug = disease.slug;
   const isFd = slug === "fd";
   const withTests = hasTestsSheet(slug);
-  const { synthesis } = useGuidelineSynthesis(slug);
+  const { synthesis, loading: synthesisLoading } = useGuidelineSynthesis(slug);
+  // FD's questions are written into the page; every other disease's come from the guideline-points loop.
+  const { points: pointsBlock, loading: pointsLoading } = useGuidelinePoints(slug, !isFd);
   const { foundations, loading: foundationsLoading } = useDiseaseFoundations(slug);
   const { therapies, loading: therapiesLoading } = useDiseaseTherapies(slug);
-  const listings = useListingLinks(slug);
+  const listings = useListingLinks(disease);
   // Old links to #disease-foundations / #disease-therapies open their section once it exists.
   useScrollToHash(!foundationsLoading && !therapiesLoading);
 
   const hasSources = sourceDocs.length > 0;
   const hasGuideline = hasSources || officialPointer != null;
   const hasSummary = hasGuidelineSummary(synthesis);
-  // Without a summary to link to, the official guideline is shown here (as before the redesign).
-  const officialOnPage = !hasSummary && officialPointer != null;
+  // Without a summary to link to, the official guideline is shown here (as before the redesign). Not while the summary is still loading, or the block would flash below the map and vanish.
+  const officialOnPage = !synthesisLoading && !hasSummary && officialPointer != null;
   const orientation = copy.orientation;
   const notifyLabel =
     subscriptionStatus === "confirmed"
@@ -128,6 +131,7 @@ export function ParentDiseasePage({
         pointer={officialPointer}
         shelfCount={sourceDocs.length}
         synthesis={synthesis}
+        summaryLoading={synthesisLoading}
         active="start"
         variant="full"
         actions={actions}
@@ -151,6 +155,9 @@ export function ParentDiseasePage({
           doctors={listings.doctors}
           trials={listings.trials}
           foundationsCount={foundationsLoading ? null : foundations.length}
+          summaryLoading={synthesisLoading}
+          pointsBlock={pointsBlock}
+          pointsLoading={pointsLoading}
         />
       </div>
       {/* Renders nothing while case uploads are switched off (config/features.ts). */}
