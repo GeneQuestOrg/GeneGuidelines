@@ -10,6 +10,7 @@ from __future__ import annotations
 import hashlib
 import json
 import sys
+import textwrap
 from pathlib import Path
 from typing import Any
 
@@ -23,6 +24,9 @@ from backend.guidelines.points.bricks.summary_en import SummaryOutput
 from backend.guidelines.points.bricks.translate_pl import PolishOutput
 
 from .common import REPO_ROOT
+
+# Longest line of a documents file written for an agent (a tool limit, not a limit on content).
+MAX_LINE = 1500
 
 RESULT_TYPES: dict[str, type[BaseModel]] = {cls.__name__: cls for cls in (DocumentReading, CoverageReview, CheckerOutput, SummaryOutput, QuestionOutput, PolishOutput)}
 
@@ -78,6 +82,14 @@ def _digest(*parts: str) -> str:
     return h.hexdigest()[:16]
 
 
+def _wrapped(text: str) -> str:
+    """The same text with long lines broken at spaces: a file-reading tool may cut a line of several thousand characters, and the checks compare text with whitespace normalised."""
+    lines: list[str] = []
+    for line in text.split("\n"):
+        lines.extend(textwrap.wrap(line, MAX_LINE, break_long_words=False, break_on_hyphens=False) if len(line) > MAX_LINE else [line])
+    return "\n".join(lines)
+
+
 class AgentFileCaller:
     """One model role answered through files in ``work``; ``model`` is the agent's model name (``sonnet`` or ``opus``)."""
 
@@ -105,8 +117,8 @@ class AgentFileCaller:
         if prefix:
             documents_path = self.work / f"documents-{_digest(prefix)}.txt"
             if not documents_path.is_file():
-                documents_path.write_text(prefix, encoding="utf-8")
-            documents = f"The documents are in this file. Read the whole file, to its last line, before you answer (it is long: read it in consecutive parts, and do not search it or skim it instead of reading it):\n\n{documents_path}"
+                documents_path.write_text(_wrapped(prefix), encoding="utf-8")
+            documents = f"The documents are in this file. Read the whole file, to its last line, before you answer (it is long: read it in consecutive parts, and do not search it or skim it instead of reading it). Paragraphs are separated by blank lines; a long paragraph runs over several lines.\n\n{documents_path}"
         request_json = self.work / "requests" / f"{key}.json"
         request_json.write_text(json.dumps({"key": key, "role": role, "model": self.model, "result_type": result_type.__name__, "answer_path": str(answer_path)}), encoding="utf-8")
         request_md = self.work / "requests" / f"{key}.md"
