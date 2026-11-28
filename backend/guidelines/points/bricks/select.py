@@ -2,7 +2,7 @@
 
 The writer (Sonnet) reads the whole documents and points at places: a paragraph and a short phrase that occurs once in it, with the reason the family needs it. It copies no passage; code reads the text from the location, so a quote can never be invented here. Code checks each location. The checker (Opus, a different model on purpose: selection is where generated blocks have failed before) reads the documents too and names what is missing and what should go.
 
-No number of points is asked for or enforced: a statement belongs when the writer can name what goes wrong for the family without it, and the checker agrees.
+No number of points is asked for or enforced: a statement belongs when the writer can name the decision about the diagnosis it changes, and the checker agrees. The checker removes as readily as it adds: the first run of this brick, with a wider scope, put 57 points in the FD block (lab README, 2026-11-28).
 """
 
 from __future__ import annotations
@@ -20,36 +20,41 @@ from .documents import READER_SYSTEM, DocumentReading, Location
 
 log = logging.getLogger(__name__)
 
-SCOPE = """The block covers what a family needs to know at diagnosis or soon after: how the diagnosis is made or confirmed; which tests are used, when, and what their results can and cannot show; which procedures (a biopsy, a genetic test, imaging) are or are not needed, and what must be done or avoided if one is done; what is evaluated at or soon after diagnosis, in each organ system the documents name. It leaves out treatment, long-term follow-up, prognosis, mechanism and research, unless a statement is about the initial evaluation."""
+SCOPE = """The block is about establishing the diagnosis, and nothing else:
+- how the diagnosis is made, and when it is certain without further tests;
+- which test confirms it when it is not certain, and what a result can and cannot show (a negative result that does not rule the disease out, a result that depends on the tissue tested or on how the sample was handled);
+- whether a procedure (a biopsy, an operation, an invasive test) is needed to make the diagnosis, when it is not needed, when it must be avoided, and how it must be done for the test to be possible;
+- what has to be established together with the diagnosis for it to be complete (the subtype, or how far the disease extends), where a document states that as part of making the diagnosis.
+A statement belongs only when it changes a decision of this kind. The work-up that follows a diagnosis (each organ system's tests, imaging protocols, reference values), monitoring, treatment, prognosis, mechanism, family counselling and research do not belong, even when they are done soon after the diagnosis. Most of any guideline does not belong in this block."""
 
 SELECT_TASK = """Task: selection. Disease: {disease}.
 
 {scope}
 
-Find every statement in the documents that belongs in this block. For each, give its location: the document id, the paragraph number (¶n), and an anchor: the shortest phrase, copied word for word from that paragraph, that occurs only once in it and picks out the statement. A paragraph can hold several statements; give one location for each. Give the reason: what goes wrong for the family if they do not know it. A statement belongs only if you can name such a consequence; a statement that changes a decision (whether a test can rule the disease out, how a sample must be handled, whether a procedure is needed at all) matters most and is the easiest to miss.
+Find every statement in the documents that belongs in this block. For each, give its location: the document id, the paragraph number (¶n), and an anchor: the shortest phrase, copied word for word from that paragraph, that occurs only once in it and picks out the statement. A paragraph can hold several statements; give one location for each. Give the reason: the decision about the diagnosis that the statement changes, and what goes wrong for the family if they do not know it. If you cannot name the decision, the statement does not belong.
 
 Prefer the strongest document: when a grade A document says it, locate it there; use grade B or C only for what no grade A document covers, and a newer document over an older one of the same grade. Locate each statement once. Use only documents about this disease.
 
-List the locations in the order a family meets them: how the diagnosis is reached, then confirming tests and what their results mean, then invasive procedures, then the evaluation that follows diagnosis.
+List the locations in the order a family meets them: how the diagnosis is reached, then confirming tests and what their results mean, then invasive procedures, then what completes the diagnosis (the subtype or the extent).
 
 Fill `locations`; leave `quotes` empty.{examples}"""
 
-COVERAGE_SYSTEM = """You check the selection for one block of a web page for parents of a child with a rare disease: "What the guideline says about diagnosis – to show your doctor". Another model chose statements from guideline-grade documents; you did not. Selection is where this block has failed before: the statement a family most needs is often the one that changes a decision (what a negative test cannot rule out, how a biopsy sample must be handled), and it is the easiest to miss.
+COVERAGE_SYSTEM = """You check the selection for one block of a web page for parents of a child with a rare disease: "What the guideline says about diagnosis – to show your doctor". Another model chose statements from guideline-grade documents; you did not. A selection fails in two ways. It can leave out a statement that changes a decision (what a negative test cannot rule out, how a sample must be handled, when a procedure is not needed): those are the easiest to miss. And it can bury such statements among items of the work-up that change no decision about the diagnosis: a block that lists everything helps nobody. Remove as readily as you add.
 
 {scope}
 
 The documents come first, with numbered paragraphs (¶n); then the selected statements, each with its id, location, the paragraph's text and the reason given.
 
 Return:
-1. missing: every statement in the documents that belongs and is not selected, each as a location (document id, paragraph number, an anchor copied word for word that occurs only once in that paragraph) with the reason a family needs it. Prefer a grade A document. Do not repeat a selected statement. An empty list is a good answer when nothing is missing; do not add a statement just to have one.
-2. unsupported: selected statements to remove, with the id and why: the paragraph does not say what the reason claims, the statement is outside the scope above, the document is about another disease, or the same statement is selected twice (remove the weaker location)."""
+1. missing: every statement in the documents that belongs by the scope above and is not selected, each as a location (document id, paragraph number, an anchor copied word for word that occurs only once in that paragraph) with the reason: the decision about the diagnosis it changes, and what goes wrong for the family without it. Prefer a grade A document. Do not repeat a selected statement. An empty list is a good answer when nothing is missing; do not add a statement just to have one.
+2. unsupported: selected statements to remove, with the id and why: the statement changes no decision about the diagnosis (an item of the work-up, a technique or a reference value, follow-up, treatment), the paragraph does not say what the reason claims, the document is about another disease, or the same statement is selected twice (remove the weaker location)."""
 
 
 class Unsupported(BaseModel):
     model_config = ConfigDict(extra="ignore", str_strip_whitespace=True)
 
     id: str = Field(..., description="id of the selected statement to remove")
-    why: str = Field(..., description="why it should not be in the block, in one sentence")
+    why: str = Field(..., description="why it should not be in the block")
 
 
 class CoverageReview(BaseModel):

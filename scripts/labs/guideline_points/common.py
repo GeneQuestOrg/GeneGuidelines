@@ -70,8 +70,14 @@ class LabBudget:
         return self.ledger.spent
 
     def reserve(self, model: str, prompt_chars: int, max_tokens: int) -> float:
+        from backend.guidelines.points.llm import BudgetExceeded
+
         amount = worst_case_cost(model, prompt_chars, max_tokens)
-        self.ledger.reserve(amount)
+        try:
+            self.ledger.reserve(amount)
+        except LabError as exc:
+            # The product's caller records a refused call and the run is saved as stopped by its budget, instead of the process dying with the run's spend unrecorded.
+            raise BudgetExceeded(str(exc)) from exc
         return amount
 
     def settle(self, ticket: float, model: str, usage: dict, role: str, error: str | None) -> float | None:

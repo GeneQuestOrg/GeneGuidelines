@@ -31,7 +31,7 @@ class Location(BaseModel):
     doc_id: str = Field(..., description="id of the document, exactly as in its <document id=...> tag")
     paragraph: int = Field(..., description="the paragraph number shown as ¶n in that document")
     anchor: str = Field(..., description="the shortest phrase, copied word for word from that paragraph, that occurs only once in it and picks out the statement")
-    reason: str = Field(..., description="what goes wrong for the family if they do not know this statement, in one sentence")
+    reason: str = Field(..., description="the decision about the diagnosis this statement changes, and what goes wrong for the family if they do not know it")
 
 
 class QuotedPassage(BaseModel):

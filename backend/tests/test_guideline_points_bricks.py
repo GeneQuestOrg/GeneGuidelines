@@ -256,3 +256,38 @@ def test_the_local_budget_refuses_past_its_cap():
     budget = LocalBudget(0.01)
     with pytest.raises(BudgetExceeded):
         budget.reserve("claude-opus-5-5", 100_000, 24_000)
+
+
+def test_an_agent_operated_call_stops_at_the_first_unanswered_request_and_replays_its_answer(tmp_path):
+    import asyncio
+
+    import pytest
+
+    from backend.guidelines.points.bricks.summary_en import SummaryOutput
+    from scripts.labs.guideline_points.agent_caller import AgentFileCaller, NeedAnswer, check_answer
+
+    caller = AgentFileCaller("sonnet", tmp_path)
+    ask = {"role": "summary_en", "system": "s", "prefix": "the documents", "user": "u", "result_type": SummaryOutput}
+    with pytest.raises(NeedAnswer) as stopped:
+        asyncio.run(caller.call(**ask))
+    request = stopped.value.request_path
+    assert "the documents" in next(tmp_path.glob("documents-*.txt")).read_text() and str(tmp_path / "answers") in request.read_text()
+    request_json = request.with_suffix(".json")
+    assert check_answer(request_json) is not None  # nothing written yet
+    answer = tmp_path / "answers" / f"{stopped.value.key}.json"
+    answer.write_text('{"items": "not a list"}')
+    assert check_answer(request_json) is not None
+    with pytest.raises(NeedAnswer):  # an answer that does not parse is set aside and asked for again
+        asyncio.run(caller.call(**ask))
+    answer.write_text('{"items": [{"id": "p1", "summary_en": "A summary."}]}')
+    assert check_answer(request_json) is None
+    output, record = asyncio.run(caller.call(**ask))
+    assert output.items[0].summary_en == "A summary." and record["ok"] and record["error"] is None and record["cost_usd_total"] == 0.0
+
+
+def test_the_stricter_fd_reading_gives_each_hand_written_point_a_point_of_its_own():
+    from scripts.labs.guideline_points.bricks_lab import _gold_sentences, _matched
+
+    assert _matched({1: {"a"}, 2: {"a"}, 3: {"b", "a"}}) in ([1, 3], [2, 3])  # one point cannot count for two
+    assert _matched({1: {"a", "b"}, 2: {"a"}}) == [1, 2]
+    assert _gold_sentences("First one. Second cut short…") == ["first one."]

@@ -26,8 +26,9 @@ from backend.guidelines.points.pipeline import build_bricks_block
 from backend.guidelines.points.prompts import worked_example
 from backend.guidelines.points.quote_check import DocIndex, normalize, passage_problem
 
+from .agent_caller import AgentFileCaller, NeedAnswer
 from .checks import disease_inputs
-from .common import CASES_DIR, LabBudget, now_iso, write_json
+from .common import CASES_DIR, LabBudget, git_state, now_iso, source_hashes, write_json
 from .gold import FD_GUIDELINE_DOC, gold_points, verifier_controls
 from .snapshot import load_disease
 
@@ -43,6 +44,8 @@ CHECKER_CONTROLS = {
 }
 CHECKER_SYSTEMS = {"quote": QUOTE_CHECK_SYSTEM, "summary_en": SUMMARY_CHECK_SYSTEM, "question_en": QUESTION_CHECK_SYSTEM, "translate_pl": POLISH_CHECK_SYSTEM}
 MAS_ENDOCRINE = re.compile(r"endocrin|thyroid|pituitar|growth hormone|gonad|pubert|adrenal|cortisol|phosphat|FGF23", re.I)
+# The stricter reading (amendment of 2026-11-28): the bare word "endocrine" in a quote is not enough; the quote names a gland, a hormone or a test, or the section is an endocrine one.
+MAS_ORGAN = re.compile(r"thyroid|pituitar|growth hormone|gonad|pubert|adrenal|cortisol|phosphat|FGF23|ovar|testi", re.I)
 
 
 def _spec(base: str, effort: str | None) -> str:
@@ -138,8 +141,30 @@ def _regression() -> dict[str, Any]:
     return json.loads((CASES_DIR / "regression_points.json").read_text(encoding="utf-8"))
 
 
+def _gold_sentences(quote: str) -> list[str]:
+    """The complete sentences of a hand-written quote, normalised; a sentence cut by '…' is left out."""
+    return [normalize(part) for part in re.split(r"(?<=[.!?])\s+(?=[A-Z])", quote.strip()) if part and "…" not in part]
+
+
+def _matched(edges: dict[int, set[str]]) -> list[int]:
+    """The gold points that can each be given a point of their own (maximum bipartite matching), so one long quote never counts for two."""
+    owner: dict[str, int] = {}
+
+    def assign(gold: int, seen: set[str]) -> bool:
+        for point_id in sorted(edges[gold]):
+            if point_id in seen:
+                continue
+            seen.add(point_id)
+            if point_id not in owner or assign(owner[point_id], seen):
+                owner[point_id] = gold
+                return True
+        return False
+
+    return sorted(gold for gold in edges if assign(gold, set()))
+
+
 def measure(slug: str, raw: dict[str, Any]) -> dict[str, Any]:
-    """The registered measures of one run, from its record: FD recall against the hand-written block, the regression points, the MAS topic."""
+    """The measures of one run, from its record: FD recall against the hand-written block (the registered rule, and the stricter one of 2026-11-28), the regression points, the MAS topic."""
     selected = {s["id"]: s for s in raw.get("selected") or []}
     accepted = raw.get("accepted") or []
     result: dict[str, Any] = {"accepted": len(accepted), "selected": len(selected)}
@@ -152,6 +177,11 @@ def measure(slug: str, raw: dict[str, Any]) -> dict[str, Any]:
         result["fd_final_hits"] = hits([p["id"] for p in accepted if p["id"] in selected])
         result["fd_selected_hits"] = hits(list(selected))
         result["fd_ok"] = len(result["fd_final_hits"]) >= 5
+        # Stricter: the point quotes the FD/MAS consensus, its quote holds a whole sentence of the hand-written quote, and each hand-written point needs a point of its own.
+        sentences = {n: _gold_sentences(p.quote) for n, p in enumerate(gold_points(), 1)}
+        edges = {n: {p["id"] for p in accepted if p["doc_id"] == FD_GUIDELINE_DOC and any(s in normalize(p["quote"]) for s in sentences[n])} for n in sentences}
+        result["fd_strict_hits"] = _matched(edges)
+        result["fd_strict_ok"] = len(result["fd_strict_hits"]) >= 5
     spec = _regression()
     found = {}
     for point in [p for p in spec["points"] if p["disease"] == slug]:
@@ -161,8 +191,23 @@ def measure(slug: str, raw: dict[str, Any]) -> dict[str, Any]:
         )
     if slug == "mas":
         found["mas-endocrine"] = any(MAS_ENDOCRINE.search(p.get("section", "")) or MAS_ENDOCRINE.search(p.get("quote", "")) for p in accepted)
+        found["mas-endocrine-strict"] = any(MAS_ENDOCRINE.search(p.get("section", "")) or MAS_ORGAN.search(p.get("quote", "")) for p in accepted)
     result["regression"] = found
     return result
+
+
+def _save_run(path: Path, *, slug: str, repeat: int, started: str, record: Any, selected: list[Any], notes: list[str], held_out: bool, caller: str) -> dict[str, Any]:
+    """Write one finished run with its measures and the code it ran on; returns the measures."""
+    block = build_published_block({"publish": record.raw["publish"], "accepted": list(record.accepted)}, selected)
+    measures = measure(slug, record.raw)
+    commit, dirty = git_state()
+    write_json(path, {
+        "slug": slug, "repeat": repeat, "started_at": started, "finished_at": now_iso(), "example_held_out": held_out, "caller": caller,
+        "git": {"commit": commit, "dirty": dirty}, "sources": source_hashes(),
+        "selected_documents": [d.doc_id for d in selected], "selection_notes": notes, "outcome": record.outcome.value, "clean": record.clean,
+        "cost_usd": record.cost_usd, "measures": measures, "record": record.raw, "block": block,
+    })
+    return measures
 
 
 async def run(snapshot: str, out: Path, *, api_key: str, cap: float, repeats: int, only: list[str] | None) -> int:
@@ -180,15 +225,36 @@ async def run(snapshot: str, out: Path, *, api_key: str, cap: float, repeats: in
                 continue
             started = now_iso()
             record = await build_bricks_block(disease_name=data["name"], docs=selected, writer=writer, checker=checker, example=example)
-            block = build_published_block({"publish": record.raw["publish"], "accepted": list(record.accepted)}, selected)
-            measures = measure(slug, record.raw)
-            write_json(path, {
-                "slug": slug, "repeat": repeat, "started_at": started, "finished_at": now_iso(), "example_held_out": example is None,
-                "selected_documents": [d.doc_id for d in selected], "selection_notes": notes, "outcome": record.outcome.value, "clean": record.clean,
-                "cost_usd": record.cost_usd, "measures": measures, "record": record.raw, "block": block,
-            })
+            measures = _save_run(path, slug=slug, repeat=repeat, started=started, record=record, selected=selected, notes=notes, held_out=example is None, caller="api")
             print(f"{slug} r{repeat}: {record.outcome.value}, {measures['accepted']} points, ${record.cost_usd:.2f} (ledger ${budget.spent:.2f}), {json.dumps({k: v for k, v in measures.items() if k not in ('accepted', 'selected')})}")
+            if record.budget_hit:
+                print("stopped: the ledger's cap refused a call")
+                return 2
     return 0
+
+
+async def agent_step(snapshot: str, out: Path, *, only: list[str] | None, repeat: int) -> int:
+    """One step of the agent-operated runs (see agent_caller.py): replay each disease's run up to the first call without an answer and print its request, or finish and save the run. No API call is made."""
+    out = out.resolve()  # the request files name their paths for an agent that may run from another directory
+    out.mkdir(parents=True, exist_ok=True)
+    waiting = 0
+    for slug in [s for s in BRICK_DISEASES if not only or s in only]:
+        path = out / f"{slug}-r{repeat}.json"
+        if path.is_file():
+            print(f"DONE {slug} r{repeat}")
+            continue
+        data, docs, selected, notes = disease_inputs(snapshot, slug)
+        example = None if slug in HELD_OUT else worked_example()
+        work = out / "agent" / f"{slug}-r{repeat}"
+        try:
+            record = await build_bricks_block(disease_name=data["name"], docs=selected, writer=AgentFileCaller("sonnet", work), checker=AgentFileCaller("opus", work), example=example)
+        except NeedAnswer as need:
+            waiting += 1
+            print(f"REQUEST {slug} r{repeat} {need.model} {need.role} {need.request_path}")
+            continue
+        measures = _save_run(path, slug=slug, repeat=repeat, started=now_iso(), record=record, selected=selected, notes=notes, held_out=example is None, caller="agent")
+        print(f"DONE {slug} r{repeat}: {record.outcome.value}, {measures['accepted']} points, {json.dumps({k: v for k, v in measures.items() if k not in ('accepted', 'selected')})}")
+    return 3 if waiting else 0
 
 
 def report(out: Path) -> Path:
@@ -203,10 +269,14 @@ def report(out: Path) -> Path:
         hits = [len(r["measures"]["fd_final_hits"]) for r in fd]
         lines.append(f"- FD, hand-written points found in the final block (at least 5 of 6 in every run): {hits} → {'PASS' if len(fd) >= 3 and all(h >= 5 for h in hits) else 'FAIL'}")
         lines.append(f"  - found already at selection: {[len(r['measures']['fd_selected_hits']) for r in fd]}")
+        strict = [len(r["measures"].get("fd_strict_hits", [])) for r in fd]
+        lines.append(f"  - stricter reading (a point of its own from the consensus, holding a whole sentence of the hand-written quote): {strict} → {'PASS' if len(fd) >= 3 and all(h >= 5 for h in strict) else 'FAIL'}")
     for slug, items in runs.items():
         for point_id in sorted({k for r in items for k in r["measures"].get("regression", {})}):
             found = sum(1 for r in items if r["measures"]["regression"].get(point_id))
             lines.append(f"- {slug} `{point_id}` found in {found} of {len(items)} runs (at least 2 of 3) → {'PASS' if found >= 2 else 'FAIL'}")
+    lines += ["", "## Points per block (no gate; the hand-written FD block has 6, the live generated blocks 6 to 8)", ""]
+    lines += [f"- {slug}: {[len(r['record'].get('accepted') or []) for r in items]} accepted of {[len(r['record'].get('selected') or []) for r in items]} selected ({', '.join(sorted({r.get('caller', 'api') for r in items}))})" for slug, items in runs.items()]
     costs = [r["cost_usd"] for items in runs.values() for r in items]
     if costs:
         lines += ["", "## Cost", "", f"- per run: min ${min(costs):.2f}, max ${max(costs):.2f}; cap to set: 1.3 × max = ${1.3 * max(costs):.2f}"]

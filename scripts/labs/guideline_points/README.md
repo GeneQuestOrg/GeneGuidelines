@@ -56,6 +56,19 @@ First calibration (`results/bricks-2026-11-28/calibration.json`, `calibration-me
 
 Revision, once, as the rule of 2026-11-23 allows: the summary checker's prompt now says what a qualifier is (a word or clause that says when, how often, for whom or under what condition the statement holds) and that a summary may name the quote's subject more briefly when what is said about it stays the same. Nothing else changes. The whole calibration is re-run at both efforts under the same rule; the runs proceed either way and the report says whether the summary checker was calibrated.
 
+### Pilot run of 2026-11-28 and what it changed (recorded before any registered run)
+
+One pilot run on FD through the API (`results/bricks-2026-11-28/pilot-api-wide-scope-fd.json`, 2.84 USD; not one of the registered runs). The re-run calibration had passed at both efforts after the one revision above (10 of 10 controls caught; quote and summary checkers 5 of 6 hand-written points, question and Polish checkers 6 of 6). The pilot published a clean block with all six hand-written points in it, and **57 points**: 60 selected, 27 of them added by the coverage checker (every organ system's baseline tests, imaging protocols, reference values). The registered FD gate measures recall only, so a block that lists everything passes it; an independent review of the code found the same, and that the MAS topic is met by the bare word "endocrine".
+
+Changed before any registered run:
+
+- **Scope** (`bricks/select.py`): the block is about establishing the diagnosis (how it is made and when it is certain; which test confirms it and what a result can and cannot show; whether a procedure is needed, when it must be avoided, how it must be done; the subtype or extent where a document makes it part of the diagnosis). The work-up after diagnosis does not belong. The selector names the decision a statement changes; the coverage checker removes as readily as it adds. Still no number of points anywhere.
+- **Measures** (all recomputable from saved records): next to the registered FD rule, a stricter reading (the point quotes the consensus, its quote holds a whole sentence of the hand-written quote, each hand-written point needs a point of its own); next to the registered MAS rule, a stricter one (an endocrine section, or a quote that names a gland, a hormone or a test); `oi-molecular-testing` also accepts the grade A guideline's statement (21829228 ¶43); points per block are reported (no gate); a run file records the commit and the hashes of the product files.
+- **In-sample note:** the prompts name the kinds of statement the earlier FD runs missed (what a negative test cannot rule out, how a sample must be handled), so FD recall is partly in-sample; FOP and OI are the out-of-sample check.
+- **A brick with no items makes no call; a refused call in the lab is recorded** instead of ending the process.
+
+**Agent-operated runs.** Darek asked (2026-11-28) for no further API spend on the foundation's key for now. `bricks-agent-step` runs the same pipeline code with Claude Code subagents as the models (Sonnet for the writers, Opus for the checkers; `agent_caller.py`): each call is a request file an agent answers with a JSON file, and the run is replayed to the next unanswered call. It is not the production request (no pinned effort, no response schema enforced by the API, no cache), so it measures what the prompts select and write, not cost. The registered API runs (3 each on FD, MAS, FOP, OI) and the dry run on production data are still to be done with the real adapter before the switch; this session's API spend on the bricks stands at 4.19 USD.
+
 ## Commands
 
 From the repository root, with the product's requirements installed (Python 3.12, `anthropic==2.12.0`) and the product's `.env` (the Anthropic key is read from that file only):

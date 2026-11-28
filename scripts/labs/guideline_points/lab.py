@@ -84,6 +84,20 @@ def cmd_bricks_run(args) -> int:
     return asyncio.run(run(args.snapshot, Path(args.out), api_key=_api_key(args), cap=args.cap, repeats=args.repeats, only=args.disease or None))
 
 
+def cmd_bricks_agent_step(args) -> int:
+    from .bricks_lab import agent_step
+
+    return asyncio.run(agent_step(args.snapshot, Path(args.out), only=args.disease or None, repeat=args.repeat))
+
+
+def cmd_bricks_agent_check(args) -> int:
+    from .agent_caller import check_answer
+
+    problem = check_answer(Path(args.request))
+    print(problem or "OK")
+    return 1 if problem else 0
+
+
 def cmd_bricks_report(args) -> int:
     from .bricks_lab import report
 
@@ -149,6 +163,17 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--repeats", type=int, default=3)
     p.add_argument("--cap", type=float, default=DEFAULT_CAP_USD)
     p.set_defaults(func=cmd_bricks_run)
+
+    p = sub.add_parser("bricks-agent-step", help="no API: replay the bricks runs to the next model call an agent has not answered (agent_caller.py)")
+    p.add_argument("--snapshot", required=True)
+    p.add_argument("--out", required=True)
+    p.add_argument("--disease", action="append")
+    p.add_argument("--repeat", type=int, default=1)
+    p.set_defaults(func=cmd_bricks_agent_step)
+
+    p = sub.add_parser("bricks-agent-check", help="no model: does an agent's answer file parse as the call's result type")
+    p.add_argument("--request", required=True)
+    p.set_defaults(func=cmd_bricks_agent_check)
 
     p = sub.add_parser("bricks-report", help="no model: the registered gates, cost and blocks of saved bricks runs")
     p.add_argument("--out", required=True)

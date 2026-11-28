@@ -70,6 +70,8 @@ def verdict_problems(output: CheckerOutput, ids: list[str]) -> dict[str, str | N
 async def run_brick(name: str, ids: list[str], write: Write, code_check: CodeCheck, model_check: ModelCheck) -> BrickRun:
     """Write, check by code, check by model; give the failed items one more attempt with the reasons."""
     run = BrickRun(name=name)
+    if not ids:
+        return run
     pending: list[str] = list(ids)
     feedback: dict[str, str] = {}
     for attempt in range(1, ATTEMPTS + 1):
