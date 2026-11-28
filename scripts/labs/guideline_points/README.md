@@ -87,6 +87,25 @@ Six runs under the second revision (`results/bricks-2026-11-28/pilot-agent-scope
 
 Third revision: a location stands for one question a parent would take to the doctor, and two statements that lead to different questions stay two locations; quotes of different locations do not overlap; from a document written for laboratories only what a result can mean for the child belongs. The question writer and checker accept a conditional opening as well as asking whether it applies first, and the checker rejects for its five reasons only. Because the question checker's prompt changed, it is calibrated again on the six hand-written questions and its three controls, with an agent as the checker (`bricks-agent-calibrate`, one repeat). The runs in `results/bricks-2026-11-28/*-r1.json` use this version.
 
+### Results under the third revision (2026-11-28, agent-operated, one run per disease)
+
+`results/bricks-2026-11-28/*-r1.json`, `report.md`; commit `4ff5825`. One run each, so the registered gates (three runs) are not decided; what the single runs show:
+
+| Disease | Live block | Bricks | Measures |
+|---|---|---|---|
+| FD | 6 (hand-written) | 10 | 5 of 6 hand-written points by both readings; the sixth (a single lesion usually needs histology) is in the first point's quote and question |
+| MAS | 8 | 7 | endocrine topic met, both readings |
+| FOP | 6 | 6 | avoid biopsy and genetic confirmation both found |
+| OI | 8 | 15 | family history found; molecular testing not found at its locations |
+| Noonan | 7 | 3 | none registered |
+| Stargardt | 8 | 5 | none registered |
+
+- **Question checker, recalibrated** (agent as the checker, one repeat): 6 of 6 hand-written questions pass, 3 of 3 controls caught. In the runs it rejected 5 of 48 first drafts (19 of 44 before the revision), and no point was lost to its question.
+- **Other checkers on first drafts:** quote 15 of 60, Polish 15 of 48 (terms and calques: "przezierność karkowa", the pattern ERG), summary 4 of 48.
+- **Points lost:** 12 to the quote brick across the six diseases, mostly a caveat the checker wanted that does not fit the 400 characters a restricted document allows (the point is dropped, never cut); 2 to the Polish checker after the retry.
+- **Open:** OI is long and leans on the grade A document, which is a laboratory guideline (11 of its 15 points); the preference for grade A works against "what a parent can ask" there. FD has two imaging points the hand-written block does not (a specialist radiologist, a soft tissue mass). Whether 10 points for FD is the right size is Darek's call on the side-by-side (`docs/produkty/geneguidelines/eksperymenty/guideline-points-cegielki-obok-siebie-2026-11-28.md` in the docs repository).
+- **Not measured here:** cost, latency, the prompt cache, pinned effort, the API's response schema. The registered API runs and the dry run on production data remain.
+
 ## Commands
 
 From the repository root, with the product's requirements installed (Python 3.12, `anthropic==2.12.0`) and the product's `.env` (the Anthropic key is read from that file only):

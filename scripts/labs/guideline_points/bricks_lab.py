@@ -294,6 +294,13 @@ async def agent_step(snapshot: str, out: Path, *, only: list[str] | None, repeat
     return 3 if waiting else 0
 
 
+def _gate(runs: int, met: bool) -> str:
+    """A registered gate needs its three runs; with fewer it is not decided, whatever the runs so far show."""
+    if runs < 3:
+        return f"not decided ({runs} of 3 runs)"
+    return "PASS" if met else "FAIL"
+
+
 def report(out: Path) -> Path:
     """The registered gates over the saved runs, the cost, and each disease's blocks next to each other."""
     runs: dict[str, list[dict[str, Any]]] = {}
@@ -304,14 +311,14 @@ def report(out: Path) -> Path:
     fd = runs.get("fd", [])
     if fd:
         hits = [len(r["measures"]["fd_final_hits"]) for r in fd]
-        lines.append(f"- FD, hand-written points found in the final block (at least 5 of 6 in every run): {hits} → {'PASS' if len(fd) >= 3 and all(h >= 5 for h in hits) else 'FAIL'}")
+        lines.append(f"- FD, hand-written points found in the final block (at least 5 of 6 in every run): {hits} → {_gate(len(fd), all(h >= 5 for h in hits))}")
         lines.append(f"  - found already at selection: {[len(r['measures']['fd_selected_hits']) for r in fd]}")
         strict = [len(r["measures"].get("fd_strict_hits", [])) for r in fd]
-        lines.append(f"  - stricter reading (a point of its own from the consensus, holding a whole sentence of the hand-written quote): {strict} → {'PASS' if len(fd) >= 3 and all(h >= 5 for h in strict) else 'FAIL'}")
+        lines.append(f"  - stricter reading (a point of its own from the consensus, holding a whole sentence of the hand-written quote): {strict} → {_gate(len(fd), all(h >= 5 for h in strict))}")
     for slug, items in runs.items():
         for point_id in sorted({k for r in items for k in r["measures"].get("regression", {})}):
             found = sum(1 for r in items if r["measures"]["regression"].get(point_id))
-            lines.append(f"- {slug} `{point_id}` found in {found} of {len(items)} runs (at least 2 of 3) → {'PASS' if found >= 2 else 'FAIL'}")
+            lines.append(f"- {slug} `{point_id}` found in {found} of {len(items)} runs (at least 2 of 3) → {_gate(len(items), found >= 2)}")
     lines += ["", "## Points per block (no gate; the hand-written FD block has 6, the live generated blocks 6 to 8)", ""]
     lines += [f"- {slug}: {[len(r['record'].get('accepted') or []) for r in items]} accepted of {[len(r['record'].get('selected') or []) for r in items]} selected ({', '.join(sorted({r.get('caller', 'api') for r in items}))})" for slug, items in runs.items()]
     costs = [r["cost_usd"] for items in runs.values() for r in items]
